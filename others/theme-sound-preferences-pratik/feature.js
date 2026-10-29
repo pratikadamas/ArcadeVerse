@@ -16,6 +16,7 @@
   }
   window.__ArcadePreferencesInitialized = true;
 
+  
   /* --------------------------------------------------------------------------
      1. Constants & Storage Keys
      -------------------------------------------------------------------------- */
@@ -74,7 +75,7 @@
       if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
         return 'light';
       }
-    } catch (e) {}
+    } catch (e) { }
     return 'dark';
   }
 
