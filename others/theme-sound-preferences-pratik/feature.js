@@ -6,7 +6,6 @@
  * Implements accessible, persistent dark/light theme switching with OS preference sync,
  * and a centralized master audio mute preference for compatible games.
  */
-
 (() => {
   'use strict';
 
@@ -16,7 +15,7 @@
   }
   window.__ArcadePreferencesInitialized = true;
 
-  
+
   /* --------------------------------------------------------------------------
      1. Constants & Storage Keys
      -------------------------------------------------------------------------- */
