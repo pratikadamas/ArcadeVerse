@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#05060f">
+  <title>Quantum Lunar Lander | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="../../assets/public/favicon.ico">
+</head>
+<body>
+  <div class="game-container">
+    <header class="game-header">
+      <div class="header-left">
+        <a href="../../index.html" class="back-link" aria-label="Return to ArcadeVerse Hub">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <span>Arcade Hub</span>
+        </a>
+        <h1 class="game-title">Quantum Lunar <span class="accent">Lander</span></h1>
+      </div>
+      <div class="header-controls">
+        <button id="pause-btn" class="icon-btn" type="button" aria-label="Pause or resume (P)" title="Pause (P)">
+          <svg id="pause-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+          <svg id="play-icon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
+        </button>
+        <button id="sound-btn" class="icon-btn" type="button" aria-label="Toggle sound effects" aria-pressed="true" title="Sound on/off">
+          <svg id="sound-icon-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+          <svg id="sound-icon-off" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+        </button>
+        <button id="help-btn" class="icon-btn" type="button" aria-label="Open flight manual" title="Flight manual / How to play">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </button>
+      </div>
+    </header>
+
+    <section class="hud" aria-label="Flight telemetry">
+      <div class="hud-row hud-top">
+        <div class="hud-card"><span class="label">LEVEL</span><span class="value" id="hud-level">1</span></div>
+        <div class="hud-card"><span class="label">SHIPS</span><span class="value lives" id="hud-lives" aria-live="polite"></span></div>
+        <div class="hud-card hud-hl"><span class="label">SCORE</span><span class="value" id="hud-score">0</span></div>
+        <div class="hud-card"><span class="label">BEST</span><span class="value" id="hud-best">0</span></div>
+      </div>
+      <div class="hud-row hud-tele">
+        <div class="hud-card"><span class="label">ALTITUDE</span><span class="value"><span id="hud-alt">0.0</span><small>m</small></span></div>
+        <div class="hud-card" id="card-vs">
+          <span class="label">V-SPEED</span>
+          <span class="value"><svg id="vs-arrow" class="arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="4" x2="12" y2="20"></line><polyline points="5 13 12 20 19 13"></polyline></svg><span id="hud-vs">0.0</span><small>m/s</small></span>
+          <span class="meter"><i id="vs-bar"></i></span>
+        </div>
+        <div class="hud-card" id="card-hs">
+          <span class="label">H-SPEED</span>
+          <span class="value"><span id="hud-hs">0.0</span><small>m/s</small></span>
+          <span class="meter"><i id="hs-bar"></i></span>
+        </div>
+        <div class="hud-card" id="card-tilt">
+          <span class="label">TILT</span>
+          <span class="value"><span id="hud-tilt">0</span><small>deg</small></span>
+          <span class="meter"><i id="tilt-bar"></i></span>
+        </div>
+      </div>
+      <div class="fuel-row" id="fuel-row">
+        <span class="label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"></path></svg>
+          FUEL
+        </span>
+        <span class="fuel-track" role="progressbar" aria-label="Fuel remaining" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" id="fuel-track"><i id="fuel-fill"></i></span>
+        <span class="fuel-text" id="fuel-text">100%</span>
+      </div>
+    </section>
+
+    <main class="stage" role="region" aria-label="Lander flight canvas">
+      <canvas id="game-canvas" width="840" height="600" aria-label="Quantum Lunar Lander game view"></canvas>
+
+      <div id="start-overlay" class="overlay">
+        <div class="overlay-card">
+          <h2 class="overlay-title">Quantum Lunar Lander</h2>
+          <p class="overlay-desc hide-sm">Fly the descent module through real orbital gravity and touch down gently on a glowing pad. Narrow pads pay more.</p>
+          <ul class="quick-keys">
+            <li><kbd>W</kbd> <kbd>&uarr;</kbd><span>Main thruster</span></li>
+            <li><kbd>A</kbd> <kbd>D</kbd> <kbd>&larr;</kbd> <kbd>&rarr;</kbd><span>Rotate</span></li>
+            <li><kbd>P</kbd> <kbd>Esc</kbd><span>Pause</span></li>
+          </ul>
+          <div class="pad-legend" aria-label="Landing pad multipliers">
+            <span class="chip c2">2x wide</span><span class="chip c3">3x medium</span><span class="chip c5">5x narrow</span>
+          </div>
+          <p class="best-line">Best score: <strong id="start-best">0</strong></p>
+          <div class="btn-row">
+            <button id="start-btn" class="btn btn-primary" type="button">Begin Descent</button>
+            <button id="start-help-btn" class="btn btn-secondary" type="button">Flight Manual</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="pause-overlay" class="overlay hidden">
+        <div class="overlay-card">
+          <h2 class="overlay-title">Paused</h2>
+          <p class="overlay-desc hide-sm">Flight systems are on hold. Gravity will wait for you.</p>
+          <div class="btn-row">
+            <button id="resume-btn" class="btn btn-primary" type="button">Resume</button>
+            <button id="pause-help-btn" class="btn btn-secondary" type="button">Flight Manual</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="land-overlay" class="overlay hidden">
+        <div class="overlay-card">
+          <h2 class="overlay-title win-text">Touchdown Confirmed</h2>
+          <p class="overlay-desc" id="land-sub">Landed on the pad.</p>
+          <div class="results">
+            <div class="row"><span>Pad multiplier</span><strong id="land-mult">2x</strong></div>
+            <div class="row"><span>Landing score</span><strong id="land-base">0</strong></div>
+            <div class="row"><span>Fuel bonus</span><strong id="land-fuel">0</strong></div>
+            <div class="row total"><span>Total</span><strong id="land-total">0</strong></div>
+          </div>
+          <p class="bonus-line hidden" id="land-life">Bonus ship awarded.</p>
+          <button id="next-btn" class="btn btn-primary" type="button">Next Level</button>
+        </div>
+      </div>
+
+      <div id="crash-overlay" class="overlay hidden">
+        <div class="overlay-card">
+          <h2 class="overlay-title lose-text">Lander Lost</h2>
+          <p class="overlay-desc" id="crash-reason">Impact.</p>
+          <p class="overlay-desc" id="crash-lives">Ships left: 2</p>
+          <button id="retry-btn" class="btn btn-primary" type="button">Retry Level</button>
+        </div>
+      </div>
+
+      <div id="over-overlay" class="overlay hidden">
+        <div class="overlay-card">
+          <h2 class="overlay-title lose-text">Mission Failed</h2>
+          <p class="overlay-desc" id="over-reason">All ships lost.</p>
+          <div class="results">
+            <div class="row"><span>Final score</span><strong id="over-score">0</strong></div>
+            <div class="row"><span>Levels cleared</span><strong id="over-levels">0</strong></div>
+            <div class="row"><span>Best score</span><strong id="over-best">0</strong></div>
+          </div>
+          <p class="bonus-line hidden" id="over-record">New best score!</p>
+          <button id="restart-btn" class="btn btn-primary" type="button">Restart Mission</button>
+        </div>
+      </div>
+    </main>
+
+    <div class="touch-bar" id="touch-bar" aria-label="On-screen flight controls">
+      <button id="btn-left" class="touch-btn" type="button" aria-label="Rotate left">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"></path><polyline points="3 4 3 10 9 10"></polyline></svg>
+      </button>
+      <button id="btn-right" class="touch-btn" type="button" aria-label="Rotate right">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7"></path><polyline points="21 4 21 10 15 10"></polyline></svg>
+      </button>
+      <button id="btn-thrust" class="touch-btn touch-main" type="button" aria-label="Main thruster">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 19 21 12 17 5 21 12 2"></polygon></svg>
+        <span>THRUST</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="help-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 id="help-title">Flight Manual</h2>
+        <button id="help-close" class="icon-btn" type="button" aria-label="Close flight manual">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <h3>Mission</h3>
+        <p>Bring the descent module down onto a landing pad without breaking it. Every level uses a new procedurally generated moon surface, and the pads get smaller and the gravity gets stronger as you go.</p>
+
+        <h3>Controls</h3>
+        <table class="manual-table">
+          <tr><th>Main thruster</th><td><kbd>W</kbd> / <kbd>&uarr;</kbd> or the THRUST button</td></tr>
+          <tr><th>Rotate left</th><td><kbd>A</kbd> / <kbd>&larr;</kbd> or the left rotate button</td></tr>
+          <tr><th>Rotate right</th><td><kbd>D</kbd> / <kbd>&rarr;</kbd> or the right rotate button</td></tr>
+          <tr><th>Pause</th><td><kbd>P</kbd> or <kbd>Esc</kbd></td></tr>
+        </table>
+        <p>The thruster pushes the ship the way its nose points. Rotation has inertia: a spin keeps going until you counter it, and slowly settles on its own. There is no air, so nothing slows you down except your engine.</p>
+
+        <h3>Safe landing limits</h3>
+        <table class="manual-table">
+          <tr><th>Vertical speed</th><td>3.5 m/s or less</td></tr>
+          <tr><th>Horizontal speed</th><td>2.5 m/s or less</td></tr>
+          <tr><th>Tilt at touchdown</th><td>12 degrees or less from upright</td></tr>
+          <tr><th>Landing gear</th><td>Both feet must be on the same pad</td></tr>
+        </table>
+        <p>The V-SPEED, H-SPEED and TILT readouts (and the landing gear on your ship) glow green when the value is inside the limit and red when touching down right now would destroy the ship. Touching rock anywhere, or hitting a pad too fast, crashes the lander.</p>
+
+        <h3>Fuel</h3>
+        <p>Fuel is limited and only burns while the main thruster is firing. When the gauge hits zero the engine is dead and you are in free fall. Later levels start with less fuel. Fuel left over after landing becomes bonus points.</p>
+
+        <h3>Pads and multipliers</h3>
+        <ul class="manual-list">
+          <li><span class="chip c2">2x</span> Wide and forgiving.</li>
+          <li><span class="chip c3">3x</span> Medium width.</li>
+          <li><span class="chip c5">5x</span> Narrow, high reward.</li>
+        </ul>
+
+        <h3>Scoring</h3>
+        <p>Landing score = (level base + soft touch bonus) x pad multiplier. Then you add a fuel bonus for each unit of fuel left. Your best score is saved in this browser.</p>
+
+        <h3>Lives, levels and hazards</h3>
+        <p>You start with 3 ships. A crash costs one ship and you retry the same terrain. A bonus ship is awarded every 3 levels. From level 3 a quantum gravity anomaly (the violet swirl) pulls the ship toward it. The dotted line shows where you will go if you stop thrusting.</p>
+      </div>
+      <div class="modal-foot">
+        <button id="help-done" class="btn btn-primary" type="button">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
