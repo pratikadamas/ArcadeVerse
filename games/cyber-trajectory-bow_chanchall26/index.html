@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Cyber Trajectory Bow | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="../../assets/public/favicon.ico">
+</head>
+<body>
+  <div class="game-container">
+    <header class="game-header">
+      <div class="header-left">
+        <a href="../../index.html" class="back-link" aria-label="Return to ArcadeVerse Hub">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <span>Arcade Hub</span>
+        </a>
+        <h1 class="game-title">Cyber Trajectory <span class="accent">Bow</span></h1>
+      </div>
+      <div class="header-controls">
+        <button id="sound-btn" class="icon-btn" type="button" aria-label="Toggle sound effects" title="Sound (M)">
+          <svg id="sound-icon-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+          <svg id="sound-icon-off" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+        </button>
+        <button id="pause-btn" class="icon-btn" type="button" aria-label="Pause game" title="Pause (P / Esc)">
+          <svg id="pause-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+          <svg id="play-icon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        </button>
+        <button id="restart-btn" class="icon-btn" type="button" aria-label="Restart stage" title="Restart stage (R)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+        </button>
+        <button id="help-btn" class="icon-btn" type="button" aria-label="How to play" title="How to play (H)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </button>
+      </div>
+    </header>
+
+    <section class="hud" aria-label="Game status">
+      <div class="hud-card">
+        <span class="hud-label">Stage</span>
+        <span class="hud-value" id="hud-stage">1/8</span>
+      </div>
+      <div class="hud-card hud-highlight">
+        <span class="hud-label">Score</span>
+        <span class="hud-value" id="hud-score">0</span>
+      </div>
+      <div class="hud-card">
+        <span class="hud-label">Best</span>
+        <span class="hud-value" id="hud-best">0</span>
+      </div>
+      <div class="hud-card">
+        <span class="hud-label">Streak</span>
+        <span class="hud-value" id="hud-streak">0</span>
+      </div>
+      <div class="hud-card hud-ammo-card">
+        <span class="hud-label">Arrows</span>
+        <span class="hud-ammo" id="hud-ammo" aria-live="polite"></span>
+      </div>
+      <div class="hud-card" id="hud-wind-card">
+        <span class="hud-label">Wind</span>
+        <span class="hud-value hud-row">
+          <svg id="wind-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="12" x2="20" y2="12"></line><polyline points="13 5 20 12 13 19"></polyline></svg>
+          <span id="wind-val">Calm</span>
+        </span>
+      </div>
+      <div class="hud-card" id="hud-grav-card">
+        <span class="hud-label">Gravity</span>
+        <span class="hud-value hud-row">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V3"></path><path d="m6 11 6 6 6-6"></path><path d="M19 21H5"></path></svg>
+          <span id="grav-val">1.00x</span>
+        </span>
+      </div>
+    </section>
+
+    <main class="canvas-wrapper" role="region" aria-label="Archery range canvas">
+      <canvas id="game-canvas" width="720" height="450" aria-label="Game field. Drag backwards from anywhere and release to fire an arrow."></canvas>
+    </main>
+
+    <p class="hint-line">Drag back from anywhere to aim. Release to fire. <kbd>P</kbd> pause, <kbd>R</kbd> restart, <kbd>M</kbd> sound.</p>
+  </div>
+
+  <!-- Start / stage select -->
+  <div id="start-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="start-title">
+    <div class="overlay-card card-wide">
+      <div class="title-icon" aria-hidden="true">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="5"></circle><circle cx="12" cy="12" r="1"></circle><line x1="12" y1="1" x2="12" y2="4"></line><line x1="12" y1="20" x2="12" y2="23"></line><line x1="1" y1="12" x2="4" y2="12"></line><line x1="20" y1="12" x2="23" y2="12"></line></svg>
+      </div>
+      <h2 id="start-title" class="overlay-title">Cyber Trajectory Bow</h2>
+      <p class="overlay-desc">Pull back, read the wind and gravity, and break every neon node before your arrows run out. The dotted line shows your exact flight path.</p>
+      <div class="start-actions">
+        <button id="start-btn" class="btn btn-primary" type="button">Launch Mission</button>
+        <button id="start-help-btn" class="btn btn-secondary" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          How to Play
+        </button>
+      </div>
+      <h3 class="subhead">Stage Select</h3>
+      <div id="stage-grid" class="stage-grid"></div>
+      <p class="best-line">Best score: <strong id="start-best">0</strong></p>
+    </div>
+  </div>
+
+  <!-- Pause -->
+  <div id="pause-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+    <div class="overlay-card">
+      <h2 id="pause-title" class="overlay-title">Paused</h2>
+      <p class="overlay-desc">Stage <span id="pause-stage">1</span> - take a breath.</p>
+      <div class="btn-stack">
+        <button id="resume-btn" class="btn btn-primary" type="button">Resume</button>
+        <button id="pause-restart-btn" class="btn btn-secondary" type="button">Restart Stage</button>
+        <button id="pause-help-btn" class="btn btn-secondary" type="button">How to Play</button>
+        <button id="pause-menu-btn" class="btn btn-secondary" type="button">Stage Select</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stage clear -->
+  <div id="clear-overlay" class="overlay overlay-light hidden" role="dialog" aria-modal="true" aria-labelledby="clear-title">
+    <div class="overlay-card">
+      <h2 id="clear-title" class="overlay-title win-text">Stage Clear</h2>
+      <div id="clear-stars" class="stars" aria-label="Star rating"></div>
+      <div class="results-stats">
+        <div class="stat-row"><span>Stage score</span><strong id="clear-score">0</strong></div>
+        <div class="stat-row"><span>Arrow bonus</span><strong id="clear-bonus">0</strong></div>
+        <div class="stat-row"><span>Accuracy</span><strong id="clear-acc">0%</strong></div>
+        <div class="stat-row"><span>Arrows left</span><strong id="clear-ammo">0</strong></div>
+        <div class="stat-row"><span>Total score</span><strong id="clear-total">0</strong></div>
+      </div>
+      <div class="btn-stack">
+        <button id="next-btn" class="btn btn-primary" type="button">Next Stage</button>
+        <button id="clear-retry-btn" class="btn btn-secondary" type="button">Replay Stage</button>
+        <button id="clear-menu-btn" class="btn btn-secondary" type="button">Stage Select</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fail -->
+  <div id="fail-overlay" class="overlay overlay-light hidden" role="dialog" aria-modal="true" aria-labelledby="fail-title">
+    <div class="overlay-card">
+      <h2 id="fail-title" class="overlay-title fail-text">Out of Arrows</h2>
+      <p class="overlay-desc"><span id="fail-left">1 node</span> still online. Study the wind and try again.</p>
+      <div class="results-stats">
+        <div class="stat-row"><span>Score this run</span><strong id="fail-score">0</strong></div>
+        <div class="stat-row"><span>Best score</span><strong id="fail-best">0</strong></div>
+      </div>
+      <div class="btn-stack">
+        <button id="fail-retry-btn" class="btn btn-primary" type="button">Retry Stage</button>
+        <button id="fail-menu-btn" class="btn btn-secondary" type="button">Stage Select</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Victory -->
+  <div id="victory-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="victory-title">
+    <div class="overlay-card">
+      <h2 id="victory-title" class="overlay-title win-text">Mission Complete</h2>
+      <p class="overlay-desc">Every stage cleared. The grid is quiet again.</p>
+      <div id="victory-stars" class="stars" aria-label="Final star rating"></div>
+      <div class="results-stats">
+        <div class="stat-row"><span>Final score</span><strong id="victory-score">0</strong></div>
+        <div class="stat-row"><span>Best score</span><strong id="victory-best">0</strong></div>
+        <div class="stat-row"><span>Stars collected</span><strong id="victory-star-count">0</strong></div>
+      </div>
+      <div class="btn-stack">
+        <button id="victory-again-btn" class="btn btn-primary" type="button">Play Again</button>
+        <button id="victory-menu-btn" class="btn btn-secondary" type="button">Stage Select</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- How to play -->
+  <div id="help-overlay" class="overlay overlay-top hidden" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="overlay-card card-wide help-card">
+      <button id="help-x-btn" class="icon-btn help-x" type="button" aria-label="Close instructions">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+      <h2 id="help-title" class="overlay-title">How to Play</h2>
+
+      <h3 class="subhead">Controls and Rules</h3>
+      <ul class="rules-list">
+        <li><strong>Aim:</strong> press anywhere on the field and drag <em>away</em> from where you want to shoot, like a slingshot. The bow turns and the string draws back.</li>
+        <li><strong>Power:</strong> the farther you pull, the faster the arrow. Pull is capped at a limit. Release to fire. A very short pull cancels the shot.</li>
+        <li><strong>Preview:</strong> the dotted curve is the real flight path using the same physics, including wind and gravity. It stops where the arrow first touches a wall, floor or barrier.</li>
+        <li><strong>Goal:</strong> destroy every node with the arrows you have. Run out with nodes left and the stage fails.</li>
+        <li><strong>Keys:</strong> <kbd>P</kbd> or <kbd>Esc</kbd> pause, <kbd>R</kbd> restart stage, <kbd>M</kbd> sound, <kbd>H</kbd> this screen. Right-click cancels an aim. Touch works the same way.</li>
+      </ul>
+
+      <h3 class="subhead">Nodes</h3>
+      <ul class="legend">
+        <li><svg class="swatch" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="#00f0ff" stroke-width="2"></circle><circle cx="12" cy="12" r="3" fill="#00f0ff"></circle></svg><span><strong class="c-static">Standard</strong> - one hit.</span></li>
+        <li><svg class="swatch" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="#39ff7a" stroke-width="2"></circle><circle cx="12" cy="12" r="3" fill="#39ff7a"></circle><path d="M2 21h20" stroke="#39ff7a" stroke-width="1.5" stroke-dasharray="2 3" fill="none"></path></svg><span><strong class="c-moving">Moving</strong> - slides or orbits on a path. Lead your shot.</span></li>
+        <li><svg class="swatch" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 21 7 21 17 12 22 3 17 3 7" fill="none" stroke="#ffb020" stroke-width="2"></polygon><path d="M12 6l-2 5 3 2-2 5" fill="none" stroke="#ffb020" stroke-width="1.5"></path></svg><span><strong class="c-armor">Armored</strong> - takes several hits. Pips show remaining hit points and cracks grow. Hits bounce the arrow off.</span></li>
+        <li><svg class="swatch" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="#ff3d81" stroke-width="2"></circle><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18" stroke="#ff3d81" stroke-width="1.6" fill="none"></path></svg><span><strong class="c-explosive">Explosive</strong> - blasts every node nearby when destroyed. Blasts chain into other explosives. Armor takes 2 damage.</span></li>
+      </ul>
+
+      <h3 class="subhead">Accuracy Grades</h3>
+      <div class="grade-table">
+        <div class="grade-row"><span class="g-bullseye">Bullseye</span><span>Hit the centre ring</span><strong>150</strong></div>
+        <div class="grade-row"><span class="g-perfect">Perfect</span><span>Hit the inner rings</span><strong>100</strong></div>
+        <div class="grade-row"><span class="g-ricochet">Ricochet</span><span>Bounced off a wall, floor, barrier or armor first</span><strong>120</strong></div>
+        <div class="grade-row"><span class="g-hit">Hit</span><span>Edge of a node</span><strong>50</strong></div>
+      </div>
+      <p class="overlay-desc left">Consecutive successful shots build a <strong>streak</strong> that multiplies points (+25% per link, up to x3). A shot that hits nothing resets it. Chain-reaction kills score extra. Finish with arrows to spare and good accuracy for up to three stars.</p>
+
+      <h3 class="subhead">Wind and Gravity</h3>
+      <p class="overlay-desc left">From stage 5 the <strong>wind</strong> pushes arrows sideways or up and down. The HUD arrow shows its direction and strength. Later stages change <strong>gravity</strong> (shown as a multiplier) and may shift both between shots. The preview line always accounts for them.</p>
+
+      <button id="help-close-btn" class="btn btn-primary" type="button">Got it</button>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

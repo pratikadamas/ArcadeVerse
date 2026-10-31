@@ -1,0 +1,15 @@
+{
+  "title": "Cyber Trajectory Bow",
+  "category": "Physics",
+  "lucideIcon": "crosshair",
+  "description": "Drag back to draw a neon bow, read the dotted trajectory, and shatter moving, armored and explosive nodes across 8 stages of wind and shifting gravity.",
+  "author": "Chanchal Gupta",
+  "github": "chanchall26",
+  "role": "Arcade Developer",
+  "tags": [
+    "Physics",
+    "Archery",
+    "Aim",
+    "Neon"
+  ]
+}
