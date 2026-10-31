@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neon Highway Hopper | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="../../assets/public/favicon.ico">
+</head>
+<body>
+  <div class="game-container">
+    <header class="game-header">
+      <div class="header-left">
+        <a href="../../index.html" class="back-link" aria-label="Return to ArcadeVerse Hub">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <span>Arcade Hub</span>
+        </a>
+        <h1 class="game-title">Neon Highway <span class="accent">Hopper</span></h1>
+      </div>
+      <div class="header-controls">
+        <button id="pause-btn" class="icon-btn" type="button" aria-label="Pause or resume" title="Pause (P)">
+          <svg id="pause-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+          <svg id="play-icon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
+        </button>
+        <button id="sound-btn" class="icon-btn" type="button" aria-label="Toggle sound effects" title="Toggle sound">
+          <svg id="sound-icon-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+          <svg id="sound-icon-off" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+        </button>
+        <button id="help-btn" class="icon-btn" type="button" aria-label="How to play" title="How to play (H)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="scoreboard-bar">
+      <div class="score-card">
+        <span class="label">DIST</span>
+        <span class="value" id="dist-display">0</span>
+      </div>
+      <div class="score-card highlight">
+        <span class="label">SCORE</span>
+        <span class="value" id="score-display">0</span>
+      </div>
+      <div class="score-card">
+        <span class="label">BEST</span>
+        <span class="value" id="best-display">0</span>
+      </div>
+      <div class="score-card bits">
+        <span class="label">BITS</span>
+        <span class="value" id="bits-display">0</span>
+      </div>
+      <div class="score-card mult">
+        <span class="label">MULT</span>
+        <span class="value" id="mult-display">x1.0</span>
+      </div>
+    </div>
+
+    <main class="canvas-wrapper" role="region" aria-label="Highway Hopper game canvas">
+      <canvas id="game-canvas" width="432" height="576"></canvas>
+
+      <div id="start-overlay" class="overlay">
+        <div class="overlay-card">
+          <div class="overlay-glyph" aria-hidden="true">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 5l7 7-7 7"></path><path d="M5 5l7 7-7 7"></path></svg>
+          </div>
+          <h2 class="overlay-title">Neon Highway Hopper</h2>
+          <p class="overlay-desc">Hop forward through endless cyber lanes. Dodge traffic, outrun magnetic trains and ride energy logs over the laser river.</p>
+          <div class="controls-guide">
+            <span class="guide-item"><kbd>&uarr;</kbd> <kbd>&larr;</kbd> <kbd>&darr;</kbd> <kbd>&rarr;</kbd> or <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to hop</span>
+            <span class="guide-item">Touch: swipe to hop, tap to go forward</span>
+            <span class="guide-item"><kbd>P</kbd> / <kbd>Esc</kbd> pause &nbsp; <kbd>H</kbd> help</span>
+          </div>
+          <button id="start-btn" class="btn btn-primary" type="button">Start Hopping</button>
+          <button id="start-help-btn" class="btn btn-secondary" type="button">How to Play</button>
+        </div>
+      </div>
+
+      <div id="pause-overlay" class="overlay hidden">
+        <div class="overlay-card">
+          <h2 class="overlay-title">Paused</h2>
+          <p class="overlay-desc">The highway is frozen. Take a breath.</p>
+          <button id="resume-btn" class="btn btn-primary" type="button">Resume</button>
+          <button id="pause-restart-btn" class="btn btn-secondary" type="button">Restart Run</button>
+          <button id="pause-help-btn" class="btn btn-secondary" type="button">How to Play</button>
+        </div>
+      </div>
+
+      <div id="gameover-overlay" class="overlay hidden">
+        <div class="overlay-card">
+          <h2 class="overlay-title gameover-text">Signal Lost</h2>
+          <p class="overlay-desc" id="gameover-reason">You got crushed on the freeway.</p>
+          <p class="new-best hidden" id="new-best-tag">New best score</p>
+          <div class="results-stats">
+            <div class="stat-row"><span>Score</span><strong id="final-score">0</strong></div>
+            <div class="stat-row"><span>Distance</span><strong id="final-dist">0</strong></div>
+            <div class="stat-row"><span>Quantum bits</span><strong id="final-bits">0</strong></div>
+            <div class="stat-row"><span>Best score</span><strong id="final-best">0</strong></div>
+          </div>
+          <button id="restart-btn" class="btn btn-primary" type="button">Run Again</button>
+          <button id="over-help-btn" class="btn btn-secondary" type="button">How to Play</button>
+        </div>
+      </div>
+
+      <div id="help-modal" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="help-title">
+        <div class="overlay-card help-card">
+          <h2 class="overlay-title" id="help-title">How to Play</h2>
+          <ul class="rules-list">
+            <li><strong>Goal:</strong> Hop forward as far as you can. Every new row earns points, scaled by your multiplier.</li>
+            <li><strong>Keyboard:</strong> Arrow keys or W A S D hop one cell. A key pressed during a hop is buffered for the next one.</li>
+            <li><strong>Touch:</strong> Swipe up, down, left or right to hop. A tap hops forward.</li>
+            <li><strong>Freeways:</strong> Cars cross each lane at different speeds. Touching one ends the run.</li>
+            <li><strong>Magnetic trains:</strong> A rail lane flashes red and beeps, then a very fast train sweeps through. Do not be on it.</li>
+            <li><strong>Laser rivers:</strong> Never land on the laser. Hop onto floating energy logs and ride them. Being carried off the edge of the screen is fatal too.</li>
+            <li><strong>Pylons:</strong> Neon pylons on safe strips block your way. Hop around them.</li>
+            <li><strong>Quantum bits:</strong> Collect glowing bits for bonus points. Each bit raises your score multiplier.</li>
+            <li><strong>Scanner drone:</strong> Stall for too long and a scanner drone sweeps up from behind. Keep moving forward.</li>
+            <li><strong>Difficulty:</strong> The farther you go, the faster and denser the lanes get.</li>
+            <li><strong>Menu keys:</strong> <kbd>P</kbd> or <kbd>Esc</kbd> pauses, <kbd>H</kbd> opens this guide, <kbd>Enter</kbd> starts or restarts.</li>
+          </ul>
+          <button id="close-help-btn" class="btn btn-primary" type="button">Got It</button>
+        </div>
+      </div>
+    </main>
+
+    <p class="touch-hint">Swipe or use arrow keys / WASD. Tap to hop forward.</p>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
