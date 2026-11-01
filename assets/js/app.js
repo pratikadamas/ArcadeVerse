@@ -330,6 +330,27 @@ document.addEventListener("DOMContentLoaded", () => {
     gameModal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
     closeModalBtn.focus();
+
+    // Centralized Master Audio Bus: Sync hub volume & mute settings into spawned iframe
+    if (gameIframe) {
+      gameIframe.onload = () => {
+        try {
+          if (window.SoundEngine && typeof window.SoundEngine.broadcastAudioConfig === "function") {
+            window.SoundEngine.broadcastAudioConfig();
+          } else {
+            const isMuted = localStorage.getItem("arcadeverse_muted") === "true";
+            const masterVol = parseFloat(localStorage.getItem("arcadeverse_master_volume")) || 0.28;
+            if (gameIframe.contentWindow) {
+              gameIframe.contentWindow.postMessage({
+                type: "ARCADEVERSE_AUDIO_CONFIG",
+                muted: isMuted,
+                volume: masterVol
+              }, "*");
+            }
+          }
+        } catch (_) {}
+      };
+    }
   }
 
   // Expose global helper to open game modal from plugins, search, or recent drawer
