@@ -1,0 +1,23 @@
+{
+  "id": "cyber-typer_hrshjswniii",
+  "title": "Cyber Typer: Terminal Hacker",
+  "category": "Arcade",
+  "lucideIcon": "terminal",
+  "description": "Defend the mainframe by typing falling cyber threat payloads. Features live WPM telemetry, accuracy multiplier combos, and mechanical Web Audio synthesis.",
+  "author": "Harsh Jaiswani",
+  "github": "hrshjswniii",
+  "role": "Active Contributor",
+  "tags": [
+    "Arcade",
+    "Typing",
+    "Cyberpunk",
+    "Terminal",
+    "Speed",
+    "Defense",
+    "NSOC26"
+  ],
+  "stars": 32,
+  "difficulty": "All Skill Levels",
+  "featured": true,
+  "releaseDate": "2026-11-01"
+}
