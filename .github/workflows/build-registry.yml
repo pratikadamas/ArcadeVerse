@@ -44,8 +44,8 @@ jobs:
             exit 1
           fi
 
-      - name: Validate Community Games Pre-Flight
-        run: node scripts/validate-games.js
+      - name: Validate Community Games Pre-Flight & Asset Integrity
+        run: node scripts/validate-games.js --audit-hub --strict-assets
 
       - name: Test Registry Auto-Compilation (PR Dry Run)
         if: github.event_name == 'pull_request'
