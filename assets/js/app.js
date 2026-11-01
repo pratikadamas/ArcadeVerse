@@ -115,6 +115,10 @@ document.addEventListener("DOMContentLoaded", () => {
         matchesCategory = true;
       } else if (currentCategory === "favorites") {
         matchesCategory = favs.has(item.id);
+      } else if (currentCategory.startsWith("playlist:")) {
+        const plId = currentCategory.replace("playlist:", "");
+        const pl = window.ArcadePlaylists ? window.ArcadePlaylists.getPlaylist(plId) : null;
+        matchesCategory = pl ? pl.games.includes(item.id) : false;
       } else {
         if (currentCategory.toLowerCase() === "halloween") {
         matchesCategory = (item.tags && item.tags.some(t => t.toLowerCase() === "halloween")) ||
@@ -451,6 +455,25 @@ document.addEventListener("DOMContentLoaded", () => {
   // Filter Search
   searchInput.addEventListener("input", (e) => {
     searchQuery = e.target.value.toLowerCase().trim();
+    renderGames();
+  });
+
+  const playlistTrigger = document.getElementById("trigger-playlists-btn");
+  if (playlistTrigger) {
+    playlistTrigger.addEventListener("click", () => {
+      if (window.ArcadePlaylists) {
+        window.ArcadePlaylists.openDrawer();
+      }
+    });
+  }
+
+  // Listen for filter-playlist event from PlaylistManager
+  window.addEventListener("arcadeverse:filter-playlist", (e) => {
+    const pl = e.detail;
+    if (!pl) return;
+    currentCategory = `playlist:${pl.id}`;
+    categoryPills.forEach((p) => p.classList.remove("active"));
+    if (playlistTrigger) playlistTrigger.classList.add("active");
     renderGames();
   });
 
