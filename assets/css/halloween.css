@@ -522,6 +522,8 @@
 
 /* Center Animated Interactive Icon */
 .halloween-card-icon {
+  margin: 0 auto;
+  align-self: center;
   width: 64px;
   height: 64px;
   border-radius: 18px;

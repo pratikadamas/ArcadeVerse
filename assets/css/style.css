@@ -2119,6 +2119,94 @@ textarea:focus-visible,
   padding: 2.2rem 2rem 1.8rem;
 }
 
+
+/* Modern Compact Footer with Project Administrator at Top */
+.footer-admin-strip {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.6rem;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  backdrop-filter: blur(8px);
+}
+
+.footer-admin-left {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.footer-admin-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent-warm);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 0.3rem 0.7rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.footer-admin-details {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.footer-admin-name {
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #fff;
+  font-family: var(--font-display);
+}
+
+.footer-admin-event {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.footer-admin-right {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.footer-admin-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  color: var(--accent-emerald);
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 0.3rem 0.8rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+@media (max-width: 768px) {
+  .footer-admin-strip {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.1rem;
+    gap: 0.9rem;
+  }
+  .footer-admin-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
 .footer-container {
   max-width: 1280px;
   margin: 0 auto;

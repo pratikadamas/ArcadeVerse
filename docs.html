@@ -139,6 +139,10 @@
         <div class="docs-sidebar-header">
           <span class="docs-sidebar-title">Table of Contents</span>
         </div>
+        <div class="docs-sidebar-search">
+          <i data-lucide="search"></i>
+          <input type="text" id="docs-search-input" placeholder="Filter topics..." aria-label="Filter documentation sections">
+        </div>
 
         <nav>
           <div class="docs-nav-group">
@@ -809,6 +813,23 @@ function updateCategoryPillCounts() {
 
   <!-- Footer -->
   <footer class="footer">
+    <div class="footer-inner-wrap" style="max-width: 1280px; margin: 0 auto;">
+      <div class="footer-admin-strip">
+        <div class="footer-admin-left">
+          <span class="footer-admin-badge"><i data-lucide="shield-check" style="width: 13px; height: 13px;"></i> Project Administration</span>
+          <div class="footer-admin-details">
+            <strong class="footer-admin-name">Debasmita Bose</strong>
+            <span class="footer-admin-event">• NSOC Winter Edition 2026</span>
+          </div>
+        </div>
+        <div class="footer-admin-right">
+          <span class="footer-admin-status"><span class="status-dot"></span> Accepting Manual PRs</span>
+          <a href="https://github.com/DebasmitaBose0/ArcadeVerse" target="_blank" rel="noopener noreferrer" class="btn btn-github-highlight btn-sm" style="padding: 0.35rem 0.85rem; font-size: 0.8rem;">
+            <i data-lucide="git-pull-request" style="width: 13px; height: 13px;"></i> Contribute
+          </a>
+        </div>
+      </div>
+    </div>
     <div class="footer-container">
       <div class="footer-col">
         <div class="logo">
@@ -846,15 +867,7 @@ function updateCategoryPillCounts() {
         </ul>
       </div>
 
-      <div class="footer-col">
-        <h4>Project Administration</h4>
-        <div class="admin-badge-card">
-          <span class="admin-title">Project Admin</span>
-          <strong class="admin-name">Debasmita Bose</strong>
-          <span class="admin-event">NSOC Winter Edition 2026</span>
-          <span class="status-indicator"><span class="status-dot"></span> Accepting Manual PRs</span>
-        </div>
-      </div>
+      
     </div>
 
     <div class="footer-bottom">
@@ -1015,6 +1028,28 @@ function updateCategoryPillCounts() {
       });
     });
   </script>
+
+  <script>
+    // Live Docs Quick Filter
+    document.addEventListener("DOMContentLoaded", () => {
+      const searchInput = document.getElementById("docs-search-input");
+      if (!searchInput) return;
+      searchInput.addEventListener("input", (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        document.querySelectorAll(".docs-nav-group").forEach(group => {
+          let hasVisible = false;
+          group.querySelectorAll(".docs-nav-link").forEach(link => {
+            const text = link.textContent.toLowerCase();
+            const match = !query || text.includes(query);
+            link.parentElement.style.display = match ? "" : "none";
+            if (match) hasVisible = true;
+          });
+          group.style.display = hasVisible ? "" : "none";
+        });
+      });
+    });
+  </script>
+
 </body>
 </html>
 
