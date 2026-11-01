@@ -1,0 +1,18 @@
+{
+  "title": "Quantum Pulse: Cyber Rhythm Blaster",
+  "category": "Arcade / Rhythm",
+  "description": "Sync into the digital quantum grid, time your key strikes to incoming light pulses, and build electrifying high-voltage combos.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": [
+    "arcade",
+    "arcade",
+    "retro",
+    "html5-canvas",
+    "nsoc26"
+  ],
+  "difficulty": "Medium",
+  "featured": true,
+  "stars": 15
+}
