@@ -82,6 +82,14 @@
         </div>
       </div>
 
+      <!-- Oil Lantern Fuel Meter (Catacombs) -->
+      <div class="meter-group" id="lanternMeterGroup" title="Catacomb Oil Lantern Fuel" style="display: none;">
+        <span class="meter-label" style="color: #f59e0b;">OIL LANTERN</span>
+        <div class="meter-track">
+          <div class="meter-fill-lantern" id="lanternBar" style="width: 100%; background: linear-gradient(90deg, #b45309, #f59e0b); height: 100%; border-radius: 4px; transition: width 0.3s ease;"></div>
+        </div>
+      </div>
+
       <div class="threat-badge" id="threatBadge">Quiet</div>
     </div>
 
@@ -112,6 +120,9 @@
     <button class="room-tab locked" data-room="kitchen" id="tabKitchen">Kitchen</button>
     <button class="room-tab locked" data-room="bedroom" id="tabBedroom">Bedroom</button>
     <button class="room-tab locked" data-room="basement" id="tabBasement">Basement</button>
+    <button class="room-tab locked catacomb-tab" data-room="wine_cellar" id="tabWineCellar" style="display: none;">Wine Cellar</button>
+    <button class="room-tab locked catacomb-tab" data-room="ossuary" id="tabOssuary" style="display: none;">Ossuary</button>
+    <button class="room-tab locked catacomb-tab" data-room="ancestral_crypt" id="tabAncestralCrypt" style="display: none;">Ancestral Crypt</button>
   </nav>
 
   <!-- Floating Case Objective Tracker -->
