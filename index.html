@@ -407,6 +407,41 @@
         </div>
       </div>
 
+      <!-- Faceted Filter Sub-Bar: Duration & Control Scheme -->
+      <div class="faceted-filter-bar" id="faceted-filter-bar">
+        <div class="facet-group" role="group" aria-label="Filter by estimated play duration">
+          <span class="facet-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            Duration:
+          </span>
+          <div class="facet-chips" id="duration-facet-chips">
+            <button class="facet-chip active" data-duration="all" type="button">All</button>
+            <button class="facet-chip" data-duration="quick" type="button" title="Quick sessions (< 3 mins)">Quick (&lt;3m)</button>
+            <button class="facet-chip" data-duration="medium" type="button" title="Standard sessions (3 - 10 mins)">Medium (3-10m)</button>
+            <button class="facet-chip" data-duration="long" type="button" title="Extended / Narrative sessions (> 10 mins)">Deep (&gt;10m)</button>
+          </div>
+        </div>
+
+        <div class="facet-group" role="group" aria-label="Filter by input control scheme">
+          <span class="facet-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="6" cy="12" r="1"></circle><circle cx="10" cy="12" r="1"></circle><line x1="14" y1="10" x2="18" y2="10"></line><line x1="14" y1="14" x2="18" y2="14"></line></svg>
+            Controls:
+          </span>
+          <div class="facet-chips" id="controls-facet-chips">
+            <button class="facet-chip active" data-controls="all" type="button">All</button>
+            <button class="facet-chip" data-controls="keyboard" type="button">Keyboard / WASD</button>
+            <button class="facet-chip" data-controls="mouse" type="button">Mouse / Pointer</button>
+            <button class="facet-chip" data-controls="touch" type="button">Touch Friendly</button>
+          </div>
+        </div>
+
+        <button class="btn-reset-facets" id="btn-reset-facets" type="button" title="Reset all facet filters">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+          Reset Filters
+        </button>
+        <div class="active-filters-summary" id="active-filters-summary" style="display: none;"></div>
+      </div>
+
       <!-- Full-Width Category Filter Pills Bar -->
       <div class="category-pills-bar">
         <div class="category-pills" id="category-pills" role="tablist" aria-label="Filter games by category">

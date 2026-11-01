@@ -510,6 +510,17 @@ jobs:
         <!-- 9b. Game Lifecycle Bridge & Client SDK -->
         <section class="docs-section" id="lifecycle-bridge">
           <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <div class="docs-callout docs-callout-info" style="margin-top: 14px; margin-bottom: 24px; padding: 16px; background: rgba(59, 130, 246, 0.08); border-left: 4px solid var(--accent-primary); border-radius: 8px;">
+            <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Multi-Criteria Catalog Faceting Engine</h4>
+            <p style="font-size: 0.92rem; line-height: 1.6; color: var(--text-secondary); margin-bottom: 12px;">
+              The ArcadeVerse platform supports instant client-side multi-criteria filtering across category, text search, estimated session duration, and control schemes:
+            </p>
+            <ul style="font-size: 0.88rem; line-height: 1.7; color: var(--text-secondary); padding-left: 20px;">
+              <li><strong>Session Duration Facets:</strong> Filter between <em>Quick Sessions (&lt;3 mins)</em>, <em>Medium Sessions (3-10 mins)</em>, and <em>Deep / Narrative Sessions (&gt;10 mins)</em>.</li>
+              <li><strong>Control Scheme Facets:</strong> Filter by input mechanism: <em>Keyboard / WASD</em>, <em>Mouse / Pointer</em>, or <em>Touch Friendly</em>.</li>
+              <li><strong>Active Filter Badges:</strong> Real-time indicator displaying active tag combinations with one-click filter reset.</li>
+            </ul>
+          </div>
           <h2 class="docs-section-title">Standardized Game Lifecycle Bridge & Client SDK </h2>
           <p class="docs-paragraph">
             ArcadeVerse introduces a zero-dependency bi-directional postMessage communication protocol and client-side bridge implemented in <code>assets/js/arcadeverse-sdk.js</code>. This guarantees zero audio bleeding, prevents residual memory leaks, and cleanly manages iframe resources during modal transitions.
