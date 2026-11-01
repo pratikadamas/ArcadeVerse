@@ -442,6 +442,30 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "cyber-typer_hrshjswniii",
+    "title": "Cyber Typer: Terminal Hacker",
+    "category": "Arcade",
+    "lucideIcon": "terminal",
+    "description": "Defend the mainframe by typing falling cyber threat payloads. Features live WPM telemetry, accuracy multiplier combos, and mechanical Web Audio synthesis.",
+    "author": "Harsh Jaiswani",
+    "github": "hrshjswniii",
+    "role": "Active Contributor",
+    "path": "games/cyber-typer_hrshjswniii/index.html",
+    "tags": [
+      "Arcade",
+      "Typing",
+      "Cyberpunk",
+      "Terminal",
+      "Speed",
+      "Defense",
+      "NSOC26"
+    ],
+    "stars": 32,
+    "featured": true,
+    "difficulty": "All Skill Levels",
+    "releaseDate": "2026-11-01"
+  },
+  {
     "id": "detective-mystery_babin",
     "title": "Detective Mystery: Neo-Tokyo Syndicate",
     "category": "Adventure / Narrative",
@@ -1116,7 +1140,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 269,
+    "commits": 270,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -1226,14 +1250,15 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "hrshjswniii",
     "avatarInitial": "H",
     "role": "Active Contributor (NSOC '26)",
-    "commits": 7,
-    "gamesCount": 1,
+    "commits": 10,
+    "gamesCount": 2,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 1,
     "bonusPts": 0,
     "contributions": [
-      "Cyber Brick Breaker"
+      "Cyber Brick Breaker",
+      "Cyber Typer: Terminal Hacker"
     ]
   },
   {
