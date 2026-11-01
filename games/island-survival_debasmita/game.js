@@ -153,6 +153,60 @@
       });
     }
 
+    playFlareLaunch() {
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
+      // Screeching ascending flare launch audio
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(2400, this.ctx.currentTime + 1.2);
+      gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.35, this.ctx.currentTime + 0.9);
+      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 1.4);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 1.4);
+
+      // Distant pop at peak
+      setTimeout(() => {
+        if (!this.ctx) return;
+        const pop = this.ctx.createOscillator();
+        const pGain = this.ctx.createGain();
+        pop.type = 'triangle';
+        pop.frequency.setValueAtTime(220, this.ctx.currentTime);
+        pop.frequency.exponentialRampToValueAtTime(50, this.ctx.currentTime + 0.3);
+        pGain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+        pGain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+        pop.connect(pGain);
+        pGain.connect(this.ctx.destination);
+        pop.start();
+        pop.stop(this.ctx.currentTime + 0.3);
+      }, 1200);
+    }
+
+    playSeaplaneDrone() {
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
+      // Twin-propeller engine hum crescendo
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(110, this.ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(145, this.ctx.currentTime + 3.0);
+      gain.gain.setValueAtTime(0.01, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.28, this.ctx.currentTime + 2.5);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 5.5);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 5.5);
+    }
+
     startHorrorAmbient() {
       if (this.muted || this.droneStarted) return;
       this.init();
@@ -309,7 +363,11 @@
       fish: 0,
       meat: 0,
       cookedFood: 0,
-      waterBottles: 0
+      waterBottles: 0,
+      copperScrap: 0,
+      sulfur: 0,
+      cloth: 0,
+      signalFlare: 0
     },
 
     trees: [],
@@ -318,6 +376,22 @@
     spring: { x: ISLAND_CX + 20, y: ISLAND_CY - 60, radius: 36 },
     planeWreck: { x: ISLAND_CX - 280, y: ISLAND_CY + 320, searched: false },
     radioCliff: { x: ISLAND_CX + 440, y: ISLAND_CY - 220 },
+    radioTower: {
+      x: ISLAND_CX + 140,
+      y: ISLAND_CY - 240,
+      repaired: false,
+      copperNeeded: 3,
+      vinesNeeded: 2,
+      copperInstalled: 0,
+      vinesInstalled: 0,
+      flareSignalActive: false
+    },
+    shipwrecks: [
+      { id: 1, x: ISLAND_CX - 380, y: ISLAND_CY - 160, searched: false, scrapCount: 2, sulfurCount: 1, clothCount: 1 },
+      { id: 2, x: ISLAND_CX + 360, y: ISLAND_CY + 180, searched: false, scrapCount: 2, sulfurCount: 1, clothCount: 1 }
+    ],
+    rescuePlane: null,
+    flareProjectile: null,
 
     structures: {
       campfires: [],
@@ -618,6 +692,16 @@
         });
         showToast('Erected SOS Beacon! Emergency distress signals sent!');
       }
+    },
+    {
+      id: 'signal_flare',
+      title: 'Distress Signal Flare (Extraction)',
+      desc: 'Emergency high-altitude pyrotechnic magnesium flare. Fire near the mountain radio tower to summon extraction seaplane.',
+      cost: { wood: 2, sulfur: 1, cloth: 1 },
+      onCraft: () => {
+        state.inventory.signalFlare = (state.inventory.signalFlare || 0) + 1;
+        showToast('Crafted Distress Signal Flare! Stand near the mountain radio tower to launch.');
+      }
     }
   ];
 
@@ -889,6 +973,107 @@
       }
     }
 
+    // 5b. Check Coastal Shipwrecks (Copper Scrap, Sulfur, Cloth)
+    if (!acted) {
+      for (const sw of state.shipwrecks) {
+        if (Math.hypot(p.x - sw.x, p.y - sw.y) < p.radius + 50) {
+          if (!sw.searched) {
+            sw.searched = true;
+            state.inventory.copperScrap = (state.inventory.copperScrap || 0) + sw.scrapCount;
+            state.inventory.sulfur = (state.inventory.sulfur || 0) + sw.sulfurCount;
+            state.inventory.cloth = (state.inventory.cloth || 0) + sw.clothCount;
+            sound.playCraft();
+            triggerScreenShake(3);
+            spawnFloatText(sw.x, sw.y - 35, `+${sw.scrapCount} Copper Scrap, +1 Sulfur, +1 Cloth`, '#f59e0b');
+            showToast(`Salvaged shipwreck! Obtained ${sw.scrapCount} Copper Scrap, Sulfur, and Weathered Cloth.`);
+          } else {
+            showToast('This shipwreck hull has already been thoroughly scavenged.');
+          }
+          acted = true;
+          break;
+        }
+      }
+    }
+
+    // 5c. Check Mountain Radio Tower (Antenna Repair & Flare Launch)
+    if (!acted) {
+      const rt = state.radioTower;
+      if (Math.hypot(p.x - rt.x, p.y - rt.y) < p.radius + 65) {
+        if (!rt.repaired) {
+          // Check if player has copper and vines to repair
+          const neededCopper = rt.copperNeeded - rt.copperInstalled;
+          const neededVines = rt.vinesNeeded - rt.vinesInstalled;
+
+          let contributed = false;
+          if (neededCopper > 0 && state.inventory.copperScrap > 0) {
+            const addCopper = Math.min(neededCopper, state.inventory.copperScrap);
+            state.inventory.copperScrap -= addCopper;
+            rt.copperInstalled += addCopper;
+            contributed = true;
+          }
+          if (neededVines > 0 && state.inventory.vines > 0) {
+            const addVines = Math.min(neededVines, state.inventory.vines);
+            state.inventory.vines -= addVines;
+            rt.vinesInstalled += addVines;
+            contributed = true;
+          }
+
+          if (rt.copperInstalled >= rt.copperNeeded && rt.vinesInstalled >= rt.vinesNeeded) {
+            rt.repaired = true;
+            sound.playVictory();
+            triggerScreenShake(4);
+            spawnFloatText(rt.x, rt.y - 40, 'RADIO TOWER REPAIRED!', '#10b981');
+            showToast('Mountain Radio Tower antenna repaired! Craft a Signal Flare to call extraction seaplane.');
+          } else if (contributed) {
+            sound.playMine();
+            spawnFloatText(rt.x, rt.y - 35, `Tower: ${rt.copperInstalled}/3 Copper, ${rt.vinesInstalled}/2 Vines`, '#00f5ff');
+            showToast(`Installed parts on Radio Tower (${rt.copperInstalled}/3 Copper, ${rt.vinesInstalled}/2 Vines).`);
+          } else {
+            showToast(`Broken Radio Tower requires 3 Copper Scrap (from coast shipwrecks) & 2 Vines to repair circuit.`);
+          }
+        } else {
+          // Tower is repaired. Check if player has Signal Flare to summon Seaplane
+          if (state.inventory.signalFlare > 0 && !rt.flareSignalActive) {
+            state.inventory.signalFlare--;
+            rt.flareSignalActive = true;
+            sound.playFlareLaunch();
+            triggerScreenShake(7);
+            spawnFloatText(p.x, p.y - 50, 'SIGNAL FLARE FIRED!', '#f43f5e');
+            showToast('Distress Flare fired into the stratosphere! Rescue Seaplane inbound!');
+
+            // Spawn ascending flare projectile
+            state.flareProjectile = {
+              x: p.x,
+              y: p.y,
+              targetY: p.y - 550,
+              vy: -9,
+              particles: [],
+              exploded: false
+            };
+
+            // Summon Rescue Seaplane after 3 seconds
+            setTimeout(() => {
+              sound.playSeaplaneDrone();
+              state.rescuePlane = {
+                x: ISLAND_CX - 700,
+                y: ISLAND_CY - 300,
+                targetX: ISLAND_CX + 140,
+                targetY: ISLAND_CY - 220,
+                speed: 160,
+                landed: false
+              };
+              showToast('RESCUE SEAPLANE SPOTTED OVER MOUNTAIN RIDGE!');
+            }, 3000);
+          } else if (rt.flareSignalActive) {
+            showToast('Distress signal active! Rescue seaplane is touching down!');
+          } else {
+            showToast('Radio circuit online! Craft a Signal Flare (2 Wood + 1 Sulfur + 1 Cloth) to signal rescue.');
+          }
+        }
+        acted = true;
+      }
+    }
+
     // 6. Check Raft Escape
     if (!acted) {
       for (const r of state.structures.rafts) {
@@ -1075,7 +1260,18 @@
     statCrafted.textContent = state.statsCrafted;
     statScore.textContent = state.statsScore;
 
-    if (type === 'raft') {
+    if (type === 'seaplane') {
+      sound.playVictory();
+      endingTitle.textContent = 'ENDING: SEAPLANE EXTRACTION (VICTORY)';
+      endingTitle.className = 'ending-title victory';
+      endingDesc.innerHTML = `
+        <p>The fiery trajectory of your Distress Signal Flare cut through the overcast sky, caught by the high-gain Mountain Radio Tower antenna.</p>
+        <p style="margin-top: 10px;">A twin-engine amphibious Rescue Seaplane cut its throttle, touched down onto the bay, and taxied to the mountain shore. You climbed aboard with your survival journal as the uncharted island faded into the horizon!</p>
+        <div style="margin-top: 14px; padding: 10px; background: rgba(0, 245, 255, 0.1); border: 1px solid rgba(0, 245, 255, 0.3); border-radius: 6px;">
+          <strong>Radio Officer Report:</strong> Evacuee extracted safely on <strong>Day ${state.day}</strong>. Survival mastery acknowledged across NSOC maritime rescue records.
+        </div>
+      `;
+    } else if (type === 'raft') {
       sound.playVictory();
       endingTitle.textContent = 'ENDING 1: OCEAN VOYAGER';
       endingTitle.className = 'ending-title victory';
@@ -1189,6 +1385,51 @@
         triggerScreenShake(7);
         lightningFx.classList.add('flash');
         setTimeout(() => lightningFx.classList.remove('flash'), 120);
+      }
+    }
+
+    // Dynamic Quest Tracker Update
+    const questTextEl = document.getElementById('questText');
+    if (questTextEl) {
+      if (!state.radioTower.repaired) {
+        questTextEl.textContent = `Repair Radio Tower (${state.radioTower.copperInstalled}/3 Copper Scrap, ${state.radioTower.vinesInstalled}/2 Vines). Scavenge coastal shipwrecks!`;
+      } else if (!state.radioTower.flareSignalActive) {
+        questTextEl.textContent = `Radio online! Craft a Distress Signal Flare [C] (2 Wood, 1 Sulfur, 1 Cloth) & fire at the tower!`;
+      } else {
+        questTextEl.textContent = `Signal Flare fired! Await extraction seaplane at the mountain tower!`;
+      }
+    }
+
+    // Flare Projectile Physics
+    if (state.flareProjectile) {
+      const fp = state.flareProjectile;
+      fp.y += fp.vy;
+      fp.vy += 0.08; // slight drag
+      // Flare smoke and sparks
+      createParticles(fp.x, fp.y, 2, '#ff1744');
+      createParticles(fp.x, fp.y, 1, '#ffd54f');
+      if (fp.y <= fp.targetY && !fp.exploded) {
+        fp.exploded = true;
+        createParticles(fp.x, fp.y, 35, '#ff1744');
+        createParticles(fp.x, fp.y, 25, '#ff9100');
+        triggerScreenShake(5);
+        state.flareProjectile = null;
+      }
+    }
+
+    // Rescue Seaplane Physics & Approach
+    if (state.rescuePlane) {
+      const sp = state.rescuePlane;
+      const distToTower = Math.hypot(sp.targetX - sp.x, sp.targetY - sp.y);
+      if (distToTower > 20) {
+        const angle = Math.atan2(sp.targetY - sp.y, sp.targetX - sp.x);
+        sp.x += Math.cos(angle) * (sp.speed * delta);
+        sp.y += Math.sin(angle) * (sp.speed * delta);
+      } else if (!sp.landed) {
+        sp.landed = true;
+        setTimeout(() => {
+          triggerEnding('seaplane');
+        }, 1200);
       }
     }
 
@@ -1747,6 +1988,160 @@
       ctx.fill();
     });
 
+    // 6b. Coastal Shipwrecks Rendering
+    state.shipwrecks.forEach(sw => {
+      ctx.save();
+      ctx.translate(sw.x, sw.y);
+      ctx.rotate(sw.id === 1 ? -0.4 : 0.35);
+      // Weathered sunken wooden hull
+      ctx.fillStyle = sw.searched ? '#374151' : '#78350f';
+      ctx.beginPath();
+      ctx.moveTo(-35, 12);
+      ctx.lineTo(-45, -10);
+      ctx.lineTo(35, -15);
+      ctx.lineTo(45, 12);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#1f2937';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Broken mast
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(-6, -38, 5, 40);
+      // Scavenge gleam if unsearched
+      if (!sw.searched) {
+        const gleam = (Math.sin(time * 0.005 + sw.id) + 1) * 0.5;
+        ctx.fillStyle = `rgba(245, 158, 11, ${0.4 + gleam * 0.6})`;
+        ctx.beginPath();
+        ctx.arc(0, -6, 8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    });
+
+    // 6c. Mountain Peak Abandoned Radio Tower Rendering
+    const rt = state.radioTower;
+    ctx.save();
+    ctx.translate(rt.x, rt.y);
+    // Rocky mountain base foundation
+    ctx.fillStyle = '#374151';
+    ctx.beginPath();
+    ctx.ellipse(0, 8, 38, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#1f2937';
+    ctx.beginPath();
+    ctx.ellipse(0, 4, 28, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Tower lattice metal structure
+    ctx.strokeStyle = rt.repaired ? '#10b981' : '#ef4444';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    // Triangular steel tower lattice
+    ctx.moveTo(-18, 0);
+    ctx.lineTo(0, -75);
+    ctx.lineTo(18, 0);
+    // Crossbars
+    ctx.moveTo(-14, -20);
+    ctx.lineTo(14, -20);
+    ctx.moveTo(-10, -42);
+    ctx.lineTo(10, -42);
+    ctx.moveTo(-6, -60);
+    ctx.lineTo(6, -60);
+    // Diagonal supports
+    ctx.moveTo(-14, -20);
+    ctx.lineTo(10, -42);
+    ctx.moveTo(14, -20);
+    ctx.lineTo(-10, -42);
+    ctx.stroke();
+
+    // Antenna transmitter dish & beacon strobe
+    ctx.fillStyle = '#9ca3af';
+    ctx.beginPath();
+    ctx.arc(0, -78, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Tower status beacon light
+    const towerPulse = Math.sin(time * 0.008) > 0;
+    if (rt.repaired) {
+      ctx.fillStyle = towerPulse ? '#10b981' : '#047857';
+      ctx.shadowColor = '#10b981';
+      ctx.shadowBlur = 15;
+    } else {
+      ctx.fillStyle = towerPulse ? '#f59e0b' : '#b45309';
+      ctx.shadowColor = '#f59e0b';
+      ctx.shadowBlur = 8;
+    }
+    ctx.beginPath();
+    ctx.arc(0, -86, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Radio broadcast waves when signal flare is active
+    if (rt.flareSignalActive) {
+      const waveRad = ((time * 0.05) % 60) + 10;
+      ctx.strokeStyle = `rgba(0, 245, 255, ${1 - waveRad / 70})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, -86, waveRad, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // 6d. Rescue Seaplane In-Flight Rendering
+    if (state.rescuePlane) {
+      const rp = state.rescuePlane;
+      ctx.save();
+      ctx.translate(rp.x, rp.y);
+      // Plane shadow on terrain
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+      ctx.beginPath();
+      ctx.ellipse(0, 45, 32, 14, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Fuselage
+      ctx.fillStyle = '#f8fafc';
+      ctx.strokeStyle = '#0284c7';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 28, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Wings
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(-8, -32, 16, 64);
+      ctx.strokeRect(-8, -32, 16, 64);
+
+      // Twin rescue pontoon floats
+      ctx.fillStyle = '#ff5722';
+      ctx.fillRect(-22, -18, 44, 5);
+      ctx.fillRect(-22, 13, 44, 5);
+
+      // Spinning propeller disc
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(28, 0, 12, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 6e. Ascending Flare Projectile
+    if (state.flareProjectile) {
+      const fp = state.flareProjectile;
+      ctx.save();
+      ctx.fillStyle = '#ff1744';
+      ctx.shadowColor = '#ff1744';
+      ctx.shadowBlur = 20;
+      ctx.beginPath();
+      ctx.arc(fp.x, fp.y, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    }
+
     // 7. Granite Boulders
     state.rocks.forEach(rk => {
       ctx.fillStyle = '#78909c';
@@ -2097,6 +2492,24 @@
     if (dPlane < minDist + 25) {
       minDist = dPlane;
       nearestPrompt = { x: state.planeWreck.x, y: state.planeWreck.y - 38, text: state.planeWreck.searched ? 'Plane Searched' : '[SPACE / Click] Search Wreckage' };
+    }
+    for (const sw of state.shipwrecks) {
+      const dSw = Math.hypot(px - sw.x, py - sw.y);
+      if (dSw < minDist + 25) {
+        minDist = dSw;
+        nearestPrompt = { x: sw.x, y: sw.y - 35, text: sw.searched ? 'Shipwreck Cleared' : '[SPACE / Click] Scavenge Shipwreck' };
+      }
+    }
+    const dTower = Math.hypot(px - state.radioTower.x, py - state.radioTower.y);
+    if (dTower < minDist + 35) {
+      minDist = dTower;
+      if (!state.radioTower.repaired) {
+        nearestPrompt = { x: state.radioTower.x, y: state.radioTower.y - 50, text: '[SPACE / Click] Repair Radio Tower' };
+      } else if (!state.radioTower.flareSignalActive) {
+        nearestPrompt = { x: state.radioTower.x, y: state.radioTower.y - 50, text: state.inventory.signalFlare > 0 ? '[SPACE / Click] Fire Signal Flare!' : 'Needs Signal Flare (Craft [C])' };
+      } else {
+        nearestPrompt = { x: state.radioTower.x, y: state.radioTower.y - 50, text: 'Rescue Seaplane Landing...' };
+      }
     }
     for (const w of state.wildlife) {
       const d = Math.hypot(px - w.x, py - w.y);
