@@ -171,6 +171,7 @@
             <span class="docs-nav-group-title">4. Platform Subsystems</span>
             <ul class="docs-nav-list">
               <li><a href="#sound-engine" class="docs-nav-link"><i data-lucide="volume-2"></i> Sound Synthesizer</a></li>
+              <li><a href="#lifecycle-bridge" class="docs-nav-link"><i data-lucide="activity"></i> Lifecycle Bridge SDK</a></li>
               <li><a href="#a11y-hub" class="docs-nav-link"><i data-lucide="eye"></i> Accessibility Engine</a></li>
               <li><a href="#trophy-engine" class="docs-nav-link"><i data-lucide="award"></i> Trophy Certificate Canvas</a></li>
               <li><a href="#shortcuts-engine" class="docs-nav-link"><i data-lucide="keyboard"></i> Keyboard Shortcuts</a></li>
@@ -185,6 +186,7 @@
             <ul class="docs-nav-list">
               <li><a href="#code-standards" class="docs-nav-link"><i data-lucide="sliders"></i> Coding Standards</a></li>
               <li><a href="#assets-rules" class="docs-nav-link"><i data-lucide="image"></i> Asset Licensing</a></li>
+              <li><a href="#category-badging" class="docs-nav-link"><i data-lucide="tags"></i> Dynamic Badging & Search</a></li>
             </ul>
           </div>
         </nav>
@@ -423,15 +425,73 @@ Audited 40 games: 0 Errors, 0 Warnings
         <!-- 9. Platform Subsystems -->
         <section class="docs-section" id="sound-engine">
           <span class="docs-section-tag">04 / Platform Subsystems</span>
-          <h2 class="docs-section-title">Procedural Web Audio Sound Engine </h2>
+          <h2 class="docs-section-title">Procedural Web Audio Sound Engine & Master Audio Bus </h2>
           <p class="docs-paragraph">
-            Implemented in <code>assets/js/sound-engine.js</code>, this subsystem provides procedural acoustic synthesis using the browser's native <strong>Web Audio API</strong> without external sound files.
+            Implemented in <code>assets/js/sound-engine.js</code>, this subsystem provides procedural acoustic synthesis using the browser's native <strong>Web Audio API</strong> without external sound files, alongside a synchronized parent-child Master Audio Bus.
           </p>
           <ul>
             <li><strong>Mechanical Pop:</strong> Dual-frequency oscillator (1750 Hz down to 75 Hz) mimicking real mechanical blue keyboard switches.</li>
             <li><strong>Acoustic Thump:</strong> Sub-bass sine wave (160 Hz down to 40 Hz) simulating keycap bottom-out reverberation.</li>
             <li><strong>Tactile Hover Tick:</strong> Rapid 35ms micro-pitch sine wave providing subtle UI feedback.</li>
+            <li><strong>Parent-Child Hub Mute Sync:</strong> Toggling the header audio button (<code>#global-sound-toggle-btn</code>) broadcasts <code>ARCADEVERSE_AUDIO_CONFIG</code> events across the iframe boundary, muting or restoring game audio simultaneously.</li>
+            <li><strong>Master Gain Node Routing:</strong> Embedded games route audio graphs through a master <code>GainNode</code> via <code>ArcadeVerse.createMasterGain(ctx)</code>.</li>
+            <li><strong>Persistent User Volume Preferences:</strong> User sound choices are automatically preserved under <code>arcadeverse_master_volume</code> and <code>arcadeverse_muted</code> in LocalStorage.</li>
           </ul>
+        </section>
+
+        <!-- 9b. Game Lifecycle Bridge & Client SDK -->
+        <section class="docs-section" id="lifecycle-bridge">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Standardized Game Lifecycle Bridge & Client SDK </h2>
+          <p class="docs-paragraph">
+            ArcadeVerse introduces a zero-dependency bi-directional postMessage communication protocol and client-side bridge implemented in <code>assets/js/arcadeverse-sdk.js</code>. This guarantees zero audio bleeding, prevents residual memory leaks, and cleanly manages iframe resources during modal transitions.
+          </p>
+          <div class="arch-grid-cards">
+            <div class="arch-card">
+              <div class="arch-card-icon"><i data-lucide="play-circle"></i></div>
+              <h3 class="arch-card-title">ARCADEVERSE_PAUSE</h3>
+              <p class="arch-card-desc">Dispatched by the shell whenever the modal loses focus or is requested to pause. Games immediately suspend timers, physics ticks, and background sound.</p>
+            </div>
+            <div class="arch-card">
+              <div class="arch-card-icon"><i data-lucide="rotate-cw"></i></div>
+              <h3 class="arch-card-title">ARCADEVERSE_RESUME</h3>
+              <p class="arch-card-desc">Notifies the game iframe that modal presentation has resumed so audio contexts can wake and gameplay can continue smoothly.</p>
+            </div>
+            <div class="arch-card">
+              <div class="arch-card-icon"><i data-lucide="power"></i></div>
+              <h3 class="arch-card-title">ARCADEVERSE_TEARDOWN</h3>
+              <p class="arch-card-desc">Dispatched 100ms before modal unmounting. Cancels all active requestAnimationFrame loops, terminates Web Audio nodes, and clears intervals.</p>
+            </div>
+          </div>
+          <div class="code-block-wrapper">
+            <div class="code-block-header">
+              <span class="code-block-lang">JAVASCRIPT</span>
+              <button class="btn-copy-code" type="button" aria-label="Copy SDK Integration Code">
+                <i data-lucide="copy"></i> <span>Copy</span>
+              </button>
+            </div>
+            <pre class="code-pre"><code>// In your game.js or by importing assets/js/arcadeverse-sdk.js:
+if (window.ArcadeVerse) {
+  // 1. Automatically track Web Audio contexts for zero audio pop on close
+  ArcadeVerse.trackAudioContext(myGameAudioContext);
+
+  // 2. Track animation loop IDs
+  const animId = requestAnimationFrame(gameLoop);
+  ArcadeVerse.trackAnimationFrame(animId);
+
+  // 3. Register custom teardown handler
+  ArcadeVerse.onTeardown(() => {
+    cancelAnimationFrame(animId);
+    if (myGameAudioContext && myGameAudioContext.state !== 'closed') {
+      myGameAudioContext.close();
+    }
+  });
+
+  // 4. Listen for pause & resume events
+  ArcadeVerse.onPause(() => { gameState = 'PAUSED'; });
+  ArcadeVerse.onResume(() => { gameState = 'PLAYING'; });
+}</code></pre>
+          </div>
         </section>
 
         <!-- 10. Accessibility Hub -->
@@ -538,6 +598,84 @@ Audited 40 games: 0 Errors, 0 Warnings
           <p class="docs-paragraph">
             ArcadeVerse is licensed under the <strong>MIT License</strong>. All assets integrated into community games must be compatible with MIT redistribution. Plagiarized copyrighted sprites, proprietary game ROMs, commercial soundtracks, or telemetry trackers will lead to immediate rejection of your pull request.
           </p>
+        </section>
+
+        <!-- 18. Dynamic Badging & Search Indexing -->
+        <section class="docs-section" id="category-badging">
+          <span class="docs-section-tag">06 / Platform UX Architecture</span>
+          <h2 class="docs-section-title">Dynamic Category Badging & Fuzzy Suggestions</h2>
+          <p class="docs-paragraph">
+            The ArcadeVerse catalog dynamically scans <code>GAMES_REGISTRY</code> upon initialization and continuously synchronizes category game counts across all active filter tabs.
+          </p>
+          <div class="code-block-wrapper">
+            <div class="code-block-header">
+              <span class="code-lang-label">JavaScript (Catalog Engine)</span>
+              <button class="btn-copy-code" data-copy-target="category-pill-sample" title="Copy Code Snippet">
+                <i data-lucide="copy"></i> Copy
+              </button>
+            </div>
+            <pre><code id="category-pill-sample">// Dynamic category pill count synchronization
+function updateCategoryPillCounts() {
+  const counts = { all: GAMES_REGISTRY.length, favorites: getFavorites().size, halloween: 0 };
+  GAMES_REGISTRY.forEach((g) => {
+    const cat = (g.category || "").toLowerCase();
+    counts[cat] = (counts[cat] || 0) + 1;
+    if (g.tags?.includes("halloween") || cat.includes("horror")) {
+      counts.halloween++;
+    }
+  });
+
+  categoryPills.forEach((pill) => {
+    const categoryKey = pill.getAttribute("data-category").toLowerCase();
+    const badge = pill.querySelector(".pill-count-badge");
+    if (badge) badge.textContent = counts[categoryKey] ?? 0;
+  });
+}</code></pre>
+          </div>
+          <p class="docs-paragraph">
+            When user search queries yield zero results, a fuzzy Levenshtein distance matcher inspects registered tags, authors, and game titles, providing 1-click interactive correction chips to guide discovery without frustration.
+          </p>
+
+          <h3 class="docs-subsection-title">Fuzzy Suggestion Heuristics</h3>
+          <p class="docs-paragraph">
+            The fuzzy recommendation pipeline evaluates query distance against platform vocabulary through a multi-tier matching strategy:
+          </p>
+          <div class="code-block-wrapper">
+            <div class="code-block-header">
+              <span class="code-lang-label">JavaScript (Levenshtein Distance Engine)</span>
+              <button class="btn-copy-code" data-copy-target="fuzzy-scoring-sample" title="Copy Code Snippet">
+                <i data-lucide="copy"></i> Copy
+              </button>
+            </div>
+            <pre><code id="fuzzy-scoring-sample">function getSmartSuggestions(query, category) {
+  if (!query) return ["All", "Arcade", "Puzzle", "Retro", "Action"];
+  const q = query.toLowerCase().trim();
+  const pool = new Set();
+  GAMES_REGISTRY.forEach(g => {
+    if (g.category) pool.add(g.category);
+    g.tags?.forEach(t => pool.add(t));
+  });
+  const scored = [];
+  pool.forEach(term => {
+    const t = term.toLowerCase();
+    let score = 0;
+    if (t.startsWith(q)) score = 100 - (t.length - q.length);
+    else if (t.includes(q)) score = 80 - (t.length - q.length);
+    else {
+      const dist = levenshteinDistance(q, t);
+      if (dist <= 2) score = 60 - dist * 15;
+    }
+    if (score > 0) scored.push({ term, score });
+  });
+  return scored.sort((a, b) => b.score - a.score).slice(0, 4).map(s => s.term);
+}</code></pre>
+          </div>
+          <div class="docs-callout callout-info">
+            <div class="callout-icon"><i data-lucide="info"></i></div>
+            <div class="callout-body">
+              <strong>Interactive Chip Injection:</strong> Clicking any recommendation chip instantly updates the active filter category or updates the search bar, executing a silky-smooth catalog re-render with zero full-page reloads.
+            </div>
+          </div>
         </section>
 
       </article>
