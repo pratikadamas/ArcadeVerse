@@ -32,6 +32,63 @@
   var registeredAnimationFrameIds = [];
   var registeredAudioContexts = [];
   var registeredGainNodes = [];
+  var registeredWebGLContexts = [];
+
+  // ========================================================
+  // WEBGL CONTEXT RECOVERY & PROTECTION SUBSYSTEM
+  // ========================================================
+  var registeredWebGLPrograms = [];
+  var registeredWebGLTextures = [];
+  var registeredWebGLBuffers = [];
+
+  /**
+   * Safe helper to bind context loss handlers and buffer registries
+   * Prevents browser GPU driver crashes and freezes on tab/modal transitions
+   */
+  function registerWebGLResource(type, res, gl) {
+    if (!res) return res;
+    if (type === 'program' && registeredWebGLPrograms.indexOf(res) === -1) {
+      registeredWebGLPrograms.push({ program: res, gl: gl });
+    } else if (type === 'texture' && registeredWebGLTextures.indexOf(res) === -1) {
+      registeredWebGLTextures.push({ texture: res, gl: gl });
+    } else if (type === 'buffer' && registeredWebGLBuffers.indexOf(res) === -1) {
+      registeredWebGLBuffers.push({ buffer: res, gl: gl });
+    }
+    return res;
+  }
+
+  function cleanAllWebGLAllocations() {
+    for (var p = 0; p < registeredWebGLPrograms.length; p++) {
+      try {
+        var itemP = registeredWebGLPrograms[p];
+        if (itemP.gl && typeof itemP.gl.deleteProgram === 'function') {
+          itemP.gl.deleteProgram(itemP.program);
+        }
+      } catch (_) {}
+    }
+    registeredWebGLPrograms.length = 0;
+
+    for (var t = 0; t < registeredWebGLTextures.length; t++) {
+      try {
+        var itemT = registeredWebGLTextures[t];
+        if (itemT.gl && typeof itemT.gl.deleteTexture === 'function') {
+          itemT.gl.deleteTexture(itemT.texture);
+        }
+      } catch (_) {}
+    }
+    registeredWebGLTextures.length = 0;
+
+    for (var b = 0; b < registeredWebGLBuffers.length; b++) {
+      try {
+        var itemB = registeredWebGLBuffers[b];
+        if (itemB.gl && typeof itemB.gl.deleteBuffer === 'function') {
+          itemB.gl.deleteBuffer(itemB.buffer);
+        }
+      } catch (_) {}
+    }
+    registeredWebGLBuffers.length = 0;
+  }
+
 
   var currentAudioConfig = {
     muted: false,
@@ -56,6 +113,7 @@
 
       case "ARCADEVERSE_TEARDOWN":
         executeHandlers(teardownHandlers, data);
+        cleanAllWebGLAllocations();
         performAutomaticCleanup();
         break;
 
@@ -132,6 +190,25 @@
       clearInterval(registeredIntervals[n]);
     }
     registeredIntervals.length = 0;
+
+    // 4. Forceful WebGL context loss and buffer/texture deallocation
+    for (var w = 0; w < registeredWebGLContexts.length; w++) {
+      try {
+        var gl = registeredWebGLContexts[w];
+        if (gl && !gl.isContextLost()) {
+          // Dispose bound textures, buffers, and shaders if methods exist
+          var loseExt = gl.getExtension("WEBGL_lose_context") ||
+                        gl.getExtension("WEBKIT_WEBGL_lose_context") ||
+                        gl.getExtension("MOZ_WEBGL_lose_context");
+          if (loseExt && typeof loseExt.loseContext === "function") {
+            loseExt.loseContext();
+          }
+        }
+      } catch (e) {
+        console.warn("[ArcadeVerse SDK] Error disposing WebGL context:", e);
+      }
+    }
+    registeredWebGLContexts.length = 0;
   }
 
   /**
