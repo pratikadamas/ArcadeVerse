@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404: Signal Lost in Cyberspace | ArcadeVerse</title>
+  <meta name="description" content="404 Page Not Found - Looks like your arcade token warped into a corrupted sector.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300f5ff'><path d='M21 2l-2 2m-1-1l-3 3m2 8A6 6 0 1 1 5 8a6 6 0 0 1 12 6z'/></svg>">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,700&family=Inter:wght@400;500;600;700&family=Press+Start+2P&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="assets/css/style.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* 404 Dedicated Retro Synthwave Styling */
+    .not-found-container {
+      min-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 3rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .not-found-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+      opacity: 0.65;
+    }
+
+    .glitch-wrapper {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 1.5rem;
+    }
+
+    .glitch-code {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(4.5rem, 12vw, 8.5rem);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -2px;
+      color: #ffffff;
+      text-shadow:
+        0 0 10px rgba(0, 243, 255, 0.8),
+        0 0 25px rgba(0, 243, 255, 0.6),
+        0 0 50px rgba(255, 0, 85, 0.5);
+      position: relative;
+    }
+
+    .glitch-code::before,
+    .glitch-code::after {
+      content: "404";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      clip: rect(0, 0, 0, 0);
+    }
+
+    .glitch-code::before {
+      left: -2px;
+      text-shadow: 2px 0 #ff0055;
+      animation: glitch-anim-1 2s infinite linear alternate-reverse;
+    }
+
+    .glitch-code::after {
+      left: 2px;
+      text-shadow: -2px 0 #00f3ff;
+      animation: glitch-anim-2 2.5s infinite linear alternate-reverse;
+    }
+
+    @keyframes glitch-anim-1 {
+      0% { clip: rect(20px, 9999px, 45px, 0); transform: skew(0.3deg); }
+      20% { clip: rect(60px, 9999px, 75px, 0); transform: skew(-0.2deg); }
+      40% { clip: rect(10px, 9999px, 35px, 0); transform: skew(0.5deg); }
+      60% { clip: rect(80px, 9999px, 95px, 0); transform: skew(-0.4deg); }
+      80% { clip: rect(30px, 9999px, 50px, 0); transform: skew(0.2deg); }
+      100% { clip: rect(50px, 9999px, 65px, 0); transform: skew(-0.1deg); }
+    }
+
+    @keyframes glitch-anim-2 {
+      0% { clip: rect(15px, 9999px, 40px, 0); transform: skew(-0.3deg); }
+      25% { clip: rect(70px, 9999px, 85px, 0); transform: skew(0.4deg); }
+      50% { clip: rect(25px, 9999px, 45px, 0); transform: skew(-0.2deg); }
+      75% { clip: rect(90px, 9999px, 105px, 0); transform: skew(0.3deg); }
+      100% { clip: rect(5px, 9999px, 25px, 0); transform: skew(-0.5deg); }
+    }
+
+    .not-found-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.45rem 1.1rem;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: rgba(255, 0, 85, 0.15);
+      color: #ff0055;
+      border: 1px solid rgba(255, 0, 85, 0.4);
+      box-shadow: 0 0 15px rgba(255, 0, 85, 0.25);
+      margin-bottom: 1.25rem;
+    }
+
+    .not-found-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      margin-bottom: 1rem;
+      color: #ffffff;
+      font-family: var(--font-heading);
+    }
+
+    .not-found-desc {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      max-width: 580px;
+      margin: 0 auto 2rem;
+      line-height: 1.6;
+    }
+
+    .not-found-card {
+      background: rgba(16, 20, 31, 0.8);
+      border: 1px solid rgba(0, 243, 255, 0.2);
+      border-radius: var(--radius-lg);
+      padding: 2rem 2.5rem;
+      max-width: 620px;
+      width: 100%;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 243, 255, 0.1);
+      backdrop-filter: blur(12px);
+    }
+
+    .not-found-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1.5rem;
+    }
+
+    .easter-egg-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+      color: var(--text-secondary);
+      padding: 0.55rem 1.2rem;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 1.2rem;
+    }
+
+    .easter-egg-btn:hover {
+      background: rgba(0, 243, 255, 0.1);
+      color: var(--accent-cyan);
+      border-color: var(--accent-cyan);
+    }
+
+    #easter-egg-canvas {
+      display: none;
+      margin: 1.5rem auto 0;
+      border: 2px solid var(--accent-cyan);
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+      background: #080a10;
+    }
+
+    [data-theme="light"] .not-found-card {
+      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(0, 0, 0, 0.1);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="light"] .not-found-title {
+      color: #0c0e14;
+    }
+
+    [data-theme="light"] .glitch-code {
+      color: #0c0e14;
+      text-shadow: 0 0 15px rgba(0, 180, 216, 0.4);
+    }
+  </style>
+</head>
+<body class="arcadeverse-body">
+  <!-- Glowing Background Orbs -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+
+  <!-- Header / Navigation -->
+  <header class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo" aria-label="ArcadeVerse Home">
+        <img src="assets/public/brand-logo.webp" alt="ArcadeVerse Logo" class="brand-logo-img" width="34" height="34">
+        <span class="logo-text">Arcade<span class="gradient-accent">Verse</span></span>
+        <span class="nsoc-tag">NSOC '26</span>
+      </a>
+
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="index.html" class="nav-item"><i data-lucide="gamepad-2"></i> Explore Games</a>
+        <a href="leaderboard.html" class="nav-item"><i data-lucide="trophy"></i> Hall of Fame</a>
+        <a href="docs.html" class="nav-item"><i data-lucide="file-code-2"></i> Documentation</a>
+        <a href="faqs.html" class="nav-item"><i data-lucide="help-circle"></i> FAQs</a>
+        <a href="https://github.com/DebasmitaBose0/ArcadeVerse/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer" class="nav-item"><i data-lucide="book-open"></i> Contributor Guide</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="not-found-container" id="main-content">
+    <canvas id="synthwave-grid" class="not-found-canvas"></canvas>
+
+    <div class="not-found-card">
+      <div class="glitch-wrapper">
+        <div class="glitch-code" aria-label="404 Error Code">404</div>
+      </div>
+
+      <div class="not-found-badge">
+        <i data-lucide="alert-triangle"></i>
+        <span>Signal Disrupted • Sector Offline</span>
+      </div>
+
+      <h1 class="not-found-title">Lost in Cyberspace</h1>
+
+      <p class="not-found-desc">
+        The game route or page you are attempting to reach has either warped into a parallel timeline, been relocated, or never existed in this dimension.
+      </p>
+
+      <div class="not-found-actions">
+        <a href="index.html" class="btn btn-primary">
+          <span><i data-lucide="gamepad-2"></i> Return to Arcade Hub</span>
+        </a>
+        <a href="docs.html" class="btn btn-secondary">
+          <span><i data-lucide="book-open"></i> Developer Docs</span>
+        </a>
+      </div>
+
+      <button id="toggle-easter-egg" class="easter-egg-btn" type="button">
+        <i data-lucide="sparkles"></i> Play Mini Synth Deflector
+      </button>
+
+      <canvas id="easter-egg-canvas" width="320" height="180"></canvas>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-col">
+        <div class="logo">
+          <img src="assets/public/brand-logo.webp" alt="ArcadeVerse Logo" class="brand-logo-img" width="34" height="34">
+          <span class="logo-text">Arcade<span class="gradient-accent">Verse</span></span>
+        </div>
+        <p class="footer-desc">An open-source flagship gaming initiative for NSOC Winter Edition 2026. Built with pure vanilla web tech.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Platform Navigation</h4>
+        <ul class="footer-list">
+          <li><a href="index.html"><i data-lucide="gamepad-2"></i> Play All Games</a></li>
+          <li><a href="leaderboard.html"><i data-lucide="trophy"></i> Hall of Fame</a></li>
+          <li><a href="docs.html"><i data-lucide="file-code-2"></i> Developer Docs</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Initialize Lucide Icons
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+
+    // Synthwave Perspective Grid Canvas Animation
+    (function initSynthwaveGrid() {
+      const canvas = document.getElementById("synthwave-grid");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      let width, height;
+      let offset = 0;
+
+      function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      }
+      window.addEventListener("resize", resize);
+      resize();
+
+      function draw() {
+        ctx.clearRect(0, 0, width, height);
+
+        // Dark horizon line
+        const horizon = height * 0.55;
+
+        // Gradient glow horizon
+        const grad = ctx.createLinearGradient(0, horizon - 80, 0, horizon + 50);
+        grad.addColorStop(0, "rgba(255, 0, 85, 0)");
+        grad.addColorStop(0.5, "rgba(255, 0, 85, 0.2)");
+        grad.addColorStop(1, "rgba(0, 243, 255, 0.15)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, horizon - 80, width, 130);
+
+        // Perspective vertical lines
+        ctx.strokeStyle = "rgba(0, 243, 255, 0.25)";
+        ctx.lineWidth = 1.5;
+        const numLines = 24;
+        const centerX = width / 2;
+
+        for (let i = -numLines; i <= numLines; i++) {
+          const xStart = centerX + i * 40;
+          ctx.beginPath();
+          ctx.moveTo(centerX, horizon);
+          ctx.lineTo(xStart + i * 80, height);
+          ctx.stroke();
+        }
+
+        // Animated horizontal scrolling lines
+        offset = (offset + 1) % 40;
+        for (let y = horizon; y < height; y += 40) {
+          const dynamicY = y + offset;
+          if (dynamicY > horizon && dynamicY < height) {
+            const alpha = Math.min(1, (dynamicY - horizon) / (height - horizon));
+            ctx.strokeStyle = `rgba(0, 243, 255, ${alpha * 0.35})`;
+            ctx.beginPath();
+            ctx.moveTo(0, dynamicY);
+            ctx.lineTo(width, dynamicY);
+            ctx.stroke();
+          }
+        }
+
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    // Mini Easter Egg Canvas Game
+    (function initMiniGame() {
+      const toggleBtn = document.getElementById("toggle-easter-egg");
+      const canvas = document.getElementById("easter-egg-canvas");
+      if (!toggleBtn || !canvas) return;
+      const ctx = canvas.getContext("2d");
+
+      let gameActive = false;
+      let paddleX = 130;
+      let ballX = 160;
+      let ballY = 90;
+      let dx = 2.5;
+      let dy = -2.5;
+      let score = 0;
+
+      toggleBtn.addEventListener("click", () => {
+        gameActive = !gameActive;
+        canvas.style.display = gameActive ? "block" : "none";
+        toggleBtn.innerHTML = gameActive ? '<i data-lucide="x"></i> Close Mini Game' : '<i data-lucide="sparkles"></i> Play Mini Synth Deflector';
+        if (window.lucide) lucide.createIcons();
+        if (gameActive) loop();
+      });
+
+      canvas.addEventListener("mousemove", (e) => {
+        const rect = canvas.getBoundingClientRect();
+        paddleX = Math.max(0, Math.min(320 - 50, e.clientX - rect.left - 25));
+      });
+
+      function loop() {
+        if (!gameActive) return;
+        ctx.fillStyle = "#080a10";
+        ctx.fillRect(0, 0, 320, 180);
+
+        // Paddle
+        ctx.fillStyle = "#00f3ff";
+        ctx.shadowColor = "#00f3ff";
+        ctx.shadowBlur = 10;
+        ctx.fillRect(paddleX, 165, 50, 8);
+
+        // Ball
+        ctx.fillStyle = "#ff0055";
+        ctx.shadowColor = "#ff0055";
+        ctx.beginPath();
+        ctx.arc(ballX, ballY, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Score
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "10px monospace";
+        ctx.fillText(`Score: ${score}`, 10, 18);
+
+        // Bounce mechanics
+        ballX += dx;
+        ballY += dy;
+
+        if (ballX + 5 > 320 || ballX - 5 < 0) dx = -dx;
+        if (ballY - 5 < 0) dy = -dy;
+
+        // Paddle collision
+        if (ballY + 5 >= 165 && ballY - 5 <= 173 && ballX >= paddleX && ballX <= paddleX + 50) {
+          dy = -Math.abs(dy);
+          score += 10;
+        }
+
+        // Missed
+        if (ballY > 180) {
+          ballX = 160;
+          ballY = 80;
+          dy = -2.5;
+          score = 0;
+        }
+
+        requestAnimationFrame(loop);
+      }
+    })();
+  </script>
+</body>
+</html>
