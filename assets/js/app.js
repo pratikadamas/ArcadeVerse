@@ -62,6 +62,46 @@ document.addEventListener("DOMContentLoaded", () => {
     if (favoritesCountBadge) {
       favoritesCountBadge.textContent = getFavorites().size;
     }
+    updateCategoryPillCounts();
+  }
+
+  // Dynamic Category Counters & Real-Time Statistics
+  function updateCategoryPillCounts() {
+    if (typeof GAMES_REGISTRY === "undefined" || !Array.isArray(GAMES_REGISTRY)) return;
+    const favs = getFavorites();
+
+    const counts = {
+      all: GAMES_REGISTRY.length,
+      favorites: favs.size,
+      halloween: 0
+    };
+
+    GAMES_REGISTRY.forEach((g) => {
+      const cat = (g.category || "").toLowerCase();
+      if (!counts[cat]) counts[cat] = 0;
+      counts[cat]++;
+
+      const isHalloween = (g.tags && g.tags.some(t => t.toLowerCase() === "halloween")) ||
+        cat.includes("horror") ||
+        (g.title && g.title.toLowerCase().includes("halloween")) ||
+        (g.id && (g.id.toLowerCase().includes("haunted") || g.id.toLowerCase().includes("escape-room") || g.id.toLowerCase().includes("island-survival")));
+      if (isHalloween) {
+        counts.halloween++;
+      }
+    });
+
+    categoryPills.forEach((pill) => {
+      const categoryKey = (pill.getAttribute("data-category") || "").toLowerCase();
+      let badge = pill.querySelector(".pill-count-badge");
+      if (!badge) {
+        badge = document.createElement("span");
+        badge.className = "pill-count-badge";
+        pill.appendChild(badge);
+      }
+      const countVal = counts[categoryKey] !== undefined ? counts[categoryKey] : 0;
+      badge.textContent = countVal;
+      badge.setAttribute("aria-label", `${countVal} games available`);
+    });
   }
 
   function updateModalFavoriteButton(fav) {
@@ -97,6 +137,90 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Levenshtein / Fuzzy Match Engine for Smart Suggestions
+  function getSmartSuggestions(query, category) {
+    if (!query || typeof GAMES_REGISTRY === "undefined") {
+      // Suggest popular categories if no query was typed but category has 0
+      return ["All", "Arcade", "Puzzle", "Retro", "Action"];
+    }
+
+    const q = query.toLowerCase().trim();
+    const candidatePool = new Set();
+
+    // Populate candidate tokens from categories, titles, authors, and tags
+    GAMES_REGISTRY.forEach(g => {
+      if (g.category) candidatePool.add(g.category);
+      if (g.tags && Array.isArray(g.tags)) {
+        g.tags.forEach(t => candidatePool.add(t));
+      }
+      if (g.title) {
+        g.title.split(/\s+/).forEach(word => {
+          const clean = word.replace(/[^a-zA-Z0-9]/g, "");
+          if (clean.length >= 3) candidatePool.add(clean);
+        });
+      }
+    });
+
+    // Score candidates based on prefix match, substring match, and Levenshtein distance
+    const scored = [];
+    candidatePool.forEach(term => {
+      const t = term.toLowerCase();
+      if (t === q) return;
+
+      let score = 0;
+      if (t.startsWith(q)) {
+        score = 100 - (t.length - q.length);
+      } else if (t.includes(q)) {
+        score = 80 - (t.length - q.length);
+      } else if (q.includes(t)) {
+        score = 70;
+      } else {
+        const dist = levenshteinDistance(q, t);
+        if (dist <= 2 && q.length >= 3) {
+          score = 60 - dist * 15;
+        } else if (dist <= 3 && q.length >= 5) {
+          score = 40 - dist * 10;
+        }
+      }
+
+      if (score > 0) {
+        scored.push({ term, score });
+      }
+    });
+
+    scored.sort((a, b) => b.score - a.score);
+    const topPicks = scored.slice(0, 4).map(s => s.term);
+
+    if (topPicks.length === 0) {
+      return ["Puzzle", "Arcade", "Retro", "Halloween"];
+    }
+    return topPicks;
+  }
+
+  function levenshteinDistance(a, b) {
+    const matrix = [];
+    for (let i = 0; i <= b.length; i++) {
+      matrix[i] = [i];
+    }
+    for (let j = 0; j <= a.length; j++) {
+      matrix[0][j] = j;
+    }
+    for (let i = 1; i <= b.length; i++) {
+      for (let j = 1; j <= a.length; j++) {
+        if (b.charAt(i - 1) === a.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1, // substitution
+            matrix[i][j - 1] + 1,     // insertion
+            matrix[i - 1][j] + 1      // deletion
+          );
+        }
+      }
+    }
+    return matrix[b.length][a.length];
+  }
+
   // Update Stats
   if (totalGamesCount) totalGamesCount.textContent = GAMES_REGISTRY.length;
   if (totalContributorsCount) totalContributorsCount.textContent = CONTRIBUTORS_REGISTRY.length;
@@ -115,6 +239,10 @@ document.addEventListener("DOMContentLoaded", () => {
         matchesCategory = true;
       } else if (currentCategory === "favorites") {
         matchesCategory = favs.has(item.id);
+      } else if (currentCategory.startsWith("playlist:")) {
+        const plId = currentCategory.replace("playlist:", "");
+        const pl = window.ArcadePlaylists ? window.ArcadePlaylists.getPlaylist(plId) : null;
+        matchesCategory = pl ? pl.games.includes(item.id) : false;
       } else {
         if (currentCategory.toLowerCase() === "halloween") {
         matchesCategory = (item.tags && item.tags.some(t => t.toLowerCase() === "halloween")) ||
@@ -157,7 +285,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // Handle Empty State
+    // Handle Empty State with Fuzzy Smart Suggestions
     if (filtered.length === 0) {
       const emptyCard = document.createElement("div");
       emptyCard.className = "catalog-empty-state";
@@ -176,12 +304,27 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         `;
       } else {
+        // Compute smart suggestions based on query and available game categories/tags
+        const suggestions = getSmartSuggestions(searchQuery, currentCategory);
+        let suggestionsHtml = "";
+        if (suggestions.length > 0) {
+          suggestionsHtml = `
+            <div class="smart-tag-suggestions">
+              <span class="smart-suggestions-label">Did you mean:</span>
+              <div class="smart-suggestions-list">
+                ${suggestions.map(s => `<button type="button" class="smart-suggestion-chip" data-suggestion="${s}">${s}</button>`).join('')}
+              </div>
+            </div>
+          `;
+        }
+
         emptyCard.innerHTML = `
           <div class="empty-state-icon"><i data-lucide="gamepad-2"></i></div>
           <h3 class="empty-state-title"></h3>
           <p class="empty-state-desc">
-            Be the pioneer contributor! Build the first game for this category under <code>games/&lt;game-name&gt;_&lt;your-name&gt;/</code> and claim your spot on the leaderboard.
+            ${searchQuery ? `We couldn't find any games matching "${searchQuery}". Try exploring related categories or searching another arcade classic.` : `Be the pioneer contributor! Build the first game for this category under <code>games/&lt;game-name&gt;_&lt;your-name&gt;/</code> and claim your spot on the leaderboard.`}
           </p>
+          ${suggestionsHtml}
           <div class="empty-state-actions">
             <a href="https://github.com/DebasmitaBose0/ArcadeVerse/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
               <span><i data-lucide="rocket"></i> Build a Game for This Category</span>
@@ -207,6 +350,28 @@ document.addEventListener("DOMContentLoaded", () => {
         const allPill = document.querySelector('.category-pills .pill[data-category="all"]');
         if (allPill) allPill.classList.add("active");
         renderGames();
+      });
+
+      // Bind smart suggestion chip clicks
+      emptyCard.querySelectorAll(".smart-suggestion-chip").forEach((chip) => {
+        chip.addEventListener("click", () => {
+          const sug = chip.getAttribute("data-suggestion");
+          if (sug) {
+            // Check if suggestion is a category
+            const matchingPill = Array.from(categoryPills).find(p => p.getAttribute("data-category").toLowerCase() === sug.toLowerCase());
+            if (matchingPill) {
+              categoryPills.forEach(p => p.classList.remove("active"));
+              matchingPill.classList.add("active");
+              currentCategory = matchingPill.getAttribute("data-category");
+              searchQuery = "";
+              if (searchInput) searchInput.value = "";
+            } else {
+              searchQuery = sug.toLowerCase();
+              if (searchInput) searchInput.value = sug;
+            }
+            renderGames();
+          }
+        });
       });
 
       gamesGrid.appendChild(emptyCard);
@@ -310,9 +475,78 @@ document.addEventListener("DOMContentLoaded", () => {
   function openGameModal(game, triggerElement = null) {
     activeGame = game;
     lastFocusedElement = triggerElement || document.activeElement;
+    // In-Modal Error Boundary & Load Timeout Handlers
+    let iframeLoadTimeout = null;
+    let iframeLoadSucceeded = false;
+
+    function resetIframeBoundary() {
+      if (iframeLoadTimeout) clearTimeout(iframeLoadTimeout);
+      const existingError = document.getElementById("modal-error-boundary");
+      if (existingError) existingError.remove();
+      gameIframe.style.display = "block";
+    }
+
+    function triggerModalErrorBoundary(gameObj) {
+      if (iframeLoadSucceeded) return;
+      gameIframe.style.display = "none";
+      let errorBoundary = document.getElementById("modal-error-boundary");
+      if (!errorBoundary) {
+        errorBoundary = document.createElement("div");
+        errorBoundary.id = "modal-error-boundary";
+        errorBoundary.className = "modal-error-boundary";
+        const frameWrap = document.querySelector(".modal-frame-wrapper");
+        if (frameWrap) frameWrap.appendChild(errorBoundary);
+      }
+
+      errorBoundary.innerHTML = `
+        <div class="boundary-content">
+          <div class="boundary-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#ff0055" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          </div>
+          <h3 class="boundary-title">Game Route Offline</h3>
+          <p class="boundary-desc">
+            Failed to establish connection to <code>${gameObj.path || 'game route'}</code>. The game entrypoint may be undergoing maintenance, corrupted, or unreachable.
+          </p>
+          <div class="boundary-actions">
+            <button class="btn btn-primary btn-sm" id="boundary-retry-btn">
+              <span>Retry Load</span>
+            </button>
+            <a href="https://github.com/DebasmitaBose0/ArcadeVerse/issues/new" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
+              <span>Report Broken Route</span>
+            </a>
+          </div>
+        </div>
+      `;
+
+      const retryBtn = errorBoundary.querySelector("#boundary-retry-btn");
+      if (retryBtn) {
+        retryBtn.addEventListener("click", () => {
+          resetIframeBoundary();
+          iframeLoadSucceeded = false;
+          gameIframe.src = gameObj.path;
+          startIframeTimeout(gameObj);
+        });
+      }
+    }
+
+    function startIframeTimeout(gameObj) {
+      resetIframeBoundary();
+      iframeLoadSucceeded = false;
+      iframeLoadTimeout = setTimeout(() => {
+        if (!iframeLoadSucceeded) {
+          triggerModalErrorBoundary(gameObj);
+        }
+      }, 7000);
+    }
+
     modalGameTitle.textContent = game.title;
     modalGameBadge.textContent = game.category;
     modalGameAuthor.textContent = `Built by @${game.author}`;
+    startIframeTimeout(game);
     gameIframe.src = game.path;
     newTabBtn.href = game.path;
 
@@ -330,6 +564,27 @@ document.addEventListener("DOMContentLoaded", () => {
     gameModal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
     closeModalBtn.focus();
+
+    // Centralized Master Audio Bus: Sync hub volume & mute settings into spawned iframe
+    if (gameIframe) {
+      gameIframe.onload = () => {
+        try {
+          if (window.SoundEngine && typeof window.SoundEngine.broadcastAudioConfig === "function") {
+            window.SoundEngine.broadcastAudioConfig();
+          } else {
+            const isMuted = localStorage.getItem("arcadeverse_muted") === "true";
+            const masterVol = parseFloat(localStorage.getItem("arcadeverse_master_volume")) || 0.28;
+            if (gameIframe.contentWindow) {
+              gameIframe.contentWindow.postMessage({
+                type: "ARCADEVERSE_AUDIO_CONFIG",
+                muted: isMuted,
+                volume: masterVol
+              }, "*");
+            }
+          }
+        } catch (_) {}
+      };
+    }
   }
 
   // Expose global helper to open game modal from plugins, search, or recent drawer
@@ -352,17 +607,28 @@ document.addEventListener("DOMContentLoaded", () => {
     activeGame = null;
     gameModal.classList.remove("active");
     gameModal.setAttribute("aria-hidden", "true");
-    
-    // Safely blank out iframe to prevent audio pops and host page reloading
+
+    // Standardized Game Lifecycle Bridge: Dispatch teardown & pause events before unmounting iframe
     try {
       if (gameIframe && gameIframe.contentWindow) {
-        gameIframe.contentWindow.location.replace("about:blank");
-      } else if (gameIframe) {
-        gameIframe.src = "about:blank";
+        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
+        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_TEARDOWN" }, "*");
       }
-    } catch (e) {
-      if (gameIframe) gameIframe.src = "about:blank";
-    }
+    } catch (_) {}
+    
+    // Safely blank out iframe after a 100ms grace period to allow games to close AudioContexts and stop RAF loops
+    const currentFrame = gameIframe;
+    setTimeout(() => {
+      try {
+        if (currentFrame && currentFrame.contentWindow) {
+          currentFrame.contentWindow.location.replace("about:blank");
+        } else if (currentFrame) {
+          currentFrame.src = "about:blank";
+        }
+      } catch (e) {
+        if (currentFrame) currentFrame.src = "about:blank";
+      }
+    }, 100);
 
     document.body.style.overflow = "";
     modalWindow.classList.remove("fullscreen");
@@ -451,6 +717,25 @@ document.addEventListener("DOMContentLoaded", () => {
   // Filter Search
   searchInput.addEventListener("input", (e) => {
     searchQuery = e.target.value.toLowerCase().trim();
+    renderGames();
+  });
+
+  const playlistTrigger = document.getElementById("trigger-playlists-btn");
+  if (playlistTrigger) {
+    playlistTrigger.addEventListener("click", () => {
+      if (window.ArcadePlaylists) {
+        window.ArcadePlaylists.openDrawer();
+      }
+    });
+  }
+
+  // Listen for filter-playlist event from PlaylistManager
+  window.addEventListener("arcadeverse:filter-playlist", (e) => {
+    const pl = e.detail;
+    if (!pl) return;
+    currentCategory = `playlist:${pl.id}`;
+    categoryPills.forEach((p) => p.classList.remove("active"));
+    if (playlistTrigger) playlistTrigger.classList.add("active");
     renderGames();
   });
 
@@ -583,6 +868,19 @@ document.addEventListener("DOMContentLoaded", () => {
   if (gameIframe) {
     gameIframe.addEventListener('load', () => {
       gameIframe.classList.add('loaded');
+      if (gameIframe.src && !gameIframe.src.includes("about:blank")) {
+        const errorBoundary = document.getElementById("modal-error-boundary");
+        if (errorBoundary) errorBoundary.remove();
+        gameIframe.style.display = "block";
+      }
+    });
+
+    gameIframe.addEventListener('error', () => {
+      const errorBoundary = document.getElementById("modal-error-boundary");
+      if (errorBoundary && activeGame) {
+        errorBoundary.style.display = "flex";
+        gameIframe.style.display = "none";
+      }
     });
   }
 

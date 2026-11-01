@@ -10,6 +10,8 @@
   'use strict';
 
   const STORAGE_KEY = 'arcadeverse_sound_settings';
+  const MASTER_VOL_KEY = 'arcadeverse_master_volume';
+  const MASTER_MUTE_KEY = 'arcadeverse_muted';
 
   const SoundEngine = {
     ctx: null,
@@ -20,6 +22,7 @@
       this.loadSettings();
       this.renderControls();
       this.bindDOMSounds();
+      this.bindWindowMessages();
     },
 
     getAudioContext() {
@@ -40,7 +43,13 @@
         const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
         if (saved && typeof saved.enabled === 'boolean') {
           this.enabled = saved.enabled;
-          this.volume = saved.volume || 0.28;
+          this.volume = typeof saved.volume === 'number' ? saved.volume : 0.28;
+        } else {
+          // Backward compatibility check with direct keys
+          const legacyMuted = localStorage.getItem(MASTER_MUTE_KEY);
+          const legacyVol = localStorage.getItem(MASTER_VOL_KEY);
+          if (legacyMuted !== null) this.enabled = legacyMuted !== 'true';
+          if (legacyVol !== null) this.volume = parseFloat(legacyVol) || 0.28;
         }
       } catch (_) {}
     },
@@ -51,7 +60,62 @@
           enabled: this.enabled,
           volume: this.volume
         }));
+        localStorage.setItem(MASTER_MUTE_KEY, (!this.enabled).toString());
+        localStorage.setItem(MASTER_VOL_KEY, this.volume.toString());
       } catch (_) {}
+    },
+
+    /**
+     * Centralized Master Audio Bus: Dispatches mute and volume state to active game iframe
+     */
+    broadcastAudioConfig() {
+      try {
+        const gameIframe = document.getElementById('game-iframe');
+        if (gameIframe && gameIframe.contentWindow) {
+          gameIframe.contentWindow.postMessage({
+            type: 'ARCADEVERSE_AUDIO_CONFIG',
+            muted: !this.enabled,
+            volume: this.volume
+          }, '*');
+        }
+      } catch (_) {}
+    },
+
+    /**
+     * Sets volume dynamically and synchronizes with active game iframe
+     * @param {number} vol 0.0 to 1.0
+     */
+    setVolume(vol) {
+      this.volume = Math.max(0, Math.min(1, Number(vol) || 0));
+      this.saveSettings();
+      this.broadcastAudioConfig();
+    },
+
+    /**
+     * Toggles sound mute/unmute and synchronizes with active game iframe
+     */
+    toggleMute() {
+      this.enabled = !this.enabled;
+      this.saveSettings();
+      this.broadcastAudioConfig();
+      const btn = document.getElementById('global-sound-toggle-btn');
+      if (btn) {
+        btn.className = `sound-toggle-btn ${this.enabled ? 'sound-active' : 'sound-muted'}`;
+        const label = btn.querySelector('.sound-label');
+        if (label) label.textContent = this.enabled ? 'SFX ON' : 'SFX OFF';
+        btn.setAttribute('aria-label', this.enabled ? 'Mute arcade UI audio' : 'Unmute arcade UI audio');
+      }
+      if (this.enabled) this.playClick();
+    },
+
+    bindWindowMessages() {
+      // Allow embedded games to query current master volume on startup
+      window.addEventListener('message', (e) => {
+        if (!e.data || typeof e.data !== 'object') return;
+        if (e.data.type === 'ARCADEVERSE_REQUEST_AUDIO_CONFIG') {
+          this.broadcastAudioConfig();
+        }
+      });
     },
 
     // Realistic Physical Mechanical Switch Click
@@ -176,12 +240,7 @@
       `;
 
       btn.addEventListener('click', () => {
-        this.enabled = !this.enabled;
-        this.saveSettings();
-        btn.className = `sound-toggle-btn ${this.enabled ? 'sound-active' : 'sound-muted'}`;
-        btn.querySelector('.sound-label').textContent = this.enabled ? 'SFX ON' : 'SFX OFF';
-        btn.setAttribute('aria-label', this.enabled ? 'Mute arcade UI audio' : 'Unmute arcade UI audio');
-        if (this.enabled) this.playClick();
+        this.toggleMute();
       });
 
       container.prepend(btn);
