@@ -352,17 +352,28 @@ document.addEventListener("DOMContentLoaded", () => {
     activeGame = null;
     gameModal.classList.remove("active");
     gameModal.setAttribute("aria-hidden", "true");
-    
-    // Safely blank out iframe to prevent audio pops and host page reloading
+
+    // Standardized Game Lifecycle Bridge: Dispatch teardown & pause events before unmounting iframe
     try {
       if (gameIframe && gameIframe.contentWindow) {
-        gameIframe.contentWindow.location.replace("about:blank");
-      } else if (gameIframe) {
-        gameIframe.src = "about:blank";
+        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
+        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_TEARDOWN" }, "*");
       }
-    } catch (e) {
-      if (gameIframe) gameIframe.src = "about:blank";
-    }
+    } catch (_) {}
+    
+    // Safely blank out iframe after a 100ms grace period to allow games to close AudioContexts and stop RAF loops
+    const currentFrame = gameIframe;
+    setTimeout(() => {
+      try {
+        if (currentFrame && currentFrame.contentWindow) {
+          currentFrame.contentWindow.location.replace("about:blank");
+        } else if (currentFrame) {
+          currentFrame.src = "about:blank";
+        }
+      } catch (e) {
+        if (currentFrame) currentFrame.src = "about:blank";
+      }
+    }, 100);
 
     document.body.style.overflow = "";
     modalWindow.classList.remove("fullscreen");
