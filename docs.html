@@ -425,14 +425,17 @@ Audited 40 games: 0 Errors, 0 Warnings
         <!-- 9. Platform Subsystems -->
         <section class="docs-section" id="sound-engine">
           <span class="docs-section-tag">04 / Platform Subsystems</span>
-          <h2 class="docs-section-title">Procedural Web Audio Sound Engine </h2>
+          <h2 class="docs-section-title">Procedural Web Audio Sound Engine & Master Audio Bus </h2>
           <p class="docs-paragraph">
-            Implemented in <code>assets/js/sound-engine.js</code>, this subsystem provides procedural acoustic synthesis using the browser's native <strong>Web Audio API</strong> without external sound files.
+            Implemented in <code>assets/js/sound-engine.js</code>, this subsystem provides procedural acoustic synthesis using the browser's native <strong>Web Audio API</strong> without external sound files, alongside a synchronized parent-child Master Audio Bus.
           </p>
           <ul>
             <li><strong>Mechanical Pop:</strong> Dual-frequency oscillator (1750 Hz down to 75 Hz) mimicking real mechanical blue keyboard switches.</li>
             <li><strong>Acoustic Thump:</strong> Sub-bass sine wave (160 Hz down to 40 Hz) simulating keycap bottom-out reverberation.</li>
             <li><strong>Tactile Hover Tick:</strong> Rapid 35ms micro-pitch sine wave providing subtle UI feedback.</li>
+            <li><strong>Parent-Child Hub Mute Sync:</strong> Toggling the header audio button (<code>#global-sound-toggle-btn</code>) broadcasts <code>ARCADEVERSE_AUDIO_CONFIG</code> events across the iframe boundary, muting or restoring game audio simultaneously.</li>
+            <li><strong>Master Gain Node Routing:</strong> Embedded games route audio graphs through a master <code>GainNode</code> via <code>ArcadeVerse.createMasterGain(ctx)</code>.</li>
+            <li><strong>Persistent User Volume Preferences:</strong> User sound choices are automatically preserved under <code>arcadeverse_master_volume</code> and <code>arcadeverse_muted</code> in LocalStorage.</li>
           </ul>
         </section>
 

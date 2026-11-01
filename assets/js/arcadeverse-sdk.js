@@ -1,6 +1,6 @@
 /**
- * ArcadeVerse Client SDK v1.0.0
- * Standardized Game Lifecycle Bridge, Audio Synchronization, and State Management
+ * ArcadeVerse Client SDK v1.1.0
+ * Standardized Game Lifecycle Bridge, Centralized Master Audio Bus, and State Management
  *
  * Supported Events:
  * - ARCADEVERSE_PAUSE: Informs the game to pause gameplay, timers, and audio nodes.
@@ -31,6 +31,7 @@
   var registeredTimeouts = [];
   var registeredAnimationFrameIds = [];
   var registeredAudioContexts = [];
+  var registeredGainNodes = [];
 
   var currentAudioConfig = {
     muted: false,
@@ -61,6 +62,7 @@
       case "ARCADEVERSE_AUDIO_CONFIG":
         if (typeof data.muted === "boolean") currentAudioConfig.muted = data.muted;
         if (typeof data.volume === "number") currentAudioConfig.volume = data.volume;
+        applyMasterGainVolume();
         executeHandlers(audioConfigHandlers, currentAudioConfig);
         break;
 
@@ -80,6 +82,21 @@
   }
 
   /**
+   * Applies hub volume and mute setting to all registered master GainNodes
+   */
+  function applyMasterGainVolume() {
+    var targetGain = currentAudioConfig.muted ? 0 : currentAudioConfig.volume;
+    for (var i = 0; i < registeredGainNodes.length; i++) {
+      try {
+        var gainNode = registeredGainNodes[i];
+        if (gainNode && gainNode.gain) {
+          gainNode.gain.setValueAtTime(targetGain, 0);
+        }
+      } catch (_) {}
+    }
+  }
+
+  /**
    * Performs fail-safe resource cleanup upon receiving teardown command
    */
   function performAutomaticCleanup() {
@@ -95,6 +112,7 @@
       } catch (e) {}
     }
     registeredAudioContexts.length = 0;
+    registeredGainNodes.length = 0;
 
     // 2. Clear registered animation frames
     for (var r = 0; r < registeredAnimationFrameIds.length; r++) {
@@ -123,6 +141,20 @@
     if (isInitialized) return;
     if (typeof window !== "undefined") {
       window.addEventListener("message", handleParentMessage, false);
+
+      // Check localStorage for persisted volume on startup
+      try {
+        var isMuted = localStorage.getItem("arcadeverse_muted") === "true";
+        var masterVol = parseFloat(localStorage.getItem("arcadeverse_master_volume"));
+        if (!isNaN(masterVol)) currentAudioConfig.volume = masterVol;
+        currentAudioConfig.muted = isMuted;
+      } catch (_) {}
+
+      // Ping parent window for initial audio configuration
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: "ARCADEVERSE_REQUEST_AUDIO_CONFIG" }, "*");
+      }
+
       isInitialized = true;
     }
   }
@@ -130,7 +162,7 @@
   init();
 
   return {
-    version: "1.0.0",
+    version: "1.1.0",
 
     /**
      * Register a callback triggered when parent requests pause
@@ -166,7 +198,6 @@
     onAudioConfig: function (callback) {
       if (typeof callback === "function") {
         audioConfigHandlers.push(callback);
-        // Dispatch immediately with current known config
         try {
           callback(currentAudioConfig);
         } catch (e) {}
@@ -183,6 +214,24 @@
         registeredAudioContexts.push(ctx);
       }
       return ctx;
+    },
+
+    /**
+     * Creates and registers a master GainNode connected to AudioContext destination.
+     * All game sound oscillators and buffer nodes should connect to this node!
+     * @param {AudioContext} ctx
+     * @returns {GainNode}
+     */
+    createMasterGain: function (ctx) {
+      if (!ctx) return null;
+      var gainNode = ctx.createGain();
+      gainNode.gain.setValueAtTime(currentAudioConfig.muted ? 0 : currentAudioConfig.volume, 0);
+      gainNode.connect(ctx.destination);
+      if (registeredGainNodes.indexOf(gainNode) === -1) {
+        registeredGainNodes.push(gainNode);
+      }
+      this.trackAudioContext(ctx);
+      return gainNode;
     },
 
     /**
