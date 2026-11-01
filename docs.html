@@ -186,6 +186,7 @@
             <ul class="docs-nav-list">
               <li><a href="#code-standards" class="docs-nav-link"><i data-lucide="sliders"></i> Coding Standards</a></li>
               <li><a href="#assets-rules" class="docs-nav-link"><i data-lucide="image"></i> Asset Licensing</a></li>
+              <li><a href="#category-badging" class="docs-nav-link"><i data-lucide="tags"></i> Dynamic Badging & Search</a></li>
             </ul>
           </div>
         </nav>
@@ -594,6 +595,84 @@ if (window.ArcadeVerse) {
           <p class="docs-paragraph">
             ArcadeVerse is licensed under the <strong>MIT License</strong>. All assets integrated into community games must be compatible with MIT redistribution. Plagiarized copyrighted sprites, proprietary game ROMs, commercial soundtracks, or telemetry trackers will lead to immediate rejection of your pull request.
           </p>
+        </section>
+
+        <!-- 18. Dynamic Badging & Search Indexing -->
+        <section class="docs-section" id="category-badging">
+          <span class="docs-section-tag">06 / Platform UX Architecture</span>
+          <h2 class="docs-section-title">Dynamic Category Badging & Fuzzy Suggestions</h2>
+          <p class="docs-paragraph">
+            The ArcadeVerse catalog dynamically scans <code>GAMES_REGISTRY</code> upon initialization and continuously synchronizes category game counts across all active filter tabs.
+          </p>
+          <div class="code-block-wrapper">
+            <div class="code-block-header">
+              <span class="code-lang-label">JavaScript (Catalog Engine)</span>
+              <button class="btn-copy-code" data-copy-target="category-pill-sample" title="Copy Code Snippet">
+                <i data-lucide="copy"></i> Copy
+              </button>
+            </div>
+            <pre><code id="category-pill-sample">// Dynamic category pill count synchronization
+function updateCategoryPillCounts() {
+  const counts = { all: GAMES_REGISTRY.length, favorites: getFavorites().size, halloween: 0 };
+  GAMES_REGISTRY.forEach((g) => {
+    const cat = (g.category || "").toLowerCase();
+    counts[cat] = (counts[cat] || 0) + 1;
+    if (g.tags?.includes("halloween") || cat.includes("horror")) {
+      counts.halloween++;
+    }
+  });
+
+  categoryPills.forEach((pill) => {
+    const categoryKey = pill.getAttribute("data-category").toLowerCase();
+    const badge = pill.querySelector(".pill-count-badge");
+    if (badge) badge.textContent = counts[categoryKey] ?? 0;
+  });
+}</code></pre>
+          </div>
+          <p class="docs-paragraph">
+            When user search queries yield zero results, a fuzzy Levenshtein distance matcher inspects registered tags, authors, and game titles, providing 1-click interactive correction chips to guide discovery without frustration.
+          </p>
+
+          <h3 class="docs-subsection-title">Fuzzy Suggestion Heuristics</h3>
+          <p class="docs-paragraph">
+            The fuzzy recommendation pipeline evaluates query distance against platform vocabulary through a multi-tier matching strategy:
+          </p>
+          <div class="code-block-wrapper">
+            <div class="code-block-header">
+              <span class="code-lang-label">JavaScript (Levenshtein Distance Engine)</span>
+              <button class="btn-copy-code" data-copy-target="fuzzy-scoring-sample" title="Copy Code Snippet">
+                <i data-lucide="copy"></i> Copy
+              </button>
+            </div>
+            <pre><code id="fuzzy-scoring-sample">function getSmartSuggestions(query, category) {
+  if (!query) return ["All", "Arcade", "Puzzle", "Retro", "Action"];
+  const q = query.toLowerCase().trim();
+  const pool = new Set();
+  GAMES_REGISTRY.forEach(g => {
+    if (g.category) pool.add(g.category);
+    g.tags?.forEach(t => pool.add(t));
+  });
+  const scored = [];
+  pool.forEach(term => {
+    const t = term.toLowerCase();
+    let score = 0;
+    if (t.startsWith(q)) score = 100 - (t.length - q.length);
+    else if (t.includes(q)) score = 80 - (t.length - q.length);
+    else {
+      const dist = levenshteinDistance(q, t);
+      if (dist <= 2) score = 60 - dist * 15;
+    }
+    if (score > 0) scored.push({ term, score });
+  });
+  return scored.sort((a, b) => b.score - a.score).slice(0, 4).map(s => s.term);
+}</code></pre>
+          </div>
+          <div class="docs-callout callout-info">
+            <div class="callout-icon"><i data-lucide="info"></i></div>
+            <div class="callout-body">
+              <strong>Interactive Chip Injection:</strong> Clicking any recommendation chip instantly updates the active filter category or updates the search bar, executing a silky-smooth catalog re-render with zero full-page reloads.
+            </div>
+          </div>
         </section>
 
       </article>
