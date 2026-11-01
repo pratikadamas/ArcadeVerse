@@ -2116,30 +2116,30 @@ textarea:focus-visible,
 .footer {
   background: #090b10;
   border-top: 1px solid var(--border-subtle);
-  padding: 4rem 2rem 2.5rem;
+  padding: 2.2rem 2rem 1.8rem;
 }
 
 .footer-container {
   max-width: 1280px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 2fr 1fr 1.5fr;
-  gap: 3rem;
-  margin-bottom: 3rem;
+  grid-template-columns: 1.8fr 1fr 1.2fr;
+  gap: 2rem;
+  margin-bottom: 1.8rem;
 }
 
 .footer-desc {
-  margin-top: 1.1rem;
+  margin-top: 0.75rem;
   color: var(--text-secondary);
-  font-size: 0.92rem;
-  max-width: 380px;
-  line-height: 1.6;
+  font-size: 0.88rem;
+  max-width: 360px;
+  line-height: 1.5;
 }
 
 .footer-col h4 {
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-family: var(--font-display);
-  margin-bottom: 1.2rem;
+  margin-bottom: 0.8rem;
   color: #fff;
 }
 
@@ -2148,18 +2148,37 @@ textarea:focus-visible,
 }
 
 .footer-list li {
-  margin-bottom: 0.65rem;
+  margin-bottom: 0.45rem;
 }
 
 .footer-list a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--text-secondary);
   text-decoration: none;
-  font-size: 0.9rem;
-  transition: color 0.2s ease;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
 }
 
 .footer-list a:hover {
-  color: #fff;
+  color: var(--accent-primary);
+  transform: translateX(3px);
+}
+
+.footer-cta-wrapper {
+  margin-top: 0.9rem !important;
+}
+
+@media (max-width: 768px) {
+  .footer {
+    padding: 2rem 1.2rem 1.5rem;
+  }
+  .footer-container {
+    grid-template-columns: 1fr;
+    gap: 1.6rem;
+    margin-bottom: 1.6rem;
+  }
 }
 
 .admin-badge-card {

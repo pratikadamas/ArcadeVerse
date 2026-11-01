@@ -258,12 +258,38 @@
             Within this directory, exactly 4 files are mandatory for pre-flight verification:
           </p>
 
-          <div class="file-tree-box">
-            <div><span class="folder">games/neon-runner_babin/</span></div>
-            <div>├── <span class="file">index.html</span> <span class="comment"># Standalone entrypoint (canvas markup, loads only local style.css &amp; game.js)</span></div>
-            <div>├── <span class="file">style.css</span>  <span class="comment"># Dedicated stylesheets scoped to your game canvas and HUD</span></div>
-            <div>├── <span class="file">game.js</span>    <span class="comment"># Core gameplay logic, loop, state management, and input</span></div>
-            <div>└── <span class="file">game.json</span>  <span class="comment"># Machine-readable descriptor ingested by the registry builder</span></div>
+          <div class="docs-table-container">
+            <table class="docs-spec-table">
+              <thead>
+                <tr>
+                  <th style="width: 20%;">Required File</th>
+                  <th style="width: 28%;">Role &amp; Entrypoint</th>
+                  <th style="width: 52%;">Mandatory Architectural Specification</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>index.html</code></td>
+                  <td>Standalone Game Entrypoint</td>
+                  <td>Self-contained canvas viewport. Only links local <code>style.css</code> and <code>game.js</code>. Responsive viewport meta tag mandatory.</td>
+                </tr>
+                <tr>
+                  <td><code>style.css</code></td>
+                  <td>Scoped Game Stylesheet</td>
+                  <td>Zero external font/CSS CDNs. Scoped to the game canvas container, HUD overlays, and touch controls.</td>
+                </tr>
+                <tr>
+                  <td><code>game.js</code></td>
+                  <td>Game Logic &amp; Engine Loop</td>
+                  <td>Pure ES6+ JavaScript. Implements game loop and hooks into <code>ArcadeVerse</code> lifecycle bridge (pause, teardown).</td>
+                </tr>
+                <tr>
+                  <td><code>game.json</code></td>
+                  <td>Metadata Descriptor</td>
+                  <td>Includes <code>title</code>, <code>category</code>, <code>description</code>, <code>author</code>, and <code>github</code> for automated catalog ingestion.</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
           <div class="docs-callout note">
@@ -943,6 +969,50 @@ function updateCategoryPillCounts() {
       if (window.lucide) {
         lucide.createIcons();
       }
+    });
+  </script>
+
+  <script>
+    // Interactive Heading Anchors & High-Contrast Code Copy Feedback
+    document.addEventListener("DOMContentLoaded", () => {
+      // 1. Add Heading Anchor Links to H2 and H3
+      document.querySelectorAll(".docs-section-title, .docs-section h3").forEach((heading) => {
+        const section = heading.closest(".docs-section");
+        const id = section ? section.id : heading.id;
+        if (id) {
+          const anchor = document.createElement("a");
+          anchor.href = "#" + id;
+          anchor.className = "docs-heading-anchor";
+          anchor.setAttribute("aria-label", "Direct link to " + heading.textContent.trim());
+          anchor.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>';
+          heading.appendChild(anchor);
+        }
+      });
+
+      // 2. High-Contrast Code Block Copy Buttons
+      document.querySelectorAll(".docs-code-preview, pre").forEach((block) => {
+        if (block.querySelector(".docs-copy-btn")) return;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "docs-copy-btn";
+        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy';
+
+        btn.addEventListener("click", () => {
+          const codeEl = block.querySelector("code") || block;
+          const textToCopy = codeEl.innerText.replace(/Copy$/, "").trim();
+          navigator.clipboard.writeText(textToCopy).then(() => {
+            btn.classList.add("copied");
+            btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+            setTimeout(() => {
+              btn.classList.remove("copied");
+              btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy';
+            }, 2000);
+          });
+        });
+
+        block.style.position = "relative";
+        block.appendChild(btn);
+      });
     });
   </script>
 </body>
