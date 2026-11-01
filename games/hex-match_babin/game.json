@@ -1,0 +1,18 @@
+{
+  "title": "Hex Match: Prismatic Tile Connect",
+  "category": "Puzzle / Match-3",
+  "description": "Swap and link vibrant chromatic hexagonal prisms across a hexagonal honey-grid to trigger cascading light bursts.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": [
+    "puzzle",
+    "arcade",
+    "retro",
+    "html5-canvas",
+    "nsoc26"
+  ],
+  "difficulty": "Medium",
+  "featured": true,
+  "stars": 15
+}
