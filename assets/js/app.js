@@ -310,9 +310,78 @@ document.addEventListener("DOMContentLoaded", () => {
   function openGameModal(game, triggerElement = null) {
     activeGame = game;
     lastFocusedElement = triggerElement || document.activeElement;
+    // In-Modal Error Boundary & Load Timeout Handlers
+    let iframeLoadTimeout = null;
+    let iframeLoadSucceeded = false;
+
+    function resetIframeBoundary() {
+      if (iframeLoadTimeout) clearTimeout(iframeLoadTimeout);
+      const existingError = document.getElementById("modal-error-boundary");
+      if (existingError) existingError.remove();
+      gameIframe.style.display = "block";
+    }
+
+    function triggerModalErrorBoundary(gameObj) {
+      if (iframeLoadSucceeded) return;
+      gameIframe.style.display = "none";
+      let errorBoundary = document.getElementById("modal-error-boundary");
+      if (!errorBoundary) {
+        errorBoundary = document.createElement("div");
+        errorBoundary.id = "modal-error-boundary";
+        errorBoundary.className = "modal-error-boundary";
+        const frameWrap = document.querySelector(".modal-frame-wrapper");
+        if (frameWrap) frameWrap.appendChild(errorBoundary);
+      }
+
+      errorBoundary.innerHTML = `
+        <div class="boundary-content">
+          <div class="boundary-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#ff0055" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          </div>
+          <h3 class="boundary-title">Game Route Offline</h3>
+          <p class="boundary-desc">
+            Failed to establish connection to <code>${gameObj.path || 'game route'}</code>. The game entrypoint may be undergoing maintenance, corrupted, or unreachable.
+          </p>
+          <div class="boundary-actions">
+            <button class="btn btn-primary btn-sm" id="boundary-retry-btn">
+              <span>Retry Load</span>
+            </button>
+            <a href="https://github.com/DebasmitaBose0/ArcadeVerse/issues/new" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
+              <span>Report Broken Route</span>
+            </a>
+          </div>
+        </div>
+      `;
+
+      const retryBtn = errorBoundary.querySelector("#boundary-retry-btn");
+      if (retryBtn) {
+        retryBtn.addEventListener("click", () => {
+          resetIframeBoundary();
+          iframeLoadSucceeded = false;
+          gameIframe.src = gameObj.path;
+          startIframeTimeout(gameObj);
+        });
+      }
+    }
+
+    function startIframeTimeout(gameObj) {
+      resetIframeBoundary();
+      iframeLoadSucceeded = false;
+      iframeLoadTimeout = setTimeout(() => {
+        if (!iframeLoadSucceeded) {
+          triggerModalErrorBoundary(gameObj);
+        }
+      }, 7000);
+    }
+
     modalGameTitle.textContent = game.title;
     modalGameBadge.textContent = game.category;
     modalGameAuthor.textContent = `Built by @${game.author}`;
+    startIframeTimeout(game);
     gameIframe.src = game.path;
     newTabBtn.href = game.path;
 
@@ -583,6 +652,19 @@ document.addEventListener("DOMContentLoaded", () => {
   if (gameIframe) {
     gameIframe.addEventListener('load', () => {
       gameIframe.classList.add('loaded');
+      if (gameIframe.src && !gameIframe.src.includes("about:blank")) {
+        const errorBoundary = document.getElementById("modal-error-boundary");
+        if (errorBoundary) errorBoundary.remove();
+        gameIframe.style.display = "block";
+      }
+    });
+
+    gameIframe.addEventListener('error', () => {
+      const errorBoundary = document.getElementById("modal-error-boundary");
+      if (errorBoundary && activeGame) {
+        errorBoundary.style.display = "flex";
+        gameIframe.style.display = "none";
+      }
     });
   }
 
