@@ -171,6 +171,7 @@
             <span class="docs-nav-group-title">4. Platform Subsystems</span>
             <ul class="docs-nav-list">
               <li><a href="#sound-engine" class="docs-nav-link"><i data-lucide="volume-2"></i> Sound Synthesizer</a></li>
+              <li><a href="#lifecycle-bridge" class="docs-nav-link"><i data-lucide="activity"></i> Lifecycle Bridge SDK</a></li>
               <li><a href="#a11y-hub" class="docs-nav-link"><i data-lucide="eye"></i> Accessibility Engine</a></li>
               <li><a href="#trophy-engine" class="docs-nav-link"><i data-lucide="award"></i> Trophy Certificate Canvas</a></li>
               <li><a href="#shortcuts-engine" class="docs-nav-link"><i data-lucide="keyboard"></i> Keyboard Shortcuts</a></li>
@@ -432,6 +433,61 @@ Audited 40 games: 0 Errors, 0 Warnings
             <li><strong>Acoustic Thump:</strong> Sub-bass sine wave (160 Hz down to 40 Hz) simulating keycap bottom-out reverberation.</li>
             <li><strong>Tactile Hover Tick:</strong> Rapid 35ms micro-pitch sine wave providing subtle UI feedback.</li>
           </ul>
+        </section>
+
+        <!-- 9b. Game Lifecycle Bridge & Client SDK -->
+        <section class="docs-section" id="lifecycle-bridge">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Standardized Game Lifecycle Bridge & Client SDK </h2>
+          <p class="docs-paragraph">
+            ArcadeVerse introduces a zero-dependency bi-directional postMessage communication protocol and client-side bridge implemented in <code>assets/js/arcadeverse-sdk.js</code>. This guarantees zero audio bleeding, prevents residual memory leaks, and cleanly manages iframe resources during modal transitions.
+          </p>
+          <div class="arch-grid-cards">
+            <div class="arch-card">
+              <div class="arch-card-icon"><i data-lucide="play-circle"></i></div>
+              <h3 class="arch-card-title">ARCADEVERSE_PAUSE</h3>
+              <p class="arch-card-desc">Dispatched by the shell whenever the modal loses focus or is requested to pause. Games immediately suspend timers, physics ticks, and background sound.</p>
+            </div>
+            <div class="arch-card">
+              <div class="arch-card-icon"><i data-lucide="rotate-cw"></i></div>
+              <h3 class="arch-card-title">ARCADEVERSE_RESUME</h3>
+              <p class="arch-card-desc">Notifies the game iframe that modal presentation has resumed so audio contexts can wake and gameplay can continue smoothly.</p>
+            </div>
+            <div class="arch-card">
+              <div class="arch-card-icon"><i data-lucide="power"></i></div>
+              <h3 class="arch-card-title">ARCADEVERSE_TEARDOWN</h3>
+              <p class="arch-card-desc">Dispatched 100ms before modal unmounting. Cancels all active requestAnimationFrame loops, terminates Web Audio nodes, and clears intervals.</p>
+            </div>
+          </div>
+          <div class="code-block-wrapper">
+            <div class="code-block-header">
+              <span class="code-block-lang">JAVASCRIPT</span>
+              <button class="btn-copy-code" type="button" aria-label="Copy SDK Integration Code">
+                <i data-lucide="copy"></i> <span>Copy</span>
+              </button>
+            </div>
+            <pre class="code-pre"><code>// In your game.js or by importing assets/js/arcadeverse-sdk.js:
+if (window.ArcadeVerse) {
+  // 1. Automatically track Web Audio contexts for zero audio pop on close
+  ArcadeVerse.trackAudioContext(myGameAudioContext);
+
+  // 2. Track animation loop IDs
+  const animId = requestAnimationFrame(gameLoop);
+  ArcadeVerse.trackAnimationFrame(animId);
+
+  // 3. Register custom teardown handler
+  ArcadeVerse.onTeardown(() => {
+    cancelAnimationFrame(animId);
+    if (myGameAudioContext && myGameAudioContext.state !== 'closed') {
+      myGameAudioContext.close();
+    }
+  });
+
+  // 4. Listen for pause & resume events
+  ArcadeVerse.onPause(() => { gameState = 'PAUSED'; });
+  ArcadeVerse.onResume(() => { gameState = 'PLAYING'; });
+}</code></pre>
+          </div>
         </section>
 
         <!-- 10. Accessibility Hub -->
