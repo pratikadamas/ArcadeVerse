@@ -7368,3 +7368,323 @@ html.light-mode .trophy-modal-title {
   border: none !important;
   outline: none !important;
 }
+
+/* ==========================================================================
+   Comprehensive Motion Reduction Engine (WCAG 2.1 & prefers-reduced-motion)
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .glow-orb,
+  .hero-glow-sphere,
+  .grid-background,
+  .cyber-grid-plane,
+  .arcade-particle,
+  .ambient-scanline {
+    animation: none !important;
+    transform: none !important;
+    display: none !important;
+  }
+
+  .game-card,
+  .pill,
+  .halloween-card,
+  .btn,
+  .leaderboard-row {
+    transition: none !important;
+    transform: none !important;
+  }
+
+  .game-card:hover,
+  .halloween-card:hover,
+  .btn:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+}
+
+/* User Explicit Setting Class Overrides via Accessibility Hub */
+html.a11y-reduced-motion *,
+html.a11y-reduced-motion *::before,
+html.a11y-reduced-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+html.a11y-reduced-motion .glow-orb,
+html.a11y-reduced-motion .hero-glow-sphere,
+html.a11y-reduced-motion .grid-background,
+html.a11y-reduced-motion .cyber-grid-plane,
+html.a11y-reduced-motion .arcade-particle,
+html.a11y-reduced-motion .ambient-scanline,
+html.a11y-reduced-motion .floating-particle {
+  animation: none !important;
+  transform: none !important;
+  display: none !important;
+}
+
+html.a11y-reduced-motion .game-card:hover,
+html.a11y-reduced-motion .halloween-card:hover,
+html.a11y-reduced-motion .btn:hover,
+html.a11y-reduced-motion .pill:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+html.a11y-reduced-motion .modal-window {
+  transform: none !important;
+  transition: opacity 0.05s ease !important;
+}
+
+html.a11y-reduced-motion .back-to-top-btn {
+  transition: opacity 0.05s ease !important;
+  transform: none !important;
+}
+
+/* Additional fine-grained motion reduction controls for canvas, icons, and loaders */
+@media (prefers-reduced-motion: reduce) {
+  .loader-spinner-circle,
+  .btn-icon svg,
+  .halloween-card-icon svg,
+  .game-card-preview .game-icon,
+  .hero-badge-live,
+  .hero-chip-icon,
+  .keyboard-shortcuts-modal,
+  .playlist-drawer-panel,
+  .a11y-drawer {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+html.a11y-reduced-motion .loader-spinner-circle,
+html.a11y-reduced-motion .btn-icon svg,
+html.a11y-reduced-motion .halloween-card-icon svg,
+html.a11y-reduced-motion .game-card-preview .game-icon,
+html.a11y-reduced-motion .hero-badge-live,
+html.a11y-reduced-motion .hero-chip-icon,
+html.a11y-reduced-motion .keyboard-shortcuts-modal,
+html.a11y-reduced-motion .playlist-drawer-panel,
+html.a11y-reduced-motion .a11y-drawer {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Modal, Dropdown and Navigation Reduced Motion Overrides */
+html.a11y-reduced-motion .modal-overlay,
+html.a11y-reduced-motion .playlist-drawer-backdrop,
+html.a11y-reduced-motion .a11y-backdrop {
+  backdrop-filter: none !important;
+  transition: none !important;
+}
+
+html.a11y-reduced-motion .nav-item,
+html.a11y-reduced-motion .theme-toggle-btn,
+html.a11y-reduced-motion .a11y-btn-trigger,
+html.a11y-reduced-motion .sound-toggle-btn,
+html.a11y-reduced-motion .keyboard-shortcuts-btn {
+  transition: none !important;
+  transform: none !important;
+}
+
+html.a11y-reduced-motion .nav-item:hover,
+html.a11y-reduced-motion .theme-toggle-btn:hover,
+html.a11y-reduced-motion .a11y-btn-trigger:hover,
+html.a11y-reduced-motion .sound-toggle-btn:hover,
+html.a11y-reduced-motion .keyboard-shortcuts-btn:hover {
+  transform: none !important;
+}
+
+html.a11y-reduced-motion .confetti-particle,
+html.a11y-reduced-motion .trophy-card-canvas,
+html.a11y-reduced-motion .radar-sweep,
+html.a11y-reduced-motion .pulse-ring {
+  display: none !important;
+  animation: none !important;
+}
+
+html.a11y-reduced-motion .accordion-content,
+html.a11y-reduced-motion .accordion-header,
+html.a11y-reduced-motion .faq-card {
+  transition: none !important;
+}
+
+/* Reduced motion support for high refresh rate gaming monitors */
+@media screen and (prefers-reduced-motion: reduce) {
+  .hero-roulette-spinner,
+  .hero-random-btn.is-rolling,
+  .badge-live-dot {
+    animation: none !important;
+  }
+}
+
+html.a11y-reduced-motion .hero-roulette-spinner,
+html.a11y-reduced-motion .hero-random-btn.is-rolling,
+html.a11y-reduced-motion .badge-live-dot {
+  animation: none !important;
+}
+
+/* Theme Design Tokens and Variable Overrides under Reduced Motion */
+:root {
+  --motion-duration-fast: 0.15s;
+  --motion-duration-normal: 0.25s;
+  --motion-duration-slow: 0.4s;
+  --motion-ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration-fast: 0s;
+    --motion-duration-normal: 0s;
+    --motion-duration-slow: 0s;
+    --motion-ease-spring: linear;
+  }
+}
+
+html.a11y-reduced-motion {
+  --motion-duration-fast: 0s !important;
+  --motion-duration-normal: 0s !important;
+  --motion-duration-slow: 0s !important;
+  --motion-ease-spring: linear !important;
+}
+
+html.a11y-reduced-motion .daily-quest-card,
+html.a11y-reduced-motion .quest-progress-fill,
+html.a11y-reduced-motion .quick-resume-card,
+html.a11y-reduced-motion .leaderboard-podium-item,
+html.a11y-reduced-motion .podium-rank-badge {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+
+html.a11y-reduced-motion .diff-dot.active {
+  animation: none !important;
+}
+
+html.a11y-reduced-motion .cyber-grid-overlay {
+  animation: none !important;
+}
+
+html.a11y-reduced-motion .halloween-container::before,
+html.a11y-reduced-motion .halloween-container::after {
+  animation: none !important;
+}
+
+/* Game Card Action & Carousel Reduced Motion Rules */
+html.a11y-reduced-motion .game-card-preview,
+html.a11y-reduced-motion .game-card-body,
+html.a11y-reduced-motion .game-card-title,
+html.a11y-reduced-motion .game-card-desc,
+html.a11y-reduced-motion .game-card-footer,
+html.a11y-reduced-motion .btn-card-favorite,
+html.a11y-reduced-motion .btn-play-trigger,
+html.a11y-reduced-motion .contributor-avatar,
+html.a11y-reduced-motion .rate-star-btn svg {
+  transition: none !important;
+  transform: none !important;
+}
+
+html.a11y-reduced-motion .game-card:hover .game-card-preview img,
+html.a11y-reduced-motion .game-card:hover .game-card-preview .game-icon {
+  transform: none !important;
+}
+
+html.a11y-reduced-motion .sort-select,
+html.a11y-reduced-motion .search-box input,
+html.a11y-reduced-motion .search-box svg {
+  transition: none !important;
+}
+
+html.a11y-reduced-motion .toast,
+html.a11y-reduced-motion .notification-badge {
+  animation: none !important;
+  transition: opacity 0.05s ease !important;
+}
+
+/* Reduced motion for SVG micro-animations and loaders */
+@media (prefers-reduced-motion: reduce) {
+  svg * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+html.a11y-reduced-motion svg * {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+
+/* Additional accessible motion rules for buttons, chips, and modals */
+html.a11y-reduced-motion .filter-btn,
+html.a11y-reduced-motion .category-pills .pill,
+html.a11y-reduced-motion .pill-count-badge,
+html.a11y-reduced-motion .favorites-count-badge,
+html.a11y-reduced-motion .smart-suggestion-chip,
+html.a11y-reduced-motion .btn-halloween-play,
+html.a11y-reduced-motion .diff-dot,
+html.a11y-reduced-motion .halloween-card-banner,
+html.a11y-reduced-motion .halloween-card-body,
+html.a11y-reduced-motion .halloween-tag-pill,
+html.a11y-reduced-motion .halloween-diff-badge,
+html.a11y-reduced-motion .island-ocean-waves,
+html.a11y-reduced-motion .resource-chip,
+html.a11y-reduced-motion .haunted-moon,
+html.a11y-reduced-motion .haunted-mansion-silhouette,
+html.a11y-reduced-motion .escape-crypt-runes {
+  animation: none !important;
+  transition: none !important;
+  transform: none !important;
+}
+
+html.a11y-reduced-motion .halloween-card:hover .halloween-card-icon,
+html.a11y-reduced-motion .halloween-card:hover .btn-halloween-play svg,
+html.a11y-reduced-motion .btn-play-trigger:hover i,
+html.a11y-reduced-motion .btn-github-highlight:hover svg {
+  transform: none !important;
+}
+
+html.a11y-reduced-motion .footer-list a,
+html.a11y-reduced-motion .footer-col h4,
+html.a11y-reduced-motion .admin-badge-card {
+  transition: none !important;
+  transform: none !important;
+}
+
+html.a11y-reduced-motion .btn-primary:active,
+html.a11y-reduced-motion .btn-secondary:active,
+html.a11y-reduced-motion .btn-icon:active {
+  transform: none !important;
+}
+
+/* HUD and Mini-map Motion Damping for Low-Latency Input */
+html.a11y-reduced-motion .hud-bar,
+html.a11y-reduced-motion .hud-score-counter,
+html.a11y-reduced-motion .hud-timer-badge,
+html.a11y-reduced-motion .crosshair-element,
+html.a11y-reduced-motion .speedometer-dial,
+html.a11y-reduced-motion .fuel-gauge-fill,
+html.a11y-reduced-motion .shield-indicator-glow {
+  transition: none !important;
+  animation: none !important;
+}
+
+html.a11y-reduced-motion .keyboard-shortcut-key,
+html.a11y-reduced-motion .shortcut-item,
+html.a11y-reduced-motion .recent-game-chip,
+html.a11y-reduced-motion .badge-count {
+  transition: none !important;
+  transform: none !important;
+}
