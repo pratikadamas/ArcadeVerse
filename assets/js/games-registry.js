@@ -1,5 +1,26 @@
 const GAMES_REGISTRY = [
   {
+    "id": "asteroid-miner_babin",
+    "title": "Asteroid Miner: Deep Space Extraction",
+    "category": "Arcade / Shooter",
+    "lucideIcon": "gamepad-2",
+    "description": "Navigate hazardous asteroid fields, blast mineral ores with precision mining lasers, and extract raw cosmic crystals.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/asteroid-miner_babin/index.html",
+    "tags": [
+      "arcade",
+      "arcade",
+      "retro",
+      "html5-canvas",
+      "nsoc26"
+    ],
+    "stars": 15,
+    "featured": true,
+    "difficulty": "Medium"
+  },
+  {
     "id": "astro-infinite-jumper_pragna7",
     "title": "Astro Infinite Jumper",
     "category": "Arcade",
@@ -1216,7 +1237,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 282,
+    "commits": 284,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -1236,13 +1257,14 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 185,
-    "gamesCount": 33,
+    "commits": 191,
+    "gamesCount": 34,
     "mechanicsBonus": 2,
     "platformPRs": 29,
     "qualityPRs": 1,
     "bonusPts": 0,
     "contributions": [
+      "Asteroid Miner: Deep Space Extraction",
       "Chrono-Shift: Temporal Paradox",
       "Cosmic Orbit Slingshot",
       "Cryptic Code Breaker: Mastermind Terminal",
