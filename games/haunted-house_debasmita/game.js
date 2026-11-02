@@ -884,7 +884,7 @@
               addItem('archival_journal');
               spawnFloatText('JOURNAL VOL II ACQUIRED', '#a855f7', 480, 240);
               addJournalEntry('Archibald Diary Vol II: Celestial Seal', '"The Ancestral Crypt is locked with concentric stone wheels. Align outer, middle, and inner notches to zenith (0 degrees) to breach the final sanctum."');
-              setHint('Found Archibald's Journal Vol II! It details the rotating stone seal mechanism.');
+              setHint("Found Archibald's Journal Vol II! It details the rotating stone seal mechanism.");
               updateCaseTracker();
             } else {
               setHint('An ornate skull altar surrounded by extinguished tallow candles.');
