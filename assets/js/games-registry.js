@@ -962,6 +962,25 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "quantum-lunar-lander_chanchall26",
+    "title": "Quantum Lunar Lander",
+    "category": "Physics",
+    "lucideIcon": "orbit",
+    "description": "A precision landing simulator with real orbital gravity, limited fuel and procedural craggy moons. Land softly on 2x, 3x and 5x pads while a quantum gravity anomaly bends your flight path.",
+    "author": "Chanchal Gupta",
+    "github": "chanchall26",
+    "role": "Arcade Developer",
+    "path": "games/quantum-lunar-lander_chanchall26/index.html",
+    "tags": [
+      "Physics",
+      "Space",
+      "Simulation",
+      "Procedural"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "quantum-minesweeper-dx_babin",
     "title": "Quantum Minesweeper DX: Grid Defusal",
     "category": "Puzzle / Strategy",
@@ -1159,7 +1178,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 278,
+    "commits": 279,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -1281,6 +1300,22 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
+    "name": "Chanchal Gupta",
+    "github": "chanchall26",
+    "avatarInitial": "C",
+    "role": "Arcade Developer",
+    "commits": 2,
+    "gamesCount": 2,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Cyber Maze Runner",
+      "Quantum Lunar Lander"
+    ]
+  },
+  {
     "name": "Pragna Seetha",
     "github": "pragna7",
     "avatarInitial": "P",
@@ -1308,21 +1343,6 @@ const CONTRIBUTORS_REGISTRY = [
     "bonusPts": 0,
     "contributions": [
       "Circuit Connect"
-    ]
-  },
-  {
-    "name": "Chanchal Gupta",
-    "github": "chanchall26",
-    "avatarInitial": "C",
-    "role": "Arcade Developer",
-    "commits": 1,
-    "gamesCount": 1,
-    "mechanicsBonus": 0,
-    "platformPRs": 0,
-    "qualityPRs": 0,
-    "bonusPts": 0,
-    "contributions": [
-      "Cyber Maze Runner"
     ]
   },
   {
