@@ -522,6 +522,86 @@ jobs:
             </ul>
           </div>
           <h2 class="docs-section-title">Standardized Game Lifecycle Bridge & Client SDK </h2>
+          <div class="docs-callout docs-callout-info" style="margin-top: 14px; margin-bottom: 24px; padding: 16px; background: rgba(59, 130, 246, 0.08); border-left: 4px solid var(--accent-primary); border-radius: 8px;">
+            <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Automatic WebGL Context Disposal & Context-Loss Protection</h4>
+            <p style="font-size: 0.92rem; line-height: 1.6; color: var(--text-secondary); margin-bottom: 12px;">
+              To prevent GPU memory exhaustion when switching between complex 3D or 2D canvas games in modals, ArcadeVerse enforces strict WebGL resource management through <code>assets/js/webgl-disposal.js</code> and the SDK:
+            </p>
+            <ul style="font-size: 0.88rem; line-height: 1.7; color: var(--text-secondary); padding-left: 20px;">
+              <li><strong>Proactive Hardware Teardown:</strong> <code>closeGameModal()</code> systematically inspects all iframe canvases and invokes <code>WEBGL_lose_context.loseContext()</code> before blanking <code>src</code>.</li>
+              <li><strong>Context Restoration Protection:</strong> Games can register their contexts with <code>ArcadeVerse.registerWebGLContext(gl, { onRestore })</code> to gracefully trap <code>webglcontextlost</code> without crashes.</li>
+              <li><strong>Automated Buffer/Texture Tracking:</strong> Register GPU allocations via <code>ArcadeVerse.trackTexture()</code> and <code>ArcadeVerse.trackProgram()</code> for instant garbage collection upon modal dismissal.</li>
+              <li><strong>Telemetry & Memory Footprint Monitoring:</strong> Track real-time context allocation stats via <code>ArcadeVerseWebGL.getStats()</code>.</li>
+            </ul>
+
+            <h5 style="color: var(--text-primary); margin-top: 16px; margin-bottom: 6px; font-size: 0.95rem;">Architectural Flowchart: WebGL Teardown Protocol</h5>
+            <div class="docs-code-preview" style="margin-top: 10px; margin-bottom: 14px;">
+              <pre><code>[User Closes Modal]
+        │
+        ▼
+[app.js: closeGameModal()] ───► [SDK: ARCADEVERSE_TEARDOWN]
+        │                                 │
+        ▼                                 ▼
+[webgl-disposal.js: Scan Canvases]  [cleanAllWebGLAllocations()]
+        │                                 │
+        ▼                                 ▼
+[WEBGL_lose_context.loseContext()]  [Delete Shaders / Buffers]
+        │                                 │
+        ▼                                 ▼
+[GPU VRAM Released Instantly] ◄──── [Zero Memory Leak Growth]</code></pre>
+            </div>
+
+            <h5 style="color: var(--text-primary); margin-top: 16px; margin-bottom: 6px; font-size: 0.95rem;">Implementation Guide for Game Contributors</h5>
+            <p style="font-size: 0.88rem; line-height: 1.6; color: var(--text-secondary); margin-bottom: 10px;">
+              When developing WebGL games for ArcadeVerse, always bind the context recovery handler. When a mobile or laptop GPU sleeps or switches display adapters, the browser triggers a synthetic context loss. With the ArcadeVerse lifecycle bridge, your game avoids black screens:
+            </p>
+            <div class="docs-code-preview">
+              <pre><code>// 1. Initialize Canvas & WebGL Context
+const canvas = document.getElementById("gameCanvas");
+const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
+
+// 2. Register Context with ArcadeVerse SDK
+if (window.ArcadeVerse && ArcadeVerse.registerWebGLContext) {
+  ArcadeVerse.registerWebGLContext(gl, {
+    onRestore: function (glInstance) {
+      console.log("Restoring textures and rebuilding shader pipeline...");
+      rebuildShaders(glInstance);
+      rebuildGeometryBuffers(glInstance);
+    }
+  });
+}
+
+// 3. Register GPU allocations for automatic disposal
+if (window.ArcadeVerse && ArcadeVerse.trackTexture) {
+  ArcadeVerse.trackTexture(gl, playerSpriteTexture);
+  ArcadeVerse.trackBuffer(gl, terrainVertexBuffer);
+}</code></pre>
+            </div>
+          </div>
+            <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Automatic WebGL Context Disposal & Context-Loss Protection</h4>
+            <p style="font-size: 0.92rem; line-height: 1.6; color: var(--text-secondary); margin-bottom: 12px;">
+              To prevent GPU memory exhaustion when switching between complex 3D or 2D canvas games in modals, ArcadeVerse enforces strict WebGL resource management:
+            </p>
+            <ul style="font-size: 0.88rem; line-height: 1.7; color: var(--text-secondary); padding-left: 20px;">
+              <li><strong>Proactive Hardware Teardown:</strong> <code>closeGameModal()</code> systematically inspects all iframe canvases and invokes <code>WEBGL_lose_context.loseContext()</code> before blanking <code>src</code>.</li>
+              <li><strong>Context Restoration Protection:</strong> Games can register their contexts with <code>ArcadeVerse.registerWebGLContext(gl, { onRestore })</code> to gracefully trap <code>webglcontextlost</code> without crashes.</li>
+              <li><strong>Automated Buffer/Texture Tracking:</strong> Register GPU allocations via <code>ArcadeVerse.trackTexture()</code> and <code>ArcadeVerse.trackProgram()</code> for instant garbage collection upon modal dismissal.</li>
+            </ul>
+            <div class="docs-code-preview" style="margin-top: 14px;">
+              <pre><code>// Example: Safe WebGL Context Initializer with ArcadeVerse SDK
+const canvas = document.getElementById('glCanvas');
+const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+
+if (window.ArcadeVerse && ArcadeVerse.registerWebGLContext) {
+  ArcadeVerse.registerWebGLContext(gl, {
+    onRestore: (restoredGl) => {
+      initShaders(restoredGl);
+      rebindTextures(restoredGl);
+    }
+  });
+}</code></pre>
+            </div>
+          </div>
           <p class="docs-paragraph">
             ArcadeVerse introduces a zero-dependency bi-directional postMessage communication protocol and client-side bridge implemented in <code>assets/js/arcadeverse-sdk.js</code>. This guarantees zero audio bleeding, prevents residual memory leaks, and cleanly manages iframe resources during modal transitions.
           </p>

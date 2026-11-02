@@ -669,6 +669,27 @@ document.addEventListener("DOMContentLoaded", () => {
       if (gameIframe && gameIframe.contentWindow) {
         gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
         gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_TEARDOWN" }, "*");
+
+        // Proactively probe and dispose WebGL contexts in child iframe if accessible
+        try {
+          const doc = gameIframe.contentDocument || gameIframe.contentWindow.document;
+          if (doc) {
+            const canvases = doc.querySelectorAll("canvas");
+            canvases.forEach((c) => {
+              try {
+                const gl = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl");
+                if (gl && !gl.isContextLost()) {
+                  const loseExt = gl.getExtension("WEBGL_lose_context") ||
+                                  gl.getExtension("WEBKIT_WEBGL_lose_context") ||
+                                  gl.getExtension("MOZ_WEBGL_lose_context");
+                  if (loseExt && typeof loseExt.loseContext === "function") {
+                    loseExt.loseContext();
+                  }
+                }
+              } catch (_) {}
+            });
+          }
+        } catch (_) {}
       }
     } catch (_) {}
     
