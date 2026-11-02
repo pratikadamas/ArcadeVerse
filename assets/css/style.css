@@ -248,6 +248,11 @@ textarea:focus-visible,
   transform: translateY(-1px);
 }
 
+.theme-toggle-btn:focus-visible {
+  outline: 2px solid var(--accent-primary, #00f5ff);
+  outline-offset: 2px;
+}
+
 .theme-toggle-btn .theme-icon-wrap {
   display: inline-flex;
   align-items: center;

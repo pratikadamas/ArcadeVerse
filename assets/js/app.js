@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const sortSelect = document.getElementById("catalog-sort-select");
   const favoritesCountBadge = document.getElementById("favorites-count-badge");
   const modalFavBtn = document.getElementById("modal-fav-btn");
+  const modalSoundBtn = document.getElementById("modal-sound-btn");
 
   let currentCategory = "all";
   let currentDurationFacet = "all";
@@ -611,6 +612,9 @@ document.addEventListener("DOMContentLoaded", () => {
     newTabBtn.href = game.path;
 
     updateModalFavoriteButton(isFavorite(game.id));
+    if (window.SoundEngine && typeof window.SoundEngine.updateUI === "function") {
+      window.SoundEngine.updateUI();
+    }
 
 
 
@@ -738,6 +742,14 @@ document.addEventListener("DOMContentLoaded", () => {
     modalFavBtn.addEventListener("click", () => {
       if (activeGame) {
         toggleFavorite(activeGame.id);
+      }
+    });
+  }
+
+  if (modalSoundBtn) {
+    modalSoundBtn.addEventListener("click", () => {
+      if (window.SoundEngine && typeof window.SoundEngine.toggleMute === "function") {
+        window.SoundEngine.toggleMute();
       }
     });
   }

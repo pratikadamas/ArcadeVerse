@@ -133,3 +133,32 @@ html.light-mode .eq-bar {
 [data-theme="light"] .sound-toggle-btn.sound-muted .sound-label {
   color: #64748b !important;
 }
+
+/* Mobile Nav Drawer Sound Item Styling */
+.sound-toggle-btn-mobile {
+  color: var(--text-primary, #f8fafc);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: var(--radius-sm, 6px);
+  transition: all 0.2s ease;
+}
+
+.sound-toggle-btn-mobile:hover {
+  background: rgba(0, 245, 255, 0.08) !important;
+  color: var(--accent-primary, #00f5ff) !important;
+}
+
+.sound-toggle-btn-mobile:focus-visible {
+  outline: 2px solid var(--accent-primary, #00f5ff);
+  outline-offset: 2px;
+}
+
+[data-theme="light"] .sound-toggle-btn-mobile {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .sound-toggle-btn-mobile:hover {
+  background: rgba(2, 132, 199, 0.1) !important;
+  color: #0284c7 !important;
+}
