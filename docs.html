@@ -540,33 +540,38 @@ jobs:
         <!-- 9b. Game Lifecycle Bridge & Client SDK -->
         <section class="docs-section" id="lifecycle-bridge">
           <span class="docs-section-tag">04 / Platform Subsystems</span>
-          <div class="docs-callout docs-callout-info" style="margin-top: 14px; margin-bottom: 24px; padding: 16px; background: rgba(59, 130, 246, 0.08); border-left: 4px solid var(--accent-primary); border-radius: 8px;">
-            <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Multi-Criteria Catalog Faceting Engine</h4>
-            <p style="font-size: 0.92rem; line-height: 1.6; color: var(--text-secondary); margin-bottom: 12px;">
-              The ArcadeVerse platform supports instant client-side multi-criteria filtering across category, text search, estimated session duration, and control schemes:
-            </p>
-            <ul style="font-size: 0.88rem; line-height: 1.7; color: var(--text-secondary); padding-left: 20px;">
-              <li><strong>Session Duration Facets:</strong> Filter between <em>Quick Sessions (&lt;3 mins)</em>, <em>Medium Sessions (3-10 mins)</em>, and <em>Deep / Narrative Sessions (&gt;10 mins)</em>.</li>
-              <li><strong>Control Scheme Facets:</strong> Filter by input mechanism: <em>Keyboard / WASD</em>, <em>Mouse / Pointer</em>, or <em>Touch Friendly</em>.</li>
-              <li><strong>Active Filter Badges:</strong> Real-time indicator displaying active tag combinations with one-click filter reset.</li>
-            </ul>
+          <div class="docs-callout note">
+            <div class="docs-callout-icon"><i data-lucide="layers"></i></div>
+            <div>
+              <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Multi-Criteria Catalog Faceting Engine</h4>
+              <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
+                The ArcadeVerse platform supports instant client-side multi-criteria filtering across category, text search, estimated session duration, and control schemes:
+              </p>
+              <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
+                <li><strong>Session Duration Facets:</strong> Filter between <em>Quick Sessions (&lt;3 mins)</em>, <em>Medium Sessions (3-10 mins)</em>, and <em>Deep / Narrative Sessions (&gt;10 mins)</em>.</li>
+                <li><strong>Control Scheme Facets:</strong> Filter by input mechanism: <em>Keyboard / WASD</em>, <em>Mouse / Pointer</em>, or <em>Touch Friendly</em>.</li>
+                <li><strong>Active Filter Badges:</strong> Real-time indicator displaying active tag combinations with one-click filter reset.</li>
+              </ul>
+            </div>
           </div>
           <h2 class="docs-section-title">Standardized Game Lifecycle Bridge & Client SDK </h2>
-          <div class="docs-callout docs-callout-info" style="margin-top: 14px; margin-bottom: 24px; padding: 16px; background: rgba(59, 130, 246, 0.08); border-left: 4px solid var(--accent-primary); border-radius: 8px;">
-            <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Automatic WebGL Context Disposal & Context-Loss Protection</h4>
-            <p style="font-size: 0.92rem; line-height: 1.6; color: var(--text-secondary); margin-bottom: 12px;">
-              To prevent GPU memory exhaustion when switching between complex 3D or 2D canvas games in modals, ArcadeVerse enforces strict WebGL resource management through <code>assets/js/webgl-disposal.js</code> and the SDK:
-            </p>
-            <ul style="font-size: 0.88rem; line-height: 1.7; color: var(--text-secondary); padding-left: 20px;">
-              <li><strong>Proactive Hardware Teardown:</strong> <code>closeGameModal()</code> systematically inspects all iframe canvases and invokes <code>WEBGL_lose_context.loseContext()</code> before blanking <code>src</code>.</li>
-              <li><strong>Context Restoration Protection:</strong> Games can register their contexts with <code>ArcadeVerse.registerWebGLContext(gl, { onRestore })</code> to gracefully trap <code>webglcontextlost</code> without crashes.</li>
-              <li><strong>Automated Buffer/Texture Tracking:</strong> Register GPU allocations via <code>ArcadeVerse.trackTexture()</code> and <code>ArcadeVerse.trackProgram()</code> for instant garbage collection upon modal dismissal.</li>
-              <li><strong>Telemetry & Memory Footprint Monitoring:</strong> Track real-time context allocation stats via <code>ArcadeVerseWebGL.getStats()</code>.</li>
-            </ul>
+          <div class="docs-callout note">
+            <div class="docs-callout-icon"><i data-lucide="cpu"></i></div>
+            <div>
+              <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Automatic WebGL Context Disposal & Context-Loss Protection</h4>
+              <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
+                To prevent GPU memory exhaustion when switching between complex 3D or 2D canvas games in modals, ArcadeVerse enforces strict WebGL resource management through <code>assets/js/webgl-disposal.js</code> and the SDK:
+              </p>
+              <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
+                <li><strong>Proactive Hardware Teardown:</strong> <code>closeGameModal()</code> systematically inspects all iframe canvases and invokes <code>WEBGL_lose_context.loseContext()</code> before blanking <code>src</code>.</li>
+                <li><strong>Context Restoration Protection:</strong> Games can register their contexts with <code>ArcadeVerse.registerWebGLContext(gl, { onRestore })</code> to gracefully trap <code>webglcontextlost</code> without crashes.</li>
+                <li><strong>Automated Buffer/Texture Tracking:</strong> Register GPU allocations via <code>ArcadeVerse.trackTexture()</code> and <code>ArcadeVerse.trackProgram()</code> for instant garbage collection upon modal dismissal.</li>
+                <li><strong>Telemetry & Memory Footprint Monitoring:</strong> Track real-time context allocation stats via <code>ArcadeVerseWebGL.getStats()</code>.</li>
+              </ul>
 
-            <h5 style="color: var(--text-primary); margin-top: 16px; margin-bottom: 6px; font-size: 0.95rem;">Architectural Flowchart: WebGL Teardown Protocol</h5>
-            <div class="docs-code-preview" style="margin-top: 10px; margin-bottom: 14px;">
-              <pre><code>[User Closes Modal]
+              <h5 style="color: var(--text-primary); margin-top: 16px; margin-bottom: 6px; font-size: 0.95rem;">Architectural Flowchart: WebGL Teardown Protocol</h5>
+              <div class="code-block-wrapper" style="margin-top: 10px; margin-bottom: 14px;">
+                <pre class="code-pre"><code>[User Closes Modal]
         │
         ▼
 [app.js: closeGameModal()] ───► [SDK: ARCADEVERSE_TEARDOWN]
@@ -579,14 +584,14 @@ jobs:
         │                                 │
         ▼                                 ▼
 [GPU VRAM Released Instantly] ◄──── [Zero Memory Leak Growth]</code></pre>
-            </div>
+              </div>
 
-            <h5 style="color: var(--text-primary); margin-top: 16px; margin-bottom: 6px; font-size: 0.95rem;">Implementation Guide for Game Contributors</h5>
-            <p style="font-size: 0.88rem; line-height: 1.6; color: var(--text-secondary); margin-bottom: 10px;">
-              When developing WebGL games for ArcadeVerse, always bind the context recovery handler. When a mobile or laptop GPU sleeps or switches display adapters, the browser triggers a synthetic context loss. With the ArcadeVerse lifecycle bridge, your game avoids black screens:
-            </p>
-            <div class="docs-code-preview">
-              <pre><code>// 1. Initialize Canvas & WebGL Context
+              <h5 style="color: var(--text-primary); margin-top: 16px; margin-bottom: 6px; font-size: 0.95rem;">Implementation Guide for Game Contributors</h5>
+              <p style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 10px;">
+                When developing WebGL games for ArcadeVerse, always bind the context recovery handler. When a mobile or laptop GPU sleeps or switches display adapters, the browser triggers a synthetic context loss. With the ArcadeVerse lifecycle bridge, your game avoids black screens:
+              </p>
+              <div class="code-block-wrapper">
+                <pre class="code-pre"><code>// 1. Initialize Canvas & WebGL Context
 const canvas = document.getElementById("gameCanvas");
 const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
 
@@ -606,30 +611,7 @@ if (window.ArcadeVerse && ArcadeVerse.trackTexture) {
   ArcadeVerse.trackTexture(gl, playerSpriteTexture);
   ArcadeVerse.trackBuffer(gl, terrainVertexBuffer);
 }</code></pre>
-            </div>
-          </div>
-            <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Automatic WebGL Context Disposal & Context-Loss Protection</h4>
-            <p style="font-size: 0.92rem; line-height: 1.6; color: var(--text-secondary); margin-bottom: 12px;">
-              To prevent GPU memory exhaustion when switching between complex 3D or 2D canvas games in modals, ArcadeVerse enforces strict WebGL resource management:
-            </p>
-            <ul style="font-size: 0.88rem; line-height: 1.7; color: var(--text-secondary); padding-left: 20px;">
-              <li><strong>Proactive Hardware Teardown:</strong> <code>closeGameModal()</code> systematically inspects all iframe canvases and invokes <code>WEBGL_lose_context.loseContext()</code> before blanking <code>src</code>.</li>
-              <li><strong>Context Restoration Protection:</strong> Games can register their contexts with <code>ArcadeVerse.registerWebGLContext(gl, { onRestore })</code> to gracefully trap <code>webglcontextlost</code> without crashes.</li>
-              <li><strong>Automated Buffer/Texture Tracking:</strong> Register GPU allocations via <code>ArcadeVerse.trackTexture()</code> and <code>ArcadeVerse.trackProgram()</code> for instant garbage collection upon modal dismissal.</li>
-            </ul>
-            <div class="docs-code-preview" style="margin-top: 14px;">
-              <pre><code>// Example: Safe WebGL Context Initializer with ArcadeVerse SDK
-const canvas = document.getElementById('glCanvas');
-const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
-
-if (window.ArcadeVerse && ArcadeVerse.registerWebGLContext) {
-  ArcadeVerse.registerWebGLContext(gl, {
-    onRestore: (restoredGl) => {
-      initShaders(restoredGl);
-      rebindTextures(restoredGl);
-    }
-  });
-}</code></pre>
+              </div>
             </div>
           </div>
           <p class="docs-paragraph">
@@ -792,19 +774,43 @@ if (window.ArcadeVerse) {
           <p class="docs-paragraph">
             ArcadeVerse maintains an automated asset verification and security architecture built into the pre-flight test runner (<code>scripts/validate-games.js</code>). The audit runner guarantees that community contributions never ship with missing resources or broken relative pathways.
           </p>
-          <div class="code-block-wrapper">
-            <div class="code-block-header">
-              <span class="code-block-lang">Asset Verification Matrix</span>
-            </div>
-            <pre class="code-pre"><code>┌─────────────────────────┬────────────────────────────────────────┬─────────────────────┐
-│ Asset Category          │ Extraction Mechanism                   │ Failure Consequence │
-├─────────────────────────┼────────────────────────────────────────┼─────────────────────┤
-│ Stylesheets & Fonts     │ &lt;link href&gt; regex resolution           │ Build Rejection     │
-│ Runtime Scripts         │ &lt;script src&gt; relative path validator   │ Build Rejection     │
-│ Sprites & Textures       │ &lt;img src&gt; & new Image().src parsing     │ Warning / Failure   │
-│ Audio Effects (SFX)     │ new Audio("...") & &lt;source src&gt; audit  │ Soft Warning        │
-│ CSS Background Media    │ url(...) parser with SVG filter bypass │ Build Rejection     │
-└─────────────────────────┴────────────────────────────────────────┴─────────────────────┘</code></pre>
+          <div class="docs-table-container">
+            <table class="docs-spec-table">
+              <thead>
+                <tr>
+                  <th style="width: 25%;">Asset Category</th>
+                  <th style="width: 45%;">Extraction Mechanism</th>
+                  <th style="width: 30%;">Failure Consequence</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>Stylesheets &amp; Fonts</code></td>
+                  <td><code>&lt;link href&gt;</code> regex resolution</td>
+                  <td><span style="color: #ef4444; font-weight: 600;">Build Rejection</span></td>
+                </tr>
+                <tr>
+                  <td><code>Runtime Scripts</code></td>
+                  <td><code>&lt;script src&gt;</code> relative path validator</td>
+                  <td><span style="color: #ef4444; font-weight: 600;">Build Rejection</span></td>
+                </tr>
+                <tr>
+                  <td><code>Sprites &amp; Textures</code></td>
+                  <td><code>&lt;img src&gt;</code> &amp; <code>new Image().src</code> parsing</td>
+                  <td><span style="color: #f59e0b; font-weight: 600;">Warning / Failure</span></td>
+                </tr>
+                <tr>
+                  <td><code>Audio Effects (SFX)</code></td>
+                  <td><code>new Audio("...")</code> &amp; <code>&lt;source src&gt;</code> audit</td>
+                  <td><span style="color: #3b82f6; font-weight: 600;">Soft Warning</span></td>
+                </tr>
+                <tr>
+                  <td><code>CSS Background Media</code></td>
+                  <td><code>url(...)</code> parser with SVG filter bypass</td>
+                  <td><span style="color: #ef4444; font-weight: 600;">Build Rejection</span></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
           <p class="docs-paragraph">

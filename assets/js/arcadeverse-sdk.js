@@ -230,6 +230,26 @@
       // Ping parent window for initial audio configuration
       if (window.parent && window.parent !== window) {
         window.parent.postMessage({ type: "ARCADEVERSE_REQUEST_AUDIO_CONFIG" }, "*");
+
+        // Forward global keyboard shortcuts from inside game iframe to parent shell
+        window.addEventListener("keydown", function (e) {
+          var key = (e.key || "").toLowerCase();
+          // Escape (close modal), f (fullscreen), r (restart), m (mute), t (theme)
+          if (e.key === "Escape" || key === "f" || key === "r" || key === "m" || key === "t") {
+            // If typing in input/textarea inside game, skip
+            var tag = (e.target && e.target.tagName ? e.target.tagName.toLowerCase() : "");
+            if (tag === "input" || tag === "textarea" || (e.target && e.target.isContentEditable)) return;
+
+            window.parent.postMessage({
+              type: "ARCADEVERSE_KEY_SHORTCUT",
+              key: e.key,
+              shiftKey: e.shiftKey,
+              altKey: e.altKey,
+              ctrlKey: e.ctrlKey,
+              metaKey: e.metaKey
+            }, "*");
+          }
+        }, true);
       }
 
       isInitialized = true;
