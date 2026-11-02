@@ -709,27 +709,6 @@ const GAMES_REGISTRY = [
     "releaseDate": "2026-10-31"
   },
   {
-    "id": "hex-match_babin",
-    "title": "Hex Match: Prismatic Tile Connect",
-    "category": "Puzzle / Match-3",
-    "lucideIcon": "gamepad-2",
-    "description": "Swap and link vibrant chromatic hexagonal prisms across a hexagonal honey-grid to trigger cascading light bursts.",
-    "author": "Babin Bid",
-    "github": "Babin123456",
-    "role": "Contributor",
-    "path": "games/hex-match_babin/index.html",
-    "tags": [
-      "puzzle",
-      "arcade",
-      "retro",
-      "html5-canvas",
-      "nsoc26"
-    ],
-    "stars": 15,
-    "featured": true,
-    "difficulty": "Medium"
-  },
-  {
     "id": "island-survival_debasmita",
     "title": "Island Survival: Lost Beyond the Shore",
     "category": "Survival / Horror",
@@ -1426,7 +1405,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 295,
+    "commits": 292,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -1446,8 +1425,8 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 200,
-    "gamesCount": 43,
+    "commits": 199,
+    "gamesCount": 42,
     "mechanicsBonus": 2,
     "platformPRs": 29,
     "qualityPRs": 1,
@@ -1473,7 +1452,6 @@ const CONTRIBUTORS_REGISTRY = [
       "Cyber-Sudoku: Neon Matrix 9x9",
       "Detective Mystery: Neo-Tokyo Syndicate",
       "Gravity Well: Singularity Slingshot",
-      "Hex Match: Prismatic Tile Connect",
       "Neon Beat Runner",
       "Neon Brick Breaker DX: Cyber Shatter",
       "Neon Gravity Rush",
@@ -1603,21 +1581,6 @@ const CONTRIBUTORS_REGISTRY = [
     "bonusPts": 0,
     "contributions": [
       "Circuit Connect"
-    ]
-  },
-  {
-    "name": "pratikgiri",
-    "github": "pratikgiri",
-    "avatarInitial": "P",
-    "role": "Contributor (NSOC '26)",
-    "commits": 9,
-    "gamesCount": 0,
-    "mechanicsBonus": 0,
-    "platformPRs": 0,
-    "qualityPRs": 0,
-    "bonusPts": 0,
-    "contributions": [
-      "Quality & Platform Contribution"
     ]
   },
   {
