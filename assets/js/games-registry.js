@@ -461,6 +461,25 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "cyber-trajectory-bow_chanchall26",
+    "title": "Cyber Trajectory Bow",
+    "category": "Physics",
+    "lucideIcon": "crosshair",
+    "description": "Drag back to draw a neon bow, read the dotted trajectory, and shatter moving, armored and explosive nodes across 8 stages of wind and shifting gravity.",
+    "author": "Chanchal Gupta",
+    "github": "chanchall26",
+    "role": "Arcade Developer",
+    "path": "games/cyber-trajectory-bow_chanchall26/index.html",
+    "tags": [
+      "Physics",
+      "Archery",
+      "Aim",
+      "Neon"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "cyber-typer_hrshjswniii",
     "title": "Cyber Typer: Terminal Hacker",
     "category": "Arcade",
@@ -1197,7 +1216,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 280,
+    "commits": 281,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -1307,14 +1326,15 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "chanchall26",
     "avatarInitial": "C",
     "role": "Arcade Developer",
-    "commits": 3,
-    "gamesCount": 3,
+    "commits": 4,
+    "gamesCount": 4,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 0,
     "bonusPts": 0,
     "contributions": [
       "Cyber Maze Runner",
+      "Cyber Trajectory Bow",
       "Neon Highway Hopper",
       "Quantum Lunar Lander"
     ]
