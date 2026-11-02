@@ -16,7 +16,10 @@
     batteries: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="16" height="10" rx="2"></rect><line x1="22" y1="11" x2="22" y2="13"></line></svg>',
     tome: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>',
     locket: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="14" r="6"></circle><path d="M12 2v6"></path><path d="M9 5h6"></path></svg>',
-    salt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>'
+    salt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>',
+    cellar_key: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="5"></circle><line x1="10.5" y1="10.5" x2="22" y2="22"></line><line x1="17" y1="17" x2="19" y2="15"></line><line x1="20" y1="20" x2="22" y2="18"></line></svg>',
+    kerosene: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2h4"></path><path d="M12 2v4"></path><path d="M6 10h12l-2 11H8L6 10z"></path></svg>',
+    archival_journal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>'
   };
 
   const ITEM_NAMES = {
@@ -27,7 +30,10 @@
     batteries: 'Flashlight Batteries',
     tome: 'Tome of Shadows',
     locket: "Eleanor's Golden Locket",
-    salt: 'Consecrated Holy Salt'
+    salt: 'Consecrated Holy Salt',
+    cellar_key: 'Rusted Cellar Trapdoor Key',
+    kerosene: 'Flask of Refined Kerosene',
+    archival_journal: 'Lord Archibald Diary Volume II'
   };
 
   // --- Web Audio Procedural Horror Sound Engine ---
@@ -233,6 +239,14 @@
     musicBoxOpened: false,
     saltFound: false,
     altarCleansed: false,
+    chapterTwoUnlocked: false,
+    lanternFuel: 100,
+    hasLantern: false,
+    catacombHatchOpen: false,
+    wineCaskInspected: false,
+    ossuaryCryptInspected: false,
+    stoneRings: { outer: 135, mid: 180, inner: 225 }, // degrees; all must be 0 % 360
+    sealUnlocked: false,
     gameEnded: false,
 
     // Dynamic Atmosphere & Animation State
@@ -336,6 +350,17 @@
   const modalBreaker = document.getElementById('modalBreaker');
   const modalAltar = document.getElementById('modalAltar');
   const modalEnding = document.getElementById('modalEnding');
+  const modalSeal = document.getElementById('modalSeal');
+  const lanternMeterGroup = document.getElementById('lanternMeterGroup');
+  const lanternBar = document.getElementById('lanternBar');
+  const ringOuterEl = document.getElementById('ringOuter');
+  const ringMidEl = document.getElementById('ringMid');
+  const ringInnerEl = document.getElementById('ringInner');
+  const sealStatus = document.getElementById('sealStatus');
+  const btnRotateOuter = document.getElementById('btnRotateOuter');
+  const btnRotateMid = document.getElementById('btnRotateMid');
+  const btnRotateInner = document.getElementById('btnRotateInner');
+  const btnInspectSealAlignment = document.getElementById('btnInspectSealAlignment');
   const endingTitle = document.getElementById('endingTitle');
   const endingText = document.getElementById('endingText');
 
@@ -775,6 +800,156 @@
           height: '24%',
           tag: 'Stairs up to Foyer',
           onClick: () => switchRoom('foyer')
+        },
+        {
+          id: 'trapdoorToCatacombs',
+          top: '72%',
+          left: '60%',
+          width: '18%',
+          height: '14%',
+          tag: 'Catacombs Stone Trapdoor',
+          onClick: () => {
+            if (state.chapterTwoUnlocked) {
+              switchRoom('wine_cellar');
+            } else {
+              setHint('A heavy engraved stone trapdoor with three concentric ring etchings. Cleanse the ritual altar first to unlock Chapter 2: The Catacombs.');
+            }
+          }
+        }
+      ]
+    },
+
+    wine_cellar: {
+      name: 'Catacombs: Vintage Wine Cellar',
+      hint: 'Damp vaulted limestone arches with giant wooden wine casks from 1845. Search the casks.',
+      hotspots: [
+        {
+          id: 'wineCasks',
+          top: '32%',
+          left: '20%',
+          width: '26%',
+          height: '38%',
+          tag: 'Ancient Oak Casks',
+          onClick: () => {
+            if (!state.wineCaskInspected) {
+              state.wineCaskInspected = true;
+              addItem('kerosene');
+              spawnFloatText('+1 KEROSENE FLASK', '#f59e0b', 320, 260);
+              addJournalEntry('Cellarman Vintage Log', '"The reserve casks contain refined kerosene lamps. Keep the lanterns ablaze down here; shadows take physical form in pitch black."');
+              setHint('You found a Flask of Refined Kerosene tucked behind the moldering oak barrel!');
+              updateCaseTracker();
+            } else {
+              setHint('Empty barrels smelling of fermented vintage blackberry wine and damp earth.');
+            }
+          }
+        },
+        {
+          id: 'doorToBasement',
+          top: '25%',
+          left: '4%',
+          width: '10%',
+          height: '35%',
+          tag: 'Stone Steps Up to Crypt',
+          onClick: () => switchRoom('basement')
+        },
+        {
+          id: 'doorToOssuary',
+          top: '24%',
+          left: '82%',
+          width: '12%',
+          height: '42%',
+          tag: 'Tunnel to Ossuary',
+          onClick: () => {
+            unlockRoom('ossuary');
+            switchRoom('ossuary');
+          }
+        }
+      ]
+    },
+
+    ossuary: {
+      name: 'Catacombs: The Ossuary Hall',
+      hint: 'Alcoves lined with centuries-old family skulls and bones. An iron niche holds forgotten records.',
+      hotspots: [
+        {
+          id: 'ossuaryAltarNiche',
+          top: '30%',
+          left: '42%',
+          width: '16%',
+          height: '34%',
+          tag: 'Bone Mosaic Niche',
+          onClick: () => {
+            if (!state.ossuaryCryptInspected) {
+              state.ossuaryCryptInspected = true;
+              addItem('archival_journal');
+              spawnFloatText('JOURNAL VOL II ACQUIRED', '#a855f7', 480, 240);
+              addJournalEntry('Archibald Diary Vol II: Celestial Seal', '"The Ancestral Crypt is locked with concentric stone wheels. Align outer, middle, and inner notches to zenith (0 degrees) to breach the final sanctum."');
+              setHint('Found Archibald's Journal Vol II! It details the rotating stone seal mechanism.');
+              updateCaseTracker();
+            } else {
+              setHint('An ornate skull altar surrounded by extinguished tallow candles.');
+            }
+          }
+        },
+        {
+          id: 'keroseneRefill',
+          top: '68%',
+          left: '18%',
+          width: '12%',
+          height: '18%',
+          tag: 'Lantern Supply Crate',
+          onClick: () => {
+            state.lanternFuel = Math.min(100, state.lanternFuel + 50);
+            if (lanternBar) lanternBar.style.width = state.lanternFuel + '%';
+            spawnFloatText('LANTERN REFUELED (+50%)', '#f59e0b', 240, 360);
+            setHint('Refilled oil lantern from the wall supply shelf!');
+          }
+        },
+        {
+          id: 'doorBackWine',
+          top: '26%',
+          left: '4%',
+          width: '10%',
+          height: '36%',
+          tag: 'Archway to Wine Cellar',
+          onClick: () => switchRoom('wine_cellar')
+        },
+        {
+          id: 'doorToCryptSeal',
+          top: '22%',
+          left: '78%',
+          width: '14%',
+          height: '46%',
+          tag: 'Heavy Granite Archway to Ancestral Crypt',
+          onClick: () => {
+            unlockRoom('ancestral_crypt');
+            switchRoom('ancestral_crypt');
+          }
+        }
+      ]
+    },
+
+    ancestral_crypt: {
+      name: 'Catacombs: Ancestral Crypt & Reliquary',
+      hint: 'The final sanctum of House Blackwood. The rotating runic stone seal guards the true escape passage.',
+      hotspots: [
+        {
+          id: 'stoneSealPuzzle',
+          top: '25%',
+          left: '38%',
+          width: '24%',
+          height: '44%',
+          tag: 'Concentric Stone Seal',
+          onClick: () => openModal(modalSeal)
+        },
+        {
+          id: 'doorBackOssuary',
+          top: '28%',
+          left: '4%',
+          width: '10%',
+          height: '36%',
+          tag: 'Tunnel Back to Ossuary',
+          onClick: () => switchRoom('ossuary')
         }
       ]
     }
@@ -1116,18 +1291,82 @@
 
     if (hasLocket && hasMatches && hasSalt) {
       state.altarCleansed = true;
+      state.chapterTwoUnlocked = true;
+      state.hasLantern = true;
       sound.playMusicBox();
-      altarStatus.textContent = 'The locket shines with brilliant celestial light! The dark curse dissolves into morning mist!';
+      altarStatus.textContent = 'The celestial locket illuminates the crypt! An ancient stone floor trapdoor slides open leading into The Catacombs!';
+      addItem('cellar_key');
+      addJournalEntry('Subterranean Catacombs Protocol', '"Beneath Blackwood Manor lies the ancestral crypt. The stone seal guards the ancient heirloom. Conserve lantern fuel or the suffocating darkness will consume you."');
+      
+      // Reveal Catacomb tabs and lantern meter
+      document.querySelectorAll('.catacomb-tab').forEach(tab => tab.style.display = 'inline-block');
+      if (lanternMeterGroup) lanternMeterGroup.style.display = 'flex';
+      unlockRoom('wine_cellar');
       updateCaseTracker();
+      
       setTimeout(() => {
         closeModal(modalAltar);
-        triggerEnding('cursebreaker');
-      }, 1500);
+        switchRoom('wine_cellar');
+        setHint('CHAPTER 2 UNLOCKED: Entered the Catacombs Wine Cellar! Maintain oil lantern fuel with kerosene!');
+      }, 2000);
     } else {
       sound.playCreak();
       altarStatus.textContent = 'Missing ritual artifacts! You need: Eleanor\'s Locket, Matchsticks, and Consecrated Salt.';
     }
   });
+
+
+  // --- Rotating Stone Seal Controls (Catacombs Chapter 2) ---
+  function updateSealVisuals() {
+    if (ringOuterEl) ringOuterEl.style.transform = `rotate(${state.stoneRings.outer}deg)`;
+    if (ringMidEl) ringMidEl.style.transform = `rotate(${state.stoneRings.mid}deg)`;
+    if (ringInnerEl) ringInnerEl.style.transform = `rotate(${state.stoneRings.inner}deg)`;
+  }
+
+  if (btnRotateOuter) {
+    btnRotateOuter.addEventListener('click', () => {
+      sound.playClick();
+      state.stoneRings.outer = (state.stoneRings.outer + 45) % 360;
+      updateSealVisuals();
+    });
+  }
+
+  if (btnRotateMid) {
+    btnRotateMid.addEventListener('click', () => {
+      sound.playClick();
+      state.stoneRings.mid = (state.stoneRings.mid + 90) % 360;
+      updateSealVisuals();
+    });
+  }
+
+  if (btnRotateInner) {
+    btnRotateInner.addEventListener('click', () => {
+      sound.playClick();
+      state.stoneRings.inner = (state.stoneRings.inner + 45) % 360;
+      updateSealVisuals();
+    });
+  }
+
+  if (btnInspectSealAlignment) {
+    btnInspectSealAlignment.addEventListener('click', () => {
+      const isAligned = (state.stoneRings.outer % 360 === 0) &&
+                        (state.stoneRings.mid % 360 === 0) &&
+                        (state.stoneRings.inner % 360 === 0);
+      if (isAligned) {
+        state.sealUnlocked = true;
+        sound.playMusicBox();
+        sealStatus.textContent = 'Runic glyphs resonate with golden light! The granite crypt seal unlocks!';
+        updateCaseTracker();
+        setTimeout(() => {
+          closeModal(modalSeal);
+          triggerEnding('cursebreaker');
+        }, 1600);
+      } else {
+        sound.playCreak();
+        sealStatus.textContent = `Unaligned: Outer ${state.stoneRings.outer}°, Mid ${state.stoneRings.mid}°, Inner ${state.stoneRings.inner}° (Must all reach 0°)`;
+      }
+    });
+  }
 
   function triggerEnding(type) {
     state.gameEnded = true;
@@ -2028,6 +2267,99 @@
         ctx.fillStyle = bGlow;
         ctx.fillRect(500 + bulbSwing - 80, 45, 160, 160);
       }
+    } else if (rm === 'wine_cellar') {
+      // Subterranean Romanesque Arch & Cask Cellar
+      ctx.fillStyle = '#08060a';
+      ctx.fillRect(-20, -20, VW + 40, VH + 40);
+
+      // Curved stone arch ribbing
+      ctx.strokeStyle = '#2d2438';
+      ctx.lineWidth = 6;
+      for (let x = 120; x < VW; x += 220) {
+        ctx.beginPath();
+        ctx.arc(x, 180, 160, Math.PI, 0);
+        ctx.stroke();
+      }
+
+      // Massive Oak Wine Casks
+      const caskGlow = ctx.createLinearGradient(160, 180, 360, 380);
+      caskGlow.addColorStop(0, '#2d1a10');
+      caskGlow.addColorStop(0.5, '#4a2c1b');
+      caskGlow.addColorStop(1, '#1e110b');
+      ctx.fillStyle = caskGlow;
+      ctx.beginPath();
+      ctx.ellipse(260, 280, 110, 85, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#110a06';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      // Cask Iron Bands
+      ctx.strokeStyle = '#594d46';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.ellipse(260, 280, 85, 83, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(260, 280, 55, 80, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Ambient Lantern Amber Glow
+      const ambGlow = ctx.createRadialGradient(VW * 0.5, VH * 0.6, 20, VW * 0.5, VH * 0.6, 300);
+      ambGlow.addColorStop(0, 'rgba(245, 158, 11, 0.12)');
+      ambGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = ambGlow;
+      ctx.fillRect(0, 0, VW, VH);
+
+    } else if (rm === 'ossuary') {
+      // Ossuary Bone Vault
+      ctx.fillStyle = '#0a0808';
+      ctx.fillRect(-20, -20, VW + 40, VH + 40);
+
+      // Stacked bone shelf niches
+      ctx.fillStyle = '#1c1719';
+      for (let row = 80; row < VH - 100; row += 90) {
+        ctx.fillRect(100, row, VW - 200, 24);
+        for (let col = 120; col < VW - 120; col += 65) {
+          ctx.fillStyle = '#9e9689';
+          ctx.beginPath();
+          ctx.arc(col, row - 12, 14, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#110e10';
+          ctx.beginPath();
+          ctx.arc(col - 4, row - 12, 3, 0, Math.PI * 2);
+          ctx.arc(col + 4, row - 12, 3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#1c1719';
+        }
+      }
+
+    } else if (rm === 'ancestral_crypt') {
+      // Ancestral Grand Crypt with Concentric Rotating Seal
+      ctx.fillStyle = '#050308';
+      ctx.fillRect(-20, -20, VW + 40, VH + 40);
+
+      // Glowing seal aura on back stone wall
+      const sealAura = ctx.createRadialGradient(VW * 0.5, VH * 0.48, 30, VW * 0.5, VH * 0.48, 220);
+      sealAura.addColorStop(0, state.sealUnlocked ? 'rgba(56, 239, 125, 0.25)' : 'rgba(245, 158, 11, 0.2)');
+      sealAura.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = sealAura;
+      ctx.fillRect(0, 0, VW, VH);
+
+      // Outer Carved Arch
+      ctx.strokeStyle = state.sealUnlocked ? '#38ef7d' : '#f59e0b';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(VW * 0.5, VH * 0.48, 130, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(VW * 0.5, VH * 0.48, 90, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(VW * 0.5, VH * 0.48, 50, 0, Math.PI * 2);
+      ctx.stroke();
     }
 
     ctx.restore();
@@ -2158,6 +2490,17 @@
         state.flashlightOn = false;
         lightLabel.textContent = 'Light: DEAD';
         setHint('Your flashlight battery died! Darkness is encroaching!');
+      }
+    }
+
+    // Catacomb Lantern Fuel Decay
+    if (state.hasLantern && ['wine_cellar', 'ossuary', 'ancestral_crypt'].includes(state.currentRoom)) {
+      state.lanternFuel = Math.max(0, state.lanternFuel - 0.35);
+      if (lanternBar) lanternBar.style.width = `${state.lanternFuel}%`;
+      if (state.lanternFuel <= 0) {
+        state.sanity = Math.max(0, state.sanity - 2.5);
+        sanityBar.style.width = `${state.sanity}%`;
+        if (state.sanity <= 0) triggerEnding('bad');
       }
     }
 

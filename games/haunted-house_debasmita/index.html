@@ -82,6 +82,14 @@
         </div>
       </div>
 
+      <!-- Oil Lantern Fuel Meter (Catacombs) -->
+      <div class="meter-group" id="lanternMeterGroup" title="Catacomb Oil Lantern Fuel" style="display: none;">
+        <span class="meter-label" style="color: #f59e0b;">OIL LANTERN</span>
+        <div class="meter-track">
+          <div class="meter-fill-lantern" id="lanternBar" style="width: 100%; background: linear-gradient(90deg, #b45309, #f59e0b); height: 100%; border-radius: 4px; transition: width 0.3s ease;"></div>
+        </div>
+      </div>
+
       <div class="threat-badge" id="threatBadge">Quiet</div>
     </div>
 
@@ -112,6 +120,9 @@
     <button class="room-tab locked" data-room="kitchen" id="tabKitchen">Kitchen</button>
     <button class="room-tab locked" data-room="bedroom" id="tabBedroom">Bedroom</button>
     <button class="room-tab locked" data-room="basement" id="tabBasement">Basement</button>
+    <button class="room-tab locked catacomb-tab" data-room="wine_cellar" id="tabWineCellar" style="display: none;">Wine Cellar</button>
+    <button class="room-tab locked catacomb-tab" data-room="ossuary" id="tabOssuary" style="display: none;">Ossuary</button>
+    <button class="room-tab locked catacomb-tab" data-room="ancestral_crypt" id="tabAncestralCrypt" style="display: none;">Ancestral Crypt</button>
   </nav>
 
   <!-- Floating Case Objective Tracker -->
@@ -370,6 +381,46 @@
         <h2 class="ending-title" id="endingTitle">ESCAPE</h2>
         <div class="ending-desc" id="endingText"></div>
         <button class="btn-primary" id="btnRestartGame" style="padding: 8px 20px;" type="button">Investigate Again</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Ancestral Crypt Rotating Stone Seal (Chapter 2) -->
+  <div class="modal-backdrop" id="modalSeal" role="dialog" aria-modal="true" aria-labelledby="sealTitle">
+    <div class="modal-card modal-card-sm modal-window">
+      <div class="modal-head">
+        <h3 class="modal-title" id="sealTitle">Ancestral Crypt Granite Seal</h3>
+        <button class="modal-close-btn" data-close="modalSeal" aria-label="Close Seal Modal" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-content">
+        <p class="modal-subtitle">Align all 3 concentric runic rings to zenith (0&deg;) to disengage the ancestral lock.</p>
+        <div class="stone-seal-container">
+          <div class="stone-ring stone-ring-outer" id="ringOuter">
+            <div class="ring-notch-mark"></div>
+            <span class="ring-label-text">OUTER</span>
+            <div class="stone-ring stone-ring-mid" id="ringMid">
+              <div class="ring-notch-mark"></div>
+              <span class="ring-label-text">MID</span>
+              <div class="stone-ring stone-ring-inner" id="ringInner">
+                <div class="ring-notch-mark"></div>
+                <div class="ring-core-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="stone-controls-row">
+          <button type="button" class="ring-btn" id="btnRotateOuter">Rotate Outer (+45&deg;)</button>
+          <button type="button" class="ring-btn" id="btnRotateMid">Rotate Mid (+90&deg;)</button>
+          <button type="button" class="ring-btn" id="btnRotateInner">Rotate Inner (+45&deg;)</button>
+        </div>
+        <div class="puzzle-status" id="sealStatus" style="text-align: center; color: #ffca7a; margin-top: 12px; min-height: 1.2rem; font-size: 0.82rem;">Align notches to 0&deg; zenith axis.</div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-primary" id="btnInspectSealAlignment" style="width: 100%;">Engage Granite Mechanism</button>
       </div>
     </div>
   </div>
