@@ -387,13 +387,19 @@
 
         <!-- Search & Sort Controls Toolbar -->
         <div class="games-toolbar-controls">
-          <div class="search-box">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="search-box" id="search-box-wrapper">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" id="game-search-input" placeholder="Search game or contributor..."
-              aria-label="Search games or contributors">
+            <input type="text" id="game-search-input" placeholder="Search games, contributors, tags..."
+              aria-label="Search games, contributors or tags" autocomplete="off">
+            <button type="button" class="search-clear-btn" id="search-clear-btn" aria-label="Clear search" title="Clear search" hidden>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </div>
 
           <div class="sort-box">
@@ -405,6 +411,12 @@
             </select>
           </div>
         </div>
+      </div>
+
+      <!-- Live Results Count & Active Filter Indicator -->
+      <div class="search-results-bar" id="search-results-bar" aria-live="polite" aria-atomic="true">
+        <span class="results-count" id="catalog-results-count"></span>
+        <div class="search-tags-row" id="search-tags-row" aria-label="Quick tag filters"></div>
       </div>
 
       <!-- Faceted Filter Sub-Bar: Duration & Control Scheme -->
