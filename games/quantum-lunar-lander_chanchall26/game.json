@@ -1,0 +1,15 @@
+{
+  "title": "Quantum Lunar Lander",
+  "category": "Physics",
+  "lucideIcon": "orbit",
+  "description": "A precision landing simulator with real orbital gravity, limited fuel and procedural craggy moons. Land softly on 2x, 3x and 5x pads while a quantum gravity anomaly bends your flight path.",
+  "author": "Chanchal Gupta",
+  "github": "chanchall26",
+  "role": "Arcade Developer",
+  "tags": [
+    "Physics",
+    "Space",
+    "Simulation",
+    "Procedural"
+  ]
+}
