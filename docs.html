@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="docs-viewport-html">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,7 +24,7 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body>
+<body class="docs-viewport-body">
   <a class="skip-link" href="#main-content">Skip to main content</a>
   <div class="cyber-grid"></div>
   <div class="glow-orb orb-1"></div>
@@ -113,36 +113,17 @@
     </div>
   </header>
 
-  <!-- Hero Section -->
-  <main id="main-content" tabindex="-1">
-    <div class="page-hero">
-      <div class="page-hero-badge">
-        <span class="pulse-dot"></span> Architectural Reference Manual
+  <!-- Main App Layout: 2-Column Dual-Pane Viewport Container -->
+  <div class="docs-viewport-container" id="main-content" tabindex="-1">
+    <!-- PANE 1: Fixed, Independently Scrollable Left Navigation Sidebar -->
+    <aside class="docs-sidebar" aria-label="Documentation Navigation">
+      <div class="docs-sidebar-header">
+        <span class="docs-sidebar-title">Table of Contents</span>
       </div>
-      <h1 class="page-hero-title">Developer <span class="gradient-text">Documentation</span></h1>
-      <p class="page-hero-subtitle">
-        Comprehensive guide to the ArcadeVerse platform architecture, isolated directory standards, validation tooling, in-app scoring, and client-side subsystems.
-      </p>
-      <div class="page-meta-row">
-        <span class="page-meta-item"><i data-lucide="layers"></i> Architecture 1.2.0</span>
-        <span>•</span>
-        <span class="page-meta-item"><i data-lucide="git-branch"></i> Zero-Conflict Standards</span>
-        <span>•</span>
-        <span class="page-meta-item"><i data-lucide="cpu"></i> Pure Vanilla Web Stack</span>
+      <div class="docs-sidebar-search">
+        <i data-lucide="search"></i>
+        <input type="text" id="docs-search-input" placeholder="Filter topics..." aria-label="Filter documentation sections">
       </div>
-    </div>
-
-    <!-- 2-Column Documentation Wrapper with Sticky TOC Sidebar -->
-    <div class="docs-wrapper">
-      <!-- Sticky Sidebar Navigation -->
-      <aside class="docs-sidebar" aria-label="Documentation Navigation">
-        <div class="docs-sidebar-header">
-          <span class="docs-sidebar-title">Table of Contents</span>
-        </div>
-        <div class="docs-sidebar-search">
-          <i data-lucide="search"></i>
-          <input type="text" id="docs-search-input" placeholder="Filter topics..." aria-label="Filter documentation sections">
-        </div>
 
         <nav>
           <div class="docs-nav-group">
@@ -196,8 +177,28 @@
         </nav>
       </aside>
 
-      <!-- Main Documentation Content -->
-      <article class="docs-content">
+      <!-- PANE 2: Independently Scrollable Right Content Pane -->
+      <main class="docs-content-pane" id="docs-content-pane" tabindex="-1">
+        <!-- Hero Section Header inside scrollable pane -->
+        <header class="docs-hero-panel">
+          <div class="page-hero-badge">
+            <span class="pulse-dot"></span> Architectural Reference Manual
+          </div>
+          <h1 class="page-hero-title">Developer <span class="gradient-text">Documentation</span></h1>
+          <p class="page-hero-subtitle">
+            Comprehensive guide to the ArcadeVerse platform architecture, isolated directory standards, validation tooling, in-app scoring, and client-side subsystems.
+          </p>
+          <div class="page-meta-row">
+            <span class="page-meta-item"><i data-lucide="layers"></i> Architecture 1.2.0</span>
+            <span>&bull;</span>
+            <span class="page-meta-item"><i data-lucide="git-branch"></i> Zero-Conflict Standards</span>
+            <span>&bull;</span>
+            <span class="page-meta-item"><i data-lucide="cpu"></i> Pure Vanilla Web Stack</span>
+          </div>
+        </header>
+
+        <!-- Main Documentation Content Articles -->
+        <article class="docs-content">
 
         <!-- 1. Platform Overview -->
         <section class="docs-section" id="overview">
@@ -905,85 +906,8 @@ function updateCategoryPillCounts() {
         </section>
 
       </article>
-    </div>
-  </main>
-
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="footer-inner-wrap" style="max-width: 1280px; margin: 0 auto;">
-      <div class="footer-admin-strip">
-        <div class="footer-admin-left">
-          <span class="footer-admin-badge"><i data-lucide="shield-check" style="width: 13px; height: 13px;"></i> Project Administration</span>
-          <div class="footer-admin-details">
-            <strong class="footer-admin-name">Debasmita Bose</strong>
-            <span class="footer-admin-event">• NSOC Winter Edition 2026</span>
-          </div>
-        </div>
-        <div class="footer-admin-right">
-          <span class="footer-admin-status"><span class="status-dot"></span> Accepting Manual PRs</span>
-          <a href="https://github.com/DebasmitaBose0/ArcadeVerse" target="_blank" rel="noopener noreferrer" class="btn btn-github-highlight btn-sm" style="padding: 0.35rem 0.85rem; font-size: 0.8rem;">
-            <i data-lucide="git-pull-request" style="width: 13px; height: 13px;"></i> Contribute
-          </a>
-        </div>
-      </div>
-    </div>
-    <div class="footer-container">
-      <div class="footer-col">
-        <div class="logo">
-          <img src="assets/public/brand-logo.webp" alt="ArcadeVerse Logo" class="brand-logo-img" width="34" height="34">
-          <span class="logo-text">Arcade<span class="gradient-accent">Verse</span></span>
-        </div>
-        <p class="footer-desc">An open-source flagship gaming initiative for NSOC Winter Edition 2026. Designed for seamless, conflict-free manual open source contributions.</p>
-        <div class="footer-cta-wrapper" style="margin-top: 1.4rem;">
-          <a href="https://github.com/DebasmitaBose0/ArcadeVerse" target="_blank" rel="noopener noreferrer" class="btn btn-github-highlight" title="Star and view ArcadeVerse on GitHub">
-            <span class="github-star-icon"><i data-lucide="star"></i></span>
-            <span class="github-btn-text">GitHub</span>
-          </a>
-        </div>
-      </div>
-
-      <div class="footer-col">
-        <h4>Explore Platform</h4>
-        <ul class="footer-list">
-          <li><a href="index.html"><i data-lucide="gamepad-2"></i> Explore All Games</a></li>
-          <li><a href="leaderboard.html"><i data-lucide="trophy"></i> Hall of Fame</a></li>
-          <li><a href="docs.html"><i data-lucide="file-code-2"></i> Documentation</a></li>
-          <li><a href="faqs.html"><i data-lucide="help-circle"></i> FAQs</a></li>
-          <li><a href="https://github.com/DebasmitaBose0/ArcadeVerse/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer"><i data-lucide="book-open"></i> Contributor Guidelines</a></li>
-        </ul>
-      </div>
-
-      <div class="footer-col">
-        <h4>Legal & Policies</h4>
-        <ul class="footer-list">
-          <li><a href="terms.html"><i data-lucide="file-text"></i> Terms of Service</a></li>
-          <li><a href="privacy.html"><i data-lucide="shield"></i> Privacy Policy</a></li>
-          <li><a href="https://github.com/DebasmitaBose0/ArcadeVerse/blob/main/CODE_OF_CONDUCT.md" target="_blank" rel="noopener noreferrer"><i data-lucide="heart-handshake"></i> Code of Conduct</a></li>
-          <li><a href="https://github.com/DebasmitaBose0/ArcadeVerse/blob/main/SECURITY.md" target="_blank" rel="noopener noreferrer"><i data-lucide="lock"></i> Security Policy</a></li>
-          <li><a href="https://github.com/DebasmitaBose0/ArcadeVerse/blob/main/LICENSE" target="_blank" rel="noopener noreferrer"><i data-lucide="file-check"></i> MIT License</a></li>
-        </ul>
-      </div>
-
-      
-    </div>
-
-    <div class="footer-bottom">
-      <div class="footer-bottom-content">
-        <p>© 2026 ArcadeVerse • Open Source under MIT License • NSOC Winter Edition 2026</p>
-        <div class="footer-bottom-links">
-          <a href="terms.html">Terms</a>
-          <span>•</span>
-          <a href="privacy.html">Privacy</a>
-          <span>•</span>
-          <a href="docs.html">Docs</a>
-          <span>•</span>
-          <a href="faqs.html">FAQs</a>
-          <span>•</span>
-          <a href="https://github.com/DebasmitaBose0/ArcadeVerse" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
-        </div>
-      </div>
-    </div>
-  </footer>
+      </div> <!-- End .docs-content-pane -->
+    </div> <!-- End .docs-viewport-container -->
 
   <!-- Page Transition Circular Loader -->
   <div id="page-transition-loader" class="page-loader-overlay" aria-hidden="true">
@@ -1032,17 +956,19 @@ function updateCategoryPillCounts() {
       const sections = document.querySelectorAll('.docs-section');
       const navLinks = document.querySelectorAll('.docs-nav-link');
       const sidebar = document.querySelector('.docs-sidebar');
+      const scrollContainer = document.getElementById('docs-content-pane') || window;
       let currentActiveId = null;
 
       function updateActiveToc() {
-        const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-        const navHeight = 100;
+        const isWindow = scrollContainer === window;
+        const scrollY = isWindow ? (window.pageYOffset || document.documentElement.scrollTop) : scrollContainer.scrollTop;
+        const navHeight = 60;
         let matchedId = null;
 
         // Iterate backwards so the lowest active section in viewport takes precedence
         for (let i = sections.length - 1; i >= 0; i--) {
           const sec = sections[i];
-          const top = sec.offsetTop - navHeight;
+          const top = isWindow ? (sec.offsetTop - 100) : (sec.offsetTop - navHeight);
           if (scrollY >= top) {
             matchedId = sec.getAttribute('id');
             break;
@@ -1069,12 +995,35 @@ function updateCategoryPillCounts() {
             }
           });
 
-          // Sidebar flows naturally with the page layout; update active navigation states seamlessly
+          if (activeLink && sidebar) {
+            const linkRect = activeLink.getBoundingClientRect();
+            const sidebarRect = sidebar.getBoundingClientRect();
+            if (linkRect.top < sidebarRect.top || linkRect.bottom > sidebarRect.bottom) {
+              activeLink.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+          }
         }
       }
 
+      if (scrollContainer !== window) {
+        scrollContainer.addEventListener('scroll', updateActiveToc, { passive: true });
+      }
       window.addEventListener('scroll', updateActiveToc, { passive: true });
       updateActiveToc();
+
+      // Smooth scroll inside scrollContainer when clicking sidebar links
+      navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          const targetId = link.getAttribute('href')?.replace('#', '');
+          const targetEl = document.getElementById(targetId);
+          if (targetEl && scrollContainer !== window && window.innerWidth > 1024) {
+            e.preventDefault();
+            const topOffset = targetEl.offsetTop - 20;
+            scrollContainer.scrollTo({ top: topOffset, behavior: 'smooth' });
+            history.pushState(null, null, '#' + targetId);
+          }
+        });
+      });
 
       if (window.lucide) {
         lucide.createIcons();

@@ -1269,17 +1269,157 @@ h3:hover .docs-heading-anchor {
   border-bottom: 1px solid var(--border-subtle);
 }
 
+/* ==========================================================================
+   VIEWPORT-LOCKED DUAL-PANE DOCUMENTATION (Tailwind Slate / Modern Theme)
+   ========================================================================== */
+
+/* 1. Body & HTML Viewport Lock (100vh with Zero Outer Window Scrollbars) */
+html.docs-viewport-html,
+body.docs-viewport-body {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 2. Main Dual-Pane Viewport Container (Fills exact remaining viewport) */
+.docs-viewport-container {
+  display: flex;
+  flex: 1 1 auto;
+  height: calc(100vh - 64px);
+  max-height: calc(100vh - 64px);
+  width: 100vw;
+  max-width: 100%;
+  overflow: hidden;
+  position: relative;
+  background-color: var(--bg-main, #0b0f19);
+}
+
+/* ==========================================================================
+   PANE 1: Left Navigation Sidebar (Fixed Width, Independently Scrollable)
+   ========================================================================== */
+.docs-viewport-container .docs-sidebar {
+  position: static;
+  width: 310px;
+  min-width: 310px;
+  max-width: 310px;
+  height: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1.5rem 1rem 3rem 1.25rem;
+  background: rgba(15, 23, 42, 0.65); /* slate-900/65 */
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: none;
+  border-bottom: none;
+  border-left: none;
+  border-radius: 0;
+  box-shadow: 2px 0 16px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(12px);
+  flex-shrink: 0;
+  z-index: 20;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.2) transparent;
+}
+
+[data-theme="light"] .docs-viewport-container .docs-sidebar {
+  background: #ffffff;
+  border-right-color: #e2e8f0; /* slate-200 */
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.03);
+  scrollbar-color: rgba(100, 116, 139, 0.2) transparent;
+}
+
+/* Left Sidebar Custom Scrollbar */
+.docs-viewport-container .docs-sidebar::-webkit-scrollbar {
+  width: 5px;
+}
+.docs-viewport-container .docs-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.docs-viewport-container .docs-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 9999px;
+}
+.docs-viewport-container .docs-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.45);
+}
+
+/* ==========================================================================
+   PANE 2: Right Content Area (Independently Smooth Scrollable)
+   ========================================================================== */
+.docs-content-pane {
+  flex: 1 1 auto;
+  height: 100%;
+  max-height: 100%;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  padding: 2.5rem 3.5rem 6rem;
+  min-width: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+}
+
+/* Content Area Discreet Custom Scrollbar */
+.docs-content-pane::-webkit-scrollbar {
+  width: 8px;
+}
+.docs-content-pane::-webkit-scrollbar-track {
+  background: transparent;
+}
+.docs-content-pane::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.docs-content-pane::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+/* Hero Section Inside Right Scroll Pane */
+.docs-hero-panel {
+  max-width: 960px;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+[data-theme="light"] .docs-hero-panel {
+  border-bottom-color: #e2e8f0;
+}
+
+/* Responsive Fallback on Mobile/Tablet */
 @media (max-width: 1024px) {
-  .docs-wrapper {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-    padding: 1.5rem 1rem 4rem;
+  html.docs-viewport-html,
+  body.docs-viewport-body {
+    height: auto !important;
+    max-height: none !important;
+    overflow: auto !important;
   }
-  .docs-sidebar {
-    position: static;
+  .docs-viewport-container {
+    flex-direction: column;
+    height: auto;
     max-height: none;
+    overflow: visible;
   }
-  .docs-section {
-    padding: 1.5rem;
+  .docs-viewport-container .docs-sidebar {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    position: static;
+    box-shadow: none;
+  }
+  .docs-content-pane {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    padding: 2rem 1.25rem;
   }
 }
