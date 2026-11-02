@@ -7910,3 +7910,254 @@ html.a11y-reduced-motion .badge-count {
   transition: none !important;
   transform: none !important;
 }
+
+/* ========================================================
+   ACCENT COLORWAY SYSTEM (CYBER CYAN, NEON PINK, TOXIC LIME, PUMPKIN ORANGE, ETC.)
+   ======================================================== */
+:root[data-colorway="cyan"],
+[data-colorway="cyan"] {
+  --accent-primary: #00f5ff;
+  --accent-primary-hover: #00c8d4;
+  --accent-secondary: #3b82f6;
+  --border-focus: #00f5ff;
+  --orb-1-color: #00f5ff;
+}
+
+:root[data-colorway="pink"],
+[data-colorway="pink"] {
+  --accent-primary: #ff007f;
+  --accent-primary-hover: #d6006b;
+  --accent-secondary: #f43f5e;
+  --border-focus: #ff007f;
+  --orb-1-color: #ff007f;
+}
+
+:root[data-colorway="lime"],
+[data-colorway="lime"] {
+  --accent-primary: #00ff66;
+  --accent-primary-hover: #00d655;
+  --accent-secondary: #10b981;
+  --border-focus: #00ff66;
+  --orb-1-color: #00ff66;
+}
+
+:root[data-colorway="orange"],
+[data-colorway="orange"] {
+  --accent-primary: #ff7700;
+  --accent-primary-hover: #e06800;
+  --accent-secondary: #f59e0b;
+  --border-focus: #ff7700;
+  --orb-1-color: #ff7700;
+}
+
+:root[data-colorway="purple"],
+[data-colorway="purple"] {
+  --accent-primary: #a855f7;
+  --accent-primary-hover: #9333ea;
+  --accent-secondary: #7c3aed;
+  --border-focus: #a855f7;
+  --orb-1-color: #a855f7;
+}
+
+:root[data-colorway="amber"],
+[data-colorway="amber"] {
+  --accent-primary: #f59e0b;
+  --accent-primary-hover: #d97706;
+  --accent-secondary: #ea580c;
+  --border-focus: #f59e0b;
+  --orb-1-color: #f59e0b;
+}
+
+/* Colorway Selector Component Styling */
+.colorway-picker-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.colorway-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-medium);
+  color: var(--text-primary);
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.colorway-trigger-btn:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 12px rgba(var(--accent-primary), 0.25);
+}
+
+.colorway-trigger-btn:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.colorway-swatch-current {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  box-shadow: 0 0 8px var(--accent-primary);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.colorway-trigger-label {
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+}
+
+.colorway-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 220px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  box-shadow: var(--shadow-md), 0 12px 32px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1000;
+  animation: colorwayFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes colorwayFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.colorway-popover.open {
+  display: flex;
+}
+
+.colorway-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.colorway-popover-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.colorway-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.colorway-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.18s ease;
+  width: 100%;
+}
+
+.colorway-btn:hover {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+
+.colorway-btn.active {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 10px rgba(var(--accent-primary), 0.2);
+}
+
+.colorway-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.colorway-name {
+  flex: 1;
+}
+
+/* Additional Colorway Theme Accents and Interactive Micro-interactions */
+.colorway-picker-container:focus-within .colorway-trigger-btn {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 10px rgba(var(--accent-primary), 0.3);
+}
+
+.colorway-btn:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 1px;
+}
+
+[data-colorway="cyan"] .btn-primary {
+  box-shadow: 0 4px 18px rgba(0, 245, 255, 0.28);
+}
+
+[data-colorway="pink"] .btn-primary {
+  box-shadow: 0 4px 18px rgba(255, 0, 127, 0.28);
+}
+
+[data-colorway="lime"] .btn-primary {
+  box-shadow: 0 4px 18px rgba(0, 255, 102, 0.28);
+}
+
+[data-colorway="orange"] .btn-primary {
+  box-shadow: 0 4px 18px rgba(255, 119, 0, 0.28);
+}
+
+[data-colorway="purple"] .btn-primary {
+  box-shadow: 0 4px 18px rgba(168, 85, 247, 0.28);
+}
+
+[data-colorway="amber"] .btn-primary {
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.28);
+}
+
+/* Colorway Tooltips and Badges */
+.colorway-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+}
