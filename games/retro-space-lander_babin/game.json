@@ -1,0 +1,18 @@
+{
+  "title": "Retro Space Lander: Apollo Lunar Descent",
+  "category": "Arcade / Physics",
+  "description": "Throttle lunar descent engines, manage scarce thruster fuel, and execute safe low-velocity touchdowns across jagged craters.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": [
+    "arcade",
+    "arcade",
+    "retro",
+    "html5-canvas",
+    "nsoc26"
+  ],
+  "difficulty": "Medium",
+  "featured": true,
+  "stars": 15
+}
