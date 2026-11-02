@@ -767,6 +767,25 @@ const GAMES_REGISTRY = [
     "featured": false
   },
   {
+    "id": "neon-highway-hopper_chanchall26",
+    "title": "Neon Highway Hopper",
+    "category": "Arcade",
+    "lucideIcon": "footprints",
+    "description": "Hop across endless cyber freeways, dodge magnetic trains and ride energy logs over laser rivers while collecting quantum bits for a bigger score multiplier.",
+    "author": "Chanchal Gupta",
+    "github": "chanchall26",
+    "role": "Arcade Developer",
+    "path": "games/neon-highway-hopper_chanchall26/index.html",
+    "tags": [
+      "Arcade",
+      "Endless",
+      "Neon",
+      "Timing"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "neon-lunar-lander_babin",
     "title": "Neon Lunar Lander",
     "category": "Physics",
@@ -1178,7 +1197,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 279,
+    "commits": 280,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -1284,6 +1303,23 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
+    "name": "Chanchal Gupta",
+    "github": "chanchall26",
+    "avatarInitial": "C",
+    "role": "Arcade Developer",
+    "commits": 3,
+    "gamesCount": 3,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Cyber Maze Runner",
+      "Neon Highway Hopper",
+      "Quantum Lunar Lander"
+    ]
+  },
+  {
     "name": "Harsh Jaiswani",
     "github": "hrshjswniii",
     "avatarInitial": "H",
@@ -1297,22 +1333,6 @@ const CONTRIBUTORS_REGISTRY = [
     "contributions": [
       "Cyber Brick Breaker",
       "Cyber Typer: Terminal Hacker"
-    ]
-  },
-  {
-    "name": "Chanchal Gupta",
-    "github": "chanchall26",
-    "avatarInitial": "C",
-    "role": "Arcade Developer",
-    "commits": 2,
-    "gamesCount": 2,
-    "mechanicsBonus": 0,
-    "platformPRs": 0,
-    "qualityPRs": 0,
-    "bonusPts": 0,
-    "contributions": [
-      "Cyber Maze Runner",
-      "Quantum Lunar Lander"
     ]
   },
   {
