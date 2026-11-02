@@ -29,10 +29,17 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentCategory = "all";
   let currentDurationFacet = "all";
   let currentControlsFacet = "all";
+  let currentTagFilter = "";
   let searchQuery = "";
   let currentSort = "featured";
   let lastFocusedElement = null;
   let activeGame = null;
+
+  // Search & filter UI element refs
+  const searchClearBtn = document.getElementById("search-clear-btn");
+  const resultsCountEl = document.getElementById("catalog-results-count");
+  const searchTagsRow = document.getElementById("search-tags-row");
+  const resetFacetsBtn = document.getElementById("btn-reset-facets");
 
   // Favorites LocalStorage Engine
   const FAVORITES_STORAGE_KEY = "arcadeverse_favorite_games";
@@ -260,6 +267,90 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // --- Build Dynamic Tag Chips from Registry Metadata ---
+  function buildTagChips() {
+    if (!searchTagsRow) return;
+    if (typeof GAMES_REGISTRY === "undefined" || !Array.isArray(GAMES_REGISTRY)) return;
+
+    // Collect all unique tags, excluding generic/noisy ones
+    const EXCLUDED = new Set(["nsoc26", "NSOC26", "html5-canvas", "html5"]);
+    const tagFreq = {};
+    GAMES_REGISTRY.forEach((g) => {
+      if (!Array.isArray(g.tags)) return;
+      g.tags.forEach((t) => {
+        const normalized = t.trim();
+        if (!normalized || EXCLUDED.has(normalized.toLowerCase())) return;
+        const key = normalized.toLowerCase();
+        tagFreq[key] = (tagFreq[key] || 0) + 1;
+      });
+    });
+
+    // Keep top 10 most-used tags
+    const topTags = Object.entries(tagFreq)
+      .filter(([, c]) => c >= 2)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([tag]) => tag.charAt(0).toUpperCase() + tag.slice(1));
+
+    if (topTags.length === 0) {
+      searchTagsRow.innerHTML = "";
+      return;
+    }
+
+    const label = document.createElement("span");
+    label.className = "tag-filter-label";
+    label.textContent = "Tags:";
+    searchTagsRow.innerHTML = "";
+    searchTagsRow.appendChild(label);
+
+    topTags.forEach((tag) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "tag-filter-chip" + (currentTagFilter === tag.toLowerCase() ? " active" : "");
+      btn.textContent = tag;
+      btn.setAttribute("aria-pressed", currentTagFilter === tag.toLowerCase() ? "true" : "false");
+      btn.addEventListener("click", () => {
+        if (currentTagFilter === tag.toLowerCase()) {
+          currentTagFilter = "";
+        } else {
+          currentTagFilter = tag.toLowerCase();
+        }
+        buildTagChips();
+        renderGames();
+      });
+      searchTagsRow.appendChild(btn);
+    });
+
+    // Add a clear-tag button if a tag is active
+    if (currentTagFilter) {
+      const clearTag = document.createElement("button");
+      clearTag.type = "button";
+      clearTag.className = "tag-filter-clear";
+      clearTag.setAttribute("aria-label", "Clear tag filter");
+      clearTag.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Clear tag`;
+      clearTag.addEventListener("click", () => {
+        currentTagFilter = "";
+        buildTagChips();
+        renderGames();
+      });
+      searchTagsRow.appendChild(clearTag);
+    }
+  }
+
+  // --- Live Results Count ---
+  function updateResultsCount(count) {
+    if (!resultsCountEl) return;
+    const total = (typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) ? GAMES_REGISTRY.length : 0;
+    const isFiltered = searchQuery || currentCategory !== "all" || currentDurationFacet !== "all" || currentControlsFacet !== "all" || currentTagFilter;
+    if (isFiltered) {
+      resultsCountEl.textContent = `${count} of ${total} game${total !== 1 ? "s" : ""} match`;
+      resultsCountEl.style.display = "";
+    } else {
+      resultsCountEl.textContent = `${total} game${total !== 1 ? "s" : ""} available`;
+      resultsCountEl.style.display = "";
+    }
+  }
+
   function renderGames() {
     gamesGrid.innerHTML = "";
     const favs = getFavorites();
@@ -295,6 +386,11 @@ document.addEventListener("DOMContentLoaded", () => {
         item.author.toLowerCase().includes(searchQuery) ||
         (item.tags && item.tags.some(t => t.toLowerCase().includes(searchQuery)));
 
+      // Tag Facet Filter
+      let matchesTag = true;
+      if (currentTagFilter) {
+        matchesTag = Array.isArray(item.tags) && item.tags.some(t => t.toLowerCase() === currentTagFilter);
+      }
       // Duration Facet Evaluation
       let matchesDuration = true;
       if (currentDurationFacet !== "all") {
@@ -324,7 +420,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
-      return matchesCategory && matchesSearch && matchesDuration && matchesControls;
+      return matchesCategory && matchesSearch && matchesDuration && matchesControls && matchesTag;
     });
 
     // Apply Sorting
@@ -349,6 +445,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Handle Empty State with Fuzzy Smart Suggestions
     if (filtered.length === 0) {
+      updateResultsCount(0);
       const emptyCard = document.createElement("div");
       emptyCard.className = "catalog-empty-state";
 
@@ -404,13 +501,17 @@ document.addEventListener("DOMContentLoaded", () => {
         emptyTitle.textContent = `No games found in "${currentCategory !== "all" ? currentCategory : searchQuery}"`;
       }
 
+      // Clear button should reset tag filter too
       emptyCard.querySelector("#reset-filter-btn").addEventListener("click", () => {
         searchQuery = "";
         currentCategory = "all";
+        currentTagFilter = "";
         if (searchInput) searchInput.value = "";
+        if (searchClearBtn) searchClearBtn.hidden = true;
         categoryPills.forEach((p) => p.classList.remove("active"));
         const allPill = document.querySelector('.category-pills .pill[data-category="all"]');
         if (allPill) allPill.classList.add("active");
+        buildTagChips();
         renderGames();
       });
 
@@ -441,6 +542,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    updateResultsCount(filtered.length);
     filtered.forEach((game) => {
       const card = document.createElement("div");
       card.className = "game-card";
@@ -836,9 +938,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Filter Search
+  // Filter Search + Clear Button
   searchInput.addEventListener("input", (e) => {
     searchQuery = e.target.value.toLowerCase().trim();
+    if (searchClearBtn) searchClearBtn.hidden = !e.target.value;
     renderGames();
   });
 
@@ -1033,5 +1136,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Initial render
+  buildTagChips();
   renderGames();
 });
