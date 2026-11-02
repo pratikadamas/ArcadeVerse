@@ -27,6 +27,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalFavBtn = document.getElementById("modal-fav-btn");
 
   let currentCategory = "all";
+  let currentDurationFacet = "all";
+  let currentControlsFacet = "all";
   let searchQuery = "";
   let currentSort = "featured";
   let lastFocusedElement = null;
@@ -227,6 +229,33 @@ document.addEventListener("DOMContentLoaded", () => {
   updateFavoritesBadge();
 
   // Render Games
+  
+  // --- Facet Filter Summary Indicator Engine ---
+  function updateFacetSummaryUI() {
+    const summaryContainer = document.getElementById("active-filters-summary");
+    if (!summaryContainer) return;
+
+    const activeTags = [];
+    if (currentDurationFacet !== "all") {
+      activeTags.push({ label: 'Duration: ' + currentDurationFacet, type: 'duration' });
+    }
+    if (currentControlsFacet !== "all") {
+      activeTags.push({ label: 'Controls: ' + currentControlsFacet, type: 'controls' });
+    }
+    if (currentCategory !== "all") {
+      activeTags.push({ label: 'Category: ' + currentCategory, type: 'category' });
+    }
+
+    if (activeTags.length === 0) {
+      summaryContainer.style.display = "none";
+      summaryContainer.innerHTML = "";
+    } else {
+      summaryContainer.style.display = "flex";
+      summaryContainer.innerHTML = '<span style="font-weight: 600;">Active Filters:</span>' +
+        activeTags.map(t => `<span class="active-filter-tag">${t.label}</span>`).join('');
+    }
+  }
+
   function renderGames() {
     gamesGrid.innerHTML = "";
     const favs = getFavorites();
@@ -262,7 +291,33 @@ document.addEventListener("DOMContentLoaded", () => {
         item.author.toLowerCase().includes(searchQuery) ||
         (item.tags && item.tags.some(t => t.toLowerCase().includes(searchQuery)));
 
-      return matchesCategory && matchesSearch;
+      // Duration Facet Evaluation
+      let matchesDuration = true;
+      if (currentDurationFacet !== "all") {
+        const descLower = (item.description || "").toLowerCase();
+        const tagsLower = (item.tags || []).map(t => t.toLowerCase());
+        const isQuick = tagsLower.includes("quick") || tagsLower.includes("arcade") || tagsLower.includes("casual") || descLower.includes("quick") || descLower.includes("fast-paced");
+        const isDeep = tagsLower.includes("survival") || tagsLower.includes("story") || tagsLower.includes("adventure") || tagsLower.includes("rpg") || descLower.includes("explore") || descLower.includes("escape");
+        if (currentDurationFacet === "quick") matchesDuration = isQuick || (!isDeep);
+        else if (currentDurationFacet === "medium") matchesDuration = true;
+        else if (currentDurationFacet === "long") matchesDuration = isDeep;
+      }
+
+      // Control Scheme Facet Evaluation
+      let matchesControls = true;
+      if (currentControlsFacet !== "all") {
+        const descLower = (item.description || "").toLowerCase();
+        const tagsLower = (item.tags || []).map(t => t.toLowerCase());
+        if (currentControlsFacet === "touch") {
+          matchesControls = item.responsive === true || tagsLower.includes("mobile") || tagsLower.includes("touch") || tagsLower.includes("casual");
+        } else if (currentControlsFacet === "mouse") {
+          matchesControls = descLower.includes("click") || descLower.includes("mouse") || tagsLower.includes("puzzle") || tagsLower.includes("card") || tagsLower.includes("board");
+        } else if (currentControlsFacet === "keyboard") {
+          matchesControls = tagsLower.includes("action") || tagsLower.includes("arcade") || tagsLower.includes("shooter") || descLower.includes("arrow") || descLower.includes("wasd");
+        }
+      }
+
+      return matchesCategory && matchesSearch && matchesDuration && matchesControls;
     });
 
     // Apply Sorting
@@ -464,6 +519,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Only clicking the dedicated Play Now button launches the game modal
       gamesGrid.appendChild(card);
+    updateFacetSummaryUI();
     });
 
     if (window.lucide) {
