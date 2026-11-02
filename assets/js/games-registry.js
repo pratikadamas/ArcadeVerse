@@ -1356,6 +1356,27 @@ const GAMES_REGISTRY = [
     "difficulty": "All Skill Levels"
   },
   {
+    "id": "wave-rider_babin",
+    "title": "Wave Rider: Frequency Pulse Surfer",
+    "category": "Arcade / Endless",
+    "lucideIcon": "gamepad-2",
+    "description": "Surf across undulating sine-wave carrier frequencies, modulate pulse amplitudes, and weave through dampening glitch walls.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/wave-rider_babin/index.html",
+    "tags": [
+      "arcade",
+      "arcade",
+      "retro",
+      "html5-canvas",
+      "nsoc26"
+    ],
+    "stars": 15,
+    "featured": true,
+    "difficulty": "Medium"
+  },
+  {
     "id": "whack-a-bug_babin",
     "title": "Whack-A-Bug Panic",
     "category": "Arcade",
@@ -1384,7 +1405,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 291,
+    "commits": 292,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -1404,8 +1425,8 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 198,
-    "gamesCount": 41,
+    "commits": 199,
+    "gamesCount": 42,
     "mechanicsBonus": 2,
     "platformPRs": 29,
     "qualityPRs": 1,
@@ -1451,6 +1472,7 @@ const CONTRIBUTORS_REGISTRY = [
       "Space Invaders 2026",
       "Synth-Wave Simon Says",
       "Tactical Fleet Commander",
+      "Wave Rider: Frequency Pulse Surfer",
       "Whack-A-Bug Panic"
     ]
   },
