@@ -57,7 +57,7 @@
     }
 
     overlayTitle.textContent = "How to play";
-    overlayMessage.textContent = "Select the cauldron whose symbol matches the falling ingredient. Catch the right ingredient to score; the wrong cauldron or a missed ingredient costs one life.";
+    overlayMessage.textContent = "Ingredients fall into their matching lanes. Select the matching cauldron before an ingredient reaches it to score; a wrong selection or missed ingredient costs one life.";
     startButton.textContent = gameState === "paused" ? "Resume brewing"
       : gameState === "over" ? "Play again" : "Start brewing";
     overlay.hidden = false;
@@ -106,7 +106,7 @@
     const type = Math.floor(Math.random() * ingredientTypes.length);
     ingredients.push({
       type,
-      x: width / 2,
+      x: cauldronPositions[type],
       y: 82,
       rotation: Math.random() * Math.PI * 2,
       wobble: Math.random() * Math.PI * 2
@@ -136,19 +136,18 @@
     const fallSpeed = Math.min(190 + elapsed * 4 + score * 1.4, 390);
     const remainingIngredients = [];
 
-    ingredients.forEach((ingredient) => {
-      const targetX = cauldronPositions[selectedCauldron];
+    for (const ingredient of ingredients) {
       ingredient.y += fallSpeed * delta;
-      ingredient.x += (targetX - ingredient.x) * Math.min(1, delta * 2.8);
       ingredient.rotation += delta * 1.25;
       ingredient.wobble += delta * 4;
 
       if (ingredient.y >= cauldronY - 43) {
         resolveIngredient(ingredient);
+        if (lives <= 0) break;
       } else {
         remainingIngredients.push(ingredient);
       }
-    });
+    }
 
     ingredients = remainingIngredients;
     updateHud();
@@ -169,7 +168,7 @@
       feedbackCountdown = 1.25;
     } else {
       lives = Math.max(0, lives - 1);
-      feedback.textContent = `Wrong cauldron for ${type.name}. One life lost.`;
+      feedback.textContent = `Missed ${type.name}. The active cauldron did not match. One life lost.`;
       feedbackCountdown = 1.5;
     }
   }
@@ -358,24 +357,8 @@
     context.restore();
   }
 
-  function drawBeam() {
-    const targetX = cauldronPositions[selectedCauldron];
-    const startX = width / 2;
-    const startY = 75;
-    context.save();
-    context.strokeStyle = `${ingredientTypes[selectedCauldron].color}22`;
-    context.lineWidth = 2;
-    context.setLineDash([6, 8]);
-    context.beginPath();
-    context.moveTo(startX, startY);
-    context.quadraticCurveTo(targetX, 220, targetX, cauldronY - 40);
-    context.stroke();
-    context.restore();
-  }
-
   function drawScene() {
     drawBackground();
-    drawBeam();
     ingredients.forEach(drawIngredient);
     cauldronPositions.forEach((_, index) => drawCauldron(index));
   }
