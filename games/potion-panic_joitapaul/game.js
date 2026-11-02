@@ -57,7 +57,7 @@
     }
 
     overlayTitle.textContent = "How to play";
-    overlayMessage.textContent = "Ingredients fall into their matching lanes. Select the matching cauldron before an ingredient reaches it to score; a wrong selection or missed ingredient costs one life.";
+    overlayMessage.textContent = "Each ingredient falls down its matching colored lane. Select that lane's cauldron before it arrives: correct matches earn a point, while a wrong cauldron or a missed ingredient costs one life.";
     startButton.textContent = gameState === "paused" ? "Resume brewing"
       : gameState === "over" ? "Play again" : "Start brewing";
     overlay.hidden = false;
@@ -97,9 +97,12 @@
   function updateHud() {
     scoreElement.textContent = score;
     livesElement.textContent = lives;
-    const speedLevel = Math.min(5, 1 + Math.floor(score / 8));
-    speedElement.textContent = ["I", "II", "III", "IV", "V"][speedLevel - 1];
+    speedElement.textContent = `${difficultyMultiplier().toFixed(1)}x`;
     updateCauldronSelection();
+  }
+
+  function difficultyMultiplier() {
+    return Math.min(2.2, 1 + elapsed / 90 + score / 60);
   }
 
   function spawnIngredient() {
@@ -129,11 +132,11 @@
 
     if (spawnCountdown <= 0) {
       spawnIngredient();
-      const spawnInterval = Math.max(0.52, 1.25 - elapsed * 0.012 - score * 0.018);
+      const spawnInterval = Math.max(0.58, 1.35 / difficultyMultiplier());
       spawnCountdown += spawnInterval;
     }
 
-    const fallSpeed = Math.min(190 + elapsed * 4 + score * 1.4, 390);
+    const fallSpeed = 180 * difficultyMultiplier();
     const remainingIngredients = [];
 
     for (const ingredient of ingredients) {
@@ -359,8 +362,36 @@
 
   function drawScene() {
     drawBackground();
+    drawLanes();
     ingredients.forEach(drawIngredient);
     cauldronPositions.forEach((_, index) => drawCauldron(index));
+  }
+
+  function drawLanes() {
+    ingredientTypes.forEach((type, index) => {
+      const x = cauldronPositions[index];
+      const isSelected = index === selectedCauldron;
+      context.save();
+      context.globalAlpha = isSelected ? 0.14 : 0.07;
+      context.fillStyle = type.color;
+      context.fillRect(x - 82, 62, 164, cauldronY - 103);
+      context.globalAlpha = isSelected ? 0.58 : 0.3;
+      context.strokeStyle = type.color;
+      context.lineWidth = isSelected ? 2 : 1;
+      context.setLineDash([6, 8]);
+      context.beginPath();
+      context.moveTo(x, 65);
+      context.lineTo(x, cauldronY - 52);
+      context.stroke();
+      context.setLineDash([]);
+      drawIngredientSymbol(type, x, 25, 8);
+      context.globalAlpha = 1;
+      context.fillStyle = type.color;
+      context.font = "800 10px Segoe UI, sans-serif";
+      context.textAlign = "center";
+      context.fillText(`${type.name.toUpperCase()} LANE`, x, 53);
+      context.restore();
+    });
   }
 
   document.addEventListener("keydown", (event) => {
