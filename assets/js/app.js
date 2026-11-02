@@ -94,6 +94,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     categoryPills.forEach((pill) => {
       const categoryKey = (pill.getAttribute("data-category") || "").toLowerCase();
+      // Favorites pill already has #favorites-count-badge in index.html; avoid appending a duplicate count badge
+      if (categoryKey === "favorites") {
+        return;
+      }
       let badge = pill.querySelector(".pill-count-badge");
       if (!badge) {
         badge = document.createElement("span");

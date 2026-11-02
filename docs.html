@@ -1099,8 +1099,10 @@ function updateCategoryPillCounts() {
         }
       });
 
-      // 2. High-Contrast Code Block Copy Buttons
+      // 2. High-Contrast Code Block Copy Buttons (only on standalone pre blocks that are not inside .code-block-wrapper)
       document.querySelectorAll(".docs-code-preview, pre").forEach((block) => {
+        // Skip pre elements already inside code-block-wrapper (which already have .btn-copy-code in header)
+        if (block.closest(".code-block-wrapper")) return;
         if (block.querySelector(".docs-copy-btn")) return;
         const btn = document.createElement("button");
         btn.type = "button";
