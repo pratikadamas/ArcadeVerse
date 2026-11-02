@@ -139,6 +139,10 @@
         <div class="docs-sidebar-header">
           <span class="docs-sidebar-title">Table of Contents</span>
         </div>
+        <div class="docs-sidebar-search">
+          <i data-lucide="search"></i>
+          <input type="text" id="docs-search-input" placeholder="Filter topics..." aria-label="Filter documentation sections">
+        </div>
 
         <nav>
           <div class="docs-nav-group">
@@ -258,12 +262,38 @@
             Within this directory, exactly 4 files are mandatory for pre-flight verification:
           </p>
 
-          <div class="file-tree-box">
-            <div><span class="folder">games/neon-runner_babin/</span></div>
-            <div>├── <span class="file">index.html</span> <span class="comment"># Standalone entrypoint (canvas markup, loads only local style.css &amp; game.js)</span></div>
-            <div>├── <span class="file">style.css</span>  <span class="comment"># Dedicated stylesheets scoped to your game canvas and HUD</span></div>
-            <div>├── <span class="file">game.js</span>    <span class="comment"># Core gameplay logic, loop, state management, and input</span></div>
-            <div>└── <span class="file">game.json</span>  <span class="comment"># Machine-readable descriptor ingested by the registry builder</span></div>
+          <div class="docs-table-container">
+            <table class="docs-spec-table">
+              <thead>
+                <tr>
+                  <th style="width: 20%;">Required File</th>
+                  <th style="width: 28%;">Role &amp; Entrypoint</th>
+                  <th style="width: 52%;">Mandatory Architectural Specification</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>index.html</code></td>
+                  <td>Standalone Game Entrypoint</td>
+                  <td>Self-contained canvas viewport. Only links local <code>style.css</code> and <code>game.js</code>. Responsive viewport meta tag mandatory.</td>
+                </tr>
+                <tr>
+                  <td><code>style.css</code></td>
+                  <td>Scoped Game Stylesheet</td>
+                  <td>Zero external font/CSS CDNs. Scoped to the game canvas container, HUD overlays, and touch controls.</td>
+                </tr>
+                <tr>
+                  <td><code>game.js</code></td>
+                  <td>Game Logic &amp; Engine Loop</td>
+                  <td>Pure ES6+ JavaScript. Implements game loop and hooks into <code>ArcadeVerse</code> lifecycle bridge (pause, teardown).</td>
+                </tr>
+                <tr>
+                  <td><code>game.json</code></td>
+                  <td>Metadata Descriptor</td>
+                  <td>Includes <code>title</code>, <code>category</code>, <code>description</code>, <code>author</code>, and <code>github</code> for automated catalog ingestion.</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
           <div class="docs-callout note">
@@ -874,6 +904,23 @@ function updateCategoryPillCounts() {
 
   <!-- Footer -->
   <footer class="footer">
+    <div class="footer-inner-wrap" style="max-width: 1280px; margin: 0 auto;">
+      <div class="footer-admin-strip">
+        <div class="footer-admin-left">
+          <span class="footer-admin-badge"><i data-lucide="shield-check" style="width: 13px; height: 13px;"></i> Project Administration</span>
+          <div class="footer-admin-details">
+            <strong class="footer-admin-name">Debasmita Bose</strong>
+            <span class="footer-admin-event">• NSOC Winter Edition 2026</span>
+          </div>
+        </div>
+        <div class="footer-admin-right">
+          <span class="footer-admin-status"><span class="status-dot"></span> Accepting Manual PRs</span>
+          <a href="https://github.com/DebasmitaBose0/ArcadeVerse" target="_blank" rel="noopener noreferrer" class="btn btn-github-highlight btn-sm" style="padding: 0.35rem 0.85rem; font-size: 0.8rem;">
+            <i data-lucide="git-pull-request" style="width: 13px; height: 13px;"></i> Contribute
+          </a>
+        </div>
+      </div>
+    </div>
     <div class="footer-container">
       <div class="footer-col">
         <div class="logo">
@@ -911,15 +958,7 @@ function updateCategoryPillCounts() {
         </ul>
       </div>
 
-      <div class="footer-col">
-        <h4>Project Administration</h4>
-        <div class="admin-badge-card">
-          <span class="admin-title">Project Admin</span>
-          <strong class="admin-name">Debasmita Bose</strong>
-          <span class="admin-event">NSOC Winter Edition 2026</span>
-          <span class="status-indicator"><span class="status-dot"></span> Accepting Manual PRs</span>
-        </div>
-      </div>
+      
     </div>
 
     <div class="footer-bottom">
@@ -1036,6 +1075,72 @@ function updateCategoryPillCounts() {
       }
     });
   </script>
+
+  <script>
+    // Interactive Heading Anchors & High-Contrast Code Copy Feedback
+    document.addEventListener("DOMContentLoaded", () => {
+      // 1. Add Heading Anchor Links to H2 and H3
+      document.querySelectorAll(".docs-section-title, .docs-section h3").forEach((heading) => {
+        const section = heading.closest(".docs-section");
+        const id = section ? section.id : heading.id;
+        if (id) {
+          const anchor = document.createElement("a");
+          anchor.href = "#" + id;
+          anchor.className = "docs-heading-anchor";
+          anchor.setAttribute("aria-label", "Direct link to " + heading.textContent.trim());
+          anchor.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>';
+          heading.appendChild(anchor);
+        }
+      });
+
+      // 2. High-Contrast Code Block Copy Buttons
+      document.querySelectorAll(".docs-code-preview, pre").forEach((block) => {
+        if (block.querySelector(".docs-copy-btn")) return;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "docs-copy-btn";
+        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy';
+
+        btn.addEventListener("click", () => {
+          const codeEl = block.querySelector("code") || block;
+          const textToCopy = codeEl.innerText.replace(/Copy$/, "").trim();
+          navigator.clipboard.writeText(textToCopy).then(() => {
+            btn.classList.add("copied");
+            btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+            setTimeout(() => {
+              btn.classList.remove("copied");
+              btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy';
+            }, 2000);
+          });
+        });
+
+        block.style.position = "relative";
+        block.appendChild(btn);
+      });
+    });
+  </script>
+
+  <script>
+    // Live Docs Quick Filter
+    document.addEventListener("DOMContentLoaded", () => {
+      const searchInput = document.getElementById("docs-search-input");
+      if (!searchInput) return;
+      searchInput.addEventListener("input", (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        document.querySelectorAll(".docs-nav-group").forEach(group => {
+          let hasVisible = false;
+          group.querySelectorAll(".docs-nav-link").forEach(link => {
+            const text = link.textContent.toLowerCase();
+            const match = !query || text.includes(query);
+            link.parentElement.style.display = match ? "" : "none";
+            if (match) hasVisible = true;
+          });
+          group.style.display = hasVisible ? "" : "none";
+        });
+      });
+    });
+  </script>
+
 </body>
 </html>
 

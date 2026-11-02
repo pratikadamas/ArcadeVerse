@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Chrono Breakout: Quantum Time Shatter - ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-app">
+    <header class="game-hud">
+      <div class="hud-item">
+        <span class="hud-label">SCORE</span>
+        <span class="hud-value" id="scoreVal">0</span>
+      </div>
+      <div class="hud-center">
+        <h1 class="hud-title">Chrono Breakout: Quantum Time Shatter</h1>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">LEVEL / LIVES</span>
+        <span class="hud-value" id="levelVal">1</span>
+      </div>
+    </header>
+
+    <main class="canvas-wrap">
+      <canvas id="gameCanvas" width="800" height="600" tabindex="0" aria-label="Chrono Breakout: Quantum Time Shatter interactive game canvas"></canvas>
+
+      <!-- Accessible Touch Virtual Controls -->
+      <div class="touch-bar" id="touchControls">
+        <button class="t-btn" id="tLeft" type="button" aria-label="Action Left">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button class="t-btn t-action" id="tAction" type="button" aria-label="Primary Action">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+        </button>
+        <button class="t-btn" id="tRight" type="button" aria-label="Action Right">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+
+      <!-- Start / Game Over Overlay -->
+      <div class="game-overlay" id="overlayScreen">
+        <div class="overlay-card">
+          <h2 class="overlay-title" id="overlayHeading">Chrono Breakout: Quantum Time Shatter</h2>
+          <p class="overlay-desc" id="overlayDesc">Shatter quantum crystal brick matrixes with a time-bending cyber ball; hold spacebar to reverse local time buffers and recover missed drops.</p>
+          <div class="controls-guide">
+            <span class="guide-tag">Left / Right or A / D = Move Paddle | Space / R = Rewind Time Buffer</span>
+          </div>
+          <button class="btn-primary-action" id="btnActionStart" type="button">START MISSION</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../../assets/js/arcadeverse-sdk.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

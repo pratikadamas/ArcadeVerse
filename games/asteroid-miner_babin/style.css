@@ -1,0 +1,210 @@
+/* Asteroid Miner: Deep Space Extraction Responsive CSS */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #080a10;
+  color: #f1f5f9;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  user-select: none;
+}
+
+#game-app {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.game-hud {
+  height: 52px;
+  background: rgba(13, 17, 28, 0.88);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  backdrop-filter: blur(8px);
+  z-index: 10;
+}
+
+.hud-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hud-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+.hud-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #00f5ff;
+}
+
+.hud-title {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #ffffff;
+  text-transform: uppercase;
+}
+
+.canvas-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 50%, #111827 0%, #080a10 80%);
+}
+
+canvas#gameCanvas {
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 4 / 3;
+  box-shadow: 0 0 35px rgba(0, 245, 255, 0.12);
+  border-radius: 8px;
+  background: #05070c;
+  outline: none;
+}
+
+canvas#gameCanvas:focus-visible {
+  box-shadow: 0 0 0 2px #00f5ff, 0 0 25px rgba(0, 245, 255, 0.4);
+}
+
+.touch-bar {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  z-index: 15;
+}
+
+.t-btn {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: rgba(30, 41, 59, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #00f5ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  backdrop-filter: blur(8px);
+  transition: transform 0.1s, background 0.2s;
+}
+
+.t-btn:active {
+  transform: scale(0.92);
+  background: rgba(0, 245, 255, 0.25);
+}
+
+.t-btn.t-action {
+  width: 64px;
+  height: 64px;
+  background: rgba(0, 245, 255, 0.2);
+  border-color: #00f5ff;
+}
+
+@media (min-width: 820px) {
+  .touch-bar {
+    opacity: 0.35;
+    transition: opacity 0.2s;
+  }
+  .touch-bar:hover {
+    opacity: 0.95;
+  }
+}
+
+.game-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(8, 10, 16, 0.85);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  transition: opacity 0.3s ease;
+}
+
+.game-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.overlay-card {
+  background: #111726;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 30px 36px;
+  text-align: center;
+  max-width: 460px;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.65);
+}
+
+.overlay-title {
+  font-size: 1.6rem;
+  color: #00f5ff;
+  margin-bottom: 12px;
+}
+
+.overlay-desc {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: #94a3b8;
+  margin-bottom: 20px;
+}
+
+.controls-guide {
+  margin-bottom: 24px;
+}
+
+.guide-tag {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #cbd5e1;
+}
+
+.btn-primary-action {
+  background: #00f5ff;
+  color: #05070c;
+  font-size: 0.95rem;
+  font-weight: 800;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 28px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: all 0.2s ease;
+}
+
+.btn-primary-action:hover {
+  background: #38bdf8;
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.4);
+  transform: translateY(-2px);
+}

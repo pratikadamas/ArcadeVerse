@@ -536,7 +536,10 @@ document.addEventListener("DOMContentLoaded", () => {
     let iframeLoadSucceeded = false;
 
     function resetIframeBoundary() {
-      if (iframeLoadTimeout) clearTimeout(iframeLoadTimeout);
+      if (iframeLoadTimeout) {
+        clearTimeout(iframeLoadTimeout);
+        iframeLoadTimeout = null;
+      }
       const existingError = document.getElementById("modal-error-boundary");
       if (existingError) existingError.remove();
       gameIframe.style.display = "block";
@@ -592,11 +595,12 @@ document.addEventListener("DOMContentLoaded", () => {
     function startIframeTimeout(gameObj) {
       resetIframeBoundary();
       iframeLoadSucceeded = false;
+      // Generous timeout (12s) to account for resource-heavy games or slower environments
       iframeLoadTimeout = setTimeout(() => {
         if (!iframeLoadSucceeded) {
           triggerModalErrorBoundary(gameObj);
         }
-      }, 7000);
+      }, 12000);
     }
 
     modalGameTitle.textContent = game.title;
@@ -624,6 +628,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // Centralized Master Audio Bus: Sync hub volume & mute settings into spawned iframe
     if (gameIframe) {
       gameIframe.onload = () => {
+        // Mark load as successful and cancel error boundary timer
+        iframeLoadSucceeded = true;
+        resetIframeBoundary();
+
         try {
           if (window.SoundEngine && typeof window.SoundEngine.broadcastAudioConfig === "function") {
             window.SoundEngine.broadcastAudioConfig();
@@ -639,6 +647,11 @@ document.addEventListener("DOMContentLoaded", () => {
             }
           }
         } catch (_) {}
+      };
+
+      gameIframe.onerror = () => {
+        iframeLoadSucceeded = false;
+        triggerModalErrorBoundary(game);
       };
     }
   }
