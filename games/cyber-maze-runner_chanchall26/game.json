@@ -1,0 +1,15 @@
+{
+  "title": "Cyber Maze Runner",
+  "category": "Arcade",
+  "lucideIcon": "ghost",
+  "description": "Harvest every energy node in a neon maze while four security drones with different pursuit AI hunt you, and flip the chase with Overdrive EMP nodes.",
+  "author": "Chanchal Gupta",
+  "github": "chanchall26",
+  "role": "Arcade Developer",
+  "tags": [
+    "Arcade",
+    "Maze",
+    "AI",
+    "Retro"
+  ]
+}
