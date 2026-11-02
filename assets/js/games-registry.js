@@ -307,6 +307,25 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "cyber-maze-runner_chanchall26",
+    "title": "Cyber Maze Runner",
+    "category": "Arcade",
+    "lucideIcon": "ghost",
+    "description": "Harvest every energy node in a neon maze while four security drones with different pursuit AI hunt you, and flip the chase with Overdrive EMP nodes.",
+    "author": "Chanchal Gupta",
+    "github": "chanchall26",
+    "role": "Arcade Developer",
+    "path": "games/cyber-maze-runner_chanchall26/index.html",
+    "tags": [
+      "Arcade",
+      "Maze",
+      "AI",
+      "Retro"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "cyber-neon-pong_debasmita",
     "title": "Cyber Neon Pong",
     "category": "Arcade",
@@ -1140,7 +1159,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 274,
+    "commits": 278,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -1160,7 +1179,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 181,
+    "commits": 183,
     "gamesCount": 33,
     "mechanicsBonus": 2,
     "platformPRs": 29,
@@ -1289,6 +1308,21 @@ const CONTRIBUTORS_REGISTRY = [
     "bonusPts": 0,
     "contributions": [
       "Circuit Connect"
+    ]
+  },
+  {
+    "name": "Chanchal Gupta",
+    "github": "chanchall26",
+    "avatarInitial": "C",
+    "role": "Arcade Developer",
+    "commits": 1,
+    "gamesCount": 1,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Cyber Maze Runner"
     ]
   },
   {
