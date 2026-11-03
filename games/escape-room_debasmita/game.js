@@ -38,6 +38,43 @@
     { id: 'bat', label: 'Night Bat' }
   ];
 
+  // Cursed Miasma time-attack length (seconds)
+  const MIASMA_TOTAL = 240;
+  const BEST_TIMES_KEY = 'witchCrypt.bestTimes.v1';
+  const MODE_LABELS = { classic: 'Classic', miasma: 'Cursed Miasma' };
+  const prefersReducedMotion = window.matchMedia
+    ? window.matchMedia('(prefers-reduced-motion: reduce)')
+    : { matches: false };
+
+  // Pages of the Alchemist's Grimoire (runic clues and formulas)
+  const GRIMOIRE_PAGES = [
+    {
+      title: 'The Four Tomes',
+      icon: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>',
+      body: '<p>The shelf obeys one long night, told in four verbs:</p><ul><li>The blood is <strong>spilled</strong> (Red)</li><li>The dusk <strong>descends</strong> (Blue)</li><li>The vine <strong>creeps</strong> (Green)</li><li>The void <strong>consumes</strong> (Purple)</li></ul><p class="grimoire-note">Pull them in that order. A wrong pull resets the tumblers.</p>'
+    },
+    {
+      title: 'Formula of the Acidic Elixir',
+      icon: '<path d="M6 3h12l-2 5a6 6 0 1 1-8 0L6 3z"></path><circle cx="12" cy="15" r="1"></circle>',
+      body: '<p>Three reagents, in any order:</p><ul><li><strong>Spider Venom</strong>, kept in the hidden drawer</li><li><strong>Mandrake Root</strong>, buried in the dead nightshade pot</li><li><strong>Cursed Ash</strong>, scraped from the brazier</li></ul><p class="grimoire-note">Embers burn bare skin. Only cold silver may touch them.</p>'
+    },
+    {
+      title: 'The Celestial Altar',
+      icon: '<circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle><line x1="12" y1="3" x2="12" y2="7"></line>',
+      body: '<p>Three harbingers seal the crypt, left disc to right disc:</p><ol><li>The crescent <strong>Moon</strong></li><li>The burning <strong>Pumpkin</strong></li><li>The sleeping <strong>Skull</strong></li></ol><p class="grimoire-note">The Night Bat is a false star. Leave it unlit.</p>'
+    },
+    {
+      title: 'The Three Wards',
+      icon: '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>',
+      body: '<ul><li><strong>Corroded Chains</strong> melt in the Acidic Elixir</li><li><strong>Gilded Keyhole</strong> turns for the Gilded Key from the altar</li><li><strong>Arcane Socket</strong> wants the Eye Talisman, locked in the Bone Chest</li></ul><p class="grimoire-note">The altar also yields a Bone Key. It opens the chest, nothing else.</p>'
+    },
+    {
+      title: 'The Cursed Miasma',
+      icon: '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"></path>',
+      body: '<p>Some who enter the crypt choose the rite of the Miasma. A poison fog rises from the floor, the cauldron boils wild, and the walls close in.</p><p>Four minutes, no more. Break all three wards before the fog reaches the gate.</p><p class="grimoire-note">The rite is chosen at the crypt entrance, before the first step.</p>'
+    }
+  ];
+
   // Sound Engine using Web Audio API
   class SoundEngine {
     constructor() {
@@ -192,6 +229,10 @@
     secondsElapsed: 0,
     timerActive: true,
     gameWon: false,
+    gameOver: false, // Cursed Miasma timeout
+    started: false,  // first intro dismissed
+    mode: 'classic', // 'classic' | 'miasma'
+    bubbleBoost: 1,  // cauldron bubbling speed multiplier (Cursed Miasma)
     selectedItem: null,
     inventory: [], // string keys
 
@@ -286,6 +327,8 @@
   const modalGate = document.getElementById('modalGate');
   const modalHelp = document.getElementById('modalHelp');
   const modalVictory = document.getElementById('modalVictory');
+  const modalGrimoire = document.getElementById('modalGrimoire');
+  const modalDefeat = document.getElementById('modalDefeat');
 
   // Hotspots
   const hotspotGate = document.getElementById('hotspotGate');
@@ -295,6 +338,7 @@
   const hotspotChest = document.getElementById('hotspotChest');
   const hotspotTorches = document.getElementById('hotspotTorches');
   const hotspotPlant = document.getElementById('hotspotPlant');
+  const hotspotGrimoire = document.getElementById('hotspotGrimoire');
 
   // --- Investigation Reticle Tracking & Hover Feedback ---
   const investigationReticle = document.getElementById('investigationReticle');
@@ -332,6 +376,7 @@
   bindHotspotReticle(hotspotTorches, 'Braziers & Crypt Fire');
   bindHotspotReticle(hotspotChest, 'Sarcophagus Relic Chest');
   bindHotspotReticle(hotspotGate, 'Iron Crypt Gate');
+  bindHotspotReticle(hotspotGrimoire, "Alchemist's Grimoire");
 
   const btnStartGame = document.getElementById('btnStartGame');
   if (btnStartGame) {
@@ -342,7 +387,17 @@
     });
   }
 
-  
+  // --- Toast ---
+  // (Hints and item pickups already called showToast, but it was never defined.)
+  let toastTimer = null;
+  function showToast(message) {
+    if (!cryptToast) return;
+    cryptToast.textContent = message;
+    cryptToast.classList.add('active');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => cryptToast.classList.remove('active'), 3200);
+  }
+
   // --- Smart Contextual Hint System ---
   document.getElementById('hintBtn').addEventListener('click', () => {
     sound.playClick();
@@ -378,7 +433,8 @@
   }
 
   // Initialize Cauldron Bubbles
-  for (let i = 0; i < 18; i++) {
+  const BASE_BUBBLES = 18;
+  function addCauldronBubble() {
     state.cauldronBubbles.push({
       x: 240 + (Math.random() - 0.5) * 44,
       y: 356 + (Math.random() - 0.5) * 12,
@@ -388,6 +444,7 @@
       life: Math.random() * 60
     });
   }
+  for (let i = 0; i < BASE_BUBBLES; i++) addCauldronBubble();
 
   const VW = 960;
   const VH = 540;
@@ -579,11 +636,12 @@
 
     // Animated Potion Bubbles Swelling & Popping
     ctx.fillStyle = state.cauldron.brewed ? '#86efac' : '#e9d5ff';
+    const boost = state.bubbleBoost;
     state.cauldronBubbles.forEach(b => {
-      b.y += b.vy;
-      b.wobble += 0.08;
+      b.y += b.vy * boost;
+      b.wobble += 0.08 * boost;
       b.x += Math.sin(b.wobble) * 0.35;
-      b.life++;
+      b.life += boost;
       if (b.y < cy + 8 || b.life > 60) {
         // Pop and spawn tiny splash
         b.y = cy + 20 + Math.random() * 4;
@@ -597,7 +655,7 @@
     });
 
     // Rising Alchemical Steam Vapor Rings
-    if (Math.random() < 0.25) {
+    if (Math.random() < 0.25 * Math.min(boost, 2.5)) {
       state.cauldronSteam.push({
         x: cx + (Math.random() - 0.5) * 25,
         y: cy + 10,
@@ -676,6 +734,60 @@
       beamGrad.addColorStop(1, 'rgba(0, 242, 254, 0)');
       ctx.fillStyle = beamGrad;
       ctx.fillRect(px - 14, 80, 28, py - 100);
+    }
+
+    // ==========================================
+    // 5b. LAB TABLE WITH THE ALCHEMIST'S GRIMOIRE
+    // ==========================================
+    const gx = 355, gy = 398;
+    // Table legs and top
+    ctx.fillStyle = '#1c102a';
+    ctx.fillRect(gx - 34, gy + 6, 6, 34);
+    ctx.fillRect(gx + 28, gy + 6, 6, 34);
+    ctx.fillStyle = '#2e1c42';
+    ctx.fillRect(gx - 40, gy, 80, 8);
+    ctx.strokeStyle = '#58337a';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(gx - 40, gy, 80, 8);
+    // Soft pulsing glow around the open book
+    const bookGlow = 0.35 + Math.sin(time * 0.003) * 0.15;
+    const gGlow = ctx.createRadialGradient(gx, gy - 8, 2, gx, gy - 8, 44);
+    gGlow.addColorStop(0, `rgba(253, 224, 71, ${bookGlow})`);
+    gGlow.addColorStop(1, 'rgba(253, 224, 71, 0)');
+    ctx.fillStyle = gGlow;
+    ctx.fillRect(gx - 50, gy - 54, 100, 70);
+    // Open tome: two pages and a spine
+    ctx.fillStyle = '#e9d5a8';
+    ctx.beginPath();
+    ctx.moveTo(gx, gy - 2);
+    ctx.lineTo(gx - 28, gy - 6);
+    ctx.lineTo(gx - 26, gy - 22);
+    ctx.lineTo(gx, gy - 18);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(gx, gy - 2);
+    ctx.lineTo(gx + 28, gy - 6);
+    ctx.lineTo(gx + 26, gy - 22);
+    ctx.lineTo(gx, gy - 18);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#7c3f12';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(gx, gy - 2);
+    ctx.lineTo(gx, gy - 18);
+    ctx.stroke();
+    // Faint runic lines on the pages
+    ctx.strokeStyle = 'rgba(124, 63, 18, 0.55)';
+    ctx.lineWidth = 1;
+    for (let ln = 0; ln < 3; ln++) {
+      ctx.beginPath();
+      ctx.moveTo(gx - 22, gy - 8 - ln * 4);
+      ctx.lineTo(gx - 6, gy - 10 - ln * 4);
+      ctx.moveTo(gx + 6, gy - 10 - ln * 4);
+      ctx.lineTo(gx + 22, gy - 8 - ln * 4);
+      ctx.stroke();
     }
 
     // ==========================================
@@ -949,6 +1061,7 @@
   function closeModal(modal) {
     sound.playClick();
     modal.classList.remove('open');
+    if (modal === modalHelp) beginRun();
   }
 
   document.querySelectorAll('[data-close]').forEach(btn => {
@@ -1187,7 +1300,7 @@
   }
 
   interactGateBtn.addEventListener('click', () => {
-    if (state.gameWon) return;
+    if (state.gameWon || state.gameOver) return;
 
     if (!state.selectedItem) {
       gateStatus.textContent = 'Select an item from your inventory to use on the gate.';
@@ -1230,8 +1343,10 @@
       sound.playVictory();
       setTimeout(() => {
         closeModal(modalGate);
-        document.getElementById('vicTime').textContent = timerBox.textContent;
         const totalSec = state.secondsElapsed;
+        document.getElementById('vicTime').textContent = formatTime(totalSec);
+        document.getElementById('vicMode').textContent = state.mode === 'miasma' ? 'Miasma' : 'Classic';
+        showBestTimes(recordBestTime(state.mode, totalSec));
         let rank = 'Crypt Novice';
         if (totalSec < 120) rank = 'Archmage Master';
         else if (totalSec < 240) rank = 'Arcane Sleuth';
@@ -1249,6 +1364,8 @@
   hotspotPedestal.addEventListener('click', () => openModal(modalPedestal));
   hotspotChest.addEventListener('click', () => openModal(modalChest));
   hotspotTorches.addEventListener('click', () => openModal(modalTorches));
+  hotspotGrimoire.addEventListener('click', openGrimoire);
+  document.getElementById('grimoireBtn').addEventListener('click', openGrimoire);
 
   // --- Header Controls ---
   document.getElementById('helpBtn').addEventListener('click', () => openModal(modalHelp));
@@ -1267,38 +1384,213 @@
     }
   });
 
-  const hintBtn = document.getElementById('hintBtn');
-  hintBtn.addEventListener('click', () => {
-    sound.playClick();
-    if (!state.bookshelfSolved) {
-      showToast('Hint: The riddle says "Blood precedes the Void; the Toxic Vine creeps after Dusk..."');
-    } else if (!state.inventory.includes('ash') && !state.cauldron.ash) {
-      showToast('Hint: Scrape the smoldering braziers using your silver dagger to gather ash.');
-    } else if (!state.plantSearched) {
-      showToast('Hint: Inspect the dead nightshade plant in the corner.');
-    } else if (!state.cauldron.brewed) {
-      showToast('Hint: Throw the Spider Venom, Mandrake Root, and Cursed Ash into the cauldron.');
-    } else if (!state.pedestalSolved) {
-      showToast('Hint: Rotate the altar discs: "Moon crowns Pumpkin, Death (Skull) sleeps".');
-    } else if (!state.chestUnlocked) {
-      showToast('Hint: Use the Bone Key to unlock the Sarcophagus Relic Chest.');
-    } else {
-      showToast('Hint: Apply the Acid, Gilded Key, and Eye Talisman to the Iron Gate!');
-    }
+  document.getElementById('playAgainBtn').addEventListener('click', () => {
+    window.location.reload();
   });
 
-  document.getElementById('playAgainBtn').addEventListener('click', () => {
+  // --- Time formatting ---
+  function formatTime(totalSeconds) {
+    const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+    const s = (totalSeconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  // --- Best Escape Times (per mode, kept in localStorage) ---
+  function loadBestTimes() {
+    const empty = { classic: [], miasma: [] };
+    try {
+      const raw = JSON.parse(localStorage.getItem(BEST_TIMES_KEY));
+      if (!raw || typeof raw !== 'object') return empty;
+      ['classic', 'miasma'].forEach(mode => {
+        if (Array.isArray(raw[mode])) {
+          empty[mode] = raw[mode]
+            .filter(n => Number.isFinite(n) && n >= 0)
+            .sort((a, b) => a - b)
+            .slice(0, 5);
+        }
+      });
+    } catch (e) {}
+    return empty;
+  }
+
+  // Saves a finished run and returns { mode, list, index } where index is the
+  // position of this run in the top 5 (-1 when it did not make the list).
+  function recordBestTime(mode, seconds) {
+    const all = loadBestTimes();
+    const list = all[mode].concat(seconds).sort((a, b) => a - b).slice(0, 5);
+    all[mode] = list;
+    try {
+      localStorage.setItem(BEST_TIMES_KEY, JSON.stringify(all));
+    } catch (e) {}
+    return { mode, list, index: list.indexOf(seconds) };
+  }
+
+  function showBestTimes(result) {
+    const listEl = document.getElementById('bestTimesList');
+    document.getElementById('bestTimesTitle').textContent = `Fastest Escapes: ${MODE_LABELS[result.mode]}`;
+    listEl.innerHTML = '';
+    result.list.forEach((secs, i) => {
+      const li = document.createElement('li');
+      li.textContent = formatTime(secs);
+      if (i === result.index) {
+        li.classList.add('current');
+        li.textContent += i === 0 ? '  (new best!)' : '  (this run)';
+      }
+      listEl.appendChild(li);
+    });
+  }
+
+  function refreshBestLabels() {
+    const all = loadBestTimes();
+    document.getElementById('bestClassic').textContent = all.classic.length
+      ? `Best: ${formatTime(all.classic[0])}` : 'No escape yet';
+    document.getElementById('bestMiasma').textContent = all.miasma.length
+      ? `Best: ${formatTime(all.miasma[0])}` : 'No escape yet';
+  }
+
+  // --- Alchemist's Grimoire (flip-page modal) ---
+  const grimoirePage = document.getElementById('grimoirePage');
+  const grimoireCount = document.getElementById('grimoireCount');
+  const grimoirePrev = document.getElementById('grimoirePrev');
+  const grimoireNext = document.getElementById('grimoireNext');
+  let grimoireIndex = 0;
+
+  function renderGrimoirePage(direction) {
+    const page = GRIMOIRE_PAGES[grimoireIndex];
+    grimoirePage.innerHTML =
+      '<h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">' +
+      page.icon + '</svg>' + page.title + '</h4>' + page.body;
+    grimoireCount.textContent = `Page ${grimoireIndex + 1} / ${GRIMOIRE_PAGES.length}`;
+    grimoirePrev.disabled = grimoireIndex === 0;
+    grimoireNext.disabled = grimoireIndex === GRIMOIRE_PAGES.length - 1;
+    // Restart the CSS flip animation (it is switched off for reduced motion in the stylesheet)
+    grimoirePage.classList.remove('turn-next', 'turn-prev');
+    if (direction) {
+      void grimoirePage.offsetWidth;
+      grimoirePage.classList.add(direction > 0 ? 'turn-next' : 'turn-prev');
+    }
+  }
+
+  function turnGrimoire(step) {
+    const next = grimoireIndex + step;
+    if (next < 0 || next >= GRIMOIRE_PAGES.length) return;
+    sound.playClick();
+    grimoireIndex = next;
+    renderGrimoirePage(step);
+  }
+
+  function openGrimoire() {
+    renderGrimoirePage(0);
+    openModal(modalGrimoire);
+  }
+
+  grimoirePrev.addEventListener('click', () => turnGrimoire(-1));
+  grimoireNext.addEventListener('click', () => turnGrimoire(1));
+  window.addEventListener('keydown', e => {
+    if (!modalGrimoire.classList.contains('open')) return;
+    if (e.key === 'ArrowRight') turnGrimoire(1);
+    else if (e.key === 'ArrowLeft') turnGrimoire(-1);
+    else if (e.key === 'Escape') closeModal(modalGrimoire);
+  });
+
+  // --- Mode select (intro) ---
+  const modeSelect = document.getElementById('modeSelect');
+  const modeBadge = document.getElementById('modeBadge');
+  const miasmaFog = document.getElementById('miasmaFog');
+  const miasmaVignette = document.getElementById('miasmaVignette');
+
+  function renderTimer() {
+    const shown = state.mode === 'miasma'
+      ? Math.max(0, MIASMA_TOTAL - state.secondsElapsed)
+      : state.secondsElapsed;
+    timerBox.textContent = formatTime(shown);
+  }
+
+  modeSelect.querySelectorAll('.mode-card').forEach(card => {
+    card.addEventListener('click', () => {
+      if (state.started) return;
+      sound.playClick();
+      state.mode = card.getAttribute('data-mode') === 'miasma' ? 'miasma' : 'classic';
+      modeSelect.querySelectorAll('.mode-card').forEach(c => {
+        const on = c === card;
+        c.classList.toggle('active', on);
+        c.setAttribute('aria-checked', String(on));
+      });
+      renderTimer();
+    });
+  });
+
+  // Called once, when the intro is dismissed for the first time
+  function beginRun() {
+    if (state.started) return;
+    state.started = true;
+    state.secondsElapsed = 0; // the run starts now, not when the page loaded
+    modeSelect.hidden = true;
+    if (state.mode === 'miasma') {
+      document.body.classList.add('miasma-on');
+      modeBadge.hidden = false;
+      updateMiasma();
+      showToast('The Cursed Miasma stirs. You have 4:00 to escape.');
+    }
+    renderTimer();
+  }
+
+  // --- Cursed Miasma time attack ---
+  const MIASMA_WARNINGS = {
+    120: 'Two minutes left. The fog is creeping up the walls.',
+    60: 'One minute left. The cauldron boils wildly!',
+    30: 'Thirty seconds. The miasma is at your throat!',
+    10: 'Ten seconds!'
+  };
+
+  function updateMiasma() {
+    const remaining = Math.max(0, MIASMA_TOTAL - state.secondsElapsed);
+    const progress = 1 - remaining / MIASMA_TOTAL; // 0 at the start, 1 when time is up
+    miasmaFog.style.height = `${(progress * 72).toFixed(1)}%`;
+    miasmaVignette.style.opacity = (0.12 + progress * 0.88).toFixed(2);
+    document.body.classList.toggle('miasma-warning', remaining <= 60);
+    document.body.classList.toggle('miasma-critical', remaining <= 30);
+    if (!prefersReducedMotion.matches) {
+      // Cauldron bubbles faster (and more of them) as time drops
+      state.bubbleBoost = 1 + progress * 2.5;
+      const wanted = BASE_BUBBLES + Math.round(progress * 12);
+      while (state.cauldronBubbles.length < wanted) addCauldronBubble();
+    }
+    if (MIASMA_WARNINGS[remaining]) {
+      showToast(MIASMA_WARNINGS[remaining]);
+      if (remaining <= 60) sound.playError();
+    }
+  }
+
+  function miasmaDefeat() {
+    state.gameOver = true;
+    state.timerActive = false;
+    const locks = state.gateLocks;
+    const broken = [locks.chains, locks.keyhole, locks.sigil].filter(Boolean).length;
+    document.getElementById('defeatProgress').textContent = `Gate wards broken: ${broken} / 3`;
+    sound.playError();
+    triggerScreenShake(40, 10);
+    openModal(modalDefeat);
+  }
+
+  document.getElementById('defeatRetryBtn').addEventListener('click', () => {
     window.location.reload();
   });
 
   // --- Timer Loop ---
   setInterval(() => {
     if (!state.timerActive) return;
+    // In Cursed Miasma mode nothing runs until the player enters the crypt
+    if (state.mode === 'miasma' && !state.started) return;
     state.secondsElapsed++;
-    const m = Math.floor(state.secondsElapsed / 60).toString().padStart(2, '0');
-    const s = (state.secondsElapsed % 60).toString().padStart(2, '0');
-    timerBox.textContent = `${m}:${s}`;
+    renderTimer();
+    if (state.mode === 'miasma' && state.started) {
+      updateMiasma();
+      if (state.secondsElapsed >= MIASMA_TOTAL && !state.gameWon) miasmaDefeat();
+    }
   }, 1000);
+
+  refreshBestLabels();
 
   // Initial inventory render
   updateInventoryUI();

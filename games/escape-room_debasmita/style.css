@@ -1312,3 +1312,320 @@ body::before {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   Alchemist's Grimoire (flip-page modal)
+   ========================================================================== */
+.grimoire-modal {
+  max-width: 480px;
+}
+
+.grimoire-book {
+  perspective: 900px;
+  background: linear-gradient(90deg, #2b1842 0%, #3a2058 50%, #2b1842 100%);
+  border: 2px solid #7c3f12;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.grimoire-page {
+  min-height: 230px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, #ead9b0, #d8c28f);
+  color: #3b2410;
+  border-radius: 6px;
+  box-shadow: inset 0 0 18px rgba(124, 63, 18, 0.35);
+  transform-origin: left center;
+  backface-visibility: hidden;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.grimoire-page h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.02rem;
+  color: #6b2d0c;
+  border-bottom: 1px solid rgba(107, 45, 12, 0.4);
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+
+.grimoire-page p,
+.grimoire-page li {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #3b2410;
+}
+
+.grimoire-page p + p,
+.grimoire-page ul + p,
+.grimoire-page ol + p {
+  margin-top: 10px;
+}
+
+.grimoire-page ul,
+.grimoire-page ol {
+  margin: 6px 0 0 20px;
+}
+
+.grimoire-page .grimoire-note {
+  font-style: italic;
+  color: #7a2a12;
+}
+
+.grimoire-page.turn-next {
+  animation: grimoire-turn-next 0.45s ease-out;
+}
+
+.grimoire-page.turn-prev {
+  animation: grimoire-turn-prev 0.45s ease-out;
+  transform-origin: right center;
+}
+
+@keyframes grimoire-turn-next {
+  0% { transform: rotateY(-80deg); opacity: 0.2; }
+  100% { transform: rotateY(0); opacity: 1; }
+}
+
+@keyframes grimoire-turn-prev {
+  0% { transform: rotateY(80deg); opacity: 0.2; }
+  100% { transform: rotateY(0); opacity: 1; }
+}
+
+.grimoire-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.grimoire-count {
+  font-size: 0.8rem;
+  color: #b59bd8;
+}
+
+.grimoire-nav .btn-secondary:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ==========================================================================
+   Mode select (intro) and Cursed Miasma time attack
+   ========================================================================== */
+.survival-rule-card.rule-wide {
+  grid-column: 1 / -1;
+}
+
+.mode-select {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+.mode-select[hidden] {
+  display: none;
+}
+
+.mode-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.mode-card:hover {
+  border-color: #9d4edd;
+}
+
+.mode-card.active {
+  border-color: var(--accent-orange);
+  background: rgba(255, 119, 0, 0.1);
+}
+
+.mode-card[data-mode="miasma"].active {
+  border-color: var(--accent-green);
+  background: rgba(56, 239, 125, 0.08);
+}
+
+.mode-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #fef08a;
+}
+
+.mode-desc {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: #c4b5d6;
+}
+
+.mode-best {
+  font-size: 0.72rem;
+  color: var(--accent-cyan);
+}
+
+.mode-badge {
+  background: rgba(56, 239, 125, 0.15);
+  border: 1px solid var(--accent-green);
+  color: var(--accent-green);
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.mode-badge[hidden] {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .mode-select {
+    grid-template-columns: 1fr;
+  }
+  .mode-badge {
+    display: none;
+  }
+}
+
+/* Rising poison fog and edge vignette. Both stay invisible until body.miasma-on. */
+.miasma-fog,
+.miasma-vignette {
+  position: absolute;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0;
+}
+
+.miasma-fog {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+  overflow: hidden;
+  background: linear-gradient(to top, rgba(74, 222, 90, 0.6) 0%, rgba(50, 140, 80, 0.38) 45%, rgba(30, 80, 60, 0) 100%);
+  transition: height 1s linear, opacity 0.6s ease;
+}
+
+.miasma-fog::before {
+  content: "";
+  position: absolute;
+  inset: -30% -20% 0 -20%;
+  background:
+    radial-gradient(ellipse 260px 110px at 15% 75%, rgba(170, 255, 170, 0.3), transparent 70%),
+    radial-gradient(ellipse 320px 130px at 55% 85%, rgba(140, 240, 150, 0.28), transparent 70%),
+    radial-gradient(ellipse 240px 100px at 90% 70%, rgba(170, 255, 170, 0.26), transparent 70%);
+  animation: miasma-drift 14s ease-in-out infinite alternate;
+}
+
+.miasma-vignette {
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 50%, transparent 35%, rgba(40, 160, 70, 0.3) 70%, rgba(6, 36, 18, 0.88) 100%);
+  transition: opacity 1s linear;
+}
+
+body.miasma-on .miasma-fog {
+  opacity: 1;
+}
+
+body.miasma-on .miasma-vignette {
+  opacity: 0.12;
+}
+
+@keyframes miasma-drift {
+  0% { transform: translateX(-6%); }
+  100% { transform: translateX(6%); }
+}
+
+/* Timer goes toxic in the last minute, and throbs in the last 30 seconds */
+body.miasma-on .timer-box {
+  color: var(--accent-green);
+  border-color: var(--accent-green);
+  box-shadow: inset 0 0 8px rgba(56, 239, 125, 0.25);
+}
+
+body.miasma-warning .timer-box {
+  color: #ffd166;
+  border-color: #ffd166;
+}
+
+body.miasma-critical .timer-box {
+  color: var(--danger);
+  border-color: var(--danger);
+  animation: miasma-throb 0.8s ease-in-out infinite alternate;
+}
+
+body.miasma-critical .miasma-vignette {
+  animation: miasma-throb 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes miasma-throb {
+  0% { filter: brightness(1); }
+  100% { filter: brightness(1.6); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .miasma-fog,
+  .miasma-vignette {
+    transition: none !important;
+  }
+  .miasma-fog::before,
+  body.miasma-critical .timer-box,
+  body.miasma-critical .miasma-vignette,
+  .grimoire-page.turn-next,
+  .grimoire-page.turn-prev {
+    animation: none !important;
+  }
+}
+
+/* Best times (victory) and defeat card */
+.best-times {
+  margin-bottom: 16px;
+  text-align: left;
+  background: #1c0e33;
+  border: 1px solid #4f2b7a;
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.best-times h4 {
+  font-size: 0.8rem;
+  color: #9f88be;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.best-times ol {
+  margin-left: 20px;
+  font-family: monospace;
+  font-size: 0.95rem;
+  color: #e5d8f6;
+}
+
+.best-times li.current {
+  color: var(--accent-green);
+  font-weight: 700;
+}
+
+.defeat-card .victory-title {
+  color: var(--accent-green);
+  text-shadow: 0 0 15px rgba(56, 239, 125, 0.5);
+}
+
+.defeat-progress {
+  margin: 14px 0 18px;
+  color: #ffd166;
+  font-size: 0.9rem;
+}
