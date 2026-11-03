@@ -227,6 +227,7 @@
   // --- Game State ---
   const state = {
     secondsElapsed: 0,
+    runStartedAt: 0, // Date.now() when the run began, so the clock survives a throttled tab
     timerActive: true,
     gameWon: false,
     gameOver: false, // Cursed Miasma timeout
@@ -1339,6 +1340,7 @@
     // Check Victory Condition
     if (state.gateLocks.chains && state.gateLocks.keyhole && state.gateLocks.sigil) {
       state.gameWon = true;
+      syncElapsed(); // take the final time from the wall clock before the timer stops
       state.timerActive = false;
       sound.playVictory();
       setTimeout(() => {
@@ -1525,6 +1527,7 @@
     if (state.started) return;
     state.started = true;
     state.secondsElapsed = 0; // the run starts now, not when the page loaded
+    state.runStartedAt = Date.now();
     modeSelect.hidden = true;
     if (state.mode === 'miasma') {
       document.body.classList.add('miasma-on');
@@ -1578,17 +1581,34 @@
   });
 
   // --- Timer Loop ---
-  setInterval(() => {
+  // Elapsed time comes from the wall clock, not from counting interval ticks:
+  // browsers throttle setInterval in background tabs and it stalls while the
+  // device sleeps, which would stretch the 4:00 Miasma limit past real time.
+  function syncElapsed() {
+    if (state.started) {
+      state.secondsElapsed = Math.max(0, Math.floor((Date.now() - state.runStartedAt) / 1000));
+    } else {
+      state.secondsElapsed++;
+    }
+  }
+
+  function tickTimer() {
     if (!state.timerActive) return;
     // In Cursed Miasma mode nothing runs until the player enters the crypt
     if (state.mode === 'miasma' && !state.started) return;
-    state.secondsElapsed++;
+    syncElapsed();
     renderTimer();
     if (state.mode === 'miasma' && state.started) {
       updateMiasma();
       if (state.secondsElapsed >= MIASMA_TOTAL && !state.gameWon) miasmaDefeat();
     }
-  }, 1000);
+  }
+
+  setInterval(tickTimer, 1000);
+  // Catch up right away when the player comes back to the tab
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) tickTimer();
+  });
 
   refreshBestLabels();
 
