@@ -1,0 +1,116 @@
+:root {
+  color-scheme: dark;
+  font-family: "Segoe UI", sans-serif;
+  background: #0b1020;
+  color: #eef4ff;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  padding: 22px 16px 30px;
+  background: radial-gradient(ellipse at 50% -12%, #1a2c4b 0, #0b1020 64%);
+}
+
+button { font: inherit; }
+
+.game-shell { width: min(100%, 900px); margin: 0 auto; }
+.game-header { text-align: center; }
+.back-link { display: inline-block; margin-bottom: 20px; color: #91baff; text-decoration: none; }
+.back-link:hover { color: #d7e7ff; }
+.eyebrow { margin: 0 0 7px; color: #69baff; font-size: .68rem; font-weight: 800; letter-spacing: .17em; }
+h1 { margin: 0; font-size: clamp(2rem, 6vw, 3.1rem); letter-spacing: -.055em; }
+h1 span { color: #68b7ff; }
+.subtitle { margin: 8px 0 19px; color: #a4b2cb; }
+
+.flight-data { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+.readout {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid #293751;
+  border-radius: 9px;
+  background: #141d2e;
+}
+.readout span { color: #8292ad; font-size: .61rem; font-weight: 800; letter-spacing: .1em; }
+.readout strong { overflow: hidden; color: #e6f1ff; font-family: Consolas, monospace; font-size: clamp(.85rem, 2.6vw, 1.05rem); text-overflow: ellipsis; white-space: nowrap; }
+.readout strong.warning { color: #ff9a87; }
+.fuel-track { height: 6px; margin: 8px 0 11px; overflow: hidden; border-radius: 99px; background: #253149; }
+.fuel-bar { width: 100%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #27d6b1, #73e5ce); transition: width .12s linear, background-color .2s ease; }
+.fuel-bar.low { background: linear-gradient(90deg, #f8a84a, #fa647c); }
+
+.flight-window {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #2c3b58;
+  border-radius: 13px;
+  background: #090f1d;
+  box-shadow: 0 18px 50px #0006;
+}
+canvas { display: block; width: 100%; height: auto; }
+.mission-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: #080d18c9;
+}
+.mission-overlay[hidden] { display: none; }
+.mission-card {
+  width: min(100%, 430px);
+  padding: 24px;
+  border: 1px solid #344463;
+  border-radius: 14px;
+  background: #111a2bf2;
+  box-shadow: 0 18px 50px #0008;
+  text-align: center;
+}
+.mission-card h2 { margin: 0 0 8px; color: #e7f2ff; font-size: clamp(1.35rem, 5vw, 1.8rem); }
+.mission-card > p:not(.eyebrow) { margin: 0; color: #aebbd0; line-height: 1.6; }
+.briefing-controls { display: grid; gap: 8px; margin: 18px 0; color: #ccd7e8; font-size: .86rem; }
+kbd { padding: 3px 7px; border: 1px solid #465775; border-radius: 5px; background: #1d2b42; color: #e7f2ff; font: 700 .78rem Consolas, monospace; }
+.mission-card button {
+  padding: 11px 20px;
+  border: 0;
+  border-radius: 8px;
+  background: #2876df;
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+}
+.mission-card button:hover { background: #4092fa; }
+.touch-controls { display: none; justify-content: center; gap: 12px; margin: 13px auto 0; }
+.flight-control {
+  min-width: 58px;
+  min-height: 48px;
+  padding: 9px 16px;
+  border: 1px solid #354969;
+  border-radius: 10px;
+  background: #19263d;
+  color: #cfe3ff;
+  font-size: 1.15rem;
+  font-weight: 800;
+  touch-action: none;
+  user-select: none;
+}
+.flight-control:active, .flight-control.pressed { border-color: #77bdff; background: #244777; }
+.main-control { min-width: 112px; border-color: #1d806f; background: #123b3a; color: #8af1d9; font-size: .8rem; letter-spacing: .08em; }
+.instructions { margin: 13px 0 0; color: #95a4be; font-size: .84rem; text-align: center; }
+.instructions strong { color: #d3e4ff; }
+
+@media (max-width: 650px) {
+  body { padding: 16px 12px 24px; }
+  .flight-data { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .touch-controls { display: flex; }
+  .mission-card { padding: 19px; }
+}
+
+@media (max-width: 360px) {
+  .readout { padding: 8px; }
+  .readout span { font-size: .55rem; }
+}

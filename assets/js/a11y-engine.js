@@ -21,9 +21,29 @@
 
     init() {
       this.loadPrefs();
+      this.detectSystemMotionPreference();
       this.applyPrefs();
       this.renderDrawer();
       this.bindEvents();
+    },
+
+    detectSystemMotionPreference() {
+      // Synchronize with system prefers-reduced-motion media query
+      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if (localStorage.getItem(STORAGE_KEY) === null && mediaQuery.matches) {
+        this.prefs.reducedMotion = true;
+      }
+
+      if (typeof mediaQuery.addEventListener === 'function') {
+        mediaQuery.addEventListener('change', (e) => {
+          if (localStorage.getItem(STORAGE_KEY) === null) {
+            this.prefs.reducedMotion = e.matches;
+            this.applyPrefs();
+            const checkbox = document.getElementById('a11y-opt-motion');
+            if (checkbox) checkbox.checked = e.matches;
+          }
+        });
+      }
     },
 
     loadPrefs() {
@@ -47,6 +67,7 @@
       root.classList.toggle('a11y-high-contrast', Boolean(this.prefs.highContrast));
       root.classList.toggle('a11y-large-text', Boolean(this.prefs.largeText));
       root.classList.toggle('a11y-focus-highlight', Boolean(this.prefs.focusHighlight));
+      window.dispatchEvent(new CustomEvent('arcadeverse:a11y-motion-changed', { detail: { reducedMotion: this.prefs.reducedMotion } }));
     },
 
     renderDrawer() {
@@ -203,6 +224,18 @@
       }
     },
 
+
+    isMotionReduced() {
+      return Boolean(this.prefs.reducedMotion);
+    },
+
+    onMotionPreferenceChange(callback) {
+      if (typeof callback === 'function') {
+        window.addEventListener('arcadeverse:a11y-motion-changed', (e) => {
+          callback(e.detail.reducedMotion);
+        });
+      }
+    },
     resetPrefs() {
       this.prefs = {
         reducedMotion: false,

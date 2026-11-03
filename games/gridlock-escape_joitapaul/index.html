@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0c0e14">
+  <title>Gridlock Escape | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="game-shell">
+    <header>
+      <a class="back-link" href="../../index.html">← ArcadeVerse</a>
+      <p class="eyebrow">PUZZLE / CITY GRID</p>
+      <h1>Gridlock <span>Escape</span></h1>
+      <p class="subtitle">Slide the traffic and clear a route for the blue getaway car.</p>
+    </header>
+    <section class="status-row" aria-label="Puzzle status">
+      <div class="status-box"><span>GRID</span><strong id="level">01</strong></div>
+      <div class="status-box"><span>MOVES</span><strong id="moves">0</strong></div>
+      <button id="restart" type="button">Reset grid</button>
+    </section>
+    <div class="board-wrap">
+      <div id="board" class="board" role="grid" aria-label="Traffic puzzle board"></div>
+      <span class="exit-label">EXIT →</span>
+    </div>
+    <p id="message" class="message" aria-live="polite">Select a car, then move it with the arrow keys.</p>
+    <div class="controls" aria-label="Move selected car">
+      <button type="button" data-move="-1" aria-label="Move selected car backward">←</button>
+      <button type="button" data-move="1" aria-label="Move selected car forward">→</button>
+    </div>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>

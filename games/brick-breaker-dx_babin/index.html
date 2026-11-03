@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+  <title>Neon Brick Breaker DX: Cyber Shatter</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="game-container">
+    <div class="hud-bar">
+      <div class="hud-left">
+        <div class="hud-pill stage-pill">
+          <span class="pill-label">STAGE</span>
+          <span class="pill-val" id="stage-val">1 / 3</span>
+        </div>
+        <div class="hud-pill lives-pill">
+          <span class="pill-label">LIVES</span>
+          <div class="lives-icons" id="lives-icons">
+            <span class="live-dot active"></span>
+            <span class="live-dot active"></span>
+            <span class="live-dot active"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hud-center">
+        <div class="active-powerup-badge hidden" id="powerup-badge">
+          <span id="powerup-name">MULTI-BALL</span>
+          <div class="powerup-timer-bar"><div id="powerup-timer-fill"></div></div>
+        </div>
+      </div>
+
+      <div class="hud-right">
+        <div class="hud-pill">
+          <span class="pill-label">SCORE</span>
+          <span class="pill-val" id="score-val">0</span>
+        </div>
+        <div class="hud-pill">
+          <span class="pill-label">BEST</span>
+          <span class="pill-val" id="best-val">0</span>
+        </div>
+        <button id="sound-btn" class="icon-btn" type="button" aria-label="Toggle Sound" title="Sound">
+          <svg id="sound-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+          <svg id="sound-off" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+        </button>
+        <button id="guide-btn" class="icon-btn" type="button" aria-label="Power-up Guide" title="How to play">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Canvas -->
+    <div class="canvas-wrap">
+      <canvas id="game-canvas"></canvas>
+
+      <!-- Start Screen -->
+      <div class="screen-overlay" id="start-overlay">
+        <div class="cyber-card">
+          <div class="badge-tag">CYBER ARCADIA 2026</div>
+          <h1 class="neon-title">BRICK BREAKER DX</h1>
+          <p class="neon-sub">Cyber Shatter Matrix</p>
+          <div class="brick-types-preview">
+            <div class="b-prev neon"><span>Neon (1 Hit)</span></div>
+            <div class="b-prev titanium"><span>Titanium (2-3 Hits)</span></div>
+            <div class="b-prev emp"><span>EMP Explosive</span></div>
+            <div class="b-prev barrier"><span>Unbreakable</span></div>
+          </div>
+          <button id="start-btn" class="cyber-btn" type="button">LAUNCH BALL</button>
+        </div>
+      </div>
+
+      <!-- Game Over Screen -->
+      <div class="screen-overlay hidden" id="gameover-overlay">
+        <div class="cyber-card">
+          <div class="badge-tag red">MATRIX COLLAPSED</div>
+          <h1 class="neon-title red">GAME OVER</h1>
+          <div class="final-stats">
+            <div><span>FINAL SCORE</span><h2 id="final-score">0</h2></div>
+            <div><span>STAGE REACHED</span><h2 id="final-stage">1</h2></div>
+            <div><span>BRICKS SHATTERED</span><h2 id="final-bricks">0</h2></div>
+          </div>
+          <button id="restart-btn" class="cyber-btn" type="button">REBOOT SYSTEM</button>
+        </div>
+      </div>
+
+      <!-- Victory Screen -->
+      <div class="screen-overlay hidden" id="victory-overlay">
+        <div class="cyber-card">
+          <div class="badge-tag gold">ALL MATRICES SHATTERED</div>
+          <h1 class="neon-title gold">VICTORY</h1>
+          <p class="neon-sub">All 3 cyber stages cleared with maximum score!</p>
+          <div class="final-stats">
+            <div><span>FINAL SCORE</span><h2 id="win-score">0</h2></div>
+            <div><span>HIGH SCORE</span><h2 id="win-best">0</h2></div>
+          </div>
+          <button id="replay-btn" class="cyber-btn" type="button">PLAY AGAIN</button>
+        </div>
+      </div>
+
+      <!-- Guide & Rules Modal -->
+      <div class="screen-overlay hidden" id="guide-modal">
+        <div class="cyber-card max-w">
+          <div class="modal-top">
+            <h2>Power-Ups & Physics Guide</h2>
+            <button id="close-guide-btn" class="icon-close" type="button" aria-label="Close">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div class="guide-scroll">
+            <div class="guide-item">
+              <span class="p-dot cyan"></span>
+              <div>
+                <strong>Dynamic Ball Reflection:</strong>
+                <p>Hitting the center bounces straight up. Hitting the outer edges cuts sharp, rapid diagonal trajectories.</p>
+              </div>
+            </div>
+            <div class="guide-item">
+              <span class="p-dot pink"></span>
+              <div>
+                <strong>Multi-Ball (M):</strong>
+                <p>Splits the energy orb into 3 active balls simultaneously.</p>
+              </div>
+            </div>
+            <div class="guide-item">
+              <span class="p-dot green"></span>
+              <div>
+                <strong>Paddle Extender (E):</strong>
+                <p>Expands the cyber paddle width by 45% for improved coverage.</p>
+              </div>
+            </div>
+            <div class="guide-item">
+              <span class="p-dot gold"></span>
+              <div>
+                <strong>Laser Blaster (L):</strong>
+                <p>Arms the paddle with laser cannons to shoot bricks directly with Space / Tap.</p>
+              </div>
+            </div>
+            <div class="guide-item">
+              <span class="p-dot orange"></span>
+              <div>
+                <strong>Sticky Magnet (S):</strong>
+                <p>Catches the ball upon paddle impact to re-aim and launch at will.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Touch Area -->
+    <div class="mobile-paddle-bar">
+      <span>Drag finger or mouse horizontally to maneuver paddle</span>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

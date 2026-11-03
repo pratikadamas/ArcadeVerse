@@ -1,0 +1,16 @@
+{
+  "title": "Lunar Landing Protocol",
+  "category": "Arcade",
+  "lucideIcon": "rocket",
+  "description": "Balance thrust, fuel, and lateral steering to land a lunar module safely on a narrow surface pad.",
+  "author": "Joita Paul",
+  "github": "joitapaul",
+  "role": "Contributor",
+  "tags": [
+    "Arcade",
+    "Physics",
+    "Space",
+    "Simulation",
+    "NSOC26"
+  ]
+}

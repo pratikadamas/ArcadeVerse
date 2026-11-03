@@ -1,0 +1,15 @@
+{
+  "title": "Pumpkin Express: Haunted Rails",
+  "category": "Puzzle",
+  "lucideIcon": "train-front",
+  "description": "Switch the haunted railway to route a runaway pumpkin train around broken rails and safely into the station.",
+  "author": "Joita Paul",
+  "github": "joitapaul",
+  "role": "Arcade Developer",
+  "tags": [
+    "Halloween",
+    "Puzzle",
+    "Railway",
+    "NSOC26"
+  ]
+}

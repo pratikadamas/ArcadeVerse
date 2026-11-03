@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Island Survival: Lost Beyond the Shore</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Fullscreen Canvas -->
+  <canvas id="islandCanvas"></canvas>
+
+  <!-- Atmospheric Weather & Horror Overlays -->
+  <div class="storm-lightning" id="lightningFx" aria-hidden="true"></div>
+  <div class="weather-overlay" id="weatherFx" aria-hidden="true"></div>
+  <div class="panic-vignette" id="panicVignette" aria-hidden="true"></div>
+  <div class="film-grain-overlay" aria-hidden="true"></div>
+
+  <!-- Dusk Threat Alert Banner -->
+  <div class="dusk-warning" id="duskWarning" role="alert">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+      <line x1="12" y1="9" x2="12" y2="13"></line>
+      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+    </svg>
+    <span>NIGHTFALL APPROACHES! Stay near your Campfire or ignite a Torch to ward off Shadow Stalkers!</span>
+  </div>
+
+  <!-- Notification Banner -->
+  <div class="event-toast" id="eventToast">
+    You woke up on the misty cursed shore after a harrowing crash.
+  </div>
+
+  <!-- Floating Sleek Top HUD -->
+  <header class="hud-topbar">
+    <a class="back-link" href="../../index.html" title="Return to ArcadeVerse Hub">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <path d="M19 12H5M12 19l-7-7 7-7"></path>
+      </svg>
+      <span>ArcadeVerse</span>
+    </a>
+
+    <!-- Vitals Pod (Left) -->
+    <div class="vitals-pod">
+      <!-- Health -->
+      <div class="vital-item" title="Health">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ff1744" stroke-width="2">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+        <div class="vital-bar">
+          <div class="vital-fill fill-hp" id="healthBar" style="width: 100%;"></div>
+        </div>
+      </div>
+
+      <!-- Hunger -->
+      <div class="vital-item" title="Hunger">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#f57c00" stroke-width="2">
+          <circle cx="12" cy="12" r="9"></circle>
+          <path d="M12 7v5l3 3"></path>
+        </svg>
+        <div class="vital-bar">
+          <div class="vital-fill fill-hunger" id="hungerBar" style="width: 100%;"></div>
+        </div>
+      </div>
+
+      <!-- Thirst -->
+      <div class="vital-item" title="Thirst">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#0288d1" stroke-width="2">
+          <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path>
+        </svg>
+        <div class="vital-bar">
+          <div class="vital-fill fill-thirst" id="thirstBar" style="width: 100%;"></div>
+        </div>
+      </div>
+
+      <!-- Energy -->
+      <div class="vital-item" title="Energy / Stamina">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fbc02d" stroke-width="2">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
+        <div class="vital-bar">
+          <div class="vital-fill fill-energy" id="energyBar" style="width: 100%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Time & Weather Pod (Right) -->
+    <div class="time-pod">
+      <span id="dayText">Day 1</span>
+      <span>•</span>
+      <span id="timeText">12:00 PM</span>
+      <span>•</span>
+      <span id="weatherText">Clear</span>
+      <button class="icon-btn-mini" id="soundToggle" title="Toggle Sound">
+        <svg id="soundIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+        </svg>
+      </button>
+      <button class="icon-btn-mini" id="helpBtn" title="Help Guide">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Floating Quest & Objective Guide -->
+  <div class="quest-tracker" id="questTracker" aria-live="polite" role="region" aria-label="Current Mission Objective">
+    <span class="quest-pill">MISSION</span>
+    <span class="quest-text" id="questText">Gather 4 Wood & 3 Stones (Chop Trees / Mine Rocks with [SPACE] or by Clicking)</span>
+  </div>
+
+  <!-- Touch On-Screen Controls -->
+  <div class="touch-container" aria-label="Mobile Touch Ergonomic Controls">
+    <div class="touch-dpad">
+      <button class="dpad-btn dpad-up" id="btnUp">UP</button>
+      <button class="dpad-btn dpad-left" id="btnLeft">LEFT</button>
+      <button class="dpad-btn dpad-right" id="btnRight">RIGHT</button>
+      <button class="dpad-btn dpad-down" id="btnDown">DOWN</button>
+    </div>
+
+    <button class="touch-act-btn" id="touchAction" title="Interact / Harvest / Attack">
+      ACT
+    </button>
+  </div>
+
+  <!-- Floating Sleek Bottom Hotbar -->
+  <footer class="hud-bottombar" aria-label="Survival Resource & Tool Hotbar">
+    <button class="hotbar-btn btn-craft" id="btnOpenCrafting">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+      </svg>
+      <span>Craft [C]</span>
+    </button>
+
+    <button class="hotbar-btn" id="btnEatDrink">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+        <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+      </svg>
+      <span>Eat [E]</span>
+    </button>
+
+    <button class="hotbar-btn" id="btnRest">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M2 4v16"></path>
+        <path d="M2 8h18a2 2 0 0 1 2 2v10"></path>
+        <path d="M2 17h20"></path>
+      </svg>
+      <span>Rest [R]</span>
+    </button>
+
+    <!-- Resources Quick Readout -->
+    <div class="hotbar-slot" title="Wood">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#8d6e63" stroke-width="2"><line x1="18" y1="2" x2="6" y2="22"></line><line x1="6" y1="2" x2="18" y2="22"></line></svg>
+      <span id="resWood">0</span>
+    </div>
+
+    <div class="hotbar-slot" title="Stone">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#b0bec5" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon></svg>
+      <span id="resStone">0</span>
+    </div>
+
+    <div class="hotbar-slot" title="Vines">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#66bb6a" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><path d="M12 2v14"></path></svg>
+      <span id="resVines">0</span>
+    </div>
+
+    <div class="hotbar-slot" title="Leaves">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#26a69a" stroke-width="2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path></svg>
+      <span id="resLeaves">0</span>
+    </div>
+
+    <div class="hotbar-slot" title="Food Stored">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#ffca28" stroke-width="2"><circle cx="12" cy="12" r="9"></circle></svg>
+      <span id="resFood">0</span>
+    </div>
+
+    <div class="hotbar-slot" title="Copper Scrap (Shipwrecks)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="8"></circle><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"></path></svg>
+      <span id="resCopper">0</span>
+    </div>
+
+    <div class="hotbar-slot" title="Distress Signal Flares">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4.5 2 7.5L12 16.5 5.5 21l2-7.5L2 9h7z"></path></svg>
+      <span id="resFlares">0</span>
+    </div>
+
+    <div class="hotbar-slot" title="Active Tool">
+      <span id="equippedTool" style="color: #ffdd80;">Bare Hands</span>
+    </div>
+  </footer>
+
+  <!-- Modals -->
+
+  <!-- Crafting Book Modal -->
+  <div class="modal-overlay" id="modalCrafting">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+          </svg>
+          Survival Crafting Manual
+        </h3>
+        <button class="modal-close" data-close="modalCrafting">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.8rem; color: #94bade; margin-bottom: 12px;">Combine harvested resources to craft tools, defensive structures, and escape equipment:</p>
+        <div class="crafting-grid" id="craftingGrid"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" data-close="modalCrafting">Close Manual</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Survival & Horror Escape Dossier Modal -->
+  <div class="modal-overlay open" id="modalHelp" role="dialog" aria-modal="true" aria-labelledby="dossierTitle">
+    <div class="modal-dialog dossier-modal">
+      <div class="modal-header">
+        <h3 id="dossierTitle">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 2a10 10 0 1 0 10 10H12V2z"></path>
+          </svg>
+          THE CURSED ATOLL: SURVIVAL & ESCAPE DOSSIER
+        </h3>
+        <button class="modal-close" data-close="modalHelp" aria-label="Close guide">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="dossier-intro">
+          You washed ashore on the uncharted and cursed Devil's Atoll following a harrowing crash. The dense mangrove jungle harbors ancient horrors that awaken when the sun sets. Maintain your vitals, build campfires to stay alive through the night, and plan your escape!
+        </p>
+
+        <div class="survival-rules-grid">
+          <div class="survival-rule-card">
+            <div class="rule-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+            <div class="rule-body">
+              <h4>1. EXPLORE & GATHER</h4>
+              <p>Move with <strong>WASD</strong>, <strong>Arrow Keys</strong>, or the <strong>Touch D-Pad</strong>. Walk up to trees, rocks, bushes, or wreckage and press <strong>[SPACE]</strong> or tap <strong>[ACT]</strong> to harvest supplies.</p>
+            </div>
+          </div>
+
+          <div class="survival-rule-card">
+            <div class="rule-icon danger">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            </div>
+            <div class="rule-body">
+              <h4>2. SURVIVE THE NIGHTMARE NIGHT</h4>
+              <p>When night falls, terrifying <strong>Shadow Stalkers</strong> emerge from the jungle! Build a <strong>Campfire</strong> or craft a <strong>Survival Torch</strong> via <strong>[C]</strong>. Firelight is your ONLY shield against the creatures.</p>
+            </div>
+          </div>
+
+          <div class="survival-rule-card">
+            <div class="rule-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+            </div>
+            <div class="rule-body">
+              <h4>3. MONITOR VITALS & REST</h4>
+              <p>Keep Health, Hunger, Thirst, and Energy above zero. Forage berries and coconuts (press <strong>[E]</strong> to eat), drink from the spring, and rest near a campfire with <strong>[R]</strong>.</p>
+            </div>
+          </div>
+
+          <div class="survival-rule-card">
+            <div class="rule-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+            </div>
+            <div class="rule-body">
+              <h4>4. CRAFT & ESCAPE</h4>
+              <p>Open Crafting with <strong>[C]</strong>. Forge Stone Axes and Spears. Escape by building a <strong>Sea Raft</strong> at the coast OR by salvaging the plane's battery to power the <strong>Cliff SOS Beacon</strong>!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" data-close="modalHelp" id="btnStartGame">
+          <span>COMMENCE SURVIVAL</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Endings Modal -->
+  <div class="modal-overlay" id="modalEnding">
+    <div class="modal-dialog">
+      <div class="modal-body ending-card">
+        <h2 class="ending-title" id="endingTitle">RESCUED!</h2>
+        <div style="font-size: 0.95rem; color: #d1e7fc; line-height: 1.6; margin: 14px 0;" id="endingDesc"></div>
+
+        <div class="ending-stats">
+          <div class="stat-item">
+            <span class="stat-val" id="statDays">1</span>
+            <span class="stat-lbl">Days Survived</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-val" id="statCrafted">0</span>
+            <span class="stat-lbl">Items Crafted</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-val" id="statScore">0</span>
+            <span class="stat-lbl">Survival Score</span>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="btnRestartGame" style="width: 100%; padding: 10px; font-size: 1rem;">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

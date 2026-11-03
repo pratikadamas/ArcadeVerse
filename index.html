@@ -15,7 +15,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cambria+Math&family=Permanent+Marker&display=swap"
+  <link href="https://fonts.googleapis.com/css2?family=Cambria+Math&family=Jolly+Lodger&family=Permanent+Marker&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="assets/css/style.css">
   <link rel="stylesheet" href="assets/css/pages.css">
@@ -27,6 +27,7 @@
   <link rel="stylesheet" href="assets/css/trophy-card.css">
   <link rel="stylesheet" href="assets/css/sound-engine.css">
   <link rel="stylesheet" href="assets/css/game-ratings.css">
+  <link rel="stylesheet" href="assets/css/halloween.css?v=20261103">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -197,7 +198,185 @@
     <!-- Daily Mystery Mission Quest Mount -->
     <div id="daily-challenge-mount" class="daily-challenge-section"></div>
 
-    <!-- Games Showcase Section -->
+    <!-- Halloween Special Showcase Section -->
+    <section class="halloween-showcase-section" id="halloween-special" aria-label="Halloween Special Games Portal">
+      <div class="halloween-container">
+        <!-- Ambient moving fog layer -->
+        <div class="halloween-fog-layer" aria-hidden="true"></div>
+
+        <div class="halloween-header">
+          <span class="halloween-badge">
+            <svg class="halloween-badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+            </svg>
+            LIMITED TIME EVENT
+          </span>
+          <div class="halloween-title-wrap">
+            <h2 class="halloween-title">
+              <svg class="halloween-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="36" height="36" aria-hidden="true">
+                <path d="M12 2c-1.5 0-3 1.2-3 2.5 0 .5.2 1 .5 1.5C6 7 4 10 4 13.5 4 18 7.5 21 12 21s8-3 8-7.5c0-3.5-2-6.5-5.5-7.5.3-.5.5-1 .5-1.5 0-1.3-1.5-2.5-3-2.5z"></path>
+                <path d="M9 12l1.5 2L12 12l1.5 2L15 12"></path>
+                <path d="M10 16h4"></path>
+              </svg>
+              Halloween Special Games
+            </h2>
+            <div class="halloween-pumpkin-glow" aria-hidden="true"></div>
+          </div>
+          <p class="halloween-subtitle">
+            Enter our newest eerie Halloween special experiences. Solve arcane crypt puzzles, escape the cursed Victorian mansion, and survive the uncharted wild.
+          </p>
+        </div>
+
+        <div class="halloween-grid" id="halloween-grid">
+          <!-- Card 1: Haunted House: The Curse Within -->
+          <div class="halloween-card theme-manor" data-game-id="haunted-house_debasmita" role="article" tabindex="0" aria-label="Haunted House: The Curse Within digital game card">
+            <div class="halloween-card-banner">
+              <div class="banner-art-wrap manor-scenery" aria-hidden="true">
+                <div class="manor-moon"></div>
+                <div class="manor-mist"></div>
+              </div>
+              <div class="banner-hud-pills">
+                <span class="halloween-tag-pill">Horror Mystery</span>
+                <div class="halloween-diff-badge" title="Difficulty: Hard" aria-label="Difficulty: Hard">
+                  <span>HARD</span>
+                  <div class="diff-dots" aria-hidden="true">
+                    <span class="diff-dot active"></span>
+                    <span class="diff-dot active"></span>
+                    <span class="diff-dot active"></span>
+                    <span class="diff-dot"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="halloween-card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 21h18"></path>
+                  <path d="M5 21V7l7-4 7 4v14"></path>
+                  <path d="M9 10h2v3H9z" class="candle-glow-flicker" fill="#ffaa00" stroke="#ff8800"></path>
+                  <path d="M13 10h2v3h-2z" fill="#3a1d56"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="halloween-card-body">
+              <span class="halloween-card-category">Adventure / Horror</span>
+              <h3 class="halloween-card-title">Haunted House: The Curse Within</h3>
+              <p class="halloween-card-desc">
+                Waking up inside an abandoned Victorian mansion, search shadowy rooms for clues, avoid lurking specters, manage your sanity, and break the 1898 Blackwood curse.
+              </p>
+              <div class="halloween-card-footer">
+                <div class="halloween-author-meta">
+                  <div class="halloween-author-avatar">D</div>
+                  <div class="halloween-author-name">Dev: <strong>Debasmita Bose</strong></div>
+                </div>
+                <button class="btn-halloween-play" data-game-id="haunted-house_debasmita" type="button" aria-label="Play Haunted House: The Curse Within in a new tab">
+                  <span>Play Now</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Halloween Escape: Witch's Crypt -->
+          <div class="halloween-card theme-crypt" data-game-id="escape-room_debasmita" role="article" tabindex="0" aria-label="Halloween Escape: Witch's Crypt digital game card">
+            <div class="halloween-card-banner">
+              <div class="banner-art-wrap" aria-hidden="true">
+                <svg class="crypt-sigil-bg" viewBox="0 0 100 100" fill="none">
+                  <circle cx="50" cy="50" r="46" stroke="#c084fc" stroke-width="1.5" stroke-dasharray="4 3"/>
+                  <polygon points="50,14 81,68 19,68" stroke="#ffd700" stroke-width="1"/>
+                  <polygon points="50,86 81,32 19,32" stroke="#ffd700" stroke-width="1"/>
+                </svg>
+                <div class="crypt-sparkles"></div>
+              </div>
+              <div class="banner-hud-pills">
+                <span class="halloween-tag-pill">Escape Room</span>
+                <div class="halloween-diff-badge" title="Difficulty: Expert" aria-label="Difficulty: Expert">
+                  <span>EXPERT</span>
+                  <div class="diff-dots" aria-hidden="true">
+                    <span class="diff-dot expert active"></span>
+                    <span class="diff-dot expert active"></span>
+                    <span class="diff-dot expert active"></span>
+                    <span class="diff-dot expert active"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="halloween-card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 2l-2 2m-1-1l-3 3m2 8A6 6 0 1 1 5 8a6 6 0 0 1 12 6z"></path>
+                  <circle cx="9" cy="14" r="1.5" fill="#ffd700"></circle>
+                </svg>
+              </div>
+            </div>
+            <div class="halloween-card-body">
+              <span class="halloween-card-category">Puzzle / Mystery</span>
+              <h3 class="halloween-card-title">Halloween Escape: Witch's Crypt</h3>
+              <p class="halloween-card-desc">
+                Trapped inside an ancient subterranean crypt, decipher runic celestial dials, brew bubbling alchemical acid, solve grimoire bookshelf riddles, and escape the sealed gate.
+              </p>
+              <div class="halloween-card-footer">
+                <div class="halloween-author-meta">
+                  <div class="halloween-author-avatar">D</div>
+                  <div class="halloween-author-name">Dev: <strong>Debasmita Bose</strong></div>
+                </div>
+                <button class="btn-halloween-play" data-game-id="escape-room_debasmita" type="button" aria-label="Play Halloween Escape: Witch's Crypt in a new tab">
+                  <span>Play Now</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3: Island Survival: Lost Beyond the Shore -->
+          <div class="halloween-card theme-island" data-game-id="island-survival_debasmita" role="article" tabindex="0" aria-label="Island Survival: Lost Beyond the Shore digital game card">
+            <div class="halloween-card-banner">
+              <div class="banner-art-wrap" aria-hidden="true">
+                <div class="island-ocean-waves"></div>
+                <div class="island-resource-chips">
+                  <span class="resource-chip">Wood</span>
+                  <span class="resource-chip">Stone</span>
+                  <span class="resource-chip">Vines</span>
+                </div>
+              </div>
+              <div class="banner-hud-pills">
+                <span class="halloween-tag-pill">Top-Down Survival</span>
+                <div class="halloween-diff-badge" title="Difficulty: Survival" aria-label="Difficulty: Survival">
+                  <span>SURVIVAL</span>
+                  <div class="diff-dots" aria-hidden="true">
+                    <span class="diff-dot survival active"></span>
+                    <span class="diff-dot survival active"></span>
+                    <span class="diff-dot survival active"></span>
+                    <span class="diff-dot"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="halloween-card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="#00e5a3"></polygon>
+                </svg>
+              </div>
+            </div>
+            <div class="halloween-card-body">
+              <span class="halloween-card-category">Survival / Adventure</span>
+              <h3 class="halloween-card-title">Island Survival: Lost Beyond the Shore</h3>
+              <p class="halloween-card-desc">
+                Stranded alone on an uncharted tropical island after a plane crash. Gather resources, craft stone axes & spears, manage hunger and thirst, hunt boars, and build a raft to escape.
+              </p>
+              <div class="halloween-card-footer">
+                <div class="halloween-author-meta">
+                  <div class="halloween-author-avatar">D</div>
+                  <div class="halloween-author-name">Dev: <strong>Debasmita Bose</strong></div>
+                </div>
+                <button class="btn-halloween-play" data-game-id="island-survival_debasmita" type="button" aria-label="Play Island Survival: Lost Beyond the Shore in a new tab">
+                  <span>Play Now</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+<!-- Games Showcase Section -->
     <section class="games-section" id="games">
       <div class="games-section-header">
         <div class="games-header-left">
@@ -208,13 +387,19 @@
 
         <!-- Search & Sort Controls Toolbar -->
         <div class="games-toolbar-controls">
-          <div class="search-box">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="search-box" id="search-box-wrapper">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" id="game-search-input" placeholder="Search game or contributor..."
-              aria-label="Search games or contributors">
+            <input type="text" id="game-search-input" placeholder="Search games, contributors, tags..."
+              aria-label="Search games, contributors or tags" autocomplete="off">
+            <button type="button" class="search-clear-btn" id="search-clear-btn" aria-label="Clear search" title="Clear search" hidden>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </div>
 
           <div class="sort-box">
@@ -228,6 +413,47 @@
         </div>
       </div>
 
+      <!-- Live Results Count & Active Filter Indicator -->
+      <div class="search-results-bar" id="search-results-bar" aria-live="polite" aria-atomic="true">
+        <span class="results-count" id="catalog-results-count"></span>
+        <div class="search-tags-row" id="search-tags-row" aria-label="Quick tag filters"></div>
+      </div>
+
+      <!-- Faceted Filter Sub-Bar: Duration & Control Scheme -->
+      <div class="faceted-filter-bar" id="faceted-filter-bar">
+        <div class="facet-group" role="group" aria-label="Filter by estimated play duration">
+          <span class="facet-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            Duration:
+          </span>
+          <div class="facet-chips" id="duration-facet-chips">
+            <button class="facet-chip active" data-duration="all" type="button">All</button>
+            <button class="facet-chip" data-duration="quick" type="button" title="Quick sessions (< 3 mins)">Quick (&lt;3m)</button>
+            <button class="facet-chip" data-duration="medium" type="button" title="Standard sessions (3 - 10 mins)">Medium (3-10m)</button>
+            <button class="facet-chip" data-duration="long" type="button" title="Extended / Narrative sessions (> 10 mins)">Deep (&gt;10m)</button>
+          </div>
+        </div>
+
+        <div class="facet-group" role="group" aria-label="Filter by input control scheme">
+          <span class="facet-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="6" cy="12" r="1"></circle><circle cx="10" cy="12" r="1"></circle><line x1="14" y1="10" x2="18" y2="10"></line><line x1="14" y1="14" x2="18" y2="14"></line></svg>
+            Controls:
+          </span>
+          <div class="facet-chips" id="controls-facet-chips">
+            <button class="facet-chip active" data-controls="all" type="button">All</button>
+            <button class="facet-chip" data-controls="keyboard" type="button">Keyboard / WASD</button>
+            <button class="facet-chip" data-controls="mouse" type="button">Mouse / Pointer</button>
+            <button class="facet-chip" data-controls="touch" type="button">Touch Friendly</button>
+          </div>
+        </div>
+
+        <button class="btn-reset-facets" id="btn-reset-facets" type="button" title="Reset all facet filters">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+          Reset Filters
+        </button>
+        <div class="active-filters-summary" id="active-filters-summary" style="display: none;"></div>
+      </div>
+
       <!-- Full-Width Category Filter Pills Bar -->
       <div class="category-pills-bar">
         <div class="category-pills" id="category-pills" role="tablist" aria-label="Filter games by category">
@@ -235,6 +461,18 @@
           <button class="pill pill-favorites" data-category="favorites">
             <span class="pill-fav-icon"><i data-lucide="heart"></i></span> Favorites <span class="favorites-count-badge"
               id="favorites-count-badge">0</span>
+          </button>
+          <button class="pill pill-playlists" id="trigger-playlists-btn" type="button" aria-label="Open Custom Playlists">
+            <span class="pill-playlist-icon"><i data-lucide="library"></i></span> Playlists
+          </button>
+          <button class="pill pill-halloween" data-category="Halloween">
+            <span class="pill-halloween-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                <path d="M12 2c-1.5 0-3 1.2-3 2.5 0 .5.2 1 .5 1.5C6 7 4 10 4 13.5 4 18 7.5 21 12 21s8-3 8-7.5c0-3.5-2-6.5-5.5-7.5.3-.5.5-1 .5-1.5 0-1.3-1.5-2.5-3-2.5z"></path>
+                <path d="M9 12l1.5 2L12 12l1.5 2L15 12"></path>
+              </svg>
+            </span>
+            Halloween
           </button>
           <button class="pill" data-category="Puzzle">Puzzle</button>
           <button class="pill" data-category="Arcade">Arcade</button>
@@ -350,6 +588,23 @@
 
   <!-- Footer -->
   <footer class="footer">
+    <div class="footer-inner-wrap" style="max-width: 1280px; margin: 0 auto;">
+      <div class="footer-admin-strip">
+        <div class="footer-admin-left">
+          <span class="footer-admin-badge"><i data-lucide="shield-check" style="width: 13px; height: 13px;"></i> Project Administration</span>
+          <div class="footer-admin-details">
+            <strong class="footer-admin-name">Debasmita Bose</strong>
+            <span class="footer-admin-event">• NSOC Winter Edition 2026</span>
+          </div>
+        </div>
+        <div class="footer-admin-right">
+          <span class="footer-admin-status"><span class="status-dot"></span> Accepting Manual PRs</span>
+          <a href="https://github.com/DebasmitaBose0/ArcadeVerse" target="_blank" rel="noopener noreferrer" class="btn btn-github-highlight btn-sm" style="padding: 0.35rem 0.85rem; font-size: 0.8rem;">
+            <i data-lucide="git-pull-request" style="width: 13px; height: 13px;"></i> Contribute
+          </a>
+        </div>
+      </div>
+    </div>
     <div class="footer-container">
       <div class="footer-col">
         <div class="logo">
@@ -389,15 +644,7 @@
         </ul>
       </div>
 
-      <div class="footer-col">
-        <h4>Project Administration</h4>
-        <div class="admin-badge-card">
-          <span class="admin-title">Project Admin</span>
-          <strong class="admin-name">Debasmita Bose</strong>
-          <span class="admin-event">NSOC Winter Edition 2026</span>
-          <span class="status-indicator"><span class="status-dot"></span> Accepting Manual PRs</span>
-        </div>
-      </div>
+      
     </div>
 
     <div class="footer-bottom">
@@ -422,6 +669,7 @@
   <script src="assets/js/navbar.js"></script>
   <script src="assets/js/games-registry.js"></script>
   <script src="assets/js/app.js"></script>
+  <script src="assets/js/halloween.js"></script>
   <script src="assets/js/daily-challenge.js"></script>
   <script src="assets/js/recently-played.js"></script>
   <script src="assets/js/keyboard-shortcuts.js"></script>
@@ -430,6 +678,7 @@
   <script src="assets/js/trophy-card.js"></script>
   <script src="assets/js/sound-engine.js"></script>
   <script src="assets/js/game-ratings.js"></script>
+  <script src="assets/js/playlist-manager.js"></script>
   <script>
     if (window.lucide) {
       lucide.createIcons();

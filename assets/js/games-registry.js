@@ -1,5 +1,26 @@
 const GAMES_REGISTRY = [
   {
+    "id": "asteroid-miner_babin",
+    "title": "Asteroid Miner: Deep Space Extraction",
+    "category": "Arcade / Shooter",
+    "lucideIcon": "gamepad-2",
+    "description": "Navigate hazardous asteroid fields, blast mineral ores with precision mining lasers, and extract raw cosmic crystals.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/asteroid-miner_babin/index.html",
+    "tags": [
+      "arcade",
+      "arcade",
+      "retro",
+      "html5-canvas",
+      "nsoc26"
+    ],
+    "stars": 15,
+    "featured": true,
+    "difficulty": "Medium"
+  },
+  {
     "id": "astro-infinite-jumper_pragna7",
     "title": "Astro Infinite Jumper",
     "category": "Arcade",
@@ -19,6 +40,22 @@ const GAMES_REGISTRY = [
     "featured": true,
     "difficulty": "Intermediate",
     "releaseDate": "2026-10-23"
+  },
+  {
+    "id": "brick-breaker-dx_babin",
+    "title": "Neon Brick Breaker DX: Cyber Shatter",
+    "category": "Arcade / Physics",
+    "lucideIcon": "gamepad-2",
+    "description": "Shatter cybernetic brick matrices with realistic ball physics, explosive power-ups, and multi-level challenges.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Arcade Developer",
+    "path": "games/brick-breaker-dx_babin/index.html",
+    "tags": [
+      "Arcade"
+    ],
+    "stars": 25,
+    "featured": false
   },
   {
     "id": "bubble-burst-arena_mistu7debnath",
@@ -42,6 +79,43 @@ const GAMES_REGISTRY = [
     "difficulty": "All Skill Levels"
   },
   {
+    "id": "chrono-breakout_babin",
+    "title": "Chrono Breakout: Quantum Time Shatter",
+    "category": "Arcade / Breakout",
+    "lucideIcon": "gamepad-2",
+    "description": "Shatter quantum crystal brick matrixes with a time-bending cyber ball; hold spacebar to reverse local time buffers and recover missed drops.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/chrono-breakout_babin/index.html",
+    "tags": [
+      "arcade",
+      "arcade",
+      "retro",
+      "html5-canvas",
+      "nsoc26"
+    ],
+    "stars": 15,
+    "featured": true,
+    "difficulty": "Medium"
+  },
+  {
+    "id": "chrono-shift_babin",
+    "title": "Chrono-Shift: Temporal Paradox",
+    "category": "Puzzle / Platformer",
+    "lucideIcon": "gamepad-2",
+    "description": "Manipulate time buffers and cooperate with holographic past-self echoes to solve paradoxical chamber puzzles.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Arcade Developer",
+    "path": "games/chrono-shift_babin/index.html",
+    "tags": [
+      "Arcade"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "circuit-connect_arshi",
     "title": "Circuit Connect",
     "category": "Puzzle",
@@ -60,6 +134,22 @@ const GAMES_REGISTRY = [
     ],
     "stars": 25,
     "featured": true
+  },
+  {
+    "id": "code-breaker_babin",
+    "title": "Cryptic Code Breaker: Mastermind Terminal",
+    "category": "Puzzle / Logic",
+    "lucideIcon": "gamepad-2",
+    "description": "Crack randomized security cipher sequences using colorblind-friendly feedback pegs in a rogue AI terminal.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Arcade Developer",
+    "path": "games/code-breaker_babin/index.html",
+    "tags": [
+      "Arcade"
+    ],
+    "stars": 25,
+    "featured": false
   },
   {
     "id": "cosmic-orbit-slingshot_babin",
@@ -224,6 +314,22 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "cyber-katana_babin",
+    "title": "Cyber-Katana: Neon Deflector",
+    "category": "Action / Reflex",
+    "lucideIcon": "gamepad-2",
+    "description": "Slice, dash, and deflect glowing neon projectile waves in bullet-time cyber combat.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Arcade Developer",
+    "path": "games/cyber-katana_babin/index.html",
+    "tags": [
+      "Arcade"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "cyber-light-cycle_babin",
     "title": "Cyber Light Cycle",
     "category": "Retro",
@@ -241,6 +347,25 @@ const GAMES_REGISTRY = [
     ],
     "stars": 49,
     "featured": true
+  },
+  {
+    "id": "cyber-maze-runner_chanchall26",
+    "title": "Cyber Maze Runner",
+    "category": "Arcade",
+    "lucideIcon": "ghost",
+    "description": "Harvest every energy node in a neon maze while four security drones with different pursuit AI hunt you, and flip the chase with Overdrive EMP nodes.",
+    "author": "Chanchal Gupta",
+    "github": "chanchall26",
+    "role": "Arcade Developer",
+    "path": "games/cyber-maze-runner_chanchall26/index.html",
+    "tags": [
+      "Arcade",
+      "Maze",
+      "AI",
+      "Retro"
+    ],
+    "stars": 25,
+    "featured": false
   },
   {
     "id": "cyber-neon-pong_debasmita",
@@ -342,6 +467,22 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "cyber-sudoku_babin",
+    "title": "Cyber-Sudoku: Neon Matrix 9x9",
+    "category": "Puzzle / Logic",
+    "lucideIcon": "gamepad-2",
+    "description": "Restore corrupted cyber sector arrays by arranging matrix digits 1-9 without row, column, or sector collisions.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Arcade Developer",
+    "path": "games/cyber-sudoku_babin/index.html",
+    "tags": [
+      "Arcade"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "cyber-swarm-assault_babin",
     "title": "Cyber Swarm Assault",
     "category": "Action",
@@ -362,6 +503,131 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "cyber-tower-defense_babin",
+    "title": "Cyber Tower Defense: Grid Bastion",
+    "category": "Strategy / Defense",
+    "lucideIcon": "gamepad-2",
+    "description": "Deploy cybernetic laser turrets along the circuit pathways to halt rogue bot swarms before they breach the mainframe core.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/cyber-tower-defense_babin/index.html",
+    "tags": [
+      "strategy",
+      "arcade",
+      "retro",
+      "html5-canvas",
+      "nsoc26"
+    ],
+    "stars": 15,
+    "featured": true,
+    "difficulty": "Medium"
+  },
+  {
+    "id": "cyber-trajectory-bow_chanchall26",
+    "title": "Cyber Trajectory Bow",
+    "category": "Physics",
+    "lucideIcon": "crosshair",
+    "description": "Drag back to draw a neon bow, read the dotted trajectory, and shatter moving, armored and explosive nodes across 8 stages of wind and shifting gravity.",
+    "author": "Chanchal Gupta",
+    "github": "chanchall26",
+    "role": "Arcade Developer",
+    "path": "games/cyber-trajectory-bow_chanchall26/index.html",
+    "tags": [
+      "Physics",
+      "Archery",
+      "Aim",
+      "Neon"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
+    "id": "cyber-typer_hrshjswniii",
+    "title": "Cyber Typer: Terminal Hacker",
+    "category": "Arcade",
+    "lucideIcon": "terminal",
+    "description": "Defend the mainframe by typing falling cyber threat payloads. Features live WPM telemetry, accuracy multiplier combos, and mechanical Web Audio synthesis.",
+    "author": "Harsh Jaiswani",
+    "github": "hrshjswniii",
+    "role": "Active Contributor",
+    "path": "games/cyber-typer_hrshjswniii/index.html",
+    "tags": [
+      "Arcade",
+      "Typing",
+      "Cyberpunk",
+      "Terminal",
+      "Speed",
+      "Defense",
+      "NSOC26"
+    ],
+    "stars": 32,
+    "featured": true,
+    "difficulty": "All Skill Levels",
+    "releaseDate": "2026-11-01"
+  },
+  {
+    "id": "detective-mystery_babin",
+    "title": "Detective Mystery: Neo-Tokyo Syndicate",
+    "category": "Adventure / Narrative",
+    "lucideIcon": "gamepad-2",
+    "description": "Investigate cyber crime scenes, interrogate corporate suspects, expose contradictory alibis, and issue arrest verdicts.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Arcade Developer",
+    "path": "games/detective-mystery_babin/index.html",
+    "tags": [
+      "Arcade"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
+    "id": "escape-room_debasmita",
+    "title": "Halloween Escape: Witch's Crypt",
+    "category": "Horror / Escape Room",
+    "lucideIcon": "key",
+    "description": "Trapped deep inside a gothic subterranean crypt on All Hallows' Eve! Decipher runic celestial altars, brew corrosive acid in the bubbling cauldron, unseal arcane grimoires, and break the three dark gate wards before the witch returns.",
+    "author": "Debasmita Bose",
+    "github": "DebasmitaBose0",
+    "role": "Project Admin & Lead",
+    "path": "games/escape-room_debasmita/index.html",
+    "tags": [
+      "Horror",
+      "Escape Room",
+      "Puzzle",
+      "Point & Click",
+      "Halloween",
+      "NSOC26"
+    ],
+    "stars": 30,
+    "featured": true,
+    "difficulty": "Medium",
+    "releaseDate": "2026-10-31"
+  },
+  {
+    "id": "fishing-frenzy_mistu7debnath",
+    "title": "Fishing Frenzy",
+    "category": "Arcade",
+    "lucideIcon": "fish",
+    "description": "Cast your line, read the water ripples, and master timing-based hooks to catch exotic aquatic species in this relaxing yet exhilarating arcade fishing simulator.",
+    "author": "mistu7debnath",
+    "github": "mistu7debnath",
+    "role": "Arcade Developer",
+    "path": "games/fishing-frenzy_mistu7debnath/index.html",
+    "tags": [
+      "Arcade",
+      "Casual",
+      "Simulation",
+      "Timing",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": true,
+    "difficulty": "All Skill Levels",
+    "releaseDate": "2026-10-31"
+  },
+  {
     "id": "flappy-jet_mistu7debnath",
     "title": "Flappy Cyber Jet",
     "category": "Arcade",
@@ -377,6 +643,134 @@ const GAMES_REGISTRY = [
     ],
     "stars": 18,
     "featured": true
+  },
+  {
+    "id": "gravity-well_babin",
+    "title": "Gravity Well: Singularity Slingshot",
+    "category": "Puzzle / Physics",
+    "lucideIcon": "gamepad-2",
+    "description": "Slingshot cosmic research probes through multi-body gravitational fields, sling around black hole accretion disks, and collect quantum beacons.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/gravity-well_babin/index.html",
+    "tags": [
+      "puzzle",
+      "arcade",
+      "retro",
+      "html5-canvas",
+      "nsoc26"
+    ],
+    "stars": 15,
+    "featured": true,
+    "difficulty": "Medium"
+  },
+  {
+    "id": "gridlock-escape_joitapaul",
+    "title": "Gridlock Escape",
+    "category": "puzzle",
+    "lucideIcon": "car",
+    "description": "Slide the traffic jam to clear a clean escape route for the blue getaway vehicle.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Contributor",
+    "path": "games/gridlock-escape_joitapaul/index.html",
+    "tags": [
+      "puzzle",
+      "traffic",
+      "logic",
+      "sliding-block"
+    ],
+    "stars": 0,
+    "featured": false,
+    "difficulty": "medium",
+    "releaseDate": "2026-11-01"
+  },
+  {
+    "id": "haunted-house_debasmita",
+    "title": "Haunted House: The Curse Within",
+    "category": "Adventure / Horror",
+    "lucideIcon": "ghost",
+    "description": "You wake up inside an abandoned Victorian mansion with no memory of how you arrived. Explore mysterious rooms, search for keys and secret passages, discover torn diary entries, solve cryptic puzzles, evade wandering paranormal entities, and uncover the dark history of the Blackwood curse before the house claims your soul.",
+    "author": "Debasmita Bose",
+    "github": "DebasmitaBose0",
+    "role": "Project Admin & Lead",
+    "path": "games/haunted-house_debasmita/index.html",
+    "tags": [
+      "Halloween",
+      "Horror",
+      "Mystery",
+      "Escape Room",
+      "NSOC26"
+    ],
+    "stars": 30,
+    "featured": true,
+    "difficulty": "Hard",
+    "releaseDate": "2026-10-31"
+  },
+  {
+    "id": "hex-match_babin",
+    "title": "Hex Match: Prismatic Tile Connect",
+    "category": "Puzzle / Match-3",
+    "lucideIcon": "gamepad-2",
+    "description": "Swap and link vibrant chromatic hexagonal prisms across a hexagonal honey-grid to trigger cascading light bursts.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/hex-match_babin/index.html",
+    "tags": [
+      "puzzle",
+      "arcade",
+      "retro",
+      "html5-canvas",
+      "nsoc26"
+    ],
+    "stars": 15,
+    "featured": true,
+    "difficulty": "Medium"
+  },
+  {
+    "id": "island-survival_debasmita",
+    "title": "Island Survival: Lost Beyond the Shore",
+    "category": "Survival / Horror",
+    "lucideIcon": "compass",
+    "description": "Stranded alone on an uncharted cursed atoll after a harrowing crash. Explore misty primeval mangroves, forage supplies, craft tools and torches, build campfires to ward off nocturnal Shadow Stalkers, manage hunger, thirst, and sanity, and find a way to escape the island's dark curse.",
+    "author": "Debasmita Bose",
+    "github": "DebasmitaBose0",
+    "role": "Project Admin & Lead",
+    "path": "games/island-survival_debasmita/index.html",
+    "tags": [
+      "Survival",
+      "Horror",
+      "Sandbox",
+      "Crafting",
+      "Top-Down",
+      "NSOC26"
+    ],
+    "stars": 30,
+    "featured": true,
+    "difficulty": "Hard",
+    "releaseDate": "2026-10-31"
+  },
+  {
+    "id": "lunar-landing-protocol_joitapaul",
+    "title": "Lunar Landing Protocol",
+    "category": "Arcade",
+    "lucideIcon": "rocket",
+    "description": "Balance thrust, fuel, and lateral steering to land a lunar module safely on a narrow surface pad.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Contributor",
+    "path": "games/lunar-landing-protocol_joitapaul/index.html",
+    "tags": [
+      "Arcade",
+      "Physics",
+      "Space",
+      "Simulation",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false
   },
   {
     "id": "memory-matrix_debasmita",
@@ -395,6 +789,25 @@ const GAMES_REGISTRY = [
     ],
     "stars": 24,
     "featured": true
+  },
+  {
+    "id": "midnight-graveyard_joitapaul",
+    "title": "Midnight Graveyard: Lantern Run",
+    "category": "Adventure",
+    "lucideIcon": "ghost",
+    "description": "Navigate a fog-covered graveyard maze, collect three crypt keys, recharge your lantern, and evade patrolling ghosts to reach the exit.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/midnight-graveyard_joitapaul/index.html",
+    "tags": [
+      "Halloween",
+      "Maze",
+      "Adventure",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false
   },
   {
     "id": "neon-asteroid-escape_joitapaul",
@@ -478,6 +891,25 @@ const GAMES_REGISTRY = [
     "featured": false
   },
   {
+    "id": "neon-highway-hopper_chanchall26",
+    "title": "Neon Highway Hopper",
+    "category": "Arcade",
+    "lucideIcon": "footprints",
+    "description": "Hop across endless cyber freeways, dodge magnetic trains and ride energy logs over laser rivers while collecting quantum bits for a bigger score multiplier.",
+    "author": "Chanchal Gupta",
+    "github": "chanchall26",
+    "role": "Arcade Developer",
+    "path": "games/neon-highway-hopper_chanchall26/index.html",
+    "tags": [
+      "Arcade",
+      "Endless",
+      "Neon",
+      "Timing"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "neon-lunar-lander_babin",
     "title": "Neon Lunar Lander",
     "category": "Physics",
@@ -514,6 +946,27 @@ const GAMES_REGISTRY = [
     ],
     "stars": 48,
     "featured": true
+  },
+  {
+    "id": "neon-pinball-dx_babin",
+    "title": "Neon Pinball DX: Cybernetic Table",
+    "category": "Arcade / Physics",
+    "lucideIcon": "gamepad-2",
+    "description": "Launch high-voltage chrome pinballs across neon bumpers, dynamic flipper traps, and multi-colored score multipliers.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/neon-pinball-dx_babin/index.html",
+    "tags": [
+      "arcade",
+      "arcade",
+      "retro",
+      "html5-canvas",
+      "nsoc26"
+    ],
+    "stars": 15,
+    "featured": true,
+    "difficulty": "Medium"
   },
   {
     "id": "neon-precision-target_babin",
@@ -595,6 +1048,26 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "potion-panic_joitapaul",
+    "title": "Potion Panic",
+    "category": "Arcade",
+    "lucideIcon": "flask-conical",
+    "description": "Sort falling magical ingredients into the matching cauldrons before the potion lab overflows.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Contributor",
+    "path": "games/potion-panic_joitapaul/index.html",
+    "tags": [
+      "Arcade",
+      "Halloween",
+      "Reflex",
+      "Sorting",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "prism-pulse_joitapaul",
     "title": "Prism Pulse: Laser Labyrinth",
     "category": "Puzzle",
@@ -615,6 +1088,25 @@ const GAMES_REGISTRY = [
     "difficulty": "Intermediate"
   },
   {
+    "id": "pumpkin-express_joitapaul",
+    "title": "Pumpkin Express: Haunted Rails",
+    "category": "Puzzle",
+    "lucideIcon": "train-front",
+    "description": "Switch the haunted railway to route a runaway pumpkin train around broken rails and safely into the station.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/pumpkin-express_joitapaul/index.html",
+    "tags": [
+      "Halloween",
+      "Puzzle",
+      "Railway",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "quantum-2048_babin",
     "title": "Quantum 2048",
     "category": "Puzzle",
@@ -632,6 +1124,41 @@ const GAMES_REGISTRY = [
     ],
     "stars": 28,
     "featured": true
+  },
+  {
+    "id": "quantum-lunar-lander_chanchall26",
+    "title": "Quantum Lunar Lander",
+    "category": "Physics",
+    "lucideIcon": "orbit",
+    "description": "A precision landing simulator with real orbital gravity, limited fuel and procedural craggy moons. Land softly on 2x, 3x and 5x pads while a quantum gravity anomaly bends your flight path.",
+    "author": "Chanchal Gupta",
+    "github": "chanchall26",
+    "role": "Arcade Developer",
+    "path": "games/quantum-lunar-lander_chanchall26/index.html",
+    "tags": [
+      "Physics",
+      "Space",
+      "Simulation",
+      "Procedural"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
+    "id": "quantum-minesweeper-dx_babin",
+    "title": "Quantum Minesweeper DX: Grid Defusal",
+    "category": "Puzzle / Strategy",
+    "lucideIcon": "gamepad-2",
+    "description": "Defuse unstable quantum network anomalies with guaranteed safe first-clicks and precision cascade algorithms.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Arcade Developer",
+    "path": "games/quantum-minesweeper-dx_babin/index.html",
+    "tags": [
+      "Arcade"
+    ],
+    "stars": 25,
+    "featured": false
   },
   {
     "id": "quantum-minesweeper_babin",
@@ -673,6 +1200,43 @@ const GAMES_REGISTRY = [
     "difficulty": "Intermediate"
   },
   {
+    "id": "quantum-pulse_babin",
+    "title": "Quantum Pulse: Cyber Rhythm Blaster",
+    "category": "Arcade / Rhythm",
+    "lucideIcon": "gamepad-2",
+    "description": "Sync into the digital quantum grid, time your key strikes to incoming light pulses, and build electrifying high-voltage combos.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/quantum-pulse_babin/index.html",
+    "tags": [
+      "arcade",
+      "arcade",
+      "retro",
+      "html5-canvas",
+      "nsoc26"
+    ],
+    "stars": 15,
+    "featured": true,
+    "difficulty": "Medium"
+  },
+  {
+    "id": "quantum-slide_babin",
+    "title": "Quantum Slide: 15-Matrix Shift",
+    "category": "Puzzle / Logic",
+    "lucideIcon": "gamepad-2",
+    "description": "Rearrange scrambled cyber-chips into sequential order on a glowing circuit matrix with guaranteed solvable boards.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Arcade Developer",
+    "path": "games/quantum-slide_babin/index.html",
+    "tags": [
+      "Arcade"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "quantum-sokoban_babin",
     "title": "Quantum Sokoban",
     "category": "Puzzle",
@@ -690,6 +1254,48 @@ const GAMES_REGISTRY = [
     ],
     "stars": 46,
     "featured": true
+  },
+  {
+    "id": "retro-space-lander_babin",
+    "title": "Retro Space Lander: Apollo Lunar Descent",
+    "category": "Arcade / Physics",
+    "lucideIcon": "gamepad-2",
+    "description": "Throttle lunar descent engines, manage scarce thruster fuel, and execute safe low-velocity touchdowns across jagged craters.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/retro-space-lander_babin/index.html",
+    "tags": [
+      "arcade",
+      "arcade",
+      "retro",
+      "html5-canvas",
+      "nsoc26"
+    ],
+    "stars": 15,
+    "featured": true,
+    "difficulty": "Medium"
+  },
+  {
+    "id": "solar-flare_babin",
+    "title": "Solar Flare: Stellar Shield Defense",
+    "category": "Arcade / Defense",
+    "lucideIcon": "gamepad-2",
+    "description": "Rotate a high-energy magnetic arc shield around a pulsating stellar core to deflect hyper-velocity coronal mass ejections.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/solar-flare_babin/index.html",
+    "tags": [
+      "arcade",
+      "arcade",
+      "retro",
+      "html5-canvas",
+      "nsoc26"
+    ],
+    "stars": 15,
+    "featured": true,
+    "difficulty": "Medium"
   },
   {
     "id": "space-invaders_babin",
@@ -771,6 +1377,27 @@ const GAMES_REGISTRY = [
     "difficulty": "All Skill Levels"
   },
   {
+    "id": "wave-rider_babin",
+    "title": "Wave Rider: Frequency Pulse Surfer",
+    "category": "Arcade / Endless",
+    "lucideIcon": "gamepad-2",
+    "description": "Surf across undulating sine-wave carrier frequencies, modulate pulse amplitudes, and weave through dampening glitch walls.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/wave-rider_babin/index.html",
+    "tags": [
+      "arcade",
+      "arcade",
+      "retro",
+      "html5-canvas",
+      "nsoc26"
+    ],
+    "stars": 15,
+    "featured": true,
+    "difficulty": "Medium"
+  },
+  {
     "id": "whack-a-bug_babin",
     "title": "Whack-A-Bug Panic",
     "category": "Arcade",
@@ -799,8 +1426,8 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 209,
-    "gamesCount": 3,
+    "commits": 298,
+    "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
     "qualityPRs": 0,
@@ -808,6 +1435,9 @@ const CONTRIBUTORS_REGISTRY = [
     "contributions": [
       "Cosmic Surge: Galaxy Defender",
       "Cyber Neon Pong",
+      "Halloween Escape: Witch's Crypt",
+      "Haunted House: The Curse Within",
+      "Island Survival: Lost Beyond the Shore",
       "Quantum Memory Matrix"
     ]
   },
@@ -816,14 +1446,18 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 145,
-    "gamesCount": 25,
+    "commits": 200,
+    "gamesCount": 43,
     "mechanicsBonus": 2,
     "platformPRs": 29,
     "qualityPRs": 1,
     "bonusPts": 0,
     "contributions": [
+      "Asteroid Miner: Deep Space Extraction",
+      "Chrono Breakout: Quantum Time Shatter",
+      "Chrono-Shift: Temporal Paradox",
       "Cosmic Orbit Slingshot",
+      "Cryptic Code Breaker: Mastermind Terminal",
       "Cryptic Wordle Hack",
       "Cyber Block Matrix",
       "Cyber Brick Breaker",
@@ -833,40 +1467,35 @@ const CONTRIBUTORS_REGISTRY = [
       "Cyber Rogue Protocol",
       "Cyber Snake Matrix",
       "Cyber Swarm Assault",
+      "Cyber Tower Defense: Grid Bastion",
       "Cyber Tower Stacker",
+      "Cyber-Katana: Neon Deflector",
+      "Cyber-Sudoku: Neon Matrix 9x9",
+      "Detective Mystery: Neo-Tokyo Syndicate",
+      "Gravity Well: Singularity Slingshot",
+      "Hex Match: Prismatic Tile Connect",
       "Neon Beat Runner",
+      "Neon Brick Breaker DX: Cyber Shatter",
       "Neon Gravity Rush",
       "Neon Lunar Lander",
       "Neon Missile Command",
+      "Neon Pinball DX: Cybernetic Table",
       "Neon Precision Target",
       "Neon Rhythm Blaster",
       "Neon Wave Matcher",
       "Quantum 2048",
       "Quantum Minesweeper",
+      "Quantum Minesweeper DX: Grid Defusal",
+      "Quantum Pulse: Cyber Rhythm Blaster",
+      "Quantum Slide: 15-Matrix Shift",
       "Quantum Sokoban",
+      "Retro Space Lander: Apollo Lunar Descent",
+      "Solar Flare: Stellar Shield Defense",
       "Space Invaders 2026",
       "Synth-Wave Simon Says",
       "Tactical Fleet Commander",
+      "Wave Rider: Frequency Pulse Surfer",
       "Whack-A-Bug Panic"
-    ]
-  },
-  {
-    "name": "mistu7debnath",
-    "github": "mistu7debnath",
-    "avatarInitial": "M",
-    "role": "Contributor (NSOC '26)",
-    "commits": 7,
-    "gamesCount": 5,
-    "mechanicsBonus": 1,
-    "platformPRs": 0,
-    "qualityPRs": 0,
-    "bonusPts": 0,
-    "contributions": [
-      "Bubble Pop: Bubble Burst Arena",
-      "Cyber Runner: Neon Rush",
-      "Flappy Cyber Jet",
-      "Neon Grid Defense: Core Protocol",
-      "Time Warp: Chrono Shift"
     ]
   },
   {
@@ -874,17 +1503,60 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "joitapaul",
     "avatarInitial": "J",
     "role": "Active Contributor (NSOC '26)",
-    "commits": 9,
-    "gamesCount": 4,
+    "commits": 17,
+    "gamesCount": 9,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 1,
     "bonusPts": 0,
     "contributions": [
+      "Gridlock Escape",
+      "Lunar Landing Protocol",
+      "Midnight Graveyard: Lantern Run",
       "Neon Asteroid Escape",
       "Neon Drift Racer",
+      "Potion Panic",
       "Prism Pulse: Laser Labyrinth",
+      "Pumpkin Express: Haunted Rails",
       "Quantum Pinball: Reactor Run"
+    ]
+  },
+  {
+    "name": "mistu7debnath",
+    "github": "mistu7debnath",
+    "avatarInitial": "M",
+    "role": "Contributor (NSOC '26)",
+    "commits": 8,
+    "gamesCount": 6,
+    "mechanicsBonus": 1,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Bubble Pop: Bubble Burst Arena",
+      "Cyber Runner: Neon Rush",
+      "Fishing Frenzy",
+      "Flappy Cyber Jet",
+      "Neon Grid Defense: Core Protocol",
+      "Time Warp: Chrono Shift"
+    ]
+  },
+  {
+    "name": "Chanchal Gupta",
+    "github": "chanchall26",
+    "avatarInitial": "C",
+    "role": "Arcade Developer",
+    "commits": 4,
+    "gamesCount": 4,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Cyber Maze Runner",
+      "Cyber Trajectory Bow",
+      "Neon Highway Hopper",
+      "Quantum Lunar Lander"
     ]
   },
   {
@@ -892,14 +1564,15 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "hrshjswniii",
     "avatarInitial": "H",
     "role": "Active Contributor (NSOC '26)",
-    "commits": 7,
-    "gamesCount": 1,
+    "commits": 10,
+    "gamesCount": 2,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 1,
     "bonusPts": 0,
     "contributions": [
-      "Cyber Brick Breaker"
+      "Cyber Brick Breaker",
+      "Cyber Typer: Terminal Hacker"
     ]
   },
   {
@@ -930,6 +1603,21 @@ const CONTRIBUTORS_REGISTRY = [
     "bonusPts": 0,
     "contributions": [
       "Circuit Connect"
+    ]
+  },
+  {
+    "name": "pratikgiri",
+    "github": "pratikgiri",
+    "avatarInitial": "P",
+    "role": "Contributor (NSOC '26)",
+    "commits": 2,
+    "gamesCount": 0,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Quality & Platform Contribution"
     ]
   },
   {

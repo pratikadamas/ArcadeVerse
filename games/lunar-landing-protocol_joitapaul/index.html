@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1020">
+  <title>Lunar Landing Protocol | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="game-shell">
+    <header class="game-header">
+      <a class="back-link" href="../../index.html">← ArcadeVerse</a>
+      <p class="eyebrow">FLIGHT CONTROL / LUNAR SECTOR 07</p>
+      <h1>Lunar Landing <span>Protocol</span></h1>
+      <p class="subtitle">Manage your fuel, steady your descent, and set down on the marked pad.</p>
+    </header>
+
+    <section class="flight-data" aria-label="Flight telemetry">
+      <div class="readout"><span>ALTITUDE</span><strong id="altitude">340 m</strong></div>
+      <div class="readout"><span>VERTICAL SPEED</span><strong id="vertical-speed">0 m/s</strong></div>
+      <div class="readout"><span>HORIZONTAL SPEED</span><strong id="horizontal-speed">0 m/s</strong></div>
+      <div class="readout fuel-readout"><span>FUEL</span><strong id="fuel-value">100%</strong></div>
+    </section>
+
+    <div class="fuel-track" role="progressbar" aria-label="Remaining fuel" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+      <div id="fuel-bar" class="fuel-bar"></div>
+    </div>
+
+    <section class="flight-window" aria-label="Lunar landing game">
+      <canvas id="flight-canvas" width="720" height="500" aria-label="Use thrusters to land the module on the highlighted pad"></canvas>
+      <div id="mission-overlay" class="mission-overlay">
+        <div class="mission-card">
+          <p class="eyebrow">MISSION BRIEFING</p>
+          <h2 id="overlay-title">Make a soft landing</h2>
+          <p id="overlay-copy">Touch down on the blue pad with low vertical and horizontal speed. Conserve fuel while you steer.</p>
+          <div class="briefing-controls">
+            <span><kbd>W</kbd> / <kbd>↑</kbd> Main thruster</span>
+            <span><kbd>A</kbd> <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd> Steering jets</span>
+          </div>
+          <button id="launch-button" type="button">Begin descent</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="touch-controls" aria-label="Touch flight controls">
+      <button class="flight-control" type="button" data-control="left" aria-label="Fire left steering jet">←</button>
+      <button class="flight-control main-control" type="button" data-control="main" aria-label="Fire main thruster">THRUST</button>
+      <button class="flight-control" type="button" data-control="right" aria-label="Fire right steering jet">→</button>
+    </div>
+
+    <p class="instructions">Keep descent speed below <strong>38 m/s</strong> and lateral speed below <strong>42 m/s</strong> at touchdown.</p>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>

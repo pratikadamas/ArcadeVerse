@@ -8,9 +8,6 @@ on:
       - 'scripts/**'
   pull_request:
     branches: [ main ]
-    paths:
-      - 'games/**'
-      - 'scripts/**'
   workflow_dispatch:
 
 permissions:
@@ -30,10 +27,31 @@ jobs:
         with:
           node-version: 20
 
-      - name: Validate Community Games Pre-Flight
-        run: node scripts/validate-games.js
+      - name: Verify No Forbidden Auto-Generated Edits (PR Only)
+        if: github.event_name == 'pull_request'
+        run: |
+          # Ensure PRs do not edit assets/js/games-registry.js manually (auto-compiled on merge).
+          # Root files (index.html, leaderboard.html, assets/*) CAN be modified when necessary for assigned platform/UI issues.
+          FORBIDDEN=$(git diff --name-only origin/main...HEAD | grep -E '^assets/js/games-registry\.js$' || true)
+          if [ -n "$FORBIDDEN" ]; then
+            echo "::error::Pull Request modifies auto-generated file: $FORBIDDEN"
+            echo "Per CONTRIBUTING.md, contributors must not edit 'assets/js/games-registry.js' manually."
+            echo "Game registration is 100% automated by GitHub Actions from 'games/<game-id>/game.json'."
+            echo "To fix merge conflicts, please revert this file:"
+            echo "  git checkout origin/main -- assets/js/games-registry.js"
+            echo "  git commit -m 'chore: revert manual changes to games-registry.js'"
+            echo "  git push"
+            exit 1
+          fi
 
-      - name: Compile Games Registry & Contributor Stats
+      - name: Validate Community Games Pre-Flight & Asset Integrity
+        run: node scripts/validate-games.js --audit-hub --strict-assets
+
+      - name: Test Registry Auto-Compilation (PR Dry Run)
+        if: github.event_name == 'pull_request'
+        run: node scripts/build-registry.js
+
+      - name: Compile Games Registry & Contributor Stats (On Merge)
         if: github.event_name != 'pull_request'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -49,6 +67,6 @@ jobs:
             echo "No registry changes detected."
           else
             git commit -m "chore(registry): auto-compile games-registry.js [skip ci]"
-            git pull --rebase origin main || true
+            git pull --rebase --autostash origin main || true
             git push origin HEAD:main
           fi

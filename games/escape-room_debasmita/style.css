@@ -1,0 +1,1314 @@
+/* Halloween Escape: Witch's Crypt - Style */
+:root {
+  --bg-color: #0d0914;
+  --panel-bg: rgba(22, 14, 34, 0.92);
+  --border-color: #58337a;
+  --text-main: #f0e6ff;
+  --accent-orange: #ff7700;
+  --accent-purple: #9d4edd;
+  --accent-green: #38ef7d;
+  --accent-cyan: #00f2fe;
+  --danger: #ff3366;
+  --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-color);
+  color: var(--text-main);
+  font-family: var(--font-main);
+  margin: 0;
+  padding: 0;
+}
+
+/* Background atmospheric mist */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 50% 30%, rgba(106, 27, 154, 0.18) 0%, rgba(5, 2, 10, 0.95) 80%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Header HUD */
+.crypt-header {
+  position: fixed;
+  top: 12px;
+  left: 16px;
+  right: 16px;
+  z-index: 25;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: rgba(13, 8, 22, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.title-area, .header-controls {
+  pointer-events: auto;
+}
+
+.title-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.title-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--accent-orange);
+  filter: drop-shadow(0 0 8px rgba(255, 119, 0, 0.6));
+}
+
+.title-text h1 {
+  font-size: 1.25rem;
+  letter-spacing: 1px;
+  color: #ff9e42;
+  text-shadow: 0 0 10px rgba(255, 158, 66, 0.5);
+}
+
+.title-text p {
+  font-size: 0.75rem;
+  color: #b59bd8;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.timer-box {
+  background: rgba(26, 15, 43, 0.8);
+  border: 1px solid var(--border-color);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 1rem;
+  color: var(--accent-cyan);
+  font-weight: 600;
+  box-shadow: inset 0 0 8px rgba(0, 242, 254, 0.15);
+}
+
+.btn-icon {
+  background: #241438;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+  background: #391e59;
+  border-color: var(--accent-orange);
+  transform: translateY(-2px);
+}
+
+.btn-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Main Crypt Room Canvas/Stage */
+.crypt-viewport {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  max-width: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.room-stage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  aspect-ratio: auto;
+  overflow: hidden;
+}
+
+/* Interactive Room Canvas */
+#roomCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 1;
+}
+
+/* Fog layer over canvas */
+.fog-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(5, 2, 10, 0.75) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Hotspots overlay */
+.hotspots-container {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.hotspot {
+  pointer-events: auto;
+  position: absolute;
+  cursor: pointer;
+  border-radius: 50%;
+  border: 2px dashed rgba(255, 170, 50, 0.4);
+  background: rgba(255, 170, 50, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  animation: pulse-glow 2.5s infinite ease-in-out;
+}
+
+.hotspot:hover {
+  background: rgba(255, 170, 50, 0.3);
+  border-color: #ffaa32;
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(255, 170, 50, 0.8);
+}
+
+.hotspot-label {
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(10, 5, 20, 0.9);
+  color: #ffca65;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  border: 1px solid rgba(255, 170, 50, 0.3);
+}
+
+.hotspot:hover .hotspot-label {
+  opacity: 1;
+}
+
+.hotspot svg {
+  width: 22px;
+  height: 22px;
+  color: #ffb347;
+  filter: drop-shadow(0 0 4px #ff7700);
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(255, 170, 50, 0.2);
+    border-color: rgba(255, 170, 50, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(255, 170, 50, 0.6);
+    border-color: rgba(255, 200, 80, 0.9);
+  }
+}
+
+/* Floating Banner message */
+.crypt-toast {
+  position: fixed;
+  top: 68px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  background: rgba(17, 10, 28, 0.95);
+  border: 1px solid var(--accent-orange);
+  color: #ffdd99;
+  padding: 7px 18px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  z-index: 30;
+  white-space: nowrap;
+}
+
+.crypt-toast.active {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Inventory Bar */
+.inventory-panel {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  width: auto;
+  max-width: min(94vw, 720px);
+  margin: 0;
+  background: rgba(14, 8, 24, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+}
+
+.inventory-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #c9a7eb;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.inventory-title svg {
+  width: 18px;
+  height: 18px;
+  color: var(--accent-purple);
+}
+
+.inventory-slots {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px;
+}
+
+.inv-slot {
+  width: 52px;
+  height: 52px;
+  background: #140b20;
+  border: 2px solid #3c1e5c;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.inv-slot:hover {
+  border-color: #7943ad;
+  transform: translateY(-2px);
+}
+
+.inv-slot.selected {
+  border-color: var(--accent-orange);
+  box-shadow: 0 0 12px rgba(255, 119, 0, 0.6);
+  background: #25123a;
+}
+
+.inv-slot svg {
+  width: 28px;
+  height: 28px;
+  color: #ffcaa0;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+.inv-slot .slot-count {
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  font-size: 0.7rem;
+  color: var(--accent-cyan);
+  font-weight: bold;
+}
+
+.inventory-hint {
+  font-size: 0.75rem;
+  color: #8874a6;
+  max-width: 220px;
+  text-align: right;
+}
+
+/* Modals & Inspect Overlays */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 2, 10, 0.85);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  padding: 16px;
+}
+
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-box {
+  background: #160c26;
+  border: 2px solid #633391;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 540px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.9), 0 0 25px rgba(120, 50, 200, 0.3);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  transform: scale(0.92);
+  transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.modal-overlay.open .modal-box {
+  transform: scale(1);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: #201138;
+  border-bottom: 1px solid #4a286a;
+}
+
+.modal-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  color: #ff9e42;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: #a48cb5;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.modal-close:hover {
+  color: #ff3366;
+}
+
+.modal-close svg {
+  width: 22px;
+  height: 22px;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #e5d8f6;
+}
+
+.modal-footer {
+  padding: 12px 20px;
+  background: #130a20;
+  border-top: 1px solid #371b50;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #ff7700, #ff4500);
+  border: none;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(255, 119, 0, 0.4);
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 119, 0, 0.6);
+}
+
+.btn-secondary {
+  background: #2b1842;
+  border: 1px solid #58337a;
+  color: #d1b8eb;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: #3c215e;
+  color: #fff;
+}
+
+/* Specific Puzzle Styles */
+/* Bookshelf Puzzle */
+.bookshelf-shelf {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 14px;
+  background: #2a173d;
+  padding: 24px 20px 8px;
+  border-bottom: 8px solid #4a286a;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+.book {
+  width: 50px;
+  height: 140px;
+  border-radius: 4px 6px 6px 4px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  transition: all 0.25s ease;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+}
+
+.book:hover {
+  transform: rotate(180deg) translateY(12px);
+  filter: brightness(1.2);
+}
+
+.book.book-red { background: linear-gradient(180deg, #b71c1c, #7f0000); color: #ffcdd2; }
+.book.book-blue { background: linear-gradient(180deg, #0d47a1, #012466); color: #bbdefb; }
+.book.book-green { background: linear-gradient(180deg, #1b5e20, #0a330e); color: #c8e6c9; }
+.book.book-purple { background: linear-gradient(180deg, #4a148c, #26054e); color: #e1bee7; }
+
+/* Runic Pedestal Puzzle */
+.runic-dials-row {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: 20px 0;
+}
+
+.dial-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.dial-btn {
+  background: #29183d;
+  border: 1px solid #633391;
+  color: #e0ccf7;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.dial-btn:hover {
+  background: #412463;
+  color: var(--accent-orange);
+}
+
+.dial-display {
+  width: 74px;
+  height: 74px;
+  background: #11081f;
+  border: 3px solid #7943ad;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 15px rgba(121, 67, 173, 0.5);
+  transition: all 0.2s ease;
+}
+
+.dial-display svg {
+  width: 36px;
+  height: 36px;
+  color: var(--accent-cyan);
+  filter: drop-shadow(0 0 8px rgba(0, 242, 254, 0.6));
+}
+
+/* Cauldron Puzzle */
+.cauldron-interactive {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.cauldron-pot {
+  width: 140px;
+  height: 120px;
+  border-radius: 0 0 70px 70px;
+  background: radial-gradient(circle at 50% 30%, #301844 0%, #0d0614 90%);
+  border: 4px solid #5a2e82;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
+}
+
+.cauldron-liquid {
+  position: absolute;
+  top: 10px;
+  width: 110px;
+  height: 24px;
+  border-radius: 50%;
+  background: #38ef7d;
+  box-shadow: 0 0 20px #38ef7d;
+  animation: boil-bubble 2s infinite ease-in-out;
+}
+
+@keyframes boil-bubble {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.08); filter: brightness(1.3); }
+}
+
+.cauldron-ingredients-list {
+  display: flex;
+  gap: 12px;
+}
+
+.ingredient-badge {
+  background: #1f1130;
+  border: 1px solid #4e2974;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #d1bfe3;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ingredient-badge.added {
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+  background: rgba(56, 239, 125, 0.1);
+}
+
+/* Gate Locks display */
+.gate-locks-row {
+  display: flex;
+  justify-content: space-around;
+  margin: 20px 0;
+  gap: 12px;
+}
+
+.gate-lock-card {
+  flex: 1;
+  background: #1a0f2b;
+  border: 1px solid #4a296b;
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.gate-lock-card.unlocked {
+  border-color: var(--accent-green);
+  background: rgba(56, 239, 125, 0.08);
+}
+
+.gate-lock-card svg {
+  width: 32px;
+  height: 32px;
+  color: var(--accent-orange);
+}
+
+.gate-lock-card.unlocked svg {
+  color: var(--accent-green);
+  filter: drop-shadow(0 0 8px rgba(56, 239, 125, 0.7));
+}
+
+.gate-lock-card span {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ccafe3;
+}
+
+/* Victory Screen */
+.victory-card {
+  text-align: center;
+  padding: 24px;
+}
+
+.victory-title {
+  font-size: 1.8rem;
+  color: #ffaa32;
+  margin-bottom: 8px;
+  text-shadow: 0 0 15px rgba(255, 170, 50, 0.6);
+}
+
+.victory-stats {
+  margin: 20px 0;
+  background: #1c0e33;
+  border: 1px solid #4f2b7a;
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-around;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-val {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: var(--accent-cyan);
+}
+
+.stat-lbl {
+  font-size: 0.75rem;
+  color: #9f88be;
+  text-transform: uppercase;
+}
+
+/* Responsiveness */
+@media (max-width: 680px) {
+  .crypt-header {
+    padding: 8px 12px;
+  }
+  .title-text h1 {
+    font-size: 1rem;
+  }
+  .inventory-panel {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .inventory-hint {
+    text-align: left;
+  }
+  .inv-slot {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+
+/* Floating Escape Tracker */
+.escape-tracker {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 24;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(14, 8, 24, 0.92);
+  border: 1px solid rgba(255, 119, 0, 0.6);
+  backdrop-filter: blur(10px);
+  padding: 4px 14px;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 15px rgba(255, 119, 0, 0.2);
+  max-width: 90vw;
+  pointer-events: auto;
+}
+
+.escape-pill {
+  background: #ff7700;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.escape-text {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #ffeedb;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+   Responsive Viewport, Modals & Hotspot Alignment Refinements
+   ========================================================================== */
+
+/* Bookshelf Modal Mobile Scaling (height: 100px; width: 40px on mobile vs 140px x 50px on desktop) */
+@media (max-width: 600px) {
+  .bookshelf-shelf {
+    padding: 16px 10px 6px;
+    gap: 8px;
+  }
+  .book {
+    width: 40px;
+    height: 100px;
+    font-size: 0.65rem;
+    letter-spacing: 0.5px;
+  }
+}
+
+/* Runic Pedestal UP/DOWN Arrow Minimum 44px Tap Targets */
+.dial-btn {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 600px) {
+  .runic-dials-row {
+    gap: 12px;
+    margin: 14px 0;
+  }
+  .dial-display {
+    width: 60px;
+    height: 60px;
+  }
+  .dial-display svg {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+/* Cauldron ingredient badges 3-badge row on small screens */
+@media (max-width: 600px) {
+  .cauldron-ingredients-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+  }
+  .ingredient-badge {
+    padding: 4px 8px;
+    font-size: 0.72rem;
+    flex: 1 1 calc(33.333% - 6px);
+    justify-content: center;
+    text-align: center;
+  }
+  .cauldron-pot {
+    width: 110px;
+    height: 95px;
+  }
+  .cauldron-liquid {
+    width: 86px;
+    height: 18px;
+  }
+}
+
+/* Header HUD Single Row on Small Screens */
+@media (max-width: 640px) {
+  .crypt-header {
+    top: 6px;
+    left: 8px;
+    right: 8px;
+    padding: 6px 10px;
+  }
+  .title-icon {
+    width: 22px;
+    height: 22px;
+  }
+  .title-text h1 {
+    font-size: 0.82rem;
+    letter-spacing: 0.5px;
+  }
+  .title-text p {
+    display: none;
+  }
+  .header-controls {
+    gap: 5px;
+  }
+  .timer-box {
+    padding: 4px 8px;
+    font-size: 0.78rem;
+  }
+  .btn-icon {
+    padding: 5px;
+  }
+  .btn-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+  .escape-tracker {
+    top: 48px;
+    max-width: 95vw;
+    padding: 3px 10px;
+  }
+  .escape-pill {
+    font-size: 0.62rem;
+    padding: 1px 6px;
+  }
+  .escape-text {
+    font-size: 0.72rem;
+  }
+}
+
+/* Inventory Dock on Mobile (< 500px): Horizontal swipeable row with badge counters */
+@media (max-width: 500px) {
+  .inventory-panel {
+    bottom: 8px;
+    padding: 5px 10px;
+    gap: 6px;
+    max-width: 98vw;
+    flex-direction: column;
+    align-items: center;
+  }
+  .inventory-title {
+    display: none;
+  }
+  .inventory-slots {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    justify-content: center;
+    padding: 2px;
+  }
+  .inv-slot {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    flex-shrink: 0;
+  }
+  .inv-slot svg {
+    width: 22px;
+    height: 22px;
+  }
+  .inventory-hint {
+    font-size: 0.68rem;
+    text-align: center;
+    max-width: 90vw;
+  }
+  .modal-box {
+    max-height: 85vh;
+  }
+  .modal-header {
+    padding: 10px 14px;
+  }
+  .modal-header h3 {
+    font-size: 0.92rem;
+  }
+  .modal-body {
+    padding: 12px 14px;
+    font-size: 0.85rem;
+    max-height: calc(85vh - 90px);
+  }
+  .modal-footer {
+    padding: 8px 14px;
+  }
+}
+
+/* Modal double-scroll prevention */
+.modal-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal-box {
+  overflow: hidden;
+}
+
+/* Hotspot hit testing touch enhancements */
+@media (pointer: coarse) {
+  .hotspot {
+    min-width: 32px;
+    min-height: 32px;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .hotspot,
+  .cauldron-liquid {
+    animation: none !important;
+  }
+  .modal-box {
+    transition: none !important;
+  }
+}
+
+/* ==========================================================================
+   Ultrawide & High-Aspect Letterbox Hotspot Alignment Enforcements
+   ========================================================================== */
+
+/* Aspect container stability */
+.room-stage {
+  touch-action: none;
+  contain: layout size;
+}
+
+/* Scrollbar styling for modal body to avoid double scrollbars */
+.modal-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: #633391;
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* Dial button active response */
+.dial-btn:active {
+  transform: scale(0.92);
+  background: var(--accent-orange);
+  color: #000;
+}
+
+/* Touch feedback for books */
+.book:active {
+  filter: brightness(1.35);
+}
+
+/* Inventory slot active selection cue */
+.inv-slot:active {
+  transform: scale(0.95);
+}
+
+/* High contrast support */
+@media (forced-colors: active) {
+  .crypt-header,
+  .escape-tracker,
+  .inventory-panel,
+  .modal-box,
+  .hotspot {
+    border: 2px solid ButtonText !important;
+  }
+}
+
+/* Additional Responsive Layout Guards & Clean Touch Handlers */
+.hotspot:focus-visible {
+  outline: 2px solid #ff7700;
+  outline-offset: 4px;
+}
+
+.crypt-toast {
+  letter-spacing: 0.03em;
+  will-change: transform, opacity;
+}
+
+.modal-header h3 svg {
+  filter: drop-shadow(0 0 6px rgba(255, 119, 0, 0.4));
+}
+
+.stat-item {
+  min-width: 65px;
+  text-align: center;
+}
+
+/* Ensure no text selection on game screen */
+.crypt-header,
+.inventory-panel,
+.bookshelf-shelf,
+.runic-dials-row,
+.cauldron-interactive {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* High DPI canvas sharpness calibration */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .hotspot-label {
+    font-size: 0.68rem;
+  }
+}
+
+/* Compact mobile modal button row */
+@media (max-width: 480px) {
+  .modal-footer {
+    flex-direction: column-reverse;
+    gap: 6px;
+  }
+  .modal-footer button {
+    width: 100%;
+    justify-content: center;
+    padding: 8px 12px;
+  }
+}
+
+/* Additional Fluid Typography & Spacing Calibration */
+.inventory-panel {
+  box-sizing: border-box;
+}
+
+.modal-box {
+  box-sizing: border-box;
+}
+
+.bookshelf-shelf {
+  box-sizing: border-box;
+}
+
+/* Portrait vs Landscape mobile tuning */
+@media (max-height: 480px) and (orientation: landscape) {
+  .crypt-header {
+    top: 4px;
+    padding: 4px 8px;
+  }
+  .title-text h1 {
+    font-size: 0.72rem;
+  }
+  .escape-tracker {
+    top: 36px;
+    padding: 2px 8px;
+  }
+  .inventory-panel {
+    bottom: 4px;
+    padding: 3px 8px;
+  }
+  .inv-slot {
+    width: 36px;
+    height: 36px;
+  }
+  .modal-box {
+    max-height: 94vh;
+  }
+  .modal-body {
+    max-height: calc(94vh - 75px);
+    padding: 8px 12px;
+  }
+}
+
+/* Back Link to ArcadeVerse */
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #c084fc;
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  background: rgba(192, 132, 252, 0.12);
+  border: 1px solid rgba(192, 132, 252, 0.3);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.back-link:hover {
+  background: rgba(192, 132, 252, 0.28);
+  color: #fff;
+}
+
+/* Analog Film Grain Overlay */
+.film-grain-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 8;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Dynamic Investigation Reticle */
+.investigation-reticle {
+  position: fixed;
+  pointer-events: none;
+  z-index: 20;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.investigation-reticle.active {
+  opacity: 1;
+}
+
+.reticle-crosshair {
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid rgba(253, 224, 71, 0.7);
+  border-radius: 50%;
+  position: relative;
+  animation: reticle-pulse 1.8s infinite alternate;
+}
+
+.reticle-crosshair::before,
+.reticle-crosshair::after {
+  content: '';
+  position: absolute;
+  background: #fde047;
+}
+
+.reticle-crosshair::before {
+  top: 50%;
+  left: -4px;
+  right: -4px;
+  height: 1px;
+  transform: translateY(-50%);
+}
+
+.reticle-crosshair::after {
+  left: 50%;
+  top: -4px;
+  bottom: -4px;
+  width: 1px;
+  transform: translateX(-50%);
+}
+
+@keyframes reticle-pulse {
+  0% { transform: scale(0.9); border-color: rgba(253, 224, 71, 0.5); }
+  100% { transform: scale(1.15); border-color: #fde047; }
+}
+
+.reticle-label {
+  margin-top: 10px;
+  background: rgba(10, 4, 16, 0.94);
+  border: 1px solid #fde047;
+  border-radius: 6px;
+  padding: 4px 10px;
+  color: #fff;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.9);
+  text-transform: uppercase;
+}
+
+/* Dossier Modal & Survival Rules Grid */
+.dossier-modal {
+  max-width: 620px;
+}
+
+.dossier-intro {
+  color: #d1bfe3;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  margin-bottom: 16px;
+  background: rgba(157, 78, 221, 0.08);
+  border-left: 3px solid #9d4edd;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+.survival-rules-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.survival-rule-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.survival-rule-card .rule-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: rgba(255, 119, 0, 0.15);
+  color: #ff9e42;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.survival-rule-card .rule-icon.danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.survival-rule-card .rule-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.survival-rule-card .rule-body h4 {
+  font-size: 0.78rem;
+  color: #fef08a;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.survival-rule-card .rule-body p {
+  font-size: 0.74rem;
+  color: #c4b5d6;
+  line-height: 1.45;
+}
+
+@media (max-width: 600px) {
+  .survival-rules-grid {
+    grid-template-columns: 1fr;
+  }
+}

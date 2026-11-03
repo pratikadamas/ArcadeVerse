@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+  <title>Cryptic Code Breaker: Mastermind Terminal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="terminal-container">
+    <!-- Top HUD Terminal Bar -->
+    <div class="hud-top">
+      <div class="hud-left">
+        <div class="mode-toggles">
+          <button class="mode-btn active" data-mode="standard">STANDARD (4 GLYPHS / 10 TURNS)</button>
+          <button class="mode-btn" data-mode="hardcore">HARDCORE (5 GLYPHS / 8 TURNS)</button>
+        </div>
+      </div>
+
+      <div class="hud-stats">
+        <div class="stat-pill">
+          <span class="stat-lbl">ATTEMPT</span>
+          <span class="stat-val" id="turn-counter">1 / 10</span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-lbl">STREAK</span>
+          <span class="stat-val" id="streak-val">0</span>
+        </div>
+      </div>
+
+      <div class="hud-right">
+        <button id="sound-btn" class="hud-icon-btn" type="button" aria-label="Toggle Sound" title="Sound">
+          <svg id="sound-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+          <svg id="sound-off" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line></svg>
+        </button>
+        <button id="help-btn" class="hud-icon-btn" type="button" aria-label="How to play" title="Instructions">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Terminal Frame -->
+    <div class="terminal-body">
+      <!-- AI Status Core Bar -->
+      <div class="ai-status-bar">
+        <span class="ai-dot"></span>
+        <span class="ai-msg" id="ai-status-text">NEO-NET REPOSITORY LOCKED // DECODE SEQUENCE OR FACE PURGE</span>
+      </div>
+
+      <!-- Attempt History Log Board -->
+      <div class="history-board" id="history-board"></div>
+
+      <!-- Result Modal Overlay -->
+      <div class="result-modal hidden" id="result-modal">
+        <div class="modal-card">
+          <div class="badge-tag" id="res-badge">CIPHER OVERRIDDEN</div>
+          <h1 class="modal-h1" id="res-title">SYSTEM UNLOCKED</h1>
+          <p class="modal-desc" id="res-desc">You successfully deduced the security glyph passcode!</p>
+          <div class="revealed-code-row">
+            <span>SECRET CIPHER:</span>
+            <div class="revealed-code-pegs" id="revealed-code"></div>
+          </div>
+          <button id="retry-btn" class="glow-action-btn" type="button">DECODE NEXT CIPHER</button>
+        </div>
+      </div>
+
+      <!-- Rules Modal -->
+      <div class="result-modal hidden" id="rules-modal">
+        <div class="modal-card max-w">
+          <div class="modal-top">
+            <h2>Cryptic Code Breaker Protocols</h2>
+            <button id="close-rules-btn" class="close-x" type="button" aria-label="Close">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div class="rules-body">
+            <p>• <strong>Goal:</strong> Deduce the secret sequence of glyphs within the turn limit.</p>
+            <p>• <strong>Feedback Pegs:</strong></p>
+            <div class="peg-guide">
+              <div><span class="peg-sample green"></span> <strong>Green / Bullseye:</strong> Correct glyph in the exact position.</div>
+              <div><span class="peg-sample yellow"></span> <strong>Yellow / Partial:</strong> Correct glyph, but in the wrong position.</div>
+              <div><span class="peg-sample null"></span> <strong>Dark / Null:</strong> Glyph does not appear in the secret code.</div>
+            </div>
+            <p>• <strong>Accessibility:</strong> Every glyph has a distinct numeric badge (1–6) and custom shape for full colorblind accessibility.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Input Tray -->
+    <div class="input-tray">
+      <div class="active-slots" id="active-slots"></div>
+
+      <div class="tray-controls">
+        <button id="btn-clear" class="tray-btn clear" type="button">CLEAR</button>
+        <button id="btn-submit" class="tray-btn submit" type="button">SUBMIT DECODE</button>
+      </div>
+    </div>
+
+    <!-- Colorblind-Friendly Glyph Palette (6 unique glyphs/numbers/shapes) -->
+    <div class="glyph-palette" id="glyph-palette">
+      <button class="palette-glyph" data-id="1" data-color="cyan">
+        <span class="glyph-shape square"></span>
+        <span class="glyph-num">1</span>
+      </button>
+      <button class="palette-glyph" data-id="2" data-color="pink">
+        <span class="glyph-shape diamond"></span>
+        <span class="glyph-num">2</span>
+      </button>
+      <button class="palette-glyph" data-id="3" data-color="yellow">
+        <span class="glyph-shape triangle"></span>
+        <span class="glyph-num">3</span>
+      </button>
+      <button class="palette-glyph" data-id="4" data-color="purple">
+        <span class="glyph-shape circle"></span>
+        <span class="glyph-num">4</span>
+      </button>
+      <button class="palette-glyph" data-id="5" data-color="green">
+        <span class="glyph-shape hex"></span>
+        <span class="glyph-num">5</span>
+      </button>
+      <button class="palette-glyph" data-id="6" data-color="orange">
+        <span class="glyph-shape star"></span>
+        <span class="glyph-num">6</span>
+      </button>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

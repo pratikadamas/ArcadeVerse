@@ -1,0 +1,14 @@
+{
+  "title": "Gridlock Escape",
+  "category": "puzzle",
+  "lucideIcon": "car",
+  "description": "Slide the traffic jam to clear a clean escape route for the blue getaway vehicle.",
+  "author": "Joita Paul",
+  "github": "joitapaul",
+  "role": "Contributor",
+  "tags": ["puzzle", "traffic", "logic", "sliding-block"],
+  "stars": 0,
+  "featured": false,
+  "difficulty": "medium",
+  "releaseDate": "2026-11-01"
+}

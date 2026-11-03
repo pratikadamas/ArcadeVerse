@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Halloween Escape: Witch's Crypt</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header / Navigation HUD -->
+  <header class="crypt-header" aria-label="Witch Crypt Escape Header">
+    <div class="title-area">
+      <a class="back-link" href="../../index.html" title="Return to ArcadeVerse Hub">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+          <path d="M19 12H5M12 19l-7-7 7-7"></path>
+        </svg>
+        <span>ArcadeVerse</span>
+      </a>
+      <svg class="title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 2l-2 2m-1-1l-3 3m2 8A6 6 0 1 1 5 8a6 6 0 0 1 12 6z"></path>
+        <circle cx="9" cy="14" r="1.5"></circle>
+      </svg>
+      <div class="title-text">
+        <h1>WITCH'S CRYPT</h1>
+        <p>Halloween Escape Experience</p>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <div class="timer-box" id="timerBox">00:00</div>
+      <button class="btn-icon" id="soundToggle" title="Toggle Sound">
+        <!-- Volume SVG -->
+        <svg id="soundIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+        </svg>
+      </button>
+      <button class="btn-icon" id="hintBtn" title="Request Spooky Hint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="9" y1="18" x2="15" y2="18"></line>
+          <line x1="10" y1="22" x2="14" y2="22"></line>
+          <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5.76.76 1.23 1.52 1.41 2.5"></path>
+        </svg>
+      </button>
+      <button class="btn-icon" id="helpBtn" title="How to Play">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Floating Escape Tracker -->
+  <div class="escape-tracker" id="escapeTracker" aria-live="polite" role="region" aria-label="Crypt Escape Guide">
+    <span class="escape-pill">GUIDE</span>
+    <span class="escape-text" id="escapeText">Step 1: Inspect the Bookshelf on the left. Pull books: Blood, Dusk, Vine, Void.</span>
+  </div>
+
+  <!-- Interactive Room Viewport -->
+  <main class="crypt-viewport">
+    <div class="room-stage" id="roomStage">
+      <!-- Animated Canvas Background -->
+      <canvas id="roomCanvas" width="960" height="540"></canvas>
+      <div class="fog-overlay"></div>
+      <div class="film-grain-overlay" aria-hidden="true"></div>
+
+      <!-- Interactive Dynamic Investigation Reticle -->
+      <div class="investigation-reticle" id="investigationReticle" aria-hidden="true">
+        <div class="reticle-crosshair"></div>
+        <div class="reticle-label" id="reticleLabel">
+          <span class="reticle-text" id="reticleText">Examine</span>
+        </div>
+      </div>
+
+      <!-- Interactive Hotspots overlay -->
+      <div class="hotspots-container" id="hotspotsContainer">
+        <!-- Gate hotspot -->
+        <div class="hotspot" id="hotspotGate" style="top: 20%; left: 40.5%; width: 19%; height: 44.5%; border-radius: 90px 90px 0 0;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span class="hotspot-label">Iron Crypt Gate</span>
+        </div>
+
+        <!-- Bookshelf hotspot -->
+        <div class="hotspot" id="hotspotBooks" style="top: 27.5%; left: 11.4%; width: 10.5%; height: 35.5%; border-radius: 8px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <span class="hotspot-label">Grimoire Bookshelf</span>
+        </div>
+
+        <!-- Cauldron hotspot -->
+        <div class="hotspot" id="hotspotCauldron" style="top: 59%; left: 20%; width: 10%; height: 14%; border-radius: 50%;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 10h16v3a8 8 0 0 1-16 0v-3z"></path>
+            <path d="M2 10h20"></path>
+            <path d="M7 18l-3 4m13-4l3 4"></path>
+          </svg>
+          <span class="hotspot-label">Alchemical Cauldron</span>
+        </div>
+
+        <!-- Runic Pedestal hotspot -->
+        <div class="hotspot" id="hotspotPedestal" style="top: 61%; left: 68.5%; width: 9%; height: 13%; border-radius: 12px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="9"></circle>
+            <circle cx="12" cy="12" r="4"></circle>
+            <line x1="12" y1="3" x2="12" y2="7"></line>
+            <line x1="12" y1="17" x2="12" y2="21"></line>
+          </svg>
+          <span class="hotspot-label">Runic Pedestal</span>
+        </div>
+
+        <!-- Bone Chest hotspot -->
+        <div class="hotspot" id="hotspotChest" style="top: 66%; left: 83%; width: 8%; height: 12%; border-radius: 10px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+          <span class="hotspot-label">Bone Relic Chest</span>
+        </div>
+
+        <!-- Wall Torches hotspot -->
+        <div class="hotspot" id="hotspotTorches" style="top: 24%; left: 69%; width: 5%; height: 12%; border-radius: 8px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2c1.5 3 4 5 4 8a4 4 0 0 1-8 0c0-3 2.5-5 4-8z"></path>
+            <line x1="12" y1="12" x2="12" y2="22"></line>
+          </svg>
+          <span class="hotspot-label">Braziers & Torches</span>
+        </div>
+
+        <!-- Plant pot hotspot (for Mandrake Root) -->
+        <div class="hotspot" id="hotspotPlant" style="top: 68%; left: 5%; width: 6%; height: 12%; border-radius: 10px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22v-8"></path>
+            <path d="M5 12h14"></path>
+            <path d="M12 7c-2-3-7-3-7 1 0 4 5 6 7 6s7-2 7-6c0-4-5-4-7-1z"></path>
+          </svg>
+          <span class="hotspot-label">Dead Nightshade Pot</span>
+        </div>
+      </div>
+
+      <!-- Toast Message -->
+      <div class="crypt-toast" id="cryptToast">Inspect the room to search for clues.</div>
+    </div>
+
+    <!-- Bottom Inventory Panel -->
+    <div class="inventory-panel" aria-label="Crypt Bag Inventory">
+      <div class="inventory-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+        </svg>
+        <span>Inventory</span>
+      </div>
+
+      <div class="inventory-slots" id="inventorySlots">
+        <!-- 6 slots generated by JS -->
+      </div>
+
+      <div class="inventory-hint" id="invDetail">
+        Tap an item to select it, then tap an object to interact.
+      </div>
+    </div>
+  </main>
+
+  <!-- Modals -->
+
+  <!-- Bookshelf Modal -->
+  <div class="modal-overlay" id="modalBookshelf">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          Arcane Grimoire Bookshelf
+        </h3>
+        <button class="modal-close" data-close="modalBookshelf">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Four weathered grimoires rest upon the carved mahogany shelf. Above them, an ancient occult riddle is etched in faded crimson into the stone:</p>
+        <p style="margin: 12px 0; font-style: italic; color: #ffca65; text-align: center; border-left: 3px solid #ff7700; padding: 8px 14px; background: rgba(255, 119, 0, 0.08); line-height: 1.5;">
+          "When darkness blankets ancient bones,<br>
+          First spills the <strong>BLOOD</strong> to soak the stones.<br>
+          Then <strong>DUSK</strong> descends with fading light,<br>
+          The choking <strong>VINE</strong> claims all in sight,<br>
+          Until the <strong>VOID</strong> consumes the night."
+        </p>
+        <p style="font-size: 0.85rem; color: #b59bd8; text-align: center;">Pull the grimoires in the correct ritual sequence:</p>
+        
+        <div class="bookshelf-shelf" id="booksRow">
+          <div class="book book-red" data-color="red">BLOOD</div>
+          <div class="book book-blue" data-color="blue">DUSK</div>
+          <div class="book book-green" data-color="green">VINE</div>
+          <div class="book book-purple" data-color="purple">VOID</div>
+        </div>
+        <p id="bookshelfStatus" style="text-align: center; font-size: 0.85rem; min-height: 1.2rem; color: #00f2fe;"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="resetBooksBtn">Reset Sequence</button>
+        <button class="btn-primary" data-close="modalBookshelf">Step Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cauldron Modal -->
+  <div class="modal-overlay" id="modalCauldron">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 10h16v3a8 8 0 0 1-16 0v-3z"></path>
+            <path d="M2 10h20"></path>
+          </svg>
+          The Witch's Cauldron
+        </h3>
+        <button class="modal-close" data-close="modalCauldron">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>A foul, simmering brew bubbles with an unearthly glow. The recipe page pinned nearby calls for an <strong>Acidic Elixir</strong> to melt corroded iron chains.</p>
+        <p style="margin: 10px 0; font-style: italic; color: #38ef7d; text-align: center; background: rgba(56, 239, 125, 0.08); padding: 6px 12px; border-radius: 6px;">
+          Required: Spider Venom + Mandrake Root + Cursed Ash
+        </p>
+
+        <div class="cauldron-interactive">
+          <div class="cauldron-pot">
+            <div class="cauldron-liquid" id="cauldronLiquid"></div>
+          </div>
+          <div class="cauldron-ingredients-list" id="cauldronIngredients">
+            <div class="ingredient-badge" id="badgeVenom">Spider Venom</div>
+            <div class="ingredient-badge" id="badgeRoot">Mandrake Root</div>
+            <div class="ingredient-badge" id="badgeAsh">Cursed Ash</div>
+          </div>
+        </div>
+        <p id="cauldronStatus" style="text-align: center; font-size: 0.9rem; min-height: 1.4rem; color: #ffaa32;"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" id="brewCauldronBtn">Add Selected Item</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Runic Pedestal Modal -->
+  <div class="modal-overlay" id="modalPedestal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="9"></circle>
+          </svg>
+          Runic Celestial Pedestal
+        </h3>
+        <button class="modal-close" data-close="modalPedestal">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Three heavy stone discs are set into the altar. A carving above reads:</p>
+        <p style="margin: 12px 0; font-style: italic; color: #ff9e42; text-align: center; border-left: 3px solid #ff9e42; padding: 8px 14px; background: rgba(255, 158, 66, 0.08); line-height: 1.5;">
+          "Three celestial harbingers seal the crypt:<br>
+          First: The Crescent <strong>MOON</strong> ascendant in twilight,<br>
+          Second: The carved <strong>PUMPKIN</strong> burning through midnight,<br>
+          Third: The silent <strong>SKULL</strong> slumbering in death."
+        </p>
+        <p style="font-size: 0.85rem; color: #a48cb5; text-align: center;">Rotate the symbols into alignment (Moon • Pumpkin • Skull):</p>
+
+        <div class="runic-dials-row">
+          <!-- Dial 1 -->
+          <div class="dial-column">
+            <button class="dial-btn" data-dial="0" data-dir="up">UP</button>
+            <div class="dial-display" id="dialDisplay0"></div>
+            <button class="dial-btn" data-dial="0" data-dir="down">DN</button>
+          </div>
+          <!-- Dial 2 -->
+          <div class="dial-column">
+            <button class="dial-btn" data-dial="1" data-dir="up">UP</button>
+            <div class="dial-display" id="dialDisplay1"></div>
+            <button class="dial-btn" data-dial="1" data-dir="down">DN</button>
+          </div>
+          <!-- Dial 3 -->
+          <div class="dial-column">
+            <button class="dial-btn" data-dial="2" data-dir="up">UP</button>
+            <div class="dial-display" id="dialDisplay2"></div>
+            <button class="dial-btn" data-dial="2" data-dir="down">DN</button>
+          </div>
+        </div>
+        <p id="pedestalStatus" style="text-align: center; font-size: 0.9rem; min-height: 1.4rem; color: #00f2fe;"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" id="checkPedestalBtn">Unlock Altar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Torches Modal -->
+  <div class="modal-overlay" id="modalTorches">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2c1.5 3 4 5 4 8a4 4 0 0 1-8 0c0-3 2.5-5 4-8z"></path>
+          </svg>
+          Braziers & Crypt Fire
+        </h3>
+        <button class="modal-close" data-close="modalTorches">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>A ceremonial brazier burns with eerie purple flames. Piles of smoldering cursed ash fill the bottom basin. There is also an inscription on the stone pillar:</p>
+        <p style="margin: 12px 0; padding: 10px; background: rgba(157, 78, 221, 0.15); border-left: 3px solid #9d4edd; border-radius: 4px; font-style: italic; color: #e0ccf7;">
+          "The flame cleanses all impurity; gather the embers with cold silver."
+        </p>
+        <div style="display: flex; justify-content: center; margin: 16px 0;">
+          <button class="btn-primary" id="gatherAshBtn">Scrape Cursed Ash</button>
+        </div>
+        <p id="torchesStatus" style="text-align: center; font-size: 0.85rem; color: #ffaa32;"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" data-close="modalTorches">Leave</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bone Chest Modal -->
+  <div class="modal-overlay" id="modalChest">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          </svg>
+          Sarcophagus Relic Chest
+        </h3>
+        <button class="modal-close" data-close="modalChest">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>A heavy sarcophagus chest bound with ossified bone seals. It features a keyhole shaped like a human vertebra.</p>
+        <div style="text-align: center; margin: 20px 0;">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#9d4edd" stroke-width="2">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+            <circle cx="12" cy="14" r="2"></circle>
+            <line x1="12" y1="16" x2="12" y2="19"></line>
+          </svg>
+        </div>
+        <p id="chestStatus" style="text-align: center; color: #ffaa32; min-height: 1.2rem;"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" id="unlockChestBtn">Use Bone Key</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Iron Gate Modal -->
+  <div class="modal-overlay" id="modalGate">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          </svg>
+          The Iron Crypt Gate
+        </h3>
+        <button class="modal-close" data-close="modalGate">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>A massive gate of rusted iron bars stands between you and the misty graveyard outside. It is secured by three dark seals:</p>
+
+        <div class="gate-locks-row">
+          <div class="gate-lock-card" id="lockChains">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            <span>Corroded Chains</span>
+          </div>
+
+          <div class="gate-lock-card" id="lockKeyhole">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M12 8v4m0 4h.01"></path>
+            </svg>
+            <span>Gilded Keyhole</span>
+          </div>
+
+          <div class="gate-lock-card" id="lockSigil">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M12 2a10 10 0 0 0-10 10c0 4.5 3 8 7 9.5"></path>
+            </svg>
+            <span>Arcane Socket</span>
+          </div>
+        </div>
+
+        <p id="gateStatus" style="text-align: center; color: #ffaa32; min-height: 1.4rem;"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" id="interactGateBtn">Apply Selected Item</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Occult Survival & Escape Dossier Modal -->
+  <div class="modal-overlay open" id="modalHelp" role="dialog" aria-modal="true" aria-labelledby="dossierTitle">
+    <div class="modal-box dossier-modal">
+      <div class="modal-header">
+        <h3 id="dossierTitle">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 2l-2 2m-1-1l-3 3m2 8A6 6 0 1 1 5 8a6 6 0 0 1 12 6z"></path>
+            <circle cx="9" cy="14" r="1.5"></circle>
+          </svg>
+          THE WITCH'S CRYPT: SURVIVAL & ESCAPE DOSSIER
+        </h3>
+        <button class="modal-close" data-close="modalHelp" aria-label="Close guide">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="dossier-intro">
+          You are trapped in the sunken crypt beneath the ancestral chapel. Three ancient wards bar the Iron Gate: corroded chains, a gilded keyhole, and an arcane eye sigil. Solve the occult puzzles and unseal the gate before midnight!
+        </p>
+
+        <div class="survival-rules-grid">
+          <div class="survival-rule-card">
+            <div class="rule-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+            <div class="rule-body">
+              <h4>1. INVESTIGATE CRYPT HOTSPOTS</h4>
+              <p>Move your reticle over the room to inspect the Bookshelf, Cauldron, Pedestal, Braziers, Plant Pot, and Sarcophagus Chest.</p>
+            </div>
+          </div>
+
+          <div class="survival-rule-card">
+            <div class="rule-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+            </div>
+            <div class="rule-body">
+              <h4>2. EQUIP INVENTORY ITEMS</h4>
+              <p>Click any item in your bottom inventory to hold it. When selected, click room objects or puzzles to use it.</p>
+            </div>
+          </div>
+
+          <div class="survival-rule-card">
+            <div class="rule-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10h16v3a8 8 0 0 1-16 0v-3z"></path><path d="M2 10h20"></path></svg>
+            </div>
+            <div class="rule-body">
+              <h4>3. BREW THE ACIDIC ELIXIR</h4>
+              <p>Gather Mandrake Root from the plant pot, smoldering Cursed Ash from the braziers using your Silver Dagger, and Spider Venom. Brew them in the cauldron to melt the gate chains!</p>
+            </div>
+          </div>
+
+          <div class="survival-rule-card">
+            <div class="rule-icon danger">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </div>
+            <div class="rule-body">
+              <h4>4. BREAK SEALS & ESCAPE</h4>
+              <p>Align the celestial altar dials (Moon, Pumpkin, Skull) to obtain keys, unseal the Bone Chest for the Eye Talisman, and unlock all 3 gate wards to break free!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" data-close="modalHelp" id="btnStartGame">
+          <span>ENTER THE WITCH'S CRYPT</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Victory Modal -->
+  <div class="modal-overlay" id="modalVictory">
+    <div class="modal-box">
+      <div class="modal-body victory-card">
+        <h2 class="victory-title">YOU ESCAPED!</h2>
+        <p style="color: #c9a7eb;">The heavy iron gate swings open, and the cool autumn night air greets your escape from the witch's crypt!</p>
+        
+        <div class="victory-stats">
+          <div class="stat-item">
+            <span class="stat-val" id="vicTime">02:45</span>
+            <span class="stat-lbl">Time Taken</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-val" id="vicRating">Archmage</span>
+            <span class="stat-lbl">Rank</span>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="playAgainBtn" style="width: 100%; padding: 12px; font-size: 1.05rem;">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
+

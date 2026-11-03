@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Typer: Terminal Hacker | ArcadeVerse</title>
+  <meta name="description" content="Defend the mainframe against falling cyber intrusion packets in this 60fps typing defense arcade. Features live WPM calculation, combo multipliers, and procedural Web Audio synthesis.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient Cyber Scanline Overlay -->
+  <div class="crt-overlay" aria-hidden="true"></div>
+  <div class="crt-vignette" aria-hidden="true"></div>
+
+  <!-- Terminal Container -->
+  <div class="terminal-container">
+    <!-- Top Terminal Titlebar -->
+    <header class="terminal-header">
+      <div class="terminal-brand">
+        <span class="terminal-badge-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 17 10 11 4 5"></polyline>
+            <line x1="12" y1="19" x2="20" y2="19"></line>
+          </svg>
+        </span>
+        <div class="terminal-title-text">
+          <span class="terminal-title">CYBER_TYPER</span>
+          <span class="terminal-sub">MAINFRAME DEFENSE V2.6</span>
+        </div>
+      </div>
+
+      <!-- Difficulty Selectors & Header Controls -->
+      <div class="header-controls">
+        <div class="difficulty-group" role="group" aria-label="Select Protocol Difficulty">
+          <button type="button" class="btn-diff active" data-diff="easy" title="Novice Protocol (Slow Pace, Short Payloads)">NOVICE</button>
+          <button type="button" class="btn-diff" data-diff="normal" title="Cyber Mercenary Protocol (Standard Speed)">NORMAL</button>
+          <button type="button" class="btn-diff" data-diff="hard" title="Netrunner Protocol (High Speed, Complex Commands)">HARDCORE</button>
+        </div>
+
+        <button type="button" class="btn-icon" id="sound-btn" title="Toggle Sound FX" aria-label="Toggle Sound Effects">
+          <svg id="sound-on-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+          </svg>
+          <svg id="sound-off-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+        </button>
+
+        <button type="button" class="btn-icon" id="help-btn" title="How to Play / Command Manual" aria-label="Open Game Manual">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Telemetry & Performance HUD Bar -->
+    <section class="telemetry-bar" aria-label="Live Telemetry Dashboard">
+      <div class="hud-stat-card">
+        <span class="hud-label">SCORE</span>
+        <span class="hud-value hud-cyan" id="hud-score">0</span>
+      </div>
+
+      <div class="hud-stat-card">
+        <span class="hud-label">LIVE WPM</span>
+        <span class="hud-value hud-green" id="hud-wpm">0</span>
+      </div>
+
+      <div class="hud-stat-card">
+        <span class="hud-label">ACCURACY</span>
+        <span class="hud-value hud-amber" id="hud-accuracy">100%</span>
+      </div>
+
+      <div class="hud-stat-card">
+        <span class="hud-label">STREAK</span>
+        <span class="hud-value hud-magenta" id="hud-streak">x1</span>
+      </div>
+
+      <div class="hud-stat-card firewall-card">
+        <div class="firewall-meta">
+          <span class="hud-label">FIREWALL INTEGRITY</span>
+          <span class="firewall-percent" id="hud-firewall-text">100%</span>
+        </div>
+        <div class="firewall-bar-track">
+          <div class="firewall-bar-fill" id="hud-firewall-fill" style="width: 100%;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Game Canvas Frame -->
+    <main class="canvas-viewport" id="canvas-viewport">
+      <canvas id="game-canvas"></canvas>
+
+      <!-- Active Threat Target Reticle HUD Overlay -->
+      <div class="target-indicator" id="target-indicator" style="display: none;">
+        <span class="target-bracket">[</span>
+        <span class="target-name" id="target-name">TARGETING</span>
+        <span class="target-bracket">]</span>
+      </div>
+
+      <!-- Start Overlay Screen -->
+      <div class="game-overlay-screen" id="start-screen">
+        <div class="overlay-panel">
+          <div class="overlay-icon-wrap">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+          </div>
+          <h1 class="overlay-title">SYSTEM INTRUSION DETECTED</h1>
+          <p class="overlay-desc">
+            Malicious intrusion packets are descending upon your core firewall.
+            Type the descending cyber payloads to lock on laser counter-measures and neutralize the threats before terminal breach.
+          </p>
+          <div class="overlay-action-group">
+            <button type="button" class="btn-terminal-primary" id="start-game-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span>ENGAGE FIREWALL</span>
+            </button>
+            <button type="button" class="btn-terminal-secondary" id="rules-trigger-btn">
+              <span>VIEW PROTOCOL MANUAL</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Game Over / Breach Overlay Screen -->
+      <div class="game-overlay-screen" id="game-over-screen" style="display: none;">
+        <div class="overlay-panel breach-panel">
+          <div class="overlay-icon-wrap breach-icon">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#ff0055" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+          <h2 class="overlay-title breach-title">FIREWALL COMPROMISED</h2>
+          <p class="overlay-desc">Intrusion packets overwhelmed the system buffer. Mainframe shutdown initiated.</p>
+
+          <div class="game-over-grid">
+            <div class="go-stat-box">
+              <span class="go-stat-label">FINAL SCORE</span>
+              <span class="go-stat-value hud-cyan" id="go-score">0</span>
+            </div>
+            <div class="go-stat-box">
+              <span class="go-stat-label">PEAK WPM</span>
+              <span class="go-stat-value hud-green" id="go-peak-wpm">0</span>
+            </div>
+            <div class="go-stat-box">
+              <span class="go-stat-label">TYPING ACCURACY</span>
+              <span class="go-stat-value hud-amber" id="go-accuracy">100%</span>
+            </div>
+            <div class="go-stat-box">
+              <span class="go-stat-label">ALL-TIME BEST</span>
+              <span class="go-stat-value hud-magenta" id="go-high-score">0</span>
+            </div>
+          </div>
+
+          <div class="overlay-action-group">
+            <button type="button" class="btn-terminal-primary" id="restart-game-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+              </svg>
+              <span>REBOOT SYSTEM & RETRY</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Live Terminal Input Buffer Bar -->
+    <footer class="terminal-prompt-bar">
+      <div class="prompt-prefix">
+        <span class="prompt-user">root@arcadeverse</span><span class="prompt-sep">:</span><span class="prompt-path">~#</span>
+      </div>
+      <div class="prompt-input-display" id="prompt-input-display">
+        <span class="typed-matched" id="prompt-matched"></span>
+        <span class="typed-target" id="prompt-unmatched">READY...</span>
+        <span class="cursor-block" aria-hidden="true"></span>
+      </div>
+      <div class="prompt-hint" id="prompt-hint">
+        Type matching keyword to fire laser counter-measures
+      </div>
+    </footer>
+
+    <!-- Mobile Virtual Touch Cyber-Keyboard -->
+    <section class="cyber-keyboard" id="cyber-keyboard" aria-label="Touch Virtual Keyboard">
+      <div class="keyboard-row">
+        <button type="button" class="key-btn" data-key="q">Q</button>
+        <button type="button" class="key-btn" data-key="w">W</button>
+        <button type="button" class="key-btn" data-key="e">E</button>
+        <button type="button" class="key-btn" data-key="r">R</button>
+        <button type="button" class="key-btn" data-key="t">T</button>
+        <button type="button" class="key-btn" data-key="y">Y</button>
+        <button type="button" class="key-btn" data-key="u">U</button>
+        <button type="button" class="key-btn" data-key="i">I</button>
+        <button type="button" class="key-btn" data-key="o">O</button>
+        <button type="button" class="key-btn" data-key="p">P</button>
+      </div>
+      <div class="keyboard-row">
+        <button type="button" class="key-btn" data-key="a">A</button>
+        <button type="button" class="key-btn" data-key="s">S</button>
+        <button type="button" class="key-btn" data-key="d">D</button>
+        <button type="button" class="key-btn" data-key="f">F</button>
+        <button type="button" class="key-btn" data-key="g">G</button>
+        <button type="button" class="key-btn" data-key="h">H</button>
+        <button type="button" class="key-btn" data-key="j">J</button>
+        <button type="button" class="key-btn" data-key="k">K</button>
+        <button type="button" class="key-btn" data-key="l">L</button>
+      </div>
+      <div class="keyboard-row">
+        <button type="button" class="key-btn" data-key="z">Z</button>
+        <button type="button" class="key-btn" data-key="x">X</button>
+        <button type="button" class="key-btn" data-key="c">C</button>
+        <button type="button" class="key-btn" data-key="v">V</button>
+        <button type="button" class="key-btn" data-key="b">B</button>
+        <button type="button" class="key-btn" data-key="n">N</button>
+        <button type="button" class="key-btn" data-key="m">M</button>
+        <button type="button" class="key-btn key-backspace" data-key="Backspace" aria-label="Backspace">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+            <line x1="18" y1="9" x2="12" y2="15"></line>
+            <line x1="12" y1="9" x2="18" y2="15"></line>
+          </svg>
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <!-- How to Play / Protocol Manual Modal -->
+  <div class="modal-backdrop" id="rules-modal" style="display: none;" role="dialog" aria-labelledby="rules-modal-title" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 17 10 11 4 5"></polyline>
+            <line x1="12" y1="19" x2="20" y2="19"></line>
+          </svg>
+          <h2 id="rules-modal-title" class="modal-title">TERMINAL DEFENSE PROTOCOL MANUAL</h2>
+        </div>
+        <button type="button" class="modal-close-btn" id="close-rules-btn" aria-label="Close Protocol Manual">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <section class="manual-section">
+          <h3>1. Mission Objective</h3>
+          <p>Cyber intrusion packets are dropping towards the bottom mainframe buffer. Type the letters displayed on any packet to acquire a target lock and fire laser counter-measures. Neutralize threats before they reach the bottom and damage your firewall.</p>
+        </section>
+
+        <section class="manual-section">
+          <h3>2. Controls & Typing Mechanics</h3>
+          <ul>
+            <li><strong>Desktop:</strong> Simply type on your physical keyboard. The terminal intercepts keystrokes automatically.</li>
+            <li><strong>Target Lock:</strong> Typing the first character of an unengaged word locks onto it. All subsequent letters will aim at that target until eliminated.</li>
+            <li><strong>Mobile / Touch:</strong> Use the on-screen virtual cyber keyboard docked at the bottom of the screen.</li>
+            <li><strong>Mute Sound:</strong> Click the speaker icon in the top header.</li>
+          </ul>
+        </section>
+
+        <section class="manual-section">
+          <h3>3. Performance Scoring & Combo Multipliers</h3>
+          <ul>
+            <li><strong>Elimination Points:</strong> Base score = <code>100 pts x word length</code>.</li>
+            <li><strong>Streak Multiplier:</strong> Consecutive correct keystrokes unlock <code>x2</code> (10 streak), <code>x3</code> (25 streak), and <code>x5</code> (50 streak) combo points.</li>
+            <li><strong>Accuracy Penalty:</strong> Typo mistakes reset the streak multiplier back to <code>x1</code>.</li>
+            <li><strong>WPM Calculation:</strong> Real-time Words-Per-Minute formula based on character bursts over elapsed time.</li>
+          </ul>
+        </section>
+
+        <section class="manual-section">
+          <h3>4. Protocols (Difficulty Tiers)</h3>
+          <ul>
+            <li><strong>Novice:</strong> Slower packet descent, 3-5 character basic shell keywords.</li>
+            <li><strong>Normal:</strong> Standard descent speed, 5-8 character commands, simultaneous threat lanes.</li>
+            <li><strong>Hardcore:</strong> Rapid acceleration, multi-lane payloads, and advanced cybersecurity keyword strings.</li>
+          </ul>
+        </section>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-terminal-primary" id="ack-rules-btn">
+          <span>ACKNOWLEDGE & RETURN TO DEFENSE</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

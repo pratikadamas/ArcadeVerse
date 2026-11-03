@@ -1,0 +1,15 @@
+{
+  "title": "Midnight Graveyard: Lantern Run",
+  "category": "Adventure",
+  "lucideIcon": "ghost",
+  "description": "Navigate a fog-covered graveyard maze, collect three crypt keys, recharge your lantern, and evade patrolling ghosts to reach the exit.",
+  "author": "Joita Paul",
+  "github": "joitapaul",
+  "role": "Arcade Developer",
+  "tags": [
+    "Halloween",
+    "Maze",
+    "Adventure",
+    "NSOC26"
+  ]
+}

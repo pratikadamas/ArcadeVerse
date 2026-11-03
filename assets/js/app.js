@@ -27,10 +27,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalFavBtn = document.getElementById("modal-fav-btn");
 
   let currentCategory = "all";
+  let currentDurationFacet = "all";
+  let currentControlsFacet = "all";
+  let currentTagFilter = "";
   let searchQuery = "";
   let currentSort = "featured";
   let lastFocusedElement = null;
   let activeGame = null;
+
+  // Search & filter UI element refs
+  const searchClearBtn = document.getElementById("search-clear-btn");
+  const resultsCountEl = document.getElementById("catalog-results-count");
+  const searchTagsRow = document.getElementById("search-tags-row");
+  const resetFacetsBtn = document.getElementById("btn-reset-facets");
 
   // Favorites LocalStorage Engine
   const FAVORITES_STORAGE_KEY = "arcadeverse_favorite_games";
@@ -62,6 +71,46 @@ document.addEventListener("DOMContentLoaded", () => {
     if (favoritesCountBadge) {
       favoritesCountBadge.textContent = getFavorites().size;
     }
+    updateCategoryPillCounts();
+  }
+
+  // Dynamic Category Counters & Real-Time Statistics
+  function updateCategoryPillCounts() {
+    if (typeof GAMES_REGISTRY === "undefined" || !Array.isArray(GAMES_REGISTRY)) return;
+    const favs = getFavorites();
+
+    const counts = {
+      all: GAMES_REGISTRY.length,
+      favorites: favs.size,
+      halloween: 0
+    };
+
+    GAMES_REGISTRY.forEach((g) => {
+      const cat = (g.category || "").toLowerCase();
+      if (!counts[cat]) counts[cat] = 0;
+      counts[cat]++;
+
+      const isHalloween = (g.tags && g.tags.some(t => t.toLowerCase() === "halloween")) ||
+        cat.includes("horror") ||
+        (g.title && g.title.toLowerCase().includes("halloween")) ||
+        (g.id && (g.id.toLowerCase().includes("haunted") || g.id.toLowerCase().includes("escape-room") || g.id.toLowerCase().includes("island-survival")));
+      if (isHalloween) {
+        counts.halloween++;
+      }
+    });
+
+    categoryPills.forEach((pill) => {
+      const categoryKey = (pill.getAttribute("data-category") || "").toLowerCase();
+      let badge = pill.querySelector(".pill-count-badge");
+      if (!badge) {
+        badge = document.createElement("span");
+        badge.className = "pill-count-badge";
+        pill.appendChild(badge);
+      }
+      const countVal = counts[categoryKey] !== undefined ? counts[categoryKey] : 0;
+      badge.textContent = countVal;
+      badge.setAttribute("aria-label", `${countVal} games available`);
+    });
   }
 
   function updateModalFavoriteButton(fav) {
@@ -97,12 +146,207 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Levenshtein / Fuzzy Match Engine for Smart Suggestions
+  function getSmartSuggestions(query, category) {
+    if (!query || typeof GAMES_REGISTRY === "undefined") {
+      // Suggest popular categories if no query was typed but category has 0
+      return ["All", "Arcade", "Puzzle", "Retro", "Action"];
+    }
+
+    const q = query.toLowerCase().trim();
+    const candidatePool = new Set();
+
+    // Populate candidate tokens from categories, titles, authors, and tags
+    GAMES_REGISTRY.forEach(g => {
+      if (g.category) candidatePool.add(g.category);
+      if (g.tags && Array.isArray(g.tags)) {
+        g.tags.forEach(t => candidatePool.add(t));
+      }
+      if (g.title) {
+        g.title.split(/\s+/).forEach(word => {
+          const clean = word.replace(/[^a-zA-Z0-9]/g, "");
+          if (clean.length >= 3) candidatePool.add(clean);
+        });
+      }
+    });
+
+    // Score candidates based on prefix match, substring match, and Levenshtein distance
+    const scored = [];
+    candidatePool.forEach(term => {
+      const t = term.toLowerCase();
+      if (t === q) return;
+
+      let score = 0;
+      if (t.startsWith(q)) {
+        score = 100 - (t.length - q.length);
+      } else if (t.includes(q)) {
+        score = 80 - (t.length - q.length);
+      } else if (q.includes(t)) {
+        score = 70;
+      } else {
+        const dist = levenshteinDistance(q, t);
+        if (dist <= 2 && q.length >= 3) {
+          score = 60 - dist * 15;
+        } else if (dist <= 3 && q.length >= 5) {
+          score = 40 - dist * 10;
+        }
+      }
+
+      if (score > 0) {
+        scored.push({ term, score });
+      }
+    });
+
+    scored.sort((a, b) => b.score - a.score);
+    const topPicks = scored.slice(0, 4).map(s => s.term);
+
+    if (topPicks.length === 0) {
+      return ["Puzzle", "Arcade", "Retro", "Halloween"];
+    }
+    return topPicks;
+  }
+
+  function levenshteinDistance(a, b) {
+    const matrix = [];
+    for (let i = 0; i <= b.length; i++) {
+      matrix[i] = [i];
+    }
+    for (let j = 0; j <= a.length; j++) {
+      matrix[0][j] = j;
+    }
+    for (let i = 1; i <= b.length; i++) {
+      for (let j = 1; j <= a.length; j++) {
+        if (b.charAt(i - 1) === a.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1, // substitution
+            matrix[i][j - 1] + 1,     // insertion
+            matrix[i - 1][j] + 1      // deletion
+          );
+        }
+      }
+    }
+    return matrix[b.length][a.length];
+  }
+
   // Update Stats
   if (totalGamesCount) totalGamesCount.textContent = GAMES_REGISTRY.length;
   if (totalContributorsCount) totalContributorsCount.textContent = CONTRIBUTORS_REGISTRY.length;
   updateFavoritesBadge();
 
   // Render Games
+  
+  // --- Facet Filter Summary Indicator Engine ---
+  function updateFacetSummaryUI() {
+    const summaryContainer = document.getElementById("active-filters-summary");
+    if (!summaryContainer) return;
+
+    const activeTags = [];
+    if (currentDurationFacet !== "all") {
+      activeTags.push({ label: 'Duration: ' + currentDurationFacet, type: 'duration' });
+    }
+    if (currentControlsFacet !== "all") {
+      activeTags.push({ label: 'Controls: ' + currentControlsFacet, type: 'controls' });
+    }
+    if (currentCategory !== "all") {
+      activeTags.push({ label: 'Category: ' + currentCategory, type: 'category' });
+    }
+
+    if (activeTags.length === 0) {
+      summaryContainer.style.display = "none";
+      summaryContainer.innerHTML = "";
+    } else {
+      summaryContainer.style.display = "flex";
+      summaryContainer.innerHTML = '<span style="font-weight: 600;">Active Filters:</span>' +
+        activeTags.map(t => `<span class="active-filter-tag">${t.label}</span>`).join('');
+    }
+  }
+
+  // --- Build Dynamic Tag Chips from Registry Metadata ---
+  function buildTagChips() {
+    if (!searchTagsRow) return;
+    if (typeof GAMES_REGISTRY === "undefined" || !Array.isArray(GAMES_REGISTRY)) return;
+
+    // Collect all unique tags, excluding generic/noisy ones
+    const EXCLUDED = new Set(["nsoc26", "NSOC26", "html5-canvas", "html5"]);
+    const tagFreq = {};
+    GAMES_REGISTRY.forEach((g) => {
+      if (!Array.isArray(g.tags)) return;
+      g.tags.forEach((t) => {
+        const normalized = t.trim();
+        if (!normalized || EXCLUDED.has(normalized.toLowerCase())) return;
+        const key = normalized.toLowerCase();
+        tagFreq[key] = (tagFreq[key] || 0) + 1;
+      });
+    });
+
+    // Keep top 10 most-used tags
+    const topTags = Object.entries(tagFreq)
+      .filter(([, c]) => c >= 2)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([tag]) => tag.charAt(0).toUpperCase() + tag.slice(1));
+
+    if (topTags.length === 0) {
+      searchTagsRow.innerHTML = "";
+      return;
+    }
+
+    const label = document.createElement("span");
+    label.className = "tag-filter-label";
+    label.textContent = "Tags:";
+    searchTagsRow.innerHTML = "";
+    searchTagsRow.appendChild(label);
+
+    topTags.forEach((tag) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "tag-filter-chip" + (currentTagFilter === tag.toLowerCase() ? " active" : "");
+      btn.textContent = tag;
+      btn.setAttribute("aria-pressed", currentTagFilter === tag.toLowerCase() ? "true" : "false");
+      btn.addEventListener("click", () => {
+        if (currentTagFilter === tag.toLowerCase()) {
+          currentTagFilter = "";
+        } else {
+          currentTagFilter = tag.toLowerCase();
+        }
+        buildTagChips();
+        renderGames();
+      });
+      searchTagsRow.appendChild(btn);
+    });
+
+    // Add a clear-tag button if a tag is active
+    if (currentTagFilter) {
+      const clearTag = document.createElement("button");
+      clearTag.type = "button";
+      clearTag.className = "tag-filter-clear";
+      clearTag.setAttribute("aria-label", "Clear tag filter");
+      clearTag.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Clear tag`;
+      clearTag.addEventListener("click", () => {
+        currentTagFilter = "";
+        buildTagChips();
+        renderGames();
+      });
+      searchTagsRow.appendChild(clearTag);
+    }
+  }
+
+  // --- Live Results Count ---
+  function updateResultsCount(count) {
+    if (!resultsCountEl) return;
+    const total = (typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) ? GAMES_REGISTRY.length : 0;
+    const isFiltered = searchQuery || currentCategory !== "all" || currentDurationFacet !== "all" || currentControlsFacet !== "all" || currentTagFilter;
+    if (isFiltered) {
+      resultsCountEl.textContent = `${count} of ${total} game${total !== 1 ? "s" : ""} match`;
+      resultsCountEl.style.display = "";
+    } else {
+      resultsCountEl.textContent = `${total} game${total !== 1 ? "s" : ""} available`;
+      resultsCountEl.style.display = "";
+    }
+  }
+
   function renderGames() {
     gamesGrid.innerHTML = "";
     const favs = getFavorites();
@@ -115,8 +359,21 @@ document.addEventListener("DOMContentLoaded", () => {
         matchesCategory = true;
       } else if (currentCategory === "favorites") {
         matchesCategory = favs.has(item.id);
+      } else if (currentCategory.startsWith("playlist:")) {
+        const plId = currentCategory.replace("playlist:", "");
+        const pl = window.ArcadePlaylists ? window.ArcadePlaylists.getPlaylist(plId) : null;
+        matchesCategory = pl ? pl.games.includes(item.id) : false;
+      } else {
+        if (currentCategory.toLowerCase() === "halloween") {
+        matchesCategory = (item.tags && item.tags.some(t => t.toLowerCase() === "halloween")) ||
+          item.category.toLowerCase().includes("horror") ||
+          item.title.toLowerCase().includes("halloween") ||
+          item.id.toLowerCase().includes("haunted") ||
+          item.id.toLowerCase().includes("escape-room") ||
+          item.id.toLowerCase().includes("island-survival");
       } else {
         matchesCategory = item.category.toLowerCase() === currentCategory.toLowerCase();
+      }
       }
 
       const matchesSearch = 
@@ -125,7 +382,38 @@ document.addEventListener("DOMContentLoaded", () => {
         item.author.toLowerCase().includes(searchQuery) ||
         (item.tags && item.tags.some(t => t.toLowerCase().includes(searchQuery)));
 
-      return matchesCategory && matchesSearch;
+      // Tag Facet Filter
+      let matchesTag = true;
+      if (currentTagFilter) {
+        matchesTag = Array.isArray(item.tags) && item.tags.some(t => t.toLowerCase() === currentTagFilter);
+      }
+      // Duration Facet Evaluation
+      let matchesDuration = true;
+      if (currentDurationFacet !== "all") {
+        const descLower = (item.description || "").toLowerCase();
+        const tagsLower = (item.tags || []).map(t => t.toLowerCase());
+        const isQuick = tagsLower.includes("quick") || tagsLower.includes("arcade") || tagsLower.includes("casual") || descLower.includes("quick") || descLower.includes("fast-paced");
+        const isDeep = tagsLower.includes("survival") || tagsLower.includes("story") || tagsLower.includes("adventure") || tagsLower.includes("rpg") || descLower.includes("explore") || descLower.includes("escape");
+        if (currentDurationFacet === "quick") matchesDuration = isQuick || (!isDeep);
+        else if (currentDurationFacet === "medium") matchesDuration = true;
+        else if (currentDurationFacet === "long") matchesDuration = isDeep;
+      }
+
+      // Control Scheme Facet Evaluation
+      let matchesControls = true;
+      if (currentControlsFacet !== "all") {
+        const descLower = (item.description || "").toLowerCase();
+        const tagsLower = (item.tags || []).map(t => t.toLowerCase());
+        if (currentControlsFacet === "touch") {
+          matchesControls = item.responsive === true || tagsLower.includes("mobile") || tagsLower.includes("touch") || tagsLower.includes("casual");
+        } else if (currentControlsFacet === "mouse") {
+          matchesControls = descLower.includes("click") || descLower.includes("mouse") || tagsLower.includes("puzzle") || tagsLower.includes("card") || tagsLower.includes("board");
+        } else if (currentControlsFacet === "keyboard") {
+          matchesControls = tagsLower.includes("action") || tagsLower.includes("arcade") || tagsLower.includes("shooter") || descLower.includes("arrow") || descLower.includes("wasd");
+        }
+      }
+
+      return matchesCategory && matchesSearch && matchesDuration && matchesControls && matchesTag;
     });
 
     // Apply Sorting
@@ -148,8 +436,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // Handle Empty State
+    // Handle Empty State with Fuzzy Smart Suggestions
     if (filtered.length === 0) {
+      updateResultsCount(0);
       const emptyCard = document.createElement("div");
       emptyCard.className = "catalog-empty-state";
 
@@ -167,12 +456,27 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         `;
       } else {
+        // Compute smart suggestions based on query and available game categories/tags
+        const suggestions = getSmartSuggestions(searchQuery, currentCategory);
+        let suggestionsHtml = "";
+        if (suggestions.length > 0) {
+          suggestionsHtml = `
+            <div class="smart-tag-suggestions">
+              <span class="smart-suggestions-label">Did you mean:</span>
+              <div class="smart-suggestions-list">
+                ${suggestions.map(s => `<button type="button" class="smart-suggestion-chip" data-suggestion="${s}">${s}</button>`).join('')}
+              </div>
+            </div>
+          `;
+        }
+
         emptyCard.innerHTML = `
           <div class="empty-state-icon"><i data-lucide="gamepad-2"></i></div>
           <h3 class="empty-state-title"></h3>
           <p class="empty-state-desc">
-            Be the pioneer contributor! Build the first game for this category under <code>games/&lt;game-name&gt;_&lt;your-name&gt;/</code> and claim your spot on the leaderboard.
+            ${searchQuery ? `We couldn't find any games matching "${searchQuery}". Try exploring related categories or searching another arcade classic.` : `Be the pioneer contributor! Build the first game for this category under <code>games/&lt;game-name&gt;_&lt;your-name&gt;/</code> and claim your spot on the leaderboard.`}
           </p>
+          ${suggestionsHtml}
           <div class="empty-state-actions">
             <a href="https://github.com/DebasmitaBose0/ArcadeVerse/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
               <span><i data-lucide="rocket"></i> Build a Game for This Category</span>
@@ -190,14 +494,40 @@ document.addEventListener("DOMContentLoaded", () => {
         emptyTitle.textContent = `No games found in "${currentCategory !== "all" ? currentCategory : searchQuery}"`;
       }
 
+      // Clear button should reset tag filter too
       emptyCard.querySelector("#reset-filter-btn").addEventListener("click", () => {
         searchQuery = "";
         currentCategory = "all";
+        currentTagFilter = "";
         if (searchInput) searchInput.value = "";
+        if (searchClearBtn) searchClearBtn.hidden = true;
         categoryPills.forEach((p) => p.classList.remove("active"));
         const allPill = document.querySelector('.category-pills .pill[data-category="all"]');
         if (allPill) allPill.classList.add("active");
+        buildTagChips();
         renderGames();
+      });
+
+      // Bind smart suggestion chip clicks
+      emptyCard.querySelectorAll(".smart-suggestion-chip").forEach((chip) => {
+        chip.addEventListener("click", () => {
+          const sug = chip.getAttribute("data-suggestion");
+          if (sug) {
+            // Check if suggestion is a category
+            const matchingPill = Array.from(categoryPills).find(p => p.getAttribute("data-category").toLowerCase() === sug.toLowerCase());
+            if (matchingPill) {
+              categoryPills.forEach(p => p.classList.remove("active"));
+              matchingPill.classList.add("active");
+              currentCategory = matchingPill.getAttribute("data-category");
+              searchQuery = "";
+              if (searchInput) searchInput.value = "";
+            } else {
+              searchQuery = sug.toLowerCase();
+              if (searchInput) searchInput.value = sug;
+            }
+            renderGames();
+          }
+        });
       });
 
       gamesGrid.appendChild(emptyCard);
@@ -205,6 +535,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    updateResultsCount(filtered.length);
     filtered.forEach((game) => {
       const card = document.createElement("div");
       card.className = "game-card";
@@ -290,6 +621,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Only clicking the dedicated Play Now button launches the game modal
       gamesGrid.appendChild(card);
+    updateFacetSummaryUI();
     });
 
     if (window.lucide) {
@@ -301,9 +633,82 @@ document.addEventListener("DOMContentLoaded", () => {
   function openGameModal(game, triggerElement = null) {
     activeGame = game;
     lastFocusedElement = triggerElement || document.activeElement;
+    // In-Modal Error Boundary & Load Timeout Handlers
+    let iframeLoadTimeout = null;
+    let iframeLoadSucceeded = false;
+
+    function resetIframeBoundary() {
+      if (iframeLoadTimeout) {
+        clearTimeout(iframeLoadTimeout);
+        iframeLoadTimeout = null;
+      }
+      const existingError = document.getElementById("modal-error-boundary");
+      if (existingError) existingError.remove();
+      gameIframe.style.display = "block";
+    }
+
+    function triggerModalErrorBoundary(gameObj) {
+      if (iframeLoadSucceeded) return;
+      gameIframe.style.display = "none";
+      let errorBoundary = document.getElementById("modal-error-boundary");
+      if (!errorBoundary) {
+        errorBoundary = document.createElement("div");
+        errorBoundary.id = "modal-error-boundary";
+        errorBoundary.className = "modal-error-boundary";
+        const frameWrap = document.querySelector(".modal-frame-wrapper");
+        if (frameWrap) frameWrap.appendChild(errorBoundary);
+      }
+
+      errorBoundary.innerHTML = `
+        <div class="boundary-content">
+          <div class="boundary-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#ff0055" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          </div>
+          <h3 class="boundary-title">Game Route Offline</h3>
+          <p class="boundary-desc">
+            Failed to establish connection to <code>${gameObj.path || 'game route'}</code>. The game entrypoint may be undergoing maintenance, corrupted, or unreachable.
+          </p>
+          <div class="boundary-actions">
+            <button class="btn btn-primary btn-sm" id="boundary-retry-btn">
+              <span>Retry Load</span>
+            </button>
+            <a href="https://github.com/DebasmitaBose0/ArcadeVerse/issues/new" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
+              <span>Report Broken Route</span>
+            </a>
+          </div>
+        </div>
+      `;
+
+      const retryBtn = errorBoundary.querySelector("#boundary-retry-btn");
+      if (retryBtn) {
+        retryBtn.addEventListener("click", () => {
+          resetIframeBoundary();
+          iframeLoadSucceeded = false;
+          gameIframe.src = gameObj.path;
+          startIframeTimeout(gameObj);
+        });
+      }
+    }
+
+    function startIframeTimeout(gameObj) {
+      resetIframeBoundary();
+      iframeLoadSucceeded = false;
+      // Generous timeout (12s) to account for resource-heavy games or slower environments
+      iframeLoadTimeout = setTimeout(() => {
+        if (!iframeLoadSucceeded) {
+          triggerModalErrorBoundary(gameObj);
+        }
+      }, 12000);
+    }
+
     modalGameTitle.textContent = game.title;
     modalGameBadge.textContent = game.category;
     modalGameAuthor.textContent = `Built by @${game.author}`;
+    startIframeTimeout(game);
     gameIframe.src = game.path;
     newTabBtn.href = game.path;
 
@@ -321,6 +726,36 @@ document.addEventListener("DOMContentLoaded", () => {
     gameModal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
     closeModalBtn.focus();
+
+    // Centralized Master Audio Bus: Sync hub volume & mute settings into spawned iframe
+    if (gameIframe) {
+      gameIframe.onload = () => {
+        // Mark load as successful and cancel error boundary timer
+        iframeLoadSucceeded = true;
+        resetIframeBoundary();
+
+        try {
+          if (window.SoundEngine && typeof window.SoundEngine.broadcastAudioConfig === "function") {
+            window.SoundEngine.broadcastAudioConfig();
+          } else {
+            const isMuted = localStorage.getItem("arcadeverse_muted") === "true";
+            const masterVol = parseFloat(localStorage.getItem("arcadeverse_master_volume")) || 0.28;
+            if (gameIframe.contentWindow) {
+              gameIframe.contentWindow.postMessage({
+                type: "ARCADEVERSE_AUDIO_CONFIG",
+                muted: isMuted,
+                volume: masterVol
+              }, "*");
+            }
+          }
+        } catch (_) {}
+      };
+
+      gameIframe.onerror = () => {
+        iframeLoadSucceeded = false;
+        triggerModalErrorBoundary(game);
+      };
+    }
   }
 
   // Expose global helper to open game modal from plugins, search, or recent drawer
@@ -343,8 +778,51 @@ document.addEventListener("DOMContentLoaded", () => {
     activeGame = null;
     gameModal.classList.remove("active");
     gameModal.setAttribute("aria-hidden", "true");
-    gameIframe.src = "";
-    document.body.style.overflow = "auto";
+
+    // Standardized Game Lifecycle Bridge: Dispatch teardown & pause events before unmounting iframe
+    try {
+      if (gameIframe && gameIframe.contentWindow) {
+        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
+        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_TEARDOWN" }, "*");
+
+        // Proactively probe and dispose WebGL contexts in child iframe if accessible
+        try {
+          const doc = gameIframe.contentDocument || gameIframe.contentWindow.document;
+          if (doc) {
+            const canvases = doc.querySelectorAll("canvas");
+            canvases.forEach((c) => {
+              try {
+                const gl = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl");
+                if (gl && !gl.isContextLost()) {
+                  const loseExt = gl.getExtension("WEBGL_lose_context") ||
+                                  gl.getExtension("WEBKIT_WEBGL_lose_context") ||
+                                  gl.getExtension("MOZ_WEBGL_lose_context");
+                  if (loseExt && typeof loseExt.loseContext === "function") {
+                    loseExt.loseContext();
+                  }
+                }
+              } catch (_) {}
+            });
+          }
+        } catch (_) {}
+      }
+    } catch (_) {}
+    
+    // Safely blank out iframe after a 100ms grace period to allow games to close AudioContexts and stop RAF loops
+    const currentFrame = gameIframe;
+    setTimeout(() => {
+      try {
+        if (currentFrame && currentFrame.contentWindow) {
+          currentFrame.contentWindow.location.replace("about:blank");
+        } else if (currentFrame) {
+          currentFrame.src = "about:blank";
+        }
+      } catch (e) {
+        if (currentFrame) currentFrame.src = "about:blank";
+      }
+    }, 100);
+
+    document.body.style.overflow = "";
     modalWindow.classList.remove("fullscreen");
     if (gameModal) gameModal.classList.remove("fullscreen-mode");
     if (document.fullscreenElement || document.webkitFullscreenElement) {
@@ -385,7 +863,39 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   fullscreenBtn.addEventListener("click", () => {
-    modalWindow.classList.toggle("fullscreen");
+    const isNowFullscreen = modalWindow.classList.toggle("fullscreen");
+    if (gameModal) {
+      gameModal.classList.toggle("fullscreen-mode", isNowFullscreen);
+    }
+    fullscreenBtn.setAttribute("aria-pressed", isNowFullscreen ? "true" : "false");
+    fullscreenBtn.title = isNowFullscreen ? "Exit Fullscreen" : "Fullscreen Game";
+
+    // Attempt native HTML5 Fullscreen API for seamless zero-chrome immersion
+    if (isNowFullscreen) {
+      if (modalWindow.requestFullscreen) {
+        modalWindow.requestFullscreen().catch(() => {});
+      } else if (modalWindow.webkitRequestFullscreen) {
+        modalWindow.webkitRequestFullscreen();
+      }
+    } else {
+      if (document.fullscreenElement || document.webkitFullscreenElement) {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
+      }
+    }
+  });
+
+  // Listen to native fullscreen exit (e.g. user presses Esc in native fullscreen)
+  document.addEventListener("fullscreenchange", () => {
+    if (!document.fullscreenElement && modalWindow.classList.contains("fullscreen")) {
+      modalWindow.classList.remove("fullscreen");
+      if (gameModal) gameModal.classList.remove("fullscreen-mode");
+      fullscreenBtn.setAttribute("aria-pressed", "false");
+      fullscreenBtn.title = "Fullscreen Game";
+    }
   });
 
   // Sort Selector Change
@@ -396,9 +906,58 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Filter Search
+  // Filter Search + Clear Button
   searchInput.addEventListener("input", (e) => {
     searchQuery = e.target.value.toLowerCase().trim();
+    if (searchClearBtn) searchClearBtn.hidden = !e.target.value;
+    renderGames();
+  });
+
+  if (searchClearBtn) {
+    searchClearBtn.addEventListener("click", () => {
+      searchQuery = "";
+      searchInput.value = "";
+      searchClearBtn.hidden = true;
+      searchInput.focus();
+      renderGames();
+    });
+  }
+
+  // Reset All Facets Button
+  if (resetFacetsBtn) {
+    resetFacetsBtn.addEventListener("click", () => {
+      currentDurationFacet = "all";
+      currentControlsFacet = "all";
+      currentTagFilter = "";
+      // Reset duration chips
+      document.querySelectorAll("#duration-facet-chips .facet-chip").forEach((c) => {
+        c.classList.toggle("active", c.dataset.duration === "all");
+      });
+      // Reset controls chips
+      document.querySelectorAll("#controls-facet-chips .facet-chip").forEach((c) => {
+        c.classList.toggle("active", c.dataset.controls === "all");
+      });
+      buildTagChips();
+      renderGames();
+    });
+  }
+
+  const playlistTrigger = document.getElementById("trigger-playlists-btn");
+  if (playlistTrigger) {
+    playlistTrigger.addEventListener("click", () => {
+      if (window.ArcadePlaylists) {
+        window.ArcadePlaylists.openDrawer();
+      }
+    });
+  }
+
+  // Listen for filter-playlist event from PlaylistManager
+  window.addEventListener("arcadeverse:filter-playlist", (e) => {
+    const pl = e.detail;
+    if (!pl) return;
+    currentCategory = `playlist:${pl.id}`;
+    categoryPills.forEach((p) => p.classList.remove("active"));
+    if (playlistTrigger) playlistTrigger.classList.add("active");
     renderGames();
   });
 
@@ -498,6 +1057,56 @@ document.addEventListener("DOMContentLoaded", () => {
     randomGameBtn.addEventListener("click", launchRandomGame);
   }
 
+  // Halloween cards Play Now buttons click handler (delegates to exclusive Halloween bat loader / new tab)
+  document.querySelectorAll(".btn-halloween-play").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const gameId = btn.getAttribute("data-game-id");
+      if (typeof window.launchHalloweenGame === "function") {
+        window.launchHalloweenGame(gameId);
+      } else if (typeof GAMES_REGISTRY !== "undefined") {
+        const game = GAMES_REGISTRY.find((g) => g.id === gameId);
+        if (game) {
+          openGameModal(game, btn);
+        }
+      }
+    });
+  });
+
+  // Global export
+  window.openGameModal = openGameModal;
+
+  // Ensure game modal frame updates aspect ratio dynamically on orientation changes
+  window.addEventListener('orientationchange', () => {
+    if (gameModal && gameModal.classList.contains('active')) {
+      const isFullscreen = modalWindow.classList.contains('fullscreen');
+      if (isFullscreen) {
+        modalWindow.style.height = (window.innerHeight) + 'px';
+      }
+    }
+  });
+
+  // Track iframe load complete event to remove spinner
+  if (gameIframe) {
+    gameIframe.addEventListener('load', () => {
+      gameIframe.classList.add('loaded');
+      if (gameIframe.src && !gameIframe.src.includes("about:blank")) {
+        const errorBoundary = document.getElementById("modal-error-boundary");
+        if (errorBoundary) errorBoundary.remove();
+        gameIframe.style.display = "block";
+      }
+    });
+
+    gameIframe.addEventListener('error', () => {
+      const errorBoundary = document.getElementById("modal-error-boundary");
+      if (errorBoundary && activeGame) {
+        errorBoundary.style.display = "flex";
+        gameIframe.style.display = "none";
+      }
+    });
+  }
+
   // Initial render
+  buildTagChips();
   renderGames();
 });

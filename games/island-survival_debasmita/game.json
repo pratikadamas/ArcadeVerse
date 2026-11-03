@@ -1,0 +1,21 @@
+{
+  "title": "Island Survival: Lost Beyond the Shore",
+  "category": "Survival / Horror",
+  "lucideIcon": "compass",
+  "description": "Stranded alone on an uncharted cursed atoll after a harrowing crash. Explore misty primeval mangroves, forage supplies, craft tools and torches, build campfires to ward off nocturnal Shadow Stalkers, manage hunger, thirst, and sanity, and find a way to escape the island's dark curse.",
+  "author": "Debasmita Bose",
+  "github": "DebasmitaBose0",
+  "role": "Project Admin & Lead",
+  "tags": [
+    "Survival",
+    "Horror",
+    "Sandbox",
+    "Crafting",
+    "Top-Down",
+    "NSOC26"
+  ],
+  "stars": 30,
+  "featured": true,
+  "difficulty": "Hard",
+  "releaseDate": "2026-10-31"
+}

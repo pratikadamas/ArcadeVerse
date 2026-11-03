@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#17100d">
+  <title>Pumpkin Express: Haunted Rails | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="game-shell">
+    <header class="masthead">
+      <a class="back-link" href="../../index.html">ArcadeVerse</a>
+      <p class="eyebrow">NIGHT LINE / SIGNALS ARE FAILING</p>
+      <h1>Pumpkin Express <span>Haunted Rails</span></h1>
+      <p class="subtitle">Switch the haunted rails. Get the runaway train to the station.</p>
+    </header>
+
+    <section class="hud" aria-label="Puzzle status">
+      <div class="hud-card">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5m16 14V5M4 8h16M4 16h16M8 8v8m8-8v8"></path></svg>
+        <div><span>SWITCH MOVES</span><strong id="move-count">0</strong></div>
+      </div>
+      <div class="hud-card train-card">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 18V7a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v11M5 12h14M8 18l-2 3m10-3 2 3M8 8h3m5 0h-1"></path><circle cx="8" cy="16" r="1"></circle><circle cx="16" cy="16" r="1"></circle></svg>
+        <div><span>RUN STATUS</span><strong id="run-status">Awaiting dispatch</strong></div>
+      </div>
+      <div class="hud-actions">
+        <button id="help-button" class="secondary-button" type="button">How to play</button>
+        <button id="restart-button" class="icon-button" type="button" aria-label="Retry level">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4.9 9A7.5 7.5 0 0 1 18 6l2 6m-16 5v-5h5m10 3A7.5 7.5 0 0 1 6 18l-2-6"></path></svg>
+        </button>
+      </div>
+    </section>
+
+    <section class="board-frame" aria-label="Railway puzzle board">
+      <canvas id="rail-canvas" width="720" height="640" tabindex="0" aria-label="Railway puzzle. Select a switch section and press Space to change the route."></canvas>
+      <div id="game-overlay" class="game-overlay">
+        <div class="overlay-card" role="dialog" aria-modal="true" aria-labelledby="overlay-title">
+          <p class="eyebrow">DISPATCH NOTE / LINE 13</p>
+          <h2 id="overlay-title">How to play</h2>
+          <p id="overlay-message">Two golden switches are misaligned. Dispatch the train, then switch each one to keep its incoming rail connected to the station route before the engine arrives.</p>
+          <ul class="instruction-list">
+            <li>Click or tap a switch to rotate it; selected switches have a gold outline</li>
+            <li><kbd>Arrow keys</kbd> select a board tile; <kbd>Space</kbd> rotates a switch</li>
+            <li><kbd>Enter</kbd> dispatches the train; <kbd>P</kbd> pauses and <kbd>R</kbd> retries</li>
+            <li>Every switch change counts as one move. Route around broken rails to reach the station</li>
+          </ul>
+          <p class="touch-note">You can change a switch while the train is moving. A wrong connection or broken rail derails the run.</p>
+          <button id="start-button" class="primary-button" type="button">Dispatch train</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="game-footer">
+      <p id="feedback" aria-live="polite">Two switches need attention before dispatch.</p>
+      <p class="key-hint"><kbd>P</kbd> Pause <span></span> <kbd>R</kbd> Retry</p>
+    </footer>
+    <p class="page-footer">MIDNIGHT SPECIAL / ALL SIGNALS UNRELIABLE</p>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>

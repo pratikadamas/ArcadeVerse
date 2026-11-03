@@ -1,0 +1,1025 @@
+/* Island Survival: Lost Beyond the Shore - Professional Fullscreen UI */
+:root {
+  --ocean-blue: #0277bd;
+  --sand-gold: #dfc282;
+  --panel-glass: rgba(8, 22, 38, 0.85);
+  --border-glass: rgba(255, 255, 255, 0.15);
+  --text-main: #f0f7ff;
+  --text-dim: #94b5d6;
+  --hp-red: #ff3366;
+  --hunger-orange: #ff9800;
+  --thirst-blue: #00b4d8;
+  --energy-yellow: #ffea00;
+  --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #031322;
+  font-family: var(--font-main);
+  color: var(--text-main);
+}
+
+/* Fullscreen Canvas Stage */
+#islandCanvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: block;
+  z-index: 1;
+}
+
+/* Atmospheric Weather Overlays */
+.weather-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.weather-overlay.rain {
+  opacity: 0.35;
+  background: repeating-linear-gradient(105deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.12) 2px, rgba(255, 255, 255, 0) 4px);
+  animation: rain-fall 0.2s linear infinite;
+}
+
+.weather-overlay.storm {
+  opacity: 0.6;
+  background: radial-gradient(circle at 50% 50%, rgba(10, 20, 35, 0.4) 0%, rgba(5, 10, 20, 0.9) 100%);
+}
+
+@keyframes rain-fall {
+  0% { background-position: 0 0; }
+  100% { background-position: 20px 80px; }
+}
+
+.storm-lightning {
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 15;
+  transition: opacity 0.08s ease;
+}
+
+.storm-lightning.flash {
+  opacity: 0.85;
+}
+
+/* Floating Sleek Top HUD */
+.hud-topbar {
+  position: fixed;
+  top: 12px;
+  left: 14px;
+  right: 14px;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+}
+
+/* Vitals Pod (Left) */
+.vitals-pod {
+  pointer-events: auto;
+  background: var(--panel-glass);
+  border: 1px solid var(--border-glass);
+  backdrop-filter: blur(10px);
+  border-radius: 30px;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.vital-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vital-item svg {
+  width: 15px;
+  height: 15px;
+}
+
+.vital-bar {
+  width: 65px;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.vital-fill {
+  height: 100%;
+  width: 100%;
+  transition: width 0.3s ease;
+}
+
+.fill-hp { background: linear-gradient(90deg, #ff1744, #ff5252); }
+.fill-hunger { background: linear-gradient(90deg, #f57c00, #ffb74d); }
+.fill-thirst { background: linear-gradient(90deg, #0288d1, #4fc3f7); }
+.fill-energy { background: linear-gradient(90deg, #fbc02d, #fff176); }
+
+/* Time & Weather Pod (Right) */
+.time-pod {
+  pointer-events: auto;
+  background: var(--panel-glass);
+  border: 1px solid var(--border-glass);
+  backdrop-filter: blur(10px);
+  border-radius: 30px;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.time-pod span {
+  color: #ffdd80;
+}
+
+.icon-btn-mini {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-main);
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.icon-btn-mini:hover {
+  background: #ffb703;
+  color: #000;
+}
+
+.icon-btn-mini svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Event Notification Banner */
+.event-toast {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: rgba(6, 20, 36, 0.95);
+  border: 1px solid #ffb703;
+  color: #fff3cc;
+  padding: 8px 22px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+  z-index: 30;
+}
+
+.event-toast.active {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Floating Sleek Bottom Hotbar & Quick Actions */
+.hud-bottombar {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--panel-glass);
+  border: 1px solid var(--border-glass);
+  backdrop-filter: blur(12px);
+  padding: 8px 16px;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  max-width: 95vw;
+}
+
+.hotbar-slot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #e1f0ff;
+  white-space: nowrap;
+}
+
+.hotbar-slot svg {
+  width: 16px;
+  height: 16px;
+}
+
+.hotbar-btn {
+  background: #174068;
+  border: 1px solid #2e669e;
+  color: #fff;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.hotbar-btn:hover {
+  background: #ffb703;
+  color: #000;
+  border-color: #ffb703;
+  transform: translateY(-2px);
+}
+
+.hotbar-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.hotbar-btn.btn-craft {
+  background: linear-gradient(135deg, #f57c00, #e65100);
+  border: none;
+}
+
+/* Ergonomic Mobile Thumb Controls */
+.touch-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 28;
+}
+
+.touch-dpad {
+  position: fixed;
+  bottom: 75px;
+  left: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, 48px);
+  grid-template-rows: repeat(3, 48px);
+  gap: 5px;
+  pointer-events: auto;
+  z-index: 30;
+}
+
+.dpad-btn {
+  width: 48px;
+  height: 48px;
+  background: rgba(14, 38, 62, 0.82);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  border-radius: 10px;
+  color: #f0f7ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  transition: transform 0.1s ease, background 0.1s ease;
+}
+
+.dpad-btn:active {
+  background: #ffb703;
+  color: #000;
+  transform: scale(0.93);
+  box-shadow: 0 0 16px rgba(255, 183, 3, 0.8);
+}
+
+.dpad-up { grid-column: 2; grid-row: 1; }
+.dpad-left { grid-column: 1; grid-row: 2; }
+.dpad-right { grid-column: 3; grid-row: 2; }
+.dpad-down { grid-column: 2; grid-row: 3; }
+
+.touch-act-btn {
+  position: fixed;
+  bottom: 75px;
+  right: 16px;
+  width: 62px;
+  height: 62px;
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffb703, #f57c00);
+  border: 2.5px solid #fff;
+  color: #000;
+  font-weight: 900;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6), 0 0 15px rgba(255, 183, 3, 0.4);
+  touch-action: none;
+  z-index: 30;
+  transition: transform 0.1s ease;
+}
+
+.touch-act-btn:active {
+  transform: scale(0.91);
+  box-shadow: 0 0 20px rgba(255, 183, 3, 0.9);
+}
+
+/* Auto-hide touch controls on devices with fine pointer (mouse/trackpad) */
+@media (hover: hover) and (pointer: fine) {
+  .touch-container,
+  .touch-dpad,
+  .touch-act-btn {
+    display: none !important;
+  }
+}
+
+/* Modals */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 10, 18, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  padding: 16px;
+}
+
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-dialog {
+  background: #0b1f35;
+  border: 2px solid #27527f;
+  border-radius: 14px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 45px rgba(0, 0, 0, 0.9);
+  overflow: hidden;
+  transform: scale(0.95);
+  transition: transform 0.25s ease;
+}
+
+.modal-overlay.open .modal-dialog {
+  transform: scale(1);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background: #102a46;
+  border-bottom: 1px solid #1f4874;
+}
+
+.modal-header h3 {
+  font-size: 1.1rem;
+  color: #ffdd80;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.modal-close svg {
+  width: 20px;
+  height: 20px;
+}
+
+.modal-body {
+  padding: 18px;
+  overflow-y: auto;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #e1f0ff;
+}
+
+.modal-footer {
+  padding: 12px 18px;
+  background: #081728;
+  border-top: 1px solid #1a3d63;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #0288d1, #01579b);
+  border: none;
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Crafting Grid */
+.crafting-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+}
+
+.craft-card {
+  background: #0e2742;
+  border: 1px solid #1e4b78;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.craft-card-title {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #ffebaa;
+}
+
+.craft-recipe {
+  font-size: 0.75rem;
+  color: #94bade;
+}
+
+.btn-craft-item {
+  background: #174068;
+  border: 1px solid #2e669e;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 5px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.btn-craft-item:hover:not(:disabled) {
+  background: #ffb703;
+  color: #000;
+}
+
+.btn-craft-item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Endings Card */
+.ending-card {
+  text-align: center;
+  padding: 24px 16px;
+}
+
+.ending-title {
+  font-size: 1.6rem;
+  margin-bottom: 8px;
+}
+
+.ending-title.victory { color: #38ef7d; }
+.ending-title.defeat { color: #ff3366; }
+
+.ending-stats {
+  display: flex;
+  justify-content: space-around;
+  margin: 18px 0;
+  background: #0e2640;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.stat-val {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #ffdd80;
+}
+
+.stat-lbl {
+  font-size: 0.68rem;
+  color: #94b5d6;
+  text-transform: uppercase;
+}
+
+/* Floating Objective & Mission Tracker */
+.quest-tracker {
+  position: fixed;
+  top: 54px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 22;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(6, 20, 36, 0.92);
+  border: 1px solid rgba(255, 183, 3, 0.6);
+  backdrop-filter: blur(10px);
+  padding: 4px 14px;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(255, 183, 3, 0.2);
+  pointer-events: auto;
+  max-width: 90vw;
+}
+
+.quest-pill {
+  background: #ffb703;
+  color: #000;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.quest-text {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #fff4d1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==========================================================================
+   Responsive Mobile HUD & Compact Vitals Grid (< 640px)
+   ========================================================================== */
+
+@media (max-width: 640px) {
+  .hud-topbar {
+    top: 6px;
+    left: 8px;
+    right: 8px;
+    gap: 8px;
+  }
+  /* Vitals Pod arranged into 2x2 compact grid preserving vertical space */
+  .vitals-pod {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px 8px;
+    padding: 5px 10px;
+    border-radius: 14px;
+  }
+  .vital-item {
+    gap: 4px;
+  }
+  .vital-item svg {
+    width: 12px;
+    height: 12px;
+  }
+  .vital-bar {
+    width: 38px;
+    height: 6px;
+  }
+  .time-pod {
+    padding: 4px 8px;
+    font-size: 0.72rem;
+    gap: 5px;
+    border-radius: 14px;
+  }
+  .icon-btn-mini {
+    padding: 3px;
+  }
+  .icon-btn-mini svg {
+    width: 12px;
+    height: 12px;
+  }
+  /* Prevent quest tracker from colliding with topbar */
+  .quest-tracker {
+    top: 68px;
+    max-width: 94vw;
+    padding: 3px 10px;
+  }
+  .quest-pill {
+    font-size: 0.62rem;
+    padding: 1px 6px;
+  }
+  .quest-text {
+    font-size: 0.72rem;
+  }
+  /* Bottom hotbar collapses into compact horizontal badge tray */
+  .hud-bottombar {
+    bottom: 8px;
+    padding: 4px 8px;
+    gap: 6px;
+    border-radius: 12px;
+    max-width: 96vw;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .hud-bottombar::-webkit-scrollbar {
+    display: none;
+  }
+  .hotbar-btn {
+    padding: 5px 8px;
+    font-size: 0.7rem;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .hotbar-btn span {
+    display: none;
+  }
+  .hotbar-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+  .hotbar-slot {
+    padding: 3px 6px;
+    font-size: 0.7rem;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .hotbar-slot svg {
+    width: 12px;
+    height: 12px;
+  }
+  /* Crafting manual collapses from 2-columns into 1-column stack */
+  .crafting-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .modal-dialog {
+    max-height: 85vh;
+  }
+  .modal-body {
+    padding: 12px;
+    max-height: calc(85vh - 90px);
+  }
+}
+
+/* Extra small devices (< 360px) */
+@media (max-width: 360px) {
+  .vital-bar {
+    width: 28px;
+  }
+  .touch-dpad {
+    bottom: 65px;
+    left: 8px;
+    grid-template-columns: repeat(3, 42px);
+    grid-template-rows: repeat(3, 42px);
+  }
+  .dpad-btn {
+    width: 42px;
+    height: 42px;
+    font-size: 0.62rem;
+  }
+  .touch-act-btn {
+    bottom: 65px;
+    right: 8px;
+    width: 52px;
+    height: 52px;
+    font-size: 0.75rem;
+  }
+}
+
+/* Accessibility & Interaction States */
+.dpad-btn:focus-visible,
+.touch-act-btn:focus-visible,
+.hotbar-btn:focus-visible {
+  outline: 2px solid #ffb703;
+  outline-offset: 2px;
+}
+
+/* Prevent accidental scrolling while touching canvas */
+#islandCanvas {
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+
+/* ==========================================================================
+   Advanced Ergonomics & High-DPI Island Layout Calibration
+   ========================================================================== */
+
+/* Thumb area padding on iOS with home indicator */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .touch-dpad {
+    bottom: calc(75px + env(safe-area-inset-bottom));
+  }
+  .touch-act-btn {
+    bottom: calc(75px + env(safe-area-inset-bottom));
+  }
+  .hud-bottombar {
+    bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+}
+
+/* Landscape Mode for Compact Mobile Phones */
+@media (max-height: 480px) and (orientation: landscape) {
+  .hud-topbar {
+    top: 4px;
+    left: 8px;
+    right: 8px;
+  }
+  .vitals-pod {
+    padding: 3px 8px;
+    grid-template-columns: repeat(4, auto);
+    gap: 4px 6px;
+  }
+  .vital-bar {
+    width: 32px;
+    height: 5px;
+  }
+  .quest-tracker {
+    top: 40px;
+    padding: 2px 10px;
+  }
+  .touch-dpad {
+    bottom: 50px;
+    left: 10px;
+    grid-template-columns: repeat(3, 40px);
+    grid-template-rows: repeat(3, 40px);
+  }
+  .dpad-btn {
+    width: 40px;
+    height: 40px;
+  }
+  .touch-act-btn {
+    bottom: 50px;
+    right: 10px;
+    width: 50px;
+    height: 50px;
+  }
+  .hud-bottombar {
+    bottom: 4px;
+    padding: 3px 8px;
+  }
+}
+
+/* Reduced Motion Setting */
+@media (prefers-reduced-motion: reduce) {
+  .weather-overlay.rain,
+  .storm-lightning.flash {
+    animation: none !important;
+  }
+  .touch-act-btn,
+  .dpad-btn,
+  .hotbar-btn {
+    transition: none !important;
+  }
+}
+
+/* High Contrast Assist for Outdoor Sun Glare */
+@media (forced-colors: active) {
+  .vitals-pod,
+  .time-pod,
+  .quest-tracker,
+  .hud-bottombar,
+  .dpad-btn,
+  .touch-act-btn {
+    border: 2px solid ButtonText !important;
+  }
+}
+
+/* Enhanced Crafting Recipe Card Details */
+.craft-recipe {
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+.craft-card-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Hotbar icon alignment */
+.hotbar-slot span {
+  font-variant-numeric: tabular-nums;
+}
+
+.event-toast {
+  letter-spacing: 0.03em;
+}
+
+/* Fine-tuned Touch Hitboxes & Boundary Enforcements */
+.dpad-btn,
+.touch-act-btn {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.hotbar-slot:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.craft-card:hover {
+  border-color: #27527f;
+}
+
+.modal-dialog {
+  will-change: transform, opacity;
+}
+
+/* Optimize backdrop blur performance on mobile GPU */
+.vitals-pod,
+.time-pod,
+.hud-bottombar,
+.quest-tracker {
+  transform: translateZ(0);
+}
+
+/* Back Link to ArcadeVerse */
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #38bdf8;
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 20px;
+  transition: all 0.2s ease;
+  pointer-events: auto;
+}
+
+.back-link:hover {
+  background: rgba(56, 189, 248, 0.28);
+  color: #fff;
+}
+
+/* Analog Film Grain Overlay */
+.film-grain-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 11;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Panic & Low Health Vignette */
+.panic-vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 12;
+  opacity: 0;
+  background: radial-gradient(circle, transparent 40%, rgba(185, 28, 28, 0.5) 80%, rgba(120, 10, 10, 0.88) 100%);
+  transition: opacity 0.3s ease;
+}
+
+.panic-vignette.active {
+  opacity: 1;
+  animation: panic-throb 0.75s ease-in-out infinite alternate;
+}
+
+@keyframes panic-throb {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(1.03); opacity: 1; }
+}
+
+/* Dusk Threat Banner */
+.dusk-warning {
+  position: fixed;
+  top: 55px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: rgba(45, 10, 10, 0.95);
+  border: 1px solid #ef4444;
+  color: #fecaca;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dusk-warning.active {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Dossier Modal & Survival Rules Grid */
+.dossier-modal {
+  max-width: 620px;
+}
+
+.dossier-intro {
+  color: #bae6fd;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  margin-bottom: 16px;
+  background: rgba(2, 136, 209, 0.1);
+  border-left: 3px solid #0288d1;
+  padding: 8px 12px;
+  border-radius: 4px;
+}
+
+.survival-rules-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.survival-rule-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.survival-rule-card .rule-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: rgba(255, 183, 3, 0.15);
+  color: #ffb703;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.survival-rule-card .rule-icon.danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.survival-rule-card .rule-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.survival-rule-card .rule-body h4 {
+  font-size: 0.78rem;
+  color: #fef08a;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.survival-rule-card .rule-body p {
+  font-size: 0.74rem;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+@media (max-width: 600px) {
+  .survival-rules-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

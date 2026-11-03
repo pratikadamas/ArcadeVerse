@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+  <title>Detective Mystery: Neo-Tokyo Syndicate</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="mystery-container">
+    <!-- Top Agency Terminal Header -->
+    <div class="agency-header">
+      <div class="header-left">
+        <div class="badge-case" id="case-badge">CASE #01: VAULT BREACH</div>
+      </div>
+
+      <div class="header-tabs">
+        <button class="nav-tab active" data-view="crime-scene">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <span>Crime Scene</span>
+        </button>
+        <button class="nav-tab" data-view="interrogation">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          <span>Interrogation</span>
+        </button>
+        <button class="nav-tab" data-view="notebook">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+          <span>Evidence (<span id="clue-count">0</span>)</span>
+        </button>
+      </div>
+
+      <div class="header-right">
+        <button id="warrant-btn" class="warrant-btn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <span>Arrest Warrant</span>
+        </button>
+        <button id="sound-btn" class="hud-icon-btn" type="button" aria-label="Toggle Sound" title="Sound">
+          <svg id="sound-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+          <svg id="sound-off" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line></svg>
+        </button>
+        <button id="help-btn" class="hud-icon-btn" type="button" aria-label="Instructions" title="Detective Dossier">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Dynamic Viewport -->
+    <div class="viewport-content">
+
+      <!-- View 1: Crime Scene Hotspot Investigation -->
+      <div class="view-panel active" id="view-crime-scene">
+        <div class="scene-header">
+          <h3>Neo-Arasaka Core Vault • Crime Scene</h3>
+          <p>Click glowing cyber hotspots to examine forensic telemetry and recover evidence.</p>
+        </div>
+        <div class="hotspots-grid" id="hotspots-grid"></div>
+      </div>
+
+      <!-- View 2: Interrogation Room -->
+      <div class="view-panel" id="view-interrogation">
+        <div class="interrogation-layout">
+          <!-- Suspects Roster Sidebar -->
+          <div class="suspects-sidebar" id="suspects-list"></div>
+
+          <!-- Active Suspect Dialogue & Contradiction Board -->
+          <div class="dialogue-board" id="dialogue-board">
+            <div class="suspect-profile-header">
+              <div class="portrait-avatar" id="active-avatar">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="7" r="4"></circle><path d="M5.5 21v-2a6.5 6.5 0 0 1 13 0v2"></path></svg>
+              </div>
+              <div>
+                <h2 id="active-name">Select a suspect</h2>
+                <span class="suspect-role" id="active-role">Neo-Tokyo Department of Investigation</span>
+              </div>
+            </div>
+            <div class="testimony-box">
+              <p id="active-testimony">Review suspect profiles and interrogate them to uncover lies.</p>
+            </div>
+            <div class="contradiction-action-row">
+              <span class="contra-label">PRESENT CONTRADICTORY EVIDENCE:</span>
+              <div class="evidence-selector" id="evidence-selector"></div>
+            </div>
+            <div class="feedback-msg hidden" id="contra-feedback"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- View 3: Evidence Notebook -->
+      <div class="view-panel" id="view-notebook">
+        <div class="notebook-grid" id="notebook-grid"></div>
+      </div>
+    </div>
+
+    <!-- Clue Discovery Toast Overlay -->
+    <div class="clue-toast hidden" id="clue-toast">
+      <div class="clue-toast-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+      </div>
+      <div>
+        <h4 id="clue-toast-title">EVIDENCE SECURED</h4>
+        <p id="clue-toast-desc">Evidence added to your forensic notebook.</p>
+      </div>
+    </div>
+
+    <!-- Arrest Warrant Modal -->
+    <div class="overlay-modal hidden" id="warrant-modal">
+      <div class="warrant-card">
+        <div class="modal-top">
+          <h2>Formal Indictment & Arrest Warrant</h2>
+          <button id="close-warrant-btn" class="close-x" type="button" aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div class="warrant-form">
+          <div class="form-group">
+            <label>1. ACCUSED CULPRIT:</label>
+            <select id="warrant-suspect"></select>
+          </div>
+          <div class="form-group">
+            <label>2. MOTIVE:</label>
+            <select id="warrant-motive"></select>
+          </div>
+          <div class="form-group">
+            <label>3. INCRIMINATING EVIDENCE:</label>
+            <select id="warrant-evidence"></select>
+          </div>
+          <button id="execute-warrant-btn" class="action-glow-btn" type="button">ISSUE ARREST WARRANT</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Verdict Screen -->
+    <div class="overlay-modal hidden" id="verdict-modal">
+      <div class="verdict-card">
+        <div class="badge-tag" id="verdict-badge">JUDGMENT RENDERED</div>
+        <h1 class="verdict-title" id="verdict-title">CASE SOLVED</h1>
+        <p class="verdict-desc" id="verdict-desc">You accurately deduced the perpetrator and closed the file.</p>
+        <button id="new-case-btn" class="action-glow-btn" type="button">LOAD NEXT CASE</button>
+      </div>
+    </div>
+
+    <!-- Tutorial Dossier Modal -->
+    <div class="overlay-modal hidden" id="help-modal">
+      <div class="warrant-card max-w">
+        <div class="modal-top">
+          <h2>Detective Dossier & Protocols</h2>
+          <button id="close-help-btn" class="close-x" type="button" aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div class="dossier-body">
+          <p>• <strong>Crime Scene:</strong> Explore physical and digital hotspots (Biometric terminal, broken glass, comms chips) to gather evidence.</p>
+          <p>• <strong>Interrogation:</strong> Question 4 unique corporate suspects. Their testimony contains contradictory alibis.</p>
+          <p>• <strong>Expose Contradictions:</strong> Select contradictory evidence from your notebook and present it to break their alibi.</p>
+          <p>• <strong>Verdict:</strong> Once satisfied, issue an arrest warrant naming the Culprit, Motive, and Critical Evidence.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

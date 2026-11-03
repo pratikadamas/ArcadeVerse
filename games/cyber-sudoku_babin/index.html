@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+  <title>Cyber-Sudoku: Neon Matrix 9x9</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="sudoku-container">
+    <!-- Header Controls -->
+    <div class="sudoku-header">
+      <div class="diff-pills">
+        <button class="diff-btn active" data-diff="easy">EASY</button>
+        <button class="diff-btn" data-diff="medium">MEDIUM</button>
+        <button class="diff-btn" data-diff="hard">HARD</button>
+      </div>
+
+      <div class="center-metrics">
+        <div class="metric-pill">
+          <span class="m-lbl">STRIKES</span>
+          <span class="m-val red" id="strikes-val">0 / 3</span>
+        </div>
+        <div class="metric-pill">
+          <span class="m-lbl">TIMER</span>
+          <span class="m-val" id="sudoku-timer">00:00</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="sound-btn" class="hud-icon-btn" type="button" aria-label="Toggle Sound" title="Sound">
+          <svg id="sound-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+          <svg id="sound-off" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line></svg>
+        </button>
+        <button id="help-btn" class="hud-icon-btn" type="button" aria-label="How to play" title="Instructions">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Board Frame -->
+    <div class="board-frame">
+      <div class="sudoku-grid" id="sudoku-grid"></div>
+
+      <!-- Victory / Game Over Overlay -->
+      <div class="result-modal hidden" id="result-modal">
+        <div class="modal-box">
+          <div class="modal-tag" id="res-tag">DATA INTEGRITY RESTORED</div>
+          <h1 class="modal-h1" id="res-title">MATRIX SOLVED</h1>
+          <div class="stats-grid">
+            <div><span>CLEAR TIME</span><h3 id="res-time">00:00</h3></div>
+            <div><span>RECORD BEST</span><h3 id="res-best">--:--</h3></div>
+          </div>
+          <button id="restart-btn" class="glow-btn" type="button">NEW SECTOR PUZZLE</button>
+        </div>
+      </div>
+
+      <!-- Rules Modal -->
+      <div class="result-modal hidden" id="rules-modal">
+        <div class="modal-box max-w">
+          <div class="modal-top">
+            <h2>Cyber-Sudoku Rules</h2>
+            <button id="close-rules-btn" class="close-x" type="button" aria-label="Close">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div class="rules-body">
+            <p>• <strong>Matrix Goal:</strong> Fill the 9×9 grid so each row, column, and 3×3 sub-box contains digits 1 to 9 with no duplicates.</p>
+            <p>• <strong>Smart Highlighting:</strong> Selecting a cell instantly illuminates its entire row, column, 3×3 sector, and all duplicate matching digits.</p>
+            <p>• <strong>Pencil Mode:</strong> Toggle Pencil / Notes mode to record candidate possibilities inside vacant cells.</p>
+            <p>• <strong>Hint System:</strong> Use the Hint button (up to 3 per puzzle) to auto-fill a tricky node.</p>
+            <p>• <strong>Strikes:</strong> 3 erroneous inputs will trigger a security lock.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Toolbar (Undo, Erase, Pencil, Hint) -->
+    <div class="action-bar">
+      <button id="btn-undo" class="tool-btn" type="button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>
+        <span>Undo</span>
+      </button>
+      <button id="btn-erase" class="tool-btn" type="button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"></path><path d="M22 21H7"></path><path d="m5 11 9 9"></path></svg>
+        <span>Erase</span>
+      </button>
+      <button id="btn-pencil" class="tool-btn" type="button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg>
+        <span id="pencil-text">Notes OFF</span>
+      </button>
+      <button id="btn-hint" class="tool-btn" type="button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"></path><path d="M9 18h6"></path><path d="M10 22h4"></path></svg>
+        <span id="hint-text">Hint (3)</span>
+      </button>
+    </div>
+
+    <!-- Numpad (1-9) -->
+    <div class="numpad" id="numpad">
+      <button class="num-btn" data-num="1">1</button>
+      <button class="num-btn" data-num="2">2</button>
+      <button class="num-btn" data-num="3">3</button>
+      <button class="num-btn" data-num="4">4</button>
+      <button class="num-btn" data-num="5">5</button>
+      <button class="num-btn" data-num="6">6</button>
+      <button class="num-btn" data-num="7">7</button>
+      <button class="num-btn" data-num="8">8</button>
+      <button class="num-btn" data-num="9">9</button>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

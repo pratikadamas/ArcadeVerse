@@ -1,0 +1,16 @@
+{
+  "title": "Potion Panic",
+  "category": "Arcade",
+  "lucideIcon": "flask-conical",
+  "description": "Sort falling magical ingredients into the matching cauldrons before the potion lab overflows.",
+  "author": "Joita Paul",
+  "github": "joitapaul",
+  "role": "Contributor",
+  "tags": [
+    "Arcade",
+    "Halloween",
+    "Reflex",
+    "Sorting",
+    "NSOC26"
+  ]
+}

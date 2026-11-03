@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Haunted House: The Curse Within</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Fullscreen Mansion Canvas Stage -->
+  <div class="mansion-frame" id="mansionFrame">
+    <canvas id="mansionCanvas"></canvas>
+    <div class="hotspots-layer" id="hotspotsLayer"></div>
+  </div>
+
+  <!-- Ambient FX & Film Grain Overlays -->
+  <div class="lightning-flash" id="lightningFx" aria-hidden="true"></div>
+  <div class="panic-vignette" id="panicVignette" aria-hidden="true"></div>
+  <div class="horror-overlay" aria-hidden="true"></div>
+  <div class="film-grain-overlay" aria-hidden="true"></div>
+
+  <!-- Interactive Dynamic Investigation Reticle -->
+  <div class="investigation-reticle" id="investigationReticle" aria-hidden="true">
+    <div class="reticle-crosshair"></div>
+    <div class="reticle-label" id="reticleLabel">
+      <span class="reticle-icon" id="reticleIcon"></span>
+      <span class="reticle-text" id="reticleText">Examine</span>
+    </div>
+  </div>
+
+  <!-- Realistic Wardrobe Eye-Slit Hiding Overlay -->
+  <div class="wardrobe-slit-overlay" id="wardrobeSlitOverlay" aria-hidden="true">
+    <div class="slit-shutter top"></div>
+    <div class="slit-view">
+      <div class="slit-breathing-indicator">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+          <path d="M12 2a10 10 0 1 0 10 10H12V2z"></path>
+        </svg>
+        <span>HOLDING BREATH... CONCEALED IN WARDROBE</span>
+      </div>
+    </div>
+    <div class="slit-shutter bottom"></div>
+  </div>
+
+  <!-- Paranormal Threat Alert -->
+  <div class="paranormal-banner" id="paranormalBanner" role="alert">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+      <line x1="12" y1="9" x2="12" y2="13"></line>
+      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+    </svg>
+    <span>AN UNSEEN PRESENCE STALKS THE ROOM! PRESS [H] OR CLICK HIDE!</span>
+  </div>
+
+  <!-- Floating Sleek Top HUD -->
+  <header class="mansion-header" role="banner">
+    <div class="header-left-pod">
+      <a class="back-link" href="../../index.html" title="Return to ArcadeVerse Hub">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+          <path d="M19 12H5M12 19l-7-7 7-7"></path>
+        </svg>
+        <span>ArcadeVerse</span>
+      </a>
+
+      <div class="title-box">
+        <h1>BLACKWOOD MANOR</h1>
+      </div>
+
+      <!-- Sanity Meter -->
+      <div class="meter-group" title="Mental Sanity (Keep light on to preserve)">
+        <span class="meter-label">SANITY</span>
+        <div class="meter-track">
+          <div class="meter-fill-sanity" id="sanityBar" style="width: 100%;"></div>
+        </div>
+      </div>
+
+      <!-- Battery Meter -->
+      <div class="meter-group" title="Flashlight Battery">
+        <span class="meter-label">BATTERY</span>
+        <div class="meter-track">
+          <div class="meter-fill-battery" id="batteryBar" style="width: 100%;"></div>
+        </div>
+      </div>
+
+      <!-- Oil Lantern Fuel Meter (Catacombs) -->
+      <div class="meter-group" id="lanternMeterGroup" title="Catacomb Oil Lantern Fuel" style="display: none;">
+        <span class="meter-label" style="color: #f59e0b;">OIL LANTERN</span>
+        <div class="meter-track">
+          <div class="meter-fill-lantern" id="lanternBar" style="width: 100%; background: linear-gradient(90deg, #b45309, #f59e0b); height: 100%; border-radius: 4px; transition: width 0.3s ease;"></div>
+        </div>
+      </div>
+
+      <div class="threat-badge" id="threatBadge">Quiet</div>
+    </div>
+
+    <div class="header-right-pod">
+      <button class="btn-icon" id="soundToggle" title="Audio Toggle" type="button" aria-label="Toggle atmospheric sound">
+        <svg id="soundIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+        </svg>
+      </button>
+      <button class="btn-icon" id="helpBtn" title="Investigator's Dossier & Survival Guide" type="button" aria-label="Open survival guide">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Floating Rooms Nav Bar -->
+  <!-- Floating Rooms Nav Bar -->
+  <nav class="rooms-nav" id="roomsNav" aria-label="Mansion Floor Navigation">
+    <button class="room-tab active" data-room="porch">Porch</button>
+    <button class="room-tab locked" data-room="foyer" id="tabFoyer">Foyer</button>
+    <button class="room-tab locked" data-room="parlor" id="tabParlor">Living Room</button>
+    <button class="room-tab locked" data-room="library" id="tabLibrary">Library</button>
+    <button class="room-tab locked" data-room="kitchen" id="tabKitchen">Kitchen</button>
+    <button class="room-tab locked" data-room="bedroom" id="tabBedroom">Bedroom</button>
+    <button class="room-tab locked" data-room="basement" id="tabBasement">Basement</button>
+    <button class="room-tab locked catacomb-tab" data-room="wine_cellar" id="tabWineCellar" style="display: none;">Wine Cellar</button>
+    <button class="room-tab locked catacomb-tab" data-room="ossuary" id="tabOssuary" style="display: none;">Ossuary</button>
+    <button class="room-tab locked catacomb-tab" data-room="ancestral_crypt" id="tabAncestralCrypt" style="display: none;">Ancestral Crypt</button>
+  </nav>
+
+  <!-- Floating Case Objective Tracker -->
+  <div class="case-tracker" id="caseTracker" aria-live="polite" role="region" aria-label="Current Investigation Objective">
+    <span class="case-pill">CASE OBJECTIVE</span>
+    <span class="case-text" id="caseText">Search the rain-soaked porch to find the brass entrance key.</span>
+  </div>
+
+  <!-- Floating Bottom Action & Inventory Dock -->
+  <footer class="bottom-dock" role="contentinfo" aria-label="Investigator Action Dock">
+    <button class="dock-btn" id="btnFlashlight" title="Toggle Flashlight Beam [F]" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+      </svg>
+      <span id="lightLabel">Light: ON [F]</span>
+    </button>
+
+    <button class="dock-btn btn-hide" id="btnHide" title="Hide from stalking specters [H]" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+      <span id="hideLabel">Hide [H]</span>
+    </button>
+
+    <button class="dock-btn" id="btnJournal" title="View Discovered Notes & Clues" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+      </svg>
+      <span>Case Log</span>
+    </button>
+
+    <div class="inventory-tray" id="inventoryTray" aria-label="Inventory pockets"></div>
+
+    <div class="dock-hint" id="dockHint">
+      Search the porch steps to enter the locked mansion.
+    </div>
+  </footer>
+
+  <!-- Modals -->
+
+  <!-- Opening Cinematic Investigator Dossier / How to Play -->
+  <div class="modal-backdrop open" id="modalHelp" role="dialog" aria-modal="true" aria-labelledby="dossierTitle">
+    <div class="modal-window dossier-modal">
+      <div class="modal-head">
+        <h3 id="dossierTitle">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          CASE DOSSIER #1898: BLACKWOOD MANOR
+        </h3>
+        <button class="modal-close-btn" data-close="modalHelp" type="button" aria-label="Close dossier">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-content">
+        <div class="dossier-intro">
+          <p class="typewriter-quote">
+            "Midnight, October 31. You arrive stranded outside the foreboding gates of Blackwood Manor. Inside lies an unbroken occult curse from 1898. To escape alive, you must investigate the rooms, solve ancient mechanisms, and exorcise the cellar altar before the darkness consumes your mind."
+          </p>
+        </div>
+
+        <div class="survival-rules-grid">
+          <div class="survival-rule-card">
+            <div class="rule-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+            <div class="rule-body">
+              <h4>1. INVESTIGATE ROOMS</h4>
+              <p>Move your mouse around each room. The dynamic crosshair reticle illuminates clues, keys, and hidden secret compartments.</p>
+            </div>
+          </div>
+
+          <div class="survival-rule-card">
+            <div class="rule-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-1-1l-3 3m2 8A6 6 0 1 1 5 8a6 6 0 0 1 12 6z"></path><circle cx="9" cy="14" r="1.5"></circle></svg>
+            </div>
+            <div class="rule-body">
+              <h4>2. EQUIP & USE ITEMS</h4>
+              <p>Click any item in your bottom inventory pockets to hold it. When an item is active, clicking compatible doors, safes, or altars will use it.</p>
+            </div>
+          </div>
+
+          <div class="survival-rule-card">
+            <div class="rule-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            </div>
+            <div class="rule-body">
+              <h4>3. MANAGE FLASHLIGHT & SANITY</h4>
+              <p>Press <strong>[F]</strong> to toggle your flashlight. Remaining in pitch blackness steadily erodes your mental sanity. If sanity hits 0, madness takes over.</p>
+            </div>
+          </div>
+
+          <div class="survival-rule-card">
+            <div class="rule-icon danger">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </div>
+            <div class="rule-body">
+              <h4>4. SURVIVE PARANORMAL ATTACKS</h4>
+              <p>When the screen turns blood-red and whisper voices surge, press <strong>[H]</strong> or click <strong>HIDE</strong> immediately to conceal yourself in the wardrobe.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-primary" data-close="modalHelp" id="btnStartGame" type="button">
+          <span>ENTER BLACKWOOD MANOR</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Case Journal Modal -->
+  <div class="modal-backdrop" id="modalJournal" role="dialog" aria-modal="true" aria-labelledby="journalTitle">
+    <div class="modal-window">
+      <div class="modal-head">
+        <h3 id="journalTitle">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          Blackwood Case Log & Evidence
+        </h3>
+        <button class="modal-close-btn" data-close="modalJournal" type="button" aria-label="Close case log">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-content" id="journalContent">
+        <p style="color: #a894bd; font-style: italic;">No evidence discovered yet. Search diaries, photographs, and records throughout the manor.</p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-primary" data-close="modalJournal" type="button">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Living Room Safe Dial Modal -->
+  <div class="modal-backdrop" id="modalSafe" role="dialog" aria-modal="true" aria-labelledby="safeTitle">
+    <div class="modal-window">
+      <div class="modal-head">
+        <h3 id="safeTitle">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2"></rect>
+            <circle cx="12" cy="16" r="2"></circle>
+          </svg>
+          Lord Blackwood's Antique Dial Safe
+        </h3>
+        <button class="modal-close-btn" data-close="modalSafe" type="button" aria-label="Close safe">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-content">
+        <p>A heavy cast-iron safe embedded into the masonry behind Archibald's portrait:</p>
+        <p style="text-align: center; font-style: italic; color: #ffca7a; margin: 10px 0; border-left: 3px solid #ffca7a; padding: 4px 10px; background: rgba(255, 202, 122, 0.08);">
+          Clue: Check the founding year inscribed on Master Archibald's fireplace portrait (1898)
+        </p>
+
+        <div class="combo-dial-row">
+          <div class="combo-digit-box">
+            <button class="digit-btn" data-dial="0" data-dir="up" type="button">▲</button>
+            <div class="digit-display" id="safeDigit0">1</div>
+            <button class="digit-btn" data-dial="0" data-dir="down" type="button">▼</button>
+          </div>
+          <div class="combo-digit-box">
+            <button class="digit-btn" data-dial="1" data-dir="up" type="button">▲</button>
+            <div class="digit-display" id="safeDigit1">8</div>
+            <button class="digit-btn" data-dial="1" data-dir="down" type="button">▼</button>
+          </div>
+          <div class="combo-digit-box">
+            <button class="digit-btn" data-dial="2" data-dir="up" type="button">▲</button>
+            <div class="digit-display" id="safeDigit2">9</div>
+            <button class="digit-btn" data-dial="2" data-dir="down" type="button">▼</button>
+          </div>
+          <div class="combo-digit-box">
+            <button class="digit-btn" data-dial="3" data-dir="up" type="button">▲</button>
+            <div class="digit-display" id="safeDigit3">0</div>
+            <button class="digit-btn" data-dial="3" data-dir="down" type="button">▼</button>
+          </div>
+        </div>
+        <p id="safeStatus" style="text-align: center; color: #ffaa32; min-height: 1.2rem;"></p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-primary" id="btnUnlockSafe" type="button">Turn Tumbler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Basement Breaker Modal -->
+  <div class="modal-backdrop" id="modalBreaker" role="dialog" aria-modal="true" aria-labelledby="breakerTitle">
+    <div class="modal-window">
+      <div class="modal-head">
+        <h3 id="breakerTitle">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          Subterranean Electrical Breaker Box
+        </h3>
+        <button class="modal-close-btn" data-close="modalBreaker" type="button" aria-label="Close breaker box">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-content">
+        <p>The auxiliary breaker controls power to the electromagnetic storm door and basement lights.</p>
+        <div style="background: rgba(255, 119, 0, 0.12); border-left: 3px solid #ff7700; padding: 6px 12px; margin: 10px 0; border-radius: 4px; font-size: 0.82rem; color: #ffca7a;">
+          Circuit Blueprint: Breaker 1: [UP] • Breaker 2: [DOWN] • Breaker 3: [UP] • Breaker 4: [UP]
+        </div>
+        <div style="display: flex; justify-content: center; gap: 10px; margin: 16px 0;" id="breakerSwitchesRow"></div>
+        <p id="breakerStatus" style="text-align: center; color: #ffca7a; min-height: 1.2rem;"></p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-primary" id="btnEngageBreaker" type="button">Engage Lever</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Altar Ritual Modal -->
+  <div class="modal-backdrop" id="modalAltar" role="dialog" aria-modal="true" aria-labelledby="altarTitle">
+    <div class="modal-window">
+      <div class="modal-head">
+        <h3 id="altarTitle">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+          Crypt Exorcism Ritual Pentagram
+        </h3>
+        <button class="modal-close-btn" data-close="modalAltar" type="button" aria-label="Close altar">
+          <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-content">
+        <p>To break the Blackwood curse forever, three consecrated components must be positioned on the sigil:</p>
+        <ul style="margin: 10px 0 10px 20px; font-size: 0.85rem; line-height: 1.7;">
+          <li>1. <strong>Eleanor's Golden Locket</strong> (Found in Master Bedroom Music Box)</li>
+          <li>2. <strong>Light 4 Sacred Candles</strong> (Matchbox from Kitchen Drawer)</li>
+          <li>3. <strong>Consecrated Salt Circle</strong> (Kitchen Pantry)</li>
+        </ul>
+        <p id="altarStatus" style="text-align: center; color: #00f2fe; min-height: 1.4rem; font-weight: bold;"></p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-secondary" id="btnQuickEscape" type="button">Flee Through Hatch</button>
+        <button class="btn-primary" id="btnPerformRitual" type="button">Perform Exorcism</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Endings Modal -->
+  <div class="modal-backdrop" id="modalEnding" role="dialog" aria-modal="true" aria-labelledby="endingTitle">
+    <div class="modal-window">
+      <div class="modal-content ending-card">
+        <h2 class="ending-title" id="endingTitle">ESCAPE</h2>
+        <div class="ending-desc" id="endingText"></div>
+        <button class="btn-primary" id="btnRestartGame" style="padding: 8px 20px;" type="button">Investigate Again</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Ancestral Crypt Rotating Stone Seal (Chapter 2) -->
+  <div class="modal-backdrop" id="modalSeal" role="dialog" aria-modal="true" aria-labelledby="sealTitle">
+    <div class="modal-card modal-card-sm modal-window">
+      <div class="modal-head">
+        <h3 class="modal-title" id="sealTitle">Ancestral Crypt Granite Seal</h3>
+        <button class="modal-close-btn" data-close="modalSeal" aria-label="Close Seal Modal" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-content">
+        <p class="modal-subtitle">Align all 3 concentric runic rings to zenith (0&deg;) to disengage the ancestral lock.</p>
+        <div class="stone-seal-container">
+          <div class="stone-ring stone-ring-outer" id="ringOuter">
+            <div class="ring-notch-mark"></div>
+            <span class="ring-label-text">OUTER</span>
+            <div class="stone-ring stone-ring-mid" id="ringMid">
+              <div class="ring-notch-mark"></div>
+              <span class="ring-label-text">MID</span>
+              <div class="stone-ring stone-ring-inner" id="ringInner">
+                <div class="ring-notch-mark"></div>
+                <div class="ring-core-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="stone-controls-row">
+          <button type="button" class="ring-btn" id="btnRotateOuter">Rotate Outer (+45&deg;)</button>
+          <button type="button" class="ring-btn" id="btnRotateMid">Rotate Mid (+90&deg;)</button>
+          <button type="button" class="ring-btn" id="btnRotateInner">Rotate Inner (+45&deg;)</button>
+        </div>
+        <div class="puzzle-status" id="sealStatus" style="text-align: center; color: #ffca7a; margin-top: 12px; min-height: 1.2rem; font-size: 0.82rem;">Align notches to 0&deg; zenith axis.</div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-primary" id="btnInspectSealAlignment" style="width: 100%;">Engage Granite Mechanism</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

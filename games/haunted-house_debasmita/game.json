@@ -1,0 +1,20 @@
+{
+  "title": "Haunted House: The Curse Within",
+  "category": "Adventure / Horror",
+  "lucideIcon": "ghost",
+  "description": "You wake up inside an abandoned Victorian mansion with no memory of how you arrived. Explore mysterious rooms, search for keys and secret passages, discover torn diary entries, solve cryptic puzzles, evade wandering paranormal entities, and uncover the dark history of the Blackwood curse before the house claims your soul.",
+  "author": "Debasmita Bose",
+  "github": "DebasmitaBose0",
+  "role": "Project Admin & Lead",
+  "tags": [
+    "Halloween",
+    "Horror",
+    "Mystery",
+    "Escape Room",
+    "NSOC26"
+  ],
+  "stars": 30,
+  "featured": true,
+  "difficulty": "Hard",
+  "releaseDate": "2026-10-31"
+}

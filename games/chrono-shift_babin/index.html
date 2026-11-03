@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+  <title>Chrono-Shift: Temporal Paradox</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="game-wrapper">
+    <!-- Top HUD -->
+    <div class="hud-top">
+      <div class="hud-left">
+        <div class="level-indicator" id="level-badge">CHAMBER 1 / 8</div>
+        <div class="echo-status" id="echo-status">
+          <span class="echo-dot"></span>
+          <span class="echo-text">ECHO RECORDING</span>
+        </div>
+      </div>
+
+      <div class="hud-center">
+        <div class="timeline-bar-wrap">
+          <span class="timeline-label">TIME BUFFER</span>
+          <div class="timeline-track">
+            <div class="timeline-fill" id="timeline-fill"></div>
+          </div>
+          <span class="timeline-secs" id="timeline-text">10.0s</span>
+        </div>
+      </div>
+
+      <div class="hud-right">
+        <div class="hud-stat">
+          <span class="stat-lbl">REWIND</span>
+          <span class="stat-val" id="rewind-count">0</span>
+        </div>
+        <button id="sound-btn" class="hud-icon-btn" type="button" aria-label="Toggle Sound" title="Toggle Sound">
+          <svg id="sound-on-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+          <svg id="sound-off-icon" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+        </button>
+        <button id="level-select-btn" class="hud-icon-btn" type="button" aria-label="Level Select" title="Select Chamber">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+        </button>
+        <button id="help-btn" class="hud-icon-btn" type="button" aria-label="Help & Rules" title="How to Play">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Viewport with VHS Glitch Scanlines -->
+    <div class="canvas-viewport">
+      <canvas id="game-canvas"></canvas>
+      <div class="vhs-glitch-overlay" id="vhs-overlay"></div>
+
+      <!-- Welcome Overlay -->
+      <div class="overlay-modal" id="welcome-modal">
+        <div class="modal-card">
+          <div class="paradox-header">
+            <div class="cyber-chip">TEMPORAL PROTOCOL 2026</div>
+            <h1 class="chrono-title">CHRONO-SHIFT</h1>
+            <p class="chrono-sub">Temporal Paradox Chamber Solver</p>
+          </div>
+          <div class="feature-list">
+            <div class="feat-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00f3ff" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+              <span><strong>Temporal Rewind:</strong> Hold <span class="kbd">R</span> to rewind time backward in a continuous circular buffer.</span>
+            </div>
+            <div class="feat-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00ff99" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span><strong>Time-Echo Clone:</strong> Your past actions play back in holographic parallel to hold pressure pads, open laser doors, and bypass security.</span>
+            </div>
+          </div>
+          <button id="start-btn" class="chrono-btn" type="button">ENTER CHAMBER 1</button>
+        </div>
+      </div>
+
+      <!-- Level Clear Overlay -->
+      <div class="overlay-modal hidden" id="clear-modal">
+        <div class="modal-card">
+          <div class="paradox-header">
+            <div class="cyber-chip green">PARADOX RESOLVED</div>
+            <h1 class="chrono-title green">CHAMBER SOLVED</h1>
+          </div>
+          <p class="clear-desc">Quantum state aligned successfully. Proceeding to next temporal puzzle chamber.</p>
+          <button id="next-chamber-btn" class="chrono-btn" type="button">NEXT CHAMBER</button>
+        </div>
+      </div>
+
+      <!-- Game Complete Overlay -->
+      <div class="overlay-modal hidden" id="victory-modal">
+        <div class="modal-card">
+          <div class="paradox-header">
+            <div class="cyber-chip gold">MASTER TIME TRAVELER</div>
+            <h1 class="chrono-title gold">ALL 8 CHAMBERS CLEARED</h1>
+          </div>
+          <p class="clear-desc">You have conquered all paradox chambers and harmonized the timeline matrix!</p>
+          <button id="replay-game-btn" class="chrono-btn" type="button">REPLAY MATRIX</button>
+        </div>
+      </div>
+
+      <!-- Level Select Modal -->
+      <div class="overlay-modal hidden" id="level-modal">
+        <div class="modal-card">
+          <div class="modal-header-row">
+            <h2>Chamber Select</h2>
+            <button id="close-level-btn" class="close-x" type="button" aria-label="Close">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div class="level-grid" id="level-grid"></div>
+        </div>
+      </div>
+
+      <!-- Help / Instructions Modal -->
+      <div class="overlay-modal hidden" id="help-modal">
+        <div class="modal-card max-w">
+          <div class="modal-header-row">
+            <h2>Chrono-Shift Protocols</h2>
+            <button id="close-help-btn" class="close-x" type="button" aria-label="Close">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div class="help-content">
+            <div class="key-guide">
+              <div class="guide-row"><span class="kbd">A / D</span> or <span class="kbd">Arrows</span> Move cyber operative</div>
+              <div class="guide-row"><span class="kbd">W</span> or <span class="kbd">Space</span> Jump onto platforms</div>
+              <div class="guide-row"><span class="kbd">R</span> (Hold) Rewind time backward</div>
+              <div class="guide-row"><span class="kbd">E</span> or <span class="kbd">F</span> Spawn / Freeze Time-Echo clone</div>
+            </div>
+            <div class="concept-box">
+              <h4>How Time-Echoes Work:</h4>
+              <p>1. Step on a floor switch to lower a laser gate.</p>
+              <p>2. Hold <strong>R</strong> to rewind to your initial position.</p>
+              <p>3. Your translucent holographic past self will re-enact walking over and holding the switch down, freeing you to sprint across the open laser gate!</p>
+              <p>4. Reach the glowing cyan Warp Portal to solve the chamber.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- On-screen Mobile Controls -->
+    <div class="mobile-controls">
+      <div class="nav-cluster">
+        <button id="m-left" class="m-btn" type="button">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button id="m-right" class="m-btn" type="button">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+      <div class="act-cluster">
+        <button id="m-rewind" class="m-btn rewind" type="button">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+          <span>REWIND</span>
+        </button>
+        <button id="m-jump" class="m-btn jump" type="button">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
+          <span>JUMP</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

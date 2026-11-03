@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+  <title>Quantum Minesweeper DX: Grid Defusal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="defusal-container">
+    <!-- Header Terminal HUD -->
+    <div class="terminal-bar">
+      <div class="term-left">
+        <div class="difficulty-select">
+          <button class="diff-btn active" data-diff="novice">NOVICE (9x9)</button>
+          <button class="diff-btn" data-diff="specialist">SPECIALIST (16x16)</button>
+          <button class="diff-btn" data-diff="overlord">OVERLORD (24x16)</button>
+        </div>
+      </div>
+
+      <div class="term-center">
+        <button id="face-reset-btn" class="face-btn" type="button" aria-label="Restart Matrix" title="Reset Grid">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+        </button>
+      </div>
+
+      <div class="term-right">
+        <!-- Digital Mine Counter -->
+        <div class="digital-box">
+          <span class="digital-lbl">MINES</span>
+          <span class="digital-val" id="mines-counter">010</span>
+        </div>
+        <!-- Digital Timer -->
+        <div class="digital-box">
+          <span class="digital-lbl">TIME</span>
+          <span class="digital-val" id="timer-counter">000</span>
+        </div>
+        <button id="sound-btn" class="icon-hud-btn" type="button" aria-label="Sound" title="Toggle Sound">
+          <svg id="sound-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+          <svg id="sound-off" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line></svg>
+        </button>
+        <button id="help-btn" class="icon-hud-btn" type="button" aria-label="Rules" title="How to play">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Grid Matrix Board -->
+    <div class="grid-outer-frame">
+      <div class="grid-board" id="mines-grid"></div>
+
+      <!-- Result Screen -->
+      <div class="result-modal hidden" id="result-modal">
+        <div class="result-card">
+          <div class="result-badge" id="res-badge">SECTOR SECURED</div>
+          <h1 class="result-title" id="res-title">GRID DEFUSED</h1>
+          <div class="stats-row">
+            <div><span>CLEAR TIME</span><h3 id="res-time">00:00</h3></div>
+            <div><span>RECORD BEST</span><h3 id="res-best">--:--</h3></div>
+          </div>
+          <button id="modal-retry-btn" class="action-glow-btn" type="button">REDEPLOY SCANNER</button>
+        </div>
+      </div>
+
+      <!-- Tutorial Modal -->
+      <div class="result-modal hidden" id="tutorial-modal">
+        <div class="result-card max-w">
+          <div class="modal-hdr">
+            <h2>Quantum Defusal Protocols</h2>
+            <button id="close-tut-btn" class="close-x" type="button" aria-label="Close">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div class="tut-content">
+            <p>• <strong>Safe First Click:</strong> The quantum grid algorithm guarantees your first sector scan will never be an anomaly.</p>
+            <p>• <strong>Cascade Flood Fill:</strong> Uncovering an empty node (0 adjacent anomalies) sweeps open all adjoining safe sectors automatically.</p>
+            <p>• <strong>Flagging Mode:</strong> Right-click on desktop or use the dedicated Flag Mode toggle on mobile to flag suspected anomalies.</p>
+            <p>• <strong>Chamber Presets:</strong> Novice (9×9, 10 mines), Specialist (16×16, 40 mines), Overlord (24×16, 99 mines).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Flag Toggle Toolbar -->
+    <div class="mobile-tool-bar">
+      <div class="mobile-flag-switch">
+        <span>SCAN MODE</span>
+        <button id="flag-toggle-btn" class="flag-switch-btn" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+          <span id="mode-text">FLAG OFF</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

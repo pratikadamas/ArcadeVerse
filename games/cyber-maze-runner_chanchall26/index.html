@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Maze Runner | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="../../assets/public/favicon.ico">
+</head>
+<body>
+  <div class="game-container">
+    <header class="game-header">
+      <div class="header-left">
+        <a href="../../index.html" class="back-link" aria-label="Return to ArcadeVerse Hub">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <span>Arcade Hub</span>
+        </a>
+        <h1 class="game-title">Cyber Maze <span class="accent">Runner</span></h1>
+      </div>
+      <div class="header-controls">
+        <button id="pause-btn" class="icon-btn" type="button" aria-label="Pause game" title="Pause (P)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect></svg>
+        </button>
+        <button id="sound-btn" class="icon-btn" type="button" aria-label="Toggle sound effects" aria-pressed="true" title="Sound (M)">
+          <svg id="sound-icon-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+          <svg id="sound-icon-off" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+        </button>
+        <button id="help-btn" class="icon-btn" type="button" aria-label="How to play" title="How to play">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="scoreboard-bar">
+      <div class="score-card highlight">
+        <span class="label">SCORE</span>
+        <span class="value" id="score-display">0</span>
+      </div>
+      <div class="score-card">
+        <span class="label">BEST</span>
+        <span class="value" id="best-display">0</span>
+      </div>
+      <div class="score-card">
+        <span class="label">LEVEL</span>
+        <span class="value" id="level-display">1</span>
+      </div>
+      <div class="score-card">
+        <span class="label">LIVES</span>
+        <span class="value lives" id="lives-display" aria-label="Lives remaining"></span>
+      </div>
+    </div>
+
+    <main class="canvas-wrapper" id="canvas-wrapper" role="region" aria-label="Maze playfield">
+      <canvas id="game-canvas" width="532" height="532" aria-label="Cyber Maze Runner game board"></canvas>
+
+      <div id="start-overlay" class="overlay">
+        <div class="overlay-card">
+          <h2 class="overlay-title">Cyber Maze Runner</h2>
+          <p class="overlay-desc">Harvest every energy node in the grid while four security drones hunt you. Grab an EMP node to turn the tables.</p>
+          <div class="controls-guide">
+            <span class="guide-item"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrow keys to steer</span>
+            <span class="guide-item">Swipe on the board on a touch screen</span>
+          </div>
+          <div class="btn-row">
+            <button id="start-btn" class="btn btn-primary" type="button">Start Run</button>
+            <button id="howto-start-btn" class="btn btn-secondary" type="button">How to Play</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="pause-overlay" class="overlay hidden">
+        <div class="overlay-card">
+          <h2 class="overlay-title">Paused</h2>
+          <p class="overlay-desc">The grid is frozen. Take a breath.</p>
+          <div class="btn-row">
+            <button id="resume-btn" class="btn btn-primary" type="button">Resume</button>
+            <button id="restart-pause-btn" class="btn btn-secondary" type="button">Restart</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="gameover-overlay" class="overlay hidden">
+        <div class="overlay-card">
+          <h2 class="overlay-title gameover-text">Run Terminated</h2>
+          <p class="overlay-desc" id="gameover-note">The drones caught you.</p>
+          <div class="results-stats">
+            <div class="stat-row"><span>Final score</span><strong id="final-score">0</strong></div>
+            <div class="stat-row"><span>Level reached</span><strong id="final-level">1</strong></div>
+            <div class="stat-row"><span>Best score</span><strong id="final-best">0</strong></div>
+          </div>
+          <button id="restart-btn" class="btn btn-primary" type="button">Run Again</button>
+        </div>
+      </div>
+
+      <div id="help-modal" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="help-title">
+        <div class="overlay-card help-card">
+          <div class="help-head">
+            <h2 id="help-title" class="overlay-title">How to Play</h2>
+            <button id="help-close" class="icon-btn" type="button" aria-label="Close how to play">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div class="help-body">
+            <h3>Goal</h3>
+            <p>Collect every energy node (small dots) to clear the level. Each level the drones get faster and the EMP effect gets shorter.</p>
+            <h3>Controls</h3>
+            <ul>
+              <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrow keys: choose a direction. You keep moving and turn at the next opening.</li>
+              <li>Touch: swipe on the board in the direction you want to go.</li>
+              <li><kbd>P</kbd> or <kbd>Esc</kbd>: pause. <kbd>M</kbd>: sound on or off.</li>
+            </ul>
+            <h3>Overdrive EMP nodes</h3>
+            <p>The four large glowing nodes at the corners turn every drone vulnerable for a few seconds. Touch a vulnerable drone to destroy it for 200, 400, 800 and 1600 points in a row. A destroyed drone returns to its pen and comes back. When they flash, the effect is about to end.</p>
+            <h3>The drones</h3>
+            <ul class="drone-list">
+              <li><span class="chip c-blitz"></span><strong>Blitz</strong> (red) heads straight for your tile.</li>
+              <li><span class="chip c-phantom"></span><strong>Phantom</strong> (magenta) aims four tiles ahead of where you are facing, to ambush you.</li>
+              <li><span class="chip c-vector"></span><strong>Vector</strong> (cyan) flanks: it aims at the point mirrored through Blitz and a spot two tiles ahead of you.</li>
+              <li><span class="chip c-drifter"></span><strong>Drifter</strong> (orange) chases from far away but retreats to its corner when it gets close.</li>
+            </ul>
+            <p>Drones alternate between scatter (they head for their own corners) and chase. They never turn back on themselves except when the mode changes.</p>
+            <h3>Scoring</h3>
+            <ul>
+              <li>Energy node: 10. EMP node: 50.</li>
+              <li>Vulnerable drone: 200, 400, 800, 1600.</li>
+              <li>Extra life at every 10,000 points. You start with 3 lives.</li>
+            </ul>
+          </div>
+          <button id="help-done" class="btn btn-primary" type="button">Got it</button>
+        </div>
+      </div>
+    </main>
+    <p class="hint-text">Arrow keys or WASD to steer. Swipe on touch screens.</p>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

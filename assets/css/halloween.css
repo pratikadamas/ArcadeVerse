@@ -1,0 +1,1621 @@
+/**
+ * ArcadeVerse - Halloween Special Showcase Styles
+ * Premium Digital Gaming Portal Experience
+ * Features:
+ * - Google Font 'Jolly Lodger' title with radiant flame aura
+ * - Exclusive animated flying-bat loading experience & swarm physics
+ * - Unique card visual identities: Victorian Manor, Arcane Crypt, Island Survival
+ * - 3D card tilt & animated glowing orange borders
+ * - Subtle ambient fog, floating embers, and background bat silhouettes
+ * - High-contrast typography across Dark and Light mode themes
+ * - Responsive 3-column, 2-column, and 1-column layouts
+ */
+
+/* ==========================================================================
+   1. Showcase Container & Atmospheric Lighting
+   ========================================================================== */
+
+.halloween-showcase-section {
+  position: relative;
+  z-index: 5;
+  max-width: 1320px;
+  margin: 2.5rem auto 3rem;
+  padding: 0 1.25rem;
+}
+
+.halloween-container {
+  background: radial-gradient(circle at 50% -10%, rgba(168, 85, 247, 0.22) 0%, rgba(15, 7, 24, 0.98) 75%),
+              linear-gradient(180deg, rgba(255, 119, 0, 0.12) 0%, rgba(10, 4, 18, 0.97) 100%);
+  border: 2px solid rgba(255, 119, 0, 0.45);
+  border-radius: 24px;
+  padding: 3rem 2.2rem;
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.8),
+              0 0 35px rgba(255, 119, 0, 0.22),
+              inset 0 1px 0 rgba(255, 200, 150, 0.15);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Light mode container adaptation */
+[data-theme="light"] .halloween-container {
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.38),
+              0 0 35px rgba(255, 119, 0, 0.3);
+  border-color: rgba(255, 119, 0, 0.55);
+}
+
+/* Atmospheric Ambient Glowing Orbs */
+.halloween-container::before {
+  content: "";
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255, 119, 0, 0.35) 0%, rgba(255, 85, 0, 0.1) 45%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  animation: ambient-orb-breathe 8s ease-in-out infinite alternate;
+}
+
+.halloween-container::after {
+  content: "";
+  position: absolute;
+  bottom: -90px;
+  left: -90px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.32) 0%, rgba(126, 34, 206, 0.12) 45%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  animation: ambient-orb-breathe 10s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes ambient-orb-breathe {
+  0% { transform: scale(0.92); opacity: 0.7; }
+  100% { transform: scale(1.1); opacity: 1; }
+}
+
+/* Ambient Moving Fog Layer */
+.halloween-fog-layer {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 180px;
+  background: radial-gradient(ellipse at 50% 100%, rgba(168, 85, 247, 0.15) 0%, rgba(255, 119, 0, 0.08) 50%, transparent 80%);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.85;
+  animation: fog-drift 18s ease-in-out infinite alternate;
+}
+
+@keyframes fog-drift {
+  0% { transform: translateX(-40px) scaleY(0.9); }
+  100% { transform: translateX(40px) scaleY(1.1); }
+}
+
+/* Ambient Floating Particles */
+.halloween-ambient-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.ambient-particle {
+  position: absolute;
+  bottom: -10px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  animation: float-particle ease-in infinite;
+}
+
+.ambient-particle.p-0 {
+  background: #ff7700;
+  box-shadow: 0 0 8px #ff7700;
+}
+.ambient-particle.p-1 {
+  background: #ffa500;
+  box-shadow: 0 0 6px #ffa500;
+}
+.ambient-particle.p-2 {
+  background: #c084fc;
+  box-shadow: 0 0 8px #a855f7;
+}
+
+@keyframes float-particle {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.75;
+  }
+  85% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(-460px) translateX(25px);
+    opacity: 0;
+  }
+}
+
+/* Ambient Occasional Background Bats */
+.halloween-ambient-bats {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.ambient-bg-bat {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ambient-bg-bat svg {
+  width: 100%;
+  height: 100%;
+  fill: #0d0517;
+  filter: drop-shadow(0 0 4px rgba(255, 119, 0, 0.3));
+}
+
+.ambient-bg-bat.bg-bat-1 {
+  width: 34px;
+  height: 20px;
+  top: 18%;
+  left: -50px;
+  animation: ambient-bat-fly-1 16s ease-in-out infinite;
+}
+
+.ambient-bg-bat.bg-bat-2 {
+  width: 26px;
+  height: 16px;
+  top: 36%;
+  right: -50px;
+  animation: ambient-bat-fly-2 22s ease-in-out 6s infinite;
+}
+
+.ambient-bg-bat.bg-bat-3 {
+  width: 42px;
+  height: 25px;
+  top: 10%;
+  left: -60px;
+  animation: ambient-bat-fly-3 19s ease-in-out 11s infinite;
+}
+
+@keyframes ambient-bat-fly-1 {
+  0% { transform: translate(0, 0) scaleX(1); opacity: 0; }
+  8% { opacity: 0.55; }
+  45% { transform: translate(750px, 35px) scaleX(1); opacity: 0.6; }
+  90% { opacity: 0.45; }
+  100% { transform: translate(1400px, -20px) scaleX(1); opacity: 0; }
+}
+
+@keyframes ambient-bat-fly-2 {
+  0% { transform: translate(0, 0) scaleX(-1); opacity: 0; }
+  10% { opacity: 0.5; }
+  50% { transform: translate(-650px, 45px) scaleX(-1); opacity: 0.55; }
+  92% { opacity: 0.4; }
+  100% { transform: translate(-1300px, 10px) scaleX(-1); opacity: 0; }
+}
+
+@keyframes ambient-bat-fly-3 {
+  0% { transform: translate(0, 0) scaleX(1); opacity: 0; }
+  10% { opacity: 0.65; }
+  48% { transform: translate(680px, 50px) scaleX(1); opacity: 0.7; }
+  90% { opacity: 0.5; }
+  100% { transform: translate(1400px, 15px) scaleX(1); opacity: 0; }
+}
+
+/* ==========================================================================
+   2. Header & Glowing Typography
+   ========================================================================== */
+
+.halloween-header {
+  text-align: center;
+  margin-bottom: 2.6rem;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Event badge with animated pulse */
+.halloween-badge,
+[data-theme="light"] .halloween-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 1.25rem;
+  background: rgba(255, 119, 0, 0.18) !important;
+  border: 1.5px solid #ff7700 !important;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #ffa500 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.85rem;
+  box-shadow: 0 0 16px rgba(255, 119, 0, 0.4);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  animation: pulse-halloween-badge 2.4s infinite ease-in-out;
+}
+
+@keyframes pulse-halloween-badge {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(255, 119, 0, 0.3);
+    border-color: #ff7700;
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(255, 119, 0, 0.75), 0 0 10px rgba(255, 180, 50, 0.5);
+    border-color: #ffaa32;
+  }
+}
+
+/* Title heading with Google Font 'Jolly Lodger' */
+.halloween-title-wrap {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 0.5rem;
+}
+
+.halloween-title,
+[data-theme="light"] .halloween-title {
+  font-family: 'Jolly Lodger', cursive;
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  line-height: 1.1;
+  letter-spacing: 2px;
+  color: #ff7700 !important;
+  text-shadow: 0 0 18px rgba(255, 119, 0, 0.85),
+               0 0 40px rgba(255, 60, 0, 0.55),
+               0 2px 4px rgba(0, 0, 0, 0.9) !important;
+  margin: 0;
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.halloween-title-icon {
+  width: clamp(28px, 4vw, 38px);
+  height: clamp(28px, 4vw, 38px);
+  stroke: #ff7700;
+  filter: drop-shadow(0 0 8px rgba(255, 119, 0, 0.8));
+  vertical-align: middle;
+}
+
+.halloween-badge-icon {
+  width: 16px;
+  height: 16px;
+  stroke: #ffaa32;
+  flex-shrink: 0;
+}
+
+/* Animated pumpkin aura glow */
+.halloween-pumpkin-glow {
+  position: absolute;
+  top: 50%;
+  right: -24px;
+  transform: translateY(-50%);
+  width: 58px;
+  height: 58px;
+  background: radial-gradient(circle, rgba(255, 119, 0, 0.6) 0%, rgba(255, 60, 0, 0.2) 60%, transparent 80%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  animation: pumpkin-aura 2s ease-in-out infinite alternate;
+}
+
+@keyframes pumpkin-aura {
+  0% { transform: translateY(-50%) scale(0.9); opacity: 0.65; }
+  100% { transform: translateY(-50%) scale(1.25); opacity: 1; }
+}
+
+/* Subtitle */
+.halloween-subtitle,
+[data-theme="light"] .halloween-subtitle,
+[data-theme="light"] p.halloween-subtitle {
+  font-size: 1.05rem;
+  color: #f3e8ff !important;
+  max-width: 680px;
+  margin: 0 auto;
+  line-height: 1.55;
+  font-weight: 500;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* ==========================================================================
+   3. Responsive Grid & Digital Game Cards
+   ========================================================================== */
+
+.halloween-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.8rem;
+  align-items: stretch;
+  position: relative;
+  z-index: 2;
+  perspective: 1200px;
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .halloween-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Card Base with Glowing Animated Border */
+.halloween-card,
+[data-theme="light"] .halloween-card {
+  background: rgba(22, 10, 36, 0.94) !important;
+  border: 2px solid rgba(255, 119, 0, 0.4) !important;
+  border-radius: 18px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28),
+              box-shadow 0.35s ease,
+              border-color 0.35s ease;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7),
+              0 0 18px rgba(255, 119, 0, 0.2) !important;
+  position: relative;
+  transform-style: preserve-3d;
+  will-change: transform;
+  outline: none;
+}
+
+.halloween-card:focus-visible {
+  border-color: #ffa500 !important;
+  box-shadow: 0 0 0 3px rgba(255, 119, 0, 0.6), 0 12px 35px rgba(0, 0, 0, 0.8) !important;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .halloween-card:hover,
+  [data-theme="light"] .halloween-card:hover {
+    transform: translateY(-8px) scale(1.015);
+    border-color: #ff7700 !important;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.9),
+                0 0 36px rgba(255, 119, 0, 0.6),
+                0 0 14px rgba(255, 170, 50, 0.5) !important;
+  }
+
+  .halloween-card:hover .btn-halloween-play {
+    background: linear-gradient(135deg, #ff8800, #ff5500);
+    box-shadow: 0 0 18px rgba(255, 119, 0, 0.8);
+    transform: scale(1.04);
+  }
+}
+
+/* Touch active feedback without sticky hover */
+@media (hover: none) {
+  .halloween-card:active {
+    transform: scale(0.99);
+    border-color: #ffaa32 !important;
+  }
+}
+
+/* ==========================================================================
+   4. Illustrated Thumbnails & Game-Specific Visual Identities
+   ========================================================================== */
+
+.halloween-card-banner {
+  height: 155px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid rgba(255, 119, 0, 0.3);
+}
+
+/* Ambient Backplate Art for Banner */
+.banner-art-wrap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Banner Difficulty & Tag Pills */
+.banner-hud-pills {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.banner-hud-pills > * {
+  pointer-events: auto;
+}
+
+.halloween-tag-pill,
+[data-theme="light"] .halloween-tag-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(12, 4, 22, 0.94) !important;
+  border: 1px solid #ff7700 !important;
+  color: #ffd88a !important;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+}
+
+.halloween-diff-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(12, 4, 22, 0.92);
+  border: 1px solid rgba(255, 119, 0, 0.4);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: #f3e8ff;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+/* Difficulty Indicator */
+.halloween-diff-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(12, 4, 22, 0.92);
+  border: 1px solid rgba(255, 119, 0, 0.4);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.64rem;
+  font-weight: 800;
+  color: #f3e8ff;
+  letter-spacing: 0.5px;
+}
+
+.diff-dots {
+  display: flex;
+  gap: 3px;
+}
+
+.diff-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+}
+
+.diff-dot.active {
+  background: #ff7700;
+  box-shadow: 0 0 6px #ff7700;
+}
+
+.diff-dot.expert.active {
+  background: #c084fc;
+  box-shadow: 0 0 6px #a855f7;
+}
+
+.diff-dot.survival.active {
+  background: #00e5a3;
+  box-shadow: 0 0 6px #00e5a3;
+}
+
+/* Center Animated Interactive Icon */
+.halloween-card-icon {
+  margin: 0 auto;
+  align-self: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 3;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.7);
+  transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.halloween-card:hover .halloween-card-icon {
+  transform: scale(1.1);
+}
+
+.halloween-card-icon svg {
+  width: 34px;
+  height: 34px;
+}
+
+/* --------------------------------------------------------------------------
+   Game 1 Visual Identity: HAUNTED HOUSE (Victorian Manor)
+   -------------------------------------------------------------------------- */
+.theme-manor .halloween-card-banner {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+  background: radial-gradient(circle at 50% 15%, rgba(255, 85, 0, 0.35) 0%, rgba(18, 6, 32, 0.98) 75%);
+}
+
+.theme-manor .halloween-card-icon {
+  margin: 0 auto !important;
+  align-self: center !important;
+  background: linear-gradient(135deg, rgba(45, 18, 68, 0.95), rgba(20, 8, 32, 0.95));
+  border: 2px solid #ff7700;
+  color: #ffaa32;
+  box-shadow: 0 0 20px rgba(255, 119, 0, 0.55);
+}
+
+.manor-scenery {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.manor-moon {
+  position: absolute;
+  top: 14px;
+  left: 20%;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffeed6 0%, #ff9900 65%, transparent 80%);
+  box-shadow: 0 0 16px rgba(255, 150, 0, 0.7);
+  opacity: 0.85;
+}
+
+.manor-mist {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 45px;
+  background: linear-gradient(180deg, transparent, rgba(168, 85, 247, 0.25));
+  animation: mist-sway 4s ease-in-out infinite alternate;
+}
+
+@keyframes mist-sway {
+  0% { transform: scaleX(1); opacity: 0.6; }
+  100% { transform: scaleX(1.15) translateX(10px); opacity: 0.9; }
+}
+
+/* Attic candlelight flicker */
+.candle-glow-flicker {
+  animation: candle-flicker 1.8s ease-in-out infinite;
+}
+
+@keyframes candle-flicker {
+  0%, 100% { opacity: 0.75; filter: drop-shadow(0 0 4px #ffaa00); }
+  35% { opacity: 0.5; filter: drop-shadow(0 0 2px #ff6600); }
+  60% { opacity: 1; filter: drop-shadow(0 0 8px #ffcc00); }
+  75% { opacity: 0.8; filter: drop-shadow(0 0 5px #ff8800); }
+}
+
+/* --------------------------------------------------------------------------
+   Game 2 Visual Identity: HALLOWEEN ESCAPE (Witch's Crypt)
+   -------------------------------------------------------------------------- */
+.theme-crypt .halloween-card-banner {
+  background: radial-gradient(circle at 50% 20%, rgba(168, 85, 247, 0.38) 0%, rgba(14, 6, 26, 0.98) 75%);
+}
+
+.theme-crypt .halloween-card-icon {
+  background: linear-gradient(135deg, rgba(38, 14, 60, 0.95), rgba(18, 6, 32, 0.95));
+  border: 2px solid #c084fc;
+  color: #ffd700;
+  box-shadow: 0 0 20px rgba(192, 132, 252, 0.55), 0 0 8px rgba(255, 215, 0, 0.35);
+}
+
+.crypt-sigil-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 140px;
+  height: 140px;
+  opacity: 0.22;
+  animation: crypt-sigil-rotate 28s linear infinite;
+}
+
+@keyframes crypt-sigil-rotate {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.crypt-sparkles {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(#ffd700 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.25;
+  animation: spell-drift 6s ease-in-out infinite alternate;
+}
+
+@keyframes spell-drift {
+  0% { transform: translateY(0); opacity: 0.2; }
+  100% { transform: translateY(-8px); opacity: 0.45; }
+}
+
+/* --------------------------------------------------------------------------
+   Game 3 Visual Identity: ISLAND SURVIVAL (Tropical Survival)
+   -------------------------------------------------------------------------- */
+.theme-island .halloween-card-banner {
+  background: radial-gradient(circle at 50% 15%, rgba(0, 229, 163, 0.25) 0%, rgba(10, 15, 30, 0.98) 75%);
+}
+
+.theme-island .halloween-card-icon {
+  background: linear-gradient(135deg, rgba(14, 42, 46, 0.95), rgba(10, 20, 32, 0.95));
+  border: 2px solid #00e5a3;
+  color: #38bdf8;
+  box-shadow: 0 0 20px rgba(0, 229, 163, 0.45), 0 0 10px rgba(255, 119, 0, 0.3);
+}
+
+.island-ocean-waves {
+  position: absolute;
+  bottom: 0;
+  left: -20px;
+  right: -20px;
+  height: 28px;
+  opacity: 0.45;
+  background: repeating-linear-gradient(90deg, rgba(0, 229, 163, 0.25) 0 20px, transparent 20px 40px);
+  animation: ocean-wave-roll 5s linear infinite;
+}
+
+@keyframes ocean-wave-roll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(40px); }
+}
+
+.island-resource-chips {
+  position: absolute;
+  bottom: 8px;
+  left: 12px;
+  display: flex;
+  gap: 5px;
+  z-index: 3;
+}
+
+.resource-chip {
+  padding: 2px 6px;
+  background: rgba(10, 20, 32, 0.85);
+  border: 1px solid rgba(0, 229, 163, 0.35);
+  border-radius: 4px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #a7f3d0;
+  text-transform: uppercase;
+}
+
+/* ==========================================================================
+   5. Card Body & Typography
+   ========================================================================== */
+
+.halloween-card-body {
+  padding: 1.35rem 1.45rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: space-between;
+}
+
+.halloween-card-desc,
+[data-theme="light"] .halloween-card-desc {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: #d1c4e9 !important;
+  margin-bottom: 1.25rem;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.halloween-card-category,
+[data-theme="light"] .halloween-card-category {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #c084fc !important;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.45rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Card titles with guaranteed high contrast in light mode */
+.halloween-card-title,
+[data-theme="light"] .halloween-card-title,
+[data-theme="light"] h3.halloween-card-title {
+  font-size: 1.28rem;
+  font-weight: 800;
+  color: #fff6e5 !important;
+  margin-bottom: 0.6rem;
+  line-height: 1.3;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* Card description text with guaranteed high contrast in light mode */
+.halloween-card-desc,
+[data-theme="light"] .halloween-card-desc,
+[data-theme="light"] p.halloween-card-desc {
+  font-size: 0.88rem;
+  color: #e2d4f5 !important;
+  line-height: 1.55;
+  margin-bottom: 1.25rem;
+  font-weight: 500;
+  flex: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
+
+.halloween-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(255, 119, 0, 0.22);
+  padding-top: 1rem;
+  margin-top: auto;
+  width: 100%;
+  gap: 12px;
+}
+
+.halloween-author-meta {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.halloween-author-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff7700, #9d4edd);
+  color: #fff;
+  font-weight: bold;
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 8px rgba(255, 119, 0, 0.4);
+}
+
+.halloween-author-name,
+[data-theme="light"] .halloween-author-name {
+  font-size: 0.76rem;
+  color: #d8c2f0 !important;
+  font-weight: 500;
+}
+
+.halloween-author-name strong,
+[data-theme="light"] .halloween-author-name strong {
+  color: #ffaa32 !important;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   6. Interactive Play Now Button
+   ========================================================================== */
+
+.btn-halloween-play,
+[data-theme="light"] .btn-halloween-play {
+  background: linear-gradient(135deg, #ff7700 0%, #d9480f 100%) !important;
+  border: none;
+  color: #ffffff !important;
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  box-shadow: 0 4px 16px rgba(255, 119, 0, 0.45) !important;
+  transition: all 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+  position: relative;
+  overflow: hidden;
+  outline: none;
+}
+
+.btn-halloween-play:focus-visible {
+  box-shadow: 0 0 0 3px #ffffff, 0 0 0 5px #ff7700 !important;
+}
+
+.btn-halloween-play span,
+[data-theme="light"] .btn-halloween-play span {
+  color: #ffffff !important;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.btn-halloween-play svg,
+[data-theme="light"] .btn-halloween-play svg {
+  width: 14px;
+  height: 14px;
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  transition: transform 0.25s ease;
+}
+
+.btn-halloween-play:hover,
+[data-theme="light"] .btn-halloween-play:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 8px 24px rgba(255, 119, 0, 0.75), 0 0 16px rgba(255, 180, 50, 0.5) !important;
+  background: linear-gradient(135deg, #ff922b 0%, #f76707 100%) !important;
+}
+
+.btn-halloween-play:hover svg {
+  transform: translateX(3px);
+}
+
+.btn-halloween-play:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+/* ==========================================================================
+   7. Exclusive Flying Bats Loader
+   ========================================================================== */
+
+.halloween-bat-loader {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 24px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+.halloween-bat-loader.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.halloween-bat-loader.bat-loader-fading {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.bat-loader-backdrop {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(20, 8, 36, 0.94) 0%, rgba(8, 3, 14, 0.97) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.bat-loader-swarm {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Wing Flapping Animations */
+.bat-wing-left {
+  transform-origin: 50px 32px;
+  animation: bat-flap-left 0.22s ease-in-out infinite alternate;
+}
+
+.bat-wing-right {
+  transform-origin: 50px 32px;
+  animation: bat-flap-right 0.22s ease-in-out infinite alternate;
+}
+
+@keyframes bat-flap-left {
+  0% { transform: rotate(0deg) scaleY(1); }
+  100% { transform: rotate(26deg) scaleY(0.68); }
+}
+
+@keyframes bat-flap-right {
+  0% { transform: rotate(0deg) scaleY(1); }
+  100% { transform: rotate(-26deg) scaleY(0.68); }
+}
+
+/* Flying Bats & Trajectories */
+.flying-bat {
+  position: absolute;
+  pointer-events: none;
+  filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.95));
+}
+
+.flying-bat .bat-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.flying-bat .bat-wings-group {
+  fill: #0d0614;
+}
+
+.flying-bat .bat-torso,
+.flying-bat .bat-head,
+.flying-bat .bat-ear {
+  fill: #190a2a;
+}
+
+/* Slight Orange Glow when Bats Cross Illuminated Section Center */
+.flying-bat .bat-glow {
+  animation: bat-orange-illumination 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes bat-orange-illumination {
+  0% { opacity: 0.3; }
+  100% { opacity: 0.9; }
+}
+
+/* Trajectory 1: Diagonal Up Right */
+.trajectory-diag-up-right {
+  bottom: -40px;
+  left: 5%;
+  animation: fly-diag-up-right linear infinite;
+}
+@keyframes fly-diag-up-right {
+  0% { transform: translate(0, 0) rotate(15deg); opacity: 0; }
+  12% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translate(650px, -450px) rotate(22deg); opacity: 0; }
+}
+
+/* Trajectory 2: Horizontal Left */
+.trajectory-horiz-left {
+  top: 38%;
+  right: -50px;
+  animation: fly-horiz-left linear infinite;
+}
+@keyframes fly-horiz-left {
+  0% { transform: translate(0, 0) rotate(-6deg) scaleX(-1); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translate(-1000px, 40px) rotate(-14deg) scaleX(-1); opacity: 0; }
+}
+
+/* Trajectory 3: Swoop Down Arc */
+.trajectory-swoop-down {
+  top: -30px;
+  left: 20%;
+  animation: fly-swoop-down ease-in-out infinite;
+}
+@keyframes fly-swoop-down {
+  0% { transform: translate(0, 0) rotate(35deg); opacity: 0; }
+  18% { opacity: 1; }
+  50% { transform: translate(320px, 260px) rotate(-5deg); }
+  85% { opacity: 1; }
+  100% { transform: translate(750px, 420px) rotate(28deg); opacity: 0; }
+}
+
+/* Trajectory 4: Diagonal Up Left */
+.trajectory-diag-up-left {
+  bottom: -30px;
+  right: 15%;
+  animation: fly-diag-up-left linear infinite;
+}
+@keyframes fly-diag-up-left {
+  0% { transform: translate(0, 0) rotate(-18deg) scaleX(-1); opacity: 0; }
+  12% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translate(-600px, -420px) rotate(-28deg) scaleX(-1); opacity: 0; }
+}
+
+/* Trajectory 5: Fast Dart */
+.trajectory-dart-fast {
+  top: 25%;
+  left: -40px;
+  animation: fly-dart-fast linear infinite;
+}
+@keyframes fly-dart-fast {
+  0% { transform: translate(0, 0) rotate(8deg); opacity: 0; }
+  10% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { transform: translate(1100px, -80px) rotate(12deg); opacity: 0; }
+}
+
+/* Trajectory 6: Spiral Up */
+.trajectory-spiral-up {
+  bottom: -40px;
+  left: 45%;
+  animation: fly-spiral-up ease-out infinite;
+}
+@keyframes fly-spiral-up {
+  0% { transform: translate(0, 0) rotate(-10deg); opacity: 0; }
+  20% { opacity: 1; }
+  50% { transform: translate(-120px, -240px) rotate(15deg); }
+  85% { opacity: 1; }
+  100% { transform: translate(180px, -520px) rotate(-8deg); opacity: 0; }
+}
+
+/* Trajectory 7: Horizontal Right */
+.trajectory-horiz-right {
+  top: 65%;
+  left: -40px;
+  animation: fly-horiz-right linear infinite;
+}
+@keyframes fly-horiz-right {
+  0% { transform: translate(0, 0) rotate(5deg); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translate(980px, -30px) rotate(9deg); opacity: 0; }
+}
+
+/* Trajectory 8: Giant Lead Bat */
+.trajectory-lead-giant {
+  top: 45%;
+  left: -80px;
+  animation: fly-lead-giant cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
+}
+@keyframes fly-lead-giant {
+  0% { transform: translate(0, 0) rotate(12deg) scale(0.9); opacity: 0; }
+  15% { opacity: 1; }
+  50% { transform: translate(550px, -50px) rotate(4deg) scale(1.15); filter: drop-shadow(0 0 12px rgba(255, 119, 0, 0.85)); }
+  85% { opacity: 1; }
+  100% { transform: translate(1200px, 80px) rotate(18deg) scale(0.9); opacity: 0; }
+}
+
+/* Loader Center Card & Typography */
+.bat-loader-content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  max-width: 480px;
+  padding: 2.2rem;
+  background: rgba(18, 7, 30, 0.92);
+  border: 2px solid #ff7700;
+  border-radius: 20px;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.85),
+              0 0 35px rgba(255, 119, 0, 0.4);
+}
+
+.bat-loader-icon-frame {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 1.2rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bat-portal-sigil {
+  width: 100%;
+  height: 100%;
+  animation: sigil-spin 12s linear infinite;
+}
+
+@keyframes sigil-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.bat-loader-portal-pulse {
+  position: absolute;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ff7700 0%, #a855f7 70%, transparent 100%);
+  animation: portal-pulse 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes portal-pulse {
+  0% { transform: scale(0.75); opacity: 0.5; }
+  100% { transform: scale(1.15); opacity: 0.95; }
+}
+
+.bat-loader-eyebrow {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: #c084fc;
+  margin-bottom: 0.35rem;
+}
+
+.bat-loader-title {
+  font-family: 'Jolly Lodger', cursive;
+  font-size: 2.5rem;
+  color: #ffaa32;
+  margin: 0 0 0.4rem;
+  line-height: 1.1;
+  text-shadow: 0 0 16px rgba(255, 119, 0, 0.7);
+}
+
+.bat-loader-status {
+  font-size: 1.05rem;
+  color: #f3e8ff;
+  font-weight: 600;
+  margin: 0;
+  min-height: 1.5em;
+  transition: opacity 0.18s ease;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+/* Pop-up Blocked Actions */
+.bat-loader-actions {
+  margin-top: 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bat-loader-notice {
+  font-size: 0.82rem;
+  color: #fecdd3;
+  background: rgba(225, 29, 72, 0.25);
+  border: 1px solid #f43f5e;
+  border-radius: 8px;
+  padding: 8px 12px;
+  line-height: 1.4;
+}
+
+.bat-loader-btn-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.btn-bat-retry {
+  background: #ff7700;
+  border: none;
+  color: #fff;
+  font-weight: 800;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-bat-cancel {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #e2d4f5;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* In-section Toast Notice */
+.halloween-toast-notice {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(18, 7, 30, 0.96);
+  border: 1.5px solid #ff7700;
+  border-radius: 10px;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #f3e8ff;
+  font-size: 0.86rem;
+  font-weight: 600;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
+  z-index: 40;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.halloween-toast-notice.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast-icon {
+  width: 18px;
+  height: 18px;
+  color: #ffaa32;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   8. Responsive Layout Breakpoints & Viewport Sizing Optimization
+   ========================================================================== */
+
+/* Tablet & Intermediate Viewports (768px - 1024px) */
+@media (max-width: 1024px) {
+  .halloween-showcase-section {
+    padding: 0 1.25rem;
+    margin: 2rem auto;
+  }
+  .halloween-container {
+    padding: 2.2rem 1.5rem;
+  }
+  .halloween-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+/* Mobile Viewports (< 768px) */
+@media (max-width: 768px) {
+  .halloween-container {
+    padding: 2rem 1.2rem;
+    border-radius: 16px;
+  }
+  .halloween-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  .halloween-card-banner {
+    height: 120px;
+  }
+  .bat-loader-content {
+    padding: 1.5rem 1rem;
+    max-width: 92%;
+  }
+  .bat-loader-title {
+    font-size: 2rem;
+  }
+}
+
+/* Mobile Phone Viewports (< 480px) */
+@media (max-width: 480px) {
+  .halloween-showcase-section {
+    padding: 0 0.85rem;
+    margin: 1.5rem auto;
+  }
+  .halloween-container {
+    padding: 1.6rem 0.95rem;
+    border-radius: 14px;
+  }
+  .halloween-badge {
+    font-size: 0.72rem;
+    padding: 0.38rem 0.95rem;
+    letter-spacing: 0.08em;
+  }
+  .halloween-title {
+    font-size: clamp(2rem, 8vw, 2.75rem);
+    letter-spacing: 1px;
+    gap: 0.4rem;
+  }
+  .halloween-subtitle {
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+  /* Mobile Banner height tuned to 100px to optimize vertical space */
+  .halloween-card-banner {
+    height: 100px;
+  }
+  .halloween-card-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+  }
+  .halloween-card-icon svg {
+    width: 26px;
+    height: 26px;
+  }
+  .halloween-card-body {
+    padding: 1.1rem 1.15rem;
+  }
+  .halloween-card-title {
+    font-size: 1.18rem;
+  }
+  .halloween-card-desc {
+    font-size: 0.84rem;
+    line-height: 1.48;
+    margin-bottom: 1rem;
+  }
+  .halloween-card-footer {
+    padding-top: 0.85rem;
+  }
+  .btn-halloween-play {
+    padding: 7px 14px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Narrow Viewports (< 360px) - Ensure tag pills never collide with card icon */
+@media (max-width: 360px) {
+  .banner-hud-pills {
+    top: 6px;
+    left: 6px;
+    right: 6px;
+  }
+  .halloween-tag-pill {
+    font-size: 0.58rem;
+    padding: 2px 6px;
+    max-width: 110px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .halloween-diff-badge {
+    font-size: 0.58rem;
+    padding: 2px 5px;
+    gap: 3px;
+  }
+  .diff-dot {
+    width: 4px;
+    height: 4px;
+  }
+  .halloween-card-banner {
+    height: 95px;
+  }
+  .halloween-card-icon {
+    width: 44px;
+    height: 44px;
+  }
+  .halloween-card-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/* Reduced Motion Preference */
+@media (prefers-reduced-motion: reduce) {
+  .ambient-bg-bat,
+  .ambient-particle,
+  .halloween-fog-layer,
+  .crypt-sigil-bg,
+  .island-ocean-waves,
+  .bat-portal-sigil {
+    animation: none !important;
+  }
+  .halloween-card {
+    transition: none !important;
+  }
+}
+
+/* ==========================================================================
+   9. Guaranteed Light/Dark Mode High-Contrast Overrides
+   ========================================================================== */
+html[data-theme="light"] #halloween-games h2.halloween-title,
+body[data-theme="light"] #halloween-games h2.halloween-title,
+[data-theme="light"] #halloween-games .halloween-title {
+  color: #ff7700 !important;
+  text-shadow: 0 0 18px rgba(255, 119, 0, 0.85), 0 0 40px rgba(255, 60, 0, 0.55), 0 2px 4px rgba(0, 0, 0, 0.9) !important;
+}
+
+html[data-theme="light"] #halloween-games p.halloween-subtitle,
+body[data-theme="light"] #halloween-games p.halloween-subtitle,
+[data-theme="light"] #halloween-games .halloween-subtitle {
+  color: #f1f5f9 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+}
+
+html[data-theme="light"] #halloween-games .halloween-card .halloween-card-title,
+html[data-theme="light"] #halloween-games h3.halloween-card-title,
+body[data-theme="light"] #halloween-games .halloween-card .halloween-card-title,
+body[data-theme="light"] #halloween-games h3.halloween-card-title,
+[data-theme="light"] .halloween-card-title,
+[data-theme="light"] h3.halloween-card-title,
+.halloween-card-title {
+  color: #ffffff !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95), 0 0 12px rgba(255, 170, 50, 0.25) !important;
+}
+
+html[data-theme="light"] #halloween-games .halloween-card .halloween-card-desc,
+html[data-theme="light"] #halloween-games p.halloween-card-desc,
+body[data-theme="light"] #halloween-games .halloween-card .halloween-card-desc,
+body[data-theme="light"] #halloween-games p.halloween-card-desc,
+[data-theme="light"] .halloween-card-desc,
+[data-theme="light"] p.halloween-card-desc,
+.halloween-card-desc {
+  color: #e2e8f0 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95) !important;
+}
+
+html[data-theme="light"] #halloween-games .halloween-card .halloween-card-category,
+body[data-theme="light"] #halloween-games .halloween-card .halloween-card-category,
+[data-theme="light"] .halloween-card-category,
+.halloween-card-category {
+  color: #fb923c !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+}
+
+html[data-theme="light"] #halloween-games .halloween-card .halloween-author-name,
+body[data-theme="light"] #halloween-games .halloween-card .halloween-author-name,
+[data-theme="light"] .halloween-author-name,
+.halloween-author-name {
+  color: #cbd5e1 !important;
+}
+
+html[data-theme="light"] #halloween-games .halloween-card .halloween-author-name strong,
+body[data-theme="light"] #halloween-games .halloween-card .halloween-author-name strong,
+[data-theme="light"] .halloween-author-name strong,
+.halloween-author-name strong {
+  color: #ffaa32 !important;
+}
+
+/* Halloween pill SVG styling */
+.pill-halloween-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.35rem;
+  vertical-align: middle;
+}
+.pill-halloween-icon svg {
+  display: block;
+}
+
+/* ==========================================================================
+   10. Expanded Responsive Fluid Engine & Layout Diagnostics
+   ========================================================================== */
+
+/* Ultrawide Viewport Enhancements (>= 1440px) */
+@media (min-width: 1440px) {
+  .halloween-showcase-section {
+    max-width: 1400px;
+    margin: 3.5rem auto;
+  }
+  .halloween-container {
+    padding: 3.5rem 3rem;
+  }
+  .halloween-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2.2rem;
+  }
+  .halloween-card-banner {
+    height: 175px;
+  }
+  .halloween-card-icon {
+    width: 72px;
+    height: 72px;
+  }
+  .halloween-card-icon svg {
+    width: 38px;
+    height: 38px;
+  }
+  .halloween-card-title {
+    font-size: 1.35rem;
+  }
+  .halloween-card-desc {
+    font-size: 0.94rem;
+  }
+}
+
+/* Medium Desktop Viewports (1025px - 1439px) */
+@media (min-width: 1025px) and (max-width: 1439px) {
+  .halloween-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.6rem;
+  }
+  .halloween-card-banner {
+    height: 150px;
+  }
+}
+
+/* Fluid Flex Sizing & Boundary Safeguards */
+.halloween-showcase-section,
+.halloween-container,
+.halloween-grid,
+.halloween-card,
+.halloween-card-body,
+.halloween-card-footer {
+  box-sizing: border-box;
+}
+
+.halloween-card {
+  min-height: 100%;
+}
+
+.halloween-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+}
+
+.halloween-card-desc {
+  flex: 1 1 auto;
+  margin-bottom: 1.25rem;
+}
+
+.halloween-card-footer {
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+/* Print Stylesheet Resilience */
+@media print {
+  .halloween-showcase-section {
+    background: transparent !important;
+    color: #000000 !important;
+  }
+  .halloween-container {
+    border: 1px solid #333333 !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+  }
+  .halloween-card {
+    page-break-inside: avoid;
+    border: 1px solid #cccccc !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+  }
+  .halloween-title,
+  .halloween-card-title,
+  .halloween-card-desc {
+    color: #000000 !important;
+    text-shadow: none !important;
+  }
+}
+
+/* High Contrast Mode Adaptation (Windows Contrast Themes) */
+@media (forced-colors: active) {
+  .halloween-card {
+    border: 2px solid ButtonText !important;
+  }
+  .halloween-tag-pill,
+  .halloween-diff-badge,
+  .btn-halloween-play {
+    border: 1px solid ButtonText !important;
+  }
+  .halloween-badge {
+    border: 2px solid Highlight !important;
+  }
+}
+
+/* ==========================================================================
+   11. Viewport Specific Micro-Layout Tuning & Sub-pixel Geometry Guards
+   ========================================================================== */
+
+/* Sub-pixel text rendering optimizations */
+.halloween-card-title,
+.halloween-card-desc,
+.halloween-tag-pill,
+.halloween-diff-badge,
+.halloween-author-name {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Landscape Mobile Orientation Adjustments */
+@media (max-height: 520px) and (orientation: landscape) {
+  .halloween-showcase-section {
+    margin: 1.25rem auto;
+  }
+  .halloween-container {
+    padding: 1.5rem 1.2rem;
+  }
+  .halloween-header {
+    margin-bottom: 1.5rem;
+  }
+  .halloween-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.1rem;
+  }
+  .halloween-card-banner {
+    height: 90px;
+  }
+}
+
+/* Focus styles for keyboard accessibility */
+.halloween-card:focus-visible,
+.btn-halloween-play:focus-visible {
+  outline: 2px solid #ffa500 !important;
+  outline-offset: 3px;
+}
+
+/* Reduced data mode efficiency */
+@media (prefers-reduced-data: reduce) {
+  .halloween-card-banner,
+  .halloween-container {
+    background-image: none !important;
+  }
+}

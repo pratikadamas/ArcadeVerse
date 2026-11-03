@@ -153,19 +153,14 @@ To keep this project scalable and prevent hundreds of merge conflicts, I have es
 >
 > ---
 >
-> **🚨 2. NEVER MODIFY ROOT FILES: `index.html`, `leaderboard.html`, OR `games-registry.js`**
->
-> **You must NEVER edit or touch ANY existing root files in the main codebase!**
->
-> - **Strictly Forbidden:** Modifying `index.html`, `leaderboard.html`, or `assets/js/games-registry.js` in your Pull Request is strictly prohibited.
-> - **Why?** When multiple contributors edit shared root files simultaneously, merge conflicts happen on every PR.
-> - **Zero need for you to touch root files:**
->   - Game registrations are handled automatically by our GitHub Actions workflow scanning `game.json`.
->   - The platform dynamic loader automatically registers and connects your components.
-> - **Any PR that touches `index.html`, `leaderboard.html`, or `games-registry.js` will be rejected immediately, and you will be instructed to revert root changes and strictly follow `CONTRIBUTING.md`.**
->
+> **🚨 2. ROOT FILES POLICY: GAME PRs VS. PLATFORM ISSUES**
+
+> - **For Game Contributions:** You must NEVER edit `assets/js/games-registry.js`, `index.html`, or `leaderboard.html` to register or connect your game. Game registration is 100% automated by GitHub Actions scanning your `game.json`.
+> - **For Platform & Core Feature Issues:** If your assigned issue specifically requires modifying root files (e.g. `index.html`, `leaderboard.html`, `assets/js/app.js`, `assets/css/style.css`), modifying those files is permitted and expected for that issue!
+> - **Strictly Prohibited for ALL PRs:** Manual edits to `assets/js/games-registry.js` are never allowed because this file is auto-compiled by CI on merge. Manual edits create severe merge conflicts.
+
 > ---
->
+
 > **🚨 3. NO LOOSE FILES OR INDIVIDUAL FOLDERS IN ROOT DIRECTORY**
 >
 > **Do NOT create, add, or dump loose files or individual folders directly in the repository root / home directory.**
@@ -385,7 +380,7 @@ As your Project Admin, here is what I expect from every contributor:
 > [!CAUTION]
 > The following are **strictly prohibited** and will result in PR rejection or disqualification:
 >
-> - ❌ **Modifying `games-registry.js`, `index.html`, or root core files** — contributors must NOT edit `assets/js/games-registry.js`, `index.html`, or `leaderboard.html`. Game registration is automated via `game.json`, and games are dynamically loaded by the platform.
+> - ❌ **Modifying `assets/js/games-registry.js` manually** — contributors must NOT edit `assets/js/games-registry.js` manually. Game registration is automated via `game.json`. (Root files like `index.html` or `leaderboard.html` should only be modified if your assigned issue specifically requires platform/UI updates).
 > - ❌ **Adding README or documentation files inside game folders** — no `README.md` or doc files are allowed in `games/<game-name_your-name>/`. Describe your changes in your PR description.
 > - ❌ **Loose files or individual folders in the home/root directory** — creating or dumping any files or folders directly in the root directory.
 > - ❌ **Creating games outside `games/`** — games must STRICTLY and MANDATORILY be placed under `games/<game-name_your-name>/` (games folder ei game create mandatory!).
@@ -439,7 +434,7 @@ Before submitting your PR to me, make sure every box is checked:
 - [ ] I have read this contributing guide and the [Code of Conduct](CODE_OF_CONDUCT.md)
 - [ ] My change is meaningful, tested, and written by me (100% Vanilla JS/HTML/CSS)
 - [ ] **No files or folders were created directly in the home/root directory**
-- [ ] **I have NOT modified any root files (`index.html`, `leaderboard.html`, `games-registry.js`)**
+- [ ] **I have NOT modified `assets/js/games-registry.js` manually** (and for game submissions, root files like `index.html` were not touched)
 - [ ] Games are strictly and mandatorily inside `games/<game-name_your-name>/` *(games folder ei game create mandatory)*
 - [ ] Game contains **ONLY** `index.html`, `style.css`, `game.js`, and `game.json` (strictly 4 files — no `README.md`, no documentation files, and no extraneous assets/binaries)
 - [ ] Used **icons only (SVG / Lucide)** in the game UI — **NO emojis**
