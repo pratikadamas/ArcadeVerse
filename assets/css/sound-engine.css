@@ -70,6 +70,71 @@
   100% { height: 6px; }
 }
 
+/* Modal audio indicator: locked state (waiting for a user gesture) */
+.sound-toggle-btn.sound-locked {
+  border-color: rgba(245, 158, 11, 0.55);
+  color: #f59e0b;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+  animation: audioLockedPulse 1.6s ease-in-out infinite;
+}
+
+.sound-toggle-btn.sound-locked .eq-bar {
+  animation: none !important;
+  height: 3px !important;
+  background: #f59e0b !important;
+}
+
+@keyframes audioLockedPulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(245, 158, 11, 0.15); }
+  50% { box-shadow: 0 0 16px rgba(245, 158, 11, 0.45); }
+}
+
+.modal-audio-indicator {
+  margin-right: 0;
+}
+
+/* Retro "click or press any key to start audio" banner over the game frame */
+.audio-unlock-banner {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100% - 24px);
+  padding: 9px 18px;
+  background: rgba(6, 9, 19, 0.92);
+  border: 1px solid #00f5ff;
+  border-radius: 6px;
+  color: #00f5ff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 0 18px rgba(0, 245, 255, 0.35);
+  animation: audioBannerBlink 1.4s steps(2, start) infinite;
+}
+
+.audio-unlock-banner .eq-bar {
+  height: 3px;
+}
+
+@keyframes audioBannerBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .audio-unlock-banner,
+  .sound-toggle-btn.sound-locked {
+    animation: none;
+  }
+}
+
 @media (max-width: 600px) {
   .sound-toggle-btn .sound-label {
     display: none;
