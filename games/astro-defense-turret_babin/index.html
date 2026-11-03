@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Astro Defense Turret - ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="game-container">
+    <header class="game-header">
+      <div class="header-left">
+        <a href="../../index.html" class="nav-btn" aria-label="Back to ArcadeVerse">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Hub</span>
+        </a>
+        <h1 class="game-title">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#ef4444" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          ASTRO DEFENSE TURRET
+        </h1>
+      </div>
+      <div class="header-controls">
+        <button id="btnRules" class="icon-btn" aria-label="Game Rules">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </button>
+        <button id="btnMute" class="icon-btn" aria-label="Toggle Sound">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+        </button>
+        <button id="btnPause" class="icon-btn" aria-label="Pause Game">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="6" y="4" width="4" height="16"></rect>
+            <rect x="14" y="4" width="4" height="16"></rect>
+          </svg>
+        </button>
+        <button id="btnRestartNav" class="icon-btn" aria-label="Restart Mission">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="stats-panel">
+      <div class="stat-card">
+        <span class="label">SCORE</span>
+        <span id="statScore" class="val score">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">WAVE</span>
+        <span id="statWave" class="val wave">1</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">SHIELD HP</span>
+        <span id="statShield" class="val shield">100%</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">HIGH SCORE</span>
+        <span id="statHigh" class="val high">0</span>
+      </div>
+    </div>
+
+    <div class="canvas-wrapper">
+      <canvas id="gameCanvas" width="600" height="600"></canvas>
+
+      <!-- Start Overlay -->
+      <div id="startScreen" class="overlay">
+        <div class="panel">
+          <div class="panel-icon">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#ef4444" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="22" y1="12" x2="18" y2="12"></line>
+              <line x1="6" y1="12" x2="2" y2="12"></line>
+              <line x1="12" y1="6" x2="12" y2="2"></line>
+              <line x1="12" y1="22" x2="12" y2="18"></line>
+            </svg>
+          </div>
+          <h2>ORBITAL DEFENSE LOCK</h2>
+          <p>Rotate your turret cannon to eliminate hostile invaders descending on the core hub before your shields collapse!</p>
+          <div class="button-group">
+            <button id="btnStart" class="btn btn-primary">ENGAGE TURRET</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pause Overlay -->
+      <div id="pauseScreen" class="overlay hidden">
+        <div class="panel">
+          <h2>TURRET STANDBY</h2>
+          <p>Fire control system paused.</p>
+          <button id="btnResume" class="btn btn-primary">RESUME COMBAT</button>
+        </div>
+      </div>
+
+      <!-- Game Over Overlay -->
+      <div id="gameOverScreen" class="overlay hidden">
+        <div class="panel">
+          <h2>DEFENSE BREACHED</h2>
+          <div class="stat-summary">
+            <div><span class="muted">Final Score:</span> <span id="finalScore">0</span></div>
+            <div><span class="muted">Wave Survived:</span> <span id="finalWave">1</span></div>
+            <div><span class="muted">Enemies Destroyed:</span> <span id="finalKills">0</span></div>
+          </div>
+          <button id="btnRestart" class="btn btn-primary">REDEPLOY TURRET</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Virtual Controls -->
+    <div class="touch-controls">
+      <button id="btnRotateLeft" class="touch-btn" aria-label="Rotate Left">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <button id="btnFire" class="touch-btn fire" aria-label="Fire Lasers">FIRE</button>
+      <button id="btnRotateRight" class="touch-btn" aria-label="Rotate Right">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Rules Modal -->
+    <div id="rulesModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>DEFENSE PROTOCOLS</h3>
+          <button id="btnCloseRules" class="close-btn" aria-label="Close">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p><strong>Aiming:</strong> Aim with your Mouse / Pointer or Left/Right Arrow keys (or A/D keys).</p>
+          <p><strong>Firing:</strong> Click canvas, tap Spacebar, or hold the Fire button on touchscreen to unleash beam lasers.</p>
+          <p><strong>Hazards:</strong> High-speed seeker probes and armored drones converge from outer orbit. If they breach the shield, core health drops!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
