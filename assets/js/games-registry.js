@@ -1606,8 +1606,8 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "pratikgiri",
-    "github": "pratikgiri",
+    "name": "Hi' I am Pratik Giri",
+    "github": "pratikadamas",
     "avatarInitial": "P",
     "role": "Contributor (NSOC '26)",
     "commits": 2,
