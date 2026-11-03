@@ -8541,3 +8541,188 @@ html.a11y-reduced-motion .badge-count {
   background: var(--accent-primary);
   color: #fff;
 }
+
+/* ========================================================
+   SEARCH & FILTER ENHANCEMENTS (Issue: Game Search & Filtering)
+   ======================================================== */
+
+/* Search Clear Button (×) */
+.search-clear-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 3px;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
+  margin-left: 2px;
+}
+
+.search-clear-btn:hover {
+  opacity: 1;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.search-clear-btn:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* Live Results Count Bar */
+.search-results-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  min-height: 1.6rem;
+}
+
+.results-count {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  opacity: 0.85;
+}
+
+/* Dynamic Tag Filter Row */
+.search-tags-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tag-filter-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-right: 2px;
+  white-space: nowrap;
+}
+
+.tag-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.tag-filter-chip:hover {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.tag-filter-chip.active {
+  background: rgba(139, 92, 246, 0.18);
+  border-color: #8b5cf6;
+  color: #c4b5fd;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.25);
+}
+
+.tag-filter-chip:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 1px;
+}
+
+/* Tag Filter Clear Button */
+.tag-filter-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px dashed rgba(139, 92, 246, 0.5);
+  color: #a78bfa;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.tag-filter-clear:hover {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: #8b5cf6;
+  color: #c4b5fd;
+}
+
+/* Light theme overrides */
+[data-theme="light"] .search-clear-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .results-count {
+  color: var(--text-muted);
+}
+
+[data-theme="light"] .tag-filter-chip {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .tag-filter-chip:hover {
+  background: rgba(59, 130, 246, 0.06);
+}
+
+[data-theme="light"] .tag-filter-chip.active {
+  background: rgba(139, 92, 246, 0.1);
+  color: #7c3aed;
+}
+
+[data-theme="light"] .tag-filter-clear {
+  color: #7c3aed;
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+/* Responsive: stack tag row under results count on small screens */
+@media (max-width: 640px) {
+  .search-results-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .search-tags-row {
+    gap: 5px;
+  }
+
+  .tag-filter-chip {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+  }
+}
+
+/* Reduced motion: suppress chip hover lift */
+html.a11y-reduced-motion .tag-filter-chip,
+html.a11y-reduced-motion .tag-filter-chip:hover,
+html.a11y-reduced-motion .search-clear-btn {
+  transform: none !important;
+  transition: none !important;
+}

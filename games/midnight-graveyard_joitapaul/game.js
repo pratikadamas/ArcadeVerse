@@ -68,6 +68,7 @@
   let animationFrame = 0;
   let statusTimeout = 0;
   let ambientTime = 0;
+  let nearLockedGate = false;
 
   function centerOf(cell) {
     return { x: (cell.x + 0.5) * tileSize, y: (cell.y + 0.5) * tileSize };
@@ -138,6 +139,7 @@
     lanternOn = true;
     invulnerability = 0;
     ambientTime = 0;
+    nearLockedGate = false;
     lastFrame = 0;
     state = "playing";
     overlay.hidden = true;
@@ -279,6 +281,7 @@
     ghosts.forEach((ghost) => advanceGhost(ghost, delta));
     collectKeys();
     checkGhostContact();
+    updateGateHint();
     updateHud();
 
     if (state === "playing" && keysFound === keyLocations.length) {
@@ -287,6 +290,21 @@
         showEndState(true);
       }
     }
+  }
+
+  function updateGateHint() {
+    if (keysFound === keyLocations.length) {
+      nearLockedGate = false;
+      return;
+    }
+
+    const exit = centerOf({ x: 18, y: 13 });
+    const isNearGate = Math.hypot(player.x - exit.x, player.y - exit.y) < tileSize * 1.25;
+    if (isNearGate && !nearLockedGate) {
+      const remaining = keyLocations.length - keysFound;
+      setStatus(`The iron gate is locked. Find ${remaining} more ${remaining === 1 ? "key" : "keys"}.`);
+    }
+    nearLockedGate = isNearGate;
   }
 
   function drawFloor(column, row) {
@@ -461,7 +479,7 @@
   }
 
   function drawFog() {
-    const radius = lanternOn ? tileSize * (4.4 + energy / maxEnergy) : tileSize * 1.35;
+    const radius = lanternOn ? tileSize * (4.4 + energy / maxEnergy) : tileSize * 2.1;
     const gradient = context.createRadialGradient(player.x, player.y, tileSize * 0.35, player.x, player.y, radius);
     gradient.addColorStop(0, "rgba(0, 0, 0, 0.96)");
     gradient.addColorStop(0.68, "rgba(0, 0, 0, 0.77)");
@@ -526,11 +544,11 @@
     if (direction && state === "playing") {
       event.preventDefault();
       pressedDirections.add(direction);
-    } else if (key === "f" && state === "playing") {
+    } else if (!event.repeat && key === "f" && state === "playing") {
       lanternOn = !lanternOn && energy > 0;
       updateHud();
       setStatus(lanternOn ? "Lantern lit." : "Lantern extinguished to conserve energy.");
-    } else if (key === "e" && state === "playing") {
+    } else if (!event.repeat && key === "e" && state === "playing") {
       event.preventDefault();
       rechargeLantern();
     } else if (key === "escape") {
@@ -541,7 +559,7 @@
         lastFrame = 0;
         animationFrame = window.requestAnimationFrame(frame);
       }
-    } else if (key === "r") {
+    } else if (!event.repeat && key === "r") {
       resetRun();
     } else if (key === "enter" && state === "ready") {
       resetRun();
