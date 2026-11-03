@@ -19,9 +19,22 @@
     <div class="author-badge">Created by @DebasmitaBose0 • Match Rules Edition</div>
   </div>
 
+  <!-- Match Setup: game mode and score limit -->
+  <div class="pong-modebar">
+    <div class="difficulty-group" role="group" aria-label="Game Mode">
+      <button type="button" class="mode-btn active" data-mode="ai" aria-pressed="true"><i data-lucide="cpu"></i> 1P vs AI</button>
+      <button type="button" class="mode-btn" data-mode="versus" aria-pressed="false"><i data-lucide="users"></i> 2P Local</button>
+    </div>
+    <div class="difficulty-group" role="group" aria-label="Score Limit">
+      <button type="button" class="target-btn" data-target="5" aria-pressed="false">First to 5</button>
+      <button type="button" class="target-btn active" data-target="7" aria-pressed="true">First to 7</button>
+      <button type="button" class="target-btn" data-target="10" aria-pressed="false">First to 10</button>
+    </div>
+  </div>
+
   <!-- Settings & Difficulty Toolbar -->
   <div class="pong-toolbar">
-    <div class="difficulty-group" role="group" aria-label="AI Difficulty Level">
+    <div class="difficulty-group" id="difficulty-group" role="group" aria-label="AI Difficulty Level">
       <button type="button" class="diff-btn active" data-difficulty="easy">Easy</button>
       <button type="button" class="diff-btn" data-difficulty="pro">Pro</button>
       <button type="button" class="diff-btn" data-difficulty="cyber">Cyber</button>
@@ -41,9 +54,9 @@
   </div>
 
   <div class="score-board" role="status" aria-live="polite">
-    <span class="score-player">Player: <strong id="player-score">0</strong></span>
-    <span class="match-target-tag">First to 7</span>
-    <span class="score-ai">AI: <strong id="ai-score">0</strong></span>
+    <span class="score-player"><span id="left-label">Player</span>: <strong id="player-score">0</strong></span>
+    <span class="match-target-tag" id="match-target-tag">First to 7</span>
+    <span class="score-ai"><span id="right-label">AI</span>: <strong id="ai-score">0</strong></span>
   </div>
 
   <div class="canvas-wrapper">
@@ -69,7 +82,7 @@
     </div>
   </div>
 
-  <p class="instructions">
+  <p class="instructions" id="instructions">
     Control paddle: <strong>Mouse / Touch</strong> or <strong>Arrow Keys / W & S</strong> • <strong>P</strong> to Pause
   </p>
 

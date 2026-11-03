@@ -1,7 +1,7 @@
 /**
  * Cyber Neon Pong — Core Match Engine
  * Pure Vanilla JavaScript 60 FPS HTML5 Canvas Pong
- * Features: First-to-7 Match Rules, Dynamic AI Difficulties, Native Web Audio Synthesis & Pause
+ * Features: First-to-N Match Rules, Dynamic AI Difficulties, 2P Local Versus Mode, Native Web Audio Synthesis & Pause
  * Author: Debasmita Bose & Babin Bid
  * NSOC Winter Edition 2026
  */
@@ -25,8 +25,16 @@
   const winnerDesc = document.getElementById("winner-desc");
   const finalScoreDisplay = document.getElementById("final-score-display");
   const diffBtns = document.querySelectorAll(".diff-btn");
+  const modeBtns = document.querySelectorAll(".mode-btn");
+  const targetBtns = document.querySelectorAll(".target-btn");
+  const difficultyGroup = document.getElementById("difficulty-group");
+  const leftLabel = document.getElementById("left-label");
+  const rightLabel = document.getElementById("right-label");
+  const matchTargetTag = document.getElementById("match-target-tag");
+  const instructionsElem = document.getElementById("instructions");
 
-  const MATCH_TARGET = 7;
+  const DEFAULT_MATCH_TARGET = 7;
+  const VERSUS_PADDLE_SPEED = 6.5;
   const paddleWidth = 12;
   const paddleHeight = 70;
   const ballRadius = 8;
@@ -45,6 +53,10 @@
   let isPaused = false;
   let isGameOver = false;
   let currentDifficulty = "easy";
+  let gameMode = "ai"; // "ai" = 1P vs AI (default), "versus" = 2P local
+  let matchTarget = DEFAULT_MATCH_TARGET;
+  // Held keys for 2P mode, so both players can move at the same time
+  const heldKeys = { leftUp: false, leftDown: false, rightUp: false, rightDown: false };
   let soundEnabled = true;
   let audioCtx = null;
   let animationId = null;
@@ -137,8 +149,17 @@
     playerY = Math.max(0, Math.min(canvas.height - paddleHeight, targetY));
   }
 
+  function setRightY(targetY) {
+    aiY = Math.max(0, Math.min(canvas.height - paddleHeight, targetY));
+  }
+
+  function clearHeldKeys() {
+    heldKeys.leftUp = heldKeys.leftDown = heldKeys.rightUp = heldKeys.rightDown = false;
+  }
+
   // Input Listeners
   canvas.addEventListener("mousemove", (e) => {
+    if (gameMode === "versus") return; // 2P uses the keyboard / split touch
     if (isPaused || isGameOver) return;
     const rect = canvas.getBoundingClientRect();
     const scaleY = canvas.height / (rect.height || canvas.height);
@@ -146,7 +167,34 @@
     setPlayerY(mouseY - paddleHeight / 2);
   });
 
+  // 2P touch: left half of the court drives the left paddle, right half the right paddle
+  function handleVersusTouch(e) {
+    e.preventDefault();
+    if (isPaused || isGameOver) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / (rect.width || canvas.width);
+    const scaleY = canvas.height / (rect.height || canvas.height);
+    for (let i = 0; i < e.touches.length; i++) {
+      const t = e.touches[i];
+      const x = (t.clientX - rect.left) * scaleX;
+      const y = (t.clientY - rect.top) * scaleY;
+      if (x < canvas.width / 2) {
+        setPlayerY(y - paddleHeight / 2);
+      } else {
+        setRightY(y - paddleHeight / 2);
+      }
+    }
+  }
+
+  canvas.addEventListener("touchstart", (e) => {
+    if (gameMode === "versus") handleVersusTouch(e);
+  }, { passive: false });
+
   canvas.addEventListener("touchmove", (e) => {
+    if (gameMode === "versus") {
+      handleVersusTouch(e);
+      return;
+    }
     if (e.touches && e.touches[0]) {
       e.preventDefault();
       if (isPaused || isGameOver) return;
@@ -158,6 +206,26 @@
   }, { passive: false });
 
   window.addEventListener("keydown", (e) => {
+    if (gameMode === "versus") {
+      // Split controls: W/S = left paddle, ArrowUp/ArrowDown = right paddle
+      if (e.key === "w" || e.key === "W") {
+        e.preventDefault();
+        heldKeys.leftUp = true;
+      } else if (e.key === "s" || e.key === "S") {
+        e.preventDefault();
+        heldKeys.leftDown = true;
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        heldKeys.rightUp = true;
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        heldKeys.rightDown = true;
+      } else if (e.key === "p" || e.key === "P" || e.key === " ") {
+        e.preventDefault();
+        togglePause();
+      }
+      return;
+    }
     if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") {
       e.preventDefault();
       setPlayerY(playerY - 24);
@@ -170,10 +238,22 @@
     }
   });
 
+  window.addEventListener("keyup", (e) => {
+    if (e.key === "w" || e.key === "W") heldKeys.leftUp = false;
+    else if (e.key === "s" || e.key === "S") heldKeys.leftDown = false;
+    else if (e.key === "ArrowUp") heldKeys.rightUp = false;
+    else if (e.key === "ArrowDown") heldKeys.rightDown = false;
+  });
+
+  window.addEventListener("blur", clearHeldKeys);
+
   function resetBall(servingToPlayer) {
     ballX = canvas.width / 2;
     ballY = canvas.height / 2;
-    const baseSpeed = currentDifficulty === "cyber" ? 5.5 : (currentDifficulty === "pro" ? 4.8 : 4.0);
+    // 2P has no AI difficulty, so it serves at the Pro pace
+    const baseSpeed = gameMode === "versus"
+      ? 4.8
+      : (currentDifficulty === "cyber" ? 5.5 : (currentDifficulty === "pro" ? 4.8 : 4.0));
     ballSpeedX = servingToPlayer ? -baseSpeed : baseSpeed;
     ballSpeedY = (Math.random() - 0.5) * 5;
   }
@@ -185,6 +265,7 @@
     aiScoreElem.textContent = "0";
     isPaused = false;
     isGameOver = false;
+    clearHeldKeys();
     pauseOverlay.classList.add("hidden");
     gameoverOverlay.classList.add("hidden");
     playerY = canvas.height / 2 - paddleHeight / 2;
@@ -202,16 +283,23 @@
   }
 
   function checkMatchOver() {
-    if (playerScore >= MATCH_TARGET || aiScore >= MATCH_TARGET) {
+    if (playerScore >= matchTarget || aiScore >= matchTarget) {
       isGameOver = true;
-      const playerWon = playerScore >= MATCH_TARGET;
+      clearHeldKeys();
+      const playerWon = playerScore >= matchTarget;
       playMatchEndSound(playerWon);
 
-      winnerTitle.textContent = playerWon ? "Match Victory!" : "Match Defeat!";
-      winnerTitle.style.color = playerWon ? "#38bdf8" : "#f43f5e";
-      winnerDesc.textContent = playerWon
-        ? `Incredible! You defeated ${currentDifficulty.toUpperCase()} AI to reach 7 points!`
-        : `AI claimed victory in ${currentDifficulty.toUpperCase()} mode. Ready for a rematch?`;
+      if (gameMode === "versus") {
+        winnerTitle.textContent = playerWon ? "Player 1 Wins!" : "Player 2 Wins!";
+        winnerTitle.style.color = playerWon ? "#38bdf8" : "#f43f5e";
+        winnerDesc.textContent = `${playerWon ? "Player 1" : "Player 2"} reached ${matchTarget} points first. Rematch?`;
+      } else {
+        winnerTitle.textContent = playerWon ? "Match Victory!" : "Match Defeat!";
+        winnerTitle.style.color = playerWon ? "#38bdf8" : "#f43f5e";
+        winnerDesc.textContent = playerWon
+          ? `Incredible! You defeated ${currentDifficulty.toUpperCase()} AI to reach ${matchTarget} points!`
+          : `AI claimed victory in ${currentDifficulty.toUpperCase()} mode. Ready for a rematch?`;
+      }
       finalScoreDisplay.textContent = `${playerScore} - ${aiScore}`;
       gameoverOverlay.classList.remove("hidden");
     }
@@ -234,19 +322,27 @@
       playWallSound();
     }
 
-    // AI Tracking Logic
-    const setting = AI_SETTINGS[currentDifficulty] || AI_SETTINGS.easy;
-    const aiCenter = aiY + paddleHeight / 2;
-    const diff = ballY - aiCenter;
+    if (gameMode === "versus") {
+      // Both paddles are driven by held keys
+      if (heldKeys.leftUp) setPlayerY(playerY - VERSUS_PADDLE_SPEED);
+      if (heldKeys.leftDown) setPlayerY(playerY + VERSUS_PADDLE_SPEED);
+      if (heldKeys.rightUp) setRightY(aiY - VERSUS_PADDLE_SPEED);
+      if (heldKeys.rightDown) setRightY(aiY + VERSUS_PADDLE_SPEED);
+    } else {
+      // AI Tracking Logic
+      const setting = AI_SETTINGS[currentDifficulty] || AI_SETTINGS.easy;
+      const aiCenter = aiY + paddleHeight / 2;
+      const diff = ballY - aiCenter;
 
-    if (Math.abs(diff) > setting.deadband) {
-      if (diff > 0) {
-        aiY += setting.speed;
-      } else {
-        aiY -= setting.speed;
+      if (Math.abs(diff) > setting.deadband) {
+        if (diff > 0) {
+          aiY += setting.speed;
+        } else {
+          aiY -= setting.speed;
+        }
       }
+      aiY = Math.max(0, Math.min(canvas.height - paddleHeight, aiY));
     }
-    aiY = Math.max(0, Math.min(canvas.height - paddleHeight, aiY));
 
     // Player Paddle Collision (Left side)
     const playerPaddleX = 15;
@@ -321,7 +417,7 @@
     ctx.shadowBlur = 12;
     ctx.fillRect(15, playerY, paddleWidth, paddleHeight);
 
-    // AI paddle (Neon Red)
+    // AI / Player 2 paddle (Neon Red)
     ctx.fillStyle = "#f43f5e";
     ctx.shadowColor = "#f43f5e";
     ctx.shadowBlur = 12;
@@ -370,6 +466,51 @@
       resetMatch();
     });
   });
+
+  // Mode & Score Limit Selectors
+  const INSTRUCTIONS = {
+    ai: "Control paddle: <strong>Mouse / Touch</strong> or <strong>Arrow Keys / W & S</strong> &bull; <strong>P</strong> to Pause &bull; First to {N} wins",
+    versus: "<strong>Player 1 (blue):</strong> W / S &bull; <strong>Player 2 (red):</strong> Arrow Up / Down &bull; Touch: left half / right half of the court &bull; <strong>P</strong> to Pause &bull; First to {N} wins"
+  };
+
+  function refreshModeUI() {
+    const versus = gameMode === "versus";
+    leftLabel.textContent = versus ? "P1" : "Player";
+    rightLabel.textContent = versus ? "P2" : "AI";
+    difficultyGroup.hidden = versus;
+    matchTargetTag.textContent = `First to ${matchTarget}`;
+    instructionsElem.innerHTML = INSTRUCTIONS[gameMode].replace("{N}", matchTarget);
+    modeBtns.forEach(b => {
+      const on = b.getAttribute("data-mode") === gameMode;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-pressed", String(on));
+    });
+    targetBtns.forEach(b => {
+      const on = Number(b.getAttribute("data-target")) === matchTarget;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-pressed", String(on));
+    });
+  }
+
+  modeBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      gameMode = btn.getAttribute("data-mode") === "versus" ? "versus" : "ai";
+      refreshModeUI();
+      resetMatch();
+      btn.blur();
+    });
+  });
+
+  targetBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      matchTarget = Number(btn.getAttribute("data-target")) || DEFAULT_MATCH_TARGET;
+      refreshModeUI();
+      resetMatch();
+      btn.blur();
+    });
+  });
+
+  refreshModeUI();
 
   // Start Loop
   resetBall(true);
