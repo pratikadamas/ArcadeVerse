@@ -1143,6 +1143,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
     });
+  }
 
   // --- Faceted Filters Event Listeners (Duration, Controls, Reset) ---
   const durationFacetChips = document.querySelectorAll("#duration-facet-chips .facet-chip");
