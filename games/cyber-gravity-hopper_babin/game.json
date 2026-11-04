@@ -1,0 +1,18 @@
+{
+  "title": "Cyber Gravity Hopper",
+  "category": "Platformer",
+  "lucideIcon": "navigation",
+  "description": "Invert gravitational fields to jump between cybernetic ceiling and floor platforms while evading laser emitters!",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Arcade Contributor",
+  "tags": [
+    "Platformer",
+    "Physics",
+    "Action",
+    "Reflex",
+    "Gravity"
+  ],
+  "stars": 38,
+  "featured": true
+}

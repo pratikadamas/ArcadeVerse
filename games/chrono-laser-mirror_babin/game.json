@@ -1,0 +1,18 @@
+{
+  "title": "Chrono Laser Mirror",
+  "category": "Puzzle",
+  "lucideIcon": "crosshair",
+  "description": "Rotate optical prism mirrors to redirect photonic laser beams into quantum target receptors!",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Arcade Contributor",
+  "tags": [
+    "Puzzle",
+    "Optics",
+    "Laser",
+    "Physics",
+    "Logic"
+  ],
+  "stars": 42,
+  "featured": true
+}
