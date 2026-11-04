@@ -1,0 +1,12 @@
+{
+  "title": "Neon Pong Smash",
+  "category": "Arcade",
+  "description": "High-octane cyberpunk Pong with responsive kinetic rallies, dynamic spin mechanics, adaptive AI and cyber powerups.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["arcade", "retro", "pong", "cyberpunk", "multi-ball", "2d"],
+  "stars": 5,
+  "featured": true,
+  "lucideIcon": "activity"
+}
