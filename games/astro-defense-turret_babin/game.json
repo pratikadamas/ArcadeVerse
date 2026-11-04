@@ -1,0 +1,12 @@
+{
+  "title": "Astro Defense Turret",
+  "category": "Defense",
+  "description": "Defend humanity's orbital gateway from incoming alien drone swarms using a 360-degree rotating laser defense cannon.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["defense", "shooter", "space", "arcade", "turret", "2d"],
+  "stars": 5,
+  "featured": true,
+  "lucideIcon": "shield-alert"
+}
