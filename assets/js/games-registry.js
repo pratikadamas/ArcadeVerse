@@ -1607,9 +1607,9 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "Abhishek",
-    "github": "Anshuu2004",
-    "avatarInitial": "A",
+    "name": "Hi' I am Pratik Giri",
+    "github": "pratikadamas",
+    "avatarInitial": "P",
     "role": "Contributor (NSOC '26)",
     "commits": 3,
     "gamesCount": 0,

@@ -1,0 +1,18 @@
+{
+  "title": "Cyber Orbit Defense",
+  "category": "Action",
+  "lucideIcon": "shield",
+  "description": "Rotate orbital defense shields to deflect rogue cosmic pulse meteors and protect the central quantum core!",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Arcade Contributor",
+  "tags": [
+    "Action",
+    "Reflex",
+    "Space",
+    "Cyberpunk",
+    "Arcade"
+  ],
+  "stars": 35,
+  "featured": true
+}
