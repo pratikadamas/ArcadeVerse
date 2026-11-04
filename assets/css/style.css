@@ -821,6 +821,7 @@ textarea:focus-visible,
 }
 
 .search-box {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.65rem;
@@ -851,6 +852,280 @@ textarea:focus-visible,
   font-size: 0.92rem;
   width: 100%;
   font-family: var(--font-body);
+}
+
+/* ===================================================
+   INTERACTIVE GAME SEARCH AUTOCOMPLETE & QUICK-JUMP
+   =================================================== */
+
+.search-autocomplete-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 100%;
+  min-width: 310px;
+  background: rgba(18, 23, 36, 0.97);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  z-index: 1000;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: autocompleteFadeIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+@keyframes autocompleteFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.autocomplete-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.35rem 0;
+  max-height: 320px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.autocomplete-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.autocomplete-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.autocomplete-list::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
+  border-radius: 4px;
+}
+
+.autocomplete-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  border-left: 3px solid transparent;
+  text-decoration: none;
+  user-select: none;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.active {
+  background: rgba(59, 130, 246, 0.15);
+  border-left-color: var(--accent-primary);
+}
+
+.autocomplete-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--accent-primary);
+  transition: all 0.15s ease;
+}
+
+.autocomplete-item:hover .autocomplete-icon-wrap,
+.autocomplete-item.active .autocomplete-icon-wrap {
+  background: rgba(59, 130, 246, 0.22);
+  color: #60a5fa;
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.autocomplete-icon-wrap svg {
+  width: 17px;
+  height: 17px;
+}
+
+.autocomplete-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.autocomplete-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.autocomplete-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.autocomplete-match {
+  color: #60a5fa;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: rgba(96, 165, 250, 0.45);
+  text-underline-offset: 2px;
+}
+
+.autocomplete-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.autocomplete-category-badge {
+  font-size: 0.68rem;
+  padding: 0.08rem 0.4rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: capitalize;
+  letter-spacing: 0.02em;
+}
+
+.autocomplete-author {
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.autocomplete-empty {
+  padding: 1.1rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.autocomplete-empty svg {
+  color: var(--text-muted);
+  opacity: 0.7;
+  width: 22px;
+  height: 22px;
+}
+
+.autocomplete-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.42rem 0.85rem;
+  background: rgba(0, 0, 0, 0.32);
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.autocomplete-footer-count {
+  font-weight: 600;
+}
+
+.autocomplete-kbd-hints {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.autocomplete-kbd {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  padding: 0.08rem 0.32rem;
+  font-family: var(--font-code);
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+}
+
+/* Light Theme Overrides */
+[data-theme="light"] .search-autocomplete-dropdown {
+  background: #ffffff;
+  border: 1px solid rgba(75, 55, 30, 0.18);
+  box-shadow: 0 16px 36px rgba(70, 50, 25, 0.16), 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .autocomplete-item:hover,
+[data-theme="light"] .autocomplete-item.active {
+  background: #eff6ff;
+  border-left-color: #2563eb;
+}
+
+[data-theme="light"] .autocomplete-icon-wrap {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #2563eb;
+}
+
+[data-theme="light"] .autocomplete-item:hover .autocomplete-icon-wrap,
+[data-theme="light"] .autocomplete-item.active .autocomplete-icon-wrap {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-color: rgba(37, 99, 235, 0.4);
+}
+
+[data-theme="light"] .autocomplete-title {
+  color: #0f172a;
+}
+
+[data-theme="light"] .autocomplete-match {
+  color: #2563eb;
+  text-decoration-color: rgba(37, 99, 235, 0.4);
+}
+
+[data-theme="light"] .autocomplete-category-badge {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+[data-theme="light"] .autocomplete-author {
+  color: #64748b;
+}
+
+[data-theme="light"] .autocomplete-empty {
+  color: #64748b;
+}
+
+[data-theme="light"] .autocomplete-footer {
+  background: #f8fafc;
+  border-top-color: #e2e8f0;
+  color: #64748b;
+}
+
+[data-theme="light"] .autocomplete-kbd {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-autocomplete-dropdown {
+    animation: none;
+  }
 }
 
 .sort-box {
