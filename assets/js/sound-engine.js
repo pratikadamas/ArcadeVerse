@@ -92,19 +92,93 @@
     },
 
     /**
+     * Updates all sound toggle controls across the DOM (desktop navbar, mobile drawer, game modal)
+     */
+    updateUI() {
+      // 1. Desktop Navbar Toggle Button
+      const navBtn = document.getElementById('global-sound-toggle-btn');
+      if (navBtn) {
+        navBtn.className = `sound-toggle-btn ${this.enabled ? 'sound-active' : 'sound-muted'}`;
+        const label = navBtn.querySelector('.sound-label');
+        if (label) label.textContent = this.enabled ? 'SFX ON' : 'SFX OFF';
+        const labelText = this.enabled ? 'Mute arcade UI audio' : 'Unmute arcade UI audio';
+        navBtn.setAttribute('aria-label', labelText);
+        navBtn.setAttribute('title', labelText);
+      }
+
+      // 2. Mobile Nav Drawer Toggle Item
+      const mobileBtn = document.getElementById('mobile-sound-toggle-btn');
+      if (mobileBtn) {
+        const mobileLabel = mobileBtn.querySelector('.mobile-sound-text');
+        if (mobileLabel) mobileLabel.textContent = this.enabled ? 'Sound SFX: ON' : 'Sound SFX: OFF';
+        const mobileIconWrap = mobileBtn.querySelector('.mobile-sound-icon-wrap');
+        if (mobileIconWrap) {
+          mobileIconWrap.innerHTML = this.enabled
+            ? '<i data-lucide="volume-2"></i>'
+            : '<i data-lucide="volume-x"></i>';
+        }
+        const mLabelText = this.enabled ? 'Mute arcade sound effects' : 'Unmute arcade sound effects';
+        mobileBtn.setAttribute('aria-label', mLabelText);
+        mobileBtn.setAttribute('title', mLabelText);
+      }
+
+      // 3. Game Modal Topbar Sound Button
+      const modalBtn = document.getElementById('modal-sound-btn');
+      if (modalBtn) {
+        const modalTitle = this.enabled ? 'Mute Game Audio (M)' : 'Unmute Game Audio (M)';
+        modalBtn.setAttribute('title', modalTitle);
+        modalBtn.setAttribute('aria-label', modalTitle);
+        if (this.enabled) {
+          modalBtn.innerHTML = `
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="modal-sound-icon" aria-hidden="true">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+            </svg>
+          `;
+        } else {
+          modalBtn.innerHTML = `
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="modal-sound-icon" aria-hidden="true" style="opacity: 0.65;">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <line x1="23" y1="9" x2="17" y2="15"></line>
+              <line x1="17" y1="9" x2="23" y2="15"></line>
+            </svg>
+          `;
+        }
+      }
+
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+
+      window.dispatchEvent(new CustomEvent('arcadeverse:sound-mode-changed', {
+        detail: {
+          enabled: this.enabled,
+          muted: !this.enabled,
+          volume: this.volume
+        }
+      }));
+    },
+
+    /**
+     * Sets mute state explicitly
+     * @param {boolean} muted
+     */
+    setMuted(muted) {
+      this.enabled = !muted;
+      this.saveSettings();
+      this.broadcastAudioConfig();
+      this.updateUI();
+    },
+
+    /**
      * Toggles sound mute/unmute and synchronizes with active game iframe
      */
     toggleMute() {
       this.enabled = !this.enabled;
       this.saveSettings();
       this.broadcastAudioConfig();
-      const btn = document.getElementById('global-sound-toggle-btn');
-      if (btn) {
-        btn.className = `sound-toggle-btn ${this.enabled ? 'sound-active' : 'sound-muted'}`;
-        const label = btn.querySelector('.sound-label');
-        if (label) label.textContent = this.enabled ? 'SFX ON' : 'SFX OFF';
-        btn.setAttribute('aria-label', this.enabled ? 'Mute arcade UI audio' : 'Unmute arcade UI audio');
-      }
+      this.updateUI();
       if (this.enabled) this.playClick();
     },
 
@@ -221,29 +295,73 @@
     },
 
     renderControls() {
+      // 1. Desktop Navbar Toggle Button
       const container = document.querySelector('.nav-actions');
-      if (!container || document.getElementById('global-sound-toggle-btn')) return;
+      if (container && !document.getElementById('global-sound-toggle-btn')) {
+        const btn = document.createElement('button');
+        btn.id = 'global-sound-toggle-btn';
+        btn.className = `sound-toggle-btn ${this.enabled ? 'sound-active' : 'sound-muted'}`;
+        btn.type = 'button';
+        const labelText = this.enabled ? 'Mute arcade UI audio' : 'Unmute arcade UI audio';
+        btn.setAttribute('aria-label', labelText);
+        btn.setAttribute('title', labelText);
+        btn.innerHTML = `
+          <span class="eq-bars">
+            <span class="eq-bar bar-1"></span>
+            <span class="eq-bar bar-2"></span>
+            <span class="eq-bar bar-3"></span>
+          </span>
+          <span class="sound-label">${this.enabled ? 'SFX ON' : 'SFX OFF'}</span>
+        `;
 
-      const btn = document.createElement('button');
-      btn.id = 'global-sound-toggle-btn';
-      btn.className = `sound-toggle-btn ${this.enabled ? 'sound-active' : 'sound-muted'}`;
-      btn.type = 'button';
-      btn.setAttribute('aria-label', this.enabled ? 'Mute arcade UI audio' : 'Unmute arcade UI audio');
-      btn.title = 'Toggle Arcade UI Audio';
-      btn.innerHTML = `
-        <span class="eq-bars">
-          <span class="eq-bar bar-1"></span>
-          <span class="eq-bar bar-2"></span>
-          <span class="eq-bar bar-3"></span>
-        </span>
-        <span class="sound-label">${this.enabled ? 'SFX ON' : 'SFX OFF'}</span>
-      `;
+        btn.addEventListener('click', () => {
+          this.toggleMute();
+        });
 
-      btn.addEventListener('click', () => {
-        this.toggleMute();
-      });
+        container.prepend(btn);
+      }
 
-      container.prepend(btn);
+      // 2. Mobile Nav Drawer Toggle Item
+      const mobileDrawer = document.querySelector('.mobile-nav-content');
+      if (mobileDrawer && !document.getElementById('mobile-sound-toggle-btn')) {
+        const mobileBtn = document.createElement('button');
+        mobileBtn.id = 'mobile-sound-toggle-btn';
+        mobileBtn.className = 'mobile-nav-item sound-toggle-btn-mobile';
+        mobileBtn.type = 'button';
+        mobileBtn.style.cssText = 'width: 100%; border: none; background: transparent; cursor: pointer; text-align: left; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem;';
+        const mLabelText = this.enabled ? 'Mute arcade sound effects' : 'Unmute arcade sound effects';
+        mobileBtn.setAttribute('aria-label', mLabelText);
+        mobileBtn.setAttribute('title', mLabelText);
+        mobileBtn.innerHTML = `
+          <span class="mobile-nav-icon mobile-sound-icon-wrap">
+            <i data-lucide="${this.enabled ? 'volume-2' : 'volume-x'}"></i>
+          </span>
+          <span class="mobile-sound-text">${this.enabled ? 'Sound SFX: ON' : 'Sound SFX: OFF'}</span>
+        `;
+        mobileBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.toggleMute();
+        });
+
+        const mobileThemeBtn = mobileDrawer.querySelector('.theme-toggle-btn');
+        if (mobileThemeBtn && mobileThemeBtn.parentNode === mobileDrawer) {
+          mobileDrawer.insertBefore(mobileBtn, mobileThemeBtn.nextSibling);
+        } else {
+          mobileDrawer.appendChild(mobileBtn);
+        }
+      }
+
+      // 3. Game Modal Sound Button (if present in markup)
+      const modalBtn = document.getElementById('modal-sound-btn');
+      if (modalBtn && !modalBtn.dataset.soundBound) {
+        modalBtn.dataset.soundBound = 'true';
+        modalBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          this.toggleMute();
+        });
+      }
+
+      this.updateUI();
     },
 
     bindDOMSounds() {
