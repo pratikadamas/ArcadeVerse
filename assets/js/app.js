@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const sortSelect = document.getElementById("catalog-sort-select");
   const favoritesCountBadge = document.getElementById("favorites-count-badge");
   const modalFavBtn = document.getElementById("modal-fav-btn");
+  const modalSoundBtn = document.getElementById("modal-sound-btn");
 
   let currentCategory = "all";
   let currentDurationFacet = "all";
@@ -34,6 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentSort = "featured";
   let lastFocusedElement = null;
   let activeGame = null;
+  let closeAutocomplete = () => {};
 
   // Search & filter UI element refs
   const searchClearBtn = document.getElementById("search-clear-btn");
@@ -101,6 +103,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     categoryPills.forEach((pill) => {
       const categoryKey = (pill.getAttribute("data-category") || "").toLowerCase();
+      // Favorites pill already has #favorites-count-badge in index.html; avoid appending a duplicate count badge
+      if (categoryKey === "favorites") {
+        return;
+      }
       let badge = pill.querySelector(".pill-count-badge");
       if (!badge) {
         badge = document.createElement("span");
@@ -390,26 +396,29 @@ document.addEventListener("DOMContentLoaded", () => {
       // Duration Facet Evaluation
       let matchesDuration = true;
       if (currentDurationFacet !== "all") {
-        const descLower = (item.description || "").toLowerCase();
-        const tagsLower = (item.tags || []).map(t => t.toLowerCase());
-        const isQuick = tagsLower.includes("quick") || tagsLower.includes("arcade") || tagsLower.includes("casual") || descLower.includes("quick") || descLower.includes("fast-paced");
-        const isDeep = tagsLower.includes("survival") || tagsLower.includes("story") || tagsLower.includes("adventure") || tagsLower.includes("rpg") || descLower.includes("explore") || descLower.includes("escape");
-        if (currentDurationFacet === "quick") matchesDuration = isQuick || (!isDeep);
-        else if (currentDurationFacet === "medium") matchesDuration = true;
-        else if (currentDurationFacet === "long") matchesDuration = isDeep;
+        const text = (item.title + " " + item.category + " " + (item.description || "") + " " + (item.tags || []).join(" ")).toLowerCase();
+        const isDeep = text.includes("adventure") || text.includes("rpg") || text.includes("story") || text.includes("survival") || text.includes("mystery") || text.includes("strategy") || text.includes("defense") || text.includes("roguelike") || text.includes("escape") || text.includes("horror");
+        const isQuick = text.includes("fast") || text.includes("quick") || text.includes("reflex") || text.includes("speed") || text.includes("endless") || text.includes("runner") || text.includes("jumper") || text.includes("click") || text.includes("burst") || text.includes("whack") || text.includes("typing") || text.includes("breakout") || text.includes("tetris") || text.includes("snake") || text.includes("fall");
+
+        if (currentDurationFacet === "quick") {
+          matchesDuration = isQuick && !isDeep;
+        } else if (currentDurationFacet === "long") {
+          matchesDuration = isDeep;
+        } else if (currentDurationFacet === "medium") {
+          matchesDuration = (!isDeep && !isQuick) || (isDeep && isQuick) || text.includes("puzzle") || text.includes("logic") || text.includes("arcade");
+        }
       }
 
       // Control Scheme Facet Evaluation
       let matchesControls = true;
       if (currentControlsFacet !== "all") {
-        const descLower = (item.description || "").toLowerCase();
-        const tagsLower = (item.tags || []).map(t => t.toLowerCase());
-        if (currentControlsFacet === "touch") {
-          matchesControls = item.responsive === true || tagsLower.includes("mobile") || tagsLower.includes("touch") || tagsLower.includes("casual");
+        const text = (item.title + " " + item.category + " " + (item.description || "") + " " + (item.tags || []).join(" ")).toLowerCase();
+        if (currentControlsFacet === "keyboard") {
+          matchesControls = text.includes("keyboard") || text.includes("wasd") || text.includes("arrow") || text.includes("typing") || text.includes("runner") || text.includes("shooter") || text.includes("snake") || text.includes("space") || text.includes("racer") || text.includes("arcade") || text.includes("platformer") || text.includes("action");
         } else if (currentControlsFacet === "mouse") {
-          matchesControls = descLower.includes("click") || descLower.includes("mouse") || tagsLower.includes("puzzle") || tagsLower.includes("card") || tagsLower.includes("board");
-        } else if (currentControlsFacet === "keyboard") {
-          matchesControls = tagsLower.includes("action") || tagsLower.includes("arcade") || tagsLower.includes("shooter") || descLower.includes("arrow") || descLower.includes("wasd");
+          matchesControls = text.includes("mouse") || text.includes("click") || text.includes("drag") || text.includes("puzzle") || text.includes("cards") || text.includes("minesweeper") || text.includes("point & click") || text.includes("burst") || text.includes("aim") || text.includes("slicing") || text.includes("wordle") || text.includes("connect");
+        } else if (currentControlsFacet === "touch") {
+          matchesControls = item.responsive === true || text.includes("touch") || text.includes("mobile") || text.includes("casual") || text.includes("swipe") || text.includes("click") || text.includes("tap") || text.includes("puzzle") || text.includes("memory") || text.includes("runner");
         }
       }
 
@@ -500,6 +509,7 @@ document.addEventListener("DOMContentLoaded", () => {
         currentCategory = "all";
         currentTagFilter = "";
         if (searchInput) searchInput.value = "";
+        closeAutocomplete();
         if (searchClearBtn) searchClearBtn.hidden = true;
         categoryPills.forEach((p) => p.classList.remove("active"));
         const allPill = document.querySelector('.category-pills .pill[data-category="all"]');
@@ -525,6 +535,7 @@ document.addEventListener("DOMContentLoaded", () => {
               searchQuery = sug.toLowerCase();
               if (searchInput) searchInput.value = sug;
             }
+            closeAutocomplete();
             renderGames();
           }
         });
@@ -629,81 +640,119 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Global modal state variables
+  let iframeLoadTimeout = null;
+  let iframeLoadSucceeded = false;
+
+  function resetIframeBoundary() {
+    if (iframeLoadTimeout) {
+      clearTimeout(iframeLoadTimeout);
+      iframeLoadTimeout = null;
+    }
+    const existingError = document.getElementById("modal-error-boundary");
+    if (existingError) existingError.remove();
+    if (gameIframe) gameIframe.style.display = "block";
+  }
+
+  function triggerModalErrorBoundary(gameObj) {
+    if (iframeLoadSucceeded) return;
+    if (gameIframe) gameIframe.style.display = "none";
+    let errorBoundary = document.getElementById("modal-error-boundary");
+    if (!errorBoundary) {
+      errorBoundary = document.createElement("div");
+      errorBoundary.id = "modal-error-boundary";
+      errorBoundary.className = "modal-error-boundary";
+      const frameWrap = document.querySelector(".modal-frame-wrapper");
+      if (frameWrap) frameWrap.appendChild(errorBoundary);
+    }
+
+    errorBoundary.innerHTML = `
+      <div class="boundary-content">
+        <div class="boundary-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#ff0055" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <h3 class="boundary-title">Game Route Offline</h3>
+        <p class="boundary-desc">
+          Failed to establish connection to <code>${(gameObj && gameObj.path) || 'game route'}</code>. The game entrypoint may be undergoing maintenance, corrupted, or unreachable.
+        </p>
+        <div class="boundary-actions">
+          <button class="btn btn-primary btn-sm" id="boundary-retry-btn">
+            <span>Retry Load</span>
+          </button>
+          <a href="https://github.com/DebasmitaBose0/ArcadeVerse/issues/new" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
+            <span>Report Broken Route</span>
+          </a>
+        </div>
+      </div>
+    `;
+
+    const retryBtn = errorBoundary.querySelector("#boundary-retry-btn");
+    if (retryBtn) {
+      retryBtn.addEventListener("click", () => {
+        resetIframeBoundary();
+        iframeLoadSucceeded = false;
+        if (gameIframe && gameObj) {
+          gameIframe.src = gameObj.path;
+          startIframeTimeout(gameObj);
+        }
+      });
+    }
+  }
+
+  function startIframeTimeout(gameObj) {
+    resetIframeBoundary();
+    iframeLoadSucceeded = false;
+    // Generous timeout (15s) to account for resource-heavy games or slower network environments
+    iframeLoadTimeout = setTimeout(() => {
+      if (!iframeLoadSucceeded) {
+        triggerModalErrorBoundary(gameObj);
+      }
+    }, 15000);
+  }
+
+  // Bind iframe load listener once at root level to ensure 100% reliable load detection
+  if (gameIframe) {
+    gameIframe.addEventListener("load", () => {
+      // Ignore blanking resets
+      if (!gameIframe.src || gameIframe.src.includes("about:blank")) return;
+
+      iframeLoadSucceeded = true;
+      resetIframeBoundary();
+      gameIframe.classList.add("loaded");
+
+      try {
+        if (window.SoundEngine && typeof window.SoundEngine.broadcastAudioConfig === "function") {
+          window.SoundEngine.broadcastAudioConfig();
+        } else {
+          const isMuted = localStorage.getItem("arcadeverse_muted") === "true";
+          const masterVol = parseFloat(localStorage.getItem("arcadeverse_master_volume")) || 0.28;
+          if (gameIframe.contentWindow) {
+            gameIframe.contentWindow.postMessage({
+              type: "ARCADEVERSE_AUDIO_CONFIG",
+              muted: isMuted,
+              volume: masterVol
+            }, "*");
+          }
+        }
+      } catch (_) {}
+    });
+
+    gameIframe.addEventListener("error", () => {
+      iframeLoadSucceeded = false;
+      if (activeGame) {
+        triggerModalErrorBoundary(activeGame);
+      }
+    });
+  }
+
   // Modal Handlers
   function openGameModal(game, triggerElement = null) {
     activeGame = game;
     lastFocusedElement = triggerElement || document.activeElement;
-    // In-Modal Error Boundary & Load Timeout Handlers
-    let iframeLoadTimeout = null;
-    let iframeLoadSucceeded = false;
-
-    function resetIframeBoundary() {
-      if (iframeLoadTimeout) {
-        clearTimeout(iframeLoadTimeout);
-        iframeLoadTimeout = null;
-      }
-      const existingError = document.getElementById("modal-error-boundary");
-      if (existingError) existingError.remove();
-      gameIframe.style.display = "block";
-    }
-
-    function triggerModalErrorBoundary(gameObj) {
-      if (iframeLoadSucceeded) return;
-      gameIframe.style.display = "none";
-      let errorBoundary = document.getElementById("modal-error-boundary");
-      if (!errorBoundary) {
-        errorBoundary = document.createElement("div");
-        errorBoundary.id = "modal-error-boundary";
-        errorBoundary.className = "modal-error-boundary";
-        const frameWrap = document.querySelector(".modal-frame-wrapper");
-        if (frameWrap) frameWrap.appendChild(errorBoundary);
-      }
-
-      errorBoundary.innerHTML = `
-        <div class="boundary-content">
-          <div class="boundary-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#ff0055" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="12"></line>
-              <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
-          </div>
-          <h3 class="boundary-title">Game Route Offline</h3>
-          <p class="boundary-desc">
-            Failed to establish connection to <code>${gameObj.path || 'game route'}</code>. The game entrypoint may be undergoing maintenance, corrupted, or unreachable.
-          </p>
-          <div class="boundary-actions">
-            <button class="btn btn-primary btn-sm" id="boundary-retry-btn">
-              <span>Retry Load</span>
-            </button>
-            <a href="https://github.com/DebasmitaBose0/ArcadeVerse/issues/new" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
-              <span>Report Broken Route</span>
-            </a>
-          </div>
-        </div>
-      `;
-
-      const retryBtn = errorBoundary.querySelector("#boundary-retry-btn");
-      if (retryBtn) {
-        retryBtn.addEventListener("click", () => {
-          resetIframeBoundary();
-          iframeLoadSucceeded = false;
-          gameIframe.src = gameObj.path;
-          startIframeTimeout(gameObj);
-        });
-      }
-    }
-
-    function startIframeTimeout(gameObj) {
-      resetIframeBoundary();
-      iframeLoadSucceeded = false;
-      // Generous timeout (12s) to account for resource-heavy games or slower environments
-      iframeLoadTimeout = setTimeout(() => {
-        if (!iframeLoadSucceeded) {
-          triggerModalErrorBoundary(gameObj);
-        }
-      }, 12000);
-    }
 
     modalGameTitle.textContent = game.title;
     modalGameBadge.textContent = game.category;
@@ -713,8 +762,9 @@ document.addEventListener("DOMContentLoaded", () => {
     newTabBtn.href = game.path;
 
     updateModalFavoriteButton(isFavorite(game.id));
-
-
+    if (window.SoundEngine && typeof window.SoundEngine.updateUI === "function") {
+      window.SoundEngine.updateUI();
+    }
 
     // Record game play in Recently Played drawer
     if (window.ArcadeRecent && typeof window.ArcadeRecent.recordPlayed === "function") {
@@ -726,36 +776,6 @@ document.addEventListener("DOMContentLoaded", () => {
     gameModal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
     closeModalBtn.focus();
-
-    // Centralized Master Audio Bus: Sync hub volume & mute settings into spawned iframe
-    if (gameIframe) {
-      gameIframe.onload = () => {
-        // Mark load as successful and cancel error boundary timer
-        iframeLoadSucceeded = true;
-        resetIframeBoundary();
-
-        try {
-          if (window.SoundEngine && typeof window.SoundEngine.broadcastAudioConfig === "function") {
-            window.SoundEngine.broadcastAudioConfig();
-          } else {
-            const isMuted = localStorage.getItem("arcadeverse_muted") === "true";
-            const masterVol = parseFloat(localStorage.getItem("arcadeverse_master_volume")) || 0.28;
-            if (gameIframe.contentWindow) {
-              gameIframe.contentWindow.postMessage({
-                type: "ARCADEVERSE_AUDIO_CONFIG",
-                muted: isMuted,
-                volume: masterVol
-              }, "*");
-            }
-          }
-        } catch (_) {}
-      };
-
-      gameIframe.onerror = () => {
-        iframeLoadSucceeded = false;
-        triggerModalErrorBoundary(game);
-      };
-    }
   }
 
   // Expose global helper to open game modal from plugins, search, or recent drawer
@@ -844,6 +864,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  if (modalSoundBtn) {
+    modalSoundBtn.addEventListener("click", () => {
+      if (window.SoundEngine && typeof window.SoundEngine.toggleMute === "function") {
+        window.SoundEngine.toggleMute();
+      }
+    });
+  }
+
   if (reloadBtn) {
     reloadBtn.addEventListener("click", () => {
       if (gameIframe.src) {
@@ -859,6 +887,25 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && gameModal.classList.contains("active")) {
       closeGameModal();
+    }
+  });
+
+  // Listen for forwarded shortcuts from inside game iframes (via ArcadeVerse SDK)
+  window.addEventListener("message", (e) => {
+    if (!e || !e.data || e.data.type !== "ARCADEVERSE_KEY_SHORTCUT") return;
+    const key = (e.data.key || "").toLowerCase();
+    if (e.data.key === "Escape") {
+      if (gameModal.classList.contains("active")) closeGameModal();
+    } else if (key === "f") {
+      if (gameModal.classList.contains("active") && fullscreenBtn) fullscreenBtn.click();
+    } else if (key === "r") {
+      if (gameModal.classList.contains("active") && reloadBtn) reloadBtn.click();
+    } else if (key === "m") {
+      const soundBtn = document.getElementById("global-sound-toggle-btn");
+      if (soundBtn) soundBtn.click();
+    } else if (key === "t") {
+      const themeBtn = document.getElementById("theme-toggle-btn");
+      if (themeBtn) themeBtn.click();
     }
   });
 
@@ -906,38 +953,231 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Filter Search + Clear Button
-  searchInput.addEventListener("input", (e) => {
-    searchQuery = e.target.value.toLowerCase().trim();
-    if (searchClearBtn) searchClearBtn.hidden = !e.target.value;
-    renderGames();
-  });
+  // ===================================================
+  // INTERACTIVE GAME SEARCH AUTOCOMPLETE & QUICK-JUMP
+  // ===================================================
+  const searchBox = document.querySelector(".search-box");
+  let autocompleteDropdown = null;
+  let activeSuggestionIndex = -1;
+  let currentSuggestions = [];
 
-  if (searchClearBtn) {
-    searchClearBtn.addEventListener("click", () => {
-      searchQuery = "";
-      searchInput.value = "";
-      searchClearBtn.hidden = true;
-      searchInput.focus();
-      renderGames();
-    });
+  function escapeHTML(str) {
+    return String(str || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
-  // Reset All Facets Button
-  if (resetFacetsBtn) {
-    resetFacetsBtn.addEventListener("click", () => {
+  function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function highlightMatch(text, query) {
+    const safeText = escapeHTML(text);
+    if (!query) return safeText;
+    const safeQuery = escapeRegex(escapeHTML(query));
+    const regex = new RegExp(`(${safeQuery})`, "gi");
+    return safeText.replace(regex, '<span class="autocomplete-match">$1</span>');
+  }
+
+  closeAutocomplete = function () {
+    if (!autocompleteDropdown) return;
+    autocompleteDropdown.style.display = "none";
+    autocompleteDropdown.innerHTML = "";
+    activeSuggestionIndex = -1;
+    currentSuggestions = [];
+    if (searchInput) {
+      searchInput.setAttribute("aria-expanded", "false");
+      searchInput.removeAttribute("aria-activedescendant");
+    }
+  };
+
+  function updateActiveSuggestion(index) {
+    if (!autocompleteDropdown) return;
+    const items = autocompleteDropdown.querySelectorAll(".autocomplete-item");
+    if (items.length === 0) return;
+
+    activeSuggestionIndex = index;
+
+    items.forEach((item, idx) => {
+      if (idx === activeSuggestionIndex) {
+        item.classList.add("active");
+        item.setAttribute("aria-selected", "true");
+        item.scrollIntoView({ block: "nearest" });
+        if (searchInput) {
+          searchInput.setAttribute("aria-activedescendant", item.id);
+        }
+      } else {
+        item.classList.remove("active");
+        item.setAttribute("aria-selected", "false");
+      }
+    });
+
+    if (activeSuggestionIndex === -1 && searchInput) {
+      searchInput.removeAttribute("aria-activedescendant");
+    }
+  }
+
+  function launchSuggestion(game) {
+    closeAutocomplete();
+    if (game && typeof openGameModal === "function") {
+      openGameModal(game, searchInput);
+    }
+  }
+
+  function renderAutocomplete(query) {
+    if (!autocompleteDropdown || !searchInput) return;
+    const trimmed = query.trim().toLowerCase();
+
+    if (!trimmed || typeof GAMES_REGISTRY === "undefined" || !Array.isArray(GAMES_REGISTRY)) {
+      closeAutocomplete();
+      return;
+    }
+
+    // Filter and score matching games
+    const scoredMatches = [];
+    for (const game of GAMES_REGISTRY) {
+      const titleLower = (game.title || "").toLowerCase();
+      const authorLower = (game.author || "").toLowerCase();
+      const githubLower = (game.github || "").toLowerCase();
+      const categoryLower = (game.category || "").toLowerCase();
+      const tagsLower = Array.isArray(game.tags) ? game.tags.map((t) => t.toLowerCase()) : [];
+
+      let score = -1;
+
+      if (titleLower.startsWith(trimmed)) {
+        score = 100;
+      } else if (titleLower.includes(trimmed)) {
+        score = 80;
+      } else if (tagsLower.some((t) => t === trimmed)) {
+        score = 60;
+      } else if (tagsLower.some((t) => t.includes(trimmed))) {
+        score = 50;
+      } else if (categoryLower.includes(trimmed)) {
+        score = 40;
+      } else if (githubLower.includes(trimmed) || authorLower.includes(trimmed)) {
+        score = 30;
+      }
+
+      if (score >= 0) {
+        scoredMatches.push({ game, score });
+      }
+    }
+
+    // Sort by relevance score descending
+    scoredMatches.sort((a, b) => b.score - a.score);
+    currentSuggestions = scoredMatches.slice(0, 6).map((item) => item.game);
+    activeSuggestionIndex = -1;
+
+    if (currentSuggestions.length === 0) {
+      autocompleteDropdown.innerHTML = `
+        <div class="autocomplete-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <div>No games found matching "<strong>${escapeHTML(query.trim())}</strong>"</div>
+        </div>
+      `;
+      autocompleteDropdown.style.display = "flex";
+      searchInput.setAttribute("aria-expanded", "true");
+      return;
+    }
+
+    const listHtml = currentSuggestions
+      .map((game, idx) => {
+        const catBadge = game.category ? game.category.split("/")[0].trim() : "Game";
+        const authorHandle = game.github || game.author || "";
+        const iconName = game.lucideIcon || "gamepad-2";
+
+        return `
+          <li class="autocomplete-item"
+              id="autocomplete-opt-${idx}"
+              role="option"
+              data-index="${idx}"
+              aria-selected="false">
+            <div class="autocomplete-icon-wrap" aria-hidden="true">
+              <i data-lucide="${escapeHTML(iconName)}"></i>
+            </div>
+            <div class="autocomplete-content">
+              <div class="autocomplete-title-row">
+                <span class="autocomplete-title">${highlightMatch(game.title, query.trim())}</span>
+              </div>
+              <div class="autocomplete-meta-row">
+                <span class="autocomplete-category-badge">${escapeHTML(catBadge)}</span>
+                ${authorHandle ? `<span class="autocomplete-author">by @${escapeHTML(authorHandle)}</span>` : ""}
+              </div>
+            </div>
+          </li>
+        `;
+      })
+      .join("");
+
+    autocompleteDropdown.innerHTML = `
+      <ul class="autocomplete-list" role="presentation">
+        ${listHtml}
+      </ul>
+      <div class="autocomplete-footer">
+        <span class="autocomplete-footer-count">${currentSuggestions.length} result${currentSuggestions.length > 1 ? "s" : ""}</span>
+        <div class="autocomplete-kbd-hints">
+          <span class="autocomplete-kbd">↑↓</span> to navigate
+          <span class="autocomplete-kbd">↵</span> to play
+          <span class="autocomplete-kbd">Esc</span> to close
+        </div>
+      </div>
+    `;
+
+    autocompleteDropdown.style.display = "flex";
+    searchInput.setAttribute("aria-expanded", "true");
+
+    // Click events on suggestion items (mousedown ensures execution before input blur)
+    const items = autocompleteDropdown.querySelectorAll(".autocomplete-item");
+    items.forEach((item) => {
+      item.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        const idx = parseInt(item.getAttribute("data-index"), 10);
+        if (!isNaN(idx) && currentSuggestions[idx]) {
+          launchSuggestion(currentSuggestions[idx]);
+        }
+      });
+    });
+
+  // --- Faceted Filters Event Listeners (Duration, Controls, Reset) ---
+  const durationFacetChips = document.querySelectorAll("#duration-facet-chips .facet-chip");
+  durationFacetChips.forEach((chip) => {
+    chip.addEventListener("click", () => {
+      durationFacetChips.forEach((c) => c.classList.remove("active"));
+      chip.classList.add("active");
+      currentDurationFacet = chip.getAttribute("data-duration") || "all";
+      renderGames();
+    });
+  });
+
+  const controlsFacetChips = document.querySelectorAll("#controls-facet-chips .facet-chip");
+  controlsFacetChips.forEach((chip) => {
+    chip.addEventListener("click", () => {
+      controlsFacetChips.forEach((c) => c.classList.remove("active"));
+      chip.classList.add("active");
+      currentControlsFacet = chip.getAttribute("data-controls") || "all";
+      renderGames();
+    });
+  });
+
+  const btnResetFacets = document.getElementById("btn-reset-facets");
+  if (btnResetFacets) {
+    btnResetFacets.addEventListener("click", () => {
       currentDurationFacet = "all";
       currentControlsFacet = "all";
-      currentTagFilter = "";
-      // Reset duration chips
-      document.querySelectorAll("#duration-facet-chips .facet-chip").forEach((c) => {
-        c.classList.toggle("active", c.dataset.duration === "all");
+      durationFacetChips.forEach((c) => {
+        if (c.getAttribute("data-duration") === "all") c.classList.add("active");
+        else c.classList.remove("active");
       });
-      // Reset controls chips
-      document.querySelectorAll("#controls-facet-chips .facet-chip").forEach((c) => {
-        c.classList.toggle("active", c.dataset.controls === "all");
+      controlsFacetChips.forEach((c) => {
+        if (c.getAttribute("data-controls") === "all") c.classList.add("active");
+        else c.classList.remove("active");
       });
-      buildTagChips();
       renderGames();
     });
   }
@@ -963,6 +1203,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   categoryPills.forEach((pill) => {
     pill.addEventListener("click", () => {
+      // Auto-close playlists drawer when switching category filters
+      const playlistDrawer = document.getElementById("playlist-drawer");
+      if (playlistDrawer && playlistDrawer.classList.contains("open")) {
+        playlistDrawer.classList.remove("open");
+        playlistDrawer.setAttribute("aria-hidden", "true");
+      }
+      if (playlistTrigger) playlistTrigger.classList.remove("active");
+
       categoryPills.forEach((p) => p.classList.remove("active"));
       pill.classList.add("active");
       currentCategory = pill.getAttribute("data-category");
@@ -1085,26 +1333,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
-
-  // Track iframe load complete event to remove spinner
-  if (gameIframe) {
-    gameIframe.addEventListener('load', () => {
-      gameIframe.classList.add('loaded');
-      if (gameIframe.src && !gameIframe.src.includes("about:blank")) {
-        const errorBoundary = document.getElementById("modal-error-boundary");
-        if (errorBoundary) errorBoundary.remove();
-        gameIframe.style.display = "block";
-      }
-    });
-
-    gameIframe.addEventListener('error', () => {
-      const errorBoundary = document.getElementById("modal-error-boundary");
-      if (errorBoundary && activeGame) {
-        errorBoundary.style.display = "flex";
-        gameIframe.style.display = "none";
-      }
-    });
-  }
 
   // Initial render
   buildTagChips();
