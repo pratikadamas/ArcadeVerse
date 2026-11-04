@@ -9,21 +9,43 @@
   // Theme Switching Engine
   const THEME_KEY = "arcadeverse_theme_mode";
 
-  function getStoredTheme() {
-    return localStorage.getItem(THEME_KEY) || "dark";
+  function getSystemTheme() {
+    if (typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) {
+      return "light";
+    }
+    return "dark";
   }
 
-  function applyThemeMode(mode) {
+  function getStoredTheme() {
+    try {
+      const saved = localStorage.getItem(THEME_KEY);
+      if (saved === "light" || saved === "dark") {
+        return saved;
+      }
+    } catch (_) {}
+    return getSystemTheme();
+  }
+
+  function applyThemeMode(mode, persist = true) {
     const root = document.documentElement;
     root.setAttribute("data-theme", mode);
-    localStorage.setItem(THEME_KEY, mode);
+    if (persist) {
+      try {
+        localStorage.setItem(THEME_KEY, mode);
+      } catch (_) {}
+    }
 
     document.querySelectorAll(".theme-toggle-btn").forEach((btn) => {
-      btn.setAttribute("aria-label", mode === "light" ? "Switch to dark theme" : "Switch to light theme");
-      btn.setAttribute("title", mode === "light" ? "Switch to dark theme" : "Switch to light theme");
+      const nextLabel = mode === "light" ? "Switch to dark theme" : "Switch to light theme";
+      btn.setAttribute("aria-label", nextLabel);
+      btn.setAttribute("title", nextLabel);
       const iconWrap = btn.querySelector(".theme-icon-wrap");
       if (iconWrap) {
         iconWrap.innerHTML = mode === "light" ? '<i data-lucide="moon"></i>' : '<i data-lucide="sun"></i>';
+      }
+      const labelText = btn.querySelector(".theme-label-text");
+      if (labelText) {
+        labelText.textContent = mode === "light" ? "Switch to Dark Theme" : "Switch to Light Theme";
       }
     });
 
@@ -35,17 +57,41 @@
   }
 
   function toggleThemeMode() {
-    const current = getStoredTheme();
+    const current = document.documentElement.getAttribute("data-theme") || getStoredTheme();
     const next = current === "light" ? "dark" : "light";
-    applyThemeMode(next);
+    applyThemeMode(next, true);
   }
 
-  // Apply immediately to prevent flash
+  // Apply immediately to prevent flash of wrong theme (FOUC)
   const initialMode = getStoredTheme();
   document.documentElement.setAttribute("data-theme", initialMode);
 
+  // Respect system color preference changes dynamically if no custom preference is saved
+  if (typeof window !== "undefined" && window.matchMedia) {
+    const colorSchemeMedia = window.matchMedia("(prefers-color-scheme: light)");
+    const onSystemThemeChange = (e) => {
+      try {
+        if (!localStorage.getItem(THEME_KEY)) {
+          applyThemeMode(e.matches ? "light" : "dark", false);
+        }
+      } catch (_) {}
+    };
+    if (typeof colorSchemeMedia.addEventListener === "function") {
+      colorSchemeMedia.addEventListener("change", onSystemThemeChange);
+    } else if (typeof colorSchemeMedia.addListener === "function") {
+      colorSchemeMedia.addListener(onSystemThemeChange);
+    }
+  }
+
+  // Expose global ArcadeTheme helper for accessibility and shortcuts
+  window.ArcadeTheme = {
+    getTheme: () => document.documentElement.getAttribute("data-theme") || getStoredTheme(),
+    toggleTheme: toggleThemeMode,
+    setTheme: (m) => applyThemeMode(m, true)
+  };
+
   document.addEventListener("DOMContentLoaded", () => {
-    applyThemeMode(initialMode);
+    applyThemeMode(initialMode, false);
 
     // Bind all theme toggle buttons
     document.querySelectorAll(".theme-toggle-btn").forEach((btn) => {

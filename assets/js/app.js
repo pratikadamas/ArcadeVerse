@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const sortSelect = document.getElementById("catalog-sort-select");
   const favoritesCountBadge = document.getElementById("favorites-count-badge");
   const modalFavBtn = document.getElementById("modal-fav-btn");
+  const modalSoundBtn = document.getElementById("modal-sound-btn");
 
   let currentCategory = "all";
   let currentDurationFacet = "all";
@@ -34,6 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentSort = "featured";
   let lastFocusedElement = null;
   let activeGame = null;
+  let closeAutocomplete = () => {};
 
   // Search & filter UI element refs
   const searchClearBtn = document.getElementById("search-clear-btn");
@@ -507,6 +509,7 @@ document.addEventListener("DOMContentLoaded", () => {
         currentCategory = "all";
         currentTagFilter = "";
         if (searchInput) searchInput.value = "";
+        closeAutocomplete();
         if (searchClearBtn) searchClearBtn.hidden = true;
         categoryPills.forEach((p) => p.classList.remove("active"));
         const allPill = document.querySelector('.category-pills .pill[data-category="all"]');
@@ -532,6 +535,7 @@ document.addEventListener("DOMContentLoaded", () => {
               searchQuery = sug.toLowerCase();
               if (searchInput) searchInput.value = sug;
             }
+            closeAutocomplete();
             renderGames();
           }
         });
@@ -758,6 +762,9 @@ document.addEventListener("DOMContentLoaded", () => {
     newTabBtn.href = game.path;
 
     updateModalFavoriteButton(isFavorite(game.id));
+    if (window.SoundEngine && typeof window.SoundEngine.updateUI === "function") {
+      window.SoundEngine.updateUI();
+    }
 
     // Record game play in Recently Played drawer
     if (window.ArcadeRecent && typeof window.ArcadeRecent.recordPlayed === "function") {
@@ -857,6 +864,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  if (modalSoundBtn) {
+    modalSoundBtn.addEventListener("click", () => {
+      if (window.SoundEngine && typeof window.SoundEngine.toggleMute === "function") {
+        window.SoundEngine.toggleMute();
+      }
+    });
+  }
+
   if (reloadBtn) {
     reloadBtn.addEventListener("click", () => {
       if (gameIframe.src) {
@@ -938,12 +953,196 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Filter Search + Clear Button
-  searchInput.addEventListener("input", (e) => {
-    searchQuery = e.target.value.toLowerCase().trim();
-    if (searchClearBtn) searchClearBtn.hidden = !e.target.value;
-    renderGames();
-  });
+  // ===================================================
+  // INTERACTIVE GAME SEARCH AUTOCOMPLETE & QUICK-JUMP
+  // ===================================================
+  const searchBox = document.querySelector(".search-box");
+  let autocompleteDropdown = null;
+  let activeSuggestionIndex = -1;
+  let currentSuggestions = [];
+
+  function escapeHTML(str) {
+    return String(str || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function highlightMatch(text, query) {
+    const safeText = escapeHTML(text);
+    if (!query) return safeText;
+    const safeQuery = escapeRegex(escapeHTML(query));
+    const regex = new RegExp(`(${safeQuery})`, "gi");
+    return safeText.replace(regex, '<span class="autocomplete-match">$1</span>');
+  }
+
+  closeAutocomplete = function () {
+    if (!autocompleteDropdown) return;
+    autocompleteDropdown.style.display = "none";
+    autocompleteDropdown.innerHTML = "";
+    activeSuggestionIndex = -1;
+    currentSuggestions = [];
+    if (searchInput) {
+      searchInput.setAttribute("aria-expanded", "false");
+      searchInput.removeAttribute("aria-activedescendant");
+    }
+  };
+
+  function updateActiveSuggestion(index) {
+    if (!autocompleteDropdown) return;
+    const items = autocompleteDropdown.querySelectorAll(".autocomplete-item");
+    if (items.length === 0) return;
+
+    activeSuggestionIndex = index;
+
+    items.forEach((item, idx) => {
+      if (idx === activeSuggestionIndex) {
+        item.classList.add("active");
+        item.setAttribute("aria-selected", "true");
+        item.scrollIntoView({ block: "nearest" });
+        if (searchInput) {
+          searchInput.setAttribute("aria-activedescendant", item.id);
+        }
+      } else {
+        item.classList.remove("active");
+        item.setAttribute("aria-selected", "false");
+      }
+    });
+
+    if (activeSuggestionIndex === -1 && searchInput) {
+      searchInput.removeAttribute("aria-activedescendant");
+    }
+  }
+
+  function launchSuggestion(game) {
+    closeAutocomplete();
+    if (game && typeof openGameModal === "function") {
+      openGameModal(game, searchInput);
+    }
+  }
+
+  function renderAutocomplete(query) {
+    if (!autocompleteDropdown || !searchInput) return;
+    const trimmed = query.trim().toLowerCase();
+
+    if (!trimmed || typeof GAMES_REGISTRY === "undefined" || !Array.isArray(GAMES_REGISTRY)) {
+      closeAutocomplete();
+      return;
+    }
+
+    // Filter and score matching games
+    const scoredMatches = [];
+    for (const game of GAMES_REGISTRY) {
+      const titleLower = (game.title || "").toLowerCase();
+      const authorLower = (game.author || "").toLowerCase();
+      const githubLower = (game.github || "").toLowerCase();
+      const categoryLower = (game.category || "").toLowerCase();
+      const tagsLower = Array.isArray(game.tags) ? game.tags.map((t) => t.toLowerCase()) : [];
+
+      let score = -1;
+
+      if (titleLower.startsWith(trimmed)) {
+        score = 100;
+      } else if (titleLower.includes(trimmed)) {
+        score = 80;
+      } else if (tagsLower.some((t) => t === trimmed)) {
+        score = 60;
+      } else if (tagsLower.some((t) => t.includes(trimmed))) {
+        score = 50;
+      } else if (categoryLower.includes(trimmed)) {
+        score = 40;
+      } else if (githubLower.includes(trimmed) || authorLower.includes(trimmed)) {
+        score = 30;
+      }
+
+      if (score >= 0) {
+        scoredMatches.push({ game, score });
+      }
+    }
+
+    // Sort by relevance score descending
+    scoredMatches.sort((a, b) => b.score - a.score);
+    currentSuggestions = scoredMatches.slice(0, 6).map((item) => item.game);
+    activeSuggestionIndex = -1;
+
+    if (currentSuggestions.length === 0) {
+      autocompleteDropdown.innerHTML = `
+        <div class="autocomplete-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <div>No games found matching "<strong>${escapeHTML(query.trim())}</strong>"</div>
+        </div>
+      `;
+      autocompleteDropdown.style.display = "flex";
+      searchInput.setAttribute("aria-expanded", "true");
+      return;
+    }
+
+    const listHtml = currentSuggestions
+      .map((game, idx) => {
+        const catBadge = game.category ? game.category.split("/")[0].trim() : "Game";
+        const authorHandle = game.github || game.author || "";
+        const iconName = game.lucideIcon || "gamepad-2";
+
+        return `
+          <li class="autocomplete-item"
+              id="autocomplete-opt-${idx}"
+              role="option"
+              data-index="${idx}"
+              aria-selected="false">
+            <div class="autocomplete-icon-wrap" aria-hidden="true">
+              <i data-lucide="${escapeHTML(iconName)}"></i>
+            </div>
+            <div class="autocomplete-content">
+              <div class="autocomplete-title-row">
+                <span class="autocomplete-title">${highlightMatch(game.title, query.trim())}</span>
+              </div>
+              <div class="autocomplete-meta-row">
+                <span class="autocomplete-category-badge">${escapeHTML(catBadge)}</span>
+                ${authorHandle ? `<span class="autocomplete-author">by @${escapeHTML(authorHandle)}</span>` : ""}
+              </div>
+            </div>
+          </li>
+        `;
+      })
+      .join("");
+
+    autocompleteDropdown.innerHTML = `
+      <ul class="autocomplete-list" role="presentation">
+        ${listHtml}
+      </ul>
+      <div class="autocomplete-footer">
+        <span class="autocomplete-footer-count">${currentSuggestions.length} result${currentSuggestions.length > 1 ? "s" : ""}</span>
+        <div class="autocomplete-kbd-hints">
+          <span class="autocomplete-kbd">↑↓</span> to navigate
+          <span class="autocomplete-kbd">↵</span> to play
+          <span class="autocomplete-kbd">Esc</span> to close
+        </div>
+      </div>
+    `;
+
+    autocompleteDropdown.style.display = "flex";
+    searchInput.setAttribute("aria-expanded", "true");
+
+    // Click events on suggestion items (mousedown ensures execution before input blur)
+    const items = autocompleteDropdown.querySelectorAll(".autocomplete-item");
+    items.forEach((item) => {
+      item.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        const idx = parseInt(item.getAttribute("data-index"), 10);
+        if (!isNaN(idx) && currentSuggestions[idx]) {
+          launchSuggestion(currentSuggestions[idx]);
+        }
+      });
+    });
 
   // --- Faceted Filters Event Listeners (Duration, Controls, Reset) ---
   const durationFacetChips = document.querySelectorAll("#duration-facet-chips .facet-chip");

@@ -121,6 +121,18 @@
         if (typeof data.muted === "boolean") currentAudioConfig.muted = data.muted;
         if (typeof data.volume === "number") currentAudioConfig.volume = data.volume;
         applyMasterGainVolume();
+        for (var a = 0; a < registeredAudioContexts.length; a++) {
+          try {
+            var actx = registeredAudioContexts[a];
+            if (actx) {
+              if (currentAudioConfig.muted && actx.state === "running") {
+                actx.suspend().catch(function () {});
+              } else if (!currentAudioConfig.muted && actx.state === "suspended") {
+                actx.resume().catch(function () {});
+              }
+            }
+          } catch (_) {}
+        }
         executeHandlers(audioConfigHandlers, currentAudioConfig);
         break;
 
