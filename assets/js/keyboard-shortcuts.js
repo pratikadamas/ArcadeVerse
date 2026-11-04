@@ -76,10 +76,6 @@
                   <span>FAQs & Help</span>
                   <div class="shortcut-keys"><kbd>Q</kbd></div>
                 </div>
-                <div class="shortcut-row">
-                  <span>Category Filter Pills</span>
-                  <div class="shortcut-keys"><kbd>1</kbd> ... <kbd>9</kbd></div>
-                </div>
               </div>
             </div>
 
@@ -297,15 +293,6 @@
             }
           }
           return;
-        }
-
-        // 1 to 9: Category pills (including Halloween)
-        if (e.key >= '1' && e.key <= '9') {
-          const pills = document.querySelectorAll('.category-pills .pill');
-          const index = parseInt(e.key, 10) - 1;
-          if (pills && pills[index]) {
-            pills[index].click();
-          }
         }
       });
     }
