@@ -21,6 +21,27 @@ const GAMES_REGISTRY = [
     "difficulty": "Medium"
   },
   {
+    "id": "astro-defense-turret_babin",
+    "title": "Astro Defense Turret",
+    "category": "Defense",
+    "lucideIcon": "shield-alert",
+    "description": "Defend humanity's orbital gateway from incoming alien drone swarms using a 360-degree rotating laser defense cannon.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/astro-defense-turret_babin/index.html",
+    "tags": [
+      "defense",
+      "shooter",
+      "space",
+      "arcade",
+      "turret",
+      "2d"
+    ],
+    "stars": 5,
+    "featured": true
+  },
+  {
     "id": "astro-infinite-jumper_pragna7",
     "title": "Astro Infinite Jumper",
     "category": "Arcade",
@@ -98,6 +119,26 @@ const GAMES_REGISTRY = [
     "stars": 15,
     "featured": true,
     "difficulty": "Medium"
+  },
+  {
+    "id": "chrono-laser-mirror_babin",
+    "title": "Chrono Laser Mirror",
+    "category": "Puzzle",
+    "lucideIcon": "crosshair",
+    "description": "Rotate optical prism mirrors to redirect photonic laser beams into quantum target receptors!",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Arcade Contributor",
+    "path": "games/chrono-laser-mirror_babin/index.html",
+    "tags": [
+      "Puzzle",
+      "Optics",
+      "Laser",
+      "Physics",
+      "Logic"
+    ],
+    "stars": 42,
+    "featured": true
   },
   {
     "id": "chrono-shift_babin",
@@ -276,6 +317,26 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "cyber-gravity-hopper_babin",
+    "title": "Cyber Gravity Hopper",
+    "category": "Platformer",
+    "lucideIcon": "navigation",
+    "description": "Invert gravitational fields to jump between cybernetic ceiling and floor platforms while evading laser emitters!",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Arcade Contributor",
+    "path": "games/cyber-gravity-hopper_babin/index.html",
+    "tags": [
+      "Platformer",
+      "Physics",
+      "Action",
+      "Reflex",
+      "Gravity"
+    ],
+    "stars": 38,
+    "featured": true
+  },
+  {
     "id": "cyber-helix-fall_babin",
     "title": "Cyber Helix Fall",
     "category": "Arcade",
@@ -386,6 +447,46 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "cyber-orbit-defense_babin",
+    "title": "Cyber Orbit Defense",
+    "category": "Action",
+    "lucideIcon": "shield",
+    "description": "Rotate orbital defense shields to deflect rogue cosmic pulse meteors and protect the central quantum core!",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Arcade Contributor",
+    "path": "games/cyber-orbit-defense_babin/index.html",
+    "tags": [
+      "Action",
+      "Reflex",
+      "Space",
+      "Cyberpunk",
+      "Arcade"
+    ],
+    "stars": 35,
+    "featured": true
+  },
+  {
+    "id": "cyber-pulse-rhythm_babin",
+    "title": "Cyber Pulse Rhythm",
+    "category": "Rhythm",
+    "lucideIcon": "music",
+    "description": "Strike descending electronic synthesizer notes in rhythm with tempo beats to maintain musical resonance!",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Arcade Contributor",
+    "path": "games/cyber-pulse-rhythm_babin/index.html",
+    "tags": [
+      "Rhythm",
+      "Audio",
+      "Music",
+      "Synth",
+      "Reflex"
+    ],
+    "stars": 41,
+    "featured": true
+  },
+  {
     "id": "cyber-rogue_babin",
     "title": "Cyber Rogue Protocol",
     "category": "Puzzle",
@@ -464,6 +565,26 @@ const GAMES_REGISTRY = [
       "Physics"
     ],
     "stars": 30,
+    "featured": true
+  },
+  {
+    "id": "cyber-sub-abyss_babin",
+    "title": "Cyber Sub Abyss",
+    "category": "Adventure",
+    "lucideIcon": "compass",
+    "description": "Navigate a deep ocean cyber submersible through trench cavern hazards and discover bioluminescent relics!",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Arcade Contributor",
+    "path": "games/cyber-sub-abyss_babin/index.html",
+    "tags": [
+      "Adventure",
+      "Ocean",
+      "Exploration",
+      "Atmospheric",
+      "Survival"
+    ],
+    "stars": 37,
     "featured": true
   },
   {
@@ -970,6 +1091,27 @@ const GAMES_REGISTRY = [
     "difficulty": "Medium"
   },
   {
+    "id": "neon-pong-smash_babin",
+    "title": "Neon Pong Smash",
+    "category": "Arcade",
+    "lucideIcon": "activity",
+    "description": "High-octane cyberpunk Pong with responsive kinetic rallies, dynamic spin mechanics, adaptive AI and cyber powerups.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/neon-pong-smash_babin/index.html",
+    "tags": [
+      "arcade",
+      "retro",
+      "pong",
+      "cyberpunk",
+      "multi-ball",
+      "2d"
+    ],
+    "stars": 5,
+    "featured": true
+  },
+  {
     "id": "neon-precision-target_babin",
     "title": "Neon Precision Target",
     "category": "Arcade",
@@ -1146,6 +1288,26 @@ const GAMES_REGISTRY = [
     "featured": false
   },
   {
+    "id": "quantum-match-matrix_babin",
+    "title": "Quantum Match Matrix",
+    "category": "Puzzle",
+    "lucideIcon": "cpu",
+    "description": "Align matching quantum particle frequencies in this fast-paced neon memory logic matrix!",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Arcade Contributor",
+    "path": "games/quantum-match-matrix_babin/index.html",
+    "tags": [
+      "Puzzle",
+      "Logic",
+      "Memory",
+      "Cyberpunk",
+      "Neon"
+    ],
+    "stars": 34,
+    "featured": true
+  },
+  {
     "id": "quantum-minesweeper-dx_babin",
     "title": "Quantum Minesweeper DX: Grid Defusal",
     "category": "Puzzle / Strategy",
@@ -1319,6 +1481,26 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "stellar-warp-runner_babin",
+    "title": "Stellar Warp Runner",
+    "category": "Runner",
+    "lucideIcon": "zap",
+    "description": "Pilot a hyperspace warp vessel through shifting tachyon barriers and collect stellar energy cells!",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Arcade Contributor",
+    "path": "games/stellar-warp-runner_babin/index.html",
+    "tags": [
+      "Runner",
+      "Space",
+      "Reflex",
+      "Speed",
+      "SciFi"
+    ],
+    "stars": 36,
+    "featured": true
+  },
+  {
     "id": "synth-says_babin",
     "title": "Synth-Wave Simon Says",
     "category": "Retro",
@@ -1427,7 +1609,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 305,
+    "commits": 315,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -1447,26 +1629,32 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 204,
-    "gamesCount": 43,
+    "commits": 214,
+    "gamesCount": 52,
     "mechanicsBonus": 2,
     "platformPRs": 29,
     "qualityPRs": 1,
     "bonusPts": 0,
     "contributions": [
       "Asteroid Miner: Deep Space Extraction",
+      "Astro Defense Turret",
       "Chrono Breakout: Quantum Time Shatter",
+      "Chrono Laser Mirror",
       "Chrono-Shift: Temporal Paradox",
       "Cosmic Orbit Slingshot",
       "Cryptic Code Breaker: Mastermind Terminal",
       "Cryptic Wordle Hack",
       "Cyber Block Matrix",
       "Cyber Brick Breaker",
+      "Cyber Gravity Hopper",
       "Cyber Helix Fall",
       "Cyber Hex Collapse",
       "Cyber Light Cycle",
+      "Cyber Orbit Defense",
+      "Cyber Pulse Rhythm",
       "Cyber Rogue Protocol",
       "Cyber Snake Matrix",
+      "Cyber Sub Abyss",
       "Cyber Swarm Assault",
       "Cyber Tower Defense: Grid Bastion",
       "Cyber Tower Stacker",
@@ -1481,10 +1669,12 @@ const CONTRIBUTORS_REGISTRY = [
       "Neon Lunar Lander",
       "Neon Missile Command",
       "Neon Pinball DX: Cybernetic Table",
+      "Neon Pong Smash",
       "Neon Precision Target",
       "Neon Rhythm Blaster",
       "Neon Wave Matcher",
       "Quantum 2048",
+      "Quantum Match Matrix",
       "Quantum Minesweeper",
       "Quantum Minesweeper DX: Grid Defusal",
       "Quantum Pulse: Cyber Rhythm Blaster",
@@ -1493,6 +1683,7 @@ const CONTRIBUTORS_REGISTRY = [
       "Retro Space Lander: Apollo Lunar Descent",
       "Solar Flare: Stellar Shield Defense",
       "Space Invaders 2026",
+      "Stellar Warp Runner",
       "Synth-Wave Simon Says",
       "Tactical Fleet Commander",
       "Wave Rider: Frequency Pulse Surfer",

@@ -1,0 +1,18 @@
+{
+  "title": "Stellar Warp Runner",
+  "category": "Runner",
+  "lucideIcon": "zap",
+  "description": "Pilot a hyperspace warp vessel through shifting tachyon barriers and collect stellar energy cells!",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Arcade Contributor",
+  "tags": [
+    "Runner",
+    "Space",
+    "Reflex",
+    "Speed",
+    "SciFi"
+  ],
+  "stars": 36,
+  "featured": true
+}

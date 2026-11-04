@@ -1,0 +1,349 @@
+/* Astro Defense Turret - style.css */
+:root {
+  --bg-dark: #05050e;
+  --panel-bg: rgba(15, 23, 42, 0.85);
+  --red-neon: #ef4444;
+  --orange-neon: #f97316;
+  --yellow-neon: #eab308;
+  --cyan-neon: #06b6d4;
+  --text-main: #f8fafc;
+  --text-dim: #94a3b8;
+  --border-neon: rgba(239, 68, 68, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px;
+}
+
+.game-container {
+  width: 100%;
+  max-width: 660px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-neon);
+  border-radius: 12px;
+  padding: 10px 16px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+}
+
+.nav-btn:hover {
+  color: var(--cyan-neon);
+  background: rgba(6, 182, 212, 0.1);
+}
+
+.game-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  letter-spacing: 1px;
+  color: #fff;
+  text-shadow: 0 0 10px var(--red-neon);
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
+  border-radius: 8px;
+  padding: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: var(--red-neon);
+  color: #fff;
+}
+
+.icon-btn.active {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.stats-panel {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.stat-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-neon);
+  border-radius: 10px;
+  padding: 8px 12px;
+  text-align: center;
+}
+
+.stat-card .label {
+  display: block;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+
+.stat-card .val {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.stat-card .val.score {
+  color: var(--yellow-neon);
+}
+.stat-card .val.wave {
+  color: var(--orange-neon);
+}
+.stat-card .val.shield {
+  color: var(--cyan-neon);
+}
+.stat-card .val.high {
+  color: #94a3b8;
+}
+
+.canvas-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #02030a;
+  border: 2px solid var(--border-neon);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 0 24px rgba(239, 68, 68, 0.2);
+}
+
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: crosshair;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 3, 10, 0.88);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(6px);
+  z-index: 10;
+  transition: opacity 0.2s ease;
+}
+
+.overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.panel {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid var(--red-neon);
+  border-radius: 16px;
+  padding: 30px;
+  text-align: center;
+  max-width: 440px;
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.35);
+}
+
+.panel-icon {
+  margin-bottom: 12px;
+}
+
+.panel h2 {
+  font-size: 24px;
+  margin-bottom: 10px;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.panel p {
+  color: var(--text-dim);
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.stat-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+  font-size: 15px;
+}
+
+.stat-summary .muted {
+  color: var(--text-dim);
+}
+
+.btn {
+  border: none;
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+  color: #fff;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.5);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 24px rgba(239, 68, 68, 0.8);
+}
+
+.touch-controls {
+  display: none;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 6px;
+}
+
+.touch-btn {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid var(--border-neon);
+  color: #fff;
+  width: 68px;
+  height: 68px;
+  border-radius: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.touch-btn.fire {
+  width: 90px;
+  font-weight: 800;
+  font-size: 14px;
+  background: rgba(239, 68, 68, 0.3);
+  border-color: var(--red-neon);
+}
+
+.touch-btn:active {
+  background: var(--red-neon);
+  color: #fff;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+  padding: 16px;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: #0f172a;
+  border: 1px solid var(--red-neon);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 450px;
+  padding: 24px;
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.4);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  color: #fff;
+}
+
+.modal-body {
+  font-size: 14px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal-body strong {
+  color: var(--red-neon);
+}
+
+@media (max-width: 768px) {
+  .touch-controls {
+    display: flex;
+  }
+}
