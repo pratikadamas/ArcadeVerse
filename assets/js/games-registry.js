@@ -1520,6 +1520,26 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "synthwave-highway-racer_babin",
+    "title": "Synthwave Highway Racer",
+    "category": "Racing",
+    "lucideIcon": "gauge",
+    "description": "Speed down an endless neon synthwave highway, overtaking traffic drones and activating nitro boosts!",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Arcade Contributor",
+    "path": "games/synthwave-highway-racer_babin/index.html",
+    "tags": [
+      "Racing",
+      "Synthwave",
+      "Retro",
+      "Reflex",
+      "Speed"
+    ],
+    "stars": 39,
+    "featured": true
+  },
+  {
     "id": "tactical-fleet_babin",
     "title": "Tactical Fleet Commander",
     "category": "Strategy",
@@ -1609,7 +1629,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 315,
+    "commits": 316,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -1629,8 +1649,8 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 214,
-    "gamesCount": 52,
+    "commits": 215,
+    "gamesCount": 53,
     "mechanicsBonus": 2,
     "platformPRs": 29,
     "qualityPRs": 1,
@@ -1685,6 +1705,7 @@ const CONTRIBUTORS_REGISTRY = [
       "Space Invaders 2026",
       "Stellar Warp Runner",
       "Synth-Wave Simon Says",
+      "Synthwave Highway Racer",
       "Tactical Fleet Commander",
       "Wave Rider: Frequency Pulse Surfer",
       "Whack-A-Bug Panic"
