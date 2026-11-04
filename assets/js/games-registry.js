@@ -1426,7 +1426,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 302,
+    "commits": 304,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -1446,7 +1446,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 200,
+    "commits": 231,
     "gamesCount": 43,
     "mechanicsBonus": 2,
     "platformPRs": 29,
@@ -1606,8 +1606,8 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "Hi' I am Pratik Giri",
-    "github": "pratikadamas",
+    "name": "pratikgiri",
+    "github": "pratikgiri",
     "avatarInitial": "P",
     "role": "Contributor (NSOC '26)",
     "commits": 3,
