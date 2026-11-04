@@ -95,6 +95,10 @@
                   <div class="shortcut-keys"><kbd>R</kbd></div>
                 </div>
                 <div class="shortcut-row">
+                  <span>Bookmark / Toggle Favorite</span>
+                  <div class="shortcut-keys"><kbd>B</kbd></div>
+                </div>
+                <div class="shortcut-row">
                   <span>Toggle UI Sound SFX</span>
                   <div class="shortcut-keys"><kbd>M</kbd></div>
                 </div>
@@ -289,6 +293,25 @@
             const reloadBtn = document.getElementById('reload-btn');
             if (reloadBtn) {
               reloadBtn.click();
+              e.preventDefault();
+            }
+          }
+          return;
+        }
+
+        // B: Bookmark / Toggle Favorite (in modal or jump to favorites tab)
+        if (e.key === 'b' || e.key === 'B') {
+          const gameModal = document.getElementById('game-modal');
+          if (gameModal && gameModal.classList.contains('active')) {
+            const favBtn = document.getElementById('modal-fav-btn');
+            if (favBtn) {
+              favBtn.click();
+              e.preventDefault();
+            }
+          } else {
+            const favPill = document.querySelector('.category-pills .pill[data-category="favorites"]');
+            if (favPill) {
+              favPill.click();
               e.preventDefault();
             }
           }
