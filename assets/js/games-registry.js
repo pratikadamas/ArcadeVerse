@@ -386,6 +386,26 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "cyber-orbit-defense_babin",
+    "title": "Cyber Orbit Defense",
+    "category": "Action",
+    "lucideIcon": "shield",
+    "description": "Rotate orbital defense shields to deflect rogue cosmic pulse meteors and protect the central quantum core!",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Arcade Contributor",
+    "path": "games/cyber-orbit-defense_babin/index.html",
+    "tags": [
+      "Action",
+      "Reflex",
+      "Space",
+      "Cyberpunk",
+      "Arcade"
+    ],
+    "stars": 35,
+    "featured": true
+  },
+  {
     "id": "cyber-rogue_babin",
     "title": "Cyber Rogue Protocol",
     "category": "Puzzle",
@@ -1427,7 +1447,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 305,
+    "commits": 307,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -1447,8 +1467,8 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 204,
-    "gamesCount": 43,
+    "commits": 206,
+    "gamesCount": 44,
     "mechanicsBonus": 2,
     "platformPRs": 29,
     "qualityPRs": 1,
@@ -1465,6 +1485,7 @@ const CONTRIBUTORS_REGISTRY = [
       "Cyber Helix Fall",
       "Cyber Hex Collapse",
       "Cyber Light Cycle",
+      "Cyber Orbit Defense",
       "Cyber Rogue Protocol",
       "Cyber Snake Matrix",
       "Cyber Swarm Assault",
@@ -1607,9 +1628,9 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "Hi' I am Pratik Giri",
-    "github": "pratikadamas",
-    "avatarInitial": "P",
+    "name": "Abhishek",
+    "github": "Anshuu2004",
+    "avatarInitial": "A",
     "role": "Contributor (NSOC '26)",
     "commits": 3,
     "gamesCount": 0,
