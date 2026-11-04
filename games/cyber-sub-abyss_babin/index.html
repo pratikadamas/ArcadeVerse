@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Sub Abyss | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="../../assets/public/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="../../assets/public/favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="../../assets/public/apple-touch-icon.png">
+</head>
+<body>
+  <div class="game-wrapper">
+    <header class="game-header">
+      <div class="header-left">
+        <h1 class="game-title">Cyber Sub <span class="accent">Abyss</span></h1>
+        <span class="game-subtitle">Deep Sea Trench Expedition</span>
+      </div>
+      <div class="header-right">
+        <button id="how-to-play-btn" class="btn btn-secondary" aria-label="Open Game Instructions">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+          Rules
+        </button>
+      </div>
+    </header>
+
+    <div class="stats-panel">
+      <div class="stat-card">
+        <span class="stat-label">DEPTH</span>
+        <span class="stat-value" id="depth-val">0 M</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">OXYGEN</span>
+        <span class="stat-value highlight" id="o2-val">100%</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">RELICS</span>
+        <span class="stat-value" id="relics-val">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">MAX DEPTH</span>
+        <span class="stat-value" id="best-val">0 M</span>
+      </div>
+    </div>
+
+    <div class="canvas-container">
+      <canvas id="game-canvas" width="600" height="500" role="img" aria-label="Submarine Ocean Depth Viewport"></canvas>
+      
+      <div id="start-overlay" class="overlay active">
+        <div class="overlay-card">
+          <div class="overlay-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+          </div>
+          <h2>SUBMERGE INTO THE ABYSS</h2>
+          <p>Guide your submersible through underwater volcanic vents, manage oxygen reserves, and recover deep abyssal artifacts!</p>
+          <div class="controls-hint">
+            <span>Controls: <strong>W/A/S/D</strong>, <strong>Arrow Keys</strong>, or <strong>Touch D-Pad</strong></span>
+          </div>
+          <button id="start-btn" class="btn btn-primary">Dive Now</button>
+        </div>
+      </div>
+
+      <div id="gameover-overlay" class="overlay">
+        <div class="overlay-card">
+          <div class="overlay-icon danger">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+          </div>
+          <h2>HULL BREACH</h2>
+          <p id="gameover-stats">Depth: 0 M &bull; Relics Gathered: 0</p>
+          <button id="restart-btn" class="btn btn-primary">Deploy New Sub</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Touch D-Pad -->
+    <div class="dpad-container">
+      <div class="dpad-grid">
+        <button id="btn-up" class="dpad-btn up" aria-label="Thrust Up">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>
+        </button>
+        <button id="btn-left" class="dpad-btn left" aria-label="Steer Left">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button id="btn-down" class="dpad-btn down" aria-label="Dive Down">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <button id="btn-right" class="dpad-btn right" aria-label="Steer Right">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- How to Play Modal -->
+    <div id="rules-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Submersible Operations</h3>
+          <button id="close-rules" class="modal-close" aria-label="Close dialog">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p><strong>1. Propel Vessel:</strong> Use WASD, Arrow keys, or the onscreen D-pad to maneuver your sub.</p>
+          <p><strong>2. Oxygen Depletion:</strong> Oxygen slowly drains over time. Collect blue oxygen bubbles to restore 25% reserves.</p>
+          <p><strong>3. Trench Hazards:</strong> Avoid volcanic geysers and rocky seafloor obstacles that rupture your pressure hull.</p>
+        </div>
+        <div class="modal-footer">
+          <button id="rules-confirm-btn" class="btn btn-primary">Understood</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
