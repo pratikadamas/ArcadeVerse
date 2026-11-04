@@ -45,10 +45,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Favorites LocalStorage Engine
   const FAVORITES_STORAGE_KEY = "arcadeverse_favorite_games";
+  const LEGACY_FAVORITES_STORAGE_KEY = "arcadeverse:preferences:favorites";
 
   function getFavorites() {
     try {
-      const raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
+      let raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
+      if (!raw) {
+        raw = localStorage.getItem(LEGACY_FAVORITES_STORAGE_KEY);
+      }
       const parsed = raw ? JSON.parse(raw) : [];
       return Array.isArray(parsed) ? new Set(parsed) : new Set();
     } catch (e) {
@@ -70,8 +74,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updateFavoritesBadge() {
+    const favCount = getFavorites().size;
     if (favoritesCountBadge) {
-      favoritesCountBadge.textContent = getFavorites().size;
+      favoritesCountBadge.textContent = favCount;
+      favoritesCountBadge.setAttribute("aria-label", `${favCount} favorite games saved`);
+    }
+    const mobileFavCount = document.getElementById("mobile-fav-count");
+    if (mobileFavCount) {
+      mobileFavCount.textContent = favCount;
     }
     updateCategoryPillCounts();
   }
@@ -123,7 +133,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!modalFavBtn) return;
     modalFavBtn.classList.toggle("favorited", fav);
     modalFavBtn.setAttribute("aria-pressed", fav ? "true" : "false");
-    modalFavBtn.title = fav ? "Remove from Favorites" : "Save to Favorites";
+    const label = fav ? "Remove from Favorites" : "Save to Favorites";
+    modalFavBtn.title = label;
+    modalFavBtn.setAttribute("aria-label", label);
   }
 
   function toggleFavorite(gameId) {
@@ -137,20 +149,70 @@ document.addEventListener("DOMContentLoaded", () => {
     saveFavorites(favs);
 
     if (currentCategory === "favorites") {
+      // Find adjacent game card ID for smooth keyboard focus handover
+      const cardNodes = Array.from(gamesGrid.querySelectorAll(".game-card"));
+      const currentIndex = cardNodes.findIndex((c) => c.getAttribute("data-game-id") === gameId);
+      let nextFocusGameId = null;
+      if (currentIndex !== -1) {
+        if (currentIndex < cardNodes.length - 1) {
+          nextFocusGameId = cardNodes[currentIndex + 1].getAttribute("data-game-id");
+        } else if (currentIndex > 0) {
+          nextFocusGameId = cardNodes[currentIndex - 1].getAttribute("data-game-id");
+        }
+      }
+
       renderGames();
+
+      if (nextFocusGameId) {
+        const nextBtn = gamesGrid.querySelector(`.btn-card-favorite[data-id="${nextFocusGameId}"]`);
+        if (nextBtn) nextBtn.focus();
+      } else {
+        const resetBtn = document.getElementById("reset-filter-btn");
+        if (resetBtn) resetBtn.focus();
+      }
     } else {
-      const cardBtn = document.querySelector(`.btn-card-favorite[data-id="${gameId}"]`);
-      if (cardBtn) {
+      const cardBtns = document.querySelectorAll(`.btn-card-favorite[data-id="${gameId}"]`);
+      cardBtns.forEach((cardBtn) => {
         cardBtn.classList.toggle("favorited", willBeFav);
         cardBtn.setAttribute("aria-pressed", willBeFav ? "true" : "false");
-        cardBtn.title = willBeFav ? "Remove from Favorites" : "Save to Favorites";
-      }
+        const label = willBeFav ? "Remove from Favorites" : "Save to Favorites";
+        cardBtn.title = label;
+        cardBtn.setAttribute("aria-label", label);
+      });
     }
 
     if (activeGame && activeGame.id === gameId) {
       updateModalFavoriteButton(willBeFav);
     }
+
+    window.dispatchEvent(new CustomEvent("arcadeverse:favorites-updated", {
+      detail: { gameId, isFavorite: willBeFav, favorites: Array.from(favs), count: favs.size }
+    }));
   }
+
+  // Cross-tab real-time favorites synchronization
+  window.addEventListener("storage", (e) => {
+    if (e.key === FAVORITES_STORAGE_KEY || e.key === LEGACY_FAVORITES_STORAGE_KEY) {
+      updateFavoritesBadge();
+      if (currentCategory === "favorites") {
+        renderGames();
+      } else {
+        const favs = getFavorites();
+        document.querySelectorAll(".btn-card-favorite").forEach((btn) => {
+          const id = btn.getAttribute("data-id");
+          const isFav = favs.has(id);
+          btn.classList.toggle("favorited", isFav);
+          btn.setAttribute("aria-pressed", isFav ? "true" : "false");
+          const label = isFav ? "Remove from Favorites" : "Save to Favorites";
+          btn.title = label;
+          btn.setAttribute("aria-label", label);
+        });
+      }
+      if (activeGame) {
+        updateModalFavoriteButton(isFavorite(activeGame.id));
+      }
+    }
+  });
 
   // Levenshtein / Fuzzy Match Engine for Smart Suggestions
   function getSmartSuggestions(query, category) {
@@ -452,18 +514,59 @@ document.addEventListener("DOMContentLoaded", () => {
       emptyCard.className = "catalog-empty-state";
 
       if (currentCategory === "favorites") {
-        emptyCard.innerHTML = `
-          <div class="empty-state-icon" style="color: #f43f5e;"><i data-lucide="heart-crack"></i></div>
-          <h3 class="empty-state-title">No Favorite Games Saved Yet</h3>
-          <p class="empty-state-desc">
-            You haven't bookmarked any games yet! Click the heart icon on any game card in the catalog to add it to your personal favorites collection.
-          </p>
-          <div class="empty-state-actions">
-            <button class="btn btn-primary btn-sm" id="reset-filter-btn">
-              <span><i data-lucide="gamepad-2"></i> Browse All Games</span>
-            </button>
-          </div>
-        `;
+        if (favs.size === 0) {
+          emptyCard.innerHTML = `
+            <div class="empty-state-icon" style="color: #f43f5e;"><i data-lucide="heart-crack"></i></div>
+            <h3 class="empty-state-title">No Favorite Games Saved Yet</h3>
+            <p class="empty-state-desc">
+              You haven't bookmarked any games yet! Click the heart icon on any game card in the catalog to add it to your personal favorites collection.
+            </p>
+            <div class="empty-state-actions">
+              <button class="btn btn-primary btn-sm" id="reset-filter-btn">
+                <span><i data-lucide="gamepad-2"></i> Browse All Games</span>
+              </button>
+            </div>
+          `;
+        } else {
+          emptyCard.innerHTML = `
+            <div class="empty-state-icon" style="color: #f43f5e;"><i data-lucide="search-x"></i></div>
+            <h3 class="empty-state-title">No Matching Favorites Found</h3>
+            <p class="empty-state-desc">
+              None of your ${favs.size} saved favorite games match the current search query or active facet filters.
+            </p>
+            <div class="empty-state-actions">
+              <button class="btn btn-primary btn-sm" id="clear-fav-search-btn">
+                <span><i data-lucide="rotate-ccw"></i> Show All Favorites (${favs.size})</span>
+              </button>
+              <button class="btn btn-secondary btn-sm" id="reset-filter-btn">
+                <span><i data-lucide="gamepad-2"></i> Browse All Games</span>
+              </button>
+            </div>
+          `;
+          const clearFavBtn = emptyCard.querySelector("#clear-fav-search-btn");
+          if (clearFavBtn) {
+            clearFavBtn.addEventListener("click", () => {
+              searchQuery = "";
+              currentTagFilter = "";
+              currentDurationFacet = "all";
+              currentControlsFacet = "all";
+              if (searchInput) searchInput.value = "";
+              if (searchClearBtn) searchClearBtn.hidden = true;
+              closeAutocomplete();
+              const durationChips = document.querySelectorAll("#duration-facet-chips .facet-chip");
+              durationChips.forEach((c) => {
+                if (c.getAttribute("data-duration") === "all") c.classList.add("active");
+                else c.classList.remove("active");
+              });
+              const controlChips = document.querySelectorAll("#controls-facet-chips .facet-chip");
+              controlChips.forEach((c) => {
+                if (c.getAttribute("data-controls") === "all") c.classList.add("active");
+                else c.classList.remove("active");
+              });
+              renderGames();
+            });
+          }
+        }
       } else {
         // Compute smart suggestions based on query and available game categories/tags
         const suggestions = getSmartSuggestions(searchQuery, currentCategory);
@@ -791,7 +894,31 @@ document.addEventListener("DOMContentLoaded", () => {
     },
     launchRandom: () => {
       launchRandomGame();
+    },
+    filterFavorites: () => {
+      categoryPills.forEach((p) => {
+        p.classList.remove("active");
+        p.setAttribute("aria-selected", "false");
+      });
+      const favPill = document.querySelector('.category-pills .pill[data-category="favorites"]');
+      if (favPill) {
+        favPill.classList.add("active");
+        favPill.setAttribute("aria-selected", "true");
+      }
+      currentCategory = "favorites";
+      searchQuery = "";
+      if (searchInput) searchInput.value = "";
+      if (searchClearBtn) searchClearBtn.hidden = true;
+      closeAutocomplete();
+      renderGames();
     }
+  };
+
+  window.ArcadeFavorites = {
+    getFavorites: () => Array.from(getFavorites()),
+    isFavorite,
+    toggleFavorite,
+    count: () => getFavorites().size
   };
 
   function closeGameModal() {
@@ -1144,6 +1271,90 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+  }
+
+  if (searchBox && searchInput) {
+    searchInput.setAttribute("role", "combobox");
+    searchInput.setAttribute("aria-autocomplete", "list");
+    searchInput.setAttribute("aria-expanded", "false");
+    searchInput.setAttribute("aria-controls", "game-search-autocomplete");
+    searchInput.setAttribute("autocomplete", "off");
+    searchInput.setAttribute("spellcheck", "false");
+
+    autocompleteDropdown = document.createElement("div");
+    autocompleteDropdown.id = "game-search-autocomplete";
+    autocompleteDropdown.className = "search-autocomplete-dropdown";
+    autocompleteDropdown.setAttribute("role", "listbox");
+    autocompleteDropdown.setAttribute("aria-label", "Search suggestions");
+    autocompleteDropdown.style.display = "none";
+    searchBox.appendChild(autocompleteDropdown);
+
+    searchInput.addEventListener("focus", () => {
+      const val = searchInput.value.trim();
+      if (val.length > 0) {
+        renderAutocomplete(val);
+      }
+    });
+
+    searchInput.addEventListener("keydown", (e) => {
+      if (!autocompleteDropdown || autocompleteDropdown.style.display === "none") {
+        if (e.key === "ArrowDown" && searchInput.value.trim().length > 0) {
+          e.preventDefault();
+          renderAutocomplete(searchInput.value);
+        }
+        return;
+      }
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (currentSuggestions.length > 0) {
+          const nextIndex = (activeSuggestionIndex + 1) % currentSuggestions.length;
+          updateActiveSuggestion(nextIndex);
+        }
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (currentSuggestions.length > 0) {
+          const prevIndex = activeSuggestionIndex <= 0 ? currentSuggestions.length - 1 : activeSuggestionIndex - 1;
+          updateActiveSuggestion(prevIndex);
+        }
+      } else if (e.key === "Enter") {
+        if (activeSuggestionIndex >= 0 && currentSuggestions[activeSuggestionIndex]) {
+          e.preventDefault();
+          launchSuggestion(currentSuggestions[activeSuggestionIndex]);
+        } else if (currentSuggestions.length === 1) {
+          e.preventDefault();
+          launchSuggestion(currentSuggestions[0]);
+        }
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        closeAutocomplete();
+      }
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!searchBox.contains(e.target)) {
+        closeAutocomplete();
+      }
+    });
+  }
+
+  // Filter Search
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      searchQuery = e.target.value.toLowerCase().trim();
+      renderGames();
+      if (searchQuery.length > 0) {
+        renderAutocomplete(e.target.value);
+      } else {
+        closeAutocomplete();
+      }
+    });
+  }
+
   // --- Faceted Filters Event Listeners (Duration, Controls, Reset) ---
   const durationFacetChips = document.querySelectorAll("#duration-facet-chips .facet-chip");
   durationFacetChips.forEach((chip) => {
@@ -1211,12 +1422,55 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if (playlistTrigger) playlistTrigger.classList.remove("active");
 
-      categoryPills.forEach((p) => p.classList.remove("active"));
+      categoryPills.forEach((p) => {
+        p.classList.remove("active");
+        p.setAttribute("aria-selected", "false");
+      });
       pill.classList.add("active");
+      pill.setAttribute("aria-selected", "true");
       currentCategory = pill.getAttribute("data-category");
       renderGames();
     });
   });
+
+  // Mobile Navigation Drawer Favorites Shortcut
+  const mobileFavLink = document.getElementById("mobile-favorites-link");
+  if (mobileFavLink) {
+    mobileFavLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      const mobileDrawer = document.getElementById("mobile-nav-drawer");
+      const menuBtn = document.getElementById("mobile-menu-btn");
+      if (mobileDrawer) {
+        mobileDrawer.classList.remove("open");
+        mobileDrawer.setAttribute("aria-hidden", "true");
+      }
+      if (menuBtn) {
+        menuBtn.classList.remove("active");
+        menuBtn.setAttribute("aria-expanded", "false");
+      }
+
+      categoryPills.forEach((p) => {
+        p.classList.remove("active");
+        p.setAttribute("aria-selected", "false");
+      });
+      const favPill = document.querySelector('.category-pills .pill[data-category="favorites"]');
+      if (favPill) {
+        favPill.classList.add("active");
+        favPill.setAttribute("aria-selected", "true");
+      }
+      currentCategory = "favorites";
+      searchQuery = "";
+      if (searchInput) searchInput.value = "";
+      if (searchClearBtn) searchClearBtn.hidden = true;
+      closeAutocomplete();
+      renderGames();
+
+      const gamesSection = document.getElementById("games");
+      if (gamesSection) {
+        gamesSection.scrollIntoView({ behavior: "smooth" });
+      }
+    });
+  }
 
   // Re-sort when a game rating is updated (debounced to preserve click interaction)
   let ratingSortTimer = null;

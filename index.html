@@ -99,6 +99,10 @@
           <span class="mobile-nav-icon"><i data-lucide="gamepad-2"></i></span>
           <span>Explore Games</span>
         </a>
+        <a href="#games" class="mobile-nav-item mobile-favorites-link" id="mobile-favorites-link">
+          <span class="mobile-nav-icon" style="color: #f43f5e;"><i data-lucide="heart"></i></span>
+          <span>Favorites (<span id="mobile-fav-count">0</span>)</span>
+        </a>
         <a href="leaderboard.html" class="mobile-nav-item">
           <span class="mobile-nav-icon"><i data-lucide="trophy"></i></span>
           <span>Hall of Fame</span>
@@ -457,10 +461,10 @@
       <!-- Full-Width Category Filter Pills Bar -->
       <div class="category-pills-bar">
         <div class="category-pills" id="category-pills" role="tablist" aria-label="Filter games by category">
-          <button class="pill active" data-category="all">All</button>
-          <button class="pill pill-favorites" data-category="favorites">
+          <button class="pill active" data-category="all" role="tab" aria-selected="true">All</button>
+          <button class="pill pill-favorites" data-category="favorites" role="tab" aria-selected="false">
             <span class="pill-fav-icon"><i data-lucide="heart"></i></span> Favorites <span class="favorites-count-badge"
-              id="favorites-count-badge">0</span>
+              id="favorites-count-badge" aria-label="0 favorites saved">0</span>
           </button>
           <button class="pill pill-playlists" id="trigger-playlists-btn" type="button" aria-label="Open Custom Playlists">
             <span class="pill-playlist-icon"><i data-lucide="library"></i></span> Playlists
@@ -545,7 +549,7 @@
           <span class="author-tag" id="modal-game-author">By @Debasmita</span>
         </div>
         <div class="modal-controls">
-          <button class="btn btn-sm btn-icon" id="modal-fav-btn" title="Save to Favorites" aria-label="Toggle favorite">
+          <button class="btn btn-sm btn-icon" id="modal-fav-btn" title="Save to Favorites" aria-label="Save to Favorites" aria-pressed="false">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
               class="modal-fav-icon">
               <path
