@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Pulse Rhythm | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="../../assets/public/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="../../assets/public/favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="../../assets/public/apple-touch-icon.png">
+</head>
+<body>
+  <div class="game-wrapper">
+    <header class="game-header">
+      <div class="header-left">
+        <h1 class="game-title">Cyber Pulse <span class="accent">Rhythm</span></h1>
+        <span class="game-subtitle">Harmonic Matrix Synthesizer</span>
+      </div>
+      <div class="header-right">
+        <button id="how-to-play-btn" class="btn btn-secondary" aria-label="Open Game Instructions">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+          Rules
+        </button>
+      </div>
+    </header>
+
+    <div class="stats-panel">
+      <div class="stat-card">
+        <span class="stat-label">SCORE</span>
+        <span class="stat-value" id="score-val">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">COMBO</span>
+        <span class="stat-value highlight" id="combo-val">0x</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">ACCURACY</span>
+        <span class="stat-value" id="accuracy-val">100%</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">BEST RECORD</span>
+        <span class="stat-value" id="best-val">0</span>
+      </div>
+    </div>
+
+    <div class="canvas-container">
+      <canvas id="game-canvas" width="600" height="650" role="img" aria-label="Cyber Pulse Rhythm Stage Viewport"></canvas>
+      
+      <div id="start-overlay" class="overlay active">
+        <div class="overlay-card">
+          <div class="overlay-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+          </div>
+          <h2>SYNCHRONIZE HARMONICS</h2>
+          <p>Tap the 4 rhythm lanes as falling pulse notes reach the strike baseline. Maintain your combo streak to build high-score multipliers!</p>
+          <div class="controls-hint">
+            <span>Controls: <strong>D, F, J, K</strong> Keys or <strong>Touch Lanes</strong></span>
+          </div>
+          <button id="start-btn" class="btn btn-primary">Start Jam Session</button>
+        </div>
+      </div>
+
+      <div id="gameover-overlay" class="overlay">
+        <div class="overlay-card">
+          <div class="overlay-icon danger">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+          </div>
+          <h2>TRACK CONCLUDED</h2>
+          <p id="gameover-stats">Score: 0 &bull; Max Combo: 0x</p>
+          <button id="restart-btn" class="btn btn-primary">Replay Track</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Onscreen Rhythm Buttons (D, F, J, K) -->
+    <div class="lane-buttons">
+      <button id="btn-lane-0" class="lane-trigger l0" aria-label="Lane 1 Key D">
+        <span class="key-tag">D</span>
+      </button>
+      <button id="btn-lane-1" class="lane-trigger l1" aria-label="Lane 2 Key F">
+        <span class="key-tag">F</span>
+      </button>
+      <button id="btn-lane-2" class="lane-trigger l2" aria-label="Lane 3 Key J">
+        <span class="key-tag">J</span>
+      </button>
+      <button id="btn-lane-3" class="lane-trigger l3" aria-label="Lane 4 Key K">
+        <span class="key-tag">K</span>
+      </button>
+    </div>
+
+    <!-- How to Play Modal -->
+    <div id="rules-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Harmonics Synthesizer Manual</h3>
+          <button id="close-rules" class="modal-close" aria-label="Close dialog">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p><strong>1. Note Falling:</strong> 4 lanes stream musical synthesizer pulses from top to bottom.</p>
+          <p><strong>2. Perfect Strike:</strong> Hit the corresponding button or key right as the pulse intersects the baseline ring.</p>
+          <p><strong>3. Combo Multipliers:</strong> Sustaining streaks multiplies your score by up to 4x.</p>
+        </div>
+        <div class="modal-footer">
+          <button id="rules-confirm-btn" class="btn btn-primary">Understood</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

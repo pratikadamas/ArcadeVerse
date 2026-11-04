@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Orbit Defense | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="../../assets/public/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="../../assets/public/favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="../../assets/public/apple-touch-icon.png">
+</head>
+<body>
+  <div class="game-wrapper">
+    <header class="game-header">
+      <div class="header-left">
+        <h1 class="game-title">Cyber Orbit <span class="accent">Defense</span></h1>
+        <span class="game-subtitle">Quantum Core Planetary Shield</span>
+      </div>
+      <div class="header-right">
+        <button id="how-to-play-btn" class="btn btn-secondary" aria-label="Open Game Instructions">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+          Rules
+        </button>
+      </div>
+    </header>
+
+    <div class="stats-panel">
+      <div class="stat-card">
+        <span class="stat-label">SCORE</span>
+        <span class="stat-value" id="score-val">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">WAVE</span>
+        <span class="stat-value" id="wave-val">1</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">CORE INTEGRITY</span>
+        <span class="stat-value highlight" id="health-val">100%</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">BEST RECORD</span>
+        <span class="stat-value" id="best-val">0</span>
+      </div>
+    </div>
+
+    <div class="canvas-container">
+      <canvas id="game-canvas" width="600" height="600" role="img" aria-label="Cyber Orbit Defense Game Area"></canvas>
+      
+      <div id="start-overlay" class="overlay active">
+        <div class="overlay-card">
+          <div class="overlay-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#00f5ff" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 1 10 10"></path></svg>
+          </div>
+          <h2>DEFEND THE CORE</h2>
+          <p>Incoming cosmic particles threaten to collapse the quantum anomaly. Rotate your dual orbital deflectors to intercept incoming hazards!</p>
+          <div class="controls-hint">
+            <span>Desktop: <strong>Left/Right Arrows</strong>, <strong>A/D</strong> or <strong>Mouse/Touch Drag</strong></span>
+          </div>
+          <button id="start-btn" class="btn btn-primary">Engage Shields</button>
+        </div>
+      </div>
+
+      <div id="gameover-overlay" class="overlay">
+        <div class="overlay-card">
+          <div class="overlay-icon danger">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          </div>
+          <h2>CORE COMPROMISED</h2>
+          <p id="gameover-stats">Final Score: 0 &bull; Wave: 1</p>
+          <button id="restart-btn" class="btn btn-primary">Re-initialize Core</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Onscreen Touch Controls -->
+    <div class="touch-controls">
+      <button id="touch-left" class="touch-btn" aria-label="Rotate Counter-Clockwise">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+      <div class="touch-label">Shield Angle Control</div>
+      <button id="touch-right" class="touch-btn" aria-label="Rotate Clockwise">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+    </div>
+
+    <!-- How to Play Modal -->
+    <div id="rules-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Defensive Protocols</h3>
+          <button id="close-rules" class="modal-close" aria-label="Close dialog">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p><strong>1. Rotate Shield Arc:</strong> Steer the orbiting energy barrier using Arrow keys, A/D, or by dragging on the screen.</p>
+          <p><strong>2. Intercept Threats:</strong> Block red and orange hostile energy projectiles before they impact the central core.</p>
+          <p><strong>3. Catch Power Matrix:</strong> Allow blue nanite cores to enter the hub to restore health by +15%.</p>
+        </div>
+        <div class="modal-footer">
+          <button id="rules-confirm-btn" class="btn btn-primary">Understood</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

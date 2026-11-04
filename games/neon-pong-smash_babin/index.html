@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neon Pong Smash - ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="game-container">
+    <header class="game-header">
+      <div class="header-left">
+        <a href="../../index.html" class="nav-btn" aria-label="Back to ArcadeVerse">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Hub</span>
+        </a>
+        <h1 class="game-title">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#a855f7" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          NEON PONG SMASH
+        </h1>
+      </div>
+      <div class="header-controls">
+        <button id="btnRules" class="icon-btn" aria-label="Game Rules">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </button>
+        <button id="btnMute" class="icon-btn" aria-label="Toggle Sound">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+        </button>
+        <button id="btnPause" class="icon-btn" aria-label="Pause Game">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="6" y="4" width="4" height="16"></rect>
+            <rect x="14" y="4" width="4" height="16"></rect>
+          </svg>
+        </button>
+        <button id="btnRestartNav" class="icon-btn" aria-label="Restart Match">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="scoreboard-bar">
+      <div class="score-player">
+        <span class="label">PLAYER 1</span>
+        <span id="playerScore" class="val player">0</span>
+      </div>
+      <div class="rally-counter">
+        <span class="sub-label">RALLY</span>
+        <span id="rallyCount" class="val-rally">0</span>
+        <span class="sub-label">MAX: <span id="maxRally">0</span></span>
+      </div>
+      <div class="score-ai">
+        <span class="label">CYBER AI</span>
+        <span id="aiScore" class="val ai">0</span>
+      </div>
+    </div>
+
+    <div class="canvas-wrapper">
+      <canvas id="gameCanvas" width="800" height="480"></canvas>
+
+      <!-- Start Overlay -->
+      <div id="startScreen" class="overlay">
+        <div class="panel">
+          <div class="panel-icon">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#a855f7" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+          </div>
+          <h2>NEON PONG SMASH</h2>
+          <p>Defeat the cybernetic AI core in hyper-speed kinetic paddle combat. First to 7 points wins!</p>
+          <div class="button-group">
+            <button id="btnStart" class="btn btn-primary">SERVE BALL</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pause Overlay -->
+      <div id="pauseScreen" class="overlay hidden">
+        <div class="panel">
+          <h2>MATCH PAUSED</h2>
+          <p>Cyber system clock frozen.</p>
+          <button id="btnResume" class="btn btn-primary">RESUME</button>
+        </div>
+      </div>
+
+      <!-- Game Over / Victory Overlay -->
+      <div id="gameOverScreen" class="overlay hidden">
+        <div class="panel">
+          <h2 id="matchResultTitle">MATCH COMPLETE</h2>
+          <div class="stat-summary">
+            <div><span class="muted">Final Score:</span> <span id="finalScoreDisplay">0 - 0</span></div>
+            <div><span class="muted">Highest Rally:</span> <span id="finalMaxRally">0</span> hits</div>
+          </div>
+          <button id="btnRestart" class="btn btn-primary">REMATCH</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Virtual Controls -->
+    <div class="touch-controls">
+      <button id="btnMoveUp" class="touch-btn" aria-label="Paddle Up">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+      </button>
+      <button id="btnSmash" class="touch-btn action" aria-label="Smash / Turbo">SMASH</button>
+      <button id="btnMoveDown" class="touch-btn" aria-label="Paddle Down">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Rules Modal -->
+    <div id="rulesModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>PONG REGULATIONS</h3>
+          <button id="btnCloseRules" class="close-btn" aria-label="Close">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p><strong>Controls:</strong> Arrow Up/Down or W/S to move your paddle. Space or Shift to engage Turbo Smash impulse.</p>
+          <p><strong>Spin Mechanics:</strong> Hitting the ball while moving imparts curvature spin and accelerates rally speeds.</p>
+          <p><strong>Victory:</strong> First player or cybernetic intelligence to reach 7 points claims the sector trophy.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

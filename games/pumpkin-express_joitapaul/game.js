@@ -424,6 +424,22 @@
     context.stroke();
     context.restore();
 
+    if ((state === "ready" || state === "running") && switchPiece.orientation !== 0) {
+      context.save();
+      context.strokeStyle = "#e48159";
+      context.fillStyle = "#f2a17b";
+      context.lineWidth = 2;
+      context.setLineDash([4, 3]);
+      context.beginPath();
+      context.arc(center.x, center.y, 26, 0, Math.PI * 2);
+      context.stroke();
+      context.setLineDash([]);
+      context.font = "800 8px Segoe UI, sans-serif";
+      context.textAlign = "center";
+      context.fillText("CHECK", center.x, center.y + 36);
+      context.restore();
+    }
+
     if (selection.x === piece.x && selection.y === piece.y) {
       context.strokeStyle = "#ffe1a0";
       context.lineWidth = 2;
@@ -462,6 +478,7 @@
 
   function drawStation(piece) {
     const center = centerOf(piece);
+    drawFixedTrack(piece);
     context.save();
     context.fillStyle = "#44634d";
     context.strokeStyle = "#98bb86";
@@ -481,7 +498,6 @@
     context.lineTo(center.x + 15, center.y - 9);
     context.stroke();
     context.restore();
-    drawFixedTrack(piece);
   }
 
   function drawStart(piece) {
