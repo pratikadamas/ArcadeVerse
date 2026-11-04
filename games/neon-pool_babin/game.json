@@ -1,0 +1,12 @@
+{
+  "title": "Neon Pool DX",
+  "category": "Sports",
+  "description": "Step into the neon glow billiards arena. Line up trajectory bank shots, gauge cue stick strike impulse, and pocket all balls with realistic 2D momentum physics.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["sports", "billiards", "physics", "pool", "arcade", "retro"],
+  "stars": 25,
+  "featured": true,
+  "lucideIcon": "circle-dot"
+}
