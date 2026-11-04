@@ -704,6 +704,28 @@ const GAMES_REGISTRY = [
     "featured": false
   },
   {
+    "id": "dino-dig_mistu7debnath",
+    "title": "Dino Dig",
+    "category": "Arcade",
+    "lucideIcon": "bone",
+    "description": "Excavate prehistoric soil, carefully brush delicate fossil deposits, and assemble legendary dinosaur skeletons in your world-class paleontology museum.",
+    "author": "mistu7debnath",
+    "github": "mistu7debnath",
+    "role": "Arcade Developer",
+    "path": "games/dino-dig_mistu7debnath/index.html",
+    "tags": [
+      "Arcade",
+      "Puzzle",
+      "Archaeology",
+      "Dinosaur",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": true,
+    "difficulty": "All Skill Levels",
+    "releaseDate": "2026-11-03"
+  },
+  {
     "id": "escape-room_debasmita",
     "title": "Halloween Escape: Witch's Crypt",
     "category": "Horror / Escape Room",
@@ -1520,6 +1542,26 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "synthwave-highway-racer_babin",
+    "title": "Synthwave Highway Racer",
+    "category": "Racing",
+    "lucideIcon": "gauge",
+    "description": "Speed down an endless neon synthwave highway, overtaking traffic drones and activating nitro boosts!",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Arcade Contributor",
+    "path": "games/synthwave-highway-racer_babin/index.html",
+    "tags": [
+      "Racing",
+      "Synthwave",
+      "Retro",
+      "Reflex",
+      "Speed"
+    ],
+    "stars": 39,
+    "featured": true
+  },
+  {
     "id": "tactical-fleet_babin",
     "title": "Tactical Fleet Commander",
     "category": "Strategy",
@@ -1609,7 +1651,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 315,
+    "commits": 317,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -1629,8 +1671,8 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 214,
-    "gamesCount": 52,
+    "commits": 215,
+    "gamesCount": 53,
     "mechanicsBonus": 2,
     "platformPRs": 29,
     "qualityPRs": 1,
@@ -1685,6 +1727,7 @@ const CONTRIBUTORS_REGISTRY = [
       "Space Invaders 2026",
       "Stellar Warp Runner",
       "Synth-Wave Simon Says",
+      "Synthwave Highway Racer",
       "Tactical Fleet Commander",
       "Wave Rider: Frequency Pulse Surfer",
       "Whack-A-Bug Panic"
@@ -1718,8 +1761,8 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "mistu7debnath",
     "avatarInitial": "M",
     "role": "Contributor (NSOC '26)",
-    "commits": 8,
-    "gamesCount": 6,
+    "commits": 12,
+    "gamesCount": 7,
     "mechanicsBonus": 1,
     "platformPRs": 0,
     "qualityPRs": 0,
@@ -1727,6 +1770,7 @@ const CONTRIBUTORS_REGISTRY = [
     "contributions": [
       "Bubble Pop: Bubble Burst Arena",
       "Cyber Runner: Neon Rush",
+      "Dino Dig",
       "Fishing Frenzy",
       "Flappy Cyber Jet",
       "Neon Grid Defense: Core Protocol",

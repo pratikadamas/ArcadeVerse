@@ -1,0 +1,21 @@
+{
+  "title": "Dino Dig",
+  "category": "Arcade",
+  "lucideIcon": "bone",
+  "description": "Excavate prehistoric soil, carefully brush delicate fossil deposits, and assemble legendary dinosaur skeletons in your world-class paleontology museum.",
+  "author": "mistu7debnath",
+  "github": "mistu7debnath",
+  "role": "Arcade Developer",
+  "tags": [
+    "Arcade",
+    "Puzzle",
+    "Archaeology",
+    "Dinosaur",
+    "NSOC26"
+  ],
+  "stars": 25,
+  "featured": true,
+  "difficulty": "All Skill Levels",
+  "releaseDate": "2026-11-03"
+}
+

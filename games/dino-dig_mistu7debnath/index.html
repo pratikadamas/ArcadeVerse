@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dino Dig | ArcadeVerse</title>
+  <meta name="description" content="Excavate prehistoric soil, carefully brush delicate fossil deposits, and assemble legendary dinosaur skeletons in your world-class paleontology museum.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="dd-app" id="dd-app">
+    <!-- Main Arcade Game Cabinet -->
+    <main class="dd-cabinet" id="dd-cabinet" role="region" aria-label="Dino Dig Archaeological Excavation Game">
+
+      <!-- ===================================================================
+           1. TOP ARCHAEOLOGICAL HUD
+           =================================================================== -->
+      <header class="dd-hud" id="dd-hud" aria-label="Game Heads Up Display">
+        <!-- HUD Left: Sound, Pause, Site Indicator -->
+        <div class="dd-hud-left">
+          <button id="dd-btn-sound" class="dd-icon-btn" type="button" aria-label="Toggle Sound" title="Toggle Sound (M)">
+            <svg class="dd-icon dd-icon-sound-on" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            </svg>
+            <svg class="dd-icon dd-icon-sound-off dd-hidden" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <line x1="23" y1="9" x2="17" y2="15"></line>
+              <line x1="17" y1="9" x2="23" y2="15"></line>
+            </svg>
+          </button>
+
+          <button id="dd-btn-pause" class="dd-icon-btn" type="button" aria-label="Pause Game" title="Pause Game (P / ESC)">
+            <svg class="dd-icon dd-icon-pause" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="6" y="4" width="4" height="16"></rect>
+              <rect x="14" y="4" width="4" height="16"></rect>
+            </svg>
+            <svg class="dd-icon dd-icon-resume dd-hidden" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+          </button>
+
+          <div class="dd-stage-badge" id="dd-hud-stage-wrap" title="Current Excavation Site">
+            <span class="dd-stage-label">SITE</span>
+            <span class="dd-stage-val" id="dd-hud-stage">1/5</span>
+          </div>
+        </div>
+
+        <!-- HUD Center: Energy Bar, Score, Coins -->
+        <div class="dd-hud-center">
+          <div class="dd-energy-bar-wrap" id="dd-energy-wrap" title="Excavation Crew Energy">
+            <div class="dd-energy-info">
+              <span class="dd-energy-label">ENERGY</span>
+              <span class="dd-energy-text" id="dd-hud-energy-text">100 / 100</span>
+            </div>
+            <div class="dd-energy-track">
+              <div class="dd-energy-fill" id="dd-hud-energy-fill" style="width: 100%;"></div>
+            </div>
+          </div>
+
+          <div class="dd-hud-score-card">
+            <span class="dd-hud-score-label">EXPEDITION SCORE</span>
+            <span class="dd-hud-score-val" id="dd-hud-score">0</span>
+          </div>
+
+          <div class="dd-hud-chip dd-chip-coin" title="Archaeology Coins">
+            <svg class="dd-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M14.5 9h-5v6h5"></path>
+              <path d="M9.5 12h4"></path>
+            </svg>
+            <span class="dd-chip-val" id="dd-hud-coins">0</span>
+          </div>
+        </div>
+
+        <!-- HUD Right: Fossil Progress & Museum Toggle -->
+        <div class="dd-hud-right">
+          <div class="dd-hud-chip dd-chip-fossil" title="Site Fossil Progress (Target: 2)">
+            <svg class="dd-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M17 10c.7-.7 1.6-1 2.5-1 2 0 3.5 1.5 3.5 3.5 0 .9-.3 1.8-1 2.5l-8 8c-.7.7-1.6 1-2.5 1-2 0-3.5-1.5-3.5-3.5 0-.9.3-1.8 1-2.5l8-8Z"></path>
+              <path d="m15 12-6 6"></path>
+            </svg>
+            <span class="dd-chip-val" id="dd-hud-fossils">0/2</span>
+          </div>
+
+          <button id="dd-btn-nav-museum" class="dd-btn-museum-toggle" type="button" title="Visit Paleontology Museum">
+            <svg class="dd-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 21h18M3 10h18M5 10v11M19 10v11M9 10v11M15 10v11M12 2 2 7h20L12 2z"></path>
+            </svg>
+            <span>MUSEUM</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- ===================================================================
+           2. MAIN WORKSPACE: EXCAVATION SITE (LEFT) + INFO PANEL (RIGHT)
+           =================================================================== -->
+      <div class="dd-main-workspace" id="dd-main-workspace">
+        <!-- Main Excavation Grid Canvas (With Archaeologist Character) -->
+        <section class="dd-excavation-area" id="dd-excavation-area" aria-label="Archaeological Excavation Trench">
+          <div class="dd-canvas-wrap" id="dd-canvas-wrap">
+            <canvas id="dd-canvas" width="670" height="420" role="img" aria-label="Archaeological Excavation Trench and Archaeologist"></canvas>
+          </div>
+        </section>
+
+        <!-- Right Information Panel -->
+        <aside class="dd-info-panel" id="dd-info-panel" aria-label="Expedition Information Panel">
+          <!-- Card 1: Expedition Objective -->
+          <div class="dd-panel-card dd-objective-card">
+            <div class="dd-card-header">
+              <svg class="dd-card-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="6"></circle>
+                <circle cx="12" cy="12" r="2"></circle>
+              </svg>
+              <h2 class="dd-card-title">EXPEDITION OBJECTIVE</h2>
+            </div>
+            <p class="dd-objective-text">Find <strong>2 dinosaur fossils</strong> hidden beneath the soil layers in this site.</p>
+            <div class="dd-objective-status">
+              <span class="dd-obj-label">SITE PROGRESS:</span>
+              <span class="dd-obj-val" id="dd-obj-progress">0 OF 2 DISCOVERED</span>
+            </div>
+            <div class="dd-obj-bar-bg">
+              <div class="dd-obj-bar-fill" id="dd-obj-bar-fill" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <!-- Card 2: Discovered Fossils in this Site -->
+          <div class="dd-panel-card dd-fossils-card">
+            <div class="dd-card-header">
+              <svg class="dd-card-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M17 10c.7-.7 1.6-1 2.5-1 2 0 3.5 1.5 3.5 3.5 0 .9-.3 1.8-1 2.5l-8 8c-.7.7-1.6 1-2.5 1-2 0-3.5-1.5-3.5-3.5 0-.9.3-1.8 1-2.5l8-8Z"></path>
+              </svg>
+              <h2 class="dd-card-title">DISCOVERED FOSSILS</h2>
+            </div>
+            <div class="dd-fossil-slots" id="dd-fossil-slots">
+              <!-- Slot 1 -->
+              <div class="dd-fossil-slot" id="dd-slot-0">
+                <div class="dd-slot-icon-wrap" id="dd-slot-icon-0">
+                  <span class="dd-slot-placeholder">?</span>
+                </div>
+                <div class="dd-slot-details">
+                  <span class="dd-slot-name" id="dd-slot-name-0">Undiscovered Fossil</span>
+                  <span class="dd-slot-sub" id="dd-slot-sub-0">Dig deeper to find</span>
+                </div>
+              </div>
+              <!-- Slot 2 -->
+              <div class="dd-fossil-slot" id="dd-slot-1">
+                <div class="dd-slot-icon-wrap" id="dd-slot-icon-1">
+                  <span class="dd-slot-placeholder">?</span>
+                </div>
+                <div class="dd-slot-details">
+                  <span class="dd-slot-name" id="dd-slot-name-1">Undiscovered Fossil</span>
+                  <span class="dd-slot-sub" id="dd-slot-sub-1">Dig deeper to find</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3: Quick How to Play -->
+          <div class="dd-panel-card dd-guide-card">
+            <div class="dd-card-header">
+              <svg class="dd-card-icon" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              <h2 class="dd-card-title">HOW TO PLAY</h2>
+            </div>
+            <ul class="dd-guide-list">
+              <li>Choose a tool below and click on any soil tile to dig.</li>
+              <li>Your archaeologist will walk over and excavate the tile.</li>
+              <li>Find <strong>2 fossils</strong> to complete the site and unlock the next zone!</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+
+      <!-- ===================================================================
+           3. BOTTOM TOOL SELECTION BAR
+           =================================================================== -->
+      <footer class="dd-toolbar" id="dd-toolbar" role="toolbar" aria-label="Archaeological Tool Selection Bar">
+        <!-- Tool 1: Brush -->
+        <button class="dd-tool-btn dd-tool-active" id="dd-tool-brush" type="button" data-tool="brush" aria-pressed="true" title="Excavation Brush (Key: 1) - Clears loose soil and delicate fossils (2 Energy)">
+          <div class="dd-tool-icon-box">
+            <svg class="dd-tool-svg" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m14 12-8.5 8.5a2.12 2.12 0 1 1-3-3L11 9"></path>
+              <path d="M15 13 9 7l4-4 6 6-4 4Z"></path>
+              <path d="m18 8 2 2"></path>
+            </svg>
+          </div>
+          <div class="dd-tool-text-box">
+            <span class="dd-tool-name">BRUSH</span>
+            <span class="dd-tool-meta"><span class="dd-cost-badge">2 NRG</span> • <kbd>[1]</kbd></span>
+          </div>
+        </button>
+
+        <!-- Tool 2: Shovel -->
+        <button class="dd-tool-btn" id="dd-tool-shovel" type="button" data-tool="shovel" aria-pressed="false" title="Trench Shovel (Key: 2) - Digs through ordinary earth faster (4 Energy)">
+          <div class="dd-tool-icon-box">
+            <svg class="dd-tool-svg" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M2 22v-5l5-5 5 5-5 5H2z"></path>
+              <path d="M9.5 14.5 16 8"></path>
+              <path d="m17 2 5 5-.5.5a3.53 3.53 0 0 1-5 0l-.5-.5"></path>
+            </svg>
+          </div>
+          <div class="dd-tool-text-box">
+            <span class="dd-tool-name">SHOVEL</span>
+            <span class="dd-tool-meta"><span class="dd-cost-badge">4 NRG</span> • <kbd>[2]</kbd></span>
+          </div>
+        </button>
+
+        <!-- Tool 3: Pickaxe -->
+        <button class="dd-tool-btn" id="dd-tool-pickaxe" type="button" data-tool="pickaxe" aria-pressed="false" title="Heavy Pickaxe (Key: 3) - Smashes hard rock and boulders (6 Energy)">
+          <div class="dd-tool-icon-box">
+            <svg class="dd-tool-svg" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M14.5 2.5c4 2 7 5 7 9M2.5 14.5c2 4 5 7 9 7"></path>
+              <path d="m19 19-8-8"></path>
+              <path d="m14 16-5-5"></path>
+              <path d="m2 2 6 6"></path>
+            </svg>
+          </div>
+          <div class="dd-tool-text-box">
+            <span class="dd-tool-name">PICKAXE</span>
+            <span class="dd-tool-meta"><span class="dd-cost-badge">6 NRG</span> • <kbd>[3]</kbd></span>
+          </div>
+        </button>
+
+        <!-- Tool 4: Radar -->
+        <button class="dd-tool-btn" id="dd-tool-radar" type="button" data-tool="radar" aria-pressed="false" title="Georadar Scanner (Key: 4) - Scans nearby tiles for fossil echoes (8 Energy)">
+          <div class="dd-tool-icon-box">
+            <svg class="dd-tool-svg" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="m12 12 4-4"></path>
+              <path d="M12 6a6 6 0 0 1 6 6"></path>
+              <path d="M12 2a10 10 0 0 1 10 10"></path>
+            </svg>
+          </div>
+          <div class="dd-tool-text-box">
+            <span class="dd-tool-name">RADAR</span>
+            <span class="dd-tool-meta"><span class="dd-cost-badge">8 NRG</span> • <kbd>[4]</kbd></span>
+          </div>
+        </button>
+      </footer>
+
+      <!-- Screen Reader Live Announcer -->
+      <div id="dd-live-announcer" class="dd-sr-only" aria-live="polite" aria-atomic="true"></div>
+
+      <!-- ===================================================================
+           4. MODALS & OVERLAYS
+           =================================================================== -->
+
+      <!-- Museum / Skeleton Assembly Hall -->
+      <div class="dd-overlay dd-museum-screen dd-hidden" id="dd-museum-screen" role="dialog" aria-modal="true" aria-labelledby="dd-museum-title">
+        <div class="dd-modal-card dd-modal-card-museum">
+          <div class="dd-modal-header">
+            <div class="dd-pill-badge dd-badge-amber">NATIONAL PALAEONTOLOGY WING</div>
+            <h2 class="dd-title-modal" id="dd-museum-title">DINOSAUR SKELETON HALL</h2>
+            <p class="dd-modal-sub">Mount your excavated fossil bones onto dinosaur exhibits to complete legendary prehistoric displays.</p>
+          </div>
+
+          <div class="dd-museum-tabs" id="dd-museum-tabs" role="tablist">
+            <button class="dd-tab-btn dd-tab-active" data-dino="triceratops" role="tab" type="button">TRICERATOPS</button>
+            <button class="dd-tab-btn" data-dino="stegosaurus" role="tab" type="button">STEGOSAURUS</button>
+            <button class="dd-tab-btn" data-dino="trex" role="tab" type="button">T-REX</button>
+            <button class="dd-tab-btn" data-dino="brachiosaurus" role="tab" type="button">BRACHIOSAURUS</button>
+          </div>
+
+          <div class="dd-museum-stage">
+            <div class="dd-exhibit-header">
+              <h3 class="dd-exhibit-name" id="dd-exhibit-name">Triceratops Prorsus</h3>
+              <span class="dd-exhibit-status" id="dd-exhibit-status">0/4 BONES ASSEMBLED</span>
+            </div>
+            <p class="dd-exhibit-desc" id="dd-exhibit-desc">Ceratopsid herbivore from late Cretaceous North America.</p>
+
+            <div class="dd-skeleton-canvas-wrap">
+              <canvas id="dd-skeleton-canvas" width="600" height="240" role="img" aria-label="Interactive Dinosaur Skeleton Showcase"></canvas>
+            </div>
+
+            <div class="dd-bones-tray-wrap">
+              <span class="dd-tray-label">COLLECTED FOSSILS (Click to Mount):</span>
+              <div class="dd-bones-tray" id="dd-bones-tray">
+                <!-- Dynamically populated bone chips -->
+              </div>
+            </div>
+          </div>
+
+          <div class="dd-btn-group dd-btn-group-row">
+            <button id="dd-btn-museum-back" class="dd-btn dd-btn-primary" type="button">
+              <span>RETURN TO DIG SITE</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pause Screen -->
+      <div class="dd-overlay dd-pause-screen dd-hidden" id="dd-pause-screen" role="dialog" aria-modal="true" aria-labelledby="dd-pause-title">
+        <div class="dd-modal-card">
+          <div class="dd-pill-badge dd-badge-amber">EXPEDITION ON HOLD</div>
+          <h2 class="dd-title-modal" id="dd-pause-title">GAME PAUSED</h2>
+          <p class="dd-modal-sub">Tools rested. Excavation grid state preserved.</p>
+
+          <div class="dd-stats-row">
+            <div class="dd-stat-box">
+              <span class="dd-stat-box-label">CURRENT SCORE</span>
+              <span class="dd-stat-box-val" id="dd-pause-score">0</span>
+            </div>
+            <div class="dd-stat-box">
+              <span class="dd-stat-box-label">REMAINING ENERGY</span>
+              <span class="dd-stat-box-val" id="dd-pause-energy">100</span>
+            </div>
+            <div class="dd-stat-box">
+              <span class="dd-stat-box-label">COINS</span>
+              <span class="dd-stat-box-val" id="dd-pause-coins">0</span>
+            </div>
+          </div>
+
+          <div class="dd-btn-group">
+            <button id="dd-btn-resume" class="dd-btn dd-btn-primary" type="button">
+              <span>RESUME DIGGING</span>
+            </button>
+            <button id="dd-btn-pause-museum" class="dd-btn dd-btn-secondary" type="button">
+              <span>VIEW MUSEUM SKELETONS</span>
+            </button>
+            <button id="dd-btn-pause-restart" class="dd-btn dd-btn-secondary" type="button">
+              <span>RESTART SITE</span>
+            </button>
+            <button id="dd-btn-pause-help" class="dd-btn dd-btn-secondary" type="button">
+              <span>HOW TO PLAY</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage Clear Screen -->
+      <div class="dd-overlay dd-clear-screen dd-hidden" id="dd-clear-screen" role="dialog" aria-modal="true" aria-labelledby="dd-clear-title">
+        <div class="dd-modal-card">
+          <div class="dd-pill-badge dd-badge-emerald">SITE FULLY EXCAVATED</div>
+          <h2 class="dd-title-modal" id="dd-clear-title">SITE COMPLETED!</h2>
+          <p class="dd-modal-sub" id="dd-clear-sub">Both required dinosaur fossils have been successfully uncovered!</p>
+
+          <div class="dd-clear-hero-score">
+            <span class="dd-clear-label">SITE BONUS AWARDED</span>
+            <span class="dd-clear-val" id="dd-clear-bonus">+600 PTS</span>
+          </div>
+
+          <div class="dd-stats-row">
+            <div class="dd-stat-box">
+              <span class="dd-stat-box-label">FOSSILS SECURED</span>
+              <span class="dd-stat-box-val" id="dd-clear-fossils">2/2</span>
+            </div>
+            <div class="dd-stat-box">
+              <span class="dd-stat-box-label">ENERGY SAVED</span>
+              <span class="dd-stat-box-val" id="dd-clear-energy-saved">50</span>
+            </div>
+            <div class="dd-stat-box">
+              <span class="dd-stat-box-label">TOTAL SCORE</span>
+              <span class="dd-stat-box-val" id="dd-clear-total-score">0</span>
+            </div>
+          </div>
+
+          <div class="dd-btn-group dd-btn-group-row">
+            <button id="dd-btn-next-stage" class="dd-btn dd-btn-primary" type="button">
+              <span>PROCEED TO NEXT SITE</span>
+            </button>
+            <button id="dd-btn-clear-museum" class="dd-btn dd-btn-secondary" type="button">
+              <span>MOUNT SKELETON</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Out of Energy Screen -->
+      <div class="dd-overlay dd-fail-screen dd-hidden" id="dd-fail-screen" role="dialog" aria-modal="true" aria-labelledby="dd-fail-title">
+        <div class="dd-modal-card">
+          <div class="dd-pill-badge dd-badge-crimson">EXPEDITION EXHAUSTED</div>
+          <h2 class="dd-title-modal" id="dd-fail-title">OUT OF ENERGY</h2>
+          <p class="dd-modal-sub">Your crew needs rest and supplies. Refill canteen to try this site again!</p>
+
+          <div class="dd-stats-row">
+            <div class="dd-stat-box">
+              <span class="dd-stat-box-label">FOSSILS UNCOVERED</span>
+              <span class="dd-stat-box-val" id="dd-fail-fossils">0/2</span>
+            </div>
+            <div class="dd-stat-box">
+              <span class="dd-stat-box-label">EXPEDITION SCORE</span>
+              <span class="dd-stat-box-val" id="dd-fail-score">0</span>
+            </div>
+          </div>
+
+          <div class="dd-btn-group">
+            <button id="dd-btn-retry-stage" class="dd-btn dd-btn-primary" type="button">
+              <span>REFILL CANTEEN &amp; RETRY</span>
+            </button>
+            <button id="dd-btn-fail-museum" class="dd-btn dd-btn-secondary" type="button">
+              <span>VISIT MUSEUM</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- How to Play Screen -->
+      <div class="dd-overlay dd-help-screen dd-hidden" id="dd-help-screen" role="dialog" aria-modal="true" aria-labelledby="dd-help-title">
+        <div class="dd-modal-card dd-modal-card-wide">
+          <div class="dd-modal-header">
+            <div class="dd-pill-badge">FIELD GUIDE</div>
+            <h2 class="dd-title-modal" id="dd-help-title">HOW TO PLAY DINO DIG</h2>
+            <p class="dd-modal-sub">Master your archaeological tools and lead your expedition to paleontological glory.</p>
+          </div>
+
+          <div class="dd-help-scrollable">
+            <div class="dd-steps-grid">
+              <div class="dd-step-card">
+                <div class="dd-step-num">1</div>
+                <h3 class="dd-step-title">Choose Tool</h3>
+                <p class="dd-step-desc">Pick <strong>Brush [1]</strong> for delicate soft soil, <strong>Shovel [2]</strong> for deep earth, <strong>Pickaxe [3]</strong> for boulders, or <strong>Radar [4]</strong> to ping fossil echoes.</p>
+              </div>
+              <div class="dd-step-card">
+                <div class="dd-step-num">2</div>
+                <h3 class="dd-step-title">Click to Excavate</h3>
+                <p class="dd-step-desc">Click any soil tile. Your archaeologist will walk over and actively dig, brush, or strike the terrain.</p>
+              </div>
+              <div class="dd-step-card">
+                <div class="dd-step-num">3</div>
+                <h3 class="dd-step-title">Find 2 Fossils</h3>
+                <p class="dd-step-desc">Every site hides 2 dinosaur bones. Watch for amber gems and canteens that restore vitality!</p>
+              </div>
+              <div class="dd-step-card">
+                <div class="dd-step-num">4</div>
+                <h3 class="dd-step-title">Assemble Skeletons</h3>
+                <p class="dd-step-desc">Visit the Museum to mount bones onto Triceratops, Stegosaurus, T-Rex, and Brachiosaurus skeletons!</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="dd-btn-group dd-btn-group-row">
+            <button id="dd-btn-help-close" class="dd-btn dd-btn-primary" type="button">
+              <span>GOT IT - RESUME EXCAVATION</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

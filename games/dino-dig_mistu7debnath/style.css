@@ -1,0 +1,1047 @@
+/* ==========================================================================
+   DINO DIG — Complete Visual Redesign Stylesheet
+   NSOC Winter Edition 2026 | Contributor: mistu7debnath
+   ========================================================================== */
+
+:root {
+  /* Rich Archaeological Palette */
+  --dd-bg-void: #140b05;
+  --dd-bg-deep: #1e1008;
+  --dd-bg-surface: #2b170b;
+  --dd-bg-card: rgba(43, 23, 11, 0.95);
+  --dd-bg-card-subtle: rgba(26, 13, 6, 0.75);
+
+  --dd-soil-light: #b45309;
+  --dd-soil-mid: #92400e;
+  --dd-soil-dark: #78350f;
+  --dd-soil-deep: #451a03;
+  --dd-rock: #475569;
+  --dd-rock-dark: #1e293b;
+
+  --dd-gold-bright: #fbbf24;
+  --dd-gold-main: #f59e0b;
+  --dd-gold-dark: #d97706;
+  --dd-orange-glow: #ea580c;
+  --dd-emerald: #10b981;
+  --dd-cyan: #06b6d4;
+  --dd-crimson: #ef4444;
+
+  --dd-bone-ivory: #fef3c7;
+  --dd-text-bright: #ffffff;
+  --dd-text-main: #fef08a;
+  --dd-text-muted: #d4d4d8;
+  --dd-text-dim: #a1a1aa;
+
+  --dd-border-gold: #f59e0b;
+  --dd-border-subtle: rgba(245, 158, 11, 0.25);
+  --dd-shadow-gold: 0 0 20px rgba(245, 158, 11, 0.4);
+  --dd-shadow-card: 0 16px 40px rgba(0, 0, 0, 0.85);
+
+  --dd-font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --dd-font-mono: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
+
+  --dd-radius-sm: 8px;
+  --dd-radius-md: 14px;
+  --dd-radius-lg: 20px;
+  --dd-radius-full: 9999px;
+}
+
+/* --------------------------------------------------------------------------
+   CSS Reset & Base Rules
+   -------------------------------------------------------------------------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--dd-bg-void);
+  color: var(--dd-text-bright);
+  font-family: var(--dd-font-sans);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Application Shell */
+.dd-app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 20%, #3a1d0d 0%, #1a0c05 60%, #0d0602 100%);
+  position: relative;
+  overflow: hidden;
+  padding: 10px;
+}
+
+/* Ambient Geological Pattern */
+.dd-app::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 15% 85%, rgba(245, 158, 11, 0.08) 0%, transparent 45%),
+    radial-gradient(circle at 85% 15%, rgba(16, 185, 129, 0.06) 0%, transparent 45%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Main Arcade Cabinet */
+.dd-cabinet {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  height: 100%;
+  max-height: 580px;
+  background: var(--dd-bg-deep);
+  border: 2px solid var(--dd-border-gold);
+  border-radius: var(--dd-radius-lg);
+  box-shadow: 
+    0 0 0 1px rgba(245, 158, 11, 0.4),
+    0 24px 60px rgba(0, 0, 0, 0.95),
+    var(--dd-shadow-gold);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 2;
+}
+
+/* --------------------------------------------------------------------------
+   1. TOP ARCHAEOLOGICAL HUD
+   -------------------------------------------------------------------------- */
+.dd-hud {
+  height: 52px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(180deg, #351b0d 0%, #231107 100%);
+  border-bottom: 2px solid var(--dd-gold-dark);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.dd-hud-left,
+.dd-hud-center,
+.dd-hud-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* HUD Buttons */
+.dd-icon-btn {
+  background: rgba(43, 23, 11, 0.85);
+  border: 1.5px solid var(--dd-gold-dark);
+  color: var(--dd-gold-bright);
+  width: 34px;
+  height: 34px;
+  border-radius: var(--dd-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dd-icon-btn:hover {
+  background: var(--dd-gold-dark);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+}
+
+.dd-icon-btn:active {
+  transform: translateY(0);
+}
+
+/* Site Badge */
+.dd-stage-badge {
+  background: linear-gradient(135deg, #78350f 0%, #451a03 100%);
+  border: 1.5px solid var(--dd-gold-main);
+  border-radius: var(--dd-radius-full);
+  padding: 3px 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dd-stage-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--dd-gold-bright);
+}
+
+.dd-stage-val {
+  font-family: var(--dd-font-mono);
+  font-weight: 800;
+  font-size: 11px;
+  color: #ffffff;
+}
+
+/* Energy Bar */
+.dd-energy-bar-wrap {
+  background: rgba(20, 10, 4, 0.9);
+  border: 1.5px solid var(--dd-gold-dark);
+  border-radius: var(--dd-radius-sm);
+  padding: 3px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 125px;
+}
+
+.dd-energy-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.dd-energy-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--dd-gold-bright);
+}
+
+.dd-energy-text {
+  font-family: var(--dd-font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--dd-text-bright);
+}
+
+.dd-energy-track {
+  width: 100%;
+  height: 5px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: var(--dd-radius-full);
+  overflow: hidden;
+}
+
+.dd-energy-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981 0%, #f59e0b 100%);
+  border-radius: var(--dd-radius-full);
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dd-energy-low .dd-energy-fill {
+  background: #ef4444;
+  animation: pulseLow 0.5s infinite alternate;
+}
+
+@keyframes pulseLow {
+  from { filter: brightness(1); }
+  to { filter: brightness(1.6) drop-shadow(0 0 6px #ef4444); }
+}
+
+/* Score Card */
+.dd-hud-score-card {
+  background: rgba(20, 10, 4, 0.9);
+  border: 1.5px solid var(--dd-gold-dark);
+  border-radius: var(--dd-radius-sm);
+  padding: 2px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 100px;
+}
+
+.dd-hud-score-label {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--dd-gold-bright);
+}
+
+.dd-hud-score-val {
+  font-family: var(--dd-font-mono);
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.1;
+}
+
+/* Chips */
+.dd-hud-chip {
+  background: rgba(20, 10, 4, 0.9);
+  border: 1.5px solid var(--dd-gold-dark);
+  border-radius: var(--dd-radius-full);
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.dd-chip-coin {
+  color: var(--dd-gold-bright);
+}
+
+.dd-chip-fossil {
+  color: var(--dd-emerald);
+}
+
+.dd-chip-val {
+  font-family: var(--dd-font-mono);
+  color: #ffffff;
+}
+
+/* Museum Button */
+.dd-btn-museum-toggle {
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+  border: 1.5px solid #ffffff;
+  border-radius: var(--dd-radius-full);
+  color: #000000;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.6px;
+  padding: 5px 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+  transition: all 0.2s ease;
+}
+
+.dd-btn-museum-toggle:hover {
+  background: #ffffff;
+  color: #000000;
+  transform: translateY(-1px) scale(1.03);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.6);
+}
+
+/* --------------------------------------------------------------------------
+   2. MAIN WORKSPACE (EXCAVATION SITE LEFT + INFO PANEL RIGHT)
+   -------------------------------------------------------------------------- */
+.dd-main-workspace {
+  flex: 1;
+  display: flex;
+  gap: 10px;
+  padding: 10px 14px 6px 14px;
+  overflow: hidden;
+  background: #190c05;
+}
+
+/* Left / Center Excavation Area */
+.dd-excavation-area {
+  flex: 1;
+  height: 100%;
+  background: #140803;
+  border: 2px solid var(--dd-gold-dark);
+  border-radius: var(--dd-radius-md);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.85);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dd-canvas-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#dd-canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* Right Information Panel */
+.dd-info-panel {
+  width: 250px;
+  flex-shrink: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.dd-panel-card {
+  background: var(--dd-bg-surface);
+  border: 1.5px solid var(--dd-border-subtle);
+  border-radius: var(--dd-radius-md);
+  padding: 10px 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dd-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--dd-gold-bright);
+}
+
+.dd-card-title {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  color: var(--dd-gold-bright);
+  text-transform: uppercase;
+}
+
+.dd-objective-text {
+  font-size: 11px;
+  color: var(--dd-text-muted);
+  line-height: 1.35;
+}
+
+.dd-objective-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.dd-obj-label {
+  color: var(--dd-gold-main);
+}
+
+.dd-obj-val {
+  font-family: var(--dd-font-mono);
+  color: #ffffff;
+}
+
+.dd-obj-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: var(--dd-radius-full);
+  overflow: hidden;
+}
+
+.dd-obj-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b 0%, #10b981 100%);
+  border-radius: var(--dd-radius-full);
+  transition: width 0.3s ease;
+}
+
+/* Fossil Slots */
+.dd-fossil-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dd-fossil-slot {
+  background: rgba(20, 10, 4, 0.8);
+  border: 1.5px dashed rgba(245, 158, 11, 0.3);
+  border-radius: var(--dd-radius-sm);
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.dd-slot-discovered {
+  border-style: solid;
+  border-color: var(--dd-gold-bright);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(16, 185, 129, 0.15) 100%);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+}
+
+.dd-slot-icon-wrap {
+  width: 32px;
+  height: 32px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--dd-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dd-slot-placeholder {
+  font-family: var(--dd-font-mono);
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--dd-gold-main);
+}
+
+.dd-slot-details {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  overflow: hidden;
+}
+
+.dd-slot-name {
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dd-slot-sub {
+  font-size: 9px;
+  color: var(--dd-text-dim);
+}
+
+/* Guide List */
+.dd-guide-list {
+  list-style: none;
+  font-size: 10px;
+  color: var(--dd-text-muted);
+  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  padding-left: 4px;
+}
+
+.dd-guide-list li {
+  position: relative;
+  padding-left: 10px;
+}
+
+.dd-guide-list li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--dd-gold-main);
+}
+
+/* --------------------------------------------------------------------------
+   3. BOTTOM TOOL SELECTION BAR
+   -------------------------------------------------------------------------- */
+.dd-toolbar {
+  height: 64px;
+  background: linear-gradient(180deg, #271409 0%, #170b04 100%);
+  border-top: 2px solid var(--dd-gold-dark);
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.dd-tool-btn {
+  flex: 1;
+  max-width: 175px;
+  height: 48px;
+  background: linear-gradient(180deg, #3d2110 0%, #29160a 100%);
+  border: 1.5px solid var(--dd-border-subtle);
+  border-radius: var(--dd-radius-md);
+  color: var(--dd-text-muted);
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.dd-tool-btn:hover {
+  background: #4a2813;
+  border-color: var(--dd-gold-main);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+.dd-tool-btn:active {
+  transform: translateY(0);
+}
+
+/* Highlighted Active Tool */
+.dd-tool-active {
+  background: linear-gradient(180deg, #ea580c 0%, #c2410c 100%) !important;
+  border: 2px solid var(--dd-gold-bright) !important;
+  color: #ffffff !important;
+  box-shadow: 
+    0 0 0 1px #ffffff,
+    0 0 18px rgba(245, 158, 11, 0.7);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.dd-tool-icon-box {
+  width: 32px;
+  height: 32px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: var(--dd-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dd-tool-text-box {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.dd-tool-name {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+}
+
+.dd-tool-meta {
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--dd-gold-bright);
+}
+
+.dd-cost-badge {
+  font-family: var(--dd-font-mono);
+  font-weight: 800;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+kbd {
+  font-family: var(--dd-font-mono);
+  font-size: 8px;
+  opacity: 0.8;
+}
+
+/* --------------------------------------------------------------------------
+   4. MODALS & OVERLAYS
+   -------------------------------------------------------------------------- */
+.dd-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(12, 6, 2, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 20;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.dd-modal-card {
+  width: 100%;
+  max-width: 480px;
+  background: var(--dd-bg-surface);
+  border: 2px solid var(--dd-border-gold);
+  border-radius: var(--dd-radius-lg);
+  box-shadow: var(--dd-shadow-card);
+  padding: 22px 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  max-height: 92%;
+  overflow-y: auto;
+}
+
+.dd-modal-card-wide {
+  max-width: 640px;
+}
+
+.dd-modal-card-museum {
+  max-width: 720px;
+  padding: 18px 22px;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(16px) scale(0.98); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.dd-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--dd-gold-bright);
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid var(--dd-border-gold);
+  border-radius: var(--dd-radius-full);
+  padding: 3px 12px;
+  margin-bottom: 10px;
+}
+
+.dd-badge-amber { color: var(--dd-gold-bright); border-color: var(--dd-gold-main); }
+.dd-badge-emerald { color: var(--dd-emerald); border-color: var(--dd-emerald); }
+.dd-badge-crimson { color: var(--dd-crimson); border-color: var(--dd-crimson); }
+
+.dd-title-modal {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.dd-modal-sub {
+  font-size: 12px;
+  color: var(--dd-text-muted);
+  margin-bottom: 14px;
+}
+
+/* Stats Row */
+.dd-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.dd-stat-box {
+  background: rgba(20, 10, 4, 0.8);
+  border: 1px solid var(--dd-border-subtle);
+  border-radius: var(--dd-radius-sm);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dd-stat-box-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--dd-text-dim);
+  margin-bottom: 2px;
+}
+
+.dd-stat-box-val {
+  font-family: var(--dd-font-mono);
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--dd-gold-bright);
+}
+
+/* Button Group System */
+.dd-btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.dd-btn-group-row {
+  flex-direction: row;
+}
+
+.dd-btn-group-row .dd-btn {
+  flex: 1;
+}
+
+.dd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  border-radius: var(--dd-radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.dd-btn-primary {
+  background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+  color: #000000;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+}
+
+.dd-btn-primary:hover {
+  background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.dd-btn-secondary {
+  background: rgba(43, 23, 11, 0.85);
+  border-color: var(--dd-border-subtle);
+  color: var(--dd-text-bright);
+}
+
+.dd-btn-secondary:hover {
+  background: rgba(60, 36, 18, 0.95);
+  border-color: var(--dd-gold-bright);
+  color: var(--dd-gold-bright);
+  transform: translateY(-1px);
+}
+
+/* Stage Clear Specific */
+.dd-clear-hero-score {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(16, 185, 129, 0.2) 100%);
+  border: 1.5px solid var(--dd-gold-main);
+  border-radius: var(--dd-radius-md);
+  padding: 10px 20px;
+  margin-bottom: 14px;
+  width: 100%;
+}
+
+.dd-clear-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--dd-gold-bright);
+  display: block;
+}
+
+.dd-clear-val {
+  font-family: var(--dd-font-mono);
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--dd-emerald);
+}
+
+/* --------------------------------------------------------------------------
+   Museum Modal Specifics
+   -------------------------------------------------------------------------- */
+.dd-museum-tabs {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 12px;
+  overflow-x: auto;
+}
+
+.dd-tab-btn {
+  flex: 1;
+  background: rgba(20, 10, 4, 0.8);
+  border: 1px solid var(--dd-border-subtle);
+  border-radius: var(--dd-radius-sm);
+  color: var(--dd-text-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 6px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.dd-tab-btn:hover {
+  color: #ffffff;
+  border-color: var(--dd-gold-bright);
+}
+
+.dd-tab-active {
+  background: var(--dd-gold-main) !important;
+  color: #000000 !important;
+  border-color: #ffffff !important;
+  font-weight: 900;
+}
+
+.dd-museum-stage {
+  width: 100%;
+  background: rgba(20, 10, 4, 0.85);
+  border: 1px solid var(--dd-border-subtle);
+  border-radius: var(--dd-radius-md);
+  padding: 12px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dd-exhibit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dd-exhibit-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.dd-exhibit-status {
+  font-family: var(--dd-font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--dd-gold-bright);
+}
+
+.dd-exhibit-desc {
+  font-size: 11px;
+  color: var(--dd-text-muted);
+  text-align: left;
+}
+
+.dd-skeleton-canvas-wrap {
+  width: 100%;
+  height: 180px;
+  background: radial-gradient(circle at 50% 50%, #2b170b 0%, #150a04 100%);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: var(--dd-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#dd-skeleton-canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.dd-bones-tray-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+}
+
+.dd-tray-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--dd-gold-bright);
+}
+
+.dd-bones-tray {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+  min-height: 40px;
+  background: rgba(12, 6, 2, 0.7);
+  border: 1px dashed rgba(245, 158, 11, 0.25);
+  border-radius: var(--dd-radius-sm);
+  padding: 6px;
+  align-items: center;
+}
+
+.dd-bone-chip {
+  background: linear-gradient(135deg, rgba(254, 243, 199, 0.15) 0%, rgba(245, 158, 11, 0.25) 100%);
+  border: 1px solid var(--dd-gold-main);
+  border-radius: var(--dd-radius-full);
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dd-bone-chip:hover {
+  background: var(--dd-gold-bright);
+  color: #000000;
+  transform: translateY(-1px);
+}
+
+.dd-bone-chip-mounted {
+  opacity: 0.45;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  cursor: default;
+}
+
+/* --------------------------------------------------------------------------
+   Utilities
+   -------------------------------------------------------------------------- */
+.dd-hidden {
+  display: none !important;
+}
+
+.dd-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Design
+   -------------------------------------------------------------------------- */
+@media (max-width: 820px) {
+  .dd-app {
+    padding: 0;
+  }
+
+  .dd-cabinet {
+    border-radius: 0;
+    max-height: 100vh;
+    height: 100vh;
+    border: none;
+  }
+
+  .dd-main-workspace {
+    flex-direction: column;
+  }
+
+  .dd-info-panel {
+    width: 100%;
+    height: auto;
+    max-height: 150px;
+  }
+
+  .dd-toolbar {
+    height: 56px;
+    gap: 6px;
+  }
+
+  .dd-tool-btn {
+    padding: 2px 6px;
+    height: 42px;
+  }
+
+  .dd-tool-name {
+    font-size: 10px;
+  }
+}
