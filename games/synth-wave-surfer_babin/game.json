@@ -1,0 +1,12 @@
+{
+  "title": "Synth Wave Surfer",
+  "category": "Arcade",
+  "description": "Surf dynamically modulating audio frequency sine waves while collecting harmonic pulses and dodging static spikes.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["arcade", "rhythm", "audio", "wave", "runner", "nsoc26"],
+  "stars": 25,
+  "featured": true,
+  "lucideIcon": "activity"
+}
