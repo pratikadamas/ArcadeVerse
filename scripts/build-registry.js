@@ -78,6 +78,14 @@ const KNOWN_PROFILES = {
     mechanicsBonus: 0,
     platformPRs: 0,
     qualityPRs: 0
+  },
+  pratikadamas: {
+    name: "Pratik Giri",
+    github: "pratikadamas",
+    role: "Contributor (NSOC '26)",
+    mechanicsBonus: 0,
+    platformPRs: 1,
+    qualityPRs: 0
   }
 };
 
@@ -90,7 +98,8 @@ const EMAIL_MAP = {
   "harshjeswanitech95722@gmail.com": "hrshjswniii",
   "seethapragna2005@gmail.com": "pragna7",
   "arshi900389@gmail.com": "arshibansal",
-  "abhishekcse2004@gmail.com": "anshuu2004"
+  "abhishekcse2004@gmail.com": "anshuu2004",
+  "pratikgiri585@gmail.com": "pratikadamas"
 };
 
 function getGitCommitCounts() {
