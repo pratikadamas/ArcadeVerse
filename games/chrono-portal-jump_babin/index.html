@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chrono Portal Jump - ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="game-container">
+    <header class="game-header">
+      <div class="header-left">
+        <a href="../../index.html" class="nav-btn" aria-label="Back to ArcadeVerse Hub">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Hub</span>
+        </a>
+        <h1 class="game-title">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#8b5cf6" stroke-width="2">
+            <path d="M15 3h6v6"></path>
+            <path d="M9 21H3v-6"></path>
+            <path d="M21 3l-7 7"></path>
+            <path d="M3 21l7-7"></path>
+          </svg>
+          CHRONO PORTAL JUMP
+        </h1>
+      </div>
+      <div class="header-controls">
+        <button id="btnRules" class="icon-btn" aria-label="Rules">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </button>
+        <button id="btnMute" class="icon-btn" aria-label="Toggle Sound">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+        </button>
+        <button id="btnPause" class="icon-btn" aria-label="Pause">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="6" y="4" width="4" height="16"></rect>
+            <rect x="14" y="4" width="4" height="16"></rect>
+          </svg>
+        </button>
+        <button id="btnRestartNav" class="icon-btn" aria-label="Restart Chamber">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="stats-panel">
+      <div class="stat-card">
+        <span class="label">CHAMBER</span>
+        <span id="statChamber" class="val chamber">1</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">JUMPS</span>
+        <span id="statJumps" class="val jumps">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">SCORE</span>
+        <span id="statScore" class="val score">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">CORES</span>
+        <span id="statCores" class="val cores">0/3</span>
+      </div>
+    </div>
+
+    <div class="canvas-wrapper">
+      <canvas id="gameCanvas" width="700" height="460"></canvas>
+
+      <!-- Start Overlay -->
+      <div id="startScreen" class="overlay">
+        <div class="panel">
+          <div class="panel-icon">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#8b5cf6" stroke-width="2">
+              <path d="M15 3h6v6"></path>
+              <path d="M9 21H3v-6"></path>
+            </svg>
+          </div>
+          <h2>CHRONO PORTAL JUMP</h2>
+          <p>Run, jump, and enter the orange & blue quantum portals to preserve your kinetic inertia and clear test chambers!</p>
+          <div class="button-group">
+            <button id="btnStart" class="btn btn-primary">ENTER CHAMBER</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chamber Clear Overlay -->
+      <div id="clearScreen" class="overlay hidden">
+        <div class="panel">
+          <h2>CHAMBER COMPLETE!</h2>
+          <p>Quantum bridge stabilized.</p>
+          <button id="btnNext" class="btn btn-primary">NEXT CHAMBER</button>
+        </div>
+      </div>
+
+      <!-- Game Over Overlay -->
+      <div id="gameOverScreen" class="overlay hidden">
+        <div class="panel">
+          <h2>CHRONO COLLAPSE</h2>
+          <div class="stat-summary">
+            <div><span class="muted">Chambers Cleared:</span> <span id="finalChambers">0</span></div>
+            <div><span class="muted">Final Score:</span> <span id="finalScore">0</span></div>
+          </div>
+          <button id="btnRestart" class="btn btn-primary">RETRY TEST</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Virtual Controls -->
+    <div class="touch-controls">
+      <button id="btnLeft" class="touch-btn" aria-label="Left">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <button id="btnJump" class="touch-btn action" aria-label="Jump">JUMP</button>
+      <button id="btnRight" class="touch-btn" aria-label="Right">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Rules Modal -->
+    <div id="rulesModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>PORTAL DYNAMICS</h3>
+          <button id="btnCloseRules" class="close-btn" aria-label="Close">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p><strong>Controls:</strong> Arrow Keys or A/D to run. Space or W to jump.</p>
+          <p><strong>Portal Physics:</strong> Entering the Orange Portal immediately teleports you out of the Blue Portal (and vice versa) while preserving full momentum.</p>
+          <p><strong>Objective:</strong> Collect all 3 quantum chronocores in each chamber to unlock the exit beacon!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
