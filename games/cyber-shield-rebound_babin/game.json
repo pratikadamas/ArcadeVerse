@@ -1,0 +1,12 @@
+{
+  "title": "Cyber Shield Rebound",
+  "category": "Arcade",
+  "description": "Deflect omni-directional plasma pulses back toward hostile drone emitters using an energy reflection shield.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["arcade", "defense", "rebound", "action", "2d", "nsoc26"],
+  "stars": 25,
+  "featured": true,
+  "lucideIcon": "shield"
+}
