@@ -1,0 +1,12 @@
+{
+  "title": "Chrono Domino Fall",
+  "category": "Puzzle",
+  "description": "Place and orient quantum kinetic dominoes across fractured pathways to initiate complete chain-reaction sequences.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["puzzle", "domino", "chain-reaction", "physics", "logic", "nsoc26"],
+  "stars": 25,
+  "featured": true,
+  "lucideIcon": "grid"
+}
