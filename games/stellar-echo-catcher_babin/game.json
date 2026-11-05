@@ -1,0 +1,12 @@
+{
+  "title": "Stellar Echo Catcher",
+  "category": "Casual",
+  "description": "Align resonance receiver dishes to capture radiating deep space audio telemetry signals before interference dissolves them.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["casual", "signals", "space", "reflex", "2d", "nsoc26"],
+  "stars": 25,
+  "featured": true,
+  "lucideIcon": "radio"
+}
