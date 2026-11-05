@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Cyber Bomber Grid: Blast Protocol. A neon grid-arena bomber game with chain reactions, upgrades and three AI bots.">
+  <title>Cyber Bomber Grid | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/x-icon" href="../../assets/public/favicon.ico">
+</head>
+<body>
+  <div class="game-container">
+    <header class="game-header">
+      <div class="header-left">
+        <a href="../../index.html" class="back-link" aria-label="Return to ArcadeVerse Hub">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <span>Arcade Hub</span>
+        </a>
+        <h1 class="game-title">Cyber Bomber <span class="accent">Grid</span> <span class="subtitle">Blast Protocol</span></h1>
+      </div>
+      <div class="header-controls">
+        <button id="pause-btn" class="icon-btn" type="button" aria-label="Pause game" title="Pause (P)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect></svg>
+        </button>
+        <button id="restart-btn" class="icon-btn" type="button" aria-label="Restart run" title="Restart (R)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+        </button>
+        <button id="sound-btn" class="icon-btn" type="button" aria-label="Mute sound effects" aria-pressed="false" title="Sound (M)">
+          <svg id="sound-icon-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+          <svg id="sound-icon-off" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+        </button>
+        <button id="help-btn" class="icon-btn" type="button" aria-label="How to play" title="How to play (H)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </button>
+      </div>
+    </header>
+
+    <section class="scoreboard-bar" aria-label="Scoreboard">
+      <div class="score-card highlight">
+        <span class="label">SCORE</span>
+        <span class="value" id="score-display">0</span>
+      </div>
+      <div class="score-card">
+        <span class="label">BEST</span>
+        <span class="value" id="best-display">0</span>
+      </div>
+      <div class="score-card">
+        <span class="label">ROUND</span>
+        <span class="value" id="round-display">1</span>
+      </div>
+      <div class="score-card">
+        <span class="label">LIVES</span>
+        <span class="value lives" id="lives-display" role="img" aria-label="3 lives"></span>
+      </div>
+      <div class="score-card" id="time-card">
+        <span class="label">TIME</span>
+        <span class="value" id="time-display">1:40</span>
+      </div>
+    </section>
+
+    <main class="canvas-wrapper" id="canvas-wrapper" aria-label="Bomber arena">
+      <canvas id="game-canvas" width="624" height="528" role="img" aria-label="Cyber Bomber Grid arena. Progress is announced in the status line below."></canvas>
+
+      <div id="banner" class="banner hidden" aria-hidden="true">
+        <span id="banner-text" class="banner-text"></span>
+        <span id="banner-sub" class="banner-sub"></span>
+      </div>
+
+      <div id="start-overlay" class="overlay">
+        <div class="overlay-card">
+          <h2 class="overlay-title">Blast Protocol</h2>
+          <p class="overlay-desc">Plant charges, blow open the blocks, chain the explosions and be the last unit standing against three AI bots. Do not stand in your own blast.</p>
+          <div class="controls-guide">
+            <span class="guide-item"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrow keys to move</span>
+            <span class="guide-item"><kbd>Space</kbd> place a charge &nbsp; <kbd>P</kbd> pause &nbsp; <kbd>R</kbd> restart</span>
+            <span class="guide-item touch-only">On a touch screen use the pad and the charge button below the arena</span>
+          </div>
+          <div class="btn-row">
+            <button id="start-btn" class="btn btn-primary" type="button">Start Run</button>
+            <button id="howto-start-btn" class="btn btn-secondary" type="button">How to Play</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="pause-overlay" class="overlay hidden">
+        <div class="overlay-card">
+          <h2 class="overlay-title">Paused</h2>
+          <p class="overlay-desc">The grid is frozen. Fuses are not burning.</p>
+          <div class="btn-row">
+            <button id="resume-btn" class="btn btn-primary" type="button">Resume</button>
+            <button id="howto-pause-btn" class="btn btn-secondary" type="button">How to Play</button>
+            <button id="restart-pause-btn" class="btn btn-secondary" type="button">Restart</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="over-overlay" class="overlay hidden">
+        <div class="overlay-card">
+          <h2 class="overlay-title over-text">Run Terminated</h2>
+          <p class="overlay-desc" id="over-note">All lives lost.</p>
+          <div class="results-stats">
+            <div class="stat-row"><span>Final score</span><strong id="final-score">0</strong></div>
+            <div class="stat-row"><span>Round reached</span><strong id="final-round">1</strong></div>
+            <div class="stat-row"><span>Bots destroyed</span><strong id="final-kills">0</strong></div>
+            <div class="stat-row"><span>Best score</span><strong id="final-best">0</strong></div>
+          </div>
+          <button id="again-btn" class="btn btn-primary" type="button">Play Again</button>
+        </div>
+      </div>
+
+      <div id="help-modal" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="help-title">
+        <div class="overlay-card help-card">
+          <div class="help-head">
+            <h2 id="help-title" class="overlay-title">How to Play</h2>
+            <button id="help-close" class="icon-btn" type="button" aria-label="Close how to play">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div class="help-body">
+            <h3>Objective</h3>
+            <p>Destroy all three bots with your charges and stay alive. Clear the round to move to the next one. Lose all lives and the run ends.</p>
+
+            <h3>Controls</h3>
+            <ul>
+              <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or the arrow keys: move one tile at a time along the grid.</li>
+              <li><kbd>Space</kbd>: place a charge on your tile. You can walk off it, but not back onto it.</li>
+              <li>Touch or mouse: use the pad for movement and the bomb button to place a charge.</li>
+              <li><kbd>P</kbd> or <kbd>Esc</kbd>: pause or resume. <kbd>R</kbd>: restart the run. <kbd>M</kbd>: sound on or off. <kbd>H</kbd>: this screen.</li>
+            </ul>
+
+            <h3>Charges and blasts</h3>
+            <ul>
+              <li>A charge explodes 2.5 seconds after it is placed, in a plus shape.</li>
+              <li>Pillars (grey, riveted) stop a blast completely and are never destroyed.</li>
+              <li>A block (purple, hatched) is destroyed by the blast and also stops it, so nothing behind it is hit.</li>
+              <li>A blast that reaches another charge sets it off at once, so charges placed in a row chain together.</li>
+              <li>Blast cells stay deadly for about half a second. They also destroy upgrades lying in them.</li>
+              <li>Your own charges can kill you. Plan your escape before you plant.</li>
+            </ul>
+
+            <h3>Upgrades</h3>
+            <p>Some destroyed blocks drop an upgrade. Walk onto it to collect it. Bots collect them too.</p>
+            <ul class="legend-list">
+              <li><span class="chip chip-range" aria-hidden="true"></span><strong>Blast range</strong>: each arm of the blast reaches one more tile (up to 7).</li>
+              <li><span class="chip chip-cap" aria-hidden="true"></span><strong>Charge capacity</strong>: carry one more live charge at a time (up to 5).</li>
+              <li><span class="chip chip-speed" aria-hidden="true"></span><strong>Speed</strong>: move faster (up to 4 levels).</li>
+            </ul>
+
+            <h3>The bots</h3>
+            <ul class="legend-list">
+              <li><span class="chip c-viper" aria-hidden="true"></span><strong>Viper</strong> (pink, horns): the hunter. Heads for you and digs through blocks that are in its way.</li>
+              <li><span class="chip c-digger" aria-hidden="true"></span><strong>Digger</strong> (amber, drill): the block-breaker. Chases upgrades and clears blocks, and attacks if you are in its line.</li>
+              <li><span class="chip c-warden" aria-hidden="true"></span><strong>Warden</strong> (cyan, ring): the cautious one. Keeps its distance, avoids your firing lines and only plants when the escape is short.</li>
+            </ul>
+            <p>All bots search the grid for the nearest target and for a tile outside every pending blast (including chains). Before planting they check that they can get clear, and they steer around blasts they can see coming. A bot can still be boxed in by charges that go down after it plants, and then it is caught in its own blast.</p>
+
+            <h3>Scoring</h3>
+            <ul>
+              <li>Block destroyed by you: 10. Upgrade collected: 50.</li>
+              <li>Bot destroyed by your blast: 300.</li>
+              <li>Chain bonus: 50 for every extra charge your blast sets off.</li>
+              <li>Round clear: 500 plus 5 for every second left on the clock.</li>
+            </ul>
+
+            <h3>Rounds, lives and sudden death</h3>
+            <ul>
+              <li>You have 3 lives. If you are caught, you lose one and the round restarts with a fresh arena.</li>
+              <li>Each round lasts 100 seconds. When the clock hits zero the outer tiles start turning into solid walls, spiralling inward. Warning flashes mark the next tiles. Anyone on a closing tile is crushed.</li>
+              <li>Each cleared round makes the bots faster.</li>
+            </ul>
+          </div>
+          <button id="help-done" class="btn btn-primary" type="button">Got it</button>
+        </div>
+      </div>
+    </main>
+
+    <p id="status-line" class="status-line" role="status" aria-live="polite">Press Start Run to begin.</p>
+
+    <section class="stat-strip" aria-label="Your upgrades and enemy status">
+      <span class="stat" title="Blast range">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fb923c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="3" x2="12" y2="21"></line><line x1="3" y1="12" x2="21" y2="12"></line><circle cx="12" cy="12" r="3"></circle></svg>
+        <span class="stat-name">Range</span> <b id="stat-range">2</b>
+      </span>
+      <span class="stat" title="Charges available">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+        <span class="stat-name">Charges</span> <b id="stat-cap">1/1</b>
+      </span>
+      <span class="stat" title="Speed level">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a3e635" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+        <span class="stat-name">Speed</span> <b id="stat-speed">0</b>
+      </span>
+      <span class="stat bots-stat" aria-label="Bots alive">
+        <span class="bot-chip" id="bot-viper" style="--c:#ff2d6f" title="Viper"></span>
+        <span class="bot-chip" id="bot-digger" style="--c:#fbbf24" title="Digger"></span>
+        <span class="bot-chip" id="bot-warden" style="--c:#22d3ee" title="Warden"></span>
+      </span>
+    </section>
+
+    <section class="touch-pad" id="touch-pad" aria-label="On-screen controls">
+      <div class="dpad" role="group" aria-label="Movement pad">
+        <button class="pad-btn pad-up" type="button" data-dir="0" aria-label="Move up">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+        </button>
+        <button class="pad-btn pad-left" type="button" data-dir="3" aria-label="Move left">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </button>
+        <button class="pad-btn pad-right" type="button" data-dir="1" aria-label="Move right">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        </button>
+        <button class="pad-btn pad-down" type="button" data-dir="2" aria-label="Move down">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+        </button>
+      </div>
+      <button id="bomb-btn" class="bomb-btn" type="button" aria-label="Place charge">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="13" r="8"></circle><path d="m18.5 8.5 1.8-1.8a2.4 2.4 0 0 0 0-3.4l-.6-.6a2.4 2.4 0 0 0-3.4 0l-1.8 1.8"></path><path d="m21 2-1.5 1.5"></path></svg>
+        <span>Charge</span>
+      </button>
+    </section>
+
+    <p class="hint-text">Arrows or WASD to move, Space to place a charge, P to pause, R to restart.</p>
+  </div>
+
+  <script src="../../assets/js/arcadeverse-sdk.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

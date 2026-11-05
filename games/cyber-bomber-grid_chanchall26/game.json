@@ -1,0 +1,16 @@
+{
+  "title": "Cyber Bomber Grid: Blast Protocol",
+  "category": "Arcade",
+  "lucideIcon": "bomb",
+  "description": "Plant timed charges in a neon grid arena, chain explosions through blocks, grab blast range, capacity and speed upgrades, and outlast three BFS-driven bots (hunter, block-breaker, cautious) before sudden death closes the arena.",
+  "author": "Chanchal Gupta",
+  "github": "chanchall26",
+  "role": "Arcade Developer",
+  "tags": [
+    "Arcade",
+    "Bomberman",
+    "Grid",
+    "AI",
+    "NSOC26"
+  ]
+}
