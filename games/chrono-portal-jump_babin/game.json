@@ -1,0 +1,12 @@
+{
+  "title": "Chrono Portal Jump",
+  "category": "Platformer",
+  "description": "Manipulate paired spatial warp wormholes to traverse temporal death chasms and anti-gravity anomaly chambers.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["platformer", "portals", "puzzle", "physics", "2d", "nsoc26"],
+  "stars": 25,
+  "featured": true,
+  "lucideIcon": "maximize-2"
+}
