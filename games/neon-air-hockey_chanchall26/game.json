@@ -1,0 +1,16 @@
+{
+  "title": "Neon Air Hockey: Plasma Puck Arena",
+  "category": "Arcade",
+  "lucideIcon": "circle-dot",
+  "description": "Top-down neon air hockey with real puck physics: swing a mallet, bank shots off the rim and beat a predictive AI on three levels. First to 7 goals wins.",
+  "author": "Chanchal Gupta",
+  "github": "chanchall26",
+  "role": "Arcade Developer",
+  "tags": [
+    "Arcade",
+    "Physics",
+    "Sports",
+    "AI",
+    "NSOC26"
+  ]
+}
