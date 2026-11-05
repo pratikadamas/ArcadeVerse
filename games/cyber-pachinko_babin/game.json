@@ -1,0 +1,12 @@
+{
+  "title": "Cyber Pachinko",
+  "category": "Arcade",
+  "description": "Drop pulsating energy spheres through a matrix of neon quantum pins, triggering gravitational bumpers, warp vortexes, and high-multiplier jackpot collection bins.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["arcade", "physics", "pachinko", "retro", "cyberpunk", "plinko"],
+  "stars": 25,
+  "featured": true,
+  "lucideIcon": "disc"
+}

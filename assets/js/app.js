@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const totalGamesCount = document.getElementById("total-games-count");
   const totalContributorsCount = document.getElementById("total-contributors-count");
   const searchInput = document.getElementById("game-search-input");
-  const categoryPills = document.querySelectorAll(".category-pills .pill");
+  const categoryPills = document.querySelectorAll(".category-pills .pill[data-category]");
 
   // Modal elements
   const gameModal = document.getElementById("game-modal");

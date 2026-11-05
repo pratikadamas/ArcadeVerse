@@ -8113,6 +8113,7 @@ html.light-mode .trophy-modal-title {
 }
 
 .playlist-input {
+  min-width: 0;
   flex: 1;
   background: rgba(10, 14, 23, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -8194,6 +8195,7 @@ html.light-mode .trophy-modal-title {
 
 .playlist-actions-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 0.6rem;
@@ -8201,7 +8203,8 @@ html.light-mode .trophy-modal-title {
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.playlist-actions-row .btn-filter-pl {
+.playlist-actions-row .btn-filter-pl,
+.playlist-actions-row .btn-export-pl {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -8216,7 +8219,8 @@ html.light-mode .trophy-modal-title {
   transition: all 0.2s ease;
 }
 
-.playlist-actions-row .btn-filter-pl:hover {
+.playlist-actions-row .btn-filter-pl:hover,
+.playlist-actions-row .btn-export-pl:hover {
   background: #00f3ff;
   color: #000;
   box-shadow: 0 0 12px rgba(0, 243, 255, 0.4);
@@ -8225,6 +8229,8 @@ html.light-mode .trophy-modal-title {
 .playlist-actions-row .btn-delete-pl {
   width: 32px;
   height: 32px;
+  padding: 0;
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -8334,16 +8340,32 @@ html.light-mode .trophy-modal-title {
   border-top-color: #e2e8f0;
 }
 
-[data-theme="light"] .playlist-actions-row .btn-filter-pl {
+[data-theme="light"] .playlist-actions-row .btn-filter-pl,
+[data-theme="light"] .playlist-actions-row .btn-export-pl {
   background: rgba(37, 99, 235, 0.08);
   border-color: rgba(37, 99, 235, 0.25);
   color: #1d4ed8;
 }
 
-[data-theme="light"] .playlist-actions-row .btn-filter-pl:hover {
+[data-theme="light"] .playlist-actions-row .btn-filter-pl:hover,
+[data-theme="light"] .playlist-actions-row .btn-export-pl:hover {
   background: #2563eb;
   color: #fff;
 }
+
+.playlist-share-status {
+  padding: 0.8rem;
+  border: 1px solid var(--text-muted);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.playlist-share-status[hidden] { display: none; }
+.playlist-share-status[data-kind="error"] { border-color: #ef4444; }
+.playlist-name { overflow-wrap: anywhere; }
 
 /* ==========================================================================
    Comprehensive Motion Reduction Engine (WCAG 2.1 & prefers-reduced-motion)

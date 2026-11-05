@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neon Laser Pathfinder - ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="game-container">
+    <header class="game-header">
+      <div class="brand">
+        <svg class="header-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+        </svg>
+        <h1>Neon Laser Pathfinder</h1>
+      </div>
+      <div class="stats-panel">
+        <div class="stat-badge">
+          <span class="stat-label">LEVEL</span>
+          <span class="stat-value" id="levelVal">1</span>
+        </div>
+        <div class="stat-badge">
+          <span class="stat-label">POWER NODES</span>
+          <span class="stat-value" id="nodesVal">0 / 1</span>
+        </div>
+        <div class="stat-badge">
+          <span class="stat-label">MOVES</span>
+          <span class="stat-value" id="movesVal">0</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="soundBtn" class="btn-icon" aria-label="Toggle Sound" title="Toggle Sound">
+          <svg id="soundIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+        </button>
+        <button id="rulesBtn" class="btn-icon" aria-label="Game Rules" title="How to Play">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="canvas-wrapper">
+      <canvas id="gameCanvas" width="600" height="600"></canvas>
+      <div id="toastMessage" class="toast hidden"></div>
+    </main>
+
+    <footer class="game-controls">
+      <div class="palette-bar">
+        <span class="palette-label">PRISM TOOLS:</span>
+        <button class="tool-btn active" id="toolMirrorSlash" data-tool="slash" title="45-deg Mirror (/)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="5" x2="5" y2="19"></line>
+          </svg>
+          <span>Mirror /</span>
+        </button>
+        <button class="tool-btn" id="toolMirrorBackslash" data-tool="backslash" title="135-deg Mirror (\)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="5" y1="5" x2="19" y2="19"></line>
+          </svg>
+          <span>Mirror \</span>
+        </button>
+        <button class="tool-btn" id="toolSplitter" data-tool="splitter" title="Optical Beam Splitter (+)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Splitter +</span>
+        </button>
+        <button class="tool-btn" id="toolEraser" data-tool="eraser" title="Remove Prism">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          <span>Erase</span>
+        </button>
+      </div>
+
+      <div class="action-buttons">
+        <button id="resetLevelBtn" class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M2.5 2v6h6M21.5 22v-6h-6"></path>
+            <path d="M22 11.5A10 10 0 0 0 3.2 7.2L2.5 8M2 12.5a10 10 0 0 0 18.8 4.2l.7-1.2"></path>
+          </svg>
+          Reset Grid
+        </button>
+        <button id="nextLevelBtn" class="btn btn-primary" disabled>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 4 15 12 5 20 5 4"></polygon>
+            <line x1="19" y1="5" x2="19" y2="19"></line>
+          </svg>
+          Next Sector
+        </button>
+      </div>
+    </footer>
+
+    <!-- Rules Modal -->
+    <div id="rulesModal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Laser Calibration Protocol</h2>
+          <button id="closeRulesBtn" class="modal-close-btn" aria-label="Close Rules">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Guide the emitter's neon photon beam across the optical testing chamber to illuminate all receiving target nodes.</p>
+          <ul>
+            <li><strong>Select Prism Tool:</strong> Choose between diagonal redirect mirrors (/ or \), beam splitters (+), or eraser.</li>
+            <li><strong>Place & Rotate:</strong> Click or tap an empty cell on the grid to deploy the active prism. Click an existing prism to rotate its orientation.</li>
+            <li><strong>Laser Physics:</strong> The laser shoots from emitter nodes and bounces according to Snell's law of reflection. Splitters split incoming photons orthogonally.</li>
+            <li><strong>Avoid Absorbers:</strong> Dark obsidian blocks completely extinguish light beams on collision.</li>
+            <li><strong>Goal:</strong> Energize every power node on the grid simultaneously to unlock the next sector.</li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button id="modalGotItBtn" class="btn btn-primary">Begin Calibration</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

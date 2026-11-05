@@ -1,0 +1,12 @@
+{
+  "title": "Quantum Mini Golf",
+  "category": "Sports",
+  "description": "Tee off across 9 futuristic neon putting greens complete with high-friction sand traps, accelerator boost pads, and spatial quantum wormhole tunnels.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["sports", "golf", "physics", "arcade", "puzzle", "retro"],
+  "stars": 25,
+  "featured": true,
+  "lucideIcon": "flag"
+}

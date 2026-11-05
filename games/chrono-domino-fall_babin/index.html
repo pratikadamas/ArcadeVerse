@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chrono Domino Fall - ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="game-container">
+    <header class="game-header">
+      <div class="header-left">
+        <a href="../../index.html" class="nav-btn" aria-label="Back to Hub">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Hub</span>
+        </a>
+        <h1 class="game-title">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#a855f7" stroke-width="2">
+            <rect x="3" y="3" width="7" height="18" rx="2"></rect>
+            <rect x="14" y="3" width="7" height="18" rx="2"></rect>
+          </svg>
+          CHRONO DOMINO FALL
+        </h1>
+      </div>
+      <div class="header-controls">
+        <button id="btnRules" class="icon-btn" aria-label="Rules">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </button>
+        <button id="btnMute" class="icon-btn" aria-label="Toggle Sound">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+        </button>
+        <button id="btnRestartNav" class="icon-btn" aria-label="Reset Level">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="stats-panel">
+      <div class="stat-card">
+        <span class="label">LEVEL</span>
+        <span id="statLevel" class="val lvl">1</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">DOMINOES AVAILABLE</span>
+        <span id="statRemaining" class="val remain">3</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">CHAIN FALLEN</span>
+        <span id="statFallen" class="val fallen">0%</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">SCORE</span>
+        <span id="statScore" class="val score">0</span>
+      </div>
+    </div>
+
+    <div class="canvas-wrapper">
+      <canvas id="gameCanvas" width="600" height="500"></canvas>
+
+      <!-- Start Overlay -->
+      <div id="startScreen" class="overlay">
+        <div class="panel">
+          <div class="panel-icon">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#a855f7" stroke-width="2">
+              <rect x="3" y="3" width="7" height="18" rx="2"></rect>
+              <rect x="14" y="3" width="7" height="18" rx="2"></rect>
+            </svg>
+          </div>
+          <h2>CHAIN REACTION SETUP</h2>
+          <p>Place quantum dominoes into gaps across the circuit track. Click Topple to trigger the kinetic cascade and strike the golden beacon!</p>
+          <div class="button-group">
+            <button id="btnStart" class="btn btn-primary">START LEVEL</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Victory Overlay -->
+      <div id="winScreen" class="overlay hidden">
+        <div class="panel">
+          <h2>CHAIN COMPLETE!</h2>
+          <p>All kinetic milestones toppled successfully.</p>
+          <button id="btnNextLevel" class="btn btn-primary">NEXT PUZZLE</button>
+        </div>
+      </div>
+
+      <!-- Failure Overlay -->
+      <div id="failScreen" class="overlay hidden">
+        <div class="panel">
+          <h2>CHAIN INTERRUPTED</h2>
+          <p>The domino cascade failed to reach the target terminal.</p>
+          <button id="btnRetry" class="btn btn-primary">RETRY PUZZLE</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls Toolbar -->
+    <div class="action-bar">
+      <button id="btnTopple" class="action-btn topple">TOPPLE DOMINOES</button>
+      <button id="btnClear" class="action-btn clear">CLEAR PLACED</button>
+    </div>
+
+    <!-- Rules Modal -->
+    <div id="rulesModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>DOMINO MECHANICS</h3>
+          <button id="btnCloseRules" class="close-btn" aria-label="Close Rules">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p><strong>Placing:</strong> Click or tap empty slots along the glowing path to place a domino tile.</p>
+          <p><strong>Toppling:</strong> Press "TOPPLE DOMINOES" to push the first piece and trigger the falling cascade.</p>
+          <p><strong>Victory:</strong> The falling kinetic wave must reach and hit the golden finish beacon!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

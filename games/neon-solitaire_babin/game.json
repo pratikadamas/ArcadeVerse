@@ -1,0 +1,12 @@
+{
+  "title": "Neon Solitaire",
+  "category": "Card",
+  "description": "Experience classic Klondike Solitaire wrapped in a sleek retro synthwave cyber deck. Features neon vector cards, drag-and-drop mechanics, undo history, and hint assistance.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["card", "solitaire", "klondike", "puzzle", "retro", "cyberpunk"],
+  "stars": 25,
+  "featured": true,
+  "lucideIcon": "layers"
+}

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Glider - ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="flight-simulator-container">
+    <!-- Top HUD Header -->
+    <header class="flight-header">
+      <div class="brand">
+        <svg class="header-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+        <div class="brand-text">
+          <h1>Cyber Glider</h1>
+          <span class="sub">AERODYNAMIC THERMAL FLIGHT</span>
+        </div>
+      </div>
+
+      <div class="hud-stats">
+        <div class="stat-badge highlight">
+          <span class="lbl">DISTANCE</span>
+          <span class="val" id="distVal">0 m</span>
+        </div>
+        <div class="stat-badge">
+          <span class="lbl">AIRSPEED</span>
+          <span class="val" id="speedVal">120 km/h</span>
+        </div>
+        <div class="stat-badge">
+          <span class="lbl">ALTITUDE</span>
+          <span class="val" id="altVal">250 m</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="soundToggleBtn" class="btn-icon" aria-label="Toggle Sound" title="Toggle Sound">
+          <svg id="soundIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+        </button>
+        <button id="rulesBtn" class="btn-icon" aria-label="Flight Manual" title="How to Play">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Canvas Flight Canyons -->
+    <main class="canvas-viewport">
+      <canvas id="flightCanvas" width="640" height="420"></canvas>
+      <div id="toastMessage" class="toast hidden">THERMAL LIFT!</div>
+    </main>
+
+    <!-- Flight Controls Toolbar -->
+    <footer class="flight-controls">
+      <div class="touch-control-buttons">
+        <button id="pitchUpBtn" class="btn btn-ctrl">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="18 15 12 9 6 15"></polyline>
+          </svg>
+          Pitch Up (Lift)
+        </button>
+        <button id="diveBtn" class="btn btn-ctrl">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+          Dive (Gain Speed)
+        </button>
+      </div>
+
+      <div class="action-buttons">
+        <button id="restartFlightBtn" class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M2.5 2v6h6M21.5 22v-6h-6"></path>
+            <path d="M22 11.5A10 10 0 0 0 3.2 7.2L2.5 8M2 12.5a10 10 0 0 0 18.8 4.2l.7-1.2"></path>
+          </svg>
+          Relaunch
+        </button>
+      </div>
+    </footer>
+
+    <!-- Flight Manual Modal -->
+    <div id="rulesModal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Aerodynamic Pilot Manual</h2>
+          <button id="closeModalBtn" class="close-btn" aria-label="Close Handbook">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Pilot your quantum drone through neon skyscraper canyons utilizing aerodynamic physics!</p>
+          <ul>
+            <li><strong>Pitch Down / Dive:</strong> Press <kbd>&darr;</kbd> or hold <em>Dive</em> to trade altitude for airspeed.</li>
+            <li><strong>Pitch Up / Climb:</strong> Press <kbd>&uarr;</kbd> or hold <em>Pitch Up</em> to convert forward airspeed into vertical lift.</li>
+            <li><strong>Stalling:</strong> If your forward airspeed drops too low (&lt; 40 km/h), your wings stall and you plummet!</li>
+            <li><strong>Thermal Updrafts:</strong> Fly into pulsating violet thermal air columns to ride powerful rising air currents!</li>
+            <li><strong>Energy Rings:</strong> Thread through floating neon cyan rings to boost speed and score!</li>
+            <li><strong>Hazards:</strong> Avoid skyscraper rooftops, radar antennas, and descending laser grids.</li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button id="modalGotItBtn" class="btn btn-primary">Take Flight</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

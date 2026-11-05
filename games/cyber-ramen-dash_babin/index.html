@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Ramen Dash - ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="shop-container">
+    <!-- Top HUD Bar -->
+    <header class="shop-header">
+      <div class="brand">
+        <svg class="header-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+          <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+          <line x1="6" y1="1" x2="6" y2="4"></line>
+          <line x1="10" y1="1" x2="10" y2="4"></line>
+          <line x1="14" y1="1" x2="14" y2="4"></line>
+        </svg>
+        <div class="brand-title">
+          <h1>Cyber Ramen Dash</h1>
+          <span class="sub">NEO-TOKYO NOODLE BAR</span>
+        </div>
+      </div>
+
+      <div class="hud-stats">
+        <div class="stat-badge">
+          <span class="lbl">CREDITS</span>
+          <span class="val" id="scoreVal">0</span>
+        </div>
+        <div class="stat-badge">
+          <span class="lbl">COMBO</span>
+          <span class="val" id="comboVal">x1</span>
+        </div>
+        <div class="stat-badge">
+          <span class="lbl">SHIFT TIME</span>
+          <span class="val" id="timerVal">180s</span>
+        </div>
+        <div class="stat-badge warning">
+          <span class="lbl">STRIKES</span>
+          <span class="val" id="strikesVal">0 / 3</span>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <button id="soundToggleBtn" class="btn-icon" aria-label="Toggle Sound" title="Toggle Sound">
+          <svg id="soundIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+        </button>
+        <button id="guideBtn" class="btn-icon" aria-label="Cooking Guide" title="Shop Protocol">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Customer Ticket Counter (Up to 3 simultaneous orders) -->
+    <section class="customers-section" id="customerCounter">
+      <!-- Injected dynamically -->
+    </section>
+
+    <!-- Workbench & Assembly Kitchen -->
+    <main class="workbench-section">
+      <!-- Active Bowl Inspection Zone -->
+      <div class="bowl-assembly-zone">
+        <div class="bowl-display" id="bowlDisplay">
+          <div class="bowl-rim">
+            <div id="liquidLayer" class="liquid-layer empty"></div>
+            <div id="noodleLayer" class="noodle-layer hidden"></div>
+            <div id="toppingsContainer" class="toppings-layer"></div>
+          </div>
+        </div>
+        <div class="bowl-summary" id="bowlSummary">Empty Bowl Ready</div>
+      </div>
+
+      <!-- Ingredient Dispensers Grid -->
+      <div class="kitchen-station">
+        <!-- Broth Dispensers -->
+        <div class="station-group">
+          <span class="group-title">1. BOILING BROTHS</span>
+          <div class="ingredients-row">
+            <button class="ing-btn broth" data-broth="Miso">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M8 12c1 2 3 2 4 0s3-2 4 0"></path></svg>
+              <span>Miso Broth</span>
+            </button>
+            <button class="ing-btn broth" data-broth="Shoyu">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v10M7 12h10"></path></svg>
+              <span>Shoyu Soy</span>
+            </button>
+            <button class="ing-btn broth" data-broth="Tonkotsu">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+              <span>Tonkotsu</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Noodle Boiler -->
+        <div class="station-group">
+          <span class="group-title">2. RAMEN NOODLES</span>
+          <div class="ingredients-row">
+            <button class="ing-btn noodles" id="boilNoodlesBtn">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6c4 4 8 4 12 0s8-4 12 0"></path><path d="M4 12c4 4 8 4 12 0s8-4 12 0"></path><path d="M4 18c4 4 8 4 12 0s8-4 12 0"></path></svg>
+              <span>Boil Fresh Noodles</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Cyber Toppings -->
+        <div class="station-group">
+          <span class="group-title">3. TOPPING CONDIMENTS</span>
+          <div class="ingredients-row">
+            <button class="ing-btn topping" data-topping="Chashu">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="4"></circle></svg>
+              <span>Chashu Pork</span>
+            </button>
+            <button class="ing-btn topping" data-topping="Ajitsuke Egg">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="7" ry="9"></ellipse><circle cx="12" cy="13" r="3"></circle></svg>
+              <span>Ramen Egg</span>
+            </button>
+            <button class="ing-btn topping" data-topping="Nori Seaweed">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"></rect><line x1="8" y1="4" x2="8" y2="20"></line></svg>
+              <span>Nori Seaweed</span>
+            </button>
+            <button class="ing-btn topping" data-topping="Green Onion">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="3"></circle><circle cx="16" cy="10" r="3"></circle><circle cx="11" cy="16" r="3"></circle></svg>
+              <span>Green Onion</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Actions Toolbar -->
+    <footer class="shop-footer">
+      <button id="discardBtn" class="btn btn-secondary">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+        Trash Bowl
+      </button>
+
+      <div class="serve-slot-group">
+        <button class="btn btn-serve" data-slot="0">Serve Slot 1</button>
+        <button class="btn btn-serve" data-slot="1">Serve Slot 2</button>
+        <button class="btn btn-serve" data-slot="2">Serve Slot 3</button>
+      </div>
+    </footer>
+
+    <!-- Recipe Modal -->
+    <div id="guideModal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Neo-Tokyo Chef Protocol</h2>
+          <button id="closeGuideBtn" class="close-btn" aria-label="Close Protocol">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Welcome, Cyber Chef! Cyborg patrons expect prompt, immaculate ramen bowls before their battery reserves deplete.</p>
+          <ul>
+            <li><strong>Step 1:</strong> Select the matching broth kettle requested on the customer ticket.</li>
+            <li><strong>Step 2:</strong> Tap <em>Boil Fresh Noodles</em> to add bouncy noodles to the broth.</li>
+            <li><strong>Step 3:</strong> Tap requested toppings (Chashu, Egg, Nori, Green Onion) in sequence.</li>
+            <li><strong>Step 4:</strong> Tap <em>Serve Slot 1/2/3</em> matching the customer order!</li>
+            <li><strong>Rush Bonus:</strong> Serving fast yields extra credits and builds combo multipliers!</li>
+            <li><strong>Strikes:</strong> 3 incorrect orders or expired patience meters will shut down your kitchen.</li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button id="modalStartBtn" class="btn btn-primary">Fire Up Stoves</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
