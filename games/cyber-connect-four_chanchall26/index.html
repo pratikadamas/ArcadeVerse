@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>Cyber Connect Four | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/x-icon" href="../../assets/public/favicon.ico">
+</head>
+<body>
+  <div class="game-container">
+    <header class="game-header">
+      <a href="../../index.html" class="back-link" aria-label="Return to ArcadeVerse Hub">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        <span>Arcade Hub</span>
+      </a>
+      <div class="header-controls">
+        <button id="menu-btn" class="icon-btn" type="button" aria-label="Open menu: mode and difficulty" title="Menu: mode and difficulty">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg>
+        </button>
+        <button id="pause-btn" class="icon-btn" type="button" aria-label="Pause game" title="Pause (P or Esc)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect></svg>
+        </button>
+        <button id="restart-btn" class="icon-btn" type="button" aria-label="Restart game" title="Restart (R)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+        </button>
+        <button id="sound-btn" class="icon-btn" type="button" aria-label="Mute sound" title="Sound on or off (M)">
+          <svg id="sound-icon-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+          <svg id="sound-icon-off" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+        </button>
+        <button id="help-btn" class="icon-btn" type="button" aria-label="How to play" title="How to play (H)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="title-row">
+      <h1 class="game-title">Cyber Connect <span class="accent">Four</span></h1>
+      <p class="mode-chip" id="mode-chip">Player vs AI</p>
+    </div>
+
+    <section class="scoreboard" aria-label="Session score">
+      <div class="score-card p1" id="sc-1">
+        <span class="label"><span class="dot dot-p1" aria-hidden="true"></span><span id="sc-name-1">You</span></span>
+        <span class="value" id="sc-val-1">0</span>
+      </div>
+      <div class="score-card draws" id="sc-d">
+        <span class="label">Draws</span>
+        <span class="value" id="sc-val-d">0</span>
+      </div>
+      <div class="score-card p2" id="sc-2">
+        <span class="label"><span class="dot dot-p2" aria-hidden="true"></span><span id="sc-name-2">AI</span></span>
+        <span class="value" id="sc-val-2">0</span>
+      </div>
+    </section>
+
+    <p class="status" id="status" role="status" aria-live="polite" aria-atomic="true">Choose a mode to begin.</p>
+
+    <div class="board-wrap" id="board-wrap">
+      <canvas id="board" width="560" height="574" tabindex="0" role="application"
+        aria-label="Connect Four board, 7 columns by 6 rows. Use the left and right arrow keys to choose a column, Enter or Space to drop a disc, or press the number keys 1 to 7."
+        aria-describedby="status"></canvas>
+    </div>
+    <p class="sr-only" id="board-text"></p>
+
+    <div class="actions" id="result-actions" hidden>
+      <button id="again-btn" class="btn btn-primary" type="button">Play Again</button>
+      <button id="menu-btn-2" class="btn btn-secondary" type="button">Change Mode</button>
+    </div>
+
+    <p class="hint-text">Arrow keys + Enter, keys 1 to 7, mouse click or touch to drop a disc. Press H for help.</p>
+  </div>
+
+  <dialog id="menu-dialog" aria-labelledby="menu-title">
+    <form method="dialog" class="dlg-body">
+      <h2 id="menu-title" class="dlg-title">Cyber Connect Four</h2>
+      <p class="dlg-desc">Drop discs, block your rival and connect four in a row to win.</p>
+
+      <fieldset class="field">
+        <legend>Mode</legend>
+        <div class="seg">
+          <input type="radio" name="mode" id="mode-ai" value="ai" checked>
+          <label for="mode-ai">Player vs AI</label>
+          <input type="radio" name="mode" id="mode-pvp" value="pvp">
+          <label for="mode-pvp">Two players</label>
+        </div>
+      </fieldset>
+
+      <fieldset class="field" id="level-field">
+        <legend>AI difficulty</legend>
+        <div class="seg">
+          <input type="radio" name="level" id="level-easy" value="easy">
+          <label for="level-easy">Easy<small>depth 2</small></label>
+          <input type="radio" name="level" id="level-medium" value="medium" checked>
+          <label for="level-medium">Medium<small>depth 4</small></label>
+          <input type="radio" name="level" id="level-hard" value="hard">
+          <label for="level-hard">Hard<small>depth 6</small></label>
+        </div>
+      </fieldset>
+
+      <div class="btn-row">
+        <button id="start-btn" class="btn btn-primary" type="submit" value="start" autofocus>Start Game</button>
+        <button id="howto-menu-btn" class="btn btn-secondary" type="button">How to Play</button>
+        <button id="resume-btn" class="btn btn-secondary" type="submit" value="resume" hidden>Resume</button>
+      </div>
+      <button id="reset-score-btn" class="link-btn" type="button">Reset session score</button>
+    </form>
+  </dialog>
+
+  <dialog id="pause-dialog" aria-labelledby="pause-title">
+    <form method="dialog" class="dlg-body">
+      <h2 id="pause-title" class="dlg-title">Paused</h2>
+      <p class="dlg-desc">The board is frozen. No moves can be made until you resume.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" type="submit" value="resume" autofocus>Resume</button>
+        <button class="btn btn-secondary" type="submit" value="restart">Restart</button>
+        <button class="btn btn-secondary" type="submit" value="menu">Menu</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="help-dialog" class="help-dialog" aria-labelledby="help-title">
+    <form method="dialog" class="dlg-body">
+      <div class="help-head">
+        <h2 id="help-title" class="dlg-title">How to Play</h2>
+        <button class="icon-btn" type="submit" value="close" aria-label="Close how to play">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="help-body">
+        <h3>Objective</h3>
+        <p>Take turns dropping discs into a 7 by 6 grid. Connect four of your discs in a row, horizontally, vertically or diagonally, before your rival does. If all 42 slots fill up with no four in a row, the game is a draw. Pink discs carry a ring and cyan discs carry a diamond, so the two sides never rely on color alone.</p>
+
+        <h3>Controls</h3>
+        <ul>
+          <li><strong>Keyboard:</strong> <kbd>Left</kbd> and <kbd>Right</kbd> move the column cursor, <kbd>Enter</kbd> or <kbd>Space</kbd> drops a disc, and <kbd>1</kbd> to <kbd>7</kbd> drops straight into that column.</li>
+          <li><strong>Mouse:</strong> move over the board to preview the column and the landing slot, then click to drop.</li>
+          <li><strong>Touch:</strong> tap a column, or touch and slide to choose a column and lift your finger to drop.</li>
+          <li><kbd>R</kbd> restarts, <kbd>P</kbd> or <kbd>Esc</kbd> pauses, <kbd>M</kbd> mutes sound, <kbd>H</kbd> opens this guide.</li>
+        </ul>
+
+        <h3>Modes and difficulty</h3>
+        <ul>
+          <li><strong>Player vs AI:</strong> you play pink, the AI plays cyan. Easy looks 2 moves ahead, Medium 4 and Hard 6.</li>
+          <li><strong>Two players:</strong> share one screen. Pink is Player 1, cyan is Player 2.</li>
+          <li>The AI uses minimax search with alpha-beta pruning. It always takes a win it can see, blocks yours, and scores the rest by counting open threats in every group of four plus control of the centre columns. Moves are tried from the centre outward.</li>
+          <li>No move is accepted while a disc is falling or while the AI is thinking.</li>
+        </ul>
+
+        <h3>Scoring</h3>
+        <ul>
+          <li>Every finished game adds one to the winner's session counter, or one to Draws. Counters are kept separately for Player vs AI and Two players.</li>
+          <li>The counters last for this browser tab session. Use Reset session score in the menu to clear them.</li>
+          <li>After a finished game, the player who moved second starts the next one.</li>
+        </ul>
+
+        <h3>Restart and pause</h3>
+        <ul>
+          <li>Restart (<kbd>R</kbd> or the restart button) clears the board. Pause (<kbd>P</kbd>, <kbd>Esc</kbd> or the pause button) freezes the game, including the AI, until you resume.</li>
+          <li>The menu button lets you switch mode or difficulty at any time.</li>
+        </ul>
+      </div>
+      <button class="btn btn-primary" type="submit" value="close" autofocus>Got it</button>
+    </form>
+  </dialog>
+
+  <script src="game.js"></script>
+</body>
+</html>
