@@ -1903,7 +1903,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 335,
+    "commits": 336,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2126,6 +2126,21 @@ const CONTRIBUTORS_REGISTRY = [
     "avatarInitial": "A",
     "role": "Contributor (NSOC '26)",
     "commits": 6,
+    "gamesCount": 0,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Quality & Platform Contribution"
+    ]
+  },
+  {
+    "name": "sarbajit-sengupta",
+    "github": "sarbajit-sengupta",
+    "avatarInitial": "S",
+    "role": "Contributor (NSOC '26)",
+    "commits": 1,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,
