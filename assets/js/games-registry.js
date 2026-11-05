@@ -1148,6 +1148,28 @@ const GAMES_REGISTRY = [
     "featured": false
   },
   {
+    "id": "math-blitz_pratikadamas",
+    "title": "Math Blitz: 60s Arithmetic Sprint",
+    "category": "Arcade / Educational",
+    "lucideIcon": "calculator",
+    "description": "Fast-paced arithmetic sprint! Race against a 60-second timer to solve 10 dynamically generated math equations with integer precision.",
+    "author": "Pratik Giri",
+    "github": "pratikadamas",
+    "role": "Contributor",
+    "path": "games/math-blitz_pratikadamas/index.html",
+    "tags": [
+      "Arcade",
+      "Educational",
+      "Math",
+      "Puzzle",
+      "Speed",
+      "NSOC26"
+    ],
+    "stars": 30,
+    "featured": true,
+    "difficulty": "Medium"
+  },
+  {
     "id": "memory-matrix_debasmita",
     "title": "Quantum Memory Matrix",
     "category": "Puzzle",
@@ -2071,7 +2093,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 332,
+    "commits": 346,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2256,14 +2278,14 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "pratikadamas",
     "avatarInitial": "P",
     "role": "Contributor (NSOC '26)",
-    "commits": 13,
-    "gamesCount": 0,
+    "commits": 6,
+    "gamesCount": 1,
     "mechanicsBonus": 0,
     "platformPRs": 1,
     "qualityPRs": 0,
     "bonusPts": 0,
     "contributions": [
-      "Quality & Platform Contribution"
+      "Math Blitz: 60s Arithmetic Sprint"
     ]
   },
   {
@@ -2301,7 +2323,22 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Anshuu2004",
     "avatarInitial": "A",
     "role": "Contributor (NSOC '26)",
-    "commits": 5,
+    "commits": 6,
+    "gamesCount": 0,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Quality & Platform Contribution"
+    ]
+  },
+  {
+    "name": "sarbajit-sengupta",
+    "github": "sarbajit-sengupta",
+    "avatarInitial": "S",
+    "role": "Contributor (NSOC '26)",
+    "commits": 1,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,
