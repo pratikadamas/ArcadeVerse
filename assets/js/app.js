@@ -30,6 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentCategory = "all";
   let currentDurationFacet = "all";
   let currentControlsFacet = "all";
+  let currentLetterFilter = "all";
   let currentTagFilter = "";
   let searchQuery = "";
   let currentSort = "featured";
@@ -320,6 +321,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (currentCategory !== "all") {
       activeTags.push({ label: 'Category: ' + currentCategory, type: 'category' });
     }
+    if (currentLetterFilter !== "all") {
+      activeTags.push({ label: 'Letter: ' + currentLetterFilter, type: 'letter' });
+    }
 
     if (activeTags.length === 0) {
       summaryContainer.style.display = "none";
@@ -484,7 +488,18 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
-      return matchesCategory && matchesSearch && matchesDuration && matchesControls && matchesTag;
+      // A-Z Alphabetical Title Jump Filter
+      let matchesLetter = true;
+      if (currentLetterFilter && currentLetterFilter !== "all") {
+        const firstChar = item.title.trim().charAt(0).toUpperCase();
+        if (currentLetterFilter === "#") {
+          matchesLetter = !/[A-Z]/.test(firstChar);
+        } else {
+          matchesLetter = firstChar === currentLetterFilter;
+        }
+      }
+
+      return matchesCategory && matchesSearch && matchesDuration && matchesControls && matchesTag && matchesLetter;
     });
 
     // Apply Sorting
@@ -550,6 +565,8 @@ document.addEventListener("DOMContentLoaded", () => {
               currentTagFilter = "";
               currentDurationFacet = "all";
               currentControlsFacet = "all";
+              currentLetterFilter = "all";
+              resetLetterFilterUI();
               if (searchInput) searchInput.value = "";
               if (searchClearBtn) searchClearBtn.hidden = true;
               closeAutocomplete();
@@ -600,17 +617,25 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
       }
 
-      // Category and search text come from the user, so set them as text, not markup.
+      // Category, search, and letter filter text come from the user, so set them as text, not markup.
       const emptyTitle = emptyCard.querySelector(".empty-state-title");
       if (currentCategory !== "favorites") {
-        emptyTitle.textContent = `No games found in "${currentCategory !== "all" ? currentCategory : searchQuery}"`;
+        if (currentLetterFilter !== "all" && currentCategory === "all" && !searchQuery) {
+          emptyTitle.textContent = `No games found starting with "${currentLetterFilter}"`;
+        } else if (currentLetterFilter !== "all" && currentCategory !== "all") {
+          emptyTitle.textContent = `No games found in "${currentCategory}" starting with "${currentLetterFilter}"`;
+        } else {
+          emptyTitle.textContent = `No games found in "${currentCategory !== "all" ? currentCategory : searchQuery}"`;
+        }
       }
 
-      // Clear button should reset tag filter too
+      // Clear button should reset tag and letter filter too
       emptyCard.querySelector("#reset-filter-btn").addEventListener("click", () => {
         searchQuery = "";
         currentCategory = "all";
         currentTagFilter = "";
+        currentLetterFilter = "all";
+        resetLetterFilterUI();
         if (searchInput) searchInput.value = "";
         closeAutocomplete();
         if (searchClearBtn) searchClearBtn.hidden = true;
@@ -1381,6 +1406,8 @@ document.addEventListener("DOMContentLoaded", () => {
     btnResetFacets.addEventListener("click", () => {
       currentDurationFacet = "all";
       currentControlsFacet = "all";
+      currentLetterFilter = "all";
+      resetLetterFilterUI();
       durationFacetChips.forEach((c) => {
         if (c.getAttribute("data-duration") === "all") c.classList.add("active");
         else c.classList.remove("active");
@@ -1588,7 +1615,95 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // --- A-Z Alphabetical Catalog Jump Bar Engine ---
+  function updateLetterAvailability() {
+    const letterButtons = document.querySelectorAll(".az-btn[data-letter]");
+    if (!letterButtons.length || typeof GAMES_REGISTRY === "undefined" || !Array.isArray(GAMES_REGISTRY)) return;
+
+    const letterCounts = {};
+    GAMES_REGISTRY.forEach((g) => {
+      if (!g || !g.title) return;
+      const firstChar = g.title.trim().charAt(0).toUpperCase();
+      const key = /[A-Z]/.test(firstChar) ? firstChar : "#";
+      letterCounts[key] = (letterCounts[key] || 0) + 1;
+    });
+
+    letterButtons.forEach((btn) => {
+      const letter = btn.getAttribute("data-letter");
+      if (!letter || letter.toLowerCase() === "all") {
+        btn.disabled = false;
+        btn.classList.remove("disabled");
+        btn.removeAttribute("aria-disabled");
+        return;
+      }
+
+      const count = letterCounts[letter] || 0;
+      if (count === 0) {
+        btn.disabled = true;
+        btn.classList.add("disabled");
+        btn.setAttribute("aria-disabled", "true");
+        btn.title = `No games starting with ${letter}`;
+      } else {
+        btn.disabled = false;
+        btn.classList.remove("disabled");
+        btn.removeAttribute("aria-disabled");
+        btn.title = `${count} game${count !== 1 ? "s" : ""} starting with ${letter}`;
+      }
+    });
+  }
+
+  function resetLetterFilterUI() {
+    currentLetterFilter = "all";
+    const letterButtons = document.querySelectorAll(".az-btn[data-letter]");
+    letterButtons.forEach((b) => {
+      const isAll = b.getAttribute("data-letter") === "all";
+      b.classList.toggle("active", isAll);
+      b.setAttribute("aria-pressed", isAll ? "true" : "false");
+    });
+  }
+
+  function initAZJumpBar() {
+    updateLetterAvailability();
+    const letterButtons = document.querySelectorAll(".az-btn[data-letter]");
+    letterButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (btn.disabled || btn.classList.contains("disabled")) return;
+        const letter = btn.getAttribute("data-letter");
+        if (!letter) return;
+
+        currentLetterFilter = letter.toLowerCase() === "all" ? "all" : letter.toUpperCase();
+
+        letterButtons.forEach((b) => {
+          const isActive = b === btn;
+          b.classList.toggle("active", isActive);
+          b.setAttribute("aria-pressed", isActive ? "true" : "false");
+        });
+
+        renderGames();
+      });
+    });
+
+    // Keyboard toolbar navigation support (Left/Right arrows)
+    const jumpBar = document.getElementById("az-jump-bar");
+    if (jumpBar) {
+      jumpBar.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+          const enabledButtons = Array.from(document.querySelectorAll(".az-btn[data-letter]:not(:disabled):not(.disabled)"));
+          const currentIndex = enabledButtons.indexOf(document.activeElement);
+          if (currentIndex !== -1) {
+            e.preventDefault();
+            const nextIndex = e.key === "ArrowRight"
+              ? (currentIndex + 1) % enabledButtons.length
+              : (currentIndex - 1 + enabledButtons.length) % enabledButtons.length;
+            enabledButtons[nextIndex].focus();
+          }
+        }
+      });
+    }
+  }
+
   // Initial render
+  initAZJumpBar();
   buildTagChips();
   renderGames();
 });
