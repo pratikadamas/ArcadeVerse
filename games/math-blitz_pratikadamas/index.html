@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Math Blitz: 60s Arithmetic Sprint | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/x-icon" href="../../assets/public/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="../../assets/public/favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="../../assets/public/apple-touch-icon.png">
+</head>
+<body>
+  <div class="blitz-app">
+    <!-- Top Global Header -->
+    <header class="blitz-header">
+      <div class="blitz-brand">
+        <div class="brand-icon" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="2" width="16" height="20" rx="2"/>
+            <line x1="8" y1="6" x2="16" y2="6"/>
+            <line x1="16" y1="14" x2="16" y2="18"/>
+            <path d="M16 10h.01"/>
+            <path d="M12 10h.01"/>
+            <path d="M8 10h.01"/>
+            <path d="M12 14h.01"/>
+            <path d="M8 14h.01"/>
+            <path d="M12 18h.01"/>
+            <path d="M8 18h.01"/>
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <h1>MATH BLITZ</h1>
+          <span class="brand-sub">60-SECOND ARITHMETIC SPRINT</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="btn-howto" class="hud-action-btn" aria-label="Game Rules and How to Play" title="How to Play">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <span class="btn-label">Rules</span>
+        </button>
+
+        <button id="btn-sound" class="hud-action-btn" aria-label="Toggle Sound" title="Sound Effects">
+          <svg id="sound-icon-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          </svg>
+          <svg id="sound-icon-off" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <line x1="23" y1="9" x2="17" y2="15"/>
+            <line x1="17" y1="9" x2="23" y2="15"/>
+          </svg>
+          <span class="btn-label">Sound</span>
+        </button>
+
+        <button id="btn-restart" class="hud-action-btn" aria-label="Restart Sprint" title="Restart Sprint">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+          <span class="btn-label">Restart</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Game Viewport -->
+    <main class="blitz-main">
+      <!-- HUD Dashboard -->
+      <section class="hud-dashboard" aria-label="Game HUD">
+        <!-- Timer Widget -->
+        <div class="hud-card timer-card" id="timer-box">
+          <div class="hud-card-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <div class="hud-card-body">
+            <span class="hud-label">TIME REMAINING</span>
+            <div class="timer-display-group">
+              <span id="timer-text" class="hud-val timer-val">60</span>
+              <span class="timer-unit">SEC</span>
+            </div>
+          </div>
+          <div class="timer-progress-track">
+            <div id="timer-progress-bar" class="timer-progress-fill" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Question Counter Widget -->
+        <div class="hud-card question-card">
+          <div class="hud-card-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+          </div>
+          <div class="hud-card-body">
+            <span class="hud-label">PROGRESS</span>
+            <span id="question-counter" class="hud-val">1 / 10</span>
+          </div>
+        </div>
+
+        <!-- Score Counter Widget -->
+        <div class="hud-card score-card">
+          <div class="hud-card-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="7"/>
+              <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+            </svg>
+          </div>
+          <div class="hud-card-body">
+            <span class="hud-label">SCORE</span>
+            <span id="score-counter" class="hud-val score-val">0 / 10</span>
+          </div>
+        </div>
+
+        <!-- Streak Widget -->
+        <div class="hud-card streak-card">
+          <div class="hud-card-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+          </div>
+          <div class="hud-card-body">
+            <span class="hud-label">STREAK</span>
+            <span id="streak-counter" class="hud-val streak-val">0</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 10-Question Progress Indicator Dots -->
+      <nav class="session-progress" aria-label="Session Questions Status">
+        <div class="progress-steps" id="progress-steps">
+          <!-- 10 dots injected via JS -->
+        </div>
+      </nav>
+
+      <!-- Central Arena Card -->
+      <section class="arena-card" id="arena-card">
+        <!-- Equation Stage -->
+        <div class="equation-stage">
+          <span class="equation-hint">SOLVE ARITHMETIC EQUATION</span>
+          <div class="equation-row">
+            <div id="equation-display" class="equation-display" aria-live="polite">--</div>
+            <span class="equation-equals">=</span>
+            <span class="equation-target">?</span>
+          </div>
+        </div>
+
+        <!-- Player Input Area -->
+        <form id="answer-form" class="answer-form" autocomplete="off" novalidate>
+          <div class="input-container">
+            <input
+              id="answer-input"
+              class="answer-input"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9\-]*"
+              placeholder="Answer..."
+              autofocus
+              autocomplete="off"
+              aria-label="Your numeric answer"
+            >
+            <button type="submit" id="submit-btn" class="submit-btn" aria-label="Submit Answer">
+              <span>SUBMIT</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </div>
+        </form>
+
+        <!-- Feedback Pill Message -->
+        <div id="feedback-pill" class="feedback-pill" aria-live="assertive">
+          <span id="feedback-text">Ready! Press Enter or Submit to start</span>
+        </div>
+
+        <!-- Touch/Mobile Numeric Keypad -->
+        <div class="keypad-wrapper" id="keypad">
+          <div class="keypad-grid">
+            <button type="button" class="keypad-btn" data-key="7">7</button>
+            <button type="button" class="keypad-btn" data-key="8">8</button>
+            <button type="button" class="keypad-btn" data-key="9">9</button>
+            <button type="button" class="keypad-btn keypad-fn" data-action="backspace" aria-label="Backspace">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+                <line x1="18" y1="9" x2="12" y2="15"/>
+                <line x1="12" y1="9" x2="18" y2="15"/>
+              </svg>
+            </button>
+
+            <button type="button" class="keypad-btn" data-key="4">4</button>
+            <button type="button" class="keypad-btn" data-key="5">5</button>
+            <button type="button" class="keypad-btn" data-key="6">6</button>
+            <button type="button" class="keypad-btn keypad-fn" data-action="clear" aria-label="Clear Input">CLR</button>
+
+            <button type="button" class="keypad-btn" data-key="1">1</button>
+            <button type="button" class="keypad-btn" data-key="2">2</button>
+            <button type="button" class="keypad-btn" data-key="3">3</button>
+            <button type="button" class="keypad-btn keypad-sign" data-key="-">&minus;</button>
+
+            <button type="button" class="keypad-btn keypad-zero" data-key="0">0</button>
+            <button type="button" class="keypad-btn keypad-submit" data-action="submit" aria-label="Submit Answer">
+              <span>ENTER</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 10 4 15 9 20"/>
+                <path d="M20 4v7a4 4 0 0 1-4 4H4"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- End Screen Modal (Sprint Finished) -->
+    <div id="modal-gameover" class="blitz-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="gameover-title">
+      <div class="blitz-modal-card">
+        <div class="modal-banner">
+          <div class="modal-icon-badge" id="gameover-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="7"/>
+              <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+            </svg>
+          </div>
+          <h2 id="gameover-title" class="modal-title">SPRINT COMPLETE!</h2>
+          <p id="gameover-subtitle" class="modal-subtitle">Great mental arithmetic performance!</p>
+        </div>
+
+        <div class="score-spotlight">
+          <span class="spotlight-label">FINAL SCORE</span>
+          <div class="spotlight-value" id="final-score-text">0 / 10</div>
+          <div class="spotlight-badge" id="final-rating-badge">Math Sprint Finished</div>
+        </div>
+
+        <!-- Performance Metrics Grid -->
+        <div class="metrics-grid">
+          <div class="metric-item">
+            <span class="metric-label">Accuracy</span>
+            <span class="metric-val" id="metric-accuracy">0%</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Time Taken</span>
+            <span class="metric-val" id="metric-time">0s</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Max Streak</span>
+            <span class="metric-val" id="metric-streak">0</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Avg Speed</span>
+            <span class="metric-val" id="metric-speed">0.0s / Q</span>
+          </div>
+        </div>
+
+        <!-- Question Review Accordion / Table -->
+        <div class="review-section">
+          <h3 class="review-title">Session Equation Breakdown</h3>
+          <div class="review-table-wrapper">
+            <table class="review-table" aria-label="Equation Breakdown Table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Equation</th>
+                  <th>Your Answer</th>
+                  <th>Correct</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="review-table-body">
+                <!-- Dynamically populated rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Modal Footer Actions -->
+        <div class="modal-actions">
+          <button id="btn-play-again" class="btn btn-primary btn-large">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+            <span>PLAY AGAIN</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rules / How to Play Modal -->
+    <div id="modal-howto" class="blitz-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="howto-title">
+      <div class="blitz-modal-card howto-card">
+        <div class="modal-header-row">
+          <div class="modal-header-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <h2 id="howto-title">Rules & Controls</h2>
+          </div>
+          <button id="btn-close-howto" class="btn-close" aria-label="Close Rules Modal">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="howto-content">
+          <div class="rule-block">
+            <div class="rule-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+            <div class="rule-text">
+              <h4>60 Seconds Countdown</h4>
+              <p>You have exactly 60 seconds on the clock to answer 10 arithmetic challenges. The sprint completes when either the 60s timer expires or all 10 equations are answered.</p>
+            </div>
+          </div>
+
+          <div class="rule-block">
+            <div class="rule-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="2" width="16" height="20" rx="2"/>
+                <line x1="8" y1="6" x2="16" y2="6"/>
+                <line x1="16" y1="14" x2="16" y2="18"/>
+              </svg>
+            </div>
+            <div class="rule-text">
+              <h4>Dynamically Generated Infix Equations</h4>
+              <p>Every equation is algorithmically synthesized with a length of at least 6 characters using operators <code>+</code>, <code>&minus;</code>, <code>&times;</code>, and <code>&divide;</code>.</p>
+            </div>
+          </div>
+
+          <div class="rule-block">
+            <div class="rule-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+            <div class="rule-text">
+              <h4>Integer Precision Only</h4>
+              <p>All division operations evaluate to clean integers with zero remainder. There is never any division by zero, and answers are strictly integer values.</p>
+            </div>
+          </div>
+
+          <div class="rule-block">
+            <div class="rule-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/>
+              </svg>
+            </div>
+            <div class="rule-text">
+              <h4>Controls & Input</h4>
+              <p>Type your answer using your physical keyboard or the on-screen arcade keypad. Press <kbd>Enter</kbd> or click <strong>Submit</strong> to submit immediately. The input field autofocuses automatically after every submission.</p>
+            </div>
+          </div>
+
+          <div class="rule-block">
+            <div class="rule-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+            </div>
+            <div class="rule-text">
+              <h4>Scoring & Victory</h4>
+              <p>Your final score is displayed as <code>X / 10</code>. Aim for 10 / 10 to achieve the Math Grandmaster title!</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button id="btn-got-it" class="btn btn-primary">
+            <span>READY TO PLAY</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/js/arcadeverse-sdk.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
