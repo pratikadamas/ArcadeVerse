@@ -1,0 +1,12 @@
+{
+  "title": "Neon Bowling DX",
+  "category": "Sports",
+  "description": "Step up to the retro synthwave bowling alley. Line up your approach, calibrate curve spin, lock launch power, and smash through pins across an authentic 10-frame championship.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["sports", "bowling", "physics", "arcade", "retro", "synthwave"],
+  "stars": 25,
+  "featured": true,
+  "lucideIcon": "circle-dot"
+}
