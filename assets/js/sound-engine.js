@@ -17,22 +17,36 @@
     ctx: null,
     enabled: true,
     volume: 0.28,
+    unlocked: false,
 
     init() {
       this.loadSettings();
       this.renderControls();
       this.bindDOMSounds();
       this.bindWindowMessages();
+      this.bindAudioUnlock();
+    },
+
+    /**
+     * True once the user has interacted with the page. Browsers log
+     * "The AudioContext was not allowed to start" if a context is created or
+     * resumed before that, so nothing touches the context until then.
+     */
+    hasUserGesture() {
+      const ua = navigator.userActivation;
+      return this.unlocked || !!(ua && ua.hasBeenActive);
     },
 
     getAudioContext() {
       if (!this.ctx) {
+        if (!this.hasUserGesture()) return null;
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         if (AudioContextClass) {
           this.ctx = new AudioContextClass();
+          this.ctx.onstatechange = () => this.updateAudioStatus();
         }
       }
-      if (this.ctx && this.ctx.state === 'suspended') {
+      if (this.ctx && this.ctx.state === 'suspended' && this.hasUserGesture()) {
         this.ctx.resume().catch(() => {});
       }
       return this.ctx;
@@ -179,7 +193,174 @@
       this.saveSettings();
       this.broadcastAudioConfig();
       this.updateUI();
+      this.updateAudioStatus();
       if (this.enabled) this.playClick();
+    },
+
+    /**
+     * Audio unlock handshake for the game modal. The first real user gesture
+     * (anywhere on the page, or inside a same-origin game iframe) resumes the
+     * shared AudioContext and tells the game with ARCADEVERSE_AUDIO_UNLOCKED.
+     * Until then a small banner in the modal asks the player to click or press a key.
+     */
+    bindAudioUnlock() {
+      this._onGesture = (e) => {
+        if (e.type === 'keydown' && ['Escape', 'Shift', 'Control', 'Alt', 'Meta', 'CapsLock'].includes(e.key)) return;
+        this.unlock();
+      };
+      this._gestureEvents = ['pointerdown', 'pointerup', 'touchend', 'keydown', 'click'];
+      this.armUnlockListeners();
+
+      window.addEventListener('arcadeverse:game-launched', () => {
+        // A sticky activation (earlier click on the page) is enough to unlock right away
+        if (!this.unlocked && navigator.userActivation && navigator.userActivation.hasBeenActive) {
+          this.unlock(true);
+        }
+        this.ensureModalIndicator();
+        this.updateAudioStatus();
+      });
+
+      const modal = document.getElementById('game-modal');
+      if (modal) {
+        new MutationObserver(() => {
+          if (!modal.classList.contains('active')) this.removeUnlockBanner();
+        }).observe(modal, { attributes: true, attributeFilter: ['class'] });
+      }
+
+      const frame = document.getElementById('game-iframe');
+      if (frame) {
+        frame.addEventListener('load', () => {
+          if (!modal || !modal.classList.contains('active')) return;
+          if (this.unlocked) {
+            this.notifyGameUnlocked();
+            return;
+          }
+          // Pointer and key events inside an iframe never bubble to the parent,
+          // so listen on the game document directly (same-origin only).
+          try {
+            const doc = frame.contentDocument;
+            if (doc) {
+              this._gestureEvents.forEach((evt) => {
+                doc.addEventListener(evt, this._onGesture, { capture: true, passive: true });
+              });
+            }
+          } catch (_) {}
+        });
+      }
+    },
+
+    armUnlockListeners() {
+      this._gestureEvents.forEach((evt) => {
+        document.addEventListener(evt, this._onGesture, { capture: true, passive: true });
+      });
+    },
+
+    unlock(force) {
+      if (this.unlocked) return;
+      const ua = navigator.userActivation;
+      // Escape/modifier keys and touchstart do not count as a gesture for autoplay
+      if (!force && ua && !ua.isActive) return;
+      this.unlocked = true;
+      this._gestureEvents.forEach((evt) => {
+        document.removeEventListener(evt, this._onGesture, { capture: true });
+      });
+      const ctx = this.getAudioContext();
+      const done = () => {
+        console.log('AudioContext active');
+        this.removeUnlockBanner();
+        this.updateAudioStatus();
+        this.notifyGameUnlocked();
+      };
+      if (!ctx || ctx.state === 'running') {
+        done();
+        return;
+      }
+      ctx.resume().then(done).catch(() => {
+        this.unlocked = false;
+        this.armUnlockListeners();
+        this.updateAudioStatus();
+      });
+    },
+
+    notifyGameUnlocked() {
+      try {
+        const gameIframe = document.getElementById('game-iframe');
+        if (gameIframe && gameIframe.contentWindow) {
+          gameIframe.contentWindow.postMessage({
+            type: 'ARCADEVERSE_AUDIO_UNLOCKED',
+            state: this.ctx ? this.ctx.state : 'running',
+            muted: !this.enabled,
+            volume: this.volume
+          }, '*');
+        }
+      } catch (_) {}
+    },
+
+    ensureModalIndicator() {
+      const controls = document.querySelector('#game-modal .modal-controls');
+      const wrapper = document.querySelector('#game-modal .modal-frame-wrapper');
+      if (!controls || !wrapper) return;
+
+      if (!document.getElementById('modal-audio-indicator')) {
+        const btn = document.createElement('button');
+        btn.id = 'modal-audio-indicator';
+        btn.type = 'button';
+        btn.className = 'sound-toggle-btn modal-audio-indicator';
+        btn.innerHTML = `
+          <span class="eq-bars">
+            <span class="eq-bar bar-1"></span>
+            <span class="eq-bar bar-2"></span>
+            <span class="eq-bar bar-3"></span>
+          </span>
+          <span class="sound-label"></span>
+        `;
+        btn.addEventListener('click', () => this.toggleMute());
+        controls.prepend(btn);
+      }
+
+      if (!this.unlocked && this.enabled && !document.getElementById('audio-unlock-banner')) {
+        const banner = document.createElement('button');
+        banner.id = 'audio-unlock-banner';
+        banner.type = 'button';
+        banner.className = 'audio-unlock-banner';
+        banner.innerHTML = `
+          <span class="eq-bars">
+            <span class="eq-bar bar-1"></span>
+            <span class="eq-bar bar-2"></span>
+            <span class="eq-bar bar-3"></span>
+          </span>
+          <span>Click or press any key to start audio</span>
+        `;
+        banner.addEventListener('click', () => {
+          const frame = document.getElementById('game-iframe');
+          if (frame) frame.focus();
+        });
+        wrapper.appendChild(banner);
+      }
+    },
+
+    removeUnlockBanner() {
+      const banner = document.getElementById('audio-unlock-banner');
+      if (banner) banner.remove();
+    },
+
+    /** Syncs the modal audio indicator: locked (waiting for a gesture), on, or muted */
+    updateAudioStatus() {
+      const btn = document.getElementById('modal-audio-indicator');
+      if (!btn) return;
+      let state = 'sound-active';
+      let text = 'AUDIO ON';
+      if (!this.enabled) {
+        state = 'sound-muted';
+        text = 'MUTED';
+      } else if (!this.ctx || this.ctx.state !== 'running') {
+        state = 'sound-locked';
+        text = 'AUDIO LOCKED';
+      }
+      btn.className = `sound-toggle-btn modal-audio-indicator ${state}`;
+      btn.querySelector('.sound-label').textContent = text;
+      btn.setAttribute('aria-label', `Game audio: ${text.toLowerCase()}. Click to ${this.enabled ? 'mute' : 'unmute'}`);
+      btn.title = this.enabled ? 'Mute arcade audio' : 'Unmute arcade audio';
     },
 
     bindWindowMessages() {
@@ -367,17 +548,6 @@
     bindDOMSounds() {
       let lastHoverTarget = null;
       let lastHoverTime = 0;
-
-      // Global unlocker on first user interaction anywhere
-      const unlockAudio = () => {
-        this.getAudioContext();
-        ['click', 'touchstart', 'keydown'].forEach(evt => {
-          document.removeEventListener(evt, unlockAudio, { capture: true });
-        });
-      };
-      ['click', 'touchstart', 'keydown'].forEach(evt => {
-        document.addEventListener(evt, unlockAudio, { capture: true, passive: true });
-      });
 
       // Subtle hover tick on interactive buttons and navigation
       document.addEventListener('mouseover', (e) => {
