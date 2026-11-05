@@ -1,0 +1,12 @@
+{
+  "title": "Stellar Miner Probe",
+  "category": "Arcade",
+  "description": "Pilot an extraction mining drone down asteroid shafts, drilling precious plasma ores while managing fuel thrusters.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["arcade", "mining", "drilling", "space", "physics", "nsoc26"],
+  "stars": 25,
+  "featured": true,
+  "lucideIcon": "drill"
+}
