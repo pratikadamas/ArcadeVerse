@@ -33,6 +33,14 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentTagFilter = "";
   let searchQuery = "";
   let currentSort = "featured";
+  const CATALOG_VIEW_STORAGE_KEY = "arcadeverse_catalog_view";
+  let currentCatalogView = "grid";
+  try {
+    const savedView = localStorage.getItem(CATALOG_VIEW_STORAGE_KEY);
+    if (savedView === "list" || savedView === "grid") {
+      currentCatalogView = savedView;
+    }
+  } catch (_) {}
   let lastFocusedElement = null;
   let activeGame = null;
   let closeAutocomplete = () => {};
@@ -417,6 +425,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderGames() {
     gamesGrid.innerHTML = "";
+    gamesGrid.classList.toggle("view-list", currentCatalogView === "list");
     const favs = getFavorites();
 
     const currentDataSet = GAMES_REGISTRY;
@@ -1588,7 +1597,41 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // --- Catalog Layout Switcher Engine (Grid vs Compact List View) ---
+  function setCatalogView(view) {
+    currentCatalogView = view === "list" ? "list" : "grid";
+    try {
+      localStorage.setItem(CATALOG_VIEW_STORAGE_KEY, currentCatalogView);
+    } catch (_) {}
+
+    if (gamesGrid) {
+      gamesGrid.classList.toggle("view-list", currentCatalogView === "list");
+    }
+
+    const gridBtn = document.getElementById("view-grid-btn");
+    const listBtn = document.getElementById("view-list-btn");
+    if (gridBtn && listBtn) {
+      gridBtn.classList.toggle("active", currentCatalogView === "grid");
+      gridBtn.setAttribute("aria-pressed", currentCatalogView === "grid" ? "true" : "false");
+      listBtn.classList.toggle("active", currentCatalogView === "list");
+      listBtn.setAttribute("aria-pressed", currentCatalogView === "list" ? "true" : "false");
+    }
+  }
+
+  function initCatalogViewSwitcher() {
+    const gridBtn = document.getElementById("view-grid-btn");
+    const listBtn = document.getElementById("view-list-btn");
+    if (gridBtn) {
+      gridBtn.addEventListener("click", () => setCatalogView("grid"));
+    }
+    if (listBtn) {
+      listBtn.addEventListener("click", () => setCatalogView("list"));
+    }
+    setCatalogView(currentCatalogView);
+  }
+
   // Initial render
+  initCatalogViewSwitcher();
   buildTagChips();
   renderGames();
 });
