@@ -496,7 +496,7 @@ const GAMES_REGISTRY = [
     "title": "Cyber Neon Pong",
     "category": "Arcade",
     "lucideIcon": "gamepad-2",
-    "description": "Classic retro pong arena with neon glow and dynamic canvas AI paddle physics.",
+    "description": "Classic retro pong arena with neon glow and dynamic canvas AI paddle physics. Play solo against Easy / Pro / Cyber AI, or switch to 2P Local versus (W/S vs Arrow keys, split-screen touch) with a first-to-5/7/10 score limit.",
     "author": "Debasmita Bose",
     "github": "DebasmitaBose0",
     "role": "Project Admin & Contributor",
@@ -504,7 +504,8 @@ const GAMES_REGISTRY = [
     "tags": [
       "Arcade",
       "Retro",
-      "Paddle"
+      "Paddle",
+      "Multiplayer"
     ],
     "stars": 32,
     "featured": true
@@ -1861,7 +1862,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 331,
+    "commits": 333,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2081,7 +2082,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Anshuu2004",
     "avatarInitial": "A",
     "role": "Contributor (NSOC '26)",
-    "commits": 4,
+    "commits": 6,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,
