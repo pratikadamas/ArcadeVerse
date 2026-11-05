@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neon Solitaire - ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="solitaire-deck-container">
+    <!-- Top HUD Header -->
+    <header class="solitaire-header">
+      <div class="brand">
+        <svg class="header-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+        <div class="brand-text">
+          <h1>Neon Solitaire</h1>
+          <span class="sub">CYBER DECK KLONDIKE</span>
+        </div>
+      </div>
+
+      <div class="hud-stats">
+        <div class="stat-badge">
+          <span class="lbl">MOVES</span>
+          <span class="val" id="movesVal">0</span>
+        </div>
+        <div class="stat-badge highlight">
+          <span class="lbl">SCORE</span>
+          <span class="val" id="scoreVal">0</span>
+        </div>
+        <div class="stat-badge">
+          <span class="lbl">TIME</span>
+          <span class="val" id="timerVal">00:00</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="soundToggleBtn" class="btn-icon" aria-label="Toggle Sound" title="Toggle Sound">
+          <svg id="soundIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+        </button>
+        <button id="rulesBtn" class="btn-icon" aria-label="Game Rules" title="How to Play">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Playing Felt Mat -->
+    <main class="felt-mat">
+      <!-- Upper Tier: Stock, Waste & 4 Foundations -->
+      <section class="upper-tier">
+        <div class="stock-waste-group">
+          <div id="stockPile" class="card-slot stock-slot" title="Draw Card">
+            <div class="slot-back-pattern"></div>
+          </div>
+          <div id="wastePile" class="card-slot waste-slot"></div>
+        </div>
+
+        <div class="foundations-group">
+          <div class="card-slot foundation-slot" data-suit="hearts">
+            <svg class="slot-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+          </div>
+          <div class="card-slot foundation-slot" data-suit="diamonds">
+            <svg class="slot-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 12 12 22 2 12 12 2"></polygon></svg>
+          </div>
+          <div class="card-slot foundation-slot" data-suit="clubs">
+            <svg class="slot-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"></circle><circle cx="8" cy="14" r="4"></circle><circle cx="16" cy="14" r="4"></circle><path d="M12 14v8"></path></svg>
+          </div>
+          <div class="card-slot foundation-slot" data-suit="spades">
+            <svg class="slot-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c4 4 8 8 8 13a4 4 0 0 1-8 2 4 4 0 0 1-8-2c0-5 4-9 8-13z"></path><path d="M12 17v5"></path></svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7 Tableau Columns -->
+      <section class="tableau-tier" id="tableauContainer">
+        <div class="tableau-col" data-col="0"></div>
+        <div class="tableau-col" data-col="1"></div>
+        <div class="tableau-col" data-col="2"></div>
+        <div class="tableau-col" data-col="3"></div>
+        <div class="tableau-col" data-col="4"></div>
+        <div class="tableau-col" data-col="5"></div>
+        <div class="tableau-col" data-col="6"></div>
+      </section>
+    </main>
+
+    <!-- Bottom Action Controls -->
+    <footer class="solitaire-footer">
+      <div class="action-buttons-group">
+        <button id="undoBtn" class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 7v6h6"></path>
+            <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+          </svg>
+          Undo Move
+        </button>
+        <button id="hintBtn" class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18h6"></path>
+            <path d="M10 22h4"></path>
+            <path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6h8c1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z"></path>
+          </svg>
+          Hint
+        </button>
+        <button id="autoCompleteBtn" class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          Auto Finish
+        </button>
+        <button id="newGameBtn" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M2.5 2v6h6M21.5 22v-6h-6"></path>
+            <path d="M22 11.5A10 10 0 0 0 3.2 7.2L2.5 8M2 12.5a10 10 0 0 0 18.8 4.2l.7-1.2"></path>
+          </svg>
+          New Deck
+        </button>
+      </div>
+    </footer>
+
+    <!-- Rules Modal -->
+    <div id="rulesModal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Neon Klondike Protocol</h2>
+          <button id="closeModalBtn" class="close-btn" aria-label="Close Handbook">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Clear the table by stacking all cards into the four foundation piles from Ace to King by suit!</p>
+          <ul>
+            <li><strong>Tableau Stacking:</strong> Stack cards in descending rank with alternating neon colors (Red suits on Cyan suits, and vice versa).</li>
+            <li><strong>Foundations:</strong> Build up each suit pile starting from Ace through King.</li>
+            <li><strong>Stock & Waste:</strong> Tap the Stock deck on the top left to cycle new cards to the Waste pile.</li>
+            <li><strong>Undo & Hints:</strong> Use the unlimited Undo button to revert moves, or tap Hint for available legal maneuvers.</li>
+            <li><strong>Auto-Complete:</strong> Once all tableau cards are face-up, tap Auto Finish to route them into foundations instantly!</li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button id="modalGotItBtn" class="btn btn-primary">Shuffle & Deal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
