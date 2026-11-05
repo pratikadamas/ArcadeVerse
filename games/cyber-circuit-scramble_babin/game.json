@@ -1,0 +1,12 @@
+{
+  "title": "Cyber Circuit Scramble",
+  "category": "Puzzle",
+  "description": "Rotate cybernetic power conduit nodes to restore energy flow to the quantum mainframe before system blackout.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["puzzle", "circuits", "logic", "cyberpunk", "grid", "nsoc26"],
+  "stars": 25,
+  "featured": true,
+  "lucideIcon": "cpu"
+}

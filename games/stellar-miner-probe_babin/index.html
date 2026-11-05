@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stellar Miner Probe - ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="game-container">
+    <header class="game-header">
+      <div class="header-left">
+        <a href="../../index.html" class="nav-btn" aria-label="Back to Hub">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Hub</span>
+        </a>
+        <h1 class="game-title">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#f59e0b" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+          STELLAR MINER PROBE
+        </h1>
+      </div>
+      <div class="header-controls">
+        <button id="btnRules" class="icon-btn" aria-label="Rules">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </button>
+        <button id="btnMute" class="icon-btn" aria-label="Toggle Sound">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+        </button>
+        <button id="btnPause" class="icon-btn" aria-label="Pause">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="6" y="4" width="4" height="16"></rect>
+            <rect x="14" y="4" width="4" height="16"></rect>
+          </svg>
+        </button>
+        <button id="btnRestartNav" class="icon-btn" aria-label="Restart Drill">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="stats-panel">
+      <div class="stat-card">
+        <span class="label">DEPTH</span>
+        <span id="statDepth" class="val depth">0m</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">FUEL TANK</span>
+        <span id="statFuel" class="val fuel">100%</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">PLASMA ORE</span>
+        <span id="statOre" class="val ore">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">CREDITS</span>
+        <span id="statCredits" class="val credits">$0</span>
+      </div>
+    </div>
+
+    <div class="canvas-wrapper">
+      <canvas id="gameCanvas" width="600" height="600"></canvas>
+
+      <!-- Start Overlay -->
+      <div id="startScreen" class="overlay">
+        <div class="panel">
+          <div class="panel-icon">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#f59e0b" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+          </div>
+          <h2>ASTEROID SHAFT MINER</h2>
+          <p>Steer the mining drone through rock shafts, drill through weak veins, collect plasma ores, and refuel before running dry!</p>
+          <div class="button-group">
+            <button id="btnStart" class="btn btn-primary">DEPLOY PROBE</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Game Over Overlay -->
+      <div id="gameOverScreen" class="overlay hidden">
+        <div class="panel">
+          <h2 id="gameOverTitle">PROBE STRANDED</h2>
+          <div class="stat-summary">
+            <div><span class="muted">Max Depth:</span> <span id="finalDepth">0m</span></div>
+            <div><span class="muted">Ore Mined:</span> <span id="finalOre">0</span></div>
+            <div><span class="muted">Credits Earned:</span> <span id="finalCredits">$0</span></div>
+          </div>
+          <button id="btnRestart" class="btn btn-primary">LAUNCH NEW DRILL</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Virtual Controls -->
+    <div class="touch-controls">
+      <button id="btnLeft" class="touch-btn" aria-label="Steer Left">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <button id="btnDrill" class="touch-btn action" aria-label="Drill Down">DRILL</button>
+      <button id="btnRight" class="touch-btn" aria-label="Steer Right">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Rules Modal -->
+    <div id="rulesModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>MINING PROTOCOLS</h3>
+          <button id="btnCloseRules" class="close-btn" aria-label="Close">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p><strong>Movement:</strong> Use Left/Right arrows or A/D to steer laterally. Press Down or Space to activate the heavy drill bit.</p>
+          <p><strong>Resources:</strong> Collect cyan fuel canisters to replenish thruster propellant. Collect gold plasma ore to earn mission credits.</p>
+          <p><strong>Hazards:</strong> Hard bedrock blocks will damage your hull if collided with at high speeds.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

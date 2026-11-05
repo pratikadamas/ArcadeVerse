@@ -58,7 +58,24 @@ body {
   padding: 2px;
 }
 
-.diff-btn {
+.pong-modebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 600px;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.difficulty-group[hidden] {
+  display: none;
+}
+
+.mode-btn,
+.diff-btn,
+.target-btn {
   background: transparent;
   border: none;
   color: #94a3b8;
@@ -70,10 +87,25 @@ body {
   transition: all 0.2s ease;
 }
 
+.mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.mode-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.mode-btn:hover,
+.target-btn:hover,
 .diff-btn:hover {
   color: #f8fafc;
 }
 
+.mode-btn.active,
+.target-btn.active,
 .diff-btn.active {
   background: #38bdf8;
   color: #090d16;
@@ -81,6 +113,7 @@ body {
 
 .toolbar-actions {
   display: flex;
+  margin-left: auto;
   gap: 6px;
 }
 

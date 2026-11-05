@@ -47,6 +47,9 @@ jobs:
       - name: Validate Community Games Pre-Flight & Asset Integrity
         run: node scripts/validate-games.js --audit-hub --strict-assets
 
+      - name: Test Playlist Share Codes
+        run: node --test scripts/test-playlist-codes.js
+
       - name: Test Registry Auto-Compilation (PR Dry Run)
         if: github.event_name == 'pull_request'
         run: node scripts/build-registry.js
