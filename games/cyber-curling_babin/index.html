@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Curling - ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="rink-container">
+    <!-- Top HUD Header -->
+    <header class="rink-header">
+      <div class="brand">
+        <svg class="header-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <circle cx="12" cy="12" r="6"></circle>
+          <circle cx="12" cy="12" r="2"></circle>
+        </svg>
+        <div class="brand-text">
+          <h1>Cyber Curling</h1>
+          <span class="sub">KINETIC ICE SHUFFLEBOARD</span>
+        </div>
+      </div>
+
+      <div class="hud-stats">
+        <div class="stat-badge">
+          <span class="lbl">END</span>
+          <span class="val" id="endVal">1 / 4</span>
+        </div>
+        <div class="stat-badge highlight">
+          <span class="lbl">YOU (CYAN)</span>
+          <span class="val" id="playerScoreVal">0</span>
+        </div>
+        <div class="stat-badge enemy">
+          <span class="lbl">AI (AMBER)</span>
+          <span class="val" id="aiScoreVal">0</span>
+        </div>
+        <div class="stat-badge">
+          <span class="lbl">STONES</span>
+          <span class="val" id="stonesLeftVal">4 / 4</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="soundToggleBtn" class="btn-icon" aria-label="Toggle Sound" title="Toggle Sound">
+          <svg id="soundIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+        </button>
+        <button id="rulesBtn" class="btn-icon" aria-label="Curling Rules" title="How to Play">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Canvas Curling Sheet Viewport -->
+    <main class="canvas-viewport">
+      <canvas id="curlingCanvas" width="460" height="660"></canvas>
+      <div id="toastMessage" class="toast hidden">BUTTON SHOT! 500 PTS</div>
+    </main>
+
+    <!-- Throw & Sweep Controls -->
+    <footer class="rink-footer">
+      <div class="meter-and-sweep-group">
+        <div class="meter-box">
+          <span class="meter-lbl">THROW FORCE</span>
+          <div class="meter-track">
+            <div id="forceFill" class="meter-fill"></div>
+          </div>
+        </div>
+        <button id="sweepBtn" class="btn btn-sweep">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2l4 4-8 8H6v-4l8-8z"></path>
+            <path d="M4 20l6-6"></path>
+          </svg>
+          <span>SWEEP ICE!</span>
+        </button>
+      </div>
+
+      <div class="action-buttons">
+        <button id="launchStoneBtn" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          Deliver Stone
+        </button>
+        <button id="resetMatchBtn" class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M2.5 2v6h6M21.5 22v-6h-6"></path>
+            <path d="M22 11.5A10 10 0 0 0 3.2 7.2L2.5 8M2 12.5a10 10 0 0 0 18.8 4.2l.7-1.2"></path>
+          </svg>
+          Restart
+        </button>
+      </div>
+    </footer>
+
+    <!-- Rules Modal -->
+    <div id="rulesModal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Cyber Curling Rulebook</h2>
+          <button id="closeModalBtn" class="close-btn" aria-label="Close Handbook">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Slide glowing quantum stones down an icy sheet into the scoring house rings!</p>
+          <ul>
+            <li><strong>Delivery:</strong> Aim your delivery trajectory line laterally and lock launch force within the sweet spot.</li>
+            <li><strong>Sweeping Friction:</strong> While your stone glides down the ice sheet, vigorously tap <kbd>Space</kbd> or the <em>SWEEP ICE!</em> button to heat the ice, reducing friction and extending slide distance!</li>
+            <li><strong>Scoring House:</strong> Concentric rings award points:
+              <ul>
+                <li>Center Button = 500 Pts</li>
+                <li>4-Foot Ring = 300 Pts</li>
+                <li>8-Foot Ring = 150 Pts</li>
+              </ul>
+            </li>
+            <li><strong>Collision Knocks:</strong> Smash into opponent stones to blast them out of the house into the backboard!</li>
+            <li><strong>Ends:</strong> Play 4 ends against the AI bot. Highest aggregate score claims the championship!</li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button id="modalGotItBtn" class="btn btn-primary">Take the Hack</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
