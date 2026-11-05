@@ -1,0 +1,12 @@
+{
+  "title": "Cyber Tanks",
+  "category": "Strategy",
+  "description": "Engage in retro turn-based artillery trajectory duels across destructible neon voxel hills. Calculate elevation angles, shot velocity, shifting wind, and ballistic cluster ordnance.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["strategy", "artillery", "physics", "arcade", "retro", "turn-based"],
+  "stars": 25,
+  "featured": true,
+  "lucideIcon": "crosshair"
+}
