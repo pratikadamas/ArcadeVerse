@@ -1,0 +1,16 @@
+{
+  "title": "Cyber Connect Four",
+  "category": "Strategy",
+  "lucideIcon": "circle-dot",
+  "description": "Drop neon discs on a 7x6 grid and connect four against a minimax AI with alpha-beta pruning (search depth 2, 4 or 6) or against a friend on one screen.",
+  "author": "Chanchal Gupta",
+  "github": "chanchall26",
+  "role": "Arcade Developer",
+  "tags": [
+    "Strategy",
+    "Board",
+    "AI",
+    "Minimax",
+    "NSOC26"
+  ]
+}
