@@ -338,6 +338,26 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "cyber-connect-four_chanchall26",
+    "title": "Cyber Connect Four",
+    "category": "Strategy",
+    "lucideIcon": "circle-dot",
+    "description": "Drop neon discs on a 7x6 grid and connect four against a minimax AI with alpha-beta pruning (search depth 2, 4 or 6) or against a friend on one screen.",
+    "author": "Chanchal Gupta",
+    "github": "chanchall26",
+    "role": "Arcade Developer",
+    "path": "games/cyber-connect-four_chanchall26/index.html",
+    "tags": [
+      "Strategy",
+      "Board",
+      "AI",
+      "Minimax",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "cyber-curling_babin",
     "title": "Cyber Curling",
     "category": "Sports",
@@ -1862,7 +1882,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 333,
+    "commits": 334,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2003,13 +2023,14 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "chanchall26",
     "avatarInitial": "C",
     "role": "Arcade Developer",
-    "commits": 4,
-    "gamesCount": 4,
+    "commits": 5,
+    "gamesCount": 5,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 0,
     "bonusPts": 0,
     "contributions": [
+      "Cyber Connect Four",
       "Cyber Maze Runner",
       "Cyber Trajectory Bow",
       "Neon Highway Hopper",
