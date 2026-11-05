@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Pachinko - ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="pachinko-cabinet">
+    <!-- Top Header -->
+    <header class="cabinet-header">
+      <div class="brand">
+        <svg class="header-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+        <div class="brand-text">
+          <h1>Cyber Pachinko</h1>
+          <span class="sub">QUANTUM DROP PEGBOARD</span>
+        </div>
+      </div>
+
+      <div class="hud-stats">
+        <div class="stat-pill highlight">
+          <span class="lbl">SPHERES</span>
+          <span class="val" id="spheresCount">50</span>
+        </div>
+        <div class="stat-pill">
+          <span class="lbl">SCORE</span>
+          <span class="val" id="scoreCount">0</span>
+        </div>
+        <div class="stat-pill">
+          <span class="lbl">MULTIPLIER</span>
+          <span class="val" id="multCount">x1</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="soundToggleBtn" class="btn-icon" aria-label="Toggle Audio" title="Toggle Sound">
+          <svg id="soundIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+        </button>
+        <button id="guideBtn" class="btn-icon" aria-label="Game Rules" title="How to Play">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Canvas Pegboard -->
+    <main class="canvas-viewport">
+      <canvas id="pachinkoCanvas" width="460" height="640"></canvas>
+      <div id="toastMessage" class="toast hidden">JACKPOT!</div>
+    </main>
+
+    <!-- Bottom Controls & Rotary Spring Plunger -->
+    <footer class="cabinet-controls">
+      <div class="plunger-control-panel">
+        <span class="plunger-label">LAUNCH FORCE: <span id="powerPercent">50%</span></span>
+        <div class="plunger-track">
+          <div id="plungerFill" class="plunger-fill"></div>
+        </div>
+      </div>
+
+      <div class="buttons-cluster">
+        <button id="launchSingleBtn" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          Drop Sphere
+        </button>
+        <button id="rapidFireBtn" class="btn btn-rapid">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          Burst (x5)
+        </button>
+        <button id="resetBoardBtn" class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M2.5 2v6h6M21.5 22v-6h-6"></path>
+            <path d="M22 11.5A10 10 0 0 0 3.2 7.2L2.5 8M2 12.5a10 10 0 0 0 18.8 4.2l.7-1.2"></path>
+          </svg>
+          Refill
+        </button>
+      </div>
+    </footer>
+
+    <!-- Rules Modal -->
+    <div id="guideModal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Quantum Pachinko Manual</h2>
+          <button id="closeModalBtn" class="close-btn" aria-label="Close Manual">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Drop glowing photon spheres through a high-energy peg matrix into payout bins!</p>
+          <ul>
+            <li><strong>Drop Mechanics:</strong> Adjust the launch force meter or hold <kbd>Space</kbd> to launch spheres through the curved acceleration chute.</li>
+            <li><strong>Elastic Pegs:</strong> Over 100 staggered pins deflect spheres with realistic bounce mechanics.</li>
+            <li><strong>Quantum Bumpers:</strong> Central bumpers award massive bonus points and flash glowing neon feedback.</li>
+            <li><strong>Warp Vortex:</strong> Hitting the vortex center teleports your sphere to the top of the matrix!</li>
+            <li><strong>Winning Bins:</strong> Catch spheres in the 7 bottom slots (x1, x2, x5, JACKPOT x20, x5, x2, x1). Jackpots refill extra spheres into your reserve!</li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button id="modalGotItBtn" class="btn btn-primary">Drop In</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
