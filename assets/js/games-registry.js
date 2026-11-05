@@ -2071,7 +2071,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 344,
+    "commits": 332,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2252,6 +2252,21 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
+    "name": "Pratik Giri",
+    "github": "pratikadamas",
+    "avatarInitial": "P",
+    "role": "Contributor (NSOC '26)",
+    "commits": 13,
+    "gamesCount": 0,
+    "mechanicsBonus": 0,
+    "platformPRs": 1,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Quality & Platform Contribution"
+    ]
+  },
+  {
     "name": "Pragna Seetha",
     "github": "pragna7",
     "avatarInitial": "P",
@@ -2282,41 +2297,11 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "Pratik Giri",
-    "github": "pratikadamas",
-    "avatarInitial": "P",
-    "role": "Contributor (NSOC '26)",
-    "commits": 4,
-    "gamesCount": 0,
-    "mechanicsBonus": 0,
-    "platformPRs": 1,
-    "qualityPRs": 0,
-    "bonusPts": 0,
-    "contributions": [
-      "Quality & Platform Contribution"
-    ]
-  },
-  {
     "name": "Abhishek",
     "github": "Anshuu2004",
     "avatarInitial": "A",
     "role": "Contributor (NSOC '26)",
-    "commits": 6,
-    "gamesCount": 0,
-    "mechanicsBonus": 0,
-    "platformPRs": 0,
-    "qualityPRs": 0,
-    "bonusPts": 0,
-    "contributions": [
-      "Quality & Platform Contribution"
-    ]
-  },
-  {
-    "name": "sarbajit-sengupta",
-    "github": "sarbajit-sengupta",
-    "avatarInitial": "S",
-    "role": "Contributor (NSOC '26)",
-    "commits": 1,
+    "commits": 5,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,
