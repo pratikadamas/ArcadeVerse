@@ -163,6 +163,13 @@
               <li><a href="#recently-played" class="docs-nav-link"><i data-lucide="clock"></i> Quick Resume Engine</a></li>
               <li><a href="#daily-quest" class="docs-nav-link"><i data-lucide="flame"></i> Daily Quest Engine</a></li>
               <li><a href="#scoring-engine" class="docs-nav-link"><i data-lucide="cpu"></i> Scoring & Leaderboard</a></li>
+              <li><a href="#storage-manager" class="docs-nav-link"><i data-lucide="hard-drive"></i> Save Data Vault & Manager</a></li>
+              <li><a href="#snapshot-studio" class="docs-nav-link"><i data-lucide="camera"></i> Retro Snapshot Studio</a></li>
+              <li><a href="#slot-reel" class="docs-nav-link"><i data-lucide="dices"></i> Slot Reel Roulette Picker</a></li>
+              <li><a href="#playlist-system" class="docs-nav-link"><i data-lucide="list-music"></i> Custom Playlist Engine</a></li>
+              <li><a href="#az-jump-bar" class="docs-nav-link"><i data-lucide="arrow-down-a-z"></i> A-Z Catalog Jump Bar</a></li>
+              <li><a href="#theme-sync" class="docs-nav-link"><i data-lucide="sun-moon"></i> System Theme Sync Engine</a></li>
+              <li><a href="#bug-report-helper" class="docs-nav-link"><i data-lucide="bug"></i> Game Bug Report Diagnostic</a></li>
             </ul>
           </div>
 
@@ -746,6 +753,108 @@ if (window.ArcadeVerse) {
               + (Merged Git Commits × 5)
               + (Bonus Multipliers)</code></pre>
           </div>
+        </section>
+
+        <!-- 15b. Storage Manager Subsystem -->
+        <section class="docs-section" id="storage-manager">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Save Data Vault & Storage Manager Subsystem</h2>
+          <p class="docs-paragraph">
+            Engineered in <code>assets/js/storage-manager.js</code>, the Storage Manager gives players full control, transparency, and portability over all client-side data generated across 104+ arcade games.
+          </p>
+          <div class="arch-grid-cards">
+            <div class="arch-card">
+              <div class="arch-card-icon"><i data-lucide="hard-drive"></i></div>
+              <h3 class="arch-card-title">Storage Quota Audit</h3>
+              <p class="arch-card-desc">Real-time breakdown of bytes consumed by game saves, favorites, daily quests, and system telemetry.</p>
+            </div>
+            <div class="arch-card">
+              <div class="arch-card-icon"><i data-lucide="download"></i></div>
+              <h3 class="arch-card-title">JSON Backup & Export</h3>
+              <p class="arch-card-desc">Export namespaced save data into timestamped JSON files for offline archiving or machine migration.</p>
+            </div>
+            <div class="arch-card">
+              <div class="arch-card-icon"><i data-lucide="upload"></i></div>
+              <h3 class="arch-card-title">Safe Save Import</h3>
+              <p class="arch-card-desc">Schema validation prevents malicious payload injection when restoring game progression.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 15c. Retro Snapshot Studio -->
+        <section class="docs-section" id="snapshot-studio">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Retro Snapshot Studio & Canvas Engine</h2>
+          <p class="docs-paragraph">
+            Implemented in <code>assets/js/snapshot-studio.js</code>, this subsystem enables players to capture instant gameplay screenshots directly from active game iframes and export them as retro Polaroid-style arcade cards.
+          </p>
+          <ul>
+            <li><strong>Cross-Frame Canvas Capture:</strong> Safely samples <code>&lt;canvas&gt;</code> rendering contexts from same-origin game instances.</li>
+            <li><strong>Stylized CRT Border Overlays:</strong> Injects dynamic game metadata, player handle, timestamp, and retro scanline vignette effects.</li>
+            <li><strong>Zero External Storage:</strong> 100% rendered client-side with instant data-URL download without uploading images to any third-party server.</li>
+          </ul>
+        </section>
+
+        <!-- 15d. Slot Reel Roulette Picker -->
+        <section class="docs-section" id="slot-reel">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Slot Reel Roulette Random Game Picker</h2>
+          <p class="docs-paragraph">
+            Implemented in <code>assets/js/slot-reel.js</code>, this playful discoverability subsystem turns game selection into a classic triple-reel arcade slot machine.
+          </p>
+          <p class="docs-paragraph">
+            Reels spin through registered games with procedural Web Audio whirring sound effects, stopping sequentially with deceleration curves. Winning a roll highlights the selected game and provides a 1-click launch shortcut.
+          </p>
+        </section>
+
+        <!-- 15e. Custom Playlists System -->
+        <section class="docs-section" id="playlist-system">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Custom Game Playlists & Shareable Codes</h2>
+          <p class="docs-paragraph">
+            Implemented in <code>assets/js/playlist-manager.js</code>, players can assemble personalized gaming mixtapes (e.g. "Cyberpunk Favorites", "Quick Lunch Breaks", "Retro Shooters").
+          </p>
+          <p class="docs-paragraph">
+            Playlists are serializable into compact Base64/UTF-8 URL strings that can be shared with friends or imported across browsers with 1-click clipboard integration.
+          </p>
+        </section>
+
+        <!-- 15f. A-Z Catalog Jump Bar Navigation -->
+        <section class="docs-section" id="az-jump-bar">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">A-Z Catalog Jump Bar Navigation</h2>
+          <p class="docs-paragraph">
+            Implemented in <code>assets/js/app.js</code>, the A-Z Jump Bar provides rapid alphabetical indexing across all 104+ registered titles.
+          </p>
+          <ul>
+            <li><strong>Dynamic Availability Scanning:</strong> Buttons for letters with zero matching games are automatically dimmed, disabled, and given <code>aria-disabled</code> accessibility tags.</li>
+            <li><strong>Keyboard Toolbar Navigation:</strong> Supports left and right arrow key traversing with wrapped focus cycling.</li>
+            <li><strong>Combined Filtering:</strong> Fully integrates with category pills, faceted duration filters, control scheme chips, and the search omnibar.</li>
+          </ul>
+        </section>
+
+        <!-- 15g. Theme Sync Engine -->
+        <section class="docs-section" id="theme-sync">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">System prefers-color-scheme Live Sync Engine</h2>
+          <p class="docs-paragraph">
+            Implemented in <code>assets/js/theme-sync-engine.js</code>, this service listens for operating system color scheme changes via <code>window.matchMedia('(prefers-color-scheme: dark)')</code>.
+          </p>
+          <p class="docs-paragraph">
+            It dynamically synchronizes CSS root tokens without requiring page reloads while respecting explicit user manual overrides saved in LocalStorage.
+          </p>
+        </section>
+
+        <!-- 15h. Report Bug Helper Diagnostic -->
+        <section class="docs-section" id="bug-report-helper">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Game Bug Report Diagnostic Helper</h2>
+          <p class="docs-paragraph">
+            Implemented in <code>assets/js/report-bug-helper.js</code>, every game card and modal launcher includes an integrated bug reporting trigger.
+          </p>
+          <p class="docs-paragraph">
+            Clicking it opens a pre-filled GitHub Issue template containing the target game ID, author github username, browser user agent, viewport resolution, and active error logs, streamlining triage for community maintainers.
+          </p>
         </section>
 
         <!-- 16. Coding Standards -->
