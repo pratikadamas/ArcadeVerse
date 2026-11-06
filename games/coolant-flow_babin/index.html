@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coolant Flow — Fusion Reactor Conduit Grid</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="arcade-cabinet">
+    <!-- Top HUD Header -->
+    <header class="hud-header">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+          <path d="M2 12h20"></path>
+        </svg>
+        <span class="hud-title">COOLANT FLOW // RX-9</span>
+      </div>
+
+      <div class="stats-rack">
+        <div class="stat-badge">
+          <span class="stat-label">STAGE</span>
+          <span id="level-display" class="stat-val">1 / 8</span>
+        </div>
+        <div class="stat-badge">
+          <span class="stat-label">FLOW COUNTDOWN</span>
+          <span id="timer-display" class="stat-val warning">25s</span>
+        </div>
+        <div class="stat-badge">
+          <span class="stat-label">CORE INTEGRITY</span>
+          <span id="integrity-display" class="stat-val accent">100%</span>
+        </div>
+        <div class="stat-badge">
+          <span class="stat-label">SCORE</span>
+          <span id="score-display" class="stat-val">00000</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="btn-sound" class="icon-btn" aria-label="Toggle Audio">
+          <svg id="icon-sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+          </svg>
+          <svg id="icon-sound-off" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="1" y1="1" x2="23" y2="23"></line>
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          </svg>
+        </button>
+        <button id="btn-restart" class="action-btn" title="Reset Level">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          RESET
+        </button>
+        <button id="btn-fast-forward" class="action-btn fast" title="Trigger Instant Coolant Flush">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 4 15 12 5 20 5 4"></polygon>
+            <polygon points="19 5 19 19"></polygon>
+          </svg>
+          FLUSH NOW
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Game Area -->
+    <main class="game-stage">
+      <!-- Left Reservoir Indicator -->
+      <aside class="reservoir-col">
+        <div class="reservoir-card">
+          <div class="col-title">PUMP A-1</div>
+          <div class="gauge-container">
+            <div id="coolant-fill-bar" class="gauge-fill"></div>
+          </div>
+          <div class="gauge-label" id="pump-status-label">PRESSURIZING</div>
+        </div>
+
+        <div class="conduit-legend">
+          <div class="legend-item"><span class="pipedot pipe-in"></span> PUMP IN</div>
+          <div class="legend-item"><span class="pipedot pipe-out"></span> REACTOR CORE</div>
+          <div class="legend-item"><span class="pipedot pipe-coolant"></span> CRYO-NITROGEN</div>
+        </div>
+      </aside>
+
+      <!-- Center Interactive Grid Canvas -->
+      <div class="canvas-wrap">
+        <canvas id="game-canvas" width="600" height="600"></canvas>
+        <div id="grid-status-overlay" class="grid-overlay hidden">
+          <div class="status-box">
+            <h2 id="overlay-title">SYSTEM ALERT</h2>
+            <p id="overlay-msg">Coolant spilled! Core meltdown imminent.</p>
+            <div class="overlay-buttons">
+              <button id="btn-overlay-retry" class="btn-primary">RETRY SECTOR</button>
+              <button id="btn-overlay-next" class="btn-primary accent hidden">NEXT SECTOR</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Mission Guide & Diagnostics -->
+      <aside class="reactor-col">
+        <div class="reactor-card">
+          <div class="col-title">FUSION REACTOR #9</div>
+          <div class="reactor-core-art">
+            <div id="reactor-glow" class="core-plasma"></div>
+          </div>
+          <div class="temperature-gauge">
+            <span class="temp-label">CORE TEMP</span>
+            <span id="temp-display" class="temp-val">7,420 K</span>
+          </div>
+        </div>
+
+        <div class="mission-log">
+          <div class="log-title">MISSION LOG</div>
+          <p id="log-text">Sector 1: Rotate conduit pipes to connect PUMP (Green) to CORE (Cyan) before pressure breach.</p>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Bottom Controls & Hints -->
+    <footer class="hud-footer">
+      <div class="hint-text">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span>Click / Tap any pipe tile to rotate 90 deg clockwise. Press [SPACE] for quick flush.</span>
+      </div>
+      <div class="version-tag">BUILD 4.2.7-NEON-FLOW</div>
+    </footer>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

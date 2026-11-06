@@ -1173,6 +1173,49 @@ textarea:focus-visible,
   color: #f8fafc;
 }
 
+/* Catalog Layout Switcher (Grid vs Compact List View) */
+.catalog-view-switcher {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  gap: 3px;
+  box-shadow: var(--shadow-sm);
+}
+
+.view-toggle-btn {
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--radius-md) - 3px);
+  color: var(--text-muted);
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+}
+
+.view-toggle-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.view-toggle-btn.active {
+  background: var(--accent-primary, #3b82f6);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.45);
+}
+
+.view-toggle-btn:focus-visible {
+  outline: 2px solid var(--accent-primary, #3b82f6);
+  outline-offset: 2px;
+}
+
 /* Dedicated Full-Width Category Filter Bar */
 .category-pills-bar {
   display: flex;
@@ -1325,6 +1368,104 @@ textarea:focus-visible,
   color: #ffffff;
 }
 
+/* =========================================================================
+   A-Z ALPHABETICAL CATALOG JUMP BAR COMPONENT
+   ========================================================================= */
+.az-jump-bar-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 2rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(15, 20, 35, 0.75);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.az-jump-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  padding: 2px 2px 4px 2px;
+}
+
+.az-jump-bar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.az-jump-bar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 2px;
+}
+
+.az-jump-bar::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
+  border-radius: 2px;
+}
+
+.az-btn {
+  min-width: 34px;
+  height: 32px;
+  padding: 0 0.45rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display, inherit);
+  font-size: 0.82rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.az-btn[data-letter="all"] {
+  min-width: 48px;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+.az-btn:hover:not(:disabled):not(.disabled) {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: var(--accent-primary, #3b82f6);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
+.az-btn.active {
+  background: var(--accent-primary, #3b82f6) !important;
+  border-color: var(--accent-primary, #3b82f6) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 14px rgba(59, 130, 246, 0.5);
+  font-weight: 800;
+}
+
+/* Letters with 0 matching games in registry dimmed & non-interactive */
+.az-btn:disabled,
+.az-btn.disabled {
+  opacity: 0.4 !important;
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+}
+
+.az-btn:focus-visible {
+  outline: 2px solid var(--accent-primary, #3b82f6);
+  outline-offset: 2px;
+}
+
 /* Smart Empty-State Tag Suggestion Chips */
 .smart-tag-suggestions {
   display: flex;
@@ -1467,6 +1608,187 @@ textarea:focus-visible,
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
   gap: 2rem;
+}
+
+/* =========================================================================
+   COMPACT TABLE / LIST VIEW (#games-grid.view-list)
+   ========================================================================= */
+#games-grid.view-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.65rem !important;
+}
+
+#games-grid.view-list .catalog-empty-state {
+  width: 100% !important;
+}
+
+#games-grid.view-list .game-card {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  padding: 0.65rem 1.25rem !important;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  gap: 1.25rem;
+  min-height: 64px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: visible;
+}
+
+#games-grid.view-list .game-card:hover {
+  transform: translateY(-1px) !important;
+  border-color: var(--border-medium);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  background: rgba(22, 28, 48, 0.85);
+}
+
+/* 1. Icon Column (within game-card-preview) */
+#games-grid.view-list .game-card-preview {
+  height: auto !important;
+  min-height: unset !important;
+  padding: 0 !important;
+  background: transparent !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.65rem !important;
+  flex-shrink: 0 !important;
+  position: static !important;
+}
+
+#games-grid.view-list .game-card-preview .game-icon {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: var(--radius-sm);
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  color: var(--accent-primary, #3b82f6);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+}
+
+#games-grid.view-list .game-card-preview .game-icon svg,
+#games-grid.view-list .game-card-preview .game-icon i {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+#games-grid.view-list .game-card-preview .btn-card-favorite {
+  position: static !important;
+  width: 32px !important;
+  height: 32px !important;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0 !important;
+}
+
+/* 4. Category Column (Tag Badge) */
+#games-grid.view-list .game-card-preview .game-category-tag {
+  position: static !important;
+  font-size: 0.72rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 4px;
+  flex-shrink: 0 !important;
+}
+
+/* 2. Game Card Body (Row of columns) */
+#games-grid.view-list .game-card-body {
+  display: flex !important;
+  align-items: center !important;
+  flex: 1 !important;
+  gap: 1.25rem !important;
+  padding: 0 !important;
+  min-width: 0 !important;
+  justify-content: space-between !important;
+}
+
+/* Title Column */
+#games-grid.view-list .game-card-title {
+  font-size: 0.98rem !important;
+  font-weight: 700 !important;
+  margin: 0 !important;
+  flex: 2 !important;
+  min-width: 150px !important;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Hide long description in compact view */
+#games-grid.view-list .game-card-desc {
+  display: none !important;
+}
+
+/* 5. Star Rating Column */
+#games-grid.view-list .game-card-rating-row {
+  margin: 0 !important;
+  flex-shrink: 0 !important;
+  min-width: 110px !important;
+  justify-content: center !important;
+}
+
+#games-grid.view-list .game-rating-stars {
+  gap: 2px !important;
+}
+
+#games-grid.view-list .rate-star-btn svg {
+  width: 13px !important;
+  height: 13px !important;
+}
+
+#games-grid.view-list .rating-badge {
+  font-size: 0.75rem !important;
+  padding: 1px 5px !important;
+}
+
+/* 3. Footer (Author & Play Button) */
+#games-grid.view-list .game-card-footer {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1.25rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  flex-shrink: 0 !important;
+}
+
+/* 3. Author Column */
+#games-grid.view-list .contributor-meta {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  min-width: 130px !important;
+}
+
+#games-grid.view-list .contributor-avatar {
+  width: 26px !important;
+  height: 26px !important;
+  font-size: 0.72rem !important;
+}
+
+#games-grid.view-list .contributor-name {
+  font-size: 0.8rem !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+}
+
+/* 6. Play Button Column */
+#games-grid.view-list .btn-play-trigger {
+  padding: 0.45rem 1.15rem !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  border-radius: var(--radius-sm) !important;
+  flex-shrink: 0 !important;
 }
 
 .game-card {
@@ -7023,6 +7345,42 @@ html {
   padding: 8px 12px;
 }
 
+[data-theme="light"] .catalog-view-switcher {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+[data-theme="light"] .view-toggle-btn {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .view-toggle-btn:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .view-toggle-btn.active {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px rgba(2, 132, 199, 0.35) !important;
+}
+
+[data-theme="light"] #games-grid.view-list .game-card {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] #games-grid.view-list .game-card:hover {
+  background: #f8fafc !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.12) !important;
+}
+
+[data-theme="light"] #games-grid.view-list .game-card-title {
+  color: #0f172a !important;
+}
+
 [data-theme="light"] .category-pills .pill {
   background: #ffffff !important;
   color: #1e293b !important;
@@ -7052,6 +7410,41 @@ html {
 [data-theme="light"] .category-pills .pill.pill-favorites.active .favorites-count-badge {
   background: rgba(255, 255, 255, 0.3) !important;
   color: #ffffff !important;
+}
+
+/* Light Theme for A-Z Jump Bar */
+[data-theme="light"] .az-jump-bar-container {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .az-btn {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+[data-theme="light"] .az-btn:hover:not(:disabled):not(.disabled) {
+  background: #f0f9ff !important;
+  border-color: #0284c7 !important;
+  color: #0284c7 !important;
+}
+
+[data-theme="light"] .az-btn.active {
+  background: #0284c7 !important;
+  border-color: #0284c7 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3) !important;
+}
+
+[data-theme="light"] .az-btn:disabled,
+[data-theme="light"] .az-btn.disabled {
+  opacity: 0.4 !important;
+  pointer-events: none !important;
+  background: #f1f5f9 !important;
+  color: #94a3b8 !important;
+  border-color: #e2e8f0 !important;
 }
 
 /* =========================================================================
@@ -7471,6 +7864,41 @@ html.light-mode .trophy-modal-title {
     white-space: nowrap;
     padding: 0.45rem 0.9rem;
     font-size: 0.82rem;
+  }
+
+  /* Compact list view mobile adaptability */
+  #games-grid.view-list .game-card {
+    flex-wrap: wrap !important;
+    gap: 0.75rem !important;
+    padding: 0.75rem 1rem !important;
+  }
+
+  #games-grid.view-list .game-card-preview {
+    gap: 0.5rem !important;
+  }
+
+  #games-grid.view-list .game-card-body {
+    flex-wrap: wrap !important;
+    gap: 0.65rem !important;
+  }
+
+  #games-grid.view-list .game-card-title {
+    flex: 1 1 100% !important;
+    white-space: normal !important;
+  }
+
+  #games-grid.view-list .contributor-meta {
+    min-width: unset !important;
+  }
+
+  #games-grid.view-list .game-card-rating-row {
+    min-width: unset !important;
+  }
+
+  #games-grid.view-list .game-card-footer {
+    width: 100% !important;
+    justify-content: space-between !important;
+    margin-top: 0.25rem !important;
   }
 
   /* Mobile optimized favorite card toggle button */

@@ -1,0 +1,12 @@
+{
+  "title": "Coolant Flow",
+  "category": "Puzzle",
+  "description": "Rotate scrambled cyber-industrial conduits to route neon coolant to the overheating fusion reactor before containment failure.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["pipe", "puzzle", "strategy", "cyberpunk", "fusion", "arcade"],
+  "stars": 24,
+  "featured": true,
+  "lucideIcon": "activity"
+}
