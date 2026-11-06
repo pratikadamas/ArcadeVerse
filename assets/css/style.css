@@ -107,6 +107,7 @@ html {
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  scroll-padding-top: 80px;
   font-family: var(--font-body);
   background-color: var(--bg-main);
   color: var(--text-primary);
@@ -265,26 +266,30 @@ textarea:focus-visible,
 }
 
 /* ===================================================
-   CLEAN, HUMAN-CRAFTED FLOATING NAVBAR
+   MODERN SAAS FIXED FLOATING GLASS NAVBAR
    =================================================== */
 .navbar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
   z-index: 1000;
-  background: rgba(6, 11, 25, 0.75);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border-bottom: 1px solid rgba(0, 245, 255, 0.12);
-  transition: background 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease;
+  background: rgba(6, 11, 25, 0.65);
+  backdrop-filter: blur(20px) saturate(190%);
+  -webkit-backdrop-filter: blur(20px) saturate(190%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Semi-transparent ultra-glassy frosted aesthetic on scroll */
 .navbar.scrolled {
-  background: rgba(6, 11, 25, 0.38) !important;
-  backdrop-filter: blur(24px) saturate(200%) brightness(105%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(200%) brightness(105%) !important;
-  border-bottom: 1px solid rgba(0, 245, 255, 0.25) !important;
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5), inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+  background: rgba(6, 11, 25, 0.45) !important;
+  backdrop-filter: blur(28px) saturate(210%) brightness(105%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(210%) brightness(105%) !important;
+  border-bottom: 1px solid rgba(0, 245, 255, 0.28) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55), inset 0 -1px 0 rgba(255, 255, 255, 0.08);
 }
 
 /* Stable navbar without fluctuation or layout shifts */
@@ -645,7 +650,7 @@ textarea:focus-visible,
 .hero-section {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 5rem 2rem 3.5rem;
+  padding: 6.5rem 2rem 3.5rem;
   text-align: center;
   position: relative;
 }
@@ -2974,7 +2979,7 @@ textarea:focus-visible,
 .page-container {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 3.5rem 2rem 5rem;
+  padding: 5.5rem 2rem 5rem;
 }
 
 /* Home Page Tool Portal Cards */
@@ -5787,19 +5792,19 @@ textarea:focus-visible,
 
 /* Header & Brand - Real Glassy Transparency in Light Mode */
 [data-theme="light"] .navbar {
-  background: rgba(252, 249, 242, 0.72) !important;
-  backdrop-filter: blur(16px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  background: rgba(252, 249, 242, 0.65) !important;
+  backdrop-filter: blur(20px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(190%) !important;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 4px 20px rgba(70, 50, 25, 0.04) !important;
+  box-shadow: 0 4px 20px rgba(70, 50, 25, 0.06) !important;
 }
 
 [data-theme="light"] .navbar.scrolled {
-  background: rgba(255, 255, 255, 0.42) !important;
-  backdrop-filter: blur(24px) saturate(190%) contrast(105%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(190%) contrast(105%) !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(28px) saturate(200%) contrast(105%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(200%) contrast(105%) !important;
   border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
-  box-shadow: 0 10px 30px rgba(70, 50, 25, 0.08), inset 0 -1px 0 rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 10px 30px rgba(70, 50, 25, 0.1), inset 0 -1px 0 rgba(255, 255, 255, 0.5) !important;
 }
 
 [data-theme="light"] .logo,
@@ -6044,6 +6049,99 @@ textarea:focus-visible,
 [data-theme="light"] .pill-favorites.active .favorites-count-badge {
   background: rgba(255, 255, 255, 0.3);
   color: #ffffff !important;
+}
+
+/* Light Mode Filter Badges & Count Numbers High-Contrast Fix on Hover and Active */
+[data-theme="light"] .pill-count-badge {
+  background: rgba(0, 0, 0, 0.08) !important;
+  color: #1e293b !important;
+  font-weight: 800;
+}
+
+[data-theme="light"] .pill:hover .pill-count-badge {
+  background: rgba(37, 99, 235, 0.15) !important;
+  color: #1d4ed8 !important;
+}
+
+[data-theme="light"] .pill.active .pill-count-badge {
+  background: #ffffff !important;
+  color: #1d4ed8 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .pill-favorites:hover .favorites-count-badge {
+  background: rgba(225, 29, 72, 0.2) !important;
+  color: #991b1b !important;
+}
+
+[data-theme="light"] .pill-halloween.active .pill-count-badge {
+  background: #ffffff !important;
+  color: #c2410c !important;
+}
+
+[data-theme="light"] .pill-halloween:hover .pill-count-badge {
+  background: rgba(249, 115, 22, 0.2) !important;
+  color: #c2410c !important;
+}
+
+/* Faceted Filter Bar in Light Mode */
+[data-theme="light"] .faceted-filter-bar {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="light"] .facet-label {
+  color: #1e293b !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="light"] .facet-chip {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+[data-theme="light"] .facet-chip:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .facet-chip-count {
+  background: rgba(0, 0, 0, 0.08) !important;
+  color: #334155 !important;
+  font-weight: 700;
+  opacity: 1 !important;
+}
+
+[data-theme="light"] .facet-chip:hover .facet-chip-count {
+  background: rgba(37, 99, 235, 0.18) !important;
+  color: #1d4ed8 !important;
+  opacity: 1 !important;
+}
+
+[data-theme="light"] .facet-chip.active {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .facet-chip.active .facet-chip-count {
+  background: #ffffff !important;
+  color: #1d4ed8 !important;
+  opacity: 1 !important;
+}
+
+[data-theme="light"] .btn-reset-facets {
+  border-color: #cbd5e1 !important;
+  color: #64748b !important;
+}
+
+[data-theme="light"] .btn-reset-facets:hover {
+  border-color: #2563eb !important;
+  color: #2563eb !important;
+  background: #eff6ff !important;
 }
 
 /* Game Cards */

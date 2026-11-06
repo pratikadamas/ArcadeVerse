@@ -32,6 +32,7 @@
   let animationFrame = 0;
   let gameState = "ready";
   let feedbackCountdown = 0;
+  let ingredientBag = [];
 
   function startGame() {
     cancelAnimationFrame(animationFrame);
@@ -43,6 +44,7 @@
     elapsed = 0;
     previousFrame = 0;
     feedbackCountdown = 0;
+    ingredientBag = [];
     gameState = "playing";
     feedback.textContent = "Choose a cauldron, then catch the matching ingredient.";
     overlay.hidden = true;
@@ -106,7 +108,15 @@
   }
 
   function spawnIngredient() {
-    const type = Math.floor(Math.random() * ingredientTypes.length);
+    if (ingredientBag.length === 0) {
+      ingredientBag = ingredientTypes.map((_, index) => index);
+      for (let index = ingredientBag.length - 1; index > 0; index--) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [ingredientBag[index], ingredientBag[swapIndex]] = [ingredientBag[swapIndex], ingredientBag[index]];
+      }
+    }
+
+    const type = ingredientBag.pop();
     ingredients.push({
       type,
       x: cauldronPositions[type],

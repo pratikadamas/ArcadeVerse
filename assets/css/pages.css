@@ -9,7 +9,7 @@
    =================================================== */
 
 .page-hero {
-  padding: 3.5rem 1.5rem 2.5rem;
+  padding: 5.5rem 1.5rem 2.5rem;
   text-align: center;
   position: relative;
   z-index: 2;
@@ -1285,17 +1285,19 @@ body.docs-viewport-body {
   flex-direction: column;
 }
 
-/* 2. Main Dual-Pane Viewport Container (Fills exact remaining viewport) */
+/* 2. Main Dual-Pane Viewport Container (Fills exact remaining viewport behind fixed navbar) */
 .docs-viewport-container {
   display: flex;
   flex: 1 1 auto;
-  height: calc(100vh - 64px);
-  max-height: calc(100vh - 64px);
+  height: 100vh;
+  max-height: 100vh;
   width: 100vw;
   max-width: 100%;
   overflow: hidden;
   position: relative;
   background-color: var(--bg-main, #0b0f19);
+  padding-top: 64px;
+  box-sizing: border-box;
 }
 
 /* ==========================================================================
@@ -1380,13 +1382,42 @@ body.docs-viewport-body {
   background: rgba(148, 163, 184, 0.5);
 }
 
-/* Hero Section Inside Right Scroll Pane */
+/* Hero Section Inside Right Scroll Pane - Centered Layout */
 .docs-hero-panel {
   max-width: 960px;
-  margin-bottom: 2.5rem;
-  padding-bottom: 1.75rem;
+  margin: 0 auto 2.5rem;
+  padding-bottom: 2rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
+
+.docs-hero-panel .page-hero-badge {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.docs-hero-panel .page-hero-title {
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.docs-hero-panel .page-hero-subtitle {
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.docs-hero-panel .page-meta-row {
+  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 [data-theme="light"] .docs-hero-panel {
   border-bottom-color: #e2e8f0;
 }
