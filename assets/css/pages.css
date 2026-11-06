@@ -9,7 +9,7 @@
    =================================================== */
 
 .page-hero {
-  padding: 3.5rem 1.5rem 2.5rem;
+  padding: 5.5rem 1.5rem 2.5rem;
   text-align: center;
   position: relative;
   z-index: 2;
@@ -1285,17 +1285,19 @@ body.docs-viewport-body {
   flex-direction: column;
 }
 
-/* 2. Main Dual-Pane Viewport Container (Fills exact remaining viewport) */
+/* 2. Main Dual-Pane Viewport Container (Fills exact remaining viewport behind fixed navbar) */
 .docs-viewport-container {
   display: flex;
   flex: 1 1 auto;
-  height: calc(100vh - 64px);
-  max-height: calc(100vh - 64px);
+  height: 100vh;
+  max-height: 100vh;
   width: 100vw;
   max-width: 100%;
   overflow: hidden;
   position: relative;
   background-color: var(--bg-main, #0b0f19);
+  padding-top: 64px;
+  box-sizing: border-box;
 }
 
 /* ==========================================================================
