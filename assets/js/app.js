@@ -1346,6 +1346,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
       searchQuery = e.target.value.toLowerCase().trim();
+      if (searchClearBtn) searchClearBtn.hidden = !e.target.value;
       renderGames();
       if (searchQuery.length > 0) {
         renderAutocomplete(e.target.value);
