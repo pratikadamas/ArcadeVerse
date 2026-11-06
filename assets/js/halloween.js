@@ -311,7 +311,66 @@
   }
 
   // Expose launch function globally
+  /**
+   * Triggers the exclusive Halloween flying bats animation when loading any Halloween game.
+   */
+  function triggerHalloweenBatAnimation(game, onComplete) {
+    const loader = ensureBatLoader();
+    loader.classList.remove("bat-loader-fading");
+    loader.classList.add("active");
+
+    const gameTitleEl = document.getElementById("bat-loader-game-title");
+    const statusTextEl = document.getElementById("bat-loader-status-text");
+    const swarmEl = document.getElementById("bat-loader-swarm");
+    const actionsEl = document.getElementById("bat-loader-actions");
+
+    if (actionsEl) actionsEl.style.display = "none";
+    const title = (game && game.title) || "Halloween Special Game";
+    if (gameTitleEl) gameTitleEl.textContent = title;
+
+    const phrases = [
+      "Entering the Haunted World...",
+      "Awakening the Nocturnal Bats...",
+      "The Darkness Awaits...",
+      "Preparing Your Nightmare..."
+    ];
+    let phraseIndex = 0;
+    if (statusTextEl) statusTextEl.textContent = phrases[0];
+
+    if (activePhraseInterval) clearInterval(activePhraseInterval);
+    activePhraseInterval = setInterval(() => {
+      phraseIndex = (phraseIndex + 1) % phrases.length;
+      if (statusTextEl) {
+        statusTextEl.style.opacity = "0";
+        setTimeout(() => {
+          statusTextEl.textContent = phrases[phraseIndex];
+          statusTextEl.style.opacity = "1";
+        }, 160);
+      }
+    }, 400);
+
+    // Populate flying bats swarm
+    populateBatSwarm(swarmEl);
+
+    // Spooky sound effect
+    if (window.soundEngine && typeof window.soundEngine.playTone === "function") {
+      try {
+        window.soundEngine.playTone(180, "sawtooth", 0.45, 0.08);
+      } catch (err) {}
+    }
+
+    if (activeLoaderTimeout) clearTimeout(activeLoaderTimeout);
+    activeLoaderTimeout = setTimeout(() => {
+      clearInterval(activePhraseInterval);
+      hideBatLoader();
+      if (typeof onComplete === "function") onComplete();
+    }, 950);
+  }
+
+  // Expose launch & animation functions globally
   window.launchHalloweenGame = launchHalloweenGame;
+  window.triggerHalloweenBatAnimation = triggerHalloweenBatAnimation;
+  window.hideHalloweenBatLoader = hideBatLoader;
 
   /**
    * Initializes 3D Tilt Effect on Game Cards

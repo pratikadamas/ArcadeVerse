@@ -875,13 +875,13 @@
    ========================================================================== */
 
 .halloween-bat-loader {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 100050;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 24px;
+  border-radius: 0;
   overflow: hidden;
   opacity: 0;
   pointer-events: none;
@@ -1618,4 +1618,71 @@ body[data-theme="light"] #halloween-games .halloween-card .halloween-author-name
   .halloween-container {
     background-image: none !important;
   }
+}
+
+
+/* ==========================================================================
+   Halloween Special Games Badges on Catalog Cards
+   ========================================================================== */
+
+.badge-halloween-special {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  background: linear-gradient(135deg, rgba(255, 119, 0, 0.28), rgba(168, 85, 247, 0.28));
+  border: 1px solid rgba(255, 136, 0, 0.7);
+  border-radius: 12px;
+  color: #ffaa33;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 0 0 12px rgba(255, 119, 0, 0.25);
+  white-space: nowrap;
+  animation: halloween-badge-pulse 2.2s ease-in-out infinite alternate;
+  z-index: 2;
+}
+
+.badge-halloween-special svg {
+  width: 13px;
+  height: 13px;
+  fill: #ffaa33;
+  animation: mini-bat-wing-flap 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes halloween-badge-pulse {
+  0% {
+    box-shadow: 0 0 6px rgba(255, 119, 0, 0.2);
+    border-color: rgba(255, 119, 0, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 16px rgba(255, 119, 0, 0.55), 0 0 8px rgba(168, 85, 247, 0.4);
+    border-color: rgba(255, 153, 0, 0.9);
+  }
+}
+
+@keyframes mini-bat-wing-flap {
+  0% { transform: scale(1) rotate(-5deg); }
+  100% { transform: scale(1.18) rotate(5deg); }
+}
+
+.halloween-title-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 2px 7px;
+  background: rgba(255, 119, 0, 0.16);
+  border: 1px solid rgba(255, 119, 0, 0.5);
+  border-radius: 4px;
+  color: #ffaa33;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+  text-transform: uppercase;
+  white-space: nowrap;
 }

@@ -102,11 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!counts[cat]) counts[cat] = 0;
       counts[cat]++;
 
-      const isHalloween = (g.tags && g.tags.some(t => t.toLowerCase() === "halloween")) ||
-        cat.includes("horror") ||
-        (g.title && g.title.toLowerCase().includes("halloween")) ||
-        (g.id && (g.id.toLowerCase().includes("haunted") || g.id.toLowerCase().includes("escape-room") || g.id.toLowerCase().includes("island-survival")));
-      if (isHalloween) {
+      if (isHalloweenGame(g)) {
         counts.halloween++;
       }
     });
@@ -415,6 +411,26 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  
+  // Helper to identify Halloween Special Games
+  function isHalloweenGame(g) {
+    if (!g) return false;
+    const id = (g.id || "").toLowerCase();
+    const title = (g.title || "").toLowerCase();
+    const cat = (g.category || "").toLowerCase();
+    const tags = Array.isArray(g.tags) ? g.tags.map((t) => t.toLowerCase()) : [];
+    return (
+      tags.includes("halloween") ||
+      cat.includes("horror") ||
+      title.includes("halloween") ||
+      id.includes("haunted") ||
+      id.includes("escape-room") ||
+      id.includes("island-survival") ||
+      id.includes("midnight-graveyard") ||
+      id.includes("pumpkin-express")
+    );
+  }
+
   function renderGames() {
     gamesGrid.innerHTML = "";
     const favs = getFavorites();
@@ -433,13 +449,8 @@ document.addEventListener("DOMContentLoaded", () => {
         matchesCategory = pl ? pl.games.includes(item.id) : false;
       } else {
         if (currentCategory.toLowerCase() === "halloween") {
-        matchesCategory = (item.tags && item.tags.some(t => t.toLowerCase() === "halloween")) ||
-          item.category.toLowerCase().includes("horror") ||
-          item.title.toLowerCase().includes("halloween") ||
-          item.id.toLowerCase().includes("haunted") ||
-          item.id.toLowerCase().includes("escape-room") ||
-          item.id.toLowerCase().includes("island-survival");
-      } else {
+          matchesCategory = isHalloweenGame(item);
+        } else {
         matchesCategory = item.category.toLowerCase() === currentCategory.toLowerCase();
       }
       }
@@ -663,9 +674,21 @@ document.addEventListener("DOMContentLoaded", () => {
       const displayScore = userRating ? Number(userRating).toFixed(1) : (game.stars ? (game.stars / 10).toFixed(1) : "5.0");
       const currentStar = userRating || Math.min(5, Math.max(1, Math.round((game.stars || 25) / 10)));
 
+      const isHalloween = isHalloweenGame(game);
+      const halloweenBadgeHtml = isHalloween ? `
+        <span class="badge-halloween-special" title="Halloween Special Games">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 4c-1.5 0-3 1.2-3 2.5 0 .5.2 1 .5 1.5C6 9 4 11 4 14c0 3.5 3 6 8 6s8-2.5 8-6c0-3-2-5-5.5-6 .3-.5.5-1 .5-1.5 0-1.3-1.5-2.5-3-2.5z"/>
+          </svg>
+          Halloween Special Games
+        </span>
+      ` : "";
+      const halloweenTitleBadge = isHalloween ? `<span class="halloween-title-badge" title="Halloween Special Games">Halloween Special Games</span>` : "";
+
       card.innerHTML = `
         <div class="game-card-preview">
           <span class="game-category-tag">${game.category}</span>
+          ${halloweenBadgeHtml}
           <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${game.id}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
               <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
@@ -674,7 +697,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="game-icon">${iconHtml}</div>
         </div>
         <div class="game-card-body">
-          <h3 class="game-card-title">${game.title}</h3>
+          <h3 class="game-card-title">${game.title}${halloweenTitleBadge}</h3>
           <p class="game-card-desc">${game.description}</p>
           <div class="game-card-rating-row">
             <div class="game-rating-stars" data-game-id="${game.id}" aria-label="Rating for ${game.title}">
@@ -856,6 +879,11 @@ document.addEventListener("DOMContentLoaded", () => {
   function openGameModal(game, triggerElement = null) {
     activeGame = game;
     lastFocusedElement = triggerElement || document.activeElement;
+
+    // Trigger bat animation if launching a Halloween Special Game
+    if (isHalloweenGame(game) && typeof window.triggerHalloweenBatAnimation === "function") {
+      window.triggerHalloweenBatAnimation(game);
+    }
 
     modalGameTitle.textContent = game.title;
     modalGameBadge.textContent = game.category;
