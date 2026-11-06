@@ -34,6 +34,14 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentTagFilter = "";
   let searchQuery = "";
   let currentSort = "featured";
+  const CATALOG_VIEW_STORAGE_KEY = "arcadeverse_catalog_view";
+  let currentCatalogView = "grid";
+  try {
+    const savedView = localStorage.getItem(CATALOG_VIEW_STORAGE_KEY);
+    if (savedView === "list" || savedView === "grid") {
+      currentCatalogView = savedView;
+    }
+  } catch (_) {}
   let lastFocusedElement = null;
   let activeGame = null;
   let closeAutocomplete = () => {};
@@ -421,6 +429,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderGames() {
     gamesGrid.innerHTML = "";
+    gamesGrid.classList.toggle("view-list", currentCatalogView === "list");
     const favs = getFavorites();
 
     const currentDataSet = GAMES_REGISTRY;
@@ -1616,95 +1625,41 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // --- A-Z Alphabetical Catalog Jump Bar Engine ---
-  function updateLetterAvailability() {
-    const letterButtons = document.querySelectorAll(".az-btn[data-letter]");
-    if (!letterButtons.length || typeof GAMES_REGISTRY === "undefined" || !Array.isArray(GAMES_REGISTRY)) return;
+  // --- Catalog Layout Switcher Engine (Grid vs Compact List View) ---
+  function setCatalogView(view) {
+    currentCatalogView = view === "list" ? "list" : "grid";
+    try {
+      localStorage.setItem(CATALOG_VIEW_STORAGE_KEY, currentCatalogView);
+    } catch (_) {}
 
-    const letterCounts = {};
-    GAMES_REGISTRY.forEach((g) => {
-      if (!g || !g.title) return;
-      const firstChar = g.title.trim().charAt(0).toUpperCase();
-      const key = /[A-Z]/.test(firstChar) ? firstChar : "#";
-      letterCounts[key] = (letterCounts[key] || 0) + 1;
-    });
+    if (gamesGrid) {
+      gamesGrid.classList.toggle("view-list", currentCatalogView === "list");
+    }
 
-    letterButtons.forEach((btn) => {
-      const letter = btn.getAttribute("data-letter");
-      if (!letter || letter.toLowerCase() === "all") {
-        btn.disabled = false;
-        btn.classList.remove("disabled");
-        btn.removeAttribute("aria-disabled");
-        return;
-      }
-
-      const count = letterCounts[letter] || 0;
-      if (count === 0) {
-        btn.disabled = true;
-        btn.classList.add("disabled");
-        btn.setAttribute("aria-disabled", "true");
-        btn.title = `No games starting with ${letter}`;
-      } else {
-        btn.disabled = false;
-        btn.classList.remove("disabled");
-        btn.removeAttribute("aria-disabled");
-        btn.title = `${count} game${count !== 1 ? "s" : ""} starting with ${letter}`;
-      }
-    });
-  }
-
-  function resetLetterFilterUI() {
-    currentLetterFilter = "all";
-    const letterButtons = document.querySelectorAll(".az-btn[data-letter]");
-    letterButtons.forEach((b) => {
-      const isAll = b.getAttribute("data-letter") === "all";
-      b.classList.toggle("active", isAll);
-      b.setAttribute("aria-pressed", isAll ? "true" : "false");
-    });
-  }
-
-  function initAZJumpBar() {
-    updateLetterAvailability();
-    const letterButtons = document.querySelectorAll(".az-btn[data-letter]");
-    letterButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        if (btn.disabled || btn.classList.contains("disabled")) return;
-        const letter = btn.getAttribute("data-letter");
-        if (!letter) return;
-
-        currentLetterFilter = letter.toLowerCase() === "all" ? "all" : letter.toUpperCase();
-
-        letterButtons.forEach((b) => {
-          const isActive = b === btn;
-          b.classList.toggle("active", isActive);
-          b.setAttribute("aria-pressed", isActive ? "true" : "false");
-        });
-
-        renderGames();
-      });
-    });
-
-    // Keyboard toolbar navigation support (Left/Right arrows)
-    const jumpBar = document.getElementById("az-jump-bar");
-    if (jumpBar) {
-      jumpBar.addEventListener("keydown", (e) => {
-        if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
-          const enabledButtons = Array.from(document.querySelectorAll(".az-btn[data-letter]:not(:disabled):not(.disabled)"));
-          const currentIndex = enabledButtons.indexOf(document.activeElement);
-          if (currentIndex !== -1) {
-            e.preventDefault();
-            const nextIndex = e.key === "ArrowRight"
-              ? (currentIndex + 1) % enabledButtons.length
-              : (currentIndex - 1 + enabledButtons.length) % enabledButtons.length;
-            enabledButtons[nextIndex].focus();
-          }
-        }
-      });
+    const gridBtn = document.getElementById("view-grid-btn");
+    const listBtn = document.getElementById("view-list-btn");
+    if (gridBtn && listBtn) {
+      gridBtn.classList.toggle("active", currentCatalogView === "grid");
+      gridBtn.setAttribute("aria-pressed", currentCatalogView === "grid" ? "true" : "false");
+      listBtn.classList.toggle("active", currentCatalogView === "list");
+      listBtn.setAttribute("aria-pressed", currentCatalogView === "list" ? "true" : "false");
     }
   }
 
+  function initCatalogViewSwitcher() {
+    const gridBtn = document.getElementById("view-grid-btn");
+    const listBtn = document.getElementById("view-list-btn");
+    if (gridBtn) {
+      gridBtn.addEventListener("click", () => setCatalogView("grid"));
+    }
+    if (listBtn) {
+      listBtn.addEventListener("click", () => setCatalogView("list"));
+    }
+    setCatalogView(currentCatalogView);
+  }
+
   // Initial render
-  initAZJumpBar();
+  initCatalogViewSwitcher();
   buildTagChips();
   renderGames();
 });
