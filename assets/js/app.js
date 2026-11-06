@@ -1144,6 +1144,91 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+  }
+
+  if (searchBox && searchInput) {
+    searchInput.setAttribute("role", "combobox");
+    searchInput.setAttribute("aria-autocomplete", "list");
+    searchInput.setAttribute("aria-expanded", "false");
+    searchInput.setAttribute("aria-controls", "game-search-autocomplete");
+    searchInput.setAttribute("autocomplete", "off");
+    searchInput.setAttribute("spellcheck", "false");
+
+    autocompleteDropdown = document.createElement("div");
+    autocompleteDropdown.id = "game-search-autocomplete";
+    autocompleteDropdown.className = "search-autocomplete-dropdown";
+    autocompleteDropdown.setAttribute("role", "listbox");
+    autocompleteDropdown.setAttribute("aria-label", "Search suggestions");
+    autocompleteDropdown.style.display = "none";
+    searchBox.appendChild(autocompleteDropdown);
+
+    searchInput.addEventListener("focus", () => {
+      const val = searchInput.value.trim();
+      if (val.length > 0) {
+        renderAutocomplete(val);
+      }
+    });
+
+    searchInput.addEventListener("keydown", (e) => {
+      if (!autocompleteDropdown || autocompleteDropdown.style.display === "none") {
+        if (e.key === "ArrowDown" && searchInput.value.trim().length > 0) {
+          e.preventDefault();
+          renderAutocomplete(searchInput.value);
+        }
+        return;
+      }
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (currentSuggestions.length > 0) {
+          const nextIndex = (activeSuggestionIndex + 1) % currentSuggestions.length;
+          updateActiveSuggestion(nextIndex);
+        }
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (currentSuggestions.length > 0) {
+          const prevIndex = activeSuggestionIndex <= 0 ? currentSuggestions.length - 1 : activeSuggestionIndex - 1;
+          updateActiveSuggestion(prevIndex);
+        }
+      } else if (e.key === "Enter") {
+        if (activeSuggestionIndex >= 0 && currentSuggestions[activeSuggestionIndex]) {
+          e.preventDefault();
+          launchSuggestion(currentSuggestions[activeSuggestionIndex]);
+        } else if (currentSuggestions.length === 1) {
+          e.preventDefault();
+          launchSuggestion(currentSuggestions[0]);
+        }
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        closeAutocomplete();
+      }
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!searchBox.contains(e.target)) {
+        closeAutocomplete();
+      }
+    });
+  }
+
+  // Filter Search
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      searchQuery = e.target.value.toLowerCase().trim();
+      if (searchClearBtn) searchClearBtn.hidden = !e.target.value;
+      renderGames();
+      if (searchQuery.length > 0) {
+        renderAutocomplete(e.target.value);
+      } else {
+        closeAutocomplete();
+      }
+    });
+  }
+
   // --- Faceted Filters Event Listeners (Duration, Controls, Reset) ---
   const durationFacetChips = document.querySelectorAll("#duration-facet-chips .facet-chip");
   durationFacetChips.forEach((chip) => {
