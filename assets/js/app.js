@@ -30,6 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentCategory = "all";
   let currentDurationFacet = "all";
   let currentControlsFacet = "all";
+  let currentLetterFilter = "all";
   let currentTagFilter = "";
   let searchQuery = "";
   let currentSort = "featured";
@@ -328,6 +329,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (currentCategory !== "all") {
       activeTags.push({ label: 'Category: ' + currentCategory, type: 'category' });
     }
+    if (currentLetterFilter !== "all") {
+      activeTags.push({ label: 'Letter: ' + currentLetterFilter, type: 'letter' });
+    }
 
     if (activeTags.length === 0) {
       summaryContainer.style.display = "none";
@@ -493,7 +497,18 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
-      return matchesCategory && matchesSearch && matchesDuration && matchesControls && matchesTag;
+      // A-Z Alphabetical Title Jump Filter
+      let matchesLetter = true;
+      if (currentLetterFilter && currentLetterFilter !== "all") {
+        const firstChar = item.title.trim().charAt(0).toUpperCase();
+        if (currentLetterFilter === "#") {
+          matchesLetter = !/[A-Z]/.test(firstChar);
+        } else {
+          matchesLetter = firstChar === currentLetterFilter;
+        }
+      }
+
+      return matchesCategory && matchesSearch && matchesDuration && matchesControls && matchesTag && matchesLetter;
     });
 
     // Apply Sorting
@@ -559,6 +574,8 @@ document.addEventListener("DOMContentLoaded", () => {
               currentTagFilter = "";
               currentDurationFacet = "all";
               currentControlsFacet = "all";
+              currentLetterFilter = "all";
+              resetLetterFilterUI();
               if (searchInput) searchInput.value = "";
               if (searchClearBtn) searchClearBtn.hidden = true;
               closeAutocomplete();
@@ -609,17 +626,25 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
       }
 
-      // Category and search text come from the user, so set them as text, not markup.
+      // Category, search, and letter filter text come from the user, so set them as text, not markup.
       const emptyTitle = emptyCard.querySelector(".empty-state-title");
       if (currentCategory !== "favorites") {
-        emptyTitle.textContent = `No games found in "${currentCategory !== "all" ? currentCategory : searchQuery}"`;
+        if (currentLetterFilter !== "all" && currentCategory === "all" && !searchQuery) {
+          emptyTitle.textContent = `No games found starting with "${currentLetterFilter}"`;
+        } else if (currentLetterFilter !== "all" && currentCategory !== "all") {
+          emptyTitle.textContent = `No games found in "${currentCategory}" starting with "${currentLetterFilter}"`;
+        } else {
+          emptyTitle.textContent = `No games found in "${currentCategory !== "all" ? currentCategory : searchQuery}"`;
+        }
       }
 
-      // Clear button should reset tag filter too
+      // Clear button should reset tag and letter filter too
       emptyCard.querySelector("#reset-filter-btn").addEventListener("click", () => {
         searchQuery = "";
         currentCategory = "all";
         currentTagFilter = "";
+        currentLetterFilter = "all";
+        resetLetterFilterUI();
         if (searchInput) searchInput.value = "";
         closeAutocomplete();
         if (searchClearBtn) searchClearBtn.hidden = true;
@@ -1355,6 +1380,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
       searchQuery = e.target.value.toLowerCase().trim();
+      if (searchClearBtn) searchClearBtn.hidden = !e.target.value;
       renderGames();
       if (searchQuery.length > 0) {
         renderAutocomplete(e.target.value);
@@ -1390,6 +1416,8 @@ document.addEventListener("DOMContentLoaded", () => {
     btnResetFacets.addEventListener("click", () => {
       currentDurationFacet = "all";
       currentControlsFacet = "all";
+      currentLetterFilter = "all";
+      resetLetterFilterUI();
       durationFacetChips.forEach((c) => {
         if (c.getAttribute("data-duration") === "all") c.classList.add("active");
         else c.classList.remove("active");

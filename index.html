@@ -549,6 +549,40 @@
         </div>
       </div>
 
+      <!-- Horizontal A-Z Alphabetical Jump Bar -->
+      <nav class="az-jump-bar-container" id="az-jump-bar-container" aria-label="Alphabetical title index">
+        <div class="az-jump-bar" id="az-jump-bar" role="toolbar" aria-label="Filter games by first letter of title">
+          <button class="az-btn active" data-letter="all" type="button" aria-pressed="true" title="Show all games">ALL</button>
+          <button class="az-btn" data-letter="#" type="button" aria-pressed="false" title="Titles starting with digits or symbols">#</button>
+          <button class="az-btn" data-letter="A" type="button" aria-pressed="false">A</button>
+          <button class="az-btn" data-letter="B" type="button" aria-pressed="false">B</button>
+          <button class="az-btn" data-letter="C" type="button" aria-pressed="false">C</button>
+          <button class="az-btn" data-letter="D" type="button" aria-pressed="false">D</button>
+          <button class="az-btn" data-letter="E" type="button" aria-pressed="false">E</button>
+          <button class="az-btn" data-letter="F" type="button" aria-pressed="false">F</button>
+          <button class="az-btn" data-letter="G" type="button" aria-pressed="false">G</button>
+          <button class="az-btn" data-letter="H" type="button" aria-pressed="false">H</button>
+          <button class="az-btn" data-letter="I" type="button" aria-pressed="false">I</button>
+          <button class="az-btn" data-letter="J" type="button" aria-pressed="false">J</button>
+          <button class="az-btn" data-letter="K" type="button" aria-pressed="false">K</button>
+          <button class="az-btn" data-letter="L" type="button" aria-pressed="false">L</button>
+          <button class="az-btn" data-letter="M" type="button" aria-pressed="false">M</button>
+          <button class="az-btn" data-letter="N" type="button" aria-pressed="false">N</button>
+          <button class="az-btn" data-letter="O" type="button" aria-pressed="false">O</button>
+          <button class="az-btn" data-letter="P" type="button" aria-pressed="false">P</button>
+          <button class="az-btn" data-letter="Q" type="button" aria-pressed="false">Q</button>
+          <button class="az-btn" data-letter="R" type="button" aria-pressed="false">R</button>
+          <button class="az-btn" data-letter="S" type="button" aria-pressed="false">S</button>
+          <button class="az-btn" data-letter="T" type="button" aria-pressed="false">T</button>
+          <button class="az-btn" data-letter="U" type="button" aria-pressed="false">U</button>
+          <button class="az-btn" data-letter="V" type="button" aria-pressed="false">V</button>
+          <button class="az-btn" data-letter="W" type="button" aria-pressed="false">W</button>
+          <button class="az-btn" data-letter="X" type="button" aria-pressed="false">X</button>
+          <button class="az-btn" data-letter="Y" type="button" aria-pressed="false">Y</button>
+          <button class="az-btn" data-letter="Z" type="button" aria-pressed="false">Z</button>
+        </div>
+      </nav>
+
       <!-- Games Grid Container -->
       <div class="games-grid" id="games-grid">
         <!-- Rendered dynamically by app.js (Includes Memory Matrix and "Add More Games" card) -->
@@ -752,6 +786,8 @@
   <script src="assets/js/sound-engine.js"></script>
   <script src="assets/js/game-ratings.js"></script>
   <script src="assets/js/playlist-manager.js"></script>
+  <script src="assets/js/theme-sync-engine.js"></script>
+  <script src="assets/js/storage-manager.js"></script>
   <script>
     if (window.lucide) {
       lucide.createIcons();

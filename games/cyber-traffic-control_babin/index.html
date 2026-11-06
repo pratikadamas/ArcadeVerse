@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Traffic Control — Skyway Signal Dispatcher</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="dispatcher-cabinet">
+    <!-- Top Dispatcher HUD -->
+    <header class="dispatcher-header">
+      <div class="brand-group">
+        <svg class="brand-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 19 21 12 17 5 21 12 2"></polygon>
+        </svg>
+        <span class="brand-name">CYBER TRAFFIC // SKYWAY 4</span>
+      </div>
+
+      <div class="metrics-deck">
+        <div class="metric-card">
+          <span class="metric-label">CARS DISPATCHED</span>
+          <span id="stat-dispatched" class="metric-val">0</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">COMMUTE SCORE</span>
+          <span id="stat-score" class="metric-val accent">00000</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">FRUSTRATION</span>
+          <div class="frustration-gauge">
+            <div id="frustration-fill" class="gauge-fill"></div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">TRAFFIC RATING</span>
+          <span id="stat-rating" class="metric-val safe">100% FLOW</span>
+        </div>
+      </div>
+
+      <div class="control-tools">
+        <button id="btn-audio-toggle" class="btn-tool" aria-label="Audio">
+          <svg id="svg-sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+          </svg>
+          <svg id="svg-sound-off" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="1" y1="1" x2="23" y2="23"></line>
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          </svg>
+        </button>
+        <button id="btn-restart-shift" class="btn-tool" title="Restart Shift">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          RESTART
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Game Board -->
+    <main class="intersection-arena">
+      <!-- Left Dispatch Conduits -->
+      <aside class="sidebar-hud lanes-hud">
+        <div class="hud-box">
+          <div class="hud-title">LANE STATUS</div>
+          <div class="lane-status-row" id="lane-n">
+            <span class="lane-tag">NORTHBOUND</span>
+            <span class="signal-dot green" id="dot-n"></span>
+          </div>
+          <div class="lane-status-row" id="lane-s">
+            <span class="lane-tag">SOUTHBOUND</span>
+            <span class="signal-dot green" id="dot-s"></span>
+          </div>
+          <div class="lane-status-row" id="lane-e">
+            <span class="lane-tag">EASTBOUND</span>
+            <span class="signal-dot red" id="dot-e"></span>
+          </div>
+          <div class="lane-status-row" id="lane-w">
+            <span class="lane-tag">WESTBOUND</span>
+            <span class="signal-dot red" id="dot-w"></span>
+          </div>
+        </div>
+
+        <div class="hud-box">
+          <div class="hud-title">HOVERCAR FLEET</div>
+          <div class="fleet-row">
+            <span class="vehicle-legend sedan"></span>
+            <span>SEDAN (Standard)</span>
+          </div>
+          <div class="fleet-row">
+            <span class="vehicle-legend hauler"></span>
+            <span>HAULER (Heavy Braking)</span>
+          </div>
+          <div class="fleet-row">
+            <span class="vehicle-legend drone"></span>
+            <span>DRONE (Priority Siren)</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Center Intersection Canvas -->
+      <section class="canvas-viewport">
+        <canvas id="traffic-canvas" width="600" height="600"></canvas>
+
+        <!-- Collision / Game Over Overlay -->
+        <div id="traffic-overlay" class="traffic-overlay hidden">
+          <div class="overlay-card">
+            <h2 id="overlay-head">SKYWAY PILEUP!</h2>
+            <p id="overlay-details">Mid-air hovercar collision at junction coordinates 4-North.</p>
+            <button id="btn-shift-retry" class="btn-primary">RESUME SHIFT</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Priority & Radio Feed -->
+      <aside class="sidebar-hud comms-hud">
+        <div class="hud-box">
+          <div class="hud-title">PRIORITY QUEUE</div>
+          <div id="priority-warning" class="priority-banner hidden">
+            <span>EMERGENCY SIREN IN BOUND!</span>
+          </div>
+          <div id="no-priority" class="no-priority-text">All lanes nominal.</div>
+        </div>
+
+        <div class="hud-box feed-box">
+          <div class="hud-title">DISPATCHER RADIO</div>
+          <ul id="radio-log-ul" class="radio-ul">
+            <li>Skyway 4 intersection clear. Shift active.</li>
+          </ul>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Bottom Controls & Hints -->
+    <footer class="dispatcher-footer">
+      <div class="instruction">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span>Click / Tap Traffic Light Junction Conduits to toggle Green & Red. Click stopped cars for Turbo Boost!</span>
+      </div>
+      <div class="engine-ver">SYSTEM SKYWAY-DISPATCH V4.3.0</div>
+    </footer>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

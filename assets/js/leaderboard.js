@@ -20,11 +20,30 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchInput = document.getElementById("leaderboard-search-input");
   const exportCsvBtn = document.getElementById("export-csv-btn");
   let tableSearchQuery = "";
+  let searchDebounceTimer = null;
+
+  // Escape regex special characters safely
+  function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  // Highlight matching query substring wrapped in <mark class="search-highlight">
+  function highlightMatch(text, query) {
+    if (!text) return "";
+    if (!query) return text;
+
+    const escaped = escapeRegex(query);
+    const regex = new RegExp("(" + escaped + ")", "gi");
+    return text.replace(regex, '<mark class="search-highlight">$1</mark>');
+  }
 
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
-      tableSearchQuery = e.target.value.toLowerCase().trim();
-      renderTable();
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(() => {
+        tableSearchQuery = e.target.value.toLowerCase().trim();
+        renderTable();
+      }, 200);
     });
   }
 
@@ -529,8 +548,8 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="table-user-cell">
             <img src="${item.avatar_url || fallbackAvatar}" alt="${item.name}" class="table-user-avatar" onerror="this.onerror=null; this.src='${fallbackAvatar}';">
             <div>
-              <strong class="user-display-name">${item.name}</strong>
-              <span class="user-handle-sub">@${item.login}</span>
+              <strong class="user-display-name">${highlightMatch(item.name, tableSearchQuery)}</strong>
+              <span class="user-handle-sub">@${highlightMatch(item.login, tableSearchQuery)}</span>
             </div>
           </div>
         </td>
@@ -540,7 +559,7 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         </td>
         <td>
-          <a href="https://github.com/${item.login}" target="_blank" class="github-handle-link">@${item.login}</a>
+          <a href="https://github.com/${item.login}" target="_blank" class="github-handle-link">@${highlightMatch(item.login, tableSearchQuery)}</a>
         </td>
         <td style="text-align: center;">
           <span class="games-count-pill" title="${(item.games || []).join(', ')}"><i data-lucide="gamepad-2"></i> ${item.gamesCount}</span>

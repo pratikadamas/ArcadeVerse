@@ -235,6 +235,27 @@ const GAMES_REGISTRY = [
     "featured": false
   },
   {
+    "id": "coolant-flow_babin",
+    "title": "Coolant Flow",
+    "category": "Puzzle",
+    "lucideIcon": "activity",
+    "description": "Rotate scrambled cyber-industrial conduits to route neon coolant to the overheating fusion reactor before containment failure.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/coolant-flow_babin/index.html",
+    "tags": [
+      "pipe",
+      "puzzle",
+      "strategy",
+      "cyberpunk",
+      "fusion",
+      "arcade"
+    ],
+    "stars": 24,
+    "featured": true
+  },
+  {
     "id": "cosmic-orbit-slingshot_babin",
     "title": "Cosmic Orbit Slingshot",
     "category": "Physics",
@@ -855,6 +876,27 @@ const GAMES_REGISTRY = [
     "difficulty": "Medium"
   },
   {
+    "id": "cyber-traffic-control_babin",
+    "title": "Cyber Traffic Control",
+    "category": "Simulation",
+    "lucideIcon": "navigation",
+    "description": "Multi-lane cyber skyway signal dispatcher. Manage hovercar conduits, toggle green/red priority signals, avoid mid-air collisions, and prioritize emergency drones.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/cyber-traffic-control_babin/index.html",
+    "tags": [
+      "traffic",
+      "simulation",
+      "cyberpunk",
+      "management",
+      "arcade",
+      "hovercar"
+    ],
+    "stars": 27,
+    "featured": true
+  },
+  {
     "id": "cyber-trajectory-bow_chanchall26",
     "title": "Cyber Trajectory Bow",
     "category": "Physics",
@@ -1249,6 +1291,27 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "neon-darts_babin",
+    "title": "Neon Darts 501",
+    "category": "Sports",
+    "lucideIcon": "target",
+    "description": "First-person precision darts mini-game. Aim at a holographic dartboard, time throws against reticle sway and wind jitter to master the classic 501 countdown.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/neon-darts_babin/index.html",
+    "tags": [
+      "darts",
+      "sports",
+      "precision",
+      "cyberpunk",
+      "arcade",
+      "501"
+    ],
+    "stars": 26,
+    "featured": true
+  },
+  {
     "id": "neon-drift-racer_joitapaul",
     "title": "Neon Drift Racer",
     "category": "Arcade",
@@ -1326,6 +1389,27 @@ const GAMES_REGISTRY = [
     ],
     "stars": 25,
     "featured": false
+  },
+  {
+    "id": "neon-infiltration_babin",
+    "title": "Neon Infiltration",
+    "category": "Action",
+    "lucideIcon": "shield",
+    "description": "Tactical top-down cyberpunk stealth protocol. Infiltrate secure mainframe servers, dodge raycasted flashlight patrol cones, hack terminals, and extract silently.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/neon-infiltration_babin/index.html",
+    "tags": [
+      "stealth",
+      "action",
+      "cyberpunk",
+      "raycasting",
+      "tactical",
+      "arcade"
+    ],
+    "stars": 28,
+    "featured": true
   },
   {
     "id": "neon-laser-pathfinder_babin",
@@ -2093,7 +2177,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 346,
+    "commits": 360,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2113,8 +2197,8 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 238,
-    "gamesCount": 72,
+    "commits": 247,
+    "gamesCount": 76,
     "mechanicsBonus": 2,
     "platformPRs": 29,
     "qualityPRs": 1,
@@ -2127,6 +2211,7 @@ const CONTRIBUTORS_REGISTRY = [
       "Chrono Laser Mirror",
       "Chrono Portal Jump",
       "Chrono-Shift: Temporal Paradox",
+      "Coolant Flow",
       "Cosmic Orbit Slingshot",
       "Cryptic Code Breaker: Mastermind Terminal",
       "Cryptic Wordle Hack",
@@ -2151,6 +2236,7 @@ const CONTRIBUTORS_REGISTRY = [
       "Cyber Tanks",
       "Cyber Tower Defense: Grid Bastion",
       "Cyber Tower Stacker",
+      "Cyber Traffic Control",
       "Cyber-Katana: Neon Deflector",
       "Cyber-Sudoku: Neon Matrix 9x9",
       "Detective Mystery: Neo-Tokyo Syndicate",
@@ -2160,7 +2246,9 @@ const CONTRIBUTORS_REGISTRY = [
       "Neon Beat Runner",
       "Neon Bowling DX",
       "Neon Brick Breaker DX: Cyber Shatter",
+      "Neon Darts 501",
       "Neon Gravity Rush",
+      "Neon Infiltration",
       "Neon Laser Pathfinder",
       "Neon Lunar Lander",
       "Neon Missile Command",
@@ -2222,7 +2310,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "mistu7debnath",
     "avatarInitial": "M",
     "role": "Contributor (NSOC '26)",
-    "commits": 12,
+    "commits": 14,
     "gamesCount": 7,
     "mechanicsBonus": 1,
     "platformPRs": 0,
@@ -2278,7 +2366,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "pratikadamas",
     "avatarInitial": "P",
     "role": "Contributor (NSOC '26)",
-    "commits": 6,
+    "commits": 7,
     "gamesCount": 1,
     "mechanicsBonus": 0,
     "platformPRs": 1,
