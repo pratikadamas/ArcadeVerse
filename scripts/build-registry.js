@@ -32,7 +32,7 @@ const KNOWN_PROFILES = {
     qualityPRs: 1
   },
   mistu7debnath: {
-    name: "mistu7debnath",
+    name: "Manisha Debnath",
     github: "mistu7debnath",
     role: "Contributor (NSOC '26)",
     mechanicsBonus: 1,
@@ -164,13 +164,16 @@ function buildRegistry() {
       const gameId = meta.id || folder;
       const htmlPath = `games/${folder}/index.html`;
 
+      const ghKey = (meta.github || "").toLowerCase();
+      const authorName = (KNOWN_PROFILES[ghKey] && KNOWN_PROFILES[ghKey].name) || meta.author || "Contributor";
+
       const gameObj = {
         id: gameId,
         title: meta.title || folder,
         category: meta.category || "Arcade",
         lucideIcon: meta.lucideIcon || "gamepad-2",
         description: meta.description || "",
-        author: meta.author || "Contributor",
+        author: authorName,
         github: meta.github || "",
         role: meta.role || "Arcade Developer",
         path: htmlPath,
