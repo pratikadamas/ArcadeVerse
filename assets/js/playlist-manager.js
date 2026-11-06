@@ -8,6 +8,8 @@
   'use strict';
 
   const STORAGE_KEY = 'arcadeverse_user_playlists';
+  const SHARE_PREFIX = 'AVPL:';
+  const MAX_SHARE_LENGTH = 64 * 1024;
 
   class PlaylistManager {
     constructor() {
@@ -48,12 +50,15 @@
       ];
     }
 
-    savePlaylists() {
+    savePlaylists(playlists = this.playlists) {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.playlists));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(playlists));
+        this.playlists = playlists;
         window.dispatchEvent(new CustomEvent('arcadeverse:playlists-updated', { detail: this.playlists }));
+        return true;
       } catch (e) {
         console.error('Failed to save playlists:', e);
+        return false;
       }
     }
 
@@ -123,6 +128,91 @@
       return JSON.stringify(this.playlists, null, 2);
     }
 
+    validateSharedPlaylist(value) {
+      if (!value || typeof value !== 'object' || Array.isArray(value) ||
+          Object.keys(value).some(key => key !== 'name' && key !== 'games') ||
+          typeof value.name !== 'string' || !value.name.trim() || value.name.length > 100 ||
+          !Array.isArray(value.games) || value.games.length > 1000) {
+        throw new Error('Invalid playlist code: expected a name and a game list.');
+      }
+      if (typeof GAMES_REGISTRY === 'undefined' || !Array.isArray(GAMES_REGISTRY)) {
+        throw new Error('The game catalog is not ready. Please try again.');
+      }
+      const knownIds = new Set(GAMES_REGISTRY.map(game => game.id));
+      if (value.games.some(id => typeof id !== 'string' || !knownIds.has(id))) {
+        throw new Error('This playlist contains games that are not in the catalog.');
+      }
+      return { name: value.name.trim(), games: [...new Set(value.games)] };
+    }
+
+    exportPlaylistCode(id) {
+      const playlist = this.getPlaylist(id);
+      if (!playlist) throw new Error('Playlist not found.');
+      const value = this.validateSharedPlaylist({ name: playlist.name, games: playlist.games });
+      // Base64 works on bytes, not JavaScript's UTF-16 strings.
+      const bytes = new TextEncoder().encode(JSON.stringify(value));
+      const code = SHARE_PREFIX + btoa(Array.from(bytes, byte => String.fromCharCode(byte)).join(''));
+      if (code.length > MAX_SHARE_LENGTH) throw new Error('This playlist is too large to share.');
+      return code;
+    }
+
+    importPlaylistCode(code) {
+      if (typeof code !== 'string' || code.length > MAX_SHARE_LENGTH) {
+        throw new Error('Invalid playlist code: the code is too large.');
+      }
+      const encoded = code.trim().slice(SHARE_PREFIX.length);
+      let value;
+      try {
+        if (!code.trim().startsWith(SHARE_PREFIX) || !encoded || encoded.length % 4 !== 0 ||
+            !/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) throw new Error();
+        const binary = atob(encoded);
+        if (btoa(binary) !== encoded) throw new Error();
+        value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(
+          Uint8Array.from(binary, char => char.charCodeAt(0))
+        ));
+      } catch {
+        throw new Error('Invalid or corrupted playlist code. Please check the AVPL: code.');
+      }
+      const shared = this.validateSharedPlaylist(value);
+      const playlist = {
+        id: 'playlist-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10),
+        ...shared,
+        description: '',
+        icon: 'list-music',
+        createdAt: Date.now()
+      };
+      // Persist before changing memory or the drawer: failed imports save nothing.
+      if (!this.savePlaylists([...this.playlists, playlist])) {
+        throw new Error('Could not save the playlist. Browser storage may be full or unavailable.');
+      }
+      this.updateDrawerList();
+      return playlist;
+    }
+
+    showShareStatus(message, isError = false) {
+      const status = document.getElementById('playlist-share-status');
+      if (!status) return;
+      status.textContent = message;
+      status.dataset.kind = isError ? 'error' : 'success';
+      status.hidden = false;
+    }
+
+    async copyPlaylistCode(id) {
+      try {
+        const code = this.exportPlaylistCode(id);
+        try {
+          await navigator.clipboard.writeText(code);
+          this.showShareStatus('Playlist code copied. Share it with a friend!');
+        } catch {
+          // HTTP origins or denied permissions still allow manual copying.
+          window.prompt('Clipboard unavailable. Copy this playlist code:', code);
+          this.showShareStatus('Clipboard unavailable. Copy the code from the dialog.', true);
+        }
+      } catch (error) {
+        this.showShareStatus(error.message, true);
+      }
+    }
+
     importCollectionsJSON(jsonStr) {
       try {
         const parsed = JSON.parse(jsonStr);
@@ -170,6 +260,10 @@
                   <span><i data-lucide="plus"></i> Create</span>
                 </button>
               </div>
+              <button type="button" class="btn btn-secondary btn-sm" id="import-playlist-btn">
+                <i data-lucide="download"></i> Import Playlist
+              </button>
+              <div id="playlist-share-status" class="playlist-share-status" role="status" aria-live="polite" aria-atomic="true" hidden></div>
               <div class="playlist-list" id="playlist-list-items">
                 <!-- Injected dynamically -->
               </div>
@@ -190,6 +284,16 @@
 
         if (closeBtn) closeBtn.addEventListener('click', close);
         if (backdrop) backdrop.addEventListener('click', close);
+        drawer.querySelector('#import-playlist-btn').addEventListener('click', () => {
+          const code = window.prompt('Paste a playlist code starting with AVPL:');
+          if (code === null) return;
+          try {
+            const playlist = this.importPlaylistCode(code);
+            this.showShareStatus(`Imported "${playlist.name}" (${playlist.games.length} games).`);
+          } catch (error) {
+            this.showShareStatus(error.message, true);
+          }
+        });
 
         if (createBtn && input) {
           createBtn.addEventListener('click', () => {
@@ -234,20 +338,30 @@
         item.innerHTML = `
           <div class="playlist-card-info">
             <div class="playlist-title-row">
-              <span class="playlist-name">${pl.name}</span>
-              <span class="playlist-count-pill">${pl.games.length} games</span>
+              <span class="playlist-name"></span>
+              <span class="playlist-count-pill"></span>
             </div>
-            ${pl.description ? `<p class="playlist-desc">${pl.description}</p>` : ''}
+            <p class="playlist-desc"></p>
           </div>
           <div class="playlist-actions-row">
-            <button class="btn btn-secondary btn-xs btn-filter-pl" data-id="${pl.id}">
+            <button type="button" class="btn btn-secondary btn-xs btn-filter-pl">
               <i data-lucide="play-circle"></i> View Games
             </button>
-            <button class="btn btn-icon btn-xs btn-delete-pl" data-id="${pl.id}" title="Delete Playlist" aria-label="Delete Playlist">
+            <button type="button" class="btn btn-secondary btn-xs btn-export-pl">
+              <i data-lucide="copy"></i> Export Code
+            </button>
+            <button type="button" class="btn btn-icon btn-xs btn-delete-pl" title="Delete Playlist" aria-label="Delete Playlist">
               <i data-lucide="trash-2"></i>
             </button>
           </div>
         `;
+        // Shared names are untrusted text, never HTML.
+        item.querySelector('.playlist-name').textContent = pl.name;
+        item.querySelector('.playlist-count-pill').textContent = `${pl.games.length} games`;
+        const description = item.querySelector('.playlist-desc');
+        description.textContent = pl.description || '';
+        description.hidden = !pl.description;
+        item.querySelector('.btn-export-pl').addEventListener('click', () => this.copyPlaylistCode(pl.id));
 
         const viewBtn = item.querySelector('.btn-filter-pl');
         if (viewBtn) {

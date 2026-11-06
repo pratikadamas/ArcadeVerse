@@ -7,6 +7,46 @@
   <title>ArcadeVerse | Open Source Gaming Platform (NSOC '26)</title>
   <meta name="description"
     content="ArcadeVerse is an open-source community arcade built with pure HTML, CSS, and JS for NSOC Winter Edition 2026.">
+  <!-- Open Graph / Twitter Card / JSON-LD (absolute URLs, scrapers do not resolve relative paths) -->
+  <link rel="canonical" href="https://arcadeverse-web.vercel.app/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ArcadeVerse">
+  <meta property="og:url" content="https://arcadeverse-web.vercel.app/">
+  <meta property="og:title" content="ArcadeVerse | Open-Source Community Arcade">
+  <meta property="og:description" content="Play dozens of free retro, arcade and horror web games built by the open-source community. No installs, just open and play.">
+  <meta property="og:image" content="https://arcadeverse-web.vercel.app/assets/public/arcadeverse-banner.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="ArcadeVerse logo, a neon game controller in front of a letter A, next to the text ArcadeVerse">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ArcadeVerse | Open-Source Community Arcade">
+  <meta name="twitter:description" content="Play dozens of free retro, arcade and horror web games built by the open-source community. No installs, just open and play.">
+  <meta name="twitter:image" content="https://arcadeverse-web.vercel.app/assets/public/arcadeverse-banner.jpg">
+  <meta name="twitter:image:alt" content="ArcadeVerse logo, a neon game controller in front of a letter A, next to the text ArcadeVerse">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://arcadeverse-web.vercel.app/#website",
+        "url": "https://arcadeverse-web.vercel.app/",
+        "name": "ArcadeVerse",
+        "description": "Open-source community arcade built with pure HTML, CSS and JS for NSOC Winter Edition 2026.",
+        "inLanguage": "en"
+      },
+      {
+        "@type": "CollectionPage",
+        "@id": "https://arcadeverse-web.vercel.app/#games",
+        "url": "https://arcadeverse-web.vercel.app/",
+        "name": "ArcadeVerse Games",
+        "description": "Free retro, arcade and horror browser games built by the open-source community.",
+        "isPartOf": { "@id": "https://arcadeverse-web.vercel.app/#website" },
+        "about": { "@type": "Thing", "name": "Browser video games" }
+      }
+    ]
+  }
+  </script>
   <!-- Favicon and Brand Icons -->
   <link rel="icon" type="image/x-icon" href="assets/public/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/public/favicon-32x32.png">
@@ -98,6 +138,10 @@
         <a href="index.html" class="mobile-nav-item active" aria-current="page">
           <span class="mobile-nav-icon"><i data-lucide="gamepad-2"></i></span>
           <span>Explore Games</span>
+        </a>
+        <a href="#games" class="mobile-nav-item mobile-favorites-link" id="mobile-favorites-link">
+          <span class="mobile-nav-icon" style="color: #f43f5e;"><i data-lucide="heart"></i></span>
+          <span>Favorites (<span id="mobile-fav-count">0</span>)</span>
         </a>
         <a href="leaderboard.html" class="mobile-nav-item">
           <span class="mobile-nav-icon"><i data-lucide="trophy"></i></span>
@@ -457,10 +501,10 @@
       <!-- Full-Width Category Filter Pills Bar -->
       <div class="category-pills-bar">
         <div class="category-pills" id="category-pills" role="tablist" aria-label="Filter games by category">
-          <button class="pill active" data-category="all">All</button>
-          <button class="pill pill-favorites" data-category="favorites">
+          <button class="pill active" data-category="all" role="tab" aria-selected="true">All</button>
+          <button class="pill pill-favorites" data-category="favorites" role="tab" aria-selected="false">
             <span class="pill-fav-icon"><i data-lucide="heart"></i></span> Favorites <span class="favorites-count-badge"
-              id="favorites-count-badge">0</span>
+              id="favorites-count-badge" aria-label="0 favorites saved">0</span>
           </button>
           <button class="pill pill-playlists" id="trigger-playlists-btn" type="button" aria-label="Open Custom Playlists">
             <span class="pill-playlist-icon"><i data-lucide="library"></i></span> Playlists
@@ -545,7 +589,7 @@
           <span class="author-tag" id="modal-game-author">By @Debasmita</span>
         </div>
         <div class="modal-controls">
-          <button class="btn btn-sm btn-icon" id="modal-fav-btn" title="Save to Favorites" aria-label="Toggle favorite">
+          <button class="btn btn-sm btn-icon" id="modal-fav-btn" title="Save to Favorites" aria-label="Save to Favorites" aria-pressed="false">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
               class="modal-fav-icon">
               <path
@@ -690,6 +734,64 @@
     if (window.lucide) {
       lucide.createIcons();
     }
+  </script>
+  <!-- Structured data generated from the games registry so the count never goes stale -->
+  <script>
+    (function () {
+      var BASE = "https://arcadeverse-web.vercel.app/";
+      function gameLd(g) {
+        return {
+          "@type": "VideoGame",
+          "name": g.title,
+          "description": g.description,
+          "url": BASE + g.path,
+          "genre": g.category,
+          "author": { "@type": "Person", "name": g.author },
+          "applicationCategory": "Game",
+          "gamePlatform": "Web Browser",
+          "operatingSystem": "Any",
+          "inLanguage": "en",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+        };
+      }
+      function setLd(id, data) {
+        var el = document.getElementById(id);
+        if (!el) {
+          el = document.createElement("script");
+          el.type = "application/ld+json";
+          el.id = id;
+          document.head.appendChild(el);
+        }
+        el.textContent = JSON.stringify(data);
+      }
+      if (typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) {
+        setLd("ld-game-list", {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          "name": "ArcadeVerse Games",
+          "numberOfItems": GAMES_REGISTRY.length,
+          "itemListElement": GAMES_REGISTRY.map(function (g, i) {
+            return { "@type": "ListItem", "position": i + 1, "item": gameLd(g) };
+          })
+        });
+      }
+      // The game that is open in the modal gets its own VideoGame entry
+      window.addEventListener("arcadeverse:game-launched", function (e) {
+        if (!e.detail) return;
+        var ld = gameLd(e.detail);
+        ld["@context"] = "https://schema.org";
+        setLd("ld-active-game", ld);
+      });
+      var modal = document.getElementById("game-modal");
+      if (modal) {
+        new MutationObserver(function () {
+          if (!modal.classList.contains("active")) {
+            var el = document.getElementById("ld-active-game");
+            if (el) el.remove();
+          }
+        }).observe(modal, { attributes: true, attributeFilter: ["class"] });
+      }
+    })();
   </script>
   <!-- Page Transition Circular Loader -->
   <div id="page-transition-loader" class="page-loader-overlay" aria-hidden="true">

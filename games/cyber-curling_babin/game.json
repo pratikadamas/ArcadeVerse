@@ -1,0 +1,12 @@
+{
+  "title": "Cyber Curling",
+  "category": "Sports",
+  "description": "Slide quantum stones down friction-modeled ice into scoring concentric rings. Vigorously sweep the ice surface to extend stone momentum and knock opponent stones out of the house.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["sports", "curling", "physics", "arcade", "retro", "shuffleboard"],
+  "stars": 25,
+  "featured": true,
+  "lucideIcon": "disc"
+}

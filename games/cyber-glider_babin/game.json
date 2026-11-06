@@ -1,0 +1,12 @@
+{
+  "title": "Cyber Glider",
+  "category": "Runner",
+  "description": "Pilot an aerodynamic quantum paper glider through glowing Neo-Tokyo canyons. Surf thermal updrafts to regain altitude, collect energy rings, and evade skyscraper obstacles.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["runner", "flight", "physics", "arcade", "retro", "cyberpunk"],
+  "stars": 25,
+  "featured": true,
+  "lucideIcon": "send"
+}

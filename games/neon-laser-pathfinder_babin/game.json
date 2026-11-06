@@ -1,0 +1,12 @@
+{
+  "title": "Neon Laser Pathfinder",
+  "category": "Puzzle",
+  "description": "Deploy optical beam splitters, angled reflector prisms, and frequency filters to route vibrant neon laser beams to target power nodes.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["puzzle", "optics", "laser", "physics", "cyberpunk", "logic"],
+  "stars": 25,
+  "featured": true,
+  "lucideIcon": "compass"
+}

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hyper Spin Blaster - ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="game-container">
+    <header class="game-header">
+      <div class="header-left">
+        <a href="../../index.html" class="nav-btn" aria-label="Back to Hub">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Hub</span>
+        </a>
+        <h1 class="game-title">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#f43f5e" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="22" y1="12" x2="18" y2="12"></line>
+            <line x1="6" y1="12" x2="2" y2="12"></line>
+            <line x1="12" y1="6" x2="12" y2="2"></line>
+            <line x1="12" y1="22" x2="12" y2="18"></line>
+          </svg>
+          HYPER SPIN BLASTER
+        </h1>
+      </div>
+      <div class="header-controls">
+        <button id="btnRules" class="icon-btn" aria-label="Rules">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </button>
+        <button id="btnMute" class="icon-btn" aria-label="Toggle Sound">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+        </button>
+        <button id="btnPause" class="icon-btn" aria-label="Pause">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="6" y="4" width="4" height="16"></rect>
+            <rect x="14" y="4" width="4" height="16"></rect>
+          </svg>
+        </button>
+        <button id="btnRestartNav" class="icon-btn" aria-label="Restart">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="stats-panel">
+      <div class="stat-card">
+        <span class="label">SCORE</span>
+        <span id="statScore" class="val score">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">SECTOR WAVE</span>
+        <span id="statWave" class="val wave">1</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">LIVES</span>
+        <span id="statLives" class="val lives">3</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">TARGETS HIT</span>
+        <span id="statHits" class="val hits">0</span>
+      </div>
+    </div>
+
+    <div class="canvas-wrapper">
+      <canvas id="gameCanvas" width="600" height="600"></canvas>
+
+      <!-- Start Overlay -->
+      <div id="startScreen" class="overlay">
+        <div class="panel">
+          <div class="panel-icon">
+            <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#f43f5e" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="22" y1="12" x2="18" y2="12"></line>
+              <line x1="6" y1="12" x2="2" y2="12"></line>
+              <line x1="12" y1="6" x2="12" y2="2"></line>
+              <line x1="12" y1="22" x2="12" y2="18"></line>
+            </svg>
+          </div>
+          <h2>ORBITAL DEFENSE LOCK</h2>
+          <p>Orbit around the outer ring and fire inward toward descending neon target cores. Avoid crossfire energy lasers!</p>
+          <div class="button-group">
+            <button id="btnStart" class="btn btn-primary">COMMENCE FIRE</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Game Over Overlay -->
+      <div id="gameOverScreen" class="overlay hidden">
+        <div class="panel">
+          <h2>CANNON DESTROYED</h2>
+          <div class="stat-summary">
+            <div><span class="muted">Sectors Cleared:</span> <span id="finalWave">1</span></div>
+            <div><span class="muted">Targets Vaporized:</span> <span id="finalHits">0</span></div>
+            <div><span class="muted">Final Score:</span> <span id="finalScore">0</span></div>
+          </div>
+          <button id="btnRestart" class="btn btn-primary">REDEPLOY CANNON</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Virtual Controls -->
+    <div class="touch-controls">
+      <button id="btnSpinLeft" class="touch-btn" aria-label="Rotate Left">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+      <button id="btnFire" class="touch-btn action" aria-label="Fire Blast">FIRE</button>
+      <button id="btnSpinRight" class="touch-btn" aria-label="Rotate Right">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Rules Modal -->
+    <div id="rulesModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>ORBITAL BLASTER PROTOCOL</h3>
+          <button id="btnCloseRules" class="close-btn" aria-label="Close Rules">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p><strong>Controls:</strong> Left/Right arrows or A/D to spin around the outer ring. Space or Click to fire lasers toward the center.</p>
+          <p><strong>Objective:</strong> Destroy expanding core rings before they reach your orbital track.</p>
+          <p><strong>Scoring:</strong> Consecutive hits build higher wave combo scores!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

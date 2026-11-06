@@ -1,0 +1,12 @@
+{
+  "title": "Cyber Ramen Dash",
+  "category": "Simulation",
+  "description": "Run a high-octane cyberpunk ramen shop in Neo-Tokyo. Cook noodles, simmer broths, assemble toppings, and satisfy demanding cyborg customers before their patience runs out.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["simulation", "cooking", "arcade", "cyberpunk", "management", "reflex"],
+  "stars": 25,
+  "featured": true,
+  "lucideIcon": "utensils"
+}

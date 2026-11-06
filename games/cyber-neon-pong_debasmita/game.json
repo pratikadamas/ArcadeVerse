@@ -2,14 +2,15 @@
   "title": "Cyber Neon Pong",
   "category": "Arcade",
   "lucideIcon": "gamepad-2",
-  "description": "Classic retro pong arena with neon glow and dynamic canvas AI paddle physics.",
+  "description": "Classic retro pong arena with neon glow and dynamic canvas AI paddle physics. Play solo against Easy / Pro / Cyber AI, or switch to 2P Local versus (W/S vs Arrow keys, split-screen touch) with a first-to-5/7/10 score limit.",
   "author": "Debasmita Bose",
   "github": "DebasmitaBose0",
   "role": "Project Admin & Contributor",
   "tags": [
     "Arcade",
     "Retro",
-    "Paddle"
+    "Paddle",
+    "Multiplayer"
   ],
   "stars": 32,
   "featured": true

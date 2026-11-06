@@ -1,0 +1,12 @@
+{
+  "title": "Orbital Gravity Lasso",
+  "category": "Physics",
+  "description": "Grapple and slingshot between gravitationally charged orbital beacons through deep space anomaly fields.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["physics", "arcade", "space", "slingshot", "2d", "nsoc26"],
+  "stars": 25,
+  "featured": true,
+  "lucideIcon": "orbit"
+}

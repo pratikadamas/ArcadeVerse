@@ -121,6 +121,27 @@ const GAMES_REGISTRY = [
     "difficulty": "Medium"
   },
   {
+    "id": "chrono-domino-fall_babin",
+    "title": "Chrono Domino Fall",
+    "category": "Puzzle",
+    "lucideIcon": "grid",
+    "description": "Place and orient quantum kinetic dominoes across fractured pathways to initiate complete chain-reaction sequences.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/chrono-domino-fall_babin/index.html",
+    "tags": [
+      "puzzle",
+      "domino",
+      "chain-reaction",
+      "physics",
+      "logic",
+      "nsoc26"
+    ],
+    "stars": 25,
+    "featured": true
+  },
+  {
     "id": "chrono-laser-mirror_babin",
     "title": "Chrono Laser Mirror",
     "category": "Puzzle",
@@ -138,6 +159,27 @@ const GAMES_REGISTRY = [
       "Logic"
     ],
     "stars": 42,
+    "featured": true
+  },
+  {
+    "id": "chrono-portal-jump_babin",
+    "title": "Chrono Portal Jump",
+    "category": "Platformer",
+    "lucideIcon": "maximize-2",
+    "description": "Manipulate paired spatial warp wormholes to traverse temporal death chasms and anti-gravity anomaly chambers.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/chrono-portal-jump_babin/index.html",
+    "tags": [
+      "platformer",
+      "portals",
+      "puzzle",
+      "physics",
+      "2d",
+      "nsoc26"
+    ],
+    "stars": 25,
     "featured": true
   },
   {
@@ -317,6 +359,89 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "cyber-circuit-scramble_babin",
+    "title": "Cyber Circuit Scramble",
+    "category": "Puzzle",
+    "lucideIcon": "cpu",
+    "description": "Rotate cybernetic power conduit nodes to restore energy flow to the quantum mainframe before system blackout.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/cyber-circuit-scramble_babin/index.html",
+    "tags": [
+      "puzzle",
+      "circuits",
+      "logic",
+      "cyberpunk",
+      "grid",
+      "nsoc26"
+    ],
+    "stars": 25,
+    "featured": true
+  },
+  {
+    "id": "cyber-connect-four_chanchall26",
+    "title": "Cyber Connect Four",
+    "category": "Strategy",
+    "lucideIcon": "circle-dot",
+    "description": "Drop neon discs on a 7x6 grid and connect four against a minimax AI with alpha-beta pruning (search depth 2, 4 or 6) or against a friend on one screen.",
+    "author": "Chanchal Gupta",
+    "github": "chanchall26",
+    "role": "Arcade Developer",
+    "path": "games/cyber-connect-four_chanchall26/index.html",
+    "tags": [
+      "Strategy",
+      "Board",
+      "AI",
+      "Minimax",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
+    "id": "cyber-curling_babin",
+    "title": "Cyber Curling",
+    "category": "Sports",
+    "lucideIcon": "disc",
+    "description": "Slide quantum stones down friction-modeled ice into scoring concentric rings. Vigorously sweep the ice surface to extend stone momentum and knock opponent stones out of the house.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/cyber-curling_babin/index.html",
+    "tags": [
+      "sports",
+      "curling",
+      "physics",
+      "arcade",
+      "retro",
+      "shuffleboard"
+    ],
+    "stars": 25,
+    "featured": true
+  },
+  {
+    "id": "cyber-glider_babin",
+    "title": "Cyber Glider",
+    "category": "Runner",
+    "lucideIcon": "send",
+    "description": "Pilot an aerodynamic quantum paper glider through glowing Neo-Tokyo canyons. Surf thermal updrafts to regain altitude, collect energy rings, and evade skyscraper obstacles.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/cyber-glider_babin/index.html",
+    "tags": [
+      "runner",
+      "flight",
+      "physics",
+      "arcade",
+      "retro",
+      "cyberpunk"
+    ],
+    "stars": 25,
+    "featured": true
+  },
+  {
     "id": "cyber-gravity-hopper_babin",
     "title": "Cyber Gravity Hopper",
     "category": "Platformer",
@@ -433,7 +558,7 @@ const GAMES_REGISTRY = [
     "title": "Cyber Neon Pong",
     "category": "Arcade",
     "lucideIcon": "gamepad-2",
-    "description": "Classic retro pong arena with neon glow and dynamic canvas AI paddle physics.",
+    "description": "Classic retro pong arena with neon glow and dynamic canvas AI paddle physics. Play solo against Easy / Pro / Cyber AI, or switch to 2P Local versus (W/S vs Arrow keys, split-screen touch) with a first-to-5/7/10 score limit.",
     "author": "Debasmita Bose",
     "github": "DebasmitaBose0",
     "role": "Project Admin & Contributor",
@@ -441,7 +566,8 @@ const GAMES_REGISTRY = [
     "tags": [
       "Arcade",
       "Retro",
-      "Paddle"
+      "Paddle",
+      "Multiplayer"
     ],
     "stars": 32,
     "featured": true
@@ -467,6 +593,27 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "cyber-pachinko_babin",
+    "title": "Cyber Pachinko",
+    "category": "Arcade",
+    "lucideIcon": "disc",
+    "description": "Drop pulsating energy spheres through a matrix of neon quantum pins, triggering gravitational bumpers, warp vortexes, and high-multiplier jackpot collection bins.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/cyber-pachinko_babin/index.html",
+    "tags": [
+      "arcade",
+      "physics",
+      "pachinko",
+      "retro",
+      "cyberpunk",
+      "plinko"
+    ],
+    "stars": 25,
+    "featured": true
+  },
+  {
     "id": "cyber-pulse-rhythm_babin",
     "title": "Cyber Pulse Rhythm",
     "category": "Rhythm",
@@ -484,6 +631,27 @@ const GAMES_REGISTRY = [
       "Reflex"
     ],
     "stars": 41,
+    "featured": true
+  },
+  {
+    "id": "cyber-ramen-dash_babin",
+    "title": "Cyber Ramen Dash",
+    "category": "Simulation",
+    "lucideIcon": "utensils",
+    "description": "Run a high-octane cyberpunk ramen shop in Neo-Tokyo. Cook noodles, simmer broths, assemble toppings, and satisfy demanding cyborg customers before their patience runs out.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/cyber-ramen-dash_babin/index.html",
+    "tags": [
+      "simulation",
+      "cooking",
+      "arcade",
+      "cyberpunk",
+      "management",
+      "reflex"
+    ],
+    "stars": 25,
     "featured": true
   },
   {
@@ -528,6 +696,27 @@ const GAMES_REGISTRY = [
     "stars": 28,
     "featured": true,
     "difficulty": "Intermediate"
+  },
+  {
+    "id": "cyber-shield-rebound_babin",
+    "title": "Cyber Shield Rebound",
+    "category": "Arcade",
+    "lucideIcon": "shield",
+    "description": "Deflect omni-directional plasma pulses back toward hostile drone emitters using an energy reflection shield.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/cyber-shield-rebound_babin/index.html",
+    "tags": [
+      "arcade",
+      "defense",
+      "rebound",
+      "action",
+      "2d",
+      "nsoc26"
+    ],
+    "stars": 25,
+    "featured": true
   },
   {
     "id": "cyber-snake_babin",
@@ -621,6 +810,27 @@ const GAMES_REGISTRY = [
       "Space"
     ],
     "stars": 50,
+    "featured": true
+  },
+  {
+    "id": "cyber-tanks_babin",
+    "title": "Cyber Tanks",
+    "category": "Strategy",
+    "lucideIcon": "crosshair",
+    "description": "Engage in retro turn-based artillery trajectory duels across destructible neon voxel hills. Calculate elevation angles, shot velocity, shifting wind, and ballistic cluster ordnance.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/cyber-tanks_babin/index.html",
+    "tags": [
+      "strategy",
+      "artillery",
+      "physics",
+      "arcade",
+      "retro",
+      "turn-based"
+    ],
+    "stars": 25,
     "featured": true
   },
   {
@@ -874,6 +1084,27 @@ const GAMES_REGISTRY = [
     "difficulty": "Medium"
   },
   {
+    "id": "hyper-spin-blaster_babin",
+    "title": "Hyper Spin Blaster",
+    "category": "Action",
+    "lucideIcon": "crosshair",
+    "description": "Rotate a perimeter cannon around concentric orbital track rings, blasting inward alien clusters and dodging radial beams.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/hyper-spin-blaster_babin/index.html",
+    "tags": [
+      "action",
+      "shooter",
+      "arcade",
+      "spin",
+      "2d",
+      "nsoc26"
+    ],
+    "stars": 25,
+    "featured": true
+  },
+  {
     "id": "island-survival_debasmita",
     "title": "Island Survival: Lost Beyond the Shore",
     "category": "Survival / Horror",
@@ -915,6 +1146,28 @@ const GAMES_REGISTRY = [
     ],
     "stars": 25,
     "featured": false
+  },
+  {
+    "id": "math-blitz_pratikadamas",
+    "title": "Math Blitz: 60s Arithmetic Sprint",
+    "category": "Arcade / Educational",
+    "lucideIcon": "calculator",
+    "description": "Fast-paced arithmetic sprint! Race against a 60-second timer to solve 10 dynamically generated math equations with integer precision.",
+    "author": "Pratik Giri",
+    "github": "pratikadamas",
+    "role": "Contributor",
+    "path": "games/math-blitz_pratikadamas/index.html",
+    "tags": [
+      "Arcade",
+      "Educational",
+      "Math",
+      "Puzzle",
+      "Speed",
+      "NSOC26"
+    ],
+    "stars": 30,
+    "featured": true,
+    "difficulty": "Medium"
   },
   {
     "id": "memory-matrix_debasmita",
@@ -973,6 +1226,27 @@ const GAMES_REGISTRY = [
     "featured": false,
     "difficulty": "Intermediate",
     "releaseDate": "2026-10-22"
+  },
+  {
+    "id": "neon-bowling_babin",
+    "title": "Neon Bowling DX",
+    "category": "Sports",
+    "lucideIcon": "circle-dot",
+    "description": "Step up to the retro synthwave bowling alley. Line up your approach, calibrate curve spin, lock launch power, and smash through pins across an authentic 10-frame championship.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/neon-bowling_babin/index.html",
+    "tags": [
+      "sports",
+      "bowling",
+      "physics",
+      "arcade",
+      "retro",
+      "synthwave"
+    ],
+    "stars": 25,
+    "featured": true
   },
   {
     "id": "neon-drift-racer_joitapaul",
@@ -1052,6 +1326,27 @@ const GAMES_REGISTRY = [
     ],
     "stars": 25,
     "featured": false
+  },
+  {
+    "id": "neon-laser-pathfinder_babin",
+    "title": "Neon Laser Pathfinder",
+    "category": "Puzzle",
+    "lucideIcon": "compass",
+    "description": "Deploy optical beam splitters, angled reflector prisms, and frequency filters to route vibrant neon laser beams to target power nodes.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/neon-laser-pathfinder_babin/index.html",
+    "tags": [
+      "puzzle",
+      "optics",
+      "laser",
+      "physics",
+      "cyberpunk",
+      "logic"
+    ],
+    "stars": 25,
+    "featured": true
   },
   {
     "id": "neon-lunar-lander_babin",
@@ -1134,6 +1429,27 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "neon-pool_babin",
+    "title": "Neon Pool DX",
+    "category": "Sports",
+    "lucideIcon": "circle-dot",
+    "description": "Step into the neon glow billiards arena. Line up trajectory bank shots, gauge cue stick strike impulse, and pocket all balls with realistic 2D momentum physics.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/neon-pool_babin/index.html",
+    "tags": [
+      "sports",
+      "billiards",
+      "physics",
+      "pool",
+      "arcade",
+      "retro"
+    ],
+    "stars": 25,
+    "featured": true
+  },
+  {
     "id": "neon-precision-target_babin",
     "title": "Neon Precision Target",
     "category": "Arcade",
@@ -1194,6 +1510,27 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "neon-solitaire_babin",
+    "title": "Neon Solitaire",
+    "category": "Card",
+    "lucideIcon": "layers",
+    "description": "Experience classic Klondike Solitaire wrapped in a sleek retro synthwave cyber deck. Features neon vector cards, drag-and-drop mechanics, undo history, and hint assistance.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/neon-solitaire_babin/index.html",
+    "tags": [
+      "card",
+      "solitaire",
+      "klondike",
+      "puzzle",
+      "retro",
+      "cyberpunk"
+    ],
+    "stars": 25,
+    "featured": true
+  },
+  {
     "id": "neon-wave-matcher_babin",
     "title": "Neon Wave Matcher",
     "category": "Puzzle",
@@ -1210,6 +1547,27 @@ const GAMES_REGISTRY = [
       "Waveform"
     ],
     "stars": 48,
+    "featured": true
+  },
+  {
+    "id": "orbital-gravity-lasso_babin",
+    "title": "Orbital Gravity Lasso",
+    "category": "Physics",
+    "lucideIcon": "orbit",
+    "description": "Grapple and slingshot between gravitationally charged orbital beacons through deep space anomaly fields.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/orbital-gravity-lasso_babin/index.html",
+    "tags": [
+      "physics",
+      "arcade",
+      "space",
+      "slingshot",
+      "2d",
+      "nsoc26"
+    ],
+    "stars": 25,
     "featured": true
   },
   {
@@ -1365,6 +1723,27 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "quantum-mini-golf_babin",
+    "title": "Quantum Mini Golf",
+    "category": "Sports",
+    "lucideIcon": "flag",
+    "description": "Tee off across 9 futuristic neon putting greens complete with high-friction sand traps, accelerator boost pads, and spatial quantum wormhole tunnels.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/quantum-mini-golf_babin/index.html",
+    "tags": [
+      "sports",
+      "golf",
+      "physics",
+      "arcade",
+      "puzzle",
+      "retro"
+    ],
+    "stars": 25,
+    "featured": true
+  },
+  {
     "id": "quantum-pinball_joitapaul",
     "title": "Quantum Pinball: Reactor Run",
     "category": "Arcade",
@@ -1503,6 +1882,48 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "stellar-echo-catcher_babin",
+    "title": "Stellar Echo Catcher",
+    "category": "Casual",
+    "lucideIcon": "radio",
+    "description": "Align resonance receiver dishes to capture radiating deep space audio telemetry signals before interference dissolves them.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/stellar-echo-catcher_babin/index.html",
+    "tags": [
+      "casual",
+      "signals",
+      "space",
+      "reflex",
+      "2d",
+      "nsoc26"
+    ],
+    "stars": 25,
+    "featured": true
+  },
+  {
+    "id": "stellar-miner-probe_babin",
+    "title": "Stellar Miner Probe",
+    "category": "Arcade",
+    "lucideIcon": "drill",
+    "description": "Pilot an extraction mining drone down asteroid shafts, drilling precious plasma ores while managing fuel thrusters.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/stellar-miner-probe_babin/index.html",
+    "tags": [
+      "arcade",
+      "mining",
+      "drilling",
+      "space",
+      "physics",
+      "nsoc26"
+    ],
+    "stars": 25,
+    "featured": true
+  },
+  {
     "id": "stellar-warp-runner_babin",
     "title": "Stellar Warp Runner",
     "category": "Runner",
@@ -1539,6 +1960,27 @@ const GAMES_REGISTRY = [
       "WebAudio"
     ],
     "stars": 32,
+    "featured": true
+  },
+  {
+    "id": "synth-wave-surfer_babin",
+    "title": "Synth Wave Surfer",
+    "category": "Arcade",
+    "lucideIcon": "activity",
+    "description": "Surf dynamically modulating audio frequency sine waves while collecting harmonic pulses and dodging static spikes.",
+    "author": "Babin Bid",
+    "github": "Babin123456",
+    "role": "Contributor",
+    "path": "games/synth-wave-surfer_babin/index.html",
+    "tags": [
+      "arcade",
+      "rhythm",
+      "audio",
+      "wave",
+      "runner",
+      "nsoc26"
+    ],
+    "stars": 25,
     "featured": true
   },
   {
@@ -1651,7 +2093,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 317,
+    "commits": 346,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -1671,8 +2113,8 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 215,
-    "gamesCount": 53,
+    "commits": 238,
+    "gamesCount": 72,
     "mechanicsBonus": 2,
     "platformPRs": 29,
     "qualityPRs": 1,
@@ -1681,23 +2123,32 @@ const CONTRIBUTORS_REGISTRY = [
       "Asteroid Miner: Deep Space Extraction",
       "Astro Defense Turret",
       "Chrono Breakout: Quantum Time Shatter",
+      "Chrono Domino Fall",
       "Chrono Laser Mirror",
+      "Chrono Portal Jump",
       "Chrono-Shift: Temporal Paradox",
       "Cosmic Orbit Slingshot",
       "Cryptic Code Breaker: Mastermind Terminal",
       "Cryptic Wordle Hack",
       "Cyber Block Matrix",
       "Cyber Brick Breaker",
+      "Cyber Circuit Scramble",
+      "Cyber Curling",
+      "Cyber Glider",
       "Cyber Gravity Hopper",
       "Cyber Helix Fall",
       "Cyber Hex Collapse",
       "Cyber Light Cycle",
       "Cyber Orbit Defense",
+      "Cyber Pachinko",
       "Cyber Pulse Rhythm",
+      "Cyber Ramen Dash",
       "Cyber Rogue Protocol",
+      "Cyber Shield Rebound",
       "Cyber Snake Matrix",
       "Cyber Sub Abyss",
       "Cyber Swarm Assault",
+      "Cyber Tanks",
       "Cyber Tower Defense: Grid Bastion",
       "Cyber Tower Stacker",
       "Cyber-Katana: Neon Deflector",
@@ -1705,27 +2156,37 @@ const CONTRIBUTORS_REGISTRY = [
       "Detective Mystery: Neo-Tokyo Syndicate",
       "Gravity Well: Singularity Slingshot",
       "Hex Match: Prismatic Tile Connect",
+      "Hyper Spin Blaster",
       "Neon Beat Runner",
+      "Neon Bowling DX",
       "Neon Brick Breaker DX: Cyber Shatter",
       "Neon Gravity Rush",
+      "Neon Laser Pathfinder",
       "Neon Lunar Lander",
       "Neon Missile Command",
       "Neon Pinball DX: Cybernetic Table",
       "Neon Pong Smash",
+      "Neon Pool DX",
       "Neon Precision Target",
       "Neon Rhythm Blaster",
+      "Neon Solitaire",
       "Neon Wave Matcher",
+      "Orbital Gravity Lasso",
       "Quantum 2048",
       "Quantum Match Matrix",
       "Quantum Minesweeper",
       "Quantum Minesweeper DX: Grid Defusal",
+      "Quantum Mini Golf",
       "Quantum Pulse: Cyber Rhythm Blaster",
       "Quantum Slide: 15-Matrix Shift",
       "Quantum Sokoban",
       "Retro Space Lander: Apollo Lunar Descent",
       "Solar Flare: Stellar Shield Defense",
       "Space Invaders 2026",
+      "Stellar Echo Catcher",
+      "Stellar Miner Probe",
       "Stellar Warp Runner",
+      "Synth Wave Surfer",
       "Synth-Wave Simon Says",
       "Synthwave Highway Racer",
       "Tactical Fleet Commander",
@@ -1782,13 +2243,14 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "chanchall26",
     "avatarInitial": "C",
     "role": "Arcade Developer",
-    "commits": 4,
-    "gamesCount": 4,
+    "commits": 5,
+    "gamesCount": 5,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 0,
     "bonusPts": 0,
     "contributions": [
+      "Cyber Connect Four",
       "Cyber Maze Runner",
       "Cyber Trajectory Bow",
       "Neon Highway Hopper",
@@ -1809,6 +2271,21 @@ const CONTRIBUTORS_REGISTRY = [
     "contributions": [
       "Cyber Brick Breaker",
       "Cyber Typer: Terminal Hacker"
+    ]
+  },
+  {
+    "name": "Pratik Giri",
+    "github": "pratikadamas",
+    "avatarInitial": "P",
+    "role": "Contributor (NSOC '26)",
+    "commits": 6,
+    "gamesCount": 1,
+    "mechanicsBonus": 0,
+    "platformPRs": 1,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Math Blitz: 60s Arithmetic Sprint"
     ]
   },
   {
@@ -1846,7 +2323,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Anshuu2004",
     "avatarInitial": "A",
     "role": "Contributor (NSOC '26)",
-    "commits": 3,
+    "commits": 6,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,
@@ -1857,11 +2334,11 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "pratikgiri",
-    "github": "pratikgiri",
-    "avatarInitial": "P",
+    "name": "sarbajit-sengupta",
+    "github": "sarbajit-sengupta",
+    "avatarInitial": "S",
     "role": "Contributor (NSOC '26)",
-    "commits": 3,
+    "commits": 1,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,
