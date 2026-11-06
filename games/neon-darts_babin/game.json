@@ -1,0 +1,12 @@
+{
+  "title": "Neon Darts 501",
+  "category": "Sports",
+  "description": "First-person precision darts mini-game. Aim at a holographic dartboard, time throws against reticle sway and wind jitter to master the classic 501 countdown.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["darts", "sports", "precision", "cyberpunk", "arcade", "501"],
+  "stars": 26,
+  "featured": true,
+  "lucideIcon": "target"
+}
