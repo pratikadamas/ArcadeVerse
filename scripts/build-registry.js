@@ -83,6 +83,7 @@ const KNOWN_PROFILES = {
     name: "Pratik Giri",
     github: "pratikadamas",
     role: "Contributor (NSOC '26)",
+    commits: 17,
     mechanicsBonus: 0,
     platformPRs: 1,
     qualityPRs: 0

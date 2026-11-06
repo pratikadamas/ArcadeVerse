@@ -468,10 +468,14 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       }
 
+      const cleanSearch = searchQuery.replace(/^by\s+@?/, "").replace(/^@/, "").trim();
       const matchesSearch = 
         item.title.toLowerCase().includes(searchQuery) ||
         item.description.toLowerCase().includes(searchQuery) ||
         item.author.toLowerCase().includes(searchQuery) ||
+        (cleanSearch && item.author.toLowerCase().includes(cleanSearch)) ||
+        (item.github && item.github.toLowerCase().includes(searchQuery)) ||
+        (cleanSearch && item.github && item.github.toLowerCase().includes(cleanSearch)) ||
         (item.tags && item.tags.some(t => t.toLowerCase().includes(searchQuery)));
 
       // Tag Facet Filter
@@ -745,9 +749,9 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
           <div class="game-card-footer">
             <div class="contributor-meta">
-              <div class="contributor-avatar">${game.author.charAt(0).toUpperCase()}</div>
+              <div class="contributor-avatar">${(game.author || game.github || "A").charAt(0).toUpperCase()}</div>
               <div class="contributor-name">
-                Dev: <strong>${game.author}</strong>
+                <button type="button" class="author-filter-btn" data-author="${game.author || game.github}" title="Filter games by ${game.author || game.github}" aria-label="Filter games by author ${game.author || game.github}">by @${game.github || game.author}</button>
               </div>
             </div>
             <button class="btn-play-trigger" data-id="${game.id}">${actionText}</button>
@@ -766,6 +770,48 @@ document.addEventListener("DOMContentLoaded", () => {
         e.stopPropagation();
         openGameModal(game, playBtn);
       });
+
+      // Direct author handle click filter
+      const authorBtn = card.querySelector(".author-filter-btn");
+      if (authorBtn) {
+        authorBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const author = authorBtn.getAttribute("data-author") || game.author || game.github;
+          if (searchInput) {
+            if (currentCategory !== "all") {
+              currentCategory = "all";
+              categoryPills.forEach((p) => {
+                const isAll = p.getAttribute("data-category") === "all";
+                p.classList.toggle("active", isAll);
+                p.setAttribute("aria-selected", isAll ? "true" : "false");
+              });
+            }
+            if (currentLetterFilter !== "all") {
+              currentLetterFilter = "all";
+              if (typeof resetLetterFilterUI === "function") {
+                resetLetterFilterUI();
+              }
+            }
+            currentDurationFacet = "all";
+            currentControlsFacet = "all";
+            currentTagFilter = "";
+            const durationChips = document.querySelectorAll("#duration-facet-chips .facet-chip");
+            durationChips.forEach((c) => c.classList.toggle("active", c.getAttribute("data-duration") === "all"));
+            const controlsChips = document.querySelectorAll("#controls-facet-chips .facet-chip");
+            controlsChips.forEach((c) => c.classList.toggle("active", c.getAttribute("data-controls") === "all"));
+
+            searchInput.value = author;
+            searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+            closeAutocomplete();
+            setTimeout(closeAutocomplete, 50);
+          }
+          const catalogEl = document.getElementById("games-catalog") || document.getElementById("games");
+          if (catalogEl) {
+            catalogEl.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+      }
 
       // Direct star rating click binding - 100% reliable, never triggers game modal
       const starBtns = card.querySelectorAll(".rate-star-btn");
