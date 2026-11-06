@@ -1423,3 +1423,13 @@ body.docs-viewport-body {
     padding: 2rem 1.25rem;
   }
 }
+
+/* Leaderboard Contributor Search Live Substring Highlighter */
+.search-highlight {
+  background: #00f0ff;
+  color: #0a0a14;
+  font-weight: 700;
+  padding: 0 2px;
+  border-radius: 2px;
+  box-shadow: 0 0 6px rgba(0, 240, 255, 0.6);
+}
