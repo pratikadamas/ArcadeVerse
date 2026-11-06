@@ -1,0 +1,12 @@
+{
+  "title": "Cyber Traffic Control",
+  "category": "Simulation",
+  "description": "Multi-lane cyber skyway signal dispatcher. Manage hovercar conduits, toggle green/red priority signals, avoid mid-air collisions, and prioritize emergency drones.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["traffic", "simulation", "cyberpunk", "management", "arcade", "hovercar"],
+  "stars": 27,
+  "featured": true,
+  "lucideIcon": "navigation"
+}

@@ -1,0 +1,12 @@
+{
+  "title": "Neon Infiltration",
+  "category": "Action",
+  "description": "Tactical top-down cyberpunk stealth protocol. Infiltrate secure mainframe servers, dodge raycasted flashlight patrol cones, hack terminals, and extract silently.",
+  "author": "Babin Bid",
+  "github": "Babin123456",
+  "role": "Contributor",
+  "tags": ["stealth", "action", "cyberpunk", "raycasting", "tactical", "arcade"],
+  "stars": 28,
+  "featured": true,
+  "lucideIcon": "shield"
+}
