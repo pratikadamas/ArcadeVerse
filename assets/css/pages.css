@@ -1380,13 +1380,42 @@ body.docs-viewport-body {
   background: rgba(148, 163, 184, 0.5);
 }
 
-/* Hero Section Inside Right Scroll Pane */
+/* Hero Section Inside Right Scroll Pane - Centered Layout */
 .docs-hero-panel {
   max-width: 960px;
-  margin-bottom: 2.5rem;
-  padding-bottom: 1.75rem;
+  margin: 0 auto 2.5rem;
+  padding-bottom: 2rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
+
+.docs-hero-panel .page-hero-badge {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.docs-hero-panel .page-hero-title {
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.docs-hero-panel .page-hero-subtitle {
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.docs-hero-panel .page-meta-row {
+  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 [data-theme="light"] .docs-hero-panel {
   border-bottom-color: #e2e8f0;
 }

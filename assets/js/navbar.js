@@ -165,15 +165,27 @@
       }, { passive: true });
     }
 
-    // Smooth navbar squeeze on scroll
+    // Smooth navbar squeeze & glassy effect on scroll
     if (navbar) {
-      window.addEventListener("scroll", () => {
-        if (window.scrollY > 40) {
+      const handleNavbarScroll = (scrollPos) => {
+        if (scrollPos > 30) {
           navbar.classList.add("scrolled");
         } else {
           navbar.classList.remove("scrolled");
         }
+      };
+
+      window.addEventListener("scroll", () => {
+        handleNavbarScroll(window.scrollY);
       }, { passive: true });
+
+      // Support scroll containers (e.g. docs-content-pane in docs.html dual-pane viewport)
+      const docsPane = document.getElementById("docs-content-pane");
+      if (docsPane) {
+        docsPane.addEventListener("scroll", () => {
+          handleNavbarScroll(docsPane.scrollTop);
+        }, { passive: true });
+      }
     }
 
     // Back to Top Button Engine

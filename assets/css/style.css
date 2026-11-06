@@ -6007,6 +6007,99 @@ textarea:focus-visible,
   color: #ffffff !important;
 }
 
+/* Light Mode Filter Badges & Count Numbers High-Contrast Fix on Hover and Active */
+[data-theme="light"] .pill-count-badge {
+  background: rgba(0, 0, 0, 0.08) !important;
+  color: #1e293b !important;
+  font-weight: 800;
+}
+
+[data-theme="light"] .pill:hover .pill-count-badge {
+  background: rgba(37, 99, 235, 0.15) !important;
+  color: #1d4ed8 !important;
+}
+
+[data-theme="light"] .pill.active .pill-count-badge {
+  background: #ffffff !important;
+  color: #1d4ed8 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .pill-favorites:hover .favorites-count-badge {
+  background: rgba(225, 29, 72, 0.2) !important;
+  color: #991b1b !important;
+}
+
+[data-theme="light"] .pill-halloween.active .pill-count-badge {
+  background: #ffffff !important;
+  color: #c2410c !important;
+}
+
+[data-theme="light"] .pill-halloween:hover .pill-count-badge {
+  background: rgba(249, 115, 22, 0.2) !important;
+  color: #c2410c !important;
+}
+
+/* Faceted Filter Bar in Light Mode */
+[data-theme="light"] .faceted-filter-bar {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="light"] .facet-label {
+  color: #1e293b !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="light"] .facet-chip {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+[data-theme="light"] .facet-chip:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .facet-chip-count {
+  background: rgba(0, 0, 0, 0.08) !important;
+  color: #334155 !important;
+  font-weight: 700;
+  opacity: 1 !important;
+}
+
+[data-theme="light"] .facet-chip:hover .facet-chip-count {
+  background: rgba(37, 99, 235, 0.18) !important;
+  color: #1d4ed8 !important;
+  opacity: 1 !important;
+}
+
+[data-theme="light"] .facet-chip.active {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .facet-chip.active .facet-chip-count {
+  background: #ffffff !important;
+  color: #1d4ed8 !important;
+  opacity: 1 !important;
+}
+
+[data-theme="light"] .btn-reset-facets {
+  border-color: #cbd5e1 !important;
+  color: #64748b !important;
+}
+
+[data-theme="light"] .btn-reset-facets:hover {
+  border-color: #2563eb !important;
+  color: #2563eb !important;
+  background: #eff6ff !important;
+}
+
 /* Game Cards */
 [data-theme="light"] .game-card {
   background: var(--bg-card);
