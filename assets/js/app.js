@@ -52,15 +52,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchTagsRow = document.getElementById("search-tags-row");
   const resetFacetsBtn = document.getElementById("btn-reset-facets");
 
-  // Favorites LocalStorage Engine
-  const FAVORITES_STORAGE_KEY = "arcadeverse_favorite_games";
-  const LEGACY_FAVORITES_STORAGE_KEY = "arcadeverse:preferences:favorites";
+  // Favorites LocalStorage Engine (Issue #533)
+  const FAVORITES_STORAGE_KEY = "av_favorites";
+  const LEGACY_FAVORITES_STORAGE_KEY = "arcadeverse_favorite_games";
+  const PREFERENCES_FAVORITES_KEY = "arcadeverse:preferences:favorites";
+
+  // Migrate legacy favorite storage keys to primary av_favorites key if needed
+  try {
+    if (!localStorage.getItem(FAVORITES_STORAGE_KEY)) {
+      const legacy = localStorage.getItem(LEGACY_FAVORITES_STORAGE_KEY) || localStorage.getItem(PREFERENCES_FAVORITES_KEY);
+      if (legacy) {
+        localStorage.setItem(FAVORITES_STORAGE_KEY, legacy);
+      }
+    }
+  } catch (_) {}
 
   function getFavorites() {
     try {
       let raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
       if (!raw) {
         raw = localStorage.getItem(LEGACY_FAVORITES_STORAGE_KEY);
+      }
+      if (!raw) {
+        raw = localStorage.getItem(PREFERENCES_FAVORITES_KEY);
       }
       const parsed = raw ? JSON.parse(raw) : [];
       return Array.isArray(parsed) ? new Set(parsed) : new Set();
@@ -70,8 +84,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function saveFavorites(favSet) {
+    const list = Array.from(favSet);
+    const serialized = JSON.stringify(list);
     try {
-      localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(Array.from(favSet)));
+      localStorage.setItem(FAVORITES_STORAGE_KEY, serialized);
+      localStorage.setItem(LEGACY_FAVORITES_STORAGE_KEY, serialized);
     } catch (e) {
       console.warn("Could not save favorites to localStorage:", e);
     }
@@ -122,8 +139,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     categoryPills.forEach((pill) => {
       const categoryKey = (pill.getAttribute("data-category") || "").toLowerCase();
-      // Favorites pill already has #favorites-count-badge in index.html; avoid appending a duplicate count badge
+      // Favorites pill already has #favorites-count-badge in index.html; keep in sync
       if (categoryKey === "favorites") {
+        const badge = pill.querySelector("#favorites-count-badge") || pill.querySelector(".favorites-count-badge");
+        if (badge) {
+          badge.textContent = counts.favorites;
+          badge.setAttribute("aria-label", `${counts.favorites} favorite games saved`);
+        }
         return;
       }
       let badge = pill.querySelector(".pill-count-badge");
@@ -158,26 +180,50 @@ document.addEventListener("DOMContentLoaded", () => {
     saveFavorites(favs);
 
     if (currentCategory === "favorites") {
-      // Find adjacent game card ID for smooth keyboard focus handover
-      const cardNodes = Array.from(gamesGrid.querySelectorAll(".game-card"));
-      const currentIndex = cardNodes.findIndex((c) => c.getAttribute("data-game-id") === gameId);
-      let nextFocusGameId = null;
-      if (currentIndex !== -1) {
-        if (currentIndex < cardNodes.length - 1) {
-          nextFocusGameId = cardNodes[currentIndex + 1].getAttribute("data-game-id");
-        } else if (currentIndex > 0) {
-          nextFocusGameId = cardNodes[currentIndex - 1].getAttribute("data-game-id");
+      const targetCard = gamesGrid.querySelector(`.game-card[data-game-id="${gameId}"]`);
+      if (targetCard && !willBeFav) {
+        // Find adjacent game card ID for smooth keyboard focus handover
+        const cardNodes = Array.from(gamesGrid.querySelectorAll(".game-card:not(.removing-favorite)"));
+        const currentIndex = cardNodes.findIndex((c) => c.getAttribute("data-game-id") === gameId);
+        let nextFocusGameId = null;
+        if (currentIndex !== -1) {
+          if (currentIndex < cardNodes.length - 1) {
+            nextFocusGameId = cardNodes[currentIndex + 1].getAttribute("data-game-id");
+          } else if (currentIndex > 0) {
+            nextFocusGameId = cardNodes[currentIndex - 1].getAttribute("data-game-id");
+          }
         }
-      }
 
-      renderGames();
+        // Immediately update button style inside the card
+        const cardBtn = targetCard.querySelector(".btn-card-favorite");
+        if (cardBtn) {
+          cardBtn.classList.remove("favorited");
+          cardBtn.setAttribute("aria-pressed", "false");
+          cardBtn.title = "Save to Favorites";
+          cardBtn.setAttribute("aria-label", "Save to Favorites");
+        }
 
-      if (nextFocusGameId) {
-        const nextBtn = gamesGrid.querySelector(`.btn-card-favorite[data-id="${nextFocusGameId}"]`);
-        if (nextBtn) nextBtn.focus();
+        // Trigger smooth CSS removal animation
+        targetCard.classList.add("removing-favorite");
+
+        // Update live results count header immediately
+        updateResultsCount(favs.size);
+
+        setTimeout(() => {
+          if (targetCard.parentNode) {
+            targetCard.remove();
+          }
+          if (favs.size === 0) {
+            renderGames();
+            const resetBtn = document.getElementById("reset-filter-btn");
+            if (resetBtn) resetBtn.focus();
+          } else if (nextFocusGameId) {
+            const nextBtn = gamesGrid.querySelector(`.btn-card-favorite[data-id="${nextFocusGameId}"]`);
+            if (nextBtn) nextBtn.focus();
+          }
+        }, 300);
       } else {
-        const resetBtn = document.getElementById("reset-filter-btn");
-        if (resetBtn) resetBtn.focus();
+        renderGames();
       }
     } else {
       const cardBtns = document.querySelectorAll(`.btn-card-favorite[data-id="${gameId}"]`);
@@ -201,7 +247,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Cross-tab real-time favorites synchronization
   window.addEventListener("storage", (e) => {
-    if (e.key === FAVORITES_STORAGE_KEY || e.key === LEGACY_FAVORITES_STORAGE_KEY) {
+    if (e.key === FAVORITES_STORAGE_KEY || e.key === LEGACY_FAVORITES_STORAGE_KEY || e.key === PREFERENCES_FAVORITES_KEY) {
       updateFavoritesBadge();
       if (currentCategory === "favorites") {
         renderGames();
