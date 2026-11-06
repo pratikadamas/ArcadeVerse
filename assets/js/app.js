@@ -34,6 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentTagFilter = "";
   let searchQuery = "";
   let currentSort = "featured";
+  let searchDebounceTimer = null;
   const CATALOG_VIEW_STORAGE_KEY = "arcadeverse_catalog_view";
   let currentCatalogView = "grid";
   try {
@@ -307,6 +308,53 @@ document.addEventListener("DOMContentLoaded", () => {
     return matrix[b.length][a.length];
   }
 
+  // Lightweight fuzzy matching (Levenshtein distance <= 2) for game titles and tags
+  function matchesFuzzyLevenshtein(item, query) {
+    if (!item || !query) return false;
+    const clean = query.replace(/^by\s+@?/, "").replace(/^@/, "").trim().toLowerCase();
+    if (clean.length < 3) return false;
+
+    const qWords = clean.split(/\s+/).filter(Boolean);
+    if (qWords.length === 0) return false;
+
+    const titleLower = (item.title || "").toLowerCase();
+    const titleWords = titleLower.split(/[\s\-:_]+/);
+    const tagsLower = Array.isArray(item.tags) ? item.tags.map((t) => t.toLowerCase()) : [];
+
+    return qWords.every((qWord) => {
+      if (qWord.length < 3) {
+        return titleLower.includes(qWord) || tagsLower.some((t) => t.includes(qWord));
+      }
+
+      // Check full title match
+      if (Math.abs(titleLower.length - qWord.length) <= 2 && levenshteinDistance(qWord, titleLower) <= 2) {
+        return true;
+      }
+
+      // Check title individual words
+      for (const w of titleWords) {
+        if (w.includes(qWord) || (Math.abs(w.length - qWord.length) <= 2 && levenshteinDistance(qWord, w) <= 2)) {
+          return true;
+        }
+      }
+
+      // Check tags (full tag or individual tag tokens)
+      for (const t of tagsLower) {
+        if (t.includes(qWord) || (Math.abs(t.length - qWord.length) <= 2 && levenshteinDistance(qWord, t) <= 2)) {
+          return true;
+        }
+        const tWords = t.split(/[\s\-:_]+/);
+        for (const tw of tWords) {
+          if (tw.includes(qWord) || (Math.abs(tw.length - qWord.length) <= 2 && levenshteinDistance(qWord, tw) <= 2)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    });
+  }
+
   // Update Stats
   if (totalGamesCount) totalGamesCount.textContent = GAMES_REGISTRY.length;
   if (totalContributorsCount) totalContributorsCount.textContent = CONTRIBUTORS_REGISTRY.length;
@@ -414,11 +462,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // --- Live Results Count ---
-  function updateResultsCount(count) {
+  function updateResultsCount(count, isFuzzy = false) {
     if (!resultsCountEl) return;
     const total = (typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) ? GAMES_REGISTRY.length : 0;
     const isFiltered = searchQuery || currentCategory !== "all" || currentDurationFacet !== "all" || currentControlsFacet !== "all" || currentTagFilter;
-    if (isFiltered) {
+    if (isFuzzy && searchQuery) {
+      resultsCountEl.textContent = `${count} close match${count !== 1 ? "es" : ""} found for "${searchQuery}"`;
+      resultsCountEl.style.display = "";
+    } else if (isFiltered) {
       resultsCountEl.textContent = `${count} of ${total} game${total !== 1 ? "s" : ""} match`;
       resultsCountEl.style.display = "";
     } else {
@@ -434,7 +485,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const currentDataSet = GAMES_REGISTRY;
 
-    let filtered = currentDataSet.filter((item) => {
+    const facetMatched = currentDataSet.filter((item) => {
       let matchesCategory = false;
       if (currentCategory === "all") {
         matchesCategory = true;
@@ -446,32 +497,23 @@ document.addEventListener("DOMContentLoaded", () => {
         matchesCategory = pl ? pl.games.includes(item.id) : false;
       } else {
         if (currentCategory.toLowerCase() === "halloween") {
-        matchesCategory = (item.tags && item.tags.some(t => t.toLowerCase() === "halloween")) ||
-          item.category.toLowerCase().includes("horror") ||
-          item.title.toLowerCase().includes("halloween") ||
-          item.id.toLowerCase().includes("haunted") ||
-          item.id.toLowerCase().includes("escape-room") ||
-          item.id.toLowerCase().includes("island-survival");
-      } else {
-        matchesCategory = item.category.toLowerCase() === currentCategory.toLowerCase();
+          matchesCategory = (item.tags && item.tags.some(t => t.toLowerCase() === "halloween")) ||
+            item.category.toLowerCase().includes("horror") ||
+            item.title.toLowerCase().includes("halloween") ||
+            item.id.toLowerCase().includes("haunted") ||
+            item.id.toLowerCase().includes("escape-room") ||
+            item.id.toLowerCase().includes("island-survival");
+        } else {
+          matchesCategory = item.category.toLowerCase() === currentCategory.toLowerCase();
+        }
       }
-      }
-
-      const cleanSearch = searchQuery.replace(/^by\s+@?/, "").replace(/^@/, "").trim();
-      const matchesSearch = 
-        item.title.toLowerCase().includes(searchQuery) ||
-        item.description.toLowerCase().includes(searchQuery) ||
-        item.author.toLowerCase().includes(searchQuery) ||
-        (cleanSearch && item.author.toLowerCase().includes(cleanSearch)) ||
-        (item.github && item.github.toLowerCase().includes(searchQuery)) ||
-        (cleanSearch && item.github && item.github.toLowerCase().includes(cleanSearch)) ||
-        (item.tags && item.tags.some(t => t.toLowerCase().includes(searchQuery)));
 
       // Tag Facet Filter
       let matchesTag = true;
       if (currentTagFilter) {
         matchesTag = Array.isArray(item.tags) && item.tags.some(t => t.toLowerCase() === currentTagFilter);
       }
+
       // Duration Facet Evaluation
       let matchesDuration = true;
       if (currentDurationFacet !== "all") {
@@ -512,8 +554,33 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
-      return matchesCategory && matchesSearch && matchesDuration && matchesControls && matchesTag && matchesLetter;
+      return matchesCategory && matchesTag && matchesDuration && matchesControls && matchesLetter;
     });
+
+    const cleanSearch = searchQuery.replace(/^by\s+@?/, "").replace(/^@/, "").trim();
+    const matchesExactSearch = (item) => {
+      if (!searchQuery) return true;
+      return (
+        item.title.toLowerCase().includes(searchQuery) ||
+        (item.description && item.description.toLowerCase().includes(searchQuery)) ||
+        (item.author && item.author.toLowerCase().includes(searchQuery)) ||
+        (cleanSearch && item.author && item.author.toLowerCase().includes(cleanSearch)) ||
+        (item.github && item.github.toLowerCase().includes(searchQuery)) ||
+        (cleanSearch && item.github && item.github.toLowerCase().includes(cleanSearch)) ||
+        (item.tags && item.tags.some(t => t.toLowerCase().includes(searchQuery)))
+      );
+    };
+
+    let filtered = facetMatched.filter(matchesExactSearch);
+    let isFuzzyFallback = false;
+
+    // Fallback: If exact matches are empty and search query is at least 3 chars, match using Levenshtein distance <= 2 on titles and tags
+    if (filtered.length === 0 && searchQuery && searchQuery.length >= 3) {
+      filtered = facetMatched.filter((item) => matchesFuzzyLevenshtein(item, searchQuery));
+      if (filtered.length > 0) {
+        isFuzzyFallback = true;
+      }
+    }
 
     // Apply Sorting
     filtered.sort((a, b) => {
@@ -687,7 +754,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    updateResultsCount(filtered.length);
+    updateResultsCount(filtered.length, isFuzzyFallback);
     filtered.forEach((game) => {
       const card = document.createElement("div");
       card.className = "game-card";
@@ -1275,6 +1342,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Sort by relevance score descending
     scoredMatches.sort((a, b) => b.score - a.score);
+
+    // Fallback: If exact matches are empty and query length >= 3, match using fuzzy Levenshtein distance <= 2
+    if (scoredMatches.length === 0 && trimmed.length >= 3) {
+      for (const game of GAMES_REGISTRY) {
+        if (matchesFuzzyLevenshtein(game, trimmed)) {
+          scoredMatches.push({ game, score: 25 });
+        }
+      }
+    }
+
     currentSuggestions = scoredMatches.slice(0, 6).map((item) => item.game);
     activeSuggestionIndex = -1;
 
@@ -1422,17 +1499,47 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Filter Search
+  // Filter Search (Debounced 120ms & Typo-Tolerant)
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
-      searchQuery = e.target.value.toLowerCase().trim();
-      if (searchClearBtn) searchClearBtn.hidden = !e.target.value;
-      renderGames();
-      if (searchQuery.length > 0) {
-        renderAutocomplete(e.target.value);
-      } else {
-        closeAutocomplete();
+      const val = e.target.value;
+      if (searchClearBtn) searchClearBtn.hidden = !val;
+
+      if (searchDebounceTimer) {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = null;
       }
+
+      const executeSearch = () => {
+        searchQuery = searchInput.value.toLowerCase().trim();
+        renderGames();
+        if (searchQuery.length > 0) {
+          renderAutocomplete(searchInput.value);
+        } else {
+          closeAutocomplete();
+        }
+      };
+
+      if (!e.isTrusted || !val) {
+        executeSearch();
+      } else {
+        searchDebounceTimer = setTimeout(executeSearch, 120);
+      }
+    });
+  }
+
+  if (searchClearBtn) {
+    searchClearBtn.addEventListener("click", () => {
+      if (searchDebounceTimer) {
+        clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = null;
+      }
+      if (searchInput) searchInput.value = "";
+      searchClearBtn.hidden = true;
+      searchQuery = "";
+      closeAutocomplete();
+      renderGames();
+      if (searchInput) searchInput.focus();
     });
   }
 
