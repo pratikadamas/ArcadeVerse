@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neon Infiltration — Shadow Operative Stealth Protocol</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="stealth-terminal">
+    <!-- Top HUD Navigation -->
+    <header class="hud-top">
+      <div class="hud-brand">
+        <svg class="brand-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+        <span class="brand-title">NEON INFILTRATION // PROTOCOL-7</span>
+      </div>
+
+      <div class="alert-status-container">
+        <span class="alert-label">FACILITY ALERT LEVEL</span>
+        <div class="alert-meter-bar">
+          <div id="alert-fill" class="alert-fill"></div>
+        </div>
+        <span id="alert-text-status" class="alert-text-status safe">PATROL (SECURE)</span>
+      </div>
+
+      <div class="hud-actions">
+        <button id="btn-sound-toggle" class="btn-tool" aria-label="Toggle Sound">
+          <svg id="svg-sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+          </svg>
+          <svg id="svg-sound-off" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="1" y1="1" x2="23" y2="23"></line>
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          </svg>
+        </button>
+        <button id="btn-restart-mission" class="btn-tool" title="Restart Mission">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          REBOOT
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Operative Arena -->
+    <main class="arena-grid">
+      <!-- Left Mission Briefing -->
+      <aside class="side-hud intel-hud">
+        <div class="hud-box">
+          <div class="box-title">MISSION OBJECTIVES</div>
+          <div class="objective-item" id="obj-hack-1">
+            <span class="chk-box"></span>
+            <span>TERMINAL A: DECRYPT MEMORY</span>
+          </div>
+          <div class="objective-item" id="obj-hack-2">
+            <span class="chk-box"></span>
+            <span>TERMINAL B: CIPHER KEY</span>
+          </div>
+          <div class="objective-item" id="obj-extract">
+            <span class="chk-box"></span>
+            <span>EXTRACT AT ELEVATOR SHAFT</span>
+          </div>
+        </div>
+
+        <div class="hud-box">
+          <div class="box-title">OPERATIVE TELEMETRY</div>
+          <div class="telemetry-row">
+            <span class="key">POSTURE</span>
+            <span id="posture-val" class="val">WALKING</span>
+          </div>
+          <div class="telemetry-row">
+            <span class="key">NOISE RADIUS</span>
+            <span id="noise-val" class="val">8 METERS</span>
+          </div>
+          <div class="telemetry-row">
+            <span class="key">TIME ELAPSED</span>
+            <span id="time-val" class="val">00:00</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Center Top-Down Canvas Viewport -->
+      <section class="canvas-container">
+        <canvas id="stealth-canvas" width="700" height="600"></canvas>
+
+        <!-- Dynamic Hacking Progress Overlay -->
+        <div id="hack-progress-box" class="hack-progress-box hidden">
+          <span class="hack-title">DOWNLOADING ENCRYPTED CORE...</span>
+          <div class="hack-track">
+            <div id="hack-fill-bar" class="hack-fill-bar"></div>
+          </div>
+          <span id="hack-pct">0%</span>
+        </div>
+
+        <!-- Mission Concluded Modal -->
+        <div id="mission-modal" class="mission-modal hidden">
+          <div class="modal-card">
+            <h2 id="modal-heading">MISSION ACCOMPLISHED</h2>
+            <p id="modal-desc">All memory cores extracted without triggering facility lockdown.</p>
+            <button id="btn-modal-action" class="btn-action">NEXT SECTOR</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Surveillance Monitor -->
+      <aside class="side-hud surveillance-hud">
+        <div class="hud-box">
+          <div class="box-title">SECURITY FEEDS</div>
+          <div class="feed-indicator">
+            <span class="radar-dot"></span>
+            <span>SENTINEL DRONES: ACTIVE (4)</span>
+          </div>
+          <div class="feed-indicator">
+            <span class="radar-dot camera"></span>
+            <span>CCTV CAMERAS: SWEEPING (2)</span>
+          </div>
+        </div>
+
+        <div class="hud-box log-box">
+          <div class="box-title">TACTICAL LOG</div>
+          <ul id="tactical-log-ul" class="log-list">
+            <li>Infiltrated sub-level 4 via air vent.</li>
+          </ul>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Bottom Controls Guide -->
+    <footer class="hud-bottom">
+      <div class="control-hints">
+        <span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span> Move Operative
+        &bull; Hold <span class="kbd">SHIFT</span> to Sneak (Silent, Zero Footstep Noise)
+        &bull; Hold <span class="kbd">SPACE</span> to Sprint (Fast, Loud Noise Rings)
+        &bull; Stand near <span class="accent-text">Yellow Terminals</span> for 3s to Decrypt
+      </div>
+      <div class="build-tag">NEON-STEALTH ENGINE // 60 FPS RAYCASTING</div>
+    </footer>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
