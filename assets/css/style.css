@@ -1781,6 +1781,15 @@ textarea:focus-visible,
   max-width: 130px;
 }
 
+#games-grid.view-list .author-filter-btn {
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: middle;
+}
+
 /* 6. Play Button Column */
 #games-grid.view-list .btn-play-trigger {
   padding: 0.45rem 1.15rem !important;
@@ -1992,6 +2001,36 @@ textarea:focus-visible,
 
 .contributor-name strong {
   color: #fff;
+}
+
+.author-filter-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-cyan, #06b6d4);
+  cursor: pointer;
+  text-align: left;
+  display: inline-block;
+  line-height: 1.2;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition: color 0.18s ease, text-decoration-color 0.18s ease;
+}
+
+.author-filter-btn:hover {
+  color: #38bdf8;
+  text-decoration-color: #38bdf8;
+}
+
+.author-filter-btn:focus-visible {
+  outline: 2px solid var(--accent-cyan, #06b6d4);
+  outline-offset: 2px;
+  border-radius: 3px;
 }
 
 .btn-play-trigger {
@@ -6071,6 +6110,19 @@ textarea:focus-visible,
 [data-theme="light"] .contributor-name strong {
   color: #000000 !important;
   font-weight: 800;
+}
+
+[data-theme="light"] .author-filter-btn {
+  color: #0284c7 !important;
+}
+
+[data-theme="light"] .author-filter-btn:hover {
+  color: #0369a1 !important;
+  text-decoration-color: #0369a1 !important;
+}
+
+[data-theme="light"] .author-filter-btn:focus-visible {
+  outline: 2px solid #0284c7 !important;
 }
 
 [data-theme="light"] .btn-card-favorite {
