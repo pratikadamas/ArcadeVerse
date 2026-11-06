@@ -22,6 +22,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const newTabBtn = document.getElementById("new-tab-btn");
   const reloadBtn = document.getElementById("reload-btn");
   const modalWindow = document.querySelector(".modal-window");
+  const modalFrameWrapper = document.querySelector(".modal-frame-wrapper");
+  if (modalFrameWrapper) {
+    modalFrameWrapper.classList.add("game-modal-body");
+  }
   const sortSelect = document.getElementById("catalog-sort-select");
   const favoritesCountBadge = document.getElementById("favorites-count-badge");
   const modalFavBtn = document.getElementById("modal-fav-btn");
@@ -906,6 +910,7 @@ document.addEventListener("DOMContentLoaded", () => {
       iframeLoadSucceeded = true;
       resetIframeBoundary();
       gameIframe.classList.add("loaded");
+      guardIframeTouchInteractions();
 
       try {
         if (window.SoundEngine && typeof window.SoundEngine.broadcastAudioConfig === "function") {
@@ -958,6 +963,7 @@ document.addEventListener("DOMContentLoaded", () => {
     gameModal.classList.add("active");
     gameModal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
+    document.body.style.overscrollBehavior = "contain";
     closeModalBtn.focus();
   }
 
@@ -1050,6 +1056,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 100);
 
     document.body.style.overflow = "";
+    document.body.style.overscrollBehavior = "";
     modalWindow.classList.remove("fullscreen");
     if (gameModal) gameModal.classList.remove("fullscreen-mode");
     if (document.fullscreenElement || document.webkitFullscreenElement) {
@@ -1158,6 +1165,132 @@ document.addEventListener("DOMContentLoaded", () => {
       currentSort = e.target.value;
       renderGames();
     });
+  }
+
+  // ==========================================================================
+  // MOBILE TOUCH & GESTURE INTERFERENCE PREVENTION (Issue #519)
+  // Prevents Default Pull-to-Refresh & Pinch-Zoom Interference During Touch Play
+  // ==========================================================================
+  function preventMultiTouchGestures(target) {
+    if (!target) return;
+
+    let lastTouchTime = 0;
+
+    // Prevent multi-touch pinch-zoom (2 or more touches)
+    target.addEventListener("touchstart", (e) => {
+      if (e.touches && e.touches.length > 1) {
+        if (e.cancelable) e.preventDefault();
+      }
+    }, { passive: false });
+
+    // Prevent pull-to-refresh & browser scrolling interference on touch movements
+    target.addEventListener("touchmove", (e) => {
+      if (e.touches && e.touches.length > 1) {
+        if (e.cancelable) e.preventDefault();
+        return;
+      }
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    // Prevent accidental double-tap zoom triggers
+    target.addEventListener("touchend", (e) => {
+      const now = Date.now();
+      if (now - lastTouchTime <= 300) {
+        if (e.cancelable) e.preventDefault();
+      }
+      lastTouchTime = now;
+    }, { passive: false });
+
+    // Prevent iOS WebKit pinch-to-zoom / multi-finger gesture events
+    target.addEventListener("gesturestart", (e) => {
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+
+    target.addEventListener("gesturechange", (e) => {
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+
+    target.addEventListener("gestureend", (e) => {
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+  }
+
+  // Guard the game modal body / frame wrapper container
+  const modalBody = document.querySelector(".game-modal-body") || modalFrameWrapper;
+  if (modalBody) {
+    preventMultiTouchGestures(modalBody);
+  }
+
+  // Prevent multi-touch zooming and gesture scaling on the modal container
+  if (gameModal) {
+    gameModal.addEventListener("touchstart", (e) => {
+      if (e.touches && e.touches.length > 1 && e.cancelable) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    gameModal.addEventListener("touchmove", (e) => {
+      if (e.touches && e.touches.length > 1 && e.cancelable) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    gameModal.addEventListener("gesturestart", (e) => {
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+
+    gameModal.addEventListener("gesturechange", (e) => {
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+
+    gameModal.addEventListener("gestureend", (e) => {
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+  }
+
+  // Prevent pull-to-refresh when dragging on backdrop overlay
+  if (modalOverlay) {
+    modalOverlay.addEventListener("touchmove", (e) => {
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+  }
+
+  // Inject gesture protections and styles inside the game iframe on load
+  function guardIframeTouchInteractions() {
+    try {
+      if (!gameIframe) return;
+      const doc = gameIframe.contentDocument || (gameIframe.contentWindow && gameIframe.contentWindow.document);
+      if (!doc) return;
+
+      if (doc.documentElement) {
+        doc.documentElement.style.overscrollBehavior = "contain";
+        doc.documentElement.style.touchAction = "none";
+      }
+      if (doc.body) {
+        doc.body.style.overscrollBehavior = "contain";
+        doc.body.style.touchAction = "none";
+      }
+
+      if (doc.head && !doc.getElementById("arcadeverse-touch-guard-css")) {
+        const style = doc.createElement("style");
+        style.id = "arcadeverse-touch-guard-css";
+        style.textContent = `
+          html, body, canvas, #canvas, .game-canvas {
+            touch-action: none !important;
+            overscroll-behavior: contain !important;
+            overscroll-behavior-y: contain !important;
+            -webkit-user-select: none !important;
+            user-select: none !important;
+            -webkit-touch-callout: none !important;
+          }
+        `;
+        doc.head.appendChild(style);
+      }
+
+      preventMultiTouchGestures(doc);
+    } catch (_) {}
   }
 
   // ===================================================
