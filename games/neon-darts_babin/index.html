@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neon Darts 501 — Precision Cyber Bullseye</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="cabinet-container">
+    <!-- Header HUD -->
+    <header class="darts-header">
+      <div class="logo-area">
+        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <circle cx="12" cy="12" r="6"></circle>
+          <circle cx="12" cy="12" r="2"></circle>
+        </svg>
+        <span class="logo-text">NEON DARTS // 501</span>
+      </div>
+
+      <div class="match-mode-selector">
+        <button id="mode-501" class="mode-btn active">OFFICIAL 501</button>
+        <button id="mode-clock" class="mode-btn">AROUND THE CLOCK</button>
+      </div>
+
+      <div class="header-tools">
+        <button id="btn-audio" class="tool-btn" aria-label="Toggle Sound">
+          <svg id="svg-audio-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+          </svg>
+          <svg id="svg-audio-off" class="hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="1" y1="1" x2="23" y2="23"></line>
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          </svg>
+        </button>
+        <button id="btn-reset" class="tool-btn" title="Reset Leg">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          RESET
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Game Court -->
+    <main class="darts-arena">
+      <!-- Left Scoreboard -->
+      <section class="side-panel scoreboard-panel">
+        <div class="panel-header">SCOREBOARD</div>
+        <div class="score-target-badge">
+          <span class="sub-label">REMAINING POINTS</span>
+          <span id="score-remaining" class="big-score">501</span>
+        </div>
+
+        <div class="darts-turn-counter">
+          <span class="sub-label">DARTS IN HAND</span>
+          <div class="dart-icons-row" id="dart-icons-container">
+            <span class="dart-pip active"></span>
+            <span class="dart-pip active"></span>
+            <span class="dart-pip active"></span>
+          </div>
+        </div>
+
+        <div class="turn-summary-card">
+          <span class="sub-label">CURRENT TURN SCORE</span>
+          <span id="turn-score" class="turn-score-val">0</span>
+          <div id="turn-darts-history" class="turn-history-list">
+            <span>Dart 1: --</span>
+            <span>Dart 2: --</span>
+            <span>Dart 3: --</span>
+          </div>
+        </div>
+
+        <div class="checkout-guide" id="checkout-guide-card">
+          <span class="sub-label">CHECKOUT ROUTE</span>
+          <span id="checkout-suggestion" class="checkout-val">T20 - T20 - D12</span>
+        </div>
+      </section>
+
+      <!-- Center Dartboard Canvas & Throw Controls -->
+      <section class="dartboard-viewport">
+        <canvas id="dartboard-canvas" width="600" height="600"></canvas>
+
+        <!-- Power Meter Overlay -->
+        <div class="power-meter-bar">
+          <div class="power-track">
+            <div id="power-indicator" class="power-fill"></div>
+            <div class="power-sweet-spot"></div>
+          </div>
+          <span class="power-label">PULL BACK & RELEASE</span>
+        </div>
+
+        <!-- Notification Banner -->
+        <div id="throw-announcement" class="announcement-banner hidden">
+          <span id="announcement-text">TRIPLE 20! (60 PTS)</span>
+        </div>
+      </section>
+
+      <!-- Right Telemetry & Stats -->
+      <section class="side-panel telemetry-panel">
+        <div class="panel-header">DART TELEMETRY</div>
+
+        <div class="wind-gauge-card">
+          <span class="sub-label">CROSSWIND JITTER</span>
+          <div class="wind-arrow-box">
+            <svg id="wind-vector-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="19" x2="12" y2="5"></line>
+              <polyline points="5 12 12 5 19 12"></polyline>
+            </svg>
+            <span id="wind-speed-val">1.2 m/s NE</span>
+          </div>
+        </div>
+
+        <div class="stat-group">
+          <div class="stat-line">
+            <span class="stat-key">3-DART AVG</span>
+            <span id="stat-avg" class="stat-num">0.0</span>
+          </div>
+          <div class="stat-line">
+            <span class="stat-key">TOTAL DARTS</span>
+            <span id="stat-total-darts" class="stat-num">0</span>
+          </div>
+          <div class="stat-line">
+            <span class="stat-key">180s HIT</span>
+            <span id="stat-180s" class="stat-num">0</span>
+          </div>
+          <div class="stat-line">
+            <span class="stat-key">CLOCK TARGET</span>
+            <span id="stat-clock-target" class="stat-num">#1</span>
+          </div>
+        </div>
+
+        <div class="history-log">
+          <div class="log-title">THROW RECORDER</div>
+          <ul id="throw-log-list" class="log-ul">
+            <li>Leg started. Double or Bull to finish!</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer Controls Bar -->
+    <footer class="darts-footer">
+      <div class="guide-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span>Hold [MOUSE / TAP] to pull back dart into sweet spot, release to throw. Crosshair sways in figure-8.</span>
+      </div>
+      <div class="leg-info">RULE: EXACT CHECKOUT ON DOUBLE OR BULLSEYE</div>
+    </footer>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
