@@ -1236,7 +1236,7 @@ textarea:focus-visible,
 .catalog-empty-state {
   grid-column: 1 / -1;
   text-align: center;
-  padding: 4rem 2rem;
+  padding: 3.5rem 2rem;
   background: var(--bg-surface);
   border: 1px dashed var(--border-medium);
   border-radius: var(--radius-xl);
@@ -1244,6 +1244,221 @@ textarea:focus-visible,
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+/* Retro Arcade Terminal Empty State */
+.catalog-empty-state.retro-arcade-terminal {
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: 680px;
+  margin: 1.5rem auto;
+  padding: 0;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(8, 12, 22, 0.98));
+  border: 1px solid rgba(0, 243, 255, 0.35);
+  border-radius: var(--radius-lg, 16px);
+  box-shadow: 0 0 25px rgba(0, 243, 255, 0.1), 0 16px 36px rgba(0, 0, 0, 0.5);
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.retro-terminal-screen {
+  position: relative;
+  width: 100%;
+  border-radius: inherit;
+  display: flex;
+  flex-direction: column;
+}
+
+.retro-terminal-scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15) 0px,
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  border-radius: inherit;
+  z-index: 1;
+}
+
+.retro-terminal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  background: rgba(0, 0, 0, 0.45);
+  border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+  position: relative;
+  z-index: 2;
+}
+
+.retro-terminal-dots {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.retro-terminal-dots .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.retro-terminal-dots .dot-red {
+  background: #f43f5e;
+  box-shadow: 0 0 6px rgba(244, 63, 94, 0.7);
+}
+
+.retro-terminal-dots .dot-yellow {
+  background: #eab308;
+  box-shadow: 0 0 6px rgba(234, 179, 8, 0.7);
+}
+
+.retro-terminal-dots .dot-green {
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.7);
+}
+
+.retro-terminal-badge {
+  font-family: var(--font-code, "Courier New", monospace);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--accent-cyan, #00f3ff);
+  text-transform: uppercase;
+}
+
+.retro-terminal-tag {
+  font-family: var(--font-code, "Courier New", monospace);
+  font-size: 0.7rem;
+  color: var(--text-muted, #94a3b8);
+  letter-spacing: 0.5px;
+}
+
+.retro-terminal-body {
+  padding: 2.5rem 1.75rem 2.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+
+.arcade-joystick-graphic {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+  filter: drop-shadow(0 6px 16px rgba(0, 243, 255, 0.2));
+  animation: arcadeJoystickFloat 3s ease-in-out infinite alternate;
+}
+
+@keyframes arcadeJoystickFloat {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-4px);
+  }
+}
+
+.retro-joystick-svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.catalog-empty-state .empty-state-title {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.65rem;
+  font-family: var(--font-display, "Space Grotesk", sans-serif);
+  letter-spacing: 0.5px;
+}
+
+.catalog-empty-state .empty-state-desc {
+  color: var(--text-secondary, #94a3b8);
+  font-size: 0.95rem;
+  max-width: 520px;
+  line-height: 1.6;
+  margin-bottom: 1.6rem;
+}
+
+.btn-reset-filters {
+  background: linear-gradient(135deg, #0284c7, #2563eb) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  border: 1px solid rgba(0, 243, 255, 0.4) !important;
+  box-shadow: 0 0 16px rgba(2, 132, 199, 0.4) !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-reset-filters:hover {
+  background: linear-gradient(135deg, #0ea5e9, #3b82f6) !important;
+  box-shadow: 0 0 22px rgba(14, 165, 233, 0.6) !important;
+  transform: translateY(-2px);
+}
+
+.btn-reset-filters:focus-visible {
+  outline: 2px solid #00f3ff !important;
+  outline-offset: 2px !important;
+}
+
+/* Light Theme overrides for Retro Terminal */
+[data-theme="light"] .catalog-empty-state.retro-arcade-terminal {
+  background: linear-gradient(180deg, #ffffff, #f8fafc) !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] .retro-terminal-scanlines {
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.02) 0px,
+    rgba(0, 0, 0, 0.02) 1px,
+    transparent 1px,
+    transparent 2px
+  ) !important;
+}
+
+[data-theme="light"] .retro-terminal-header {
+  background: #f1f5f9 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .retro-terminal-badge {
+  color: #0284c7 !important;
+}
+
+[data-theme="light"] .retro-terminal-tag {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .catalog-empty-state .empty-state-title {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .catalog-empty-state .empty-state-desc {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .btn-reset-filters {
+  background: #0284c7 !important;
+  border-color: #0284c7 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3) !important;
+}
+
+[data-theme="light"] .btn-reset-filters:hover {
+  background: #0369a1 !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4) !important;
 }
 
 .empty-state-icon {
