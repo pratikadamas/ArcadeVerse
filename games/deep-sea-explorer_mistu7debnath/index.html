@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Deep Sea Explorer - Sunken Ruins Archaeology | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-container">
+    <!-- Top Antique Brass & Oceanic HUD -->
+    <header id="top-hud">
+      <div class="hud-left">
+        <a href="../../index.html" class="hud-btn back-btn" title="Back to ArcadeVerse Hub" aria-label="Back to ArcadeVerse">
+          <svg viewBox="0 0 24 24" class="svg-icon"><path d="m15 18-6-6 6-6"/></svg>
+          <span class="btn-text">Arcade</span>
+        </a>
+        <div class="brand-title">
+          <div class="logo-icon">
+            <svg viewBox="0 0 24 24" class="svg-icon"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+          </div>
+          <div class="title-meta">
+            <h1>DEEP SEA EXPLORER</h1>
+            <span class="sub-tag">SUNKEN RUINS ARCHAEOLOGY</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hud-center">
+        <!-- Ocean Exploration Distance Tracker -->
+        <div class="ocean-progress-wrapper" title="Expedition Distance Across Ocean">
+          <div class="progress-bar-track">
+            <div id="ocean-progress-fill" class="progress-bar-fill"></div>
+          </div>
+          <span id="ocean-progress-text" class="progress-text">0m / 3800m</span>
+        </div>
+
+        <div class="depth-meter">
+          <svg viewBox="0 0 24 24" class="svg-icon"><path d="M12 2v20"/><path d="m17 17-5 5-5-5"/><path d="M7 7l5-5 5 5"/></svg>
+          <span class="depth-label">DEPTH:</span>
+          <span id="depth-display" class="depth-val">124m</span>
+        </div>
+
+        <button id="btn-mode-switch" class="hud-btn mode-btn" title="Switch Between Submarine and Diver [F]">
+          <svg viewBox="0 0 24 24" class="svg-icon"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span id="mode-btn-text">DIVER MODE [F]</span>
+        </button>
+      </div>
+
+      <div class="hud-right">
+        <div class="stat-pill relic-pill" title="Archaeological Relics Recovered">
+          <svg viewBox="0 0 24 24" class="svg-icon"><path d="M6 3h12l2 6-8 12L4 9z"/></svg>
+          <span id="relics-display">0/6</span>
+        </div>
+        <div class="stat-pill coin-pill" title="Ocean Coins Collected">
+          <svg viewBox="0 0 24 24" class="svg-icon"><circle cx="12" cy="12" r="8"/><path d="M12 8v8"/><path d="M9.5 10a2.5 2.5 0 0 1 5 0c0 2-3 2-3 4"/></svg>
+          <span id="coins-display">0</span>
+        </div>
+        <div class="stat-pill score-pill" title="Expedition Score">
+          <svg viewBox="0 0 24 24" class="svg-icon"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span id="score-display">0</span>
+        </div>
+        <div class="hud-actions">
+          <button id="btn-sound" class="hud-btn icon-only" title="Toggle Audio [M]" aria-label="Toggle Audio">
+            <svg id="sound-icon-on" viewBox="0 0 24 24" class="svg-icon"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+            <svg id="sound-icon-off" viewBox="0 0 24 24" class="svg-icon hidden"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+          </button>
+          <button id="btn-hangar" class="hud-btn icon-only" title="Submersible Upgrades [U]" aria-label="Submersible Upgrades">
+            <svg viewBox="0 0 24 24" class="svg-icon"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          </button>
+          <button id="btn-guide" class="hud-btn icon-only" title="Archaeology Handbook [H]" aria-label="Archaeology Handbook">
+            <svg viewBox="0 0 24 24" class="svg-icon"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </button>
+          <button id="btn-pause" class="hud-btn icon-only" title="Pause Exploration [P]" aria-label="Pause Exploration">
+            <svg id="pause-icon" viewBox="0 0 24 24" class="svg-icon"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            <svg id="play-icon" viewBox="0 0 24 24" class="svg-icon hidden"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Ocean Ruins Viewport & 2.5D Archaeological Stage -->
+    <main id="ocean-viewport">
+      <div id="canvas-wrapper">
+        <canvas id="ocean-canvas" width="1200" height="720"></canvas>
+        <div id="damage-flash-overlay"></div>
+
+        <!-- Submarine / Diver Telemetry Dashboard -->
+        <div id="submarine-dashboard">
+          <div class="pilot-mode-badge">
+            <span>ACTIVE VESSEL:</span>
+            <span id="active-vessel-text">BRASS NAUTILUS</span>
+          </div>
+
+          <!-- Oxygen Gauge -->
+          <div class="dashboard-meter" id="meter-oxygen">
+            <div class="meter-header">
+              <svg viewBox="0 0 24 24" class="svg-icon meter-icon o2-icon"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>
+              <span class="meter-title">OXYGEN</span>
+              <span id="val-oxygen" class="meter-val">100%</span>
+            </div>
+            <div class="meter-bar-track">
+              <div id="bar-oxygen" class="meter-bar-fill fill-cyan" style="width: 100%;"></div>
+            </div>
+          </div>
+
+          <!-- Fuel Gauge -->
+          <div class="dashboard-meter" id="meter-fuel">
+            <div class="meter-header">
+              <svg viewBox="0 0 24 24" class="svg-icon meter-icon fuel-icon"><path d="M3 22h12"/><path d="M4 9h10"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"/></svg>
+              <span class="meter-title">PROPULSION FUEL</span>
+              <span id="val-fuel" class="meter-val">100%</span>
+            </div>
+            <div class="meter-bar-track">
+              <div id="bar-fuel" class="meter-bar-fill fill-orange" style="width: 100%;"></div>
+            </div>
+          </div>
+
+          <!-- Hull / Suit Integrity -->
+          <div class="dashboard-meter" id="meter-hull">
+            <div class="meter-header">
+              <svg viewBox="0 0 24 24" class="svg-icon meter-icon hull-icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <span id="title-hull" class="meter-title">HULL INTEGRITY</span>
+              <span id="val-hull" class="meter-val">100%</span>
+            </div>
+            <div class="meter-bar-track">
+              <div id="bar-hull" class="meter-bar-fill fill-green" style="width: 100%;"></div>
+            </div>
+          </div>
+
+          <!-- Subsystems (Sonar & Thruster Boost) -->
+          <div class="dashboard-subsystems">
+            <div class="subsystem-pill" id="subsystem-sonar">
+              <span class="subsystem-key">SPACE</span>
+              <span class="subsystem-label">SONAR PING</span>
+              <div class="cooldown-dial" id="sonar-dial">READY</div>
+            </div>
+            <div class="subsystem-pill" id="subsystem-boost">
+              <span class="subsystem-key">SHIFT</span>
+              <span class="subsystem-label">NITRO BOOST</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Excavation / Salvage Prompt -->
+        <div id="interaction-prompt" class="hidden">
+          <span class="prompt-key">E</span>
+          <span id="prompt-label" class="prompt-text">EXCAVATE ANCIENT AMPHORA</span>
+        </div>
+
+        <!-- Floating Live Alerts & Expedition Notifications -->
+        <div id="ocean-alerts-container"></div>
+      </div>
+    </main>
+
+    <!-- Bottom Controls & Telemetry Dock -->
+    <footer id="bottom-dock">
+      <div class="dock-content">
+        <div class="dock-control-hints">
+          <span class="hint-item"><kbd>WASD</kbd> / <kbd>&uarr;&larr;&darr;&rarr;</kbd> Steer Submarine / Diver</span>
+          <span class="hint-item"><kbd>E</kbd> Excavate & Salvage</span>
+          <span class="hint-item"><kbd>F</kbd> Deploy / Board Sub</span>
+          <span class="hint-item"><kbd>Shift</kbd> Nitro Thruster</span>
+          <span class="hint-item"><kbd>Space</kbd> Acoustic Sonar</span>
+          <span class="hint-item"><kbd>U</kbd> Hangar</span>
+          <span class="hint-item"><kbd>P</kbd> Pause</span>
+        </div>
+        <div class="dock-objective" id="dock-objective-text">
+          OBJECTIVE: Collect golden coins, steer clear of boulders, sharks & jellyfish, and reach the Atlantis Gateway!
+        </div>
+      </div>
+    </footer>
+
+    <!-- MODAL: Main Menu -->
+    <div id="modal-menu" class="game-modal">
+      <div class="modal-backdrop"></div>
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <div class="modal-brand">
+            <svg viewBox="0 0 24 24" class="svg-icon brand-svg"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+            <h2>DEEP SEA EXPLORER</h2>
+          </div>
+          <p class="modal-sub">Sunken Ruins Archaeology & Submarine Adventure</p>
+        </div>
+        <div class="modal-content">
+          <div class="menu-actions">
+            <button id="menu-btn-play" class="btn btn-primary btn-lg">
+              <svg viewBox="0 0 24 24" class="svg-icon"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span>COMMENCE EXPEDITION</span>
+            </button>
+            <button id="menu-btn-hangar" class="btn btn-secondary">
+              <svg viewBox="0 0 24 24" class="svg-icon"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+              <span>SUBMERSIBLE HANGAR (UPGRADES)</span>
+            </button>
+            <button id="menu-btn-guide" class="btn btn-secondary">
+              <svg viewBox="0 0 24 24" class="svg-icon"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span>ARCHAEOLOGY HANDBOOK & HAZARDS</span>
+            </button>
+          </div>
+          <div class="modal-stats-summary">
+            <div class="summary-card">
+              <span class="sum-num" id="sum-artifacts">0</span>
+              <span class="sum-lbl">Relics Excavated</span>
+            </div>
+            <div class="summary-card">
+              <span class="sum-num" id="sum-maxdepth">124m</span>
+              <span class="sum-lbl">Deepest Dive Record</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Submarine Hangar (Upgrades Workshop) -->
+    <div id="modal-hangar" class="game-modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-dialog wide-dialog">
+        <div class="modal-header">
+          <h2>SUBMERSIBLE WORKSHOP & UPGRADES</h2>
+          <p class="modal-sub">Spend collected Ocean Coins to reinforce your brass submarine and vintage diving equipment.</p>
+          <button class="modal-close" id="btn-close-hangar" aria-label="Close dialog">&times;</button>
+        </div>
+        <div class="modal-content">
+          <div class="hangar-currency-bar">
+            <span>AVAILABLE RESEARCH CREDITS:</span>
+            <span id="hangar-coins" class="coin-num">0 OCEAN COINS</span>
+          </div>
+
+          <div class="hangar-grid">
+            <!-- Oxygen Tanks Upgrade -->
+            <div class="upgrade-card" data-upgrade="oxygen">
+              <div class="upgrade-top">
+                <span class="upgrade-title">Auxiliary Oxygen Tanks</span>
+                <span class="upgrade-tier" id="tier-oxygen">Tier 0/3</span>
+              </div>
+              <p class="upgrade-desc">High-pressure compressed air reserves. Increases dive endurance by +25% per tier.</p>
+              <button class="btn btn-secondary upgrade-cost-btn" id="btn-upgrade-oxygen">UPGRADE: 120 COINS</button>
+            </div>
+
+            <!-- Thruster Boost Upgrade -->
+            <div class="upgrade-card" data-upgrade="thruster">
+              <div class="upgrade-top">
+                <span class="upgrade-title">Brass Cavitation Turbines</span>
+                <span class="upgrade-tier" id="tier-thruster">Tier 0/3</span>
+              </div>
+              <p class="upgrade-desc">Refined bronze propeller blades and nitro turbines for +20% movement speed and fuel efficiency.</p>
+              <button class="btn btn-secondary upgrade-cost-btn" id="btn-upgrade-thruster">UPGRADE: 150 COINS</button>
+            </div>
+
+            <!-- Hull Armor Upgrade -->
+            <div class="upgrade-card" data-upgrade="hull">
+              <div class="upgrade-top">
+                <span class="upgrade-title">Reinforced Riveted Plating</span>
+                <span class="upgrade-tier" id="tier-hull">Tier 0/3</span>
+              </div>
+              <p class="upgrade-desc">Tempered heavy brass and steel armor plates to withstand boulder crashes, shark bites, and shock damage.</p>
+              <button class="btn btn-secondary upgrade-cost-btn" id="btn-upgrade-hull">UPGRADE: 180 COINS</button>
+            </div>
+
+            <!-- Sonar Pulse Array Upgrade -->
+            <div class="upgrade-card" data-upgrade="sonar">
+              <div class="upgrade-top">
+                <span class="upgrade-title">Acoustic Sonar Transceiver</span>
+                <span class="upgrade-tier" id="tier-sonar">Tier 0/3</span>
+              </div>
+              <p class="upgrade-desc">Wide-band acoustic transceiver expanding sonar scan radius by +30% and highlighting coins, relics, and hazards.</p>
+              <button class="btn btn-secondary upgrade-cost-btn" id="btn-upgrade-sonar">UPGRADE: 140 COINS</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Archaeology Handbook & Hazards -->
+    <div id="modal-guide" class="game-modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h2>ARCHAEOLOGIST'S SURVIVAL GUIDE</h2>
+          <p class="modal-sub">Oceanic navigation, coin collection, and environmental hazards.</p>
+          <button class="modal-close" id="btn-close-guide" aria-label="Close dialog">&times;</button>
+        </div>
+        <div class="modal-content">
+          <div class="guide-sections">
+            <p><strong>Golden Ocean Coins:</strong> Abundantly scattered in arcs and hidden paths throughout the ocean. Collect them to increase your expedition score and fund upgrades!</p>
+            <br>
+            <p><strong>Massive Boulders & Sea Rocks:</strong> Craggy underwater rock formations and boulders. High-speed collisions cause severe hull damage and bounce your craft back. Maneuver carefully!</p>
+            <br>
+            <p><strong>Dangerous Species:</strong></p>
+            <ul style="margin-left: 20px; margin-top: 6px; line-height: 1.5;">
+              <li><strong>Hunter Sharks:</strong> Aggressive deep predators that patrol trenches and pursue your vessel if you stray too close.</li>
+              <li><strong>Electrified Jellyfish:</strong> Pulsing luminescent jellyfish that discharge electric shocks, damaging hull and slowing propulsion.</li>
+              <li><strong>Spiky Sea Urchins:</strong> Venomous spines resting on boulder faces.</li>
+              <li><strong>Sunken Naval Mines:</strong> Chained explosive spheres that detonate upon contact!</li>
+            </ul>
+            <br>
+            <p><strong>Geothermal Vents & Repair Kits:</strong> Hover over rising bubble chimneys to replenish Oxygen; collect green nanite pods to repair your damaged hull.</p>
+          </div>
+          <button id="btn-guide-ok" class="btn btn-primary" style="margin-top: 14px; width: 100%;">READY TO DIVE</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Emergency Ascent / Game Over -->
+    <div id="modal-gameover" class="game-modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h2>EMERGENCY ASCENT TRIGGERED</h2>
+          <p class="modal-sub" id="gameover-reason">Catastrophic damage sustained. Emergency ballast fired.</p>
+        </div>
+        <div class="modal-content">
+          <div class="modal-stats-summary">
+            <div class="summary-card">
+              <span class="sum-num" id="go-score">0</span>
+              <span class="sum-lbl">Expedition Score</span>
+            </div>
+            <div class="summary-card">
+              <span class="sum-num" id="go-coins">0</span>
+              <span class="sum-lbl">Coins Collected</span>
+            </div>
+          </div>
+          <div class="menu-actions" style="margin-top: 14px;">
+            <button id="btn-restart" class="btn btn-primary btn-lg">
+              <svg viewBox="0 0 24 24" class="svg-icon"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+              <span>RE-LAUNCH EXPEDITION</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Mission Complete / Atlantis Gateway Activated -->
+    <div id="modal-victory" class="game-modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h2>ATLANTIS GATEWAY REACHED!</h2>
+          <p class="modal-sub">Successfully navigated the ocean abyss, avoided predators, and reached the ancient gateway!</p>
+        </div>
+        <div class="modal-content">
+          <div class="modal-stats-summary">
+            <div class="summary-card">
+              <span class="sum-num" id="vic-score">0</span>
+              <span class="sum-lbl">Final Score</span>
+            </div>
+            <div class="summary-card">
+              <span class="sum-num" id="vic-relics">6/6</span>
+              <span class="sum-lbl">Relics Preserved</span>
+            </div>
+          </div>
+          <div class="menu-actions" style="margin-top: 14px;">
+            <button id="btn-next-dive" class="btn btn-primary btn-lg">
+              <svg viewBox="0 0 24 24" class="svg-icon"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span>CONTINUE EXPEDITION</span>
+            </button>
+            <button id="btn-vic-hangar" class="btn btn-secondary">
+              <span>VISIT WORKSHOP (UPGRADES)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

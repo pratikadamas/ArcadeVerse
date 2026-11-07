@@ -1,0 +1,907 @@
+/* ==========================================================================
+   DEEP SEA EXPLORER - SUNKEN RUINS ARCHAEOLOGY & SUBMERSIBLE STYLESHEET
+   Antique brass steampunk & deep Atlantean ocean ruins aesthetic
+   ========================================================================== */
+
+:root {
+  /* Oceanic Palette */
+  --ocean-abyss: #040d1a;
+  --ocean-deep: #091c33;
+  --ocean-mid: #0e2a4a;
+  --ocean-surface: #143e68;
+  --ocean-cyan: #22d3ee;
+  --ocean-cyan-glow: rgba(34, 211, 238, 0.35);
+  --ocean-amber: #f59e0b;
+  --ocean-green: #10b981;
+  --ocean-red: #ef4444;
+
+  /* Antique Brass & Bronze Palette */
+  --brass-light: #fef08a;
+  --brass-gold: #eab308;
+  --brass-dark: #854d0e;
+  --brass-rim: #ca8a04;
+  --brass-gradient: linear-gradient(135deg, #fef08a 0%, #eab308 50%, #854d0e 100%);
+  --brass-panel-bg: rgba(9, 28, 51, 0.92);
+
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+  --text-gold: #fde047;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --radius-full: 9999px;
+
+  --shadow-hud: 0 8px 30px rgba(0, 0, 0, 0.7), 0 0 15px rgba(34, 211, 238, 0.15);
+  --shadow-brass: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--ocean-abyss);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+#game-container {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  background: radial-gradient(circle at 50% 15%, #123d68 0%, #081d36 50%, #030a14 100%);
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   TOP HUD NAVIGATION (ANTIQUE BRASS & NAUTICAL TELEMETRY)
+   ========================================================================== */
+
+#top-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: rgba(7, 21, 38, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 2px solid var(--brass-rim);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  z-index: 50;
+  flex-shrink: 0;
+  height: 60px;
+  gap: 12px;
+}
+
+.hud-left, .hud-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hud-center {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  justify-content: center;
+  max-width: 680px;
+}
+
+.hud-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid var(--brass-rim);
+  color: var(--text-gold);
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  box-shadow: var(--shadow-brass);
+}
+
+.hud-btn:hover {
+  background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+  border-color: var(--brass-light);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.hud-btn:active {
+  transform: translateY(1px);
+}
+
+.hud-btn.icon-only {
+  padding: 7px;
+  border-radius: var(--radius-full);
+}
+
+.hud-btn.mode-btn {
+  background: linear-gradient(180deg, #854d0e 0%, #713f12 100%);
+  border: 1px solid var(--brass-light);
+  color: var(--brass-light);
+  box-shadow: 0 0 10px rgba(234, 179, 8, 0.3);
+}
+
+.hud-btn.mode-btn:hover {
+  background: linear-gradient(180deg, #a16207 0%, #854d0e 100%);
+  box-shadow: 0 0 15px rgba(234, 179, 8, 0.5);
+}
+
+.svg-icon {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  flex-shrink: 0;
+}
+
+.brand-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  background: radial-gradient(circle, #eab308 0%, #854d0e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--brass-light);
+  box-shadow: 0 0 10px rgba(234, 179, 8, 0.4);
+}
+
+.logo-icon .svg-icon {
+  stroke: #091c33;
+  width: 20px;
+  height: 20px;
+}
+
+.title-meta h1 {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: var(--brass-light);
+  text-shadow: 0 0 8px rgba(234, 179, 8, 0.4);
+  line-height: 1.1;
+}
+
+.title-meta .sub-tag {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--ocean-cyan);
+  letter-spacing: 1px;
+}
+
+/* Ocean World Exploration Distance Tracker */
+.ocean-progress-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(14, 42, 74, 0.85);
+  border: 1px solid var(--brass-rim);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+}
+
+.progress-bar-track {
+  width: 90px;
+  height: 6px;
+  background: rgba(15, 23, 42, 0.9);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.progress-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #eab308, #22d3ee);
+  border-radius: var(--radius-full);
+  transition: width 0.25s ease;
+  box-shadow: 0 0 6px var(--ocean-cyan);
+}
+
+.progress-text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-gold);
+  white-space: nowrap;
+}
+
+.depth-meter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(14, 42, 74, 0.85);
+  border: 1px solid var(--ocean-cyan);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+}
+
+.depth-meter .svg-icon {
+  width: 14px;
+  height: 14px;
+  stroke: var(--ocean-cyan);
+}
+
+.depth-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--ocean-cyan);
+  letter-spacing: 1px;
+}
+
+.depth-val {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(14, 42, 74, 0.85);
+  border: 1px solid var(--brass-rim);
+  padding: 5px 10px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.coin-pill {
+  color: var(--text-gold);
+  border-color: var(--brass-rim);
+}
+
+.coin-pill .svg-icon {
+  stroke: var(--text-gold);
+}
+
+.score-pill {
+  color: var(--ocean-cyan);
+  border-color: rgba(34, 211, 238, 0.4);
+}
+
+.score-pill .svg-icon {
+  stroke: var(--ocean-cyan);
+}
+
+.relic-pill {
+  color: #f472b6;
+  border-color: rgba(244, 114, 182, 0.4);
+}
+
+.relic-pill .svg-icon {
+  stroke: #f472b6;
+}
+
+.hud-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ==========================================================================
+   OCEAN VIEWPORT & RUINS CANVAS STAGE
+   ========================================================================== */
+
+#ocean-viewport {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 8px;
+}
+
+#canvas-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 1200px;
+  max-height: 720px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#ocean-canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #030b17;
+  border: 2px solid var(--brass-rim);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9), 0 0 20px rgba(34, 211, 238, 0.15);
+  display: block;
+}
+
+/* Red Danger Flash Overlay on Screen Damage */
+#damage-flash-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-md);
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(239, 68, 68, 0) 50%, rgba(239, 68, 68, 0.45) 100%);
+  opacity: 0;
+  transition: opacity 0.15s ease-out;
+  z-index: 30;
+}
+
+#damage-flash-overlay.active {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   COCKPIT TELEMETRY & BRASS DASHBOARD OVERLAY
+   ========================================================================== */
+
+#submarine-dashboard {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(7, 21, 38, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--brass-rim);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-hud);
+  min-width: 230px;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.dashboard-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.meter-title {
+  color: var(--text-muted);
+  flex: 1;
+  margin-left: 6px;
+}
+
+.meter-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.o2-icon { stroke: var(--ocean-cyan); }
+.fuel-icon { stroke: var(--brass-gold); }
+.hull-icon { stroke: var(--ocean-green); }
+
+.meter-val {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.meter-bar-track {
+  width: 100%;
+  height: 7px;
+  background: rgba(15, 23, 42, 0.9);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.meter-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.2s ease, background-color 0.3s ease;
+}
+
+.fill-cyan { background: linear-gradient(90deg, #0284c7, #22d3ee); box-shadow: 0 0 8px var(--ocean-cyan); }
+.fill-orange { background: linear-gradient(90deg, #b45309, #f59e0b); box-shadow: 0 0 8px #f59e0b; }
+.fill-green { background: linear-gradient(90deg, #059669, #10b981); box-shadow: 0 0 8px #10b981; }
+
+.dashboard-subsystems {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(234, 179, 8, 0.2);
+}
+
+.subsystem-pill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.subsystem-key {
+  background: #334155;
+  color: var(--text-gold);
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  border: 1px solid var(--brass-rim);
+}
+
+.subsystem-label {
+  color: var(--text-muted);
+}
+
+.cooldown-dial {
+  color: var(--ocean-cyan);
+  font-family: var(--font-mono);
+  font-weight: 800;
+}
+
+.cooldown-dial.charging {
+  color: var(--ocean-amber);
+}
+
+/* Mode Badge In Cockpit */
+.pilot-mode-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(133, 77, 14, 0.3);
+  border: 1px solid var(--brass-rim);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-gold);
+}
+
+/* Floating Live Alerts Container */
+#ocean-alerts-container {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.ocean-toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(9, 28, 51, 0.95);
+  border: 1px solid var(--brass-rim);
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-gold);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+  animation: slideInToast 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.ocean-toast.success {
+  border-color: #10b981;
+  color: #6ee7b7;
+}
+
+.ocean-toast.warning {
+  border-color: #f59e0b;
+  color: #fde047;
+}
+
+.ocean-toast.danger {
+  border-color: #ef4444;
+  color: #fca5a5;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+}
+
+@keyframes slideInToast {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Interaction Prompt Overlay */
+#interaction-prompt {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(7, 21, 38, 0.95);
+  border: 2px solid var(--brass-gold);
+  box-shadow: 0 0 20px rgba(234, 179, 8, 0.4);
+  padding: 8px 18px;
+  border-radius: var(--radius-full);
+  pointer-events: none;
+  z-index: 45;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+#interaction-prompt.hidden {
+  opacity: 0;
+  transform: translate(-50%, 15px);
+  pointer-events: none;
+}
+
+.prompt-key {
+  background: var(--brass-gold);
+  color: #091c33;
+  font-family: var(--font-mono);
+  font-weight: 900;
+  font-size: 12px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.prompt-text {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--brass-light);
+}
+
+/* ==========================================================================
+   BOTTOM CONTROLS & OBJECTIVE DOCK
+   ========================================================================== */
+
+#bottom-dock {
+  background: rgba(7, 21, 38, 0.95);
+  border-top: 1px solid var(--brass-rim);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  z-index: 50;
+}
+
+.dock-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 16px;
+}
+
+.dock-control-hints {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.hint-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+kbd {
+  background: #1e293b;
+  border: 1px solid var(--brass-rim);
+  color: var(--text-gold);
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.dock-objective {
+  font-weight: 700;
+  color: var(--ocean-cyan);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   MODAL WINDOWS & ARCHAEOLOGY ARCHIVE DIALOGS
+   ========================================================================== */
+
+.game-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.game-modal.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 10, 20, 0.85);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.modal-dialog {
+  position: relative;
+  background: linear-gradient(180deg, #0c233c 0%, #061528 100%);
+  border: 2px solid var(--brass-rim);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.8), 0 0 25px rgba(234, 179, 8, 0.25);
+  width: 100%;
+  max-width: 480px;
+  padding: 24px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-dialog.wide-dialog {
+  max-width: 660px;
+}
+
+.modal-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+  border-bottom: 1px solid rgba(234, 179, 8, 0.25);
+  padding-bottom: 12px;
+}
+
+.modal-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-brand .brand-svg {
+  width: 28px;
+  height: 28px;
+  stroke: var(--brass-light);
+}
+
+.modal-header h2 {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: var(--brass-light);
+}
+
+.modal-sub {
+  font-size: 12px;
+  color: var(--ocean-cyan);
+}
+
+.modal-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text-dim);
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.modal-close:hover {
+  color: var(--text-main);
+}
+
+.menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: var(--brass-gradient);
+  color: #091c33;
+  border-color: var(--brass-light);
+  box-shadow: 0 4px 15px rgba(234, 179, 8, 0.4);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(234, 179, 8, 0.6);
+  filter: brightness(1.1);
+}
+
+.btn-secondary {
+  background: rgba(15, 23, 42, 0.8);
+  border-color: var(--brass-rim);
+  color: var(--text-gold);
+}
+
+.btn-secondary:hover {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: var(--brass-light);
+  color: #ffffff;
+}
+
+.btn-lg {
+  padding: 14px 20px;
+  font-size: 15px;
+}
+
+.modal-stats-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.summary-card {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(234, 179, 8, 0.2);
+  padding: 10px;
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.sum-num {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--text-gold);
+}
+
+.sum-lbl {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* Hangar & Upgrade Items */
+.hangar-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.upgrade-card {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(234, 179, 8, 0.25);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.upgrade-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.upgrade-title {
+  font-weight: 800;
+  font-size: 12px;
+  color: var(--text-gold);
+}
+
+.upgrade-tier {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ocean-cyan);
+}
+
+.upgrade-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.upgrade-cost-btn {
+  margin-top: 4px;
+  width: 100%;
+}
+
+.hangar-currency-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(14, 42, 74, 0.7);
+  border: 1px solid var(--brass-rim);
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  color: var(--text-gold);
+  margin-bottom: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .title-meta .sub-tag { display: none; }
+  .dock-control-hints { display: none; }
+  #submarine-dashboard { min-width: 180px; }
+  .hangar-grid { grid-template-columns: 1fr; }
+  .ocean-progress-wrapper { display: none; }
+}
+
+.hidden {
+  display: none !important;
+}
