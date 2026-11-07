@@ -1,0 +1,22 @@
+{
+  "title": "Robo Factory",
+  "category": "Puzzle",
+  "lucideIcon": "bot",
+  "description": "Design efficient factory assembly lines with conveyor belts, cutters, assemblers, painters, and packers to automate robot production and deliver orbital orders.",
+  "author": "mistu7debnath",
+  "github": "mistu7debnath",
+  "role": "Arcade Developer",
+  "tags": [
+    "Puzzle",
+    "Automation",
+    "Strategy",
+    "Simulation",
+    "Robotics",
+    "NSOC26"
+  ],
+  "stars": 25,
+  "featured": true,
+  "difficulty": "All Skill Levels",
+  "releaseDate": "2026-11-07"
+}
+
