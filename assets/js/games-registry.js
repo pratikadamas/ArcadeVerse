@@ -1925,6 +1925,29 @@ const GAMES_REGISTRY = [
     "difficulty": "Medium"
   },
   {
+    "id": "robo-factory_mistu7debnath",
+    "title": "Robo Factory",
+    "category": "Puzzle",
+    "lucideIcon": "bot",
+    "description": "Design efficient factory assembly lines with conveyor belts, cutters, assemblers, painters, and packers to automate robot production and deliver orbital orders.",
+    "author": "Manisha Debnath",
+    "github": "mistu7debnath",
+    "role": "Arcade Developer",
+    "path": "games/robo-factory_mistu7debnath/index.html",
+    "tags": [
+      "Puzzle",
+      "Automation",
+      "Strategy",
+      "Simulation",
+      "Robotics",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": true,
+    "difficulty": "All Skill Levels",
+    "releaseDate": "2026-11-07"
+  },
+  {
     "id": "solar-flare_babin",
     "title": "Solar Flare: Stellar Shield Defense",
     "category": "Arcade / Defense",
@@ -2177,7 +2200,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 387,
+    "commits": 392,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2310,8 +2333,8 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "mistu7debnath",
     "avatarInitial": "M",
     "role": "Contributor (NSOC '26)",
-    "commits": 14,
-    "gamesCount": 7,
+    "commits": 15,
+    "gamesCount": 8,
     "mechanicsBonus": 1,
     "platformPRs": 0,
     "qualityPRs": 0,
@@ -2323,6 +2346,7 @@ const CONTRIBUTORS_REGISTRY = [
       "Fishing Frenzy",
       "Flappy Cyber Jet",
       "Neon Grid Defense: Core Protocol",
+      "Robo Factory",
       "Time Warp: Chrono Shift"
     ]
   },
