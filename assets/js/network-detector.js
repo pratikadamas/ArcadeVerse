@@ -143,6 +143,50 @@
 
     isOnline() {
       return navigator.onLine;
+    },
+
+    /**
+     * Cross-Origin & CDN Asset Health Verifier (#494)
+     * Performs non-blocking probes on critical CDNs and webfonts to detect CORS drops
+     */
+    verifyCORSResource(url, timeoutMs = 2500) {
+      if (!url || typeof url !== 'string') return Promise.resolve(false);
+      return new Promise((resolve) => {
+        let timedOut = false;
+        const timer = setTimeout(() => {
+          timedOut = true;
+          resolve(false);
+        }, timeoutMs);
+
+        try {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            if (!timedOut) {
+              clearTimeout(timer);
+              resolve(true);
+            }
+          };
+          img.onerror = () => {
+            if (!timedOut) {
+              clearTimeout(timer);
+              resolve(false);
+            }
+          };
+          img.src = url;
+        } catch (_) {
+          clearTimeout(timer);
+          resolve(false);
+        }
+      });
+    },
+
+    /**
+     * Report CDN resource failure and register system typography fallback
+     */
+    reportCDNFailure(resourceName) {
+      console.warn([ArcadeNetwork] Cross-origin CDN resource unreachable or blocked: . Utilizing local bundle assets.);
+      document.documentElement.classList.add('cdn-fallback-active');
     }
   };
 

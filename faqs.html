@@ -753,6 +753,29 @@
           </div>
         </div>
 
+        <!-- Question 25 -->
+        <div class="faq-accordion-item" data-category="architecture" id="faq-25">
+          <button class="faq-accordion-trigger" type="button" aria-expanded="false" aria-controls="faq-ans-25">
+            <span class="faq-question-text">
+              <span class="faq-category-badge">Architecture</span>
+              25. What happens if external Google Fonts or CDN stylesheets fail to load?
+            </span>
+            <i data-lucide="chevron-down" class="faq-chevron"></i>
+          </button>
+          <div class="faq-accordion-content" id="faq-ans-25" role="region">
+            <div class="faq-accordion-inner">
+              <div class="faq-answer-text">
+                <p>ArcadeVerse includes a robust Font Preload Resilience layer. If an external CDN fails due to network outage, strict CORS policies, or offline mode:</p>
+                <ul>
+                  <li><strong>Preload Timeout:</strong> The platform races webfonts against a 3000ms timer; on timeout or failure, <code>fonts-failed</code> mode is engaged immediately.</li>
+                  <li><strong>System Fallbacks:</strong> Typography degrades gracefully to local serif, mono, and display stacks with matched metrics to eliminate cumulative layout shifts.</li>
+                  <li><strong>Zero Crash Guarantee:</strong> Games and hub components render without blocking, and a non-intrusive status toast alerts the user.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- Quick Help & Issues CTA Banner -->

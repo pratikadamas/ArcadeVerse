@@ -438,6 +438,7 @@ Before submitting your PR to me, make sure every box is checked:
 - [ ] Games are strictly and mandatorily inside `games/<game-name_your-name>/` *(games folder ei game create mandatory)*
 - [ ] Game contains **ONLY** `index.html`, `style.css`, `game.js`, and `game.json` (strictly 4 files — no `README.md`, no documentation files, and no extraneous assets/binaries)
 - [ ] Used **icons only (SVG / Lucide)** in the game UI — **NO emojis**
+- [ ] Ensure font imports define system fallback stacks (e.g. ont-display: swap; font-family: 'Marker', cursive, sans-serif;) to prevent CORS/offline preload failures
 - [ ] Added `game.json` (I have **NOT** edited `assets/js/games-registry.js` or `index.html`)
 - [ ] I ran `node scripts/validate-games.js` (or `npm run validate`) locally and confirmed zero errors
 - [ ] The PR says `Closes #issue-number` with a short summary

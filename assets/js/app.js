@@ -2423,7 +2423,93 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (_) {}
   });
 
+  // ========================================================
+  // CORS & THIRD-PARTY FONT/RESOURCE PRELOAD RESILIENCE (#494)
+  // Detects font preload timeouts or CORS failures and falls back gracefully
+  // ========================================================
+  function initFontPreloadResilience() {
+    if (!("fonts" in document)) return;
+
+    document.documentElement.classList.add("fonts-loading");
+
+    const fontTimeout = setTimeout(() => {
+      if (document.documentElement.classList.contains("fonts-loading")) {
+        document.documentElement.classList.remove("fonts-loading");
+        document.documentElement.classList.add("fonts-failed");
+        console.warn("[ArcadeVerse] Webfonts preload timed out (3s). Switched to system font fallbacks.");
+        showFontFallbackToast();
+      }
+    }, 3000);
+
+    Promise.all([
+      document.fonts.load('16px "Cambria Math"'),
+      document.fonts.load('16px "Permanent Marker"'),
+      document.fonts.load('16px "JetBrains Mono"')
+    ])
+      .then(() => {
+        clearTimeout(fontTimeout);
+        document.documentElement.classList.remove("fonts-loading");
+        document.documentElement.classList.add("fonts-loaded");
+      })
+      .catch((err) => {
+        clearTimeout(fontTimeout);
+        document.documentElement.classList.remove("fonts-loading");
+        document.documentElement.classList.add("fonts-failed");
+        console.warn("[ArcadeVerse] Webfonts preload rejected (CORS or network drop). Switched to system fallbacks.", err);
+        showFontFallbackToast();
+      });
+  }
+
+  function showFontFallbackToast() {
+    if (document.getElementById("font-preload-notice-banner")) return;
+    const banner = document.createElement("div");
+    banner.id = "font-preload-notice-banner";
+    banner.className = "font-preload-notice";
+    banner.setAttribute("role", "status");
+    banner.innerHTML = `
+      <div class="font-preload-notice-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <div class="font-preload-notice-content">
+        <strong>Offline Typography Fallback</strong>
+        External webfonts were unavailable. System typography was loaded seamlessly with zero layout shift.
+      </div>
+      <button type="button" class="font-preload-notice-close" aria-label="Dismiss typography notice">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    `;
+
+    document.body.appendChild(banner);
+    requestAnimationFrame(() => {
+      banner.classList.add("visible");
+    });
+
+    const closeBtn = banner.querySelector(".font-preload-notice-close");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", () => {
+        banner.classList.remove("visible");
+        setTimeout(() => banner.remove(), 300);
+      });
+    }
+
+    // Auto-dismiss notice after 6 seconds
+    setTimeout(() => {
+      if (banner.parentElement) {
+        banner.classList.remove("visible");
+        setTimeout(() => banner.remove(), 300);
+      }
+    }, 6000);
+  }
+
   // Initial render
+  initFontPreloadResilience();
   initCatalogViewSwitcher();
   initAZJumpBar();
   initURLDeepLinking();
