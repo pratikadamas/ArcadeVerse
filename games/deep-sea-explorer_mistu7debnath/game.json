@@ -1,0 +1,22 @@
+{
+  "title": "Deep Sea Explorer",
+  "category": "Adventure",
+  "lucideIcon": "compass",
+  "description": "Pilot a research submarine into uncharted ocean depths, navigate treacherous coral caverns, manage vital oxygen and fuel, and unearth ancient sunken treasures.",
+  "author": "mistu7debnath",
+  "github": "mistu7debnath",
+  "role": "Arcade Developer",
+  "tags": [
+    "Adventure",
+    "Submarine",
+    "Underwater",
+    "Exploration",
+    "Survival",
+    "NSOC26"
+  ],
+  "stars": 25,
+  "featured": true,
+  "difficulty": "All Skill Levels",
+  "releaseDate": "2026-11-07"
+}
+
