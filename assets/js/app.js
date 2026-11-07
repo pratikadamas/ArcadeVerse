@@ -34,6 +34,13 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentTagFilter = "";
   let searchQuery = "";
   let currentSort = "featured";
+  const CATALOG_SORT_STORAGE_KEY = "arcadeverse_catalog_sort";
+  try {
+    const savedSort = localStorage.getItem(CATALOG_SORT_STORAGE_KEY);
+    if (savedSort && ["featured", "az", "za", "rating", "newest", "difficulty", "difficulty-desc"].includes(savedSort)) {
+      currentSort = savedSort;
+    }
+  } catch (_) {}
   const CATALOG_VIEW_STORAGE_KEY = "arcadeverse_catalog_view";
   let currentCatalogView = "grid";
   try {
@@ -515,14 +522,53 @@ document.addEventListener("DOMContentLoaded", () => {
       return matchesCategory && matchesSearch && matchesDuration && matchesControls && matchesTag && matchesLetter;
     });
 
+    function getDifficultyRank(game) {
+      if (!game) return 2;
+      const raw = String(game.difficulty || "").toLowerCase().trim();
+      if (raw.includes("easy") || raw.includes("beginner") || raw.includes("all skill") || raw.includes("casual")) return 1;
+      if (raw.includes("hard") || raw.includes("advanced") || raw.includes("expert") || raw.includes("survival")) return 3;
+      if (raw.includes("medium") || raw.includes("intermediate")) return 2;
+
+      const text = (String(game.title || "") + " " + String(game.category || "") + " " + (Array.isArray(game.tags) ? game.tags.join(" ") : "") + " " + String(game.description || "")).toLowerCase();
+      if (text.includes("easy") || text.includes("casual") || text.includes("relaxing") || text.includes("simple") || text.includes("calm") || text.includes("clicker")) return 1;
+      if (text.includes("expert") || text.includes("hardcore") || text.includes("insane") || text.includes("complex") || text.includes("rpg") || text.includes("hard") || text.includes("survival") || text.includes("roguelike")) return 3;
+      return 2;
+    }
+
+    function getGameReleaseTime(game) {
+      if (!game) return 0;
+      if (game.releaseDate) {
+        const t = new Date(game.releaseDate).getTime();
+        if (!isNaN(t)) return t;
+      }
+      return 0;
+    }
+
     // Apply Sorting
     filtered.sort((a, b) => {
       if (currentSort === "az") {
         return a.title.localeCompare(b.title);
+      } else if (currentSort === "za") {
+        return b.title.localeCompare(a.title);
       } else if (currentSort === "rating") {
         const rA = (window.GameRatings && window.GameRatings.ratings[a.id]) || (a.stars ? (a.stars / 10) : 5.0);
         const rB = (window.GameRatings && window.GameRatings.ratings[b.id]) || (b.stars ? (b.stars / 10) : 5.0);
         if (rB !== rA) return rB - rA;
+        return a.title.localeCompare(b.title);
+      } else if (currentSort === "newest") {
+        const timeA = getGameReleaseTime(a);
+        const timeB = getGameReleaseTime(b);
+        if (timeB !== timeA) return timeB - timeA;
+        return a.title.localeCompare(b.title);
+      } else if (currentSort === "difficulty") {
+        const diffA = getDifficultyRank(a);
+        const diffB = getDifficultyRank(b);
+        if (diffA !== diffB) return diffA - diffB;
+        return a.title.localeCompare(b.title);
+      } else if (currentSort === "difficulty-desc") {
+        const diffA = getDifficultyRank(a);
+        const diffB = getDifficultyRank(b);
+        if (diffB !== diffA) return diffB - diffA;
         return a.title.localeCompare(b.title);
       } else {
         // "featured": featured items first, then by rating / title
@@ -1273,8 +1319,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Sort Selector Change
   if (sortSelect) {
+    sortSelect.value = currentSort;
     sortSelect.addEventListener("change", (e) => {
       currentSort = e.target.value;
+      try {
+        localStorage.setItem(CATALOG_SORT_STORAGE_KEY, currentSort);
+      } catch (_) {}
       renderGames();
     });
   }

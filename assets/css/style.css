@@ -1173,6 +1173,12 @@ textarea:focus-visible,
   cursor: pointer;
 }
 
+.sort-select:focus-visible {
+  outline: 2px solid var(--accent-primary, #6366f1);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs, 4px);
+}
+
 .sort-select option {
   background: #131722;
   color: #f8fafc;
