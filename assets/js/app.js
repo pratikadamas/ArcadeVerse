@@ -94,6 +94,85 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // =========================================================================
+  // XSS PREVENTION & ATTRIBUTE SANITIZATION UTILITIES (#491)
+  // =========================================================================
+  const ArcadeSanitizer = (function () {
+    // Permitted Lucide icon names whitelist to prevent arbitrary attribute or SVG injection
+    const LUCIDE_ICON_WHITELIST = new Set([
+      "gamepad-2", "gamepad", "play", "play-circle", "trophy", "star",
+      "heart", "heart-crack", "search", "x", "refresh-cw", "maximize",
+      "maximize-2", "minimize", "external-link", "volume-2", "volume-x",
+      "moon", "sun", "help-circle", "file-code-2", "book-open", "chevron-down",
+      "chevron-up", "chevron-right", "chevron-left", "shield", "cpu",
+      "zap", "award", "crown", "sparkles", "compass", "target", "crosshair",
+      "dices", "layers", "timer", "clock", "hash", "code", "terminal",
+      "user", "users", "tag", "tags", "filter", "check", "info", "alert-triangle",
+      "alert-circle", "eye", "eye-off", "lock", "unlock", "power", "sliders",
+      "copy", "download", "folder", "flame", "skull", "ghost", "radar"
+    ]);
+
+    /**
+     * Pure vanilla HTML entity encoder for text content
+     * Encodes &, <, >, ", ', and ` to neutralize HTML injection
+     */
+    function escapeHTML(str) {
+      if (str === null || str === undefined) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;")
+        .replace(/`/g, "&#96;");
+    }
+
+    /**
+     * Attribute-safe encoder for HTML attributes (title="...", data-*, aria-*)
+     * Strictly neutralizes quote breakout characters and control characters
+     */
+    function escapeAttr(str) {
+      if (str === null || str === undefined) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/`/g, "&#96;")
+        .replace(/=/g, "&#61;");
+    }
+
+    /**
+     * Validates and returns a safe Lucide icon name from the strict whitelist
+     */
+    function sanitizeIconName(name) {
+      if (!name || typeof name !== "string") return "gamepad-2";
+      const cleanName = name.trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
+      return LUCIDE_ICON_WHITELIST.has(cleanName) ? cleanName : "gamepad-2";
+    }
+
+    /**
+     * Generates a safe whitelisted Lucide icon HTML tag
+     */
+    function renderSafeIcon(name, extraClass = "") {
+      const safeName = sanitizeIconName(name);
+      const safeClass = escapeAttr(extraClass);
+      return `<i data-lucide="${safeName}" class="${safeClass}"></i>`;
+    }
+
+    return {
+      escapeHTML,
+      escapeAttr,
+      sanitizeIconName,
+      renderSafeIcon,
+      LUCIDE_ICON_WHITELIST
+    };
+  })();
+
+  window.ArcadeSanitizer = ArcadeSanitizer;
+  const { escapeHTML, escapeAttr, sanitizeIconName, renderSafeIcon } = ArcadeSanitizer;
+
   // Search & filter UI element refs
   const searchClearBtn = document.getElementById("search-clear-btn");
   const resultsCountEl = document.getElementById("catalog-results-count");
@@ -1000,11 +1079,17 @@ document.addEventListener("DOMContentLoaded", () => {
     filtered.forEach((game) => {
       const card = document.createElement("div");
       card.className = "game-card";
-      card.setAttribute("data-game-id", game.id);
-      const iconName = game.lucideIcon || "gamepad-2";
-      const iconHtml = `<i data-lucide="${iconName}"></i>`;
+      card.setAttribute("data-game-id", escapeAttr(game.id));
+      const safeGameId = escapeAttr(game.id);
+      const safeTitle = escapeHTML(game.title);
+      const safeCategory = escapeHTML(game.category);
+      const safeDesc = escapeHTML(game.description || "");
+      const safeAuthor = escapeHTML(game.author || game.github || "Contributor");
+      const safeGithub = escapeHTML(game.github || game.author || "Contributor");
+      const safeAuthorAttr = escapeAttr(game.author || game.github || "Contributor");
+      const iconHtml = renderSafeIcon(game.lucideIcon || "gamepad-2");
       const favorited = favs.has(game.id);
-      const actionText = 'Play Now <i data-lucide="play" style="width: 13px; height: 13px; vertical-align: middle; margin-left: 2px;"></i>';
+      const actionText = `Play Now ${renderSafeIcon("play", "btn-play-icon")}`;
 
       const userRating = (window.GameRatings && window.GameRatings.ratings[game.id]) || null;
       const displayScore = userRating ? Number(userRating).toFixed(1) : (game.stars ? (game.stars / 10).toFixed(1) : "5.0");
@@ -1023,9 +1108,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       card.innerHTML = `
         <div class="game-card-preview">
-          <span class="game-category-tag">${game.category}</span>
+          <span class="game-category-tag">${safeCategory}</span>
           ${halloweenBadgeHtml}
-          <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${game.id}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
+          <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
               <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
             </svg>
@@ -1033,26 +1118,26 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="game-icon">${iconHtml}</div>
         </div>
         <div class="game-card-body">
-          <h3 class="game-card-title">${game.title}${halloweenTitleBadge}</h3>
-          <p class="game-card-desc">${game.description}</p>
+          <h3 class="game-card-title">${safeTitle}${halloweenTitleBadge}</h3>
+          <p class="game-card-desc">${safeDesc}</p>
           <div class="game-card-rating-row">
-            <div class="game-rating-stars" data-game-id="${game.id}" aria-label="Rating for ${game.title}">
+            <div class="game-rating-stars" data-game-id="${safeGameId}" aria-label="Rating for ${escapeAttr(game.title)}">
               ${[1, 2, 3, 4, 5].map(starNum => `
-                <button type="button" class="rate-star-btn ${currentStar >= starNum ? 'voted' : ''}" data-game="${game.id}" data-star="${starNum}" title="Rate ${starNum} star${starNum > 1 ? 's' : ''}" aria-label="Rate ${starNum} stars">
+                <button type="button" class="rate-star-btn ${currentStar >= starNum ? 'voted' : ''}" data-game="${safeGameId}" data-star="${starNum}" title="Rate ${starNum} star${starNum > 1 ? 's' : ''}" aria-label="Rate ${starNum} stars">
                   <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                 </button>
               `).join('')}
-              <span class="rating-badge">${displayScore}</span>
+              <span class="rating-badge">${escapeHTML(displayScore)}</span>
             </div>
           </div>
           <div class="game-card-footer">
             <div class="contributor-meta">
-              <div class="contributor-avatar">${(game.author || game.github || "A").charAt(0).toUpperCase()}</div>
+              <div class="contributor-avatar">${escapeHTML((game.author || game.github || "A").charAt(0).toUpperCase())}</div>
               <div class="contributor-name">
-                <button type="button" class="author-filter-btn" data-author="${game.author || game.github}" title="Filter games by ${game.author || game.github}" aria-label="Filter games by author ${game.author || game.github}">by @${game.github || game.author}</button>
+                <button type="button" class="author-filter-btn" data-author="${safeAuthorAttr}" title="Filter games by ${safeAuthorAttr}" aria-label="Filter games by author ${safeAuthorAttr}">by @${safeGithub}</button>
               </div>
             </div>
-            <button class="btn-play-trigger" data-id="${game.id}">${actionText}</button>
+            <button class="btn-play-trigger" data-id="${safeGameId}">${actionText}</button>
           </div>
         </div>
       `;
@@ -1652,15 +1737,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let activeSuggestionIndex = -1;
   let currentSuggestions = [];
 
-  function escapeHTML(str) {
-    return String(str || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
-
   function escapeRegex(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
@@ -1791,7 +1867,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .map((game, idx) => {
         const catBadge = game.category ? game.category.split("/")[0].trim() : "Game";
         const authorHandle = game.github || game.author || "";
-        const iconName = game.lucideIcon || "gamepad-2";
+        const iconName = sanitizeIconName(game.lucideIcon || "gamepad-2");
 
         return `
           <li class="autocomplete-item"
@@ -1800,7 +1876,7 @@ document.addEventListener("DOMContentLoaded", () => {
               data-index="${idx}"
               aria-selected="false">
             <div class="autocomplete-icon-wrap" aria-hidden="true">
-              <i data-lucide="${escapeHTML(iconName)}"></i>
+              ${renderSafeIcon(iconName)}
             </div>
             <div class="autocomplete-content">
               <div class="autocomplete-title-row">

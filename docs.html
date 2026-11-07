@@ -511,7 +511,8 @@ jobs:
           <ul>
             <li><strong>Protected Root Isolation:</strong> Ensures no community PR inadvertently edits protected runtime files (e.g. <code>assets/js/games-registry.js</code>, <code>index.html</code>, or <code>leaderboard.html</code>).</li>
             <li><strong>Zero Broken Relative Links:</strong> Asserts that every local image, stylesheet, script, and audio resource exists on the file system.</li>
-            <li><strong>SVG Standard:</strong> Rejects unicode emojis across game scripts and stylesheets to maintain a consistent cyber-arcade aesthetic.</li>
+            <li><strong>SVG Standard & Whitelisted Icons:</strong> Rejects unicode emojis across game scripts and stylesheets to maintain a consistent cyber-arcade aesthetic, and restricts icon names to verified whitelisted Lucide SVGs (#491).</li>
+            <li><strong>XSS & Attribute Breakout Sanitization:</strong> Ensures all dynamic game titles, author handles, and descriptions in <code>game.json</code> are stripped of raw angle brackets and unescaped quote delimiters before catalog rendering (#491).</li>
             <li><strong>Schema Conformance:</strong> Asserts that mandatory metadata fields (<code>title</code>, <code>category</code>, <code>description</code>, <code>author</code>, <code>github</code>) exist in <code>game.json</code>.</li>
           </ul>
         </section>
