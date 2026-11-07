@@ -266,23 +266,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 2. Dedicated Game Developer Tier (Based on Verified Games in 'games/' folder)
     const gamesCount = user.gamesCount || 0;
-    if (gamesCount >= 50) {
+    if (gamesCount >= 100) {
+      badges.push({
+        role: "Arcade Omnipresent Primordial",
+        tagClass: "role-omnipresent-primordial",
+        label: "Arcade Omnipresent Primordial",
+        lucideIcon: "crown",
+        category: "Games Dedicated",
+        requirement: "Requires 100+ Verified Games in 'games/' folder"
+      });
+    } else if (gamesCount >= 75) {
+      badges.push({
+        role: "Celestial Game Deity",
+        tagClass: "role-celestial-deity",
+        label: "Celestial Game Deity",
+        lucideIcon: "sparkles",
+        category: "Games Dedicated",
+        requirement: "Requires 75–99 Verified Games in 'games/' folder"
+      });
+    } else if (gamesCount >= 55) {
+      badges.push({
+        role: "Mythic Overlord Architect",
+        tagClass: "role-mythic-overlord",
+        label: "Mythic Overlord Architect",
+        lucideIcon: "zap",
+        category: "Games Dedicated",
+        requirement: "Requires 55–74 Verified Games in 'games/' folder"
+      });
+    } else if (gamesCount >= 40) {
       badges.push({
         role: "Legendary Game Architect",
         tagClass: "role-legendary-architect",
         label: "Legendary Game Architect",
         lucideIcon: "crown",
         category: "Games Dedicated",
-        requirement: "Requires 50+ Verified Games in 'games/' folder"
-      });
-    } else if (gamesCount >= 35) {
-      badges.push({
-        role: "Mythic Game Creator",
-        tagClass: "role-mythic-creator",
-        label: "Mythic Game Creator",
-        lucideIcon: "flame",
-        category: "Games Dedicated",
-        requirement: "Requires 35–49 Verified Games in 'games/' folder"
+        requirement: "Requires 40–54 Verified Games in 'games/' folder"
       });
     } else if (gamesCount >= 25) {
       badges.push({
@@ -291,7 +309,7 @@ document.addEventListener("DOMContentLoaded", () => {
         label: "Grandmaster Game Designer",
         lucideIcon: "award",
         category: "Games Dedicated",
-        requirement: "Requires 25–34 Verified Games in 'games/' folder"
+        requirement: "Requires 25–39 Verified Games in 'games/' folder"
       });
     } else if (gamesCount >= 15) {
       badges.push({
@@ -316,7 +334,7 @@ document.addEventListener("DOMContentLoaded", () => {
         role: "Hyper Game Developer",
         tagClass: "role-hyper",
         label: "Hyper Game Developer",
-        lucideIcon: "zap",
+        lucideIcon: "flame",
         category: "Games Dedicated",
         requirement: "Requires 7–9 Verified Games in 'games/' folder"
       });
@@ -361,68 +379,86 @@ document.addEventListener("DOMContentLoaded", () => {
     // 3. Platform & Universal Engineering Track (Directly bound to In-App Arcade Score)
     const score = calculateScore(user);
 
-    if (score >= 5000) {
+    if (score >= 15000) {
+      badges.push({
+        role: "Singularity Sovereign Architect",
+        tagClass: "role-singularity-sovereign",
+        label: "Singularity Sovereign Architect",
+        lucideIcon: "crown",
+        category: "Platform & Core",
+        requirement: "Requires 15,000+ Arcade Points"
+      });
+    } else if (score >= 10000) {
+      badges.push({
+        role: "Apex Core Pioneer",
+        tagClass: "role-apex-core",
+        label: "Apex Core Pioneer",
+        lucideIcon: "gem",
+        category: "Platform & Core",
+        requirement: "Requires 10,000–14,999 Arcade Points"
+      });
+    } else if (score >= 7500) {
       badges.push({
         role: "Immortal Arcade Legend",
         tagClass: "role-immortal",
         label: "Immortal Arcade Legend",
         lucideIcon: "sparkles",
         category: "Platform & Core",
-        requirement: "Requires 5,000+ Arcade Points"
+        requirement: "Requires 7,500–9,999 Arcade Points"
       });
-    } else if (score >= 3000) {
+    } else if (score >= 5000) {
       badges.push({
         role: "Grandmaster Core Architect",
         tagClass: "role-grandmaster-core",
         label: "Grandmaster Core Architect",
-        lucideIcon: "gem",
+        lucideIcon: "award",
         category: "Platform & Core",
-        requirement: "Requires 3,000–4,999 Arcade Points"
+        requirement: "Requires 5,000–7,499 Arcade Points"
       });
-    } else if (score >= 2000) {
+    } else if (score >= 3000) {
       badges.push({
         role: "Master Core Architect",
         tagClass: "role-master",
         label: "Master Core Architect",
         lucideIcon: "shield-check",
         category: "Platform & Core",
-        requirement: "Requires 2,000–2,999 Arcade Points"
+        requirement: "Requires 3,000–4,999 Arcade Points"
       });
-    } else if (score >= 1200) {
+    } else if (score >= 1800) {
       badges.push({
         role: "Senior Platform Engineer",
         tagClass: "role-senior-platform",
         label: "Senior Platform Engineer",
         lucideIcon: "terminal",
         category: "Platform & Core",
-        requirement: "Requires 1,200–1,999 Arcade Points"
+        requirement: "Requires 1,800–2,999 Arcade Points"
       });
-    } else if (score >= 750) {
+    } else if (score >= 1000) {
       badges.push({
         role: "Elite Contributor",
         tagClass: "role-elite",
         label: "Elite Contributor",
-        lucideIcon: "gem",
+        lucideIcon: "zap",
         category: "Platform & Core",
-        requirement: "Requires 750–1,199 Arcade Points"
+        requirement: "Requires 1,000–1,799 Arcade Points"
       });
-    } else if (score >= 400) {
+    } else if (score >= 500) {
       badges.push({
         role: "Distinguished Contributor",
         tagClass: "role-distinguished",
         label: "Distinguished Contributor",
         lucideIcon: "medal",
         category: "Platform & Core",
-        requirement: "Requires 400–749 Arcade Points"
+        requirement: "Requires 500–999 Arcade Points"
       });
-    } else if (score >= 200) {
+    } else if (score >= 250) {
       badges.push({
         role: "Platform Contributor",
         tagClass: "role-platform",
         label: "Platform Contributor",
         lucideIcon: "code-2",
         category: "Platform & Core",
-        requirement: "Requires 200–399 Arcade Points"
+        requirement: "Requires 250–499 Arcade Points"
       });
     } else if (score >= 100) {
       badges.push({
@@ -431,7 +467,7 @@ document.addEventListener("DOMContentLoaded", () => {
         label: "Rising Contributor",
         lucideIcon: "trending-up",
         category: "Getting Started",
-        requirement: "Requires 100–199 Arcade Points"
+        requirement: "Requires 100–249 Arcade Points"
       });
     } else if (score >= 25) {
       badges.push({
