@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Potion Maker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- TOP HUD -->
+  <header class="hud">
+    <a href="../../index.html" class="hud-btn back-btn" title="Back to Arcade">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Arcade
+    </a>
+    <div class="hud-center">
+      <div class="game-logo">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+        POTION MAKER
+      </div>
+      <div class="hud-tagline">Mix magic. Discover wonders.</div>
+    </div>
+    <div class="hud-stats">
+      <div class="stat-pill">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <span id="hud-coins">0</span>
+      </div>
+      <div class="stat-pill">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <span id="hud-score">0</span>
+      </div>
+      <div class="stat-pill">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+        <span id="hud-potions">0</span> recipes
+      </div>
+      <button class="hud-btn" id="pause-btn" title="Pause">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN GAME AREA -->
+  <main class="game-main" id="game-area">
+
+    <!-- LEFT: INGREDIENT INVENTORY -->
+    <section class="panel inventory-panel">
+      <div class="panel-header">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        Ingredients
+        <button class="btn-small btn-shop" id="open-shop-btn">Shop</button>
+      </div>
+      <div class="ingredient-grid" id="ingredient-grid"></div>
+    </section>
+
+    <!-- CENTER: BREWING STATION -->
+    <section class="panel brewing-panel">
+      <div class="panel-header">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M9.5 14.5v-5c0-.83-.67-1.5-1.5-1.5S6.5 8.67 6.5 9.5v5"/><path d="M3 14h18v2a7 7 0 0 1-7 7H10a7 7 0 0 1-7-7v-2z"/></svg>
+        Brewing Station
+      </div>
+
+      <!-- CAULDRON -->
+      <div class="cauldron-area">
+        <canvas id="cauldron-canvas" width="220" height="200"></canvas>
+        <div class="brew-status" id="brew-status">Select up to 3 ingredients</div>
+      </div>
+
+      <!-- INGREDIENT SLOTS -->
+      <div class="slot-row">
+        <div class="ingredient-slot" id="slot-0">
+          <div class="slot-inner">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          </div>
+          <span class="slot-label">Slot 1</span>
+        </div>
+        <div class="ingredient-slot" id="slot-1">
+          <div class="slot-inner">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          </div>
+          <span class="slot-label">Slot 2</span>
+        </div>
+        <div class="ingredient-slot" id="slot-2">
+          <div class="slot-inner">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          </div>
+          <span class="slot-label">Slot 3</span>
+        </div>
+      </div>
+
+      <!-- BREW PROGRESS -->
+      <div class="brew-progress-wrap" id="brew-progress-wrap" style="display:none;">
+        <div class="brew-progress-bar"><div class="brew-progress-fill" id="brew-progress-fill"></div></div>
+        <span class="brew-time-label" id="brew-time-label">0s</span>
+      </div>
+
+      <!-- ACTION BUTTONS -->
+      <div class="action-row">
+        <button class="btn btn-primary" id="brew-btn" disabled>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6m0 0l3-3m-3 3l-3-3"/><path d="M3 14h18v2a7 7 0 0 1-7 7H10a7 7 0 0 1-7-7v-2z"/><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5V8"/><path d="M9.5 10c.83 0 1.5-.67 1.5-1.5V8"/></svg>
+          Brew Potion
+        </button>
+        <button class="btn btn-secondary" id="clear-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.1"/></svg>
+          Clear
+        </button>
+        <button class="btn btn-outline" id="recipebook-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          Recipes
+        </button>
+      </div>
+    </section>
+
+    <!-- RIGHT: CUSTOMER ORDERS -->
+    <section class="panel orders-panel">
+      <div class="panel-header">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Customer Orders
+      </div>
+      <div class="orders-list" id="orders-list">
+        <div class="orders-empty">Customers will appear soon...</div>
+      </div>
+
+      <!-- POTION COLLECTION PREVIEW -->
+      <div class="panel-header" style="margin-top:16px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+        Your Collection
+        <button class="btn-small" id="open-collection-btn">View All</button>
+      </div>
+      <div class="collection-preview" id="collection-preview"></div>
+    </section>
+  </main>
+
+  <!-- ===================== MODALS ===================== -->
+
+  <!-- MAIN MENU -->
+  <div class="modal-overlay" id="modal-menu">
+    <div class="modal modal-menu-card">
+      <div class="modal-logo">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+      </div>
+      <h1 class="modal-title">POTION MAKER</h1>
+      <p class="modal-tagline">Mix magic. Discover wonders.</p>
+      <div class="menu-buttons">
+        <button class="btn btn-primary btn-large" id="menu-play-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Play Game
+        </button>
+        <button class="btn btn-secondary btn-large" id="menu-howto-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          How to Play
+        </button>
+        <button class="btn btn-outline btn-large" id="menu-collection-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+          Collection
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW TO PLAY -->
+  <div class="modal-overlay hidden" id="modal-howto">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>How to Play</h2>
+        <button class="modal-close" id="howto-close-btn">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="howto-content">
+        <div class="howto-step">
+          <div class="howto-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </div>
+          <div>
+            <strong>1. Pick Ingredients</strong>
+            <p>Click ingredients from your inventory panel (left). Up to 3 at a time go into the cauldron slots.</p>
+          </div>
+        </div>
+        <div class="howto-step">
+          <div class="howto-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c084fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14h18v2a7 7 0 0 1-7 7H10a7 7 0 0 1-7-7v-2z"/></svg>
+          </div>
+          <div>
+            <strong>2. Brew</strong>
+            <p>Press "Brew Potion". If you've used the right ingredients, you'll craft a potion! Wrong combos make mysterious smoke.</p>
+          </div>
+        </div>
+        <div class="howto-step">
+          <div class="howto-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          </div>
+          <div>
+            <strong>3. Fulfill Orders</strong>
+            <p>Customers on the right need specific potions. Deliver them before time runs out for bonus coins!</p>
+          </div>
+        </div>
+        <div class="howto-step">
+          <div class="howto-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          </div>
+          <div>
+            <strong>4. Buy More Ingredients</strong>
+            <p>Use earned coins in the Shop to restock. Discover all recipes to unlock Master Alchemist status!</p>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="howto-ok-btn">Got it!</button>
+    </div>
+  </div>
+
+  <!-- RECIPE BOOK -->
+  <div class="modal-overlay hidden" id="modal-recipebook">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <h2>Recipe Book</h2>
+        <button class="modal-close" id="recipebook-close-btn">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="recipebook-grid" id="recipebook-grid"></div>
+    </div>
+  </div>
+
+  <!-- COLLECTION -->
+  <div class="modal-overlay hidden" id="modal-collection">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <h2>Potion Collection</h2>
+        <button class="modal-close" id="collection-close-btn">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="collection-grid" id="collection-grid"></div>
+    </div>
+  </div>
+
+  <!-- SHOP -->
+  <div class="modal-overlay hidden" id="modal-shop">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Ingredient Shop</h2>
+        <div class="shop-coins">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <span id="shop-coins-display">0</span> coins
+        </div>
+        <button class="modal-close" id="shop-close-btn">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="shop-grid" id="shop-grid"></div>
+    </div>
+  </div>
+
+  <!-- BREW RESULT -->
+  <div class="modal-overlay hidden" id="modal-brew-result">
+    <div class="modal modal-result">
+      <div class="result-icon" id="result-icon"></div>
+      <h2 class="result-title" id="result-title"></h2>
+      <p class="result-desc" id="result-desc"></p>
+      <div class="result-reward" id="result-reward"></div>
+      <button class="btn btn-primary btn-large" id="result-ok-btn">Continue Brewing</button>
+    </div>
+  </div>
+
+  <!-- PAUSE -->
+  <div class="modal-overlay hidden" id="modal-pause">
+    <div class="modal">
+      <h2 class="modal-title">Paused</h2>
+      <div class="menu-buttons">
+        <button class="btn btn-primary btn-large" id="resume-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Resume
+        </button>
+        <button class="btn btn-secondary btn-large" id="restart-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.1"/></svg>
+          Restart
+        </button>
+        <button class="btn btn-outline btn-large" id="pause-menu-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Main Menu
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTIFICATION TOAST -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="game.js"></script>
+</body>
+</html>
+

@@ -241,10 +241,23 @@
           return;
         }
 
+        // Helper to navigate with the page transition loader
+        const navigateWithLoader = (targetUrl) => {
+          if (typeof window.triggerPageTransition === 'function') {
+            window.triggerPageTransition(targetUrl);
+          } else {
+            const loader = document.getElementById('page-transition-loader');
+            if (loader) loader.classList.add('active');
+            setTimeout(() => {
+              window.location.href = targetUrl;
+            }, 140);
+          }
+        };
+
         // H: Go Home
         if (e.key === 'h' || e.key === 'H') {
           if (!window.location.pathname.endsWith('index.html') && !window.location.pathname.endsWith('/')) {
-            window.location.href = 'index.html';
+            navigateWithLoader('index.html');
           }
           return;
         }
@@ -252,7 +265,7 @@
         // L: Go to Leaderboard
         if (e.key === 'l' || e.key === 'L') {
           if (!window.location.pathname.endsWith('leaderboard.html')) {
-            window.location.href = 'leaderboard.html';
+            navigateWithLoader('leaderboard.html');
           }
           return;
         }
@@ -260,7 +273,7 @@
         // D: Go to Documentation
         if (e.key === 'd' || e.key === 'D') {
           if (!window.location.pathname.endsWith('docs.html')) {
-            window.location.href = 'docs.html';
+            navigateWithLoader('docs.html');
           }
           return;
         }
@@ -268,7 +281,7 @@
         // Q: Go to FAQs
         if (e.key === 'q' || e.key === 'Q') {
           if (!window.location.pathname.endsWith('faqs.html')) {
-            window.location.href = 'faqs.html';
+            navigateWithLoader('faqs.html');
           }
           return;
         }

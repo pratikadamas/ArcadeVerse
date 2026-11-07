@@ -79,14 +79,30 @@
         resolvedAvatar ? loadImage(resolvedAvatar) : (cleanHandle.toLowerCase() === 'debasmitabose0' ? loadImage('https://avatars.githubusercontent.com/u/144198639?v=4') : null)
       ]);
 
-      // 1. Deep Cyber Luxury Background
+      // 1. Deep Cyber Luxury Background with Ambient Radial Glow Orbs
       const bgGrad = ctx.createLinearGradient(0, 0, W, H);
-      bgGrad.addColorStop(0, '#030714');
+      bgGrad.addColorStop(0, '#020511');
       bgGrad.addColorStop(0.35, '#071126');
-      bgGrad.addColorStop(0.7, '#0c1b3a');
-      bgGrad.addColorStop(1, '#04091a');
+      bgGrad.addColorStop(0.7, '#0b1a38');
+      bgGrad.addColorStop(1, '#030818');
       ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, W, H);
+
+      // Ambient Corner Radial Glows
+      const drawGlow = (gx, gy, gr, col1, col2) => {
+        ctx.save();
+        const radGrad = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
+        radGrad.addColorStop(0, col1);
+        radGrad.addColorStop(1, col2);
+        ctx.fillStyle = radGrad;
+        ctx.beginPath();
+        ctx.arc(gx, gy, gr, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      };
+      drawGlow(120, 100, 320, 'rgba(0, 245, 255, 0.08)', 'rgba(0, 245, 255, 0)');
+      drawGlow(W - 120, 100, 320, 'rgba(245, 158, 11, 0.08)', 'rgba(245, 158, 11, 0)');
+      drawGlow(W / 2, H - 100, 380, 'rgba(168, 85, 247, 0.08)', 'rgba(168, 85, 247, 0)');
 
       // 2. Ambient Cyber Matrix Grid
       ctx.save();
@@ -108,26 +124,27 @@
 
       // 3. Ornate Double Certificate Borders with Gold & Cyan Gradients
       ctx.save();
-      // Outer Gold/Cyan Frame
+      // Outer Gold/Cyan Frame with Hologram Aura
       const outerGrad = ctx.createLinearGradient(0, 0, W, H);
       outerGrad.addColorStop(0, '#00f5ff');
-      outerGrad.addColorStop(0.3, '#38bdf8');
-      outerGrad.addColorStop(0.7, '#f59e0b');
+      outerGrad.addColorStop(0.25, '#38bdf8');
+      outerGrad.addColorStop(0.5, '#ec4899');
+      outerGrad.addColorStop(0.75, '#f59e0b');
       outerGrad.addColorStop(1, '#fbbf24');
       ctx.strokeStyle = outerGrad;
-      ctx.lineWidth = 3.5;
-      ctx.shadowColor = 'rgba(0, 245, 255, 0.35)';
-      ctx.shadowBlur = 18;
+      ctx.lineWidth = 4;
+      ctx.shadowColor = 'rgba(0, 245, 255, 0.45)';
+      ctx.shadowBlur = 22;
       ctx.strokeRect(26, 26, W - 52, H - 52);
 
       // Inner Hairline Ornate Border
       ctx.shadowBlur = 0;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
       ctx.lineWidth = 1;
       ctx.strokeRect(36, 36, W - 72, H - 72);
 
-      // Inner Thin Accent Line
-      ctx.strokeStyle = 'rgba(0, 245, 255, 0.22)';
+      // Inner Gold Accent Line with Micro-Dots
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.35)';
       ctx.strokeRect(40, 40, W - 80, H - 80);
 
       // Corner Ornaments (Filigree Certificate Brackets)
@@ -136,34 +153,40 @@
         ctx.translate(cx, cy);
         ctx.scale(flipX, flipY);
         ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(0, 32);
+        ctx.moveTo(0, 36);
         ctx.lineTo(0, 0);
-        ctx.lineTo(32, 0);
+        ctx.lineTo(36, 0);
         ctx.stroke();
 
         ctx.strokeStyle = '#00f5ff';
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.8;
         ctx.beginPath();
-        ctx.moveTo(6, 24);
-        ctx.lineTo(6, 6);
-        ctx.lineTo(24, 6);
+        ctx.moveTo(8, 28);
+        ctx.lineTo(8, 8);
+        ctx.lineTo(28, 8);
         ctx.stroke();
+
+        // Little diamond accent
+        ctx.fillStyle = '#fde047';
+        ctx.beginPath();
+        ctx.arc(14, 14, 2.5, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
       };
-      drawCorner(46, 46, 1, 1);
-      drawCorner(W - 46, 46, -1, 1);
-      drawCorner(46, H - 46, 1, -1);
-      drawCorner(W - 46, H - 46, -1, -1);
+      drawCorner(48, 48, 1, 1);
+      drawCorner(W - 48, 48, -1, 1);
+      drawCorner(48, H - 48, 1, -1);
+      drawCorner(W - 48, H - 48, -1, -1);
       ctx.restore();
 
       // 4. Header: Platform Brand Logo & Credential Banner
       if (brandLogoImg) {
         ctx.save();
         ctx.shadowColor = '#00f5ff';
-        ctx.shadowBlur = 16;
-        ctx.drawImage(brandLogoImg, (W - 68) / 2, 54, 68, 68);
+        ctx.shadowBlur = 20;
+        ctx.drawImage(brandLogoImg, (W - 74) / 2, 52, 74, 74);
         ctx.restore();
       }
 
@@ -173,28 +196,30 @@
 
       ctx.fillStyle = '#38bdf8';
       ctx.font = '700 13px "JetBrains Mono", monospace';
-      ctx.letterSpacing = '3px';
-      ctx.fillText('NEXUS SPRING OF CODE 2026 • OFFICIAL OPEN SOURCE CREDENTIAL', W / 2, 148);
+      ctx.letterSpacing = '3.5px';
+      ctx.fillText('NEXUS SPRING OF CODE 2026 • OFFICIAL OPEN SOURCE CREDENTIAL', W / 2, 150);
 
       // Main Certificate Title
-      const titleGrad = ctx.createLinearGradient((W / 2) - 300, 0, (W / 2) + 300, 0);
+      const titleGrad = ctx.createLinearGradient((W / 2) - 340, 0, (W / 2) + 340, 0);
       titleGrad.addColorStop(0, '#ffffff');
+      titleGrad.addColorStop(0.3, '#38bdf8');
       titleGrad.addColorStop(0.5, '#00f5ff');
+      titleGrad.addColorStop(0.7, '#fbbf24');
       titleGrad.addColorStop(1, '#ffffff');
       ctx.fillStyle = titleGrad;
-      ctx.font = 'bold 36px "Space Grotesk", sans-serif';
-      ctx.letterSpacing = '1px';
-      ctx.fillText('CERTIFICATE OF ACHIEVEMENT', W / 2, 192);
+      ctx.font = 'bold 38px "Space Grotesk", sans-serif';
+      ctx.letterSpacing = '1.5px';
+      ctx.fillText('CERTIFICATE OF ACHIEVEMENT', W / 2, 194);
 
       ctx.fillStyle = '#94a3b8';
       ctx.font = '500 15px "Plus Jakarta Sans", sans-serif';
       ctx.letterSpacing = '0.5px';
-      ctx.fillText('This credential certifies that the following developer has achieved exceptional distinction:', W / 2, 222);
+      ctx.fillText('This credential certifies that the following developer has achieved exceptional distinction:', W / 2, 224);
       ctx.restore();
 
       // 5. User Profile: Original Avatar Image & Recipient Name
       const avatarY = 300;
-      const avatarR = 48;
+      const avatarR = 50;
 
       ctx.save();
       if (userAvatarImg) {
@@ -207,13 +232,19 @@
         ctx.drawImage(userAvatarImg, (W / 2) - avatarR, avatarY - avatarR, avatarR * 2, avatarR * 2);
         ctx.restore();
 
-        // Avatar Glowing Border Ring
+        // Avatar Glowing Multi-Ring Aura
         ctx.beginPath();
         ctx.arc(W / 2, avatarY, avatarR + 3, 0, Math.PI * 2);
         ctx.strokeStyle = outerGrad;
         ctx.lineWidth = 3.5;
-        ctx.shadowColor = 'rgba(0, 245, 255, 0.5)';
-        ctx.shadowBlur = 14;
+        ctx.shadowColor = 'rgba(0, 245, 255, 0.6)';
+        ctx.shadowBlur = 18;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(W / 2, avatarY, avatarR + 7, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(250, 204, 21, 0.4)';
+        ctx.lineWidth = 1.2;
         ctx.stroke();
       } else {
         // Fallback Initial Avatar (Valid CanvasGradient)
@@ -227,12 +258,12 @@
         ctx.fill();
         ctx.strokeStyle = outerGrad;
         ctx.lineWidth = 3.5;
-        ctx.shadowColor = 'rgba(0, 245, 255, 0.4)';
-        ctx.shadowBlur = 12;
+        ctx.shadowColor = 'rgba(0, 245, 255, 0.5)';
+        ctx.shadowBlur = 14;
         ctx.stroke();
 
         ctx.fillStyle = '#040b17';
-        ctx.font = 'bold 44px "Space Grotesk", sans-serif';
+        ctx.font = 'bold 46px "Space Grotesk", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(initial, W / 2, avatarY + 2);
@@ -243,37 +274,44 @@
       ctx.save();
       ctx.textAlign = 'center';
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 34px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText(playerName, W / 2, 386);
+      ctx.font = 'bold 36px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(playerName, W / 2, 388);
 
       // GitHub Handle & Badge
       ctx.fillStyle = '#38bdf8';
       ctx.font = '600 17px "JetBrains Mono", monospace';
-      ctx.fillText(userHandle, W / 2, 414);
+      ctx.fillText(userHandle, W / 2, 416);
 
-      // Distinction / Rank Tier Pill
-      const pillW = 460;
-      const pillH = 38;
+      // Distinction / Rank Tier Pill with Luxury Gradient Glow
+      const pillW = 500;
+      const pillH = 40;
       const pillX = (W - pillW) / 2;
-      const pillY = 436;
+      const pillY = 438;
 
-      ctx.fillStyle = 'rgba(0, 245, 255, 0.08)';
-      ctx.strokeStyle = 'rgba(0, 245, 255, 0.35)';
-      ctx.lineWidth = 1.2;
+      const badgeGrad = ctx.createLinearGradient(pillX, 0, pillX + pillW, 0);
+      badgeGrad.addColorStop(0, 'rgba(0, 245, 255, 0.12)');
+      badgeGrad.addColorStop(0.5, 'rgba(245, 158, 11, 0.15)');
+      badgeGrad.addColorStop(1, 'rgba(168, 85, 247, 0.12)');
+      ctx.fillStyle = badgeGrad;
+      ctx.strokeStyle = 'rgba(250, 204, 21, 0.45)';
+      ctx.lineWidth = 1.5;
+      ctx.shadowColor = 'rgba(250, 204, 21, 0.3)';
+      ctx.shadowBlur = 10;
       ctx.beginPath();
-      ctx.roundRect(pillX, pillY, pillW, pillH, 19);
+      ctx.roundRect(pillX, pillY, pillW, pillH, 20);
       ctx.fill();
       ctx.stroke();
 
-      ctx.fillStyle = '#fbbf24';
-      ctx.font = 'bold 15px "Space Grotesk", sans-serif';
-      ctx.fillText(`${rank} • Total Arcade Score: ${score}`, W / 2, pillY + 24);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#fde047';
+      ctx.font = 'bold 15.5px "Space Grotesk", sans-serif';
+      ctx.fillText(`★  ${rank}  •  Total Arcade Score: ${score}  ★`, W / 2, pillY + 25);
 
       // Certificate Citation Statement
       ctx.fillStyle = '#94a3b8';
-      ctx.font = '400 14.5px "Plus Jakarta Sans", sans-serif';
-      ctx.fillText('In recognition of verified code contributions, game architecture, and open-source craftsmanship', W / 2, 510);
-      ctx.fillText('for the ArcadeVerse platform during Nexus Spring of Code – Winter Edition 2026.', W / 2, 532);
+      ctx.font = '400 15px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('In recognition of verified code contributions, game architecture, and open-source craftsmanship', W / 2, 514);
+      ctx.fillText('for the ArcadeVerse platform during Nexus Spring of Code – Winter Edition 2026.', W / 2, 536);
       ctx.restore();
 
       // 6. Verification Seal & Signatures
@@ -300,29 +338,43 @@
       ctx.fillText('Project Lead & Lead Architect', 110, bottomY + 38);
       ctx.restore();
 
-      // Center: Official Gold Rosette Seal
+      // Center: Official Gold Rosette Seal with Ornate Multi-Spoke Ring
       const sealX = W / 2;
       const sealY = bottomY + 8;
-      const sealR = 40;
+      const sealR = 44;
 
       ctx.save();
-      // Outer Seal Ring
+      // Outer Seal Ring with Glow
       ctx.beginPath();
       ctx.arc(sealX, sealY, sealR, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(245, 158, 11, 0.12)';
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.15)';
       ctx.fill();
       ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 2.5;
-      ctx.shadowColor = '#f59e0b';
-      ctx.shadowBlur = 10;
+      ctx.lineWidth = 2.8;
+      ctx.shadowColor = 'rgba(245, 158, 11, 0.6)';
+      ctx.shadowBlur = 14;
       ctx.stroke();
 
-      // Inner Star Ring
+      // Inner Star/Cog Ring
       ctx.beginPath();
       ctx.arc(sealX, sealY, sealR - 6, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(0, 245, 255, 0.4)';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(0, 245, 255, 0.55)';
+      ctx.lineWidth = 1.2;
       ctx.stroke();
+
+      // Radiating notch accents
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 8) {
+        const nx1 = sealX + Math.cos(a) * (sealR - 4);
+        const ny1 = sealY + Math.sin(a) * (sealR - 4);
+        const nx2 = sealX + Math.cos(a) * (sealR - 1);
+        const ny2 = sealY + Math.sin(a) * (sealR - 1);
+        ctx.beginPath();
+        ctx.moveTo(nx1, ny1);
+        ctx.lineTo(nx2, ny2);
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
 
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -344,9 +396,14 @@
       ctx.lineTo(W - 110, bottomY);
       ctx.stroke();
 
+      // Format today's date dynamically (e.g., "Nov 7, 2026" or "Jan 2, 2027")
+      const now = new Date();
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const formattedDate = `${monthNames[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+
       ctx.fillStyle = '#f8fafc';
       ctx.font = 'bold 14px "JetBrains Mono", monospace';
-      ctx.fillText('OCTOBER 2026', W - 110, bottomY - 10);
+      ctx.fillText(formattedDate.toUpperCase(), W - 110, bottomY - 10);
 
       ctx.fillStyle = '#64748b';
       ctx.font = '600 12.5px "Space Grotesk", sans-serif';

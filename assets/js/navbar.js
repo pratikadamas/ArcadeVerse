@@ -273,6 +273,16 @@
     hideLoader();
     window.addEventListener('pageshow', hideLoader);
 
+    // Global helper to trigger page transition programmatically
+    window.triggerPageTransition = function (url) {
+      if (!url) return;
+      loader.classList.add('active');
+      setTimeout(hideLoader, 2500);
+      setTimeout(() => {
+        window.location.href = url;
+      }, 140);
+    };
+
     // Intercept clicks on links specifically moving from ONE PAGE TO ANOTHER
     document.querySelectorAll('a[href]').forEach((link) => {
       const href = link.getAttribute('href');
@@ -293,11 +303,7 @@
         link.addEventListener('click', (e) => {
           if (e.metaKey || e.ctrlKey || e.button !== 0) return;
           e.preventDefault();
-          loader.classList.add('active');
-          setTimeout(hideLoader, 2500);
-          setTimeout(() => {
-            window.location.href = href;
-          }, 140);
+          window.triggerPageTransition(href);
         });
       }
     });
