@@ -2177,7 +2177,11 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
+<<<<<<< HEAD
     "commits": 381,
+=======
+    "commits": 367,
+>>>>>>> d760360799e8fb0d352e2c9c8fddfdee6a4adf9a
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2197,7 +2201,11 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
+<<<<<<< HEAD
     "commits": 254,
+=======
+    "commits": 250,
+>>>>>>> d760360799e8fb0d352e2c9c8fddfdee6a4adf9a
     "gamesCount": 76,
     "mechanicsBonus": 2,
     "platformPRs": 29,
@@ -2366,7 +2374,11 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "pratikadamas",
     "avatarInitial": "P",
     "role": "Contributor (NSOC '26)",
+<<<<<<< HEAD
     "commits": 17,
+=======
+    "commits": 18,
+>>>>>>> d760360799e8fb0d352e2c9c8fddfdee6a4adf9a
     "gamesCount": 1,
     "mechanicsBonus": 0,
     "platformPRs": 1,
