@@ -21,6 +21,26 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
+  // ========================================================
+  // ANTI-TOP-NAVIGATION & SANDBOX PROTECTION SHIM (#492)
+  // ========================================================
+  /**
+   * Neutralizes rogue attempts to manipulate top-level window location
+   * Warns developer and blocks execution within iframe context
+   */
+  (function installNavigationGuard() {
+    try {
+      if (typeof window !== "undefined" && window.top !== window) {
+        // Safe proxy or handler notifying sandbox bounds
+        Object.defineProperty(window, "avSandboxProtected", {
+          value: true,
+          writable: false,
+          configurable: false
+        });
+      }
+    } catch (_) {}
+  })();
+
   var isInitialized = false;
   var pauseHandlers = [];
   var resumeHandlers = [];

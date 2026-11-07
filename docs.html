@@ -545,6 +545,25 @@ jobs:
           </ul>
         </section>
 
+        <!-- 9a. Iframe Sandbox Policy -->
+        <section class="docs-section" id="sandbox-policy">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Iframe Security Sandbox & Navigation Lock (#492)</h2>
+          <p class="docs-paragraph">
+            To prevent untrusted or misbehaving community games from redirecting the parent ArcadeVerse station, <code>#game-iframe</code> operates under a strict HTML5 sandbox policy:
+          </p>
+          <div class="code-block-wrapper">
+            <div class="code-block-header">
+              <span class="code-block-lang">HTML (Sandbox Specification)</span>
+            </div>
+            <pre class="code-pre"><code>&lt;iframe id="game-iframe" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"&gt;&lt;/iframe&gt;</code></pre>
+          </div>
+          <ul>
+            <li><strong>Top-Level Navigation Block:</strong> Omitting <code>allow-top-navigation</code> halts rogue <code>window.top.location = ...</code> calls at the browser sandbox level.</li>
+            <li><strong>Active Session Shield:</strong> An active <code>beforeunload</code> guard prevents losing ongoing gameplay or scores due to accidental page navigation.</li>
+          </ul>
+        </section>
+
         <!-- 9b. Game Lifecycle Bridge & Client SDK -->
         <section class="docs-section" id="lifecycle-bridge">
           <span class="docs-section-tag">04 / Platform Subsystems</span>
@@ -620,6 +639,20 @@ if (window.ArcadeVerse && ArcadeVerse.trackTexture) {
   ArcadeVerse.trackBuffer(gl, terrainVertexBuffer);
 }</code></pre>
               </div>
+            </div>
+          </div>
+          <div class="docs-callout note">
+            <div class="docs-callout-icon"><i data-lucide="shield"></i></div>
+            <div>
+              <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Strict Iframe Sandboxing & Top Navigation Prevention (#492)</h4>
+              <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
+                To permanently protect the ArcadeVerse shell and player session from rogue redirection scripts, the game iframe applies a strict HTML5 <code>sandbox</code> configuration:
+              </p>
+              <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
+                <li><strong>Omission of Top Navigation Privileges:</strong> The iframe is configured with <code>sandbox="allow-scripts allow-same-origin allow-forms allow-popups"</code> strictly omitting <code>allow-top-navigation</code> and <code>allow-top-navigation-by-user-activation</code>.</li>
+                <li><strong>Browser Sandbox Boundary:</strong> If any embedded game script attempts <code>window.top.location.href = ...</code> or <code>window.parent.location.replace(...)</code>, the browser immediately halts the action with a sandbox security DOMException.</li>
+                <li><strong>Active Session Unload Guard:</strong> An active <code>window.addEventListener("beforeunload", ...)</code> listener protects players from losing ongoing arcade scores if navigation is triggered while a game modal is active.</li>
+              </ul>
             </div>
           </div>
           <p class="docs-paragraph">
