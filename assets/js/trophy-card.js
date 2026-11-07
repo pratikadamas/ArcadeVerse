@@ -396,9 +396,14 @@
       ctx.lineTo(W - 110, bottomY);
       ctx.stroke();
 
+      // Format today's date dynamically (e.g., "Nov 7, 2026" or "Jan 2, 2027")
+      const now = new Date();
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const formattedDate = `${monthNames[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+
       ctx.fillStyle = '#f8fafc';
       ctx.font = 'bold 14px "JetBrains Mono", monospace';
-      ctx.fillText('OCTOBER 2026', W - 110, bottomY - 10);
+      ctx.fillText(formattedDate.toUpperCase(), W - 110, bottomY - 10);
 
       ctx.fillStyle = '#64748b';
       ctx.font = '600 12.5px "Space Grotesk", sans-serif';
