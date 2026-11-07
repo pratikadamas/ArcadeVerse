@@ -51,7 +51,50 @@ document.addEventListener("DOMContentLoaded", () => {
   } catch (_) {}
   let lastFocusedElement = null;
   let activeGame = null;
+  let modalPushedHistory = false;
   let closeAutocomplete = () => {};
+
+  // History API State Synchronization & Deep-Linking Engine
+  function syncURLState(push = false) {
+    try {
+      if (typeof window === "undefined" || !window.history || !window.location) return;
+      const url = new URL(window.location.href);
+
+      if (currentCategory && currentCategory.toLowerCase() !== "all") {
+        url.searchParams.set("category", currentCategory);
+      } else {
+        url.searchParams.delete("category");
+      }
+
+      if (searchQuery && searchQuery.trim().length > 0) {
+        url.searchParams.set("search", searchQuery.trim());
+      } else {
+        url.searchParams.delete("search");
+      }
+
+      if (activeGame && activeGame.id) {
+        url.searchParams.set("game", activeGame.id);
+      } else {
+        url.searchParams.delete("game");
+      }
+
+      const stateObj = {
+        category: currentCategory,
+        search: searchQuery,
+        game: activeGame ? activeGame.id : null
+      };
+
+      const newUrl = url.pathname + (url.search ? url.search : "") + (url.hash ? url.hash : "");
+
+      if (push) {
+        window.history.pushState(stateObj, "", newUrl);
+      } else {
+        window.history.replaceState(stateObj, "", newUrl);
+      }
+    } catch (_) {
+      // Gracefully handle file:// or restricted sandbox origins
+    }
+  }
 
   // Search & filter UI element refs
   const searchClearBtn = document.getElementById("search-clear-btn");
@@ -817,11 +860,7 @@ document.addEventListener("DOMContentLoaded", () => {
           buildTagChips();
         }
         renderGames();
-      }
-
-      // Attach reset listener to all reset buttons in empty state
-      emptyCard.querySelectorAll("#reset-filter-btn, #reset-all-filters-btn, .btn-reset-filters").forEach((btn) => {
-        btn.addEventListener("click", resetAllCatalogFilters);
+        syncURLState(false);
       });
 
       // Bind smart suggestion chip clicks
@@ -843,6 +882,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             closeAutocomplete();
             renderGames();
+            syncURLState(false);
           }
         });
       });
@@ -1098,7 +1138,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Modal Handlers
-  function openGameModal(game, triggerElement = null) {
+  function openGameModal(game, triggerElement = null, isDirectDeepLink = false) {
     activeGame = game;
     lastFocusedElement = triggerElement || document.activeElement;
 
@@ -1124,6 +1164,14 @@ document.addEventListener("DOMContentLoaded", () => {
     gameModal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
     closeModalBtn.focus();
+
+    if (!isDirectDeepLink) {
+      modalPushedHistory = true;
+      syncURLState(true);
+    } else {
+      modalPushedHistory = false;
+      syncURLState(false);
+    }
   }
 
   // Expose global helper to open game modal from plugins, search, or recent drawer
@@ -1156,6 +1204,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (searchClearBtn) searchClearBtn.hidden = true;
       closeAutocomplete();
       renderGames();
+      syncURLState(false);
     }
   };
 
@@ -1166,7 +1215,8 @@ document.addEventListener("DOMContentLoaded", () => {
     count: () => getFavorites().size
   };
 
-  function closeGameModal() {
+  function closeGameModal(isFromPopState = false) {
+    if (!gameModal || (!gameModal.classList.contains("active") && !activeGame)) return;
     activeGame = null;
     gameModal.classList.remove("active");
     gameModal.setAttribute("aria-hidden", "true");
@@ -1223,10 +1273,25 @@ document.addEventListener("DOMContentLoaded", () => {
     if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
       lastFocusedElement.focus();
     }
+
+    if (isFromPopState) {
+      modalPushedHistory = false;
+    } else {
+      if (modalPushedHistory) {
+        modalPushedHistory = false;
+        try {
+          window.history.back();
+        } catch (_) {
+          syncURLState(false);
+        }
+      } else {
+        syncURLState(false);
+      }
+    }
   }
 
-  closeModalBtn.addEventListener("click", closeGameModal);
-  modalOverlay.addEventListener("click", closeGameModal);
+  closeModalBtn.addEventListener("click", () => closeGameModal(false));
+  modalOverlay.addEventListener("click", () => closeGameModal(false));
 
   if (modalFavBtn) {
     modalFavBtn.addEventListener("click", () => {
@@ -1258,7 +1323,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && gameModal.classList.contains("active")) {
-      closeGameModal();
+      closeGameModal(false);
     }
   });
 
@@ -1267,7 +1332,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!e || !e.data || e.data.type !== "ARCADEVERSE_KEY_SHORTCUT") return;
     const key = (e.data.key || "").toLowerCase();
     if (e.data.key === "Escape") {
-      if (gameModal.classList.contains("active")) closeGameModal();
+      if (gameModal.classList.contains("active")) closeGameModal(false);
     } else if (key === "f") {
       if (gameModal.classList.contains("active") && fullscreenBtn) fullscreenBtn.click();
     } else if (key === "r") {
@@ -1597,11 +1662,23 @@ document.addEventListener("DOMContentLoaded", () => {
       searchQuery = e.target.value.toLowerCase().trim();
       if (searchClearBtn) searchClearBtn.hidden = !e.target.value;
       renderGames();
+      syncURLState(false);
       if (searchQuery.length > 0) {
         renderAutocomplete(e.target.value);
       } else {
         closeAutocomplete();
       }
+    });
+  }
+
+  if (searchClearBtn) {
+    searchClearBtn.addEventListener("click", () => {
+      if (searchInput) searchInput.value = "";
+      searchQuery = "";
+      searchClearBtn.hidden = true;
+      closeAutocomplete();
+      renderGames();
+      syncURLState(false);
     });
   }
 
@@ -1682,6 +1759,7 @@ document.addEventListener("DOMContentLoaded", () => {
       pill.setAttribute("aria-selected", "true");
       currentCategory = pill.getAttribute("data-category");
       renderGames();
+      syncURLState(false);
     });
   });
 
@@ -1716,6 +1794,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (searchClearBtn) searchClearBtn.hidden = true;
       closeAutocomplete();
       renderGames();
+      syncURLState(false);
 
       const gamesSection = document.getElementById("games");
       if (gamesSection) {
@@ -1960,9 +2039,114 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // --- History API Deep-Linking & State Initialization ---
+  function initURLDeepLinking() {
+    try {
+      const url = new URL(window.location.href);
+      const categoryParam = url.searchParams.get("category");
+      const searchParam = url.searchParams.get("search");
+      const gameParam = url.searchParams.get("game");
+
+      if (categoryParam) {
+        const targetCat = categoryParam.trim();
+        const matchedPill = Array.from(categoryPills).find(
+          (p) => (p.getAttribute("data-category") || "").toLowerCase() === targetCat.toLowerCase()
+        );
+        if (matchedPill) {
+          categoryPills.forEach((p) => {
+            p.classList.remove("active");
+            p.setAttribute("aria-selected", "false");
+          });
+          matchedPill.classList.add("active");
+          matchedPill.setAttribute("aria-selected", "true");
+          currentCategory = matchedPill.getAttribute("data-category");
+        } else {
+          currentCategory = targetCat;
+        }
+      }
+
+      if (searchParam) {
+        const targetSearch = searchParam.trim();
+        searchQuery = targetSearch.toLowerCase();
+        if (searchInput) {
+          searchInput.value = targetSearch;
+        }
+        if (searchClearBtn) {
+          searchClearBtn.hidden = !targetSearch;
+        }
+      }
+
+      buildTagChips();
+      renderGames();
+
+      if (gameParam && typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) {
+        const targetGameId = gameParam.trim().toLowerCase();
+        const targetGame = GAMES_REGISTRY.find(
+          (g) => g && g.id && g.id.toLowerCase() === targetGameId
+        );
+        if (targetGame) {
+          openGameModal(targetGame, null, true);
+        }
+      }
+    } catch (_) {
+      buildTagChips();
+      renderGames();
+    }
+  }
+
+  // Handle browser Back & Forward navigation
+  window.addEventListener("popstate", () => {
+    try {
+      const url = new URL(window.location.href);
+      const gameParam = url.searchParams.get("game");
+      const categoryParam = url.searchParams.get("category");
+      const searchParam = url.searchParams.get("search");
+
+      // 1. Handle Game Modal back/forward
+      if (!gameParam) {
+        if (gameModal && gameModal.classList.contains("active")) {
+          closeGameModal(true);
+        }
+      } else {
+        const targetGameId = gameParam.trim().toLowerCase();
+        if (!activeGame || (activeGame.id && activeGame.id.toLowerCase() !== targetGameId)) {
+          const targetGame = Array.isArray(GAMES_REGISTRY) && GAMES_REGISTRY.find((g) => g && g.id && g.id.toLowerCase() === targetGameId);
+          if (targetGame) {
+            openGameModal(targetGame, null, true);
+          }
+        }
+      }
+
+      // 2. Handle Category back/forward
+      const targetCategory = (categoryParam && categoryParam.trim()) || "all";
+      if (targetCategory.toLowerCase() !== currentCategory.toLowerCase()) {
+        const matchedPill = Array.from(categoryPills).find(
+          (p) => (p.getAttribute("data-category") || "").toLowerCase() === targetCategory.toLowerCase()
+        );
+        currentCategory = matchedPill ? matchedPill.getAttribute("data-category") : targetCategory;
+        categoryPills.forEach((p) => {
+          const isMatch = (p.getAttribute("data-category") || "").toLowerCase() === currentCategory.toLowerCase();
+          p.classList.toggle("active", isMatch);
+          p.setAttribute("aria-selected", isMatch ? "true" : "false");
+        });
+        buildTagChips();
+        renderGames();
+      }
+
+      // 3. Handle Search back/forward
+      const targetSearch = (searchParam && searchParam.trim()) || "";
+      if (targetSearch.toLowerCase() !== searchQuery.toLowerCase()) {
+        searchQuery = targetSearch.toLowerCase();
+        if (searchInput) searchInput.value = targetSearch;
+        if (searchClearBtn) searchClearBtn.hidden = !targetSearch;
+        closeAutocomplete();
+        renderGames();
+      }
+    } catch (_) {}
+  });
+
   // Initial render
   initCatalogViewSwitcher();
   initAZJumpBar();
-  buildTagChips();
-  renderGames();
+  initURLDeepLinking();
 });
