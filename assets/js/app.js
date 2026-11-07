@@ -34,6 +34,13 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentTagFilter = "";
   let searchQuery = "";
   let currentSort = "featured";
+  const CATALOG_SORT_STORAGE_KEY = "arcadeverse_catalog_sort";
+  try {
+    const savedSort = localStorage.getItem(CATALOG_SORT_STORAGE_KEY);
+    if (savedSort && ["featured", "az", "za", "rating", "newest", "difficulty", "difficulty-desc"].includes(savedSort)) {
+      currentSort = savedSort;
+    }
+  } catch (_) {}
   const CATALOG_VIEW_STORAGE_KEY = "arcadeverse_catalog_view";
   let currentCatalogView = "grid";
   try {
@@ -558,14 +565,53 @@ document.addEventListener("DOMContentLoaded", () => {
       return matchesCategory && matchesSearch && matchesDuration && matchesControls && matchesTag && matchesLetter;
     });
 
+    function getDifficultyRank(game) {
+      if (!game) return 2;
+      const raw = String(game.difficulty || "").toLowerCase().trim();
+      if (raw.includes("easy") || raw.includes("beginner") || raw.includes("all skill") || raw.includes("casual")) return 1;
+      if (raw.includes("hard") || raw.includes("advanced") || raw.includes("expert") || raw.includes("survival")) return 3;
+      if (raw.includes("medium") || raw.includes("intermediate")) return 2;
+
+      const text = (String(game.title || "") + " " + String(game.category || "") + " " + (Array.isArray(game.tags) ? game.tags.join(" ") : "") + " " + String(game.description || "")).toLowerCase();
+      if (text.includes("easy") || text.includes("casual") || text.includes("relaxing") || text.includes("simple") || text.includes("calm") || text.includes("clicker")) return 1;
+      if (text.includes("expert") || text.includes("hardcore") || text.includes("insane") || text.includes("complex") || text.includes("rpg") || text.includes("hard") || text.includes("survival") || text.includes("roguelike")) return 3;
+      return 2;
+    }
+
+    function getGameReleaseTime(game) {
+      if (!game) return 0;
+      if (game.releaseDate) {
+        const t = new Date(game.releaseDate).getTime();
+        if (!isNaN(t)) return t;
+      }
+      return 0;
+    }
+
     // Apply Sorting
     filtered.sort((a, b) => {
       if (currentSort === "az") {
         return a.title.localeCompare(b.title);
+      } else if (currentSort === "za") {
+        return b.title.localeCompare(a.title);
       } else if (currentSort === "rating") {
         const rA = (window.GameRatings && window.GameRatings.ratings[a.id]) || (a.stars ? (a.stars / 10) : 5.0);
         const rB = (window.GameRatings && window.GameRatings.ratings[b.id]) || (b.stars ? (b.stars / 10) : 5.0);
         if (rB !== rA) return rB - rA;
+        return a.title.localeCompare(b.title);
+      } else if (currentSort === "newest") {
+        const timeA = getGameReleaseTime(a);
+        const timeB = getGameReleaseTime(b);
+        if (timeB !== timeA) return timeB - timeA;
+        return a.title.localeCompare(b.title);
+      } else if (currentSort === "difficulty") {
+        const diffA = getDifficultyRank(a);
+        const diffB = getDifficultyRank(b);
+        if (diffA !== diffB) return diffA - diffB;
+        return a.title.localeCompare(b.title);
+      } else if (currentSort === "difficulty-desc") {
+        const diffA = getDifficultyRank(a);
+        const diffB = getDifficultyRank(b);
+        if (diffB !== diffA) return diffB - diffA;
         return a.title.localeCompare(b.title);
       } else {
         // "featured": featured items first, then by rating / title
@@ -582,36 +628,64 @@ document.addEventListener("DOMContentLoaded", () => {
     if (filtered.length === 0) {
       updateResultsCount(0);
       const emptyCard = document.createElement("div");
-      emptyCard.className = "catalog-empty-state";
+      emptyCard.className = "catalog-empty-state retro-arcade-terminal";
 
       if (currentCategory === "favorites") {
         if (favs.size === 0) {
           emptyCard.innerHTML = `
-            <div class="empty-state-icon" style="color: #f43f5e;"><i data-lucide="heart-crack"></i></div>
-            <h3 class="empty-state-title">No Favorite Games Saved Yet</h3>
-            <p class="empty-state-desc">
-              You haven't bookmarked any games yet! Click the heart icon on any game card in the catalog to add it to your personal favorites collection.
-            </p>
-            <div class="empty-state-actions">
-              <button class="btn btn-primary btn-sm" id="reset-filter-btn">
-                <span><i data-lucide="gamepad-2"></i> Browse All Games</span>
-              </button>
+            <div class="retro-terminal-screen">
+              <div class="retro-terminal-scanlines" aria-hidden="true"></div>
+              <div class="retro-terminal-header">
+                <div class="retro-terminal-dots" aria-hidden="true">
+                  <span class="dot dot-red"></span>
+                  <span class="dot dot-yellow"></span>
+                  <span class="dot dot-green"></span>
+                </div>
+                <span class="retro-terminal-badge">ARCADE-OS // FAVORITES</span>
+                <span class="retro-terminal-tag">STATUS: EMPTY_VAULT</span>
+              </div>
+              <div class="retro-terminal-body">
+                <div class="empty-state-icon" style="color: #f43f5e;"><i data-lucide="heart-crack"></i></div>
+                <h3 class="empty-state-title">No Favorite Games Saved Yet</h3>
+                <p class="empty-state-desc">
+                  You haven't bookmarked any games yet! Click the heart icon on any game card in the catalog to add it to your personal favorites collection.
+                </p>
+                <div class="empty-state-actions">
+                  <button type="button" class="btn btn-primary btn-sm btn-reset-filters" id="reset-filter-btn">
+                    <span><i data-lucide="gamepad-2"></i> Browse All Games</span>
+                  </button>
+                </div>
+              </div>
             </div>
           `;
         } else {
           emptyCard.innerHTML = `
-            <div class="empty-state-icon" style="color: #f43f5e;"><i data-lucide="search-x"></i></div>
-            <h3 class="empty-state-title">No Matching Favorites Found</h3>
-            <p class="empty-state-desc">
-              None of your ${favs.size} saved favorite games match the current search query or active facet filters.
-            </p>
-            <div class="empty-state-actions">
-              <button class="btn btn-primary btn-sm" id="clear-fav-search-btn">
-                <span><i data-lucide="rotate-ccw"></i> Show All Favorites (${favs.size})</span>
-              </button>
-              <button class="btn btn-secondary btn-sm" id="reset-filter-btn">
-                <span><i data-lucide="gamepad-2"></i> Browse All Games</span>
-              </button>
+            <div class="retro-terminal-screen">
+              <div class="retro-terminal-scanlines" aria-hidden="true"></div>
+              <div class="retro-terminal-header">
+                <div class="retro-terminal-dots" aria-hidden="true">
+                  <span class="dot dot-red"></span>
+                  <span class="dot dot-yellow"></span>
+                  <span class="dot dot-green"></span>
+                </div>
+                <span class="retro-terminal-badge">ARCADE-OS // FAVORITES</span>
+                <span class="retro-terminal-tag">STATUS: 0 MATCHES</span>
+              </div>
+              <div class="retro-terminal-body">
+                <div class="empty-state-icon" style="color: #f43f5e;"><i data-lucide="search-x"></i></div>
+                <h3 class="empty-state-title">No Matching Favorites Found</h3>
+                <p class="empty-state-desc">
+                  None of your ${favs.size} saved favorite games match the current search query or active facet filters.
+                </p>
+                <div class="empty-state-actions">
+                  <button type="button" class="btn btn-primary btn-sm" id="clear-fav-search-btn">
+                    <span><i data-lucide="rotate-ccw"></i> Show All Favorites (${favs.size})</span>
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm btn-reset-filters" id="reset-filter-btn">
+                    <span><i data-lucide="gamepad-2"></i> Browse All Games</span>
+                  </button>
+                </div>
+              </div>
             </div>
           `;
           const clearFavBtn = emptyCard.querySelector("#clear-fav-search-btn");
@@ -656,49 +730,135 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         emptyCard.innerHTML = `
-          <div class="empty-state-icon"><i data-lucide="gamepad-2"></i></div>
-          <h3 class="empty-state-title"></h3>
-          <p class="empty-state-desc">
-            ${searchQuery ? `We couldn't find any games matching "${searchQuery}". Try exploring related categories or searching another arcade classic.` : `Be the pioneer contributor! Build the first game for this category under <code>games/&lt;game-name&gt;_&lt;your-name&gt;/</code> and claim your spot on the leaderboard.`}
-          </p>
-          ${suggestionsHtml}
-          <div class="empty-state-actions">
-            <a href="https://github.com/DebasmitaBose0/ArcadeVerse/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
-              <span><i data-lucide="rocket"></i> Build a Game for This Category</span>
-            </a>
-            <button class="btn btn-secondary btn-sm" id="reset-filter-btn">
-              <span><i data-lucide="rotate-ccw"></i> Clear Filters</span>
-            </button>
+          <div class="retro-terminal-screen">
+            <div class="retro-terminal-scanlines" aria-hidden="true"></div>
+            <div class="retro-terminal-header">
+              <div class="retro-terminal-dots" aria-hidden="true">
+                <span class="dot dot-red"></span>
+                <span class="dot dot-yellow"></span>
+                <span class="dot dot-green"></span>
+              </div>
+              <span class="retro-terminal-badge">ARCADE-OS // SYSTEM STATUS</span>
+              <span class="retro-terminal-tag">STATUS: 0 MATCHES</span>
+            </div>
+            <div class="retro-terminal-body">
+              <div class="arcade-joystick-graphic" aria-hidden="true">
+                <svg class="retro-joystick-svg" viewBox="0 0 120 120" width="110" height="110" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <radialGradient id="retroJoystickBallGlow" cx="35%" cy="35%" r="65%">
+                      <stop offset="0%" stop-color="#ff7694" />
+                      <stop offset="55%" stop-color="#f43f5e" />
+                      <stop offset="100%" stop-color="#9f1239" />
+                    </radialGradient>
+                    <linearGradient id="retroJoystickShaft" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="#cbd5e1" />
+                      <stop offset="45%" stop-color="#f8fafc" />
+                      <stop offset="100%" stop-color="#64748b" />
+                    </linearGradient>
+                    <linearGradient id="retroTerminalDeck" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stop-color="#1e293b" />
+                      <stop offset="100%" stop-color="#0f172a" />
+                    </linearGradient>
+                  </defs>
+                  <!-- Arcade Control Deck Base -->
+                  <rect x="10" y="76" width="100" height="34" rx="8" fill="url(#retroTerminalDeck)" stroke="#00f3ff" stroke-width="2" stroke-opacity="0.6" />
+                  <line x1="16" y1="84" x2="104" y2="84" stroke="#00f3ff" stroke-opacity="0.25" stroke-dasharray="2 3" />
+                  <!-- Screws / Rivets on Deck -->
+                  <circle cx="16" cy="82" r="1.5" fill="#64748b" />
+                  <circle cx="104" cy="82" r="1.5" fill="#64748b" />
+                  <circle cx="16" cy="102" r="1.5" fill="#64748b" />
+                  <circle cx="104" cy="102" r="1.5" fill="#64748b" />
+                  <!-- Action Buttons on Right -->
+                  <ellipse cx="80" cy="94" rx="6.5" ry="4.5" fill="#0891b2" stroke="#00f3ff" stroke-width="1.5" />
+                  <ellipse cx="80" cy="92.5" rx="4.5" ry="2.8" fill="#22d3ee" />
+                  <ellipse cx="96" cy="88" rx="6.5" ry="4.5" fill="#d97706" stroke="#fbbf24" stroke-width="1.5" />
+                  <ellipse cx="96" cy="86.5" rx="4.5" ry="2.8" fill="#fde047" />
+                  <!-- Joystick Washer / Dust Bezel -->
+                  <ellipse cx="44" cy="84" rx="18" ry="7" fill="#020617" stroke="#334155" stroke-width="2" />
+                  <ellipse cx="44" cy="84" rx="12" ry="4.5" fill="#0f172a" stroke="#00f3ff" stroke-width="1" stroke-opacity="0.4" />
+                  <!-- Joystick Shaft / Stick -->
+                  <path d="M41 82 L42 42 L46 42 L47 82 Z" fill="url(#retroJoystickShaft)" stroke="#475569" stroke-width="0.5" />
+                  <!-- Joystick Ball Top Knob -->
+                  <circle cx="44" cy="34" r="15" fill="url(#retroJoystickBallGlow)" />
+                  <ellipse cx="39" cy="29" rx="4" ry="2.5" fill="#ffffff" opacity="0.65" transform="rotate(-30 39 29)" />
+                </svg>
+              </div>
+              <h3 class="empty-state-title">No Games Found</h3>
+              <p class="empty-state-desc">
+                ${searchQuery ? `We couldn't find any games matching "${searchQuery}". Try exploring related categories or resetting all active filters.` : `No games matched the current filter combination. Reset your filters to explore the entire ArcadeVerse collection.`}
+              </p>
+              ${suggestionsHtml}
+              <div class="empty-state-actions">
+                <button type="button" class="btn btn-primary btn-reset-filters" id="reset-filter-btn" aria-label="Reset All Filters">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align: -2px; margin-right: 6px;">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                    <path d="M3 3v5h5"/>
+                  </svg>
+                  <span>Reset All Filters</span>
+                </button>
+                <a href="https://github.com/DebasmitaBose0/ArcadeVerse/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align: -2px; margin-right: 4px;">
+                    <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>
+                    <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>
+                    <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/>
+                    <path d="M12 9V4s3.03.55 4 2c1.08 1.62 0 5 0 5"/>
+                  </svg>
+                  <span>Build a Game</span>
+                </a>
+              </div>
+            </div>
           </div>
         `;
       }
 
       // Category, search, and letter filter text come from the user, so set them as text, not markup.
       const emptyTitle = emptyCard.querySelector(".empty-state-title");
-      if (currentCategory !== "favorites") {
-        if (currentLetterFilter !== "all" && currentCategory === "all" && !searchQuery) {
+      if (emptyTitle && currentCategory !== "favorites") {
+        if (searchQuery) {
+          emptyTitle.textContent = `No games found matching "${searchQuery}"`;
+        } else if (currentLetterFilter !== "all" && currentCategory === "all") {
           emptyTitle.textContent = `No games found starting with "${currentLetterFilter}"`;
         } else if (currentLetterFilter !== "all" && currentCategory !== "all") {
           emptyTitle.textContent = `No games found in "${currentCategory}" starting with "${currentLetterFilter}"`;
+        } else if (currentCategory !== "all") {
+          emptyTitle.textContent = `No games found in "${currentCategory}" category`;
+        } else if (currentDurationFacet !== "all" || currentControlsFacet !== "all" || currentTagFilter) {
+          emptyTitle.textContent = "No Games Found for Active Filters";
         } else {
-          emptyTitle.textContent = `No games found in "${currentCategory !== "all" ? currentCategory : searchQuery}"`;
+          emptyTitle.textContent = "No Games Found";
         }
       }
 
-      // Clear button should reset tag and letter filter too
-      emptyCard.querySelector("#reset-filter-btn").addEventListener("click", () => {
+      // Comprehensive Reset All Filters handler that instantly restores the full catalog
+      function resetAllCatalogFilters() {
         searchQuery = "";
         currentCategory = "all";
         currentTagFilter = "";
         currentLetterFilter = "all";
-        resetLetterFilterUI();
+        currentDurationFacet = "all";
+        currentControlsFacet = "all";
+        if (typeof resetLetterFilterUI === "function") {
+          resetLetterFilterUI();
+        }
         if (searchInput) searchInput.value = "";
-        closeAutocomplete();
         if (searchClearBtn) searchClearBtn.hidden = true;
-        categoryPills.forEach((p) => p.classList.remove("active"));
-        const allPill = document.querySelector('.category-pills .pill[data-category="all"]');
-        if (allPill) allPill.classList.add("active");
-        buildTagChips();
+        closeAutocomplete();
+        categoryPills.forEach((p) => {
+          const isAll = p.getAttribute("data-category") === "all";
+          p.classList.toggle("active", isAll);
+          p.setAttribute("aria-selected", isAll ? "true" : "false");
+        });
+        const durationChips = document.querySelectorAll("#duration-facet-chips .facet-chip");
+        durationChips.forEach((c) => {
+          c.classList.toggle("active", c.getAttribute("data-duration") === "all");
+        });
+        const controlChips = document.querySelectorAll("#controls-facet-chips .facet-chip");
+        controlChips.forEach((c) => {
+          c.classList.toggle("active", c.getAttribute("data-controls") === "all");
+        });
+        if (typeof buildTagChips === "function") {
+          buildTagChips();
+        }
         renderGames();
         syncURLState(false);
       });
@@ -1224,8 +1384,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Sort Selector Change
   if (sortSelect) {
+    sortSelect.value = currentSort;
     sortSelect.addEventListener("change", (e) => {
       currentSort = e.target.value;
+      try {
+        localStorage.setItem(CATALOG_SORT_STORAGE_KEY, currentSort);
+      } catch (_) {}
       renderGames();
     });
   }
