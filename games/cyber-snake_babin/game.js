@@ -45,7 +45,7 @@
   let gameLoopTimeout = null;
   let bestScore = 0;
   try {
-    bestScore = parseInt(localStorage.getItem("arcadeverse_cyber_snake_best") || "0", 10) || 0;
+    bestScore = parseInt((window.ArcadeStorage ? window.ArcadeStorage.getItem("bestScore") : null) || localStorage.getItem("arcadeverse_cyber_snake_best") || "0", 10) || 0;
   } catch (e) {}
 
   bestScoreEl.textContent = bestScore;
@@ -55,7 +55,7 @@
       bestScore = score;
       bestScoreEl.textContent = bestScore;
       try {
-        localStorage.setItem("arcadeverse_cyber_snake_best", bestScore);
+        if (window.ArcadeStorage) window.ArcadeStorage.setItem("bestScore", bestScore); localStorage.setItem("arcadeverse_cyber_snake_best", bestScore);
       } catch (e) {}
     }
   }

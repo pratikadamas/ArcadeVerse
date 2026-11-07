@@ -753,6 +753,29 @@
           </div>
         </div>
 
+        <!-- Question 24 -->
+        <div class="faq-accordion-item" data-category="architecture" id="faq-24">
+          <button class="faq-accordion-trigger" type="button" aria-expanded="false" aria-controls="faq-ans-24">
+            <span class="faq-question-text">
+              <span class="faq-category-badge">Architecture</span>
+              24. How do I prevent localStorage key collisions between multiple games?
+            </span>
+            <i data-lucide="chevron-down" class="faq-chevron"></i>
+          </button>
+          <div class="faq-accordion-content" id="faq-ans-24" role="region">
+            <div class="faq-accordion-inner">
+              <div class="faq-answer-text">
+                <p>Because all games in ArcadeVerse run under the same origin in iframes, writing directly to unnamespaced keys such as <code>localStorage.setItem('highScore', 100)</code> will overwrite high scores of other games. ArcadeVerse provides a built-in isolated storage proxy via <code>ArcadeVerse.storage</code>:</p>
+                <ul>
+                  <li><strong>Automated Prefixing:</strong> Calling <code>ArcadeVerse.storage.setItem('highScore', score)</code> stores the value under <code>av_&lt;your_game_id&gt;_highScore</code> automatically.</li>
+                  <li><strong>SDK Proxy:</strong> Games should always use <code>const storage = window.ArcadeVerse?.storage || window.localStorage;</code> to guarantee isolated read/write operations.</li>
+                  <li><strong>Individual Game Reset:</strong> The ArcadeVerse Storage Manager allows players to wipe save data for a single game without clearing other games or global settings.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- Quick Help & Issues CTA Banner -->
