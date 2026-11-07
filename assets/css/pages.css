@@ -1464,3 +1464,190 @@ body.docs-viewport-body {
   border-radius: 2px;
   box-shadow: 0 0 6px rgba(0, 240, 255, 0.6);
 }
+
+/* ===================================================
+   LEADERBOARD STANDINGS TABLE PAGINATION CONTROLS
+   =================================================== */
+
+.leaderboard-pagination-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1.1rem 1.6rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.pagination-info-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.pagination-info {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.page-size-selector-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.page-size-label {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.page-size-select {
+  background: var(--bg-surface-elevated, #161b2a);
+  border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.12));
+  border-radius: var(--radius-sm, 6px);
+  color: var(--text-primary, #fff);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.35rem 0.65rem;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-size-select:focus {
+  border-color: var(--accent-primary, #3b82f6);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+.pagination-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.38rem 0.75rem;
+  min-height: 34px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: var(--bg-surface-elevated, #161b2a);
+  border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.12));
+  color: var(--text-primary, #fff);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn .lucide {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.5px;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: var(--accent-primary, #3b82f6);
+  color: #fff;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.pagination-pages {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.pagination-page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: var(--bg-surface-elevated, #161b2a);
+  border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.12));
+  color: var(--text-secondary, #cbd5e1);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-page-btn:hover:not(.active):not(:disabled) {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: var(--accent-primary, #3b82f6);
+  color: #fff;
+}
+
+.pagination-page-btn.active {
+  background: linear-gradient(135deg, var(--accent-primary, #3b82f6), #6366f1);
+  border-color: transparent;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+}
+
+.pagination-page-btn:disabled {
+  cursor: default;
+}
+
+.pagination-ellipsis {
+  padding: 0 0.35rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  user-select: none;
+}
+
+/* Light Theme Support */
+[data-theme="light"] .leaderboard-pagination-bar {
+  background: rgba(0, 0, 0, 0.02);
+  border-top-color: var(--border-subtle);
+}
+
+[data-theme="light"] .page-size-select,
+[data-theme="light"] .pagination-btn,
+[data-theme="light"] .pagination-page-btn {
+  background: #ffffff;
+  border-color: var(--border-medium, #cbd5e1);
+  color: var(--text-primary, #0f172a);
+}
+
+[data-theme="light"] .pagination-page-btn.active {
+  color: #ffffff;
+}
+
+/* Mobile Responsive Breakpoint */
+@media (max-width: 640px) {
+  .leaderboard-pagination-bar {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    gap: 0.85rem;
+    padding: 1rem;
+  }
+
+  .pagination-info-wrap {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .pagination-nav {
+    justify-content: center;
+    width: 100%;
+  }
+}

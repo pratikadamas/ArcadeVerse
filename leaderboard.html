@@ -195,7 +195,7 @@
           </div>
         </div>
         <div class="table-responsive">
-          <table class="leaderboard-table">
+          <table class="leaderboard-table" id="leaderboard-table">
             <thead>
               <tr>
                 <th style="width: 75px;">Rank</th>
@@ -213,6 +213,32 @@
               <!-- Rendered by leaderboard.js -->
             </tbody>
           </table>
+        </div>
+        <!-- Standings Table Pagination & Page-Size Controls -->
+        <div class="leaderboard-pagination-bar" id="leaderboard-pagination-bar">
+          <div class="pagination-info-wrap">
+            <span class="pagination-info" id="leaderboard-pagination-info">Showing 1–10 of 42 contributors</span>
+            <div class="page-size-selector-wrap">
+              <label for="leaderboard-page-size" class="page-size-label">Rows per page:</label>
+              <select id="leaderboard-page-size" class="page-size-select" aria-label="Rows per page">
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="all">All</option>
+              </select>
+            </div>
+          </div>
+          <nav class="pagination-nav" id="leaderboard-pagination-nav" aria-label="Leaderboard table pagination">
+            <button type="button" class="pagination-btn prev-btn" id="pagination-prev-btn" aria-label="Previous page">
+              <i data-lucide="chevron-left"></i> <span>Previous</span>
+            </button>
+            <div class="pagination-pages" id="pagination-pages-container">
+              <!-- Page numbers injected dynamically -->
+            </div>
+            <button type="button" class="pagination-btn next-btn" id="pagination-next-btn" aria-label="Next page">
+              <span>Next</span> <i data-lucide="chevron-right"></i>
+            </button>
+          </nav>
         </div>
       </div>
     </div>
