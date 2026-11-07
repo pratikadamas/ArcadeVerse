@@ -606,21 +606,10 @@ document.addEventListener("DOMContentLoaded", () => {
         matchesCategory = pl ? pl.games.includes(item.id) : false;
       } else {
         if (currentCategory.toLowerCase() === "halloween") {
-<<<<<<< HEAD
           matchesCategory = isHalloweenGame(item);
-        } else {
-        matchesCategory = item.category.toLowerCase() === currentCategory.toLowerCase();
-=======
-          matchesCategory = (item.tags && item.tags.some(t => t.toLowerCase() === "halloween")) ||
-            item.category.toLowerCase().includes("horror") ||
-            item.title.toLowerCase().includes("halloween") ||
-            item.id.toLowerCase().includes("haunted") ||
-            item.id.toLowerCase().includes("escape-room") ||
-            item.id.toLowerCase().includes("island-survival");
         } else {
           matchesCategory = item.category.toLowerCase() === currentCategory.toLowerCase();
         }
->>>>>>> d760360799e8fb0d352e2c9c8fddfdee6a4adf9a
       }
 
       // Tag Facet Filter
@@ -971,6 +960,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         renderGames();
         syncURLState(false);
+      }
+
+      // Attach reset listener to all reset buttons in empty state
+      emptyCard.querySelectorAll("#reset-filter-btn, #reset-all-filters-btn, .btn-reset-filters").forEach((btn) => {
+        btn.addEventListener("click", resetAllCatalogFilters);
       });
 
       // Bind smart suggestion chip clicks
