@@ -1678,6 +1678,29 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "potion-maker_mistu7debnath",
+    "title": "Potion Maker",
+    "category": "Puzzle",
+    "lucideIcon": "flask-conical",
+    "description": "Operate a magical alchemist laboratory, discover secret recipes, brew potions, and fulfill customer orders in this cozy crafting adventure!",
+    "author": "Manisha Debnath",
+    "github": "mistu7debnath",
+    "role": "Arcade Developer",
+    "path": "games/potion-maker_mistu7debnath/index.html",
+    "tags": [
+      "Puzzle",
+      "Crafting",
+      "Magic",
+      "Alchemy",
+      "Casual",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": true,
+    "difficulty": "All Skill Levels",
+    "releaseDate": "2026-11-07"
+  },
+  {
     "id": "potion-panic_joitapaul",
     "title": "Potion Panic",
     "category": "Arcade",
@@ -2223,7 +2246,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 393,
+    "commits": 394,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2329,6 +2352,30 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
+    "name": "Manisha Debnath",
+    "github": "mistu7debnath",
+    "avatarInitial": "M",
+    "role": "Contributor (NSOC '26)",
+    "commits": 17,
+    "gamesCount": 10,
+    "mechanicsBonus": 1,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Bubble Pop: Bubble Burst Arena",
+      "Cyber Runner: Neon Rush",
+      "Deep Sea Explorer",
+      "Dino Dig",
+      "Fishing Frenzy",
+      "Flappy Cyber Jet",
+      "Neon Grid Defense: Core Protocol",
+      "Potion Maker",
+      "Robo Factory",
+      "Time Warp: Chrono Shift"
+    ]
+  },
+  {
     "name": "Joita Paul",
     "github": "joitapaul",
     "avatarInitial": "J",
@@ -2349,29 +2396,6 @@ const CONTRIBUTORS_REGISTRY = [
       "Prism Pulse: Laser Labyrinth",
       "Pumpkin Express: Haunted Rails",
       "Quantum Pinball: Reactor Run"
-    ]
-  },
-  {
-    "name": "Manisha Debnath",
-    "github": "mistu7debnath",
-    "avatarInitial": "M",
-    "role": "Contributor (NSOC '26)",
-    "commits": 16,
-    "gamesCount": 9,
-    "mechanicsBonus": 1,
-    "platformPRs": 0,
-    "qualityPRs": 0,
-    "bonusPts": 0,
-    "contributions": [
-      "Bubble Pop: Bubble Burst Arena",
-      "Cyber Runner: Neon Rush",
-      "Deep Sea Explorer",
-      "Dino Dig",
-      "Fishing Frenzy",
-      "Flappy Cyber Jet",
-      "Neon Grid Defense: Core Protocol",
-      "Robo Factory",
-      "Time Warp: Chrono Shift"
     ]
   },
   {
