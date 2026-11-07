@@ -1558,6 +1558,15 @@ textarea:focus-visible,
   stroke-width: 2.5;
   display: inline-block;
   vertical-align: middle;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), fill 0.2s ease;
+}
+
+.pill-favorites:hover .pill-fav-icon svg,
+.pill-favorites.active .pill-fav-icon svg,
+.pill-favorites:hover .pill-fav-icon i,
+.pill-favorites.active .pill-fav-icon i {
+  fill: currentColor;
+  transform: scale(1.12);
 }
 
 .favorites-count-badge,
@@ -2043,6 +2052,30 @@ textarea:focus-visible,
   border-color: var(--border-medium);
   box-shadow: var(--shadow-lg);
   background: var(--bg-surface-elevated);
+}
+
+/* Smooth Card Removal Animation in Favorites Filter View (Issue #533) */
+.game-card.removing-favorite {
+  opacity: 0 !important;
+  transform: scale(0.88) translateY(10px) !important;
+  pointer-events: none !important;
+  transition: opacity 0.3s cubic-bezier(0.2, 0, 0, 1),
+              transform 0.3s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.3s ease !important;
+}
+
+#games-grid.view-list .game-card.removing-favorite {
+  opacity: 0 !important;
+  transform: translateX(-16px) scale(0.96) !important;
+  pointer-events: none !important;
+  transition: opacity 0.3s cubic-bezier(0.2, 0, 0, 1),
+              transform 0.3s cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+html.a11y-reduced-motion .game-card.removing-favorite {
+  opacity: 0 !important;
+  transform: none !important;
+  transition: opacity 0.05s linear !important;
 }
 
 .game-card-preview {
