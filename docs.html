@@ -594,6 +594,30 @@ jobs:
 [GPU VRAM Released Instantly] ◄──── [Zero Memory Leak Growth]</code></pre>
               </div>
 
+              <!-- Atomic Backup & Corrupted JSON Recovery Architecture -->
+              <div class="docs-callout note" style="margin-top: 24px;">
+                <div class="docs-callout-icon"><i data-lucide="archive"></i></div>
+                <div>
+                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Atomic Save Backup Recovery & Corrupted JSON Protection (#495)</h4>
+                  <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
+                    Users can export and restore their high scores, completed quest streaks, favorites, and settings via JSON backup archives in the Storage Manager. To protect against partial writes, network aborts, or corrupted JSON syntax:
+                  </p>
+                  <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
+                    <li><strong>Heuristic Syntax Repair:</strong> If <code>JSON.parse()</code> fails due to trailing commas or unmatched quote characters, a heuristic recovery pass attempts automated normalization before rejecting.</li>
+                    <li><strong>Strict Schema Validation:</strong> Backups are audited against <code>BACKUP_SCHEMA</code>, disallowing prototype pollution (<code>__proto__</code>), non-primitive values, or excessive payload sizes (&gt;1MB per entry).</li>
+                    <li><strong>Atomic Rollback Snapshots:</strong> Before any key is written to <code>localStorage</code>, an in-memory snapshot of the existing storage is created. If any exception or quota issue occurs mid-restore, the entire storage is rolled back atomically to its initial clean state.</li>
+                    <li><strong>Inline Non-blocking Error Banners:</strong> Replaces disruptive browser alert boxes with modern in-modal error and warning banners.</li>
+                  </ul>
+                  <div class="code-block-wrapper" style="margin-top: 10px; margin-bottom: 10px;">
+                    <pre class="code-pre"><code class="language-javascript">// Schema & Atomic Transaction Flow
+validateBackupPayload(data)
+  ├── 1. Verify Structure & Capacity (Max 2,000 keys)
+  ├── 2. Strip Prototype Pollution & Validate Primitives
+  └── 3. Create Rollback Snapshot ──► Commit or Rollback on Error</code></pre>
+                  </div>
+                </div>
+              </div>
+
               <h5 style="color: var(--text-primary); margin-top: 16px; margin-bottom: 6px; font-size: 0.95rem;">Implementation Guide for Game Contributors</h5>
               <p style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 10px;">
                 When developing WebGL games for ArcadeVerse, always bind the context recovery handler. When a mobile or laptop GPU sleeps or switches display adapters, the browser triggers a synthetic context loss. With the ArcadeVerse lifecycle bridge, your game avoids black screens:

@@ -2423,6 +2423,21 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (_) {}
   });
 
+  // ========================================================
+  // STORAGE RECOVERY TELEMETRY LISTENER (#495)
+  // Re-syncs catalog state and favorites if save backup is restored
+  // ========================================================
+  window.addEventListener("arcadeverse:storage-restored", (e) => {
+    try {
+      console.info("[ArcadeApp] Save backup restore event received, refreshing favorites and catalog state...", e.detail);
+      favoritesSet = null; // force reload from localStorage
+      updateFavoritesBadge();
+      renderGames();
+    } catch (err) {
+      console.warn("[ArcadeApp] Failed to refresh UI after storage restore:", err);
+    }
+  });
+
   // Initial render
   initCatalogViewSwitcher();
   initAZJumpBar();

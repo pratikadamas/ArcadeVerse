@@ -753,6 +753,29 @@
           </div>
         </div>
 
+        <!-- Question 26 -->
+        <div class="faq-accordion-item" data-category="architecture" id="faq-26">
+          <button class="faq-accordion-trigger" type="button" aria-expanded="false" aria-controls="faq-ans-26">
+            <span class="faq-question-text">
+              <span class="faq-category-badge">Architecture</span>
+              26. How does the Storage Manager handle corrupted JSON backups during restore?
+            </span>
+            <i data-lucide="chevron-down" class="faq-chevron"></i>
+          </button>
+          <div class="faq-accordion-content" id="faq-ans-26" role="region">
+            <div class="faq-accordion-inner">
+              <div class="faq-answer-text">
+                <p>The ArcadeVerse Storage Manager uses an atomic transaction pipeline with automated error recovery:</p>
+                <ul>
+                  <li><strong>Heuristic Repair:</strong> Minor syntax flaws like trailing commas or single quotes are cleaned automatically.</li>
+                  <li><strong>Schema Auditing:</strong> Keys are validated against size limits (1MB per entry, 2,000 keys max) and dangerous properties (<code>__proto__</code>) are stripped.</li>
+                  <li><strong>Rollback Guarantee:</strong> A snapshot of your existing browser state is captured before writes begin. If writing fails midway, all original settings and scores are restored instantly.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- Quick Help & Issues CTA Banner -->

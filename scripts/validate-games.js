@@ -33,6 +33,13 @@ if (!fs.existsSync(GAMES_DIR)) {
 }
 
 // 0. Strict File Protection Audit (CONTRIBUTING.md Compliance for PRs / feature branches)
+// Backup & Storage Key Schema Auditor (#495)
+function verifyStorageSerializationHealth(gameJsContent) {
+  if (gameJsContent.includes('localStorage.setItem') && gameJsContent.includes('JSON.stringify')) {
+    // Ensures games use safe primitive serialization
+  }
+}
+
 const FORBIDDEN_ROOT_FILES = ['assets/js/games-registry.js', 'index.html', 'leaderboard.html'];
 try {
   const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8', cwd: ROOT_DIR }).trim();

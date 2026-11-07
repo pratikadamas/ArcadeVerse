@@ -46,6 +46,13 @@ Publicly opening an issue exposes the platform, contributors, and users to poten
 
 ---
 
+## 🗄️ Storage Serialization & Atomic Backup Security (#495)
+
+To protect player profiles, ratings, and game progress from corruption or malicious payload injection:
+- The JSON backup restoration handler implements a strict parser with prototype pollution protection (rejecting payloads bearing __proto__, constructor, or prototype).
+- All restored keys and values are sanitized to primitive types with a 1MB per-item threshold and a 2,000-key capacity cap.
+- Restores are executed as atomic transactions: an in-memory snapshot is recorded prior to writing, and an instant rollback is executed if quota or parse errors occur during processing.
+
 ## 💻 Web Architecture & Code Safety Guidelines
 
 ArcadeVerse is built strictly on **100% native web standards (HTML5, CSS3, Vanilla JavaScript)** without server-side runtimes, Python backends, or node dependencies. All games and platform features execute client-side in the user's browser.

@@ -326,28 +326,168 @@
     URL.revokeObjectURL(url);
   }
 
-  // Import Saves from JSON
+  // ========================================================
+  // ATOMIC BACKUP SCHEMA VALIDATOR & CORRUPTED JSON RECOVERY (#495)
+  // Prevents mid-write corruptions and guarantees atomic rollback on parse failure
+  // ========================================================
+  const BACKUP_SCHEMA = {
+    ALLOWED_TYPE_KEYS: ['string', 'number', 'boolean'],
+    MAX_ENTRY_SIZE_BYTES: 1048576, // 1MB per individual save key
+    MAX_TOTAL_KEYS: 2000
+  };
+
+  /**
+   * Validate integrity and format of imported JSON backup
+   * @param {any} data
+   * @returns {{isValid: boolean, error?: string, sanitized?: Object}}
+   */
+  function validateBackupPayload(data) {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      return { isValid: false, error: 'Backup payload must be a non-null JSON object mapping keys to values.' };
+    }
+
+    const keys = Object.keys(data);
+    if (keys.length === 0) {
+      return { isValid: false, error: 'Backup file contains an empty dataset with zero keys.' };
+    }
+
+    if (keys.length > BACKUP_SCHEMA.MAX_TOTAL_KEYS) {
+      return { isValid: false, error: Dataset exceeds maximum key capacity of  keys. };
+    }
+
+    const sanitized = {};
+    for (const key of keys) {
+      if (typeof key !== 'string' || key.trim().length === 0) {
+        return { isValid: false, error: 'Malformed key identifier detected.' };
+      }
+
+      // Check for illegal prototype pollution keys
+      if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+        return { isValid: false, error: 'Dangerous object property detected in backup payload.' };
+      }
+
+      const val = data[key];
+      const valType = typeof val;
+
+      if (!BACKUP_SCHEMA.ALLOWED_TYPE_KEYS.includes(valType) && val !== null) {
+        return { isValid: false, error: Invalid value type '' detected for key ''. Must be primitive string/number/boolean. };
+      }
+
+      const stringifiedVal = val === null ? '' : String(val);
+      if (stringifiedVal.length > BACKUP_SCHEMA.MAX_ENTRY_SIZE_BYTES) {
+        return { isValid: false, error: Key '' exceeds individual payload limit (1MB). };
+      }
+
+      sanitized[key] = stringifiedVal;
+    }
+
+    return { isValid: true, sanitized };
+  }
+
+  /**
+   * Surface non-blocking error banner inside Storage Modal
+   * @param {string} message
+   * @param {'error'|'warning'|'success'} type
+   */
+  function showStorageBanner(message, type = 'error') {
+    const existing = document.getElementById('storage-modal-feedback-banner');
+    if (existing) existing.remove();
+
+    const banner = document.createElement('div');
+    banner.id = 'storage-modal-feedback-banner';
+    banner.className = storage-banner storage-banner-;
+    banner.innerHTML = 
+      <div class="storage-banner-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          
+        </svg>
+      </div>
+      <div class="storage-banner-text"></div>
+      <button type="button" class="storage-banner-close" aria-label="Dismiss banner">&times;</button>
+    ;
+
+    const body = storageModal ? storageModal.querySelector('.storage-modal-body') : null;
+    if (body) {
+      body.insertBefore(banner, body.firstChild);
+      banner.querySelector('.storage-banner-close').addEventListener('click', () => banner.remove());
+      if (type === 'success') {
+        setTimeout(() => banner.remove(), 4000);
+      }
+    }
+  }
+
+  // Import Saves from JSON with Atomic Rollback & Corrupted Recovery
   function importSaves(e) {
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = (event) => {
+      let rawText = event.target.result;
+      let parsed = null;
+
       try {
-        const parsed = JSON.parse(event.target.result);
-        if (typeof parsed === 'object' && parsed !== null) {
-          Object.keys(parsed).forEach((k) => {
-            localStorage.setItem(k, parsed[k]);
+        parsed = JSON.parse(rawText);
+      } catch (parseErr) {
+        console.warn('[ArcadeStorageManager] JSON parse failed, attempting heuristic cleanup...', parseErr);
+        // Attempt basic heuristic recovery for trailing commas or single quotes
+        try {
+          const cleanedText = rawText
+            .replace(/,\s*([}\]])/g, '') // remove trailing commas
+            .replace(/'/g, '"');          // replace single quotes
+          parsed = JSON.parse(cleanedText);
+          showStorageBanner('Recovered corrupted JSON syntax (repaired trailing commas/quotes).', 'warning');
+        } catch (recoveryErr) {
+          showStorageBanner(Corrupted JSON file: . Import aborted safely., 'error');
+          return;
+        }
+      }
+
+      // Step 2: Validate against Schema
+      const validation = validateBackupPayload(parsed);
+      if (!validation.isValid) {
+        showStorageBanner(Validation Error: , 'error');
+        return;
+      }
+
+      // Step 3: Atomic Transaction with Rollback Snapshot
+      const rollbackSnapshot = {};
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k) rollbackSnapshot[k] = localStorage.getItem(k);
+        }
+
+        const dataToApply = validation.sanitized;
+        let appliedCount = 0;
+
+        for (const targetKey of Object.keys(dataToApply)) {
+          localStorage.setItem(targetKey, dataToApply[targetKey]);
+          appliedCount++;
+        }
+
+        renderStorageTable();
+        showStorageBanner(Backup restored successfully!  keys committed atomically., 'success');
+      } catch (txErr) {
+        console.error('[ArcadeStorageManager] Write transaction failed, initiating atomic rollback...', txErr);
+        // Rollback to prior clean state
+        try {
+          localStorage.clear();
+          Object.keys(rollbackSnapshot).forEach(k => {
+            localStorage.setItem(k, rollbackSnapshot[k]);
           });
           renderStorageTable();
-          alert('Save data backup imported successfully!');
-        } else {
-          alert('Invalid backup file format.');
+          showStorageBanner(Quota or Write error during import: . All settings rolled back to previous state., 'error');
+        } catch (rollbackErr) {
+          console.error('[ArcadeStorageManager] Critical: Rollback failed!', rollbackErr);
         }
-      } catch (err) {
-        alert('Could not parse backup JSON file.');
       }
     };
+
+    reader.onerror = () => {
+      showStorageBanner('Unable to read selected backup file from disk.', 'error');
+    };
+
     reader.readAsText(file);
     e.target.value = ''; // Reset input
   }
@@ -563,6 +703,51 @@
         align-items: center;
         gap: 4px;
         transition: all 0.2s;
+      }
+            .storage-banner {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        line-height: 1.4;
+        animation: fadeIn 0.2s ease-out;
+      }
+      .storage-banner-error {
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        color: #fca5a5;
+      }
+      .storage-banner-warning {
+        background: rgba(245, 158, 11, 0.15);
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        color: #fcd34d;
+      }
+      .storage-banner-success {
+        background: rgba(16, 185, 129, 0.15);
+        border: 1px solid rgba(16, 185, 129, 0.4);
+        color: #6ee7b7;
+      }
+      .storage-banner-icon {
+        flex-shrink: 0;
+        display: flex;
+      }
+      .storage-banner-text {
+        flex: 1;
+      }
+      .storage-banner-close {
+        background: transparent;
+        border: none;
+        color: inherit;
+        font-size: 1.1rem;
+        cursor: pointer;
+        padding: 0 4px;
+        line-height: 1;
+        opacity: 0.7;
+      }
+      .storage-banner-close:hover {
+        opacity: 1;
       }
       .btn-clear-game:hover {
         background: #ef4444;
