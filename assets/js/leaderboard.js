@@ -49,6 +49,25 @@ document.addEventListener("DOMContentLoaded", () => {
     return text.replace(regex, '<mark class="search-highlight">$1</mark>');
   }
 
+  function escapeHTML(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function renderBadgeHtml(b) {
+    const name = escapeHTML(b.label || b.role);
+    const cat = escapeHTML(b.category || "Badge");
+    const req = escapeHTML(b.requirement || "");
+    const icon = escapeHTML(b.lucideIcon || "award");
+    const tagClass = escapeHTML(b.tagClass || "");
+    return `<span class="role-pill-badge ${tagClass}" data-badge-name="${name}" data-badge-cat="${cat}" data-badge-req="${req}" tabindex="0" role="button" aria-label="${name}: ${req}" title="${name} • ${req}"><i data-lucide="${icon}"></i> ${name}</span>`;
+  }
+
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
       clearTimeout(searchDebounceTimer);
@@ -240,7 +259,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tagClass: "role-admin",
         label: "Project Admin & Lead",
         lucideIcon: "crown",
-        category: "Leadership"
+        category: "Leadership",
+        requirement: "Project Lead & Core Platform Architect"
       });
     }
 
@@ -252,7 +272,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tagClass: "role-legendary-architect",
         label: "Legendary Game Architect",
         lucideIcon: "crown",
-        category: "Games Dedicated"
+        category: "Games Dedicated",
+        requirement: "Requires 50+ Verified Games in 'games/' folder"
       });
     } else if (gamesCount >= 35) {
       badges.push({
@@ -260,7 +281,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tagClass: "role-mythic-creator",
         label: "Mythic Game Creator",
         lucideIcon: "flame",
-        category: "Games Dedicated"
+        category: "Games Dedicated",
+        requirement: "Requires 35–49 Verified Games in 'games/' folder"
       });
     } else if (gamesCount >= 25) {
       badges.push({
@@ -268,7 +290,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tagClass: "role-grandmaster-designer",
         label: "Grandmaster Game Designer",
         lucideIcon: "award",
-        category: "Games Dedicated"
+        category: "Games Dedicated",
+        requirement: "Requires 25–34 Verified Games in 'games/' folder"
       });
     } else if (gamesCount >= 15) {
       badges.push({
@@ -276,7 +299,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tagClass: "role-master-architect",
         label: "Master Game Architect",
         lucideIcon: "shield-check",
-        category: "Games Dedicated"
+        category: "Games Dedicated",
+        requirement: "Requires 15–24 Verified Games in 'games/' folder"
       });
     } else if (gamesCount >= 10) {
       badges.push({
@@ -284,7 +308,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tagClass: "role-veteran-dev",
         label: "Veteran Game Developer",
         lucideIcon: "rocket",
-        category: "Games Dedicated"
+        category: "Games Dedicated",
+        requirement: "Requires 10–14 Verified Games in 'games/' folder"
       });
     } else if (gamesCount >= 7) {
       badges.push({
@@ -292,7 +317,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tagClass: "role-hyper",
         label: "Hyper Game Developer",
         lucideIcon: "zap",
-        category: "Games Dedicated"
+        category: "Games Dedicated",
+        requirement: "Requires 7–9 Verified Games in 'games/' folder"
       });
     } else if (gamesCount >= 5) {
       badges.push({
@@ -300,7 +326,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tagClass: "role-senior-arcade",
         label: "Senior Arcade Developer",
         lucideIcon: "cpu",
-        category: "Games Dedicated"
+        category: "Games Dedicated",
+        requirement: "Requires 5–6 Verified Games in 'games/' folder"
       });
     } else if (gamesCount >= 3) {
       badges.push({
@@ -308,7 +335,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tagClass: "role-arcade",
         label: "Arcade Developer",
         lucideIcon: "gamepad-2",
-        category: "Games Dedicated"
+        category: "Games Dedicated",
+        requirement: "Requires 3–4 Verified Games in 'games/' folder"
       });
     } else if (gamesCount >= 2) {
       badges.push({
@@ -316,7 +344,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tagClass: "role-junior-crafter",
         label: "Junior Game Crafter",
         lucideIcon: "hammer",
-        category: "Games Dedicated"
+        category: "Games Dedicated",
+        requirement: "Requires 2 Verified Games in 'games/' folder"
       });
     } else if (gamesCount >= 1) {
       badges.push({
@@ -324,7 +353,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tagClass: "role-novice-creator",
         label: "Novice Game Creator",
         lucideIcon: "compass",
-        category: "Games Dedicated"
+        category: "Games Dedicated",
+        requirement: "Requires 1 Verified Game in 'games/' folder"
       });
     }
 
@@ -337,7 +367,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tagClass: "role-immortal",
         label: "Immortal Arcade Legend",
         lucideIcon: "sparkles",
-        category: "Platform & Core"
+        category: "Platform & Core",
+        requirement: "Requires 5,000+ Arcade Points"
       });
     } else if (score >= 3000) {
       badges.push({
@@ -345,7 +376,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tagClass: "role-grandmaster-core",
         label: "Grandmaster Core Architect",
         lucideIcon: "gem",
-        category: "Platform & Core"
+        category: "Platform & Core",
+        requirement: "Requires 3,000–4,999 Arcade Points"
       });
     } else if (score >= 2000) {
       badges.push({
@@ -353,7 +385,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tagClass: "role-master",
         label: "Master Core Architect",
         lucideIcon: "shield-check",
-        category: "Platform & Core"
+        category: "Platform & Core",
+        requirement: "Requires 2,000–2,999 Arcade Points"
       });
     } else if (score >= 1200) {
       badges.push({
@@ -361,7 +394,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tagClass: "role-senior-platform",
         label: "Senior Platform Engineer",
         lucideIcon: "terminal",
-        category: "Platform & Core"
+        category: "Platform & Core",
+        requirement: "Requires 1,200–1,999 Arcade Points"
       });
     } else if (score >= 750) {
       badges.push({
@@ -369,7 +403,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tagClass: "role-elite",
         label: "Elite Contributor",
         lucideIcon: "gem",
-        category: "Platform & Core"
+        category: "Platform & Core",
+        requirement: "Requires 750–1,199 Arcade Points"
       });
     } else if (score >= 400) {
       badges.push({
@@ -377,7 +412,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tagClass: "role-distinguished",
         label: "Distinguished Contributor",
         lucideIcon: "medal",
-        category: "Platform & Core"
+        category: "Platform & Core",
+        requirement: "Requires 400–749 Arcade Points"
       });
     } else if (score >= 200) {
       badges.push({
@@ -385,7 +421,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tagClass: "role-platform",
         label: "Platform Contributor",
         lucideIcon: "code-2",
-        category: "Platform & Core"
+        category: "Platform & Core",
+        requirement: "Requires 200–399 Arcade Points"
       });
     } else if (score >= 100) {
       badges.push({
@@ -393,7 +430,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tagClass: "role-rising",
         label: "Rising Contributor",
         lucideIcon: "trending-up",
-        category: "Getting Started"
+        category: "Getting Started",
+        requirement: "Requires 100–199 Arcade Points"
       });
     } else if (score >= 25) {
       badges.push({
@@ -401,7 +439,8 @@ document.addEventListener("DOMContentLoaded", () => {
         tagClass: "role-active",
         label: "Active Contributor",
         lucideIcon: "sprout",
-        category: "Getting Started"
+        category: "Getting Started",
+        requirement: "Requires 25–99 Arcade Points"
       });
     } else if (score >= 1) {
       badges.push({
@@ -409,14 +448,13 @@ document.addEventListener("DOMContentLoaded", () => {
         tagClass: "role-apprentice",
         label: "Apprentice Contributor",
         lucideIcon: "target",
-        category: "Getting Started"
+        category: "Getting Started",
+        requirement: "Requires 1–24 Arcade Points"
       });
     }
 
     badges.forEach(b => {
-      if (!b.title) {
-        b.title = `${b.category}: ${b.label}`;
-      }
+      b.title = `${b.label}: ${b.requirement || b.category}`;
     });
 
     return badges;
@@ -523,7 +561,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <a href="https://github.com/${item.login}" target="_blank" rel="noopener noreferrer" class="podium-handle">@${item.login}</a>
         
         <div class="podium-badges-container">
-          ${badges.map(b => `<span class="role-pill-badge ${b.tagClass}" title="${b.title || b.label}"><i data-lucide="${b.lucideIcon}"></i> ${b.label}</span>`).join("")}
+          ${badges.map(renderBadgeHtml).join("")}
         </div>
 
         <div class="podium-score-pill">
@@ -660,7 +698,7 @@ document.addEventListener("DOMContentLoaded", () => {
         </td>
         <td>
           <div class="contributor-badges-wrap">
-            ${badges.map(b => `<span class="role-pill-badge ${b.tagClass}" title="${b.title || b.label}"><i data-lucide="${b.lucideIcon}"></i> ${b.label}</span>`).join("")}
+            ${badges.map(renderBadgeHtml).join("")}
           </div>
         </td>
         <td>
@@ -790,9 +828,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const adminBadgesContainer = document.getElementById("admin-badges-row");
     if (adminBadgesContainer) {
       const badges = getContributorBadges(adminUser);
-      adminBadgesContainer.innerHTML = badges.map(b => `
-        <span class="role-pill-badge ${b.tagClass}" title="${b.title || b.label}"><i data-lucide="${b.lucideIcon}"></i> ${b.label}</span>
-      `).join("");
+      adminBadgesContainer.innerHTML = badges.map(renderBadgeHtml).join("");
       if (window.lucide) {
         lucide.createIcons();
       }
@@ -1039,6 +1075,157 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
   }
+
+  // --- Interactive Badge Tooltip Engine ---
+  let activeTooltipTarget = null;
+  const tooltipEl = document.createElement("div");
+  tooltipEl.id = "badge-interactive-tooltip";
+  tooltipEl.className = "badge-interactive-tooltip";
+  tooltipEl.setAttribute("role", "tooltip");
+  tooltipEl.setAttribute("aria-hidden", "true");
+  document.body.appendChild(tooltipEl);
+
+  function showBadgeTooltip(target) {
+    const name = target.getAttribute("data-badge-name");
+    const cat = target.getAttribute("data-badge-cat");
+    const req = target.getAttribute("data-badge-req");
+    if (!name || !req) return;
+
+    activeTooltipTarget = target;
+    tooltipEl.innerHTML = `
+      <div class="tooltip-header">
+        <span class="tooltip-cat">${escapeHTML(cat || "Milestone")}</span>
+        <strong class="tooltip-name">${escapeHTML(name)}</strong>
+      </div>
+      <div class="tooltip-req">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span>${escapeHTML(req)}</span>
+      </div>
+    `;
+
+    tooltipEl.style.display = "block";
+    tooltipEl.setAttribute("aria-hidden", "false");
+
+    const rect = target.getBoundingClientRect();
+    const tooltipRect = tooltipEl.getBoundingClientRect();
+
+    let top = rect.top - tooltipRect.height - 8;
+    if (top < 10) {
+      top = rect.bottom + 8;
+    }
+
+    let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+    if (left < 10) left = 10;
+    if (left + tooltipRect.width > window.innerWidth - 10) {
+      left = window.innerWidth - tooltipRect.width - 10;
+    }
+
+    tooltipEl.style.top = `${top + window.scrollY}px`;
+    tooltipEl.style.left = `${left + window.scrollX}px`;
+    tooltipEl.classList.add("visible");
+  }
+
+  function hideBadgeTooltip() {
+    activeTooltipTarget = null;
+    tooltipEl.classList.remove("visible");
+    tooltipEl.style.display = "none";
+    tooltipEl.setAttribute("aria-hidden", "true");
+  }
+
+  document.addEventListener("mouseover", (e) => {
+    const badge = e.target.closest(".role-pill-badge[data-badge-req]");
+    if (badge) {
+      showBadgeTooltip(badge);
+    }
+  });
+
+  document.addEventListener("mouseout", (e) => {
+    const badge = e.target.closest(".role-pill-badge[data-badge-req]");
+    if (badge && activeTooltipTarget === badge) {
+      hideBadgeTooltip();
+    }
+  });
+
+  document.addEventListener("focusin", (e) => {
+    const badge = e.target.closest(".role-pill-badge[data-badge-req]");
+    if (badge) {
+      showBadgeTooltip(badge);
+    }
+  });
+
+  document.addEventListener("focusout", (e) => {
+    const badge = e.target.closest(".role-pill-badge[data-badge-req]");
+    if (badge && activeTooltipTarget === badge) {
+      hideBadgeTooltip();
+    }
+  });
+
+  // Mobile Tap / Click support
+  document.addEventListener("click", (e) => {
+    const badge = e.target.closest(".role-pill-badge[data-badge-req]");
+    if (badge) {
+      if (activeTooltipTarget === badge) {
+        hideBadgeTooltip();
+      } else {
+        showBadgeTooltip(badge);
+      }
+    } else if (activeTooltipTarget && !tooltipEl.contains(e.target)) {
+      hideBadgeTooltip();
+    }
+  });
+
+  window.addEventListener("scroll", () => {
+    if (activeTooltipTarget) {
+      hideBadgeTooltip();
+    }
+  }, { passive: true });
+
+  // --- Badge Legend Modal Controller ---
+  const badgeLegendModal = document.getElementById("badge-legend-modal");
+  const badgeLegendBackdrop = document.getElementById("badge-legend-backdrop");
+  const openBadgeLegendBtn = document.getElementById("open-badge-legend-btn");
+  const badgeLegendLinkHint = document.getElementById("badge-legend-link-hint");
+  const closeBadgeLegendBtn = document.getElementById("close-badge-legend-btn");
+
+  function openBadgeLegend() {
+    if (!badgeLegendModal) return;
+    badgeLegendModal.style.display = "flex";
+    badgeLegendModal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    if (window.lucide) lucide.createIcons();
+    if (closeBadgeLegendBtn) closeBadgeLegendBtn.focus();
+  }
+
+  function closeBadgeLegend() {
+    if (!badgeLegendModal) return;
+    badgeLegendModal.style.display = "none";
+    badgeLegendModal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+    if (openBadgeLegendBtn) openBadgeLegendBtn.focus();
+  }
+
+  if (openBadgeLegendBtn) {
+    openBadgeLegendBtn.addEventListener("click", openBadgeLegend);
+  }
+  if (badgeLegendLinkHint) {
+    badgeLegendLinkHint.addEventListener("click", openBadgeLegend);
+  }
+  if (closeBadgeLegendBtn) {
+    closeBadgeLegendBtn.addEventListener("click", closeBadgeLegend);
+  }
+  if (badgeLegendBackdrop) {
+    badgeLegendBackdrop.addEventListener("click", closeBadgeLegend);
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && badgeLegendModal && badgeLegendModal.style.display !== "none") {
+      closeBadgeLegend();
+    }
+  });
 
   // Initial Run: Sync verified registry data first and render podium/table
   loadRegistryContributors();

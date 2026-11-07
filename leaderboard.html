@@ -48,6 +48,7 @@
   <link rel="stylesheet" href="assets/css/trophy-card.css">
   <link rel="stylesheet" href="assets/css/sound-engine.css">
   <link rel="stylesheet" href="assets/css/network-detector.css">
+  <link rel="stylesheet" href="assets/css/leaderboard.css">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -182,13 +183,16 @@
         <div class="table-header">
           <div>
             <h3><i data-lucide="medal"></i> Verified Community Contributors Standing</h3>
-            <span class="ranking-metric-hint">Ranked by Verified Game(s) & Merged GitHub Contributions in NSOC '26</span>
+            <span class="ranking-metric-hint">Ranked by Verified Game(s) & Merged GitHub Contributions in NSOC '26 • <a href="javascript:void(0)" class="badge-legend-link" id="badge-legend-link-hint">Badge Legend</a></span>
           </div>
           <div class="table-header-tools">
             <div class="leaderboard-search-wrap">
               <i data-lucide="search" class="leaderboard-search-icon"></i>
               <input type="text" id="leaderboard-search-input" placeholder="Search contributor or badge..." aria-label="Search contributor table">
             </div>
+            <button type="button" class="btn btn-secondary btn-sm btn-badge-legend" id="open-badge-legend-btn" title="View all contributor role badges and milestone criteria">
+              <i data-lucide="award"></i> <span>Badge Legend</span>
+            </button>
             <button type="button" class="btn btn-secondary btn-sm btn-export-csv" id="export-csv-btn" title="Export leaderboard standings as CSV file">
               <i data-lucide="download"></i> <span>Export CSV</span>
             </button>
@@ -647,7 +651,177 @@
       lucide.createIcons();
     }
   </script>
-    <!-- Page Transition Circular Loader -->
+  <!-- Badge Legend & Milestone Modal -->
+  <div class="badge-legend-modal-overlay" id="badge-legend-modal" role="dialog" aria-modal="true" aria-labelledby="badge-legend-title" aria-hidden="true" style="display: none;">
+    <div class="badge-legend-backdrop" id="badge-legend-backdrop"></div>
+    <div class="badge-legend-modal-window">
+      <div class="badge-legend-header">
+        <div class="badge-legend-title-wrap">
+          <div class="badge-legend-icon-wrap" aria-hidden="true">
+            <i data-lucide="award"></i>
+          </div>
+          <div>
+            <h2 id="badge-legend-title">Contributor Role Badges &amp; Milestone Legend</h2>
+            <p class="badge-legend-subtitle">Qualification criteria and requirements for all verified Hall of Fame community badges</p>
+          </div>
+        </div>
+        <button type="button" class="badge-legend-close-btn" id="close-badge-legend-btn" aria-label="Close Badge Legend">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="badge-legend-body">
+        <!-- Section 1: Games Dedicated Track -->
+        <div class="legend-section">
+          <div class="legend-section-header">
+            <h3><i data-lucide="gamepad-2"></i> Dedicated Game Developer Track</h3>
+            <span class="legend-track-desc">Ranked strictly by verified, standalone games built under <code>games/&lt;game-id&gt;/</code></span>
+          </div>
+          <div class="legend-badges-grid">
+            <div class="legend-badge-card">
+              <span class="role-pill-badge role-legendary-architect"><i data-lucide="crown"></i> Legendary Game Architect</span>
+              <div class="legend-badge-req"><strong>50+</strong> Verified Games</div>
+              <p class="legend-badge-desc">The highest tier of game creation in ArcadeVerse.</p>
+            </div>
+            <div class="legend-badge-card">
+              <span class="role-pill-badge role-mythic-creator"><i data-lucide="flame"></i> Mythic Game Creator</span>
+              <div class="legend-badge-req"><strong>35–49</strong> Verified Games</div>
+              <p class="legend-badge-desc">Prolific creator with dozens of community games.</p>
+            </div>
+            <div class="legend-badge-card">
+              <span class="role-pill-badge role-grandmaster-designer"><i data-lucide="award"></i> Grandmaster Game Designer</span>
+              <div class="legend-badge-req"><strong>25–34</strong> Verified Games</div>
+              <p class="legend-badge-desc">Master level game developer with a massive library.</p>
+            </div>
+            <div class="legend-badge-card">
+              <span class="role-pill-badge role-master-architect"><i data-lucide="shield-check"></i> Master Game Architect</span>
+              <div class="legend-badge-req"><strong>15–24</strong> Verified Games</div>
+              <p class="legend-badge-desc">Experienced builder of varied genres and mechanics.</p>
+            </div>
+            <div class="legend-badge-card">
+              <span class="role-pill-badge role-veteran-dev"><i data-lucide="rocket"></i> Veteran Game Developer</span>
+              <div class="legend-badge-req"><strong>10–14</strong> Verified Games</div>
+              <p class="legend-badge-desc">Double-digit game contributor milestone.</p>
+            </div>
+            <div class="legend-badge-card">
+              <span class="role-pill-badge role-hyper"><i data-lucide="zap"></i> Hyper Game Developer</span>
+              <div class="legend-badge-req"><strong>7–9</strong> Verified Games</div>
+              <p class="legend-badge-desc">Consistently releases fast, high-quality arcade titles.</p>
+            </div>
+            <div class="legend-badge-card">
+              <span class="role-pill-badge role-senior-arcade"><i data-lucide="cpu"></i> Senior Arcade Developer</span>
+              <div class="legend-badge-req"><strong>5–6</strong> Verified Games</div>
+              <p class="legend-badge-desc">Core contributor with 5+ community games.</p>
+            </div>
+            <div class="legend-badge-card">
+              <span class="role-pill-badge role-arcade"><i data-lucide="gamepad-2"></i> Arcade Developer</span>
+              <div class="legend-badge-req"><strong>3–4</strong> Verified Games</div>
+              <p class="legend-badge-desc">Multi-game contributor to the ArcadeVerse platform.</p>
+            </div>
+            <div class="legend-badge-card">
+              <span class="role-pill-badge role-junior-crafter"><i data-lucide="hammer"></i> Junior Game Crafter</span>
+              <div class="legend-badge-req"><strong>2</strong> Verified Games</div>
+              <p class="legend-badge-desc">Follow-up contributor with 2 verified titles.</p>
+            </div>
+            <div class="legend-badge-card">
+              <span class="role-pill-badge role-novice-creator"><i data-lucide="compass"></i> Novice Game Creator</span>
+              <div class="legend-badge-req"><strong>1</strong> Verified Game</div>
+              <p class="legend-badge-desc">First integrated game submission merged to main.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Platform & Universal Engineering Track -->
+        <div class="legend-section">
+          <div class="legend-section-header">
+            <h3><i data-lucide="sparkles"></i> Platform &amp; Universal Engineering Track</h3>
+            <span class="legend-track-desc">Earned strictly by accumulated Arcade Score from merged features, fixes, games, and commits</span>
+          </div>
+          <div class="legend-badges-grid">
+            <div class="legend-badge-card">
+              <span class="role-pill-badge role-immortal"><i data-lucide="sparkles"></i> Immortal Arcade Legend</span>
+              <div class="legend-badge-req"><strong>5,000+</strong> Arcade Points</div>
+              <p class="legend-badge-desc">Legendary contributor who has shaped the platform.</p>
+            </div>
+            <div class="legend-badge-card">
+              <span class="role-pill-badge role-grandmaster-core"><i data-lucide="gem"></i> Grandmaster Core Architect</span>
+              <div class="legend-badge-req"><strong>3,000–4,999</strong> Arcade Points</div>
+              <p class="legend-badge-desc">Elite architect of major core platform infrastructure.</p>
+            </div>
+            <div class="legend-badge-card">
+              <span class="role-pill-badge role-master"><i data-lucide="shield-check"></i> Master Core Architect</span>
+              <div class="legend-badge-req"><strong>2,000–2,999</strong> Arcade Points</div>
+              <p class="legend-badge-desc">Deep platform contributions and architecture.</p>
+            </div>
+            <div class="legend-badge-card">
+              <span class="role-pill-badge role-senior-platform"><i data-lucide="terminal"></i> Senior Platform Engineer</span>
+              <div class="legend-badge-req"><strong>1,200–1,999</strong> Arcade Points</div>
+              <p class="legend-badge-desc">Substantial feature development and core stability.</p>
+            </div>
+            <div class="legend-badge-card">
+              <span class="role-pill-badge role-elite"><i data-lucide="gem"></i> Elite Contributor</span>
+              <div class="legend-badge-req"><strong>750–1,199</strong> Arcade Points</div>
+              <p class="legend-badge-desc">High-impact contributor across features and games.</p>
+            </div>
+            <div class="legend-badge-card">
+              <span class="role-pill-badge role-distinguished"><i data-lucide="medal"></i> Distinguished Contributor</span>
+              <div class="legend-badge-req"><strong>400–749</strong> Arcade Points</div>
+              <p class="legend-badge-desc">Established contributor with multiple merged contributions.</p>
+            </div>
+            <div class="legend-badge-card">
+              <span class="role-pill-badge role-platform"><i data-lucide="code-2"></i> Platform Contributor</span>
+              <div class="legend-badge-req"><strong>200–399</strong> Arcade Points</div>
+              <p class="legend-badge-desc">Regular contributor with merged features and fixes.</p>
+            </div>
+            <div class="legend-badge-card">
+              <span class="role-pill-badge role-rising"><i data-lucide="trending-up"></i> Rising Contributor</span>
+              <div class="legend-badge-req"><strong>100–199</strong> Arcade Points</div>
+              <p class="legend-badge-desc">Actively contributing to the ecosystem.</p>
+            </div>
+            <div class="legend-badge-card">
+              <span class="role-pill-badge role-active"><i data-lucide="sprout"></i> Active Contributor</span>
+              <div class="legend-badge-req"><strong>25–99</strong> Arcade Points</div>
+              <p class="legend-badge-desc">Beginning contributor with merged commits or fixes.</p>
+            </div>
+            <div class="legend-badge-card">
+              <span class="role-pill-badge role-apprentice"><i data-lucide="target"></i> Apprentice Contributor</span>
+              <div class="legend-badge-req"><strong>1–24</strong> Arcade Points</div>
+              <p class="legend-badge-desc">First merged contribution to ArcadeVerse.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Point Calculation Breakdown -->
+        <div class="legend-score-formula-box">
+          <h4><i data-lucide="calculator"></i> How Arcade Points Are Calculated</h4>
+          <div class="score-formula-grid">
+            <div class="formula-item">
+              <span class="formula-pts">+100 pts</span>
+              <span class="formula-label">Verified Game in <code>games/</code></span>
+            </div>
+            <div class="formula-item">
+              <span class="formula-pts">+50 pts</span>
+              <span class="formula-label">Platform Feature PR</span>
+            </div>
+            <div class="formula-item">
+              <span class="formula-pts">+25 pts</span>
+              <span class="formula-label">Mechanics / Physics Bonus</span>
+            </div>
+            <div class="formula-item">
+              <span class="formula-pts">+25 pts</span>
+              <span class="formula-label">Quality &amp; Bug Fix PR</span>
+            </div>
+            <div class="formula-item">
+              <span class="formula-pts">+5 pts</span>
+              <span class="formula-label">Merged Verified Commit</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page Transition Circular Loader -->
   <div id="page-transition-loader" class="page-loader-overlay" aria-hidden="true">
     <div class="loader-spinner-wrap">
       <div class="loader-spinner-circle"></div>
