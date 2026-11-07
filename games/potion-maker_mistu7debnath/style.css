@@ -1,0 +1,488 @@
+/* ============================================================
+   POTION MAKER — style.css
+   Palette: violet, emerald, turquoise, amber, warm magical
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:          #0d0a1a;
+  --bg2:         #130f24;
+  --bg3:         #1a1430;
+  --panel:       #1e1736;
+  --panel-border:#2e2255;
+  --violet:      #c084fc;
+  --violet-dark: #7c3aed;
+  --violet-glow: rgba(192,132,252,0.25);
+  --emerald:     #34d399;
+  --emerald-dark:#059669;
+  --turquoise:   #22d3ee;
+  --amber:       #fbbf24;
+  --amber-dark:  #d97706;
+  --pink:        #f472b6;
+  --red:         #f87171;
+  --text:        #e2d8f8;
+  --text-muted:  #8b7caa;
+  --shadow:      0 4px 24px rgba(0,0,0,0.5);
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+/* ---- STARFIELD BG ---- */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 30%, rgba(124,58,237,0.12) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 35% at 80% 70%, rgba(34,211,238,0.08) 0%, transparent 70%),
+    var(--bg);
+}
+
+/* ============ HUD ============ */
+.hud {
+  position: relative; z-index: 10;
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 18px;
+  background: rgba(13,10,26,0.92);
+  border-bottom: 1px solid var(--panel-border);
+  backdrop-filter: blur(8px);
+  min-height: 56px;
+}
+
+.hud-center {
+  flex: 1; text-align: center;
+}
+
+.game-logo {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 1.3rem; font-weight: 800; letter-spacing: 2px;
+  color: var(--violet);
+  text-shadow: 0 0 20px var(--violet-glow);
+}
+
+.hud-tagline {
+  font-size: 0.72rem; color: var(--text-muted); letter-spacing: 1px; margin-top: 1px;
+}
+
+.hud-stats {
+  display: flex; align-items: center; gap: 8px;
+}
+
+.stat-pill {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--bg3); border: 1px solid var(--panel-border);
+  border-radius: 20px; padding: 4px 10px;
+  font-size: 0.85rem; font-weight: 600; color: var(--text);
+}
+
+.hud-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--bg3); border: 1px solid var(--panel-border);
+  border-radius: 8px; padding: 7px 12px;
+  color: var(--text); font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; transition: all 0.18s;
+  text-decoration: none;
+}
+.hud-btn:hover { background: var(--panel); border-color: var(--violet); color: var(--violet); }
+
+/* ============ MAIN LAYOUT ============ */
+.game-main {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: 260px 1fr 280px;
+  gap: 0;
+  height: calc(100vh - 56px);
+  overflow: hidden;
+}
+
+/* ============ PANELS ============ */
+.panel {
+  display: flex; flex-direction: column;
+  background: var(--panel);
+  border-right: 1px solid var(--panel-border);
+  overflow: hidden;
+}
+
+.orders-panel { border-right: none; border-left: 1px solid var(--panel-border); }
+.brewing-panel { border-right: 1px solid var(--panel-border); }
+
+.panel-header {
+  display: flex; align-items: center; gap: 7px;
+  padding: 10px 14px;
+  background: rgba(0,0,0,0.25);
+  border-bottom: 1px solid var(--panel-border);
+  font-size: 0.82rem; font-weight: 700; letter-spacing: 0.5px;
+  color: var(--text); flex-shrink: 0;
+}
+
+/* ============ INGREDIENT GRID ============ */
+.inventory-panel { overflow-y: auto; }
+
+.ingredient-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; padding: 10px; overflow-y: auto;
+}
+
+.ingredient-card {
+  background: var(--bg3);
+  border: 2px solid var(--panel-border);
+  border-radius: 10px; padding: 10px 8px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  cursor: pointer; transition: all 0.18s; position: relative;
+  user-select: none;
+}
+.ingredient-card:hover:not(.unavailable) {
+  border-color: var(--violet); transform: translateY(-2px);
+  box-shadow: 0 4px 16px var(--violet-glow);
+}
+.ingredient-card.selected {
+  border-color: var(--emerald);
+  background: rgba(52,211,153,0.1);
+  box-shadow: 0 0 12px rgba(52,211,153,0.3);
+}
+.ingredient-card.unavailable {
+  opacity: 0.42; cursor: not-allowed; filter: grayscale(0.4);
+}
+
+.ingredient-icon {
+  width: 44px; height: 44px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.ingredient-name {
+  font-size: 0.72rem; font-weight: 700; text-align: center;
+  color: var(--text); line-height: 1.2;
+}
+.ingredient-qty {
+  font-size: 0.68rem; color: var(--text-muted);
+}
+.ingredient-rarity {
+  position: absolute; top: 5px; right: 6px;
+  font-size: 0.6rem; padding: 1px 5px; border-radius: 6px; font-weight: 700;
+}
+.rarity-common  { background: rgba(107,114,128,0.3); color: #9ca3af; }
+.rarity-uncommon{ background: rgba(52,211,153,0.2); color: var(--emerald); }
+.rarity-rare    { background: rgba(192,132,252,0.2); color: var(--violet); }
+.rarity-legendary{ background: rgba(251,191,36,0.25); color: var(--amber); }
+
+/* ============ BREWING STATION ============ */
+.brewing-panel { align-items: center; overflow-y: auto; }
+
+.cauldron-area {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 16px 0 8px; flex-shrink: 0;
+}
+
+#cauldron-canvas { display: block; }
+
+.brew-status {
+  font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;
+  text-align: center; min-height: 20px;
+}
+
+.slot-row {
+  display: flex; gap: 10px; justify-content: center;
+  padding: 0 14px 10px; flex-shrink: 0;
+}
+
+.ingredient-slot {
+  width: 80px; min-height: 86px;
+  background: var(--bg3); border: 2px dashed var(--panel-border);
+  border-radius: 10px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 4px;
+  transition: all 0.18s;
+}
+.ingredient-slot.filled {
+  border-style: solid; border-color: var(--emerald);
+  background: rgba(52,211,153,0.07);
+}
+
+.slot-inner {
+  width: 48px; height: 48px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.slot-label { font-size: 0.65rem; color: var(--text-muted); }
+
+/* ============ BREW PROGRESS ============ */
+.brew-progress-wrap {
+  width: 220px; display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0; margin-bottom: 8px;
+}
+.brew-progress-bar {
+  flex: 1; height: 8px; background: var(--bg3);
+  border-radius: 4px; overflow: hidden;
+}
+.brew-progress-fill {
+  height: 100%; width: 0%; background: linear-gradient(90deg, var(--violet), var(--turquoise));
+  border-radius: 4px; transition: width 0.3s;
+}
+.brew-time-label { font-size: 0.75rem; color: var(--text-muted); min-width: 28px; }
+
+/* ============ BUTTONS ============ */
+.action-row {
+  display: flex; gap: 8px; padding: 0 14px 14px;
+  flex-wrap: wrap; justify-content: center; flex-shrink: 0;
+}
+
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  border: none; border-radius: 9px; padding: 10px 16px;
+  font-size: 0.82rem; font-weight: 700; cursor: pointer;
+  transition: all 0.18s; letter-spacing: 0.3px;
+}
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-primary  { background: var(--violet-dark); color: #fff; }
+.btn-primary:hover:not(:disabled)  { background: var(--violet); box-shadow: 0 0 16px var(--violet-glow); }
+.btn-secondary{ background: var(--bg3); color: var(--turquoise); border: 1px solid var(--turquoise); }
+.btn-secondary:hover:not(:disabled){ background: rgba(34,211,238,0.1); }
+.btn-outline  { background: transparent; color: var(--text-muted); border: 1px solid var(--panel-border); }
+.btn-outline:hover { color: var(--text); border-color: var(--violet); }
+.btn-large    { padding: 13px 22px; font-size: 0.95rem; }
+.btn-small    { background: var(--bg3); border: 1px solid var(--panel-border); color: var(--text-muted);
+                border-radius: 6px; padding: 3px 9px; font-size: 0.7rem; cursor: pointer;
+                margin-left: auto; transition: all 0.15s; }
+.btn-small:hover    { color: var(--violet); border-color: var(--violet); }
+.btn-shop { background: rgba(251,191,36,0.15); border-color: var(--amber); color: var(--amber); }
+.btn-shop:hover { background: rgba(251,191,36,0.3); }
+
+/* ============ ORDERS PANEL ============ */
+.orders-panel { overflow-y: auto; }
+
+.orders-list {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 10px; overflow-y: auto; flex: 1;
+}
+
+.orders-empty { font-size: 0.8rem; color: var(--text-muted); text-align: center; padding: 20px 0; }
+
+.order-card {
+  background: var(--bg3); border: 1.5px solid var(--panel-border);
+  border-radius: 10px; padding: 10px 12px; position: relative; overflow: hidden;
+}
+.order-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; border-radius: 3px 0 0 3px;
+}
+.order-card.urgent::before { background: var(--red); }
+.order-card.normal::before { background: var(--amber); }
+.order-card.fresh::before  { background: var(--emerald); }
+
+.order-customer { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px; }
+.order-want { font-size: 0.82rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 6px; }
+.order-potion-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.order-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+.order-timer { font-size: 0.72rem; font-weight: 700; display: flex; align-items: center; gap: 3px; }
+.order-timer.urgent { color: var(--red); }
+.order-timer.normal { color: var(--amber); }
+.order-timer.fresh  { color: var(--emerald); }
+.order-reward { font-size: 0.72rem; color: var(--amber); font-weight: 700; display: flex; align-items: center; gap: 3px; }
+.order-progress { height: 3px; background: var(--bg); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+.order-progress-fill { height: 100%; border-radius: 2px; transition: width 1s linear; }
+.order-fulfill-btn {
+  display: block; width: 100%; margin-top: 8px;
+  background: rgba(52,211,153,0.15); border: 1px solid var(--emerald);
+  color: var(--emerald); border-radius: 7px; padding: 5px;
+  font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: all 0.15s;
+}
+.order-fulfill-btn:hover { background: rgba(52,211,153,0.3); }
+.order-fulfill-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ============ COLLECTION PREVIEW ============ */
+.collection-preview {
+  display: flex; gap: 6px; padding: 8px 10px; flex-wrap: wrap;
+}
+
+.collection-dot {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.1);
+  cursor: pointer; transition: transform 0.15s;
+  position: relative;
+}
+.collection-dot:hover { transform: scale(1.2); }
+.collection-dot-locked { opacity: 0.2; filter: grayscale(1); }
+
+/* ============ MODALS ============ */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.75); backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  animation: fadeIn 0.2s;
+}
+.modal-overlay.hidden { display: none; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.modal {
+  background: var(--bg2); border: 1px solid var(--panel-border);
+  border-radius: 18px; padding: 28px 28px 24px;
+  max-width: 480px; width: 94vw; max-height: 90vh; overflow-y: auto;
+  box-shadow: var(--shadow), 0 0 60px rgba(192,132,252,0.12);
+  animation: scaleIn 0.22s;
+}
+.modal-wide { max-width: 680px; }
+
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 18px;
+}
+.modal-header h2 { font-size: 1.1rem; font-weight: 800; color: var(--violet); }
+
+.modal-close {
+  background: none; border: none; color: var(--text-muted);
+  cursor: pointer; padding: 4px; border-radius: 6px; transition: all 0.15s;
+  display: flex;
+}
+.modal-close:hover { color: var(--red); background: rgba(248,113,113,0.1); }
+
+.modal-menu-card { text-align: center; }
+.modal-logo { margin-bottom: 10px; display: flex; justify-content: center; }
+.modal-logo svg { filter: drop-shadow(0 0 18px rgba(192,132,252,0.5)); }
+.modal-title { font-size: 2rem; font-weight: 900; color: var(--violet); letter-spacing: 2px;
+               text-shadow: 0 0 30px var(--violet-glow); }
+.modal-tagline { font-size: 0.85rem; color: var(--text-muted); margin: 6px 0 24px; letter-spacing: 1px; }
+
+.menu-buttons { display: flex; flex-direction: column; gap: 10px; }
+
+/* HOW TO PLAY */
+.howto-content { display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px; }
+.howto-step { display: flex; gap: 12px; align-items: flex-start; }
+.howto-icon { width: 44px; height: 44px; background: var(--bg3); border-radius: 10px;
+              flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.howto-step strong { display: block; font-size: 0.88rem; margin-bottom: 3px; color: var(--text); }
+.howto-step p { font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; }
+
+/* RECIPE BOOK */
+.recipebook-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.recipe-card {
+  background: var(--bg3); border: 1.5px solid var(--panel-border);
+  border-radius: 10px; padding: 12px;
+}
+.recipe-card.discovered { border-color: var(--violet); }
+.recipe-card.mystery { opacity: 0.55; }
+.recipe-name { font-size: 0.82rem; font-weight: 700; color: var(--violet); margin-bottom: 6px; }
+.recipe-ingredients { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 4px; }
+.recipe-result { font-size: 0.72rem; color: var(--emerald); font-weight: 700; }
+.recipe-mystery-label { font-size: 0.72rem; color: var(--text-muted); font-style: italic; }
+
+/* COLLECTION GRID */
+.collection-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+.collection-card {
+  background: var(--bg3); border: 1.5px solid var(--panel-border);
+  border-radius: 10px; padding: 14px; text-align: center;
+  transition: all 0.18s;
+}
+.collection-card.owned { border-color: var(--violet); }
+.collection-card.locked { opacity: 0.35; filter: grayscale(0.5); }
+.collection-card:hover { transform: translateY(-2px); }
+.collection-bottle { margin: 0 auto 8px; }
+.collection-name { font-size: 0.75rem; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.collection-rarity { font-size: 0.65rem; }
+.collection-qty { font-size: 0.68rem; color: var(--text-muted); margin-top: 3px; }
+
+/* SHOP */
+.shop-coins { margin-left: auto; display: flex; align-items: center; gap: 5px;
+              font-size: 0.82rem; color: var(--amber); font-weight: 700; }
+.shop-grid { display: flex; flex-direction: column; gap: 8px; }
+.shop-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg3); border: 1px solid var(--panel-border);
+  border-radius: 10px; padding: 10px 14px;
+}
+.shop-item-info { flex: 1; }
+.shop-item-name { font-size: 0.82rem; font-weight: 700; }
+.shop-item-desc { font-size: 0.7rem; color: var(--text-muted); }
+.shop-buy-btn {
+  background: rgba(251,191,36,0.2); border: 1px solid var(--amber);
+  color: var(--amber); border-radius: 7px; padding: 6px 12px;
+  font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.15s;
+  white-space: nowrap;
+}
+.shop-buy-btn:hover:not(:disabled) { background: rgba(251,191,36,0.4); }
+.shop-buy-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* BREW RESULT */
+.modal-result { text-align: center; }
+.result-icon { font-size: 4rem; margin-bottom: 10px; display: flex; justify-content: center; }
+.result-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 8px; }
+.result-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px; line-height: 1.6; }
+.result-reward { font-size: 1rem; color: var(--amber); font-weight: 700; margin-bottom: 18px;
+                 display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+/* ============ TOAST ============ */
+.toast-container {
+  position: fixed; bottom: 20px; right: 20px; z-index: 200;
+  display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+}
+.toast {
+  background: var(--bg2); border: 1px solid var(--panel-border);
+  border-radius: 10px; padding: 10px 16px;
+  font-size: 0.82rem; color: var(--text);
+  box-shadow: var(--shadow); animation: toastIn 0.25s;
+  display: flex; align-items: center; gap: 8px;
+  max-width: 280px;
+}
+.toast.success { border-color: var(--emerald); }
+.toast.error   { border-color: var(--red); }
+.toast.info    { border-color: var(--violet); }
+.toast.coin    { border-color: var(--amber); }
+@keyframes toastIn {
+  from { transform: translateX(40px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes toastOut {
+  from { transform: translateX(0); opacity: 1; }
+  to   { transform: translateX(40px); opacity: 0; }
+}
+.toast.removing { animation: toastOut 0.25s forwards; }
+
+/* ============ CAULDRON ANIMATIONS ============ */
+@keyframes bubbleFloat {
+  0%   { transform: translateY(0) scale(1); opacity: 0.7; }
+  50%  { transform: translateY(-18px) scale(1.1); opacity: 0.4; }
+  100% { transform: translateY(-34px) scale(0.6); opacity: 0; }
+}
+@keyframes liquidWave {
+  0%,100% { transform: scaleX(1) translateY(0); }
+  50%     { transform: scaleX(1.03) translateY(-2px); }
+}
+@keyframes glow-pulse {
+  0%,100% { filter: drop-shadow(0 0 8px var(--violet)) drop-shadow(0 0 2px var(--turquoise)); }
+  50%     { filter: drop-shadow(0 0 18px var(--violet)) drop-shadow(0 0 8px var(--turquoise)); }
+}
+@keyframes sparkle {
+  0%   { transform: scale(0) rotate(0deg); opacity: 1; }
+  60%  { transform: scale(1.4) rotate(180deg); opacity: 0.8; }
+  100% { transform: scale(0) rotate(360deg); opacity: 0; }
+}
+
+/* ============ SCROLLBAR ============ */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--panel-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--violet-dark); }
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 860px) {
+  .game-main { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; overflow-y: auto; }
+  .panel { overflow: visible; min-height: 200px; }
+  .inventory-panel .ingredient-grid { max-height: 180px; overflow-y: auto; }
+  html, body { overflow: auto; }
+}
+
