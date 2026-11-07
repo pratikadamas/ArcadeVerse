@@ -2735,6 +2735,9 @@ textarea:focus-visible,
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.25s ease;
+  touch-action: none;
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
 }
 
 .game-modal.active {
@@ -2766,6 +2769,9 @@ textarea:focus-visible,
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
 }
 
 .game-modal.fullscreen-mode {
@@ -2912,16 +2918,26 @@ textarea:focus-visible,
   transform: translateY(0) scale(0.96);
 }
 
-.modal-frame-wrapper {
+.modal-frame-wrapper,
+.game-modal-body {
   flex-grow: 1;
   background: #0c0e14;
   position: relative;
+  touch-action: none;
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
-.modal-frame-wrapper iframe {
+.modal-frame-wrapper iframe,
+.game-modal-body iframe {
   width: 100%;
   height: 100%;
   border: none;
+  touch-action: none;
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
 }
 
 /* Modal for Submit Guide */
@@ -8599,10 +8615,27 @@ html.light-mode .trophy-modal-title {
   }
 }
 
-/* Sub-pixel Mobile Jitter Reduction */
+/* ==========================================================================
+   Mobile Touch & Gesture Guard (Issue #519)
+   Prevents Default Pull-to-Refresh & Pinch-Zoom Interference During Touch Play
+   ========================================================================== */
 .game-modal {
-  touch-action: pan-y;
-  -webkit-overflow-scrolling: touch;
+  touch-action: none;
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: auto;
+}
+
+.game-modal.active,
+.modal-window,
+.modal-frame-wrapper,
+.game-modal-body,
+#game-iframe,
+.game-modal canvas,
+canvas.game-canvas {
+  touch-action: none;
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
 }
 
 .modal-window {
@@ -8612,6 +8645,15 @@ html.light-mode .trophy-modal-title {
 /* Hardware Accelerated Viewport Sizing for Game Renderers */
 .game-modal iframe {
   transform: translateZ(0);
+  touch-action: none;
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
+}
+
+/* Keep topbar controls easily tap-accessible without double-tap delay */
+.modal-topbar .btn,
+.modal-controls .btn {
+  touch-action: manipulation;
 }
 
 /* ==========================================================================
