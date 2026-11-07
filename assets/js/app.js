@@ -94,6 +94,180 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // =========================================================================
+  // RESILIENT LOCALSTORAGE QUOTA MANAGER & AUTOMATIC CACHE PRUNING (#490)
+  // =========================================================================
+  const ArcadeStorageResilience = (function () {
+    const TOAST_ID = "av-storage-quota-toast";
+    let toastTimeout = null;
+
+    // Ordered eviction priority buckets: least critical items are purged first
+    const EVICTION_PRIORITIES = [
+      // Priority 1: Ephemeral API & Network Caches
+      [
+        /^arcadeverse_contributors_cache/,
+        /^av_search_cache/,
+        /^av_temp_/
+      ],
+      // Priority 2: Stale session logs, analytics, and telemetry
+      [
+        /^arcadeverse_recently_played_v2/,
+        /^arcadeverse_recently_played/,
+        /^av_play_log/,
+        /^av_session_/,
+        /^arcadeverse_telemetry/
+      ],
+      // Priority 3: Non-critical UI state toggles & filters
+      [
+        /^arcadeverse_catalog_sort/,
+        /^arcadeverse_catalog_view/,
+        /^arcadeverse_last_category/
+      ]
+      // Priority 4 (PROTECTED & NEVER EVICTED):
+      // Favorites (av_favorites), ratings, sound preferences, theme mode
+    ];
+
+    const PROTECTED_KEYS = new Set([
+      "av_favorites",
+      "arcadeverse_favorite_games",
+      "arcadeverse:preferences:favorites",
+      "arcadeverse_theme",
+      "arcadeverse_game_ratings",
+      "arcadeverse_master_volume",
+      "arcadeverse_muted"
+    ]);
+
+    function isQuotaError(err) {
+      if (!err) return false;
+      return (
+        err.name === "QuotaExceededError" ||
+        err.name === "NS_ERROR_DOM_QUOTA_REACHED" ||
+        err.code === 22 ||
+        err.code === 1014 ||
+        err.number === -2147024882 ||
+        (typeof err.message === "string" && err.message.toLowerCase().includes("quota"))
+      );
+    }
+
+    function showQuotaToast(message) {
+      let toast = document.getElementById(TOAST_ID);
+      if (!toast) {
+        toast = document.createElement("div");
+        toast.id = TOAST_ID;
+        toast.className = "av-storage-quota-toast";
+        toast.setAttribute("role", "status");
+        toast.setAttribute("aria-live", "polite");
+        document.body.appendChild(toast);
+      }
+
+      toast.innerHTML = `
+        <div class="av-quota-toast-content">
+          <svg class="av-quota-toast-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <span class="av-quota-toast-text">${message}</span>
+          <button type="button" class="av-quota-toast-close" aria-label="Dismiss Notification">&times;</button>
+        </div>
+      `;
+
+      toast.querySelector(".av-quota-toast-close").onclick = () => {
+        toast.classList.remove("visible");
+      };
+
+      toast.classList.add("visible");
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove("visible");
+      }, 5500);
+    }
+
+    function pruneTier(tierRegexList) {
+      let bytesFreed = 0;
+      let keysRemoved = 0;
+      try {
+        const totalKeys = localStorage.length;
+        const candidateKeys = [];
+
+        for (let i = 0; i < totalKeys; i++) {
+          const key = localStorage.key(i);
+          if (!key || PROTECTED_KEYS.has(key)) continue;
+
+          for (let r = 0; r < tierRegexList.length; r++) {
+            if (tierRegexList[r].test(key)) {
+              candidateKeys.push(key);
+              break;
+            }
+          }
+        }
+
+        candidateKeys.forEach((key) => {
+          try {
+            const val = localStorage.getItem(key) || "";
+            bytesFreed += (key.length + val.length) * 2;
+            localStorage.removeItem(key);
+            keysRemoved++;
+          } catch (_) {}
+        });
+      } catch (_) {}
+      return { bytesFreed, keysRemoved };
+    }
+
+    function pruneStorageForQuota() {
+      let totalFreed = 0;
+      let totalRemoved = 0;
+
+      for (let p = 0; p < EVICTION_PRIORITIES.length; p++) {
+        const res = pruneTier(EVICTION_PRIORITIES[p]);
+        totalFreed += res.bytesFreed;
+        totalRemoved += res.keysRemoved;
+        if (totalRemoved > 0) break; // Try writing after each tier
+      }
+
+      return { totalFreed, totalRemoved };
+    }
+
+    function safeSetItem(key, value) {
+      try {
+        localStorage.setItem(key, value);
+        return true;
+      } catch (err) {
+        if (isQuotaError(err)) {
+          console.warn(`[ArcadeVerse Storage] QuotaExceededError writing "${key}". Initiating LRU prune...`);
+          const pruneResult = pruneStorageForQuota();
+
+          if (pruneResult.totalRemoved > 0) {
+            try {
+              localStorage.setItem(key, value);
+              showQuotaToast(
+                "Storage quota full: old session logs were automatically cleaned up to preserve your favorites."
+              );
+              return true;
+            } catch (retryErr) {
+              console.error("[ArcadeVerse Storage] Write failed even after eviction:", retryErr);
+            }
+          }
+
+          showQuotaToast(
+            "Storage quota full: unable to save new data without clearing space."
+          );
+          return false;
+        } else {
+          console.warn(`[ArcadeVerse Storage] Failed to set "${key}":`, err);
+          return false;
+        }
+      }
+    }
+
+    return {
+      safeSetItem,
+      showQuotaToast,
+      isQuotaError,
+      pruneStorageForQuota
+    };
+  })();
+
+  window.ArcadeStorageResilience = ArcadeStorageResilience;
+
   // Search & filter UI element refs
   const searchClearBtn = document.getElementById("search-clear-btn");
   const resultsCountEl = document.getElementById("catalog-results-count");
@@ -110,7 +284,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!localStorage.getItem(FAVORITES_STORAGE_KEY)) {
       const legacy = localStorage.getItem(LEGACY_FAVORITES_STORAGE_KEY) || localStorage.getItem(PREFERENCES_FAVORITES_KEY);
       if (legacy) {
-        localStorage.setItem(FAVORITES_STORAGE_KEY, legacy);
+        ArcadeStorageResilience.safeSetItem(FAVORITES_STORAGE_KEY, legacy);
       }
     }
   } catch (_) {}
@@ -134,12 +308,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function saveFavorites(favSet) {
     const list = Array.from(favSet);
     const serialized = JSON.stringify(list);
-    try {
-      localStorage.setItem(FAVORITES_STORAGE_KEY, serialized);
-      localStorage.setItem(LEGACY_FAVORITES_STORAGE_KEY, serialized);
-    } catch (e) {
-      console.warn("Could not save favorites to localStorage:", e);
-    }
+    ArcadeStorageResilience.safeSetItem(FAVORITES_STORAGE_KEY, serialized);
+    ArcadeStorageResilience.safeSetItem(LEGACY_FAVORITES_STORAGE_KEY, serialized);
     updateFavoritesBadge();
   }
 
@@ -1511,9 +1681,7 @@ document.addEventListener("DOMContentLoaded", () => {
     sortSelect.value = currentSort;
     sortSelect.addEventListener("change", (e) => {
       currentSort = e.target.value;
-      try {
-        localStorage.setItem(CATALOG_SORT_STORAGE_KEY, currentSort);
-      } catch (_) {}
+      ArcadeStorageResilience.safeSetItem(CATALOG_SORT_STORAGE_KEY, currentSort);
       renderGames();
     });
   }
@@ -2200,9 +2368,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Catalog Layout Switcher Engine (Grid vs Compact List View) ---
   function setCatalogView(view) {
     currentCatalogView = view === "list" ? "list" : "grid";
-    try {
-      localStorage.setItem(CATALOG_VIEW_STORAGE_KEY, currentCatalogView);
-    } catch (_) {}
+    ArcadeStorageResilience.safeSetItem(CATALOG_VIEW_STORAGE_KEY, currentCatalogView);
 
     if (gamesGrid) {
       gamesGrid.classList.toggle("view-list", currentCatalogView === "list");
