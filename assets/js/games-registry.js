@@ -940,6 +940,29 @@ const GAMES_REGISTRY = [
     "releaseDate": "2026-11-01"
   },
   {
+    "id": "deep-sea-explorer_mistu7debnath",
+    "title": "Deep Sea Explorer",
+    "category": "Adventure",
+    "lucideIcon": "compass",
+    "description": "Pilot a research submarine into uncharted ocean depths, navigate treacherous coral caverns, manage vital oxygen and fuel, and unearth ancient sunken treasures.",
+    "author": "Manisha Debnath",
+    "github": "mistu7debnath",
+    "role": "Arcade Developer",
+    "path": "games/deep-sea-explorer_mistu7debnath/index.html",
+    "tags": [
+      "Adventure",
+      "Submarine",
+      "Underwater",
+      "Exploration",
+      "Survival",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": true,
+    "difficulty": "All Skill Levels",
+    "releaseDate": "2026-11-07"
+  },
+  {
     "id": "detective-mystery_babin",
     "title": "Detective Mystery: Neo-Tokyo Syndicate",
     "category": "Adventure / Narrative",
@@ -2200,7 +2223,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 392,
+    "commits": 393,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2333,8 +2356,8 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "mistu7debnath",
     "avatarInitial": "M",
     "role": "Contributor (NSOC '26)",
-    "commits": 15,
-    "gamesCount": 8,
+    "commits": 16,
+    "gamesCount": 9,
     "mechanicsBonus": 1,
     "platformPRs": 0,
     "qualityPRs": 0,
@@ -2342,6 +2365,7 @@ const CONTRIBUTORS_REGISTRY = [
     "contributions": [
       "Bubble Pop: Bubble Burst Arena",
       "Cyber Runner: Neon Rush",
+      "Deep Sea Explorer",
       "Dino Dig",
       "Fishing Frenzy",
       "Flappy Cyber Jet",
