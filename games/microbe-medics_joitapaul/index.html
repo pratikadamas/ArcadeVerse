@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Contain a fictional outbreak in this turn-based grid strategy game.">
+  <title>Microbe Medics: Outbreak Protocol</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="game-shell">
+    <header class="game-header">
+      <a class="back-link" href="../../index.html">ArcadeVerse</a>
+      <p class="eyebrow">Turn-based containment strategy</p>
+      <h1>Microbe Medics</h1>
+      <p class="subtitle">Outbreak Protocol</p>
+    </header>
+
+    <div class="game-layout">
+      <section class="board-panel" aria-labelledby="board-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Containment zone</p>
+            <h2 id="board-heading">Outbreak grid</h2>
+          </div>
+          <p class="turn-readout">Turn <span id="turn-count">1</span></p>
+        </div>
+
+        <div class="board-wrap">
+          <div id="board" class="board" role="group" aria-label="8 by 8 outbreak grid"></div>
+        </div>
+
+        <div class="legend" aria-label="Grid legend">
+          <span><i class="legend-mark infected-mark">I</i> Infected</span>
+          <span><i class="legend-mark barrier-mark">B</i> Barrier</span>
+          <span><i class="legend-mark cured-mark">C</i> Cured</span>
+          <span><i class="legend-mark healthy-mark"></i> Healthy</span>
+        </div>
+      </section>
+
+      <aside class="control-panel" aria-label="Game controls and status">
+        <section class="status-card">
+          <p class="eyebrow">Live status</p>
+          <p id="game-status" class="game-status" role="status" aria-live="polite">
+            Choose an action, then select a cell. The outbreak spreads after each turn.
+          </p>
+          <div class="infection-meter">
+            <div class="meter-heading">
+              <span>Affected cells</span>
+              <strong><span id="infected-count">2</span> / <span id="infection-limit">18</span></strong>
+            </div>
+            <progress id="infection-progress" value="2" max="18">2 of 18</progress>
+          </div>
+        </section>
+
+        <section class="resources-card" aria-labelledby="resources-heading">
+          <p class="eyebrow">Available resources</p>
+          <h2 id="resources-heading" class="visually-hidden">Available resources</h2>
+          <div class="resource-row">
+            <span>Barriers</span>
+            <strong id="barriers-count">10</strong>
+          </div>
+          <div class="resource-row">
+            <span>Cure units</span>
+            <strong id="cures-count">8</strong>
+          </div>
+          <p class="resource-note">Plan as many placements as you can afford, then end the turn to let the outbreak spread.</p>
+        </section>
+
+        <section class="actions-card" aria-labelledby="actions-heading">
+          <p class="eyebrow">Your move</p>
+          <h2 id="actions-heading">Choose an action</h2>
+          <div class="action-buttons">
+            <button id="barrier-action" class="action-button" type="button" aria-pressed="false">
+              <span>Place barrier</span>
+              <small>Block spread into a healthy cell</small>
+            </button>
+            <button id="cure-action" class="action-button" type="button" aria-pressed="false">
+              <span>Use cure unit</span>
+              <small>Clear and protect an infected cell</small>
+            </button>
+            <button id="end-turn" class="secondary-button" type="button">End turn without an action</button>
+          </div>
+          <button id="restart-button" class="restart-button" type="button">Restart outbreak</button>
+        </section>
+
+        <section class="rules-card" aria-labelledby="rules-heading">
+          <p class="eyebrow">Protocol</p>
+          <h2 id="rules-heading">How to play</h2>
+          <ol>
+            <li>Select a barrier or cure, then choose a valid grid cell. Repeat with your remaining resources, then end the turn.</li>
+            <li>After each turn, infected cells each try to infect one neighbor in up, right, down, left order. No more than two new cells are infected per turn.</li>
+            <li>Barriers block infection. Cured cells are protected. Diagonal cells do not spread infection.</li>
+            <li>Clear every infection, or prevent all spread for three turns, to win. The outbreak overwhelms the zone at 18 infected cells.</li>
+          </ol>
+        </section>
+      </aside>
+    </div>
+    <footer class="game-footer">All outbreak organisms and events in this game are fictional.</footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>

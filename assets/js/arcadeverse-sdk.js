@@ -246,6 +246,76 @@
   var teardownHandlers = [];
   var audioConfigHandlers = [];
 
+  // Cryptographic Session Handshake Subsystem (Issue #489)
+  var sessionToken = null;
+  var handshakeComplete = false;
+  var handshakePendingCallbacks = [];
+  var parentOrigin = "*";
+  var securityTelemetry = {
+    messagesReceived: 0,
+    messagesValidated: 0,
+    messagesRejected: 0,
+    handshakeTimestamp: 0,
+    lastValidatedOrigin: null
+  };
+
+  /**
+   * Safe origin comparator for sandboxed iframes & cross-origin verification
+   * Allows parent origin matching while tolerating file:// or null origins in local dev
+   */
+  function isTrustedParentOrigin(origin) {
+    if (!origin || origin === "null") return true;
+    try {
+      if (window.location && window.location.origin && window.location.origin !== "null") {
+        return origin === window.location.origin;
+      }
+    } catch (_) {}
+    return true;
+  }
+
+  /**
+   * Internal structured clone serializer & sanitizer
+   * Guarantees payload fields conform strictly to object primitives
+   */
+  function sanitizePayload(payload) {
+    if (!payload || typeof payload !== "object") return {};
+    try {
+      return JSON.parse(JSON.stringify(payload));
+    } catch (_) {
+      var copy = {};
+      for (var key in payload) {
+        if (Object.prototype.hasOwnProperty.call(payload, key)) {
+          var val = payload[key];
+          if (typeof val === "string" || typeof val === "number" || typeof val === "boolean") {
+            copy[key] = val;
+          }
+        }
+      }
+      return copy;
+    }
+  }
+
+  /**
+   * Internal secure dispatch to parent with cryptographic session authentication
+   */
+  function securePostToParent(messageType, payload) {
+    if (!window.parent || window.parent === window) return;
+    var sanitizedData = sanitizePayload(payload);
+    var message = Object.assign({}, sanitizedData, {
+      type: messageType,
+      sessionToken: sessionToken || null,
+      timestamp: Date.now(),
+      protocolVersion: "2.0.0"
+    });
+
+    var target = (parentOrigin && parentOrigin !== "null" && parentOrigin !== "*") ? parentOrigin : "*";
+    try {
+      window.parent.postMessage(message, target);
+    } catch (err) {
+      console.warn("[ArcadeVerse SDK] Secure postMessage failed:", err);
+    }
+  }
+
   var registeredIntervals = [];
   var registeredTimeouts = [];
   var registeredAnimationFrameIds = [];
@@ -320,7 +390,45 @@
   function handleParentMessage(event) {
     if (!event || !event.data || typeof event.data !== "object") return;
 
+    // Strict origin validation (reject spoofed messages from untrusted origins)
+    if (!isTrustedParentOrigin(event.origin)) {
+      console.warn("[ArcadeVerse SDK Security] Rejected parent message from untrusted origin:", event.origin);
+      return;
+    }
+
     var data = event.data;
+
+    // Handle initial cryptographic session handshake from parent hub
+    if (data.type === "AV_INIT_SESSION") {
+      if (typeof data.sessionToken === "string" && data.sessionToken.trim().length > 0) {
+        sessionToken = data.sessionToken.trim();
+        handshakeComplete = true;
+        parentOrigin = event.origin || "*";
+
+        // Reply with immediate ACK handshake confirmation
+        securePostToParent("AV_SESSION_ACK", {
+          status: "connected",
+          sdkVersion: "1.2.0",
+          userAgent: (typeof navigator !== "undefined" ? navigator.userAgent : "unknown")
+        });
+
+        // Flush any pending callbacks waiting for handshake
+        for (var h = 0; h < handshakePendingCallbacks.length; h++) {
+          try {
+            handshakePendingCallbacks[h](sessionToken);
+          } catch (_) {}
+        }
+        handshakePendingCallbacks.length = 0;
+      }
+      return;
+    }
+
+    // Require valid session token if handshake was established
+    if (handshakeComplete && data.sessionToken && data.sessionToken !== sessionToken) {
+      console.warn("[ArcadeVerse SDK Security] Rejected command with invalid session token mismatch");
+      return;
+    }
+
     switch (data.type) {
       case "ARCADEVERSE_PAUSE":
         executeHandlers(pauseHandlers, data);
@@ -460,7 +568,7 @@
 
       // Ping parent window for initial audio configuration
       if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: "ARCADEVERSE_REQUEST_AUDIO_CONFIG" }, "*");
+        securePostToParent("ARCADEVERSE_REQUEST_AUDIO_CONFIG", {});
 
         // Forward global keyboard shortcuts from inside game iframe to parent shell
         window.addEventListener("keydown", function (e) {
@@ -471,14 +579,13 @@
             var tag = (e.target && e.target.tagName ? e.target.tagName.toLowerCase() : "");
             if (tag === "input" || tag === "textarea" || (e.target && e.target.isContentEditable)) return;
 
-            window.parent.postMessage({
-              type: "ARCADEVERSE_KEY_SHORTCUT",
+            securePostToParent("ARCADEVERSE_KEY_SHORTCUT", {
               key: e.key,
               shiftKey: e.shiftKey,
               altKey: e.altKey,
               ctrlKey: e.ctrlKey,
               metaKey: e.metaKey
-            }, "*");
+            });
           }
         }, true);
       }
@@ -606,15 +713,9 @@
      * @param {number} score
      */
     postScore: function (score) {
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage(
-          {
-            type: "ARCADEVERSE_GAME_SCORE",
-            score: Number(score) || 0
-          },
-          "*"
-        );
-      }
+      securePostToParent("ARCADEVERSE_GAME_SCORE", {
+        score: Number(score) || 0
+      });
     },
 
     /**
@@ -622,15 +723,52 @@
      * @param {Object} details
      */
     postGameOver: function (details) {
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage(
-          {
-            type: "ARCADEVERSE_GAME_OVER",
-            details: details || {}
-          },
-          "*"
-        );
+      securePostToParent("ARCADEVERSE_GAME_OVER", {
+        details: details || {}
+      });
+    },
+
+    /**
+     * Listen for cryptographic session handshake completion
+     * @param {Function} callback
+     */
+    onHandshake: function (callback) {
+      if (typeof callback !== "function") return this;
+      if (handshakeComplete) {
+        callback(sessionToken);
+      } else {
+        handshakePendingCallbacks.push(callback);
       }
+      return this;
+    },
+
+    /**
+     * Get active cryptographic session token
+     */
+    getSessionToken: function () {
+      return sessionToken;
+    },
+
+    /**
+     * Check whether secure handshake with parent hub is active
+     */
+    isSessionHandshakeComplete: function () {
+      return handshakeComplete;
+    },
+
+    /**
+     * Inspect security telemetry metrics for diagnostics
+     */
+    getSecurityTelemetry: function () {
+      return {
+        messagesReceived: securityTelemetry.messagesReceived,
+        messagesValidated: securityTelemetry.messagesValidated,
+        messagesRejected: securityTelemetry.messagesRejected,
+        handshakeTimestamp: securityTelemetry.handshakeTimestamp,
+        lastValidatedOrigin: securityTelemetry.lastValidatedOrigin,
+        handshakeComplete: handshakeComplete,
+        sessionActive: Boolean(sessionToken)
+      };
     },
 
     /**

@@ -39,14 +39,30 @@ document.addEventListener("DOMContentLoaded", () => {
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  // Highlight matching query substring wrapped in <mark class="search-highlight">
+  // Highlight matching query substring safely escaped
   function highlightMatch(text, query) {
     if (!text) return "";
-    if (!query) return text;
+    const safeText = String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+    if (!query) return safeText;
 
-    const escaped = escapeRegex(query);
+    const escaped = escapeRegex(query.trim());
     const regex = new RegExp("(" + escaped + ")", "gi");
-    return text.replace(regex, '<mark class="search-highlight">$1</mark>');
+    return safeText.replace(regex, '<mark class="search-highlight">$1</mark>');
+  }
+
+  function escapeAttr(str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
   }
 
   function escapeHTML(str) {
@@ -609,7 +625,7 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
 
         <div class="podium-actions-row">
-          <button type="button" class="podium-trophy-btn" data-action="open-trophy-card" data-player="${item.name || item.login}" data-handle="${item.login}" data-avatar="${item.avatar_url || ''}" data-score="${score} PTS" data-game="NSOC 2026 Hall of Fame" data-rank="${slot.badgeLabel}" data-badge="NSOC 2026" title="Generate Verified Achievement Certificate">
+          <button type="button" class="podium-trophy-btn" data-action="open-trophy-card" data-player="${escapeAttr(item.name || item.login)}" data-handle="${escapeAttr(item.login)}" data-avatar="${escapeAttr(item.avatar_url || '')}" data-score="${score} PTS" data-game="NSOC 2026 Hall of Fame" data-rank="${escapeAttr(slot.badgeLabel)}" data-badge="NSOC 2026" title="Generate Verified Achievement Certificate">
             <i data-lucide="award"></i> Trophy Certificate
           </button>
         </div>
@@ -757,7 +773,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <a href="https://github.com/DebasmitaBose0/ArcadeVerse/pulls?q=author%3A${item.login}" target="_blank" rel="noopener noreferrer" class="activity-link-btn" title="View Pull Requests by @${item.login}">
               <i data-lucide="git-pull-request"></i> PRs
             </a>
-            <button type="button" class="activity-link-btn table-trophy-btn" data-action="open-trophy-card" data-player="${item.name || item.login}" data-handle="${item.login}" data-avatar="${item.avatar_url || ''}" data-score="${score} PTS" data-game="Contributor Milestone" data-rank="#${rank} Contributor" data-badge="NSOC 2026" title="Generate Verified Achievement Certificate">
+            <button type="button" class="activity-link-btn table-trophy-btn" data-action="open-trophy-card" data-player="${escapeAttr(item.name || item.login)}" data-handle="${escapeAttr(item.login)}" data-avatar="${escapeAttr(item.avatar_url || '')}" data-score="${score} PTS" data-game="Contributor Milestone" data-rank="#${rank} Contributor" data-badge="NSOC 2026" title="Generate Verified Achievement Certificate">
               <i data-lucide="award"></i> Certificate
             </button>
           </div>
@@ -1024,13 +1040,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
         contributorsData = enrichedContributors;
 
-        try {
-          localStorage.setItem(`${CACHE_KEY}_${repo}`, JSON.stringify({
-            timestamp: Date.now(),
-            data: enrichedContributors
-          }));
-        } catch (e) {
-          console.warn("Could not save to cache:", e);
+        const cachePayload = JSON.stringify({
+          timestamp: Date.now(),
+          data: enrichedContributors
+        });
+
+        if (window.ArcadeStorageResilience && typeof window.ArcadeStorageResilience.safeSetItem === "function") {
+          window.ArcadeStorageResilience.safeSetItem(`${CACHE_KEY}_${repo}`, cachePayload);
+        } else {
+          try {
+            localStorage.setItem(`${CACHE_KEY}_${repo}`, cachePayload);
+          } catch (e) {
+            console.warn("Could not save to cache:", e);
+          }
         }
 
         const adminUser = contributorsData.find(c => c.login.toLowerCase() === "debasmitabose0");
