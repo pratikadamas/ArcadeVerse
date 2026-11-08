@@ -1040,13 +1040,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
         contributorsData = enrichedContributors;
 
-        try {
-          localStorage.setItem(`${CACHE_KEY}_${repo}`, JSON.stringify({
-            timestamp: Date.now(),
-            data: enrichedContributors
-          }));
-        } catch (e) {
-          console.warn("Could not save to cache:", e);
+        const cachePayload = JSON.stringify({
+          timestamp: Date.now(),
+          data: enrichedContributors
+        });
+
+        if (window.ArcadeStorageResilience && typeof window.ArcadeStorageResilience.safeSetItem === "function") {
+          window.ArcadeStorageResilience.safeSetItem(`${CACHE_KEY}_${repo}`, cachePayload);
+        } else {
+          try {
+            localStorage.setItem(`${CACHE_KEY}_${repo}`, cachePayload);
+          } catch (e) {
+            console.warn("Could not save to cache:", e);
+          }
         }
 
         const adminUser = contributorsData.find(c => c.login.toLowerCase() === "debasmitabose0");

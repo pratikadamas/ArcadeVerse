@@ -1,0 +1,15 @@
+{
+  "title": "Kingdom Maker",
+  "category": "Strategy",
+  "lucideIcon": "crown",
+  "description": "Construct medieval buildings, manage vital resources and population, expand your territory, and build a majestic royal kingdom!",
+  "author": "mistu7debnath",
+  "github": "mistu7debnath",
+  "role": "Arcade Developer",
+  "tags": ["Strategy", "Simulation", "Medieval", "City Builder", "Management", "NSOC26"],
+  "stars": 30,
+  "featured": true,
+  "difficulty": "All Skill Levels",
+  "releaseDate": "2026-11-08"
+}
+

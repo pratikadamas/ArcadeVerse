@@ -1193,6 +1193,29 @@ const GAMES_REGISTRY = [
     "releaseDate": "2026-10-31"
   },
   {
+    "id": "kingdom-maker_mistu7debnath",
+    "title": "Kingdom Maker",
+    "category": "Strategy",
+    "lucideIcon": "crown",
+    "description": "Construct medieval buildings, manage vital resources and population, expand your territory, and build a majestic royal kingdom!",
+    "author": "Manisha Debnath",
+    "github": "mistu7debnath",
+    "role": "Arcade Developer",
+    "path": "games/kingdom-maker_mistu7debnath/index.html",
+    "tags": [
+      "Strategy",
+      "Simulation",
+      "Medieval",
+      "City Builder",
+      "Management",
+      "NSOC26"
+    ],
+    "stars": 30,
+    "featured": true,
+    "difficulty": "All Skill Levels",
+    "releaseDate": "2026-11-08"
+  },
+  {
     "id": "lunar-landing-protocol_joitapaul",
     "title": "Lunar Landing Protocol",
     "category": "Arcade",
@@ -1251,6 +1274,25 @@ const GAMES_REGISTRY = [
     ],
     "stars": 24,
     "featured": true
+  },
+  {
+    "id": "microbe-medics_joitapaul",
+    "title": "Microbe Medics: Outbreak Protocol",
+    "category": "Puzzle",
+    "lucideIcon": "shield-plus",
+    "description": "Contain a fictional outbreak by placing barriers and deploying limited-use cure units on a turn-based grid.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/microbe-medics_joitapaul/index.html",
+    "tags": [
+      "Puzzle",
+      "Strategy",
+      "Grid",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false
   },
   {
     "id": "midnight-graveyard_joitapaul",
@@ -2246,11 +2288,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-<<<<<<< HEAD
-    "commits": 395,
-=======
-    "commits": 394,
->>>>>>> 9a37c3a6391248ddb419537447336420118243e3
+    "commits": 399,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2270,7 +2308,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 254,
+    "commits": 252,
     "gamesCount": 76,
     "mechanicsBonus": 2,
     "platformPRs": 29,
@@ -2360,8 +2398,8 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "mistu7debnath",
     "avatarInitial": "M",
     "role": "Contributor (NSOC '26)",
-    "commits": 17,
-    "gamesCount": 10,
+    "commits": 18,
+    "gamesCount": 11,
     "mechanicsBonus": 1,
     "platformPRs": 0,
     "qualityPRs": 0,
@@ -2373,6 +2411,7 @@ const CONTRIBUTORS_REGISTRY = [
       "Dino Dig",
       "Fishing Frenzy",
       "Flappy Cyber Jet",
+      "Kingdom Maker",
       "Neon Grid Defense: Core Protocol",
       "Potion Maker",
       "Robo Factory",
@@ -2384,8 +2423,8 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "joitapaul",
     "avatarInitial": "J",
     "role": "Active Contributor (NSOC '26)",
-    "commits": 20,
-    "gamesCount": 9,
+    "commits": 21,
+    "gamesCount": 10,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 1,
@@ -2393,6 +2432,7 @@ const CONTRIBUTORS_REGISTRY = [
     "contributions": [
       "Gridlock Escape",
       "Lunar Landing Protocol",
+      "Microbe Medics: Outbreak Protocol",
       "Midnight Graveyard: Lantern Run",
       "Neon Asteroid Escape",
       "Neon Drift Racer",
@@ -2487,7 +2527,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Anshuu2004",
     "avatarInitial": "A",
     "role": "Contributor (NSOC '26)",
-    "commits": 7,
+    "commits": 6,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,
