@@ -10166,3 +10166,94 @@ html.a11y-reduced-motion .search-clear-btn {
   border-color: rgba(16, 185, 129, 0.35);
   color: #047857;
 }
+
+/* ========================================================
+   MODAL RAPID CLICK RACE CONDITION GUARD (#504)
+   Prevents duplicate iframe loads & overlapping audio instances
+   ======================================================== */
+body.modal-launching-in-progress .game-card-btn,
+body.modal-launching-in-progress .btn-play-game,
+body.modal-launching-in-progress .play-btn,
+body.modal-launching-in-progress #random-game-btn {
+  pointer-events: none !important;
+  cursor: wait !important;
+  opacity: 0.85;
+  transition: opacity 0.15s ease;
+}
+
+.game-modal-launching-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--accent-primary, #6366f1);
+  font-family: var(--font-heading, inherit);
+  font-size: 0.95rem;
+  font-weight: 600;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.game-modal-launch-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(255, 255, 255, 0.12);
+  border-top-color: var(--accent-primary, #6366f1);
+  border-radius: 50%;
+  animation: modalLaunchSpin 0.7s linear infinite;
+}
+
+@keyframes modalLaunchSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Debounced click feedback on interactive buttons */
+.game-card-btn.action-locked,
+.btn-play-game.action-locked {
+  pointer-events: none !important;
+  opacity: 0.65 !important;
+  filter: grayscale(0.5);
+  transition: all 0.2s ease;
+}
+
+/* Modal frame loading state pulse */
+.modal-frame-wrapper.is-mounting {
+  position: relative;
+}
+
+.modal-frame-wrapper.is-mounting::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(99, 102, 241, 0.15) 0%, rgba(10, 14, 26, 0.95) 70%);
+  pointer-events: none;
+  z-index: 5;
+  animation: mountingPulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes mountingPulse {
+  from { opacity: 0.4; }
+  to { opacity: 0.85; }
+}
+
+/* Modal debounced trigger cooldown bar */
+.modal-launch-cooldown-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-primary, #6366f1), #ec4899);
+  z-index: 100;
+  transform-origin: left center;
+  animation: cooldownProgress 0.45s linear forwards;
+}
+
+@keyframes cooldownProgress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}

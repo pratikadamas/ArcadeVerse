@@ -638,6 +638,36 @@ validateBackupPayload(data)
                 </div>
               </div>
 
+              <!-- Rapid Launch Debounce & Race Condition Guard Architecture (#504) -->
+              <div class="docs-callout note" style="margin-top: 24px;">
+                <div class="docs-callout-icon"><i data-lucide="zap-off"></i></div>
+                <div>
+                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Rapid-Click Launch Guard & Audio Race Condition Prevention (#504)</h4>
+                  <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
+                    Users double-clicking or spamming the "Play Now" button on game cards previously triggered rapid concurrent modal invocations. This caused multiple hidden iframes to initialize, resulting in desynchronized audio contexts, ghost soundtrack playback, and memory leaks. ArcadeVerse enforces a strict debounce guard:
+                  </p>
+                  <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
+                    <li><strong>400ms Modal Launch Cooldown:</strong> When <code>openGameModal()</code> triggers, an atomic lock flag (<code>isOpeningModal</code>) intercepts and rejects duplicate launch dispatches.</li>
+                    <li><strong>CSS Pointer-Events Lockout:</strong> Applies <code>modal-launching-in-progress</code> to <code>document.body</code>, temporarily disabling pointer interactions on play cards to prevent double-tap triggers.</li>
+                    <li><strong>Audio & Frame Teardown Guarantee:</strong> Any existing game iframe is properly neutralized before the new game's URL is bound, ensuring zero audio overlapping.</li>
+                  </ul>
+                  <h5 style="color: var(--text-primary); margin-top: 14px; margin-bottom: 6px; font-size: 0.95rem;">Rapid Click Guard Logic</h5>
+                  <div class="code-block-wrapper" style="margin-top: 10px; margin-bottom: 10px;">
+                    <pre class="code-pre"><code class="language-javascript">// Atomic lock prevents duplicate concurrent launches
+function openGameModal(game, triggerElement) {
+  if (isOpeningModal) return;
+  isOpeningModal = true;
+  document.body.classList.add("modal-launching-in-progress");
+  setTimeout(() => {
+    isOpeningModal = false;
+    document.body.classList.remove("modal-launching-in-progress");
+  }, 450);
+  // Proceed with clean iframe mounting...
+}</code></pre>
+                  </div>
+                </div>
+              </div>
+
               <h5 style="color: var(--text-primary); margin-top: 16px; margin-bottom: 6px; font-size: 0.95rem;">Implementation Guide for Game Contributors</h5>
               <p style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 10px;">
                 When developing WebGL games for ArcadeVerse, always bind the context recovery handler. When a mobile or laptop GPU sleeps or switches display adapters, the browser triggers a synthetic context loss. With the ArcadeVerse lifecycle bridge, your game avoids black screens:
