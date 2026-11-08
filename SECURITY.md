@@ -53,6 +53,12 @@ To protect player profiles, ratings, and game progress from corruption or malici
 - All restored keys and values are sanitized to primitive types with a 1MB per-item threshold and a 2,000-key capacity cap.
 - Restores are executed as atomic transactions: an in-memory snapshot is recorded prior to writing, and an instant rollback is executed if quota or parse errors occur during processing.
 
+## 📐 Canvas Bounds & Viewport Stability (#501)
+
+To protect host responsiveness and prevent GPU buffer overflows during rapid window resizes:
+- Window resize and orientation changes are debounced to a 150ms stabilization threshold before triggering layout recalculations.
+- Viewports enforce canonical aspect ratios to prevent memory thrashing and excessive texture allocations.
+
 ## 💻 Web Architecture & Code Safety Guidelines
 
 ArcadeVerse is built strictly on **100% native web standards (HTML5, CSS3, Vanilla JavaScript)** without server-side runtimes, Python backends, or node dependencies. All games and platform features execute client-side in the user's browser.
@@ -86,6 +92,7 @@ To ensure client-side safety, all contributors **must** strictly adhere to the f
 - **Cryptominers:** Any script utilizing WebAssembly, Web Workers, or canvas loops for background cryptocurrency mining will result in an immediate **permanent ban and disqualification from NSoC '26**.
 - **Persistent Tracking:** No unauthorized persistent tracking, localStorage poisoning, fingerprinting, or credential sniffing.
 - **Harmful iframes:** No hidden iframes or redirects to external malicious domains.
+- **Mobile Viewport Isolation & Screen Hijacking**: Fullscreen operations and iOS pseudo-fullscreen adaptors must operate strictly within the declared `.game-modal` viewport bounds without tampering with parent navigation bars or injecting overlay exploits.
 
 ---
 
