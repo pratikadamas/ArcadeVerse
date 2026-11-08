@@ -10166,3 +10166,97 @@ html.a11y-reduced-motion .search-clear-btn {
   border-color: rgba(16, 185, 129, 0.35);
   color: #047857;
 }
+
+/* ========================================================
+   GLOBAL MASTER AUDIO & GAIN SYNCHRONIZATION BRIDGE (#506)
+   Tactile audio feedback, master volume slider & smooth ramps
+   ======================================================== */
+.modal-volume-control-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 8px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  border-radius: 8px;
+}
+
+.modal-volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 64px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.modal-volume-slider:hover,
+.modal-volume-slider:focus-visible {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.modal-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent-primary, #6366f1);
+  box-shadow: 0 0 6px var(--accent-primary, #6366f1);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.modal-volume-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.modal-volume-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent-primary, #6366f1);
+  border: none;
+  cursor: pointer;
+}
+
+.audio-mute-indicator-badge {
+  font-family: monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+/* Master audio gain transition animation */
+.master-gain-active {
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.2);
+}
+
+/* Master volume tooltip indicator */
+.volume-level-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0f172a;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: monospace;
+  font-size: 0.72rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.modal-volume-control-wrap:hover .volume-level-tooltip {
+  opacity: 1;
+}

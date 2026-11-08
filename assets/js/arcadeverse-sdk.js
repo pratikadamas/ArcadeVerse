@@ -866,6 +866,194 @@
         }
       }
       return payload;
+    },
+
+    /**
+     * Global Master Volume & Mute Synchronization Bridge (#506)
+     * Creates a master GainNode connected directly to audioContext.destination
+     * and automatically syncs its gain value with parent hub volume/mute broadcasts
+     * @param {AudioContext} audioCtx
+     * @param {function(number, boolean): void} [onVolumeChange] - Optional callback
+     * @returns {{masterGain: GainNode, setVolume: function(number): void, setMuted: function(boolean): void, getVolume: function(): number, isMuted: function(): boolean}}
+     */
+    createMasterGainBridge: function (audioCtx, onVolumeChange) {
+      if (!audioCtx) return null;
+      var ctx = audioCtx;
+      var masterGain = ctx.createGain();
+      masterGain.connect(ctx.destination);
+
+      var currentVolume = 0.5;
+      var isMuted = false;
+
+      var applyGain = function () {
+        var targetGain = isMuted ? 0 : currentVolume;
+        if (ctx.state === 'running') {
+          masterGain.gain.setValueAtTime(masterGain.gain.value, ctx.currentTime);
+          masterGain.gain.linearRampToValueAtTime(targetGain, ctx.currentTime + 0.05);
+        } else {
+          masterGain.gain.value = targetGain;
+        }
+        if (typeof onVolumeChange === 'function') {
+          onVolumeChange(currentVolume, isMuted);
+        }
+      };
+
+      // Listen for parent hub audio broadcasts
+      var handleMessage = function (e) {
+        if (!e || !e.data) return;
+        if (e.data.type === 'ARCADEVERSE_AUDIO_CONFIG') {
+          if (typeof e.data.muted === 'boolean') isMuted = e.data.muted;
+          if (typeof e.data.volume === 'number') currentVolume = Math.max(0, Math.min(1, e.data.volume));
+          applyGain();
+        } else if (e.data.type === 'AV_MUTE_CHANGE' && e.data.payload) {
+          if (typeof e.data.payload.muted === 'boolean') isMuted = e.data.payload.muted;
+          if (typeof e.data.payload.volume === 'number') currentVolume = Math.max(0, Math.min(1, e.data.payload.volume));
+          applyGain();
+        }
+      };
+      window.addEventListener('message', handleMessage);
+
+      // Query initial configuration from parent window
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'ARCADEVERSE_REQUEST_AUDIO_CONFIG' }, '*');
+        }
+      } catch (_e) {}
+
+      return {
+        masterGain: masterGain,
+        setVolume: function (vol) {
+          currentVolume = Math.max(0, Math.min(1, Number(vol) || 0));
+          applyGain();
+        },
+        setMuted: function (muted) {
+          isMuted = !!muted;
+          applyGain();
+        },
+        getVolume: function () {
+          return currentVolume;
+        },
+        isMuted: function () {
+          return isMuted;
+        },
+        dispose: function () {
+          window.removeEventListener('message', handleMessage);
+          try {
+            masterGain.disconnect();
+          } catch (_e) {}
+        }
+      };
+    },
+
+    /**
+     * Helper to route an HTML5 Audio element through the synchronized Master Gain bus
+     * @param {HTMLAudioElement} audioElement
+     * @param {AudioContext} audioCtx
+     * @param {GainNode} masterGain
+     * @returns {MediaElementAudioSourceNode|null}
+     */
+    routeMediaElementToMaster: function (audioElement, audioCtx, masterGain) {
+      if (!audioElement || !audioCtx || !masterGain) return null;
+      try {
+        var sourceNode = audioCtx.createMediaElementSource(audioElement);
+        sourceNode.connect(masterGain);
+        return sourceNode;
+      } catch (_e) {
+        return null;
+      }
+    },
+
+    /**
+     * Crossfade between two audio nodes smoothly using linear gain ramping
+     * @param {GainNode} gainOut - Node to fade out
+     * @param {GainNode} gainIn - Node to fade in
+     * @param {AudioContext} audioCtx
+     * @param {number} durationSec - Crossfade duration in seconds
+     */
+    crossfadeNodes: function (gainOut, gainIn, audioCtx, durationSec) {
+      if (!audioCtx) return;
+      var duration = typeof durationSec === 'number' && durationSec > 0 ? durationSec : 0.8;
+      var now = audioCtx.currentTime;
+      if (gainOut && gainOut.gain) {
+        gainOut.gain.setValueAtTime(gainOut.gain.value, now);
+        gainOut.gain.linearRampToValueAtTime(0, now + duration);
+      }
+      if (gainIn && gainIn.gain) {
+        gainIn.gain.setValueAtTime(gainIn.gain.value, now);
+        gainIn.gain.linearRampToValueAtTime(1, now + duration);
+      }
+    },
+
+    /**
+     * Envelope shaper utility for game sound effects (Attack, Decay, Sustain, Release)
+     * @param {AudioParam} gainParam - The target audio node's gain parameter
+     * @param {AudioContext} audioCtx
+     * @param {{attack?: number, decay?: number, sustain?: number, release?: number, peak?: number}} envelope
+     */
+    applyAdsrEnvelope: function (gainParam, audioCtx, envelope) {
+      if (!gainParam || !audioCtx) return;
+      var env = envelope || {};
+      var now = audioCtx.currentTime;
+      var a = env.attack || 0.01;
+      var d = env.decay || 0.05;
+      var s = typeof env.sustain === 'number' ? env.sustain : 0.3;
+      var r = env.release || 0.15;
+      var peak = typeof env.peak === 'number' ? env.peak : 0.8;
+
+      gainParam.cancelScheduledValues(now);
+      gainParam.setValueAtTime(0, now);
+      gainParam.linearRampToValueAtTime(peak, now + a);
+      gainParam.linearRampToValueAtTime(peak * s, now + a + d);
+      gainParam.linearRampToValueAtTime(0, now + a + d + r);
+    },
+
+    /**
+     * Calibrate sound output for quiet environments or headphone listening
+     * Dynamically normalizes peak dB level across retro synth channels
+     * @param {AudioContext} audioCtx
+     * @returns {DynamicsCompressorNode|null}
+     */
+    createArcadeCompressor: function (audioCtx) {
+      if (!audioCtx) return null;
+      try {
+        var comp = audioCtx.createDynamicsCompressor();
+        comp.threshold.setValueAtTime(-24, audioCtx.currentTime);
+        comp.knee.setValueAtTime(30, audioCtx.currentTime);
+        comp.ratio.setValueAtTime(12, audioCtx.currentTime);
+        comp.attack.setValueAtTime(0.003, audioCtx.currentTime);
+        comp.release.setValueAtTime(0.25, audioCtx.currentTime);
+        return comp;
+      } catch (_e) {
+        return null;
+      }
+    },
+
+    /**
+     * Mutes all tracked active audio contexts in the current window instantly
+     */
+    silenceAllTrackedAudio: function () {
+      if (!this._trackedAudioContexts) return;
+      this._trackedAudioContexts.forEach(function (ctx) {
+        try {
+          if (ctx.state === 'running') {
+            ctx.suspend();
+          }
+        } catch (_e) {}
+      });
+    },
+
+    /**
+     * Resumes all tracked active audio contexts in the current window
+     */
+    resumeAllTrackedAudio: function () {
+      if (!this._trackedAudioContexts) return;
+      this._trackedAudioContexts.forEach(function (ctx) {
+        try {
+          if (ctx.state === 'suspended') {
+            ctx.resume();
+          }
+        } catch (_e) {}
+      });
     }
   };
 });

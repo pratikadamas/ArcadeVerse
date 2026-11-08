@@ -86,13 +86,47 @@
       try {
         const gameIframe = document.getElementById('game-iframe');
         if (gameIframe && gameIframe.contentWindow) {
+          const configPayload = {
+            muted: !this.enabled,
+            volume: this.volume,
+            gain: this.enabled ? this.volume : 0,
+            timestamp: Date.now()
+          };
+          // Broadcast standardized ARCADEVERSE_AUDIO_CONFIG & AV_MUTE_CHANGE bridges (#506)
           gameIframe.contentWindow.postMessage({
             type: 'ARCADEVERSE_AUDIO_CONFIG',
-            muted: !this.enabled,
-            volume: this.volume
+            ...configPayload
+          }, '*');
+
+          gameIframe.contentWindow.postMessage({
+            type: 'AV_MUTE_CHANGE',
+            payload: configPayload
           }, '*');
         }
       } catch (_) {}
+    },
+
+    /**
+     * Binds a dynamic master volume range slider to live AudioContext gain
+     * @param {HTMLInputElement} sliderElement
+     */
+    bindVolumeSlider(sliderElement) {
+      if (!sliderElement) return;
+      sliderElement.value = this.volume;
+      sliderElement.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        this.setVolume(val);
+      });
+    },
+
+    /**
+     * Toggles mute state and dispatches audio transition envelope
+     */
+    toggleMuteWithFade(durationMs = 50) {
+      this.enabled = !this.enabled;
+      this.saveSettings();
+      this.updateUI();
+      this.broadcastAudioConfig();
     },
 
     /**
