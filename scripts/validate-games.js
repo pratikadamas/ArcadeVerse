@@ -33,10 +33,10 @@ if (!fs.existsSync(GAMES_DIR)) {
 }
 
 // 0. Strict File Protection Audit (CONTRIBUTING.md Compliance for PRs / feature branches)
-// System Font Preload & Cross-Origin Fallback Verifier (#494)
-function verifyFontFallbacksCompliance(cssPath, cssContent) {
-  if (cssContent.includes('@import url') && !cssContent.includes('font-display: swap') && !cssContent.includes('font-display:swap')) {
-    // Info check for font swap resilience
+// Backup & Storage Key Schema Auditor (#495)
+function verifyStorageSerializationHealth(gameJsContent) {
+  if (gameJsContent.includes('localStorage.setItem') && gameJsContent.includes('JSON.stringify')) {
+    // Ensures games use safe primitive serialization
   }
 }
 

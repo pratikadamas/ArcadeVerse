@@ -843,6 +843,29 @@
       var ctx = new AudioContextClass();
       this.trackAudioContext(ctx);
       return ctx;
+    },
+
+    /**
+     * Helper to format and export backup-compliant state object for this game
+     * Ensures all keys follow primitive schema to prevent backup corruptions (#495)
+     * @param {string} gameId
+     * @param {Object} stateData
+     * @returns {Object}
+     */
+    createBackupPayload: function (gameId, stateData) {
+      if (!gameId || typeof stateData !== 'object' || !stateData) return {};
+      var payload = {};
+      for (var k in stateData) {
+        if (Object.prototype.hasOwnProperty.call(stateData, k)) {
+          var val = stateData[k];
+          if (typeof val === 'object' && val !== null) {
+            payload['av_' + gameId + '_' + k] = JSON.stringify(val);
+          } else {
+            payload['av_' + gameId + '_' + k] = String(val);
+          }
+        }
+      }
+      return payload;
     }
   };
 });

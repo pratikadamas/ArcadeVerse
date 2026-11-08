@@ -46,12 +46,12 @@ Publicly opening an issue exposes the platform, contributors, and users to poten
 
 ---
 
-## 🌐 Cross-Origin & Font Preload Security (#494)
+## 🗄️ Storage Serialization & Atomic Backup Security (#495)
 
-To prevent resource starvation or CORS-related denial of service when third-party font delivery networks fail:
-- ArcadeVerse employs strict system font fallbacks (Cambria, Georgia, Impact, Consolas) with matched font metrics to prevent cumulative layout shift (CLS).
-- Web font loading utilizes the Font Loading API (document.fonts.load()) wrapped in non-blocking 3000ms safety timeouts.
-- Style sheets enforce @supports (font-display: swap) and offline fallbacks, maintaining a functional UI even in air-gapped or restricted CORS environments.
+To protect player profiles, ratings, and game progress from corruption or malicious payload injection:
+- The JSON backup restoration handler implements a strict parser with prototype pollution protection (rejecting payloads bearing __proto__, constructor, or prototype).
+- All restored keys and values are sanitized to primitive types with a 1MB per-item threshold and a 2,000-key capacity cap.
+- Restores are executed as atomic transactions: an in-memory snapshot is recorded prior to writing, and an instant rollback is executed if quota or parse errors occur during processing.
 
 ## 💻 Web Architecture & Code Safety Guidelines
 

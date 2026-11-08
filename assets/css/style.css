@@ -10078,126 +10078,91 @@ html.a11y-reduced-motion .search-clear-btn {
 }
 
 /* ========================================================
-   CORS & FONT OFFLINE RESILIENCE SUBSYSTEM (#494)
-   Ensures seamless typographic rendering and offline font fallbacks
-   when external Google Fonts, CDNs, or third-party webfonts fail to preload.
+   STORAGE BACKUP RECOVERY & STATUS BANNER STYLES (#495)
    ======================================================== */
-@supports (font-display: swap) {
-  @font-face {
-    font-family: 'ArcadeVerseFallbackSerif';
-    src: local('Cambria Math'), local('Cambria'), local('Georgia'), local('Times New Roman');
-    font-display: swap;
-  }
-  @font-face {
-    font-family: 'ArcadeVerseFallbackMarker';
-    src: local('Permanent Marker'), local('Impact'), local('Trebuchet MS'), local('Arial Black');
-    font-display: swap;
-  }
-  @font-face {
-    font-family: 'ArcadeVerseFallbackMono';
-    src: local('JetBrains Mono'), local('Cascadia Code'), local('Consolas'), local('Fira Code'), local('Courier New');
-    font-display: swap;
-  }
-}
-
-/* System Font Fallback Stacks */
-:root {
-  --font-body-fallback: 'Cambria Math', Cambria, Georgia, 'Times New Roman', serif;
-  --font-heading-fallback: 'Permanent Marker', Impact, 'Trebuchet MS', 'Arial Black', cursive, sans-serif;
-  --font-code-fallback: 'JetBrains Mono', 'Cascadia Code', Consolas, 'Fira Code', 'Courier New', monospace;
-}
-
-/* Network Font Loading Status Flags */
-html.fonts-loading {
-  --font-body: var(--font-body-fallback);
-  --font-heading: var(--font-heading-fallback);
-  --font-display: var(--font-heading-fallback);
-  --font-code: var(--font-code-fallback);
-}
-
-html.fonts-failed {
-  --font-body: var(--font-body-fallback);
-  --font-heading: var(--font-heading-fallback);
-  --font-display: var(--font-heading-fallback);
-  --font-code: var(--font-code-fallback);
-}
-
-/* Non-blocking Offline Fallback Banners & Toast Indicators */
-.font-preload-notice {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 1.5rem;
-  z-index: 9998;
+.storage-banner {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.65rem 1rem;
-  background: rgba(18, 22, 34, 0.94);
-  border: 1px solid rgba(245, 158, 11, 0.35);
-  border-radius: var(--radius-md);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(245, 158, 11, 0.15);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  color: var(--text-primary);
-  font-family: var(--font-body);
+  gap: 12px;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm, 8px);
   font-size: 0.82rem;
-  max-width: 380px;
-  opacity: 0;
-  transform: translateY(12px);
-  pointer-events: none;
-  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.font-preload-notice.visible {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
-}
-
-.font-preload-notice-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: rgba(245, 158, 11, 0.18);
-  color: #f59e0b;
-  flex-shrink: 0;
-}
-
-.font-preload-notice-content {
-  flex: 1;
   line-height: 1.4;
+  margin-bottom: 12px;
+  animation: storageBannerFadeIn 0.25s ease-out;
 }
 
-.font-preload-notice-content strong {
-  color: #f59e0b;
-  display: block;
-  font-size: 0.85rem;
-  margin-bottom: 2px;
+@keyframes storageBannerFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.font-preload-notice-close {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  display: inline-flex;
+.storage-banner-error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+.storage-banner-warning {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fcd34d;
+}
+
+.storage-banner-success {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #6ee7b7;
+}
+
+.storage-banner-icon {
+  flex-shrink: 0;
+  display: flex;
   align-items: center;
-  justify-content: center;
-  transition: color 0.18s ease;
 }
 
-.font-preload-notice-close:hover {
-  color: var(--text-primary);
+.storage-banner-text {
+  flex: 1;
+  font-weight: 500;
 }
 
-[data-theme="light"] .font-preload-notice {
-  background: rgba(255, 255, 255, 0.96);
-  border-color: rgba(217, 119, 6, 0.3);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 0 15px rgba(217, 119, 6, 0.1);
-  color: #0f172a;
+.storage-banner-close {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 1.15rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  line-height: 1;
+  opacity: 0.7;
+  border-radius: 4px;
+}
+
+.storage-banner-close:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="light"] .storage-banner-error {
+  background: rgba(254, 242, 242, 0.95);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #b91c1c;
+}
+
+[data-theme="light"] .storage-banner-warning {
+  background: rgba(254, 252, 232, 0.95);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #b45309;
+}
+
+[data-theme="light"] .storage-banner-success {
+  background: rgba(240, 253, 244, 0.95);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #047857;
 }

@@ -772,23 +772,23 @@
           </div>
         </div>
 
-        <!-- Question 25 -->
-        <div class="faq-accordion-item" data-category="architecture" id="faq-25">
-          <button class="faq-accordion-trigger" type="button" aria-expanded="false" aria-controls="faq-ans-25">
+        <!-- Question 26 -->
+        <div class="faq-accordion-item" data-category="architecture" id="faq-26">
+          <button class="faq-accordion-trigger" type="button" aria-expanded="false" aria-controls="faq-ans-26">
             <span class="faq-question-text">
               <span class="faq-category-badge">Architecture</span>
-              25. What happens if external Google Fonts or CDN stylesheets fail to load?
+              26. How does the Storage Manager handle corrupted JSON backups during restore?
             </span>
             <i data-lucide="chevron-down" class="faq-chevron"></i>
           </button>
-          <div class="faq-accordion-content" id="faq-ans-25" role="region">
+          <div class="faq-accordion-content" id="faq-ans-26" role="region">
             <div class="faq-accordion-inner">
               <div class="faq-answer-text">
-                <p>ArcadeVerse includes a robust Font Preload Resilience layer. If an external CDN fails due to network outage, strict CORS policies, or offline mode:</p>
+                <p>The ArcadeVerse Storage Manager uses an atomic transaction pipeline with automated error recovery:</p>
                 <ul>
-                  <li><strong>Preload Timeout:</strong> The platform races webfonts against a 3000ms timer; on timeout or failure, <code>fonts-failed</code> mode is engaged immediately.</li>
-                  <li><strong>System Fallbacks:</strong> Typography degrades gracefully to local serif, mono, and display stacks with matched metrics to eliminate cumulative layout shifts.</li>
-                  <li><strong>Zero Crash Guarantee:</strong> Games and hub components render without blocking, and a non-intrusive status toast alerts the user.</li>
+                  <li><strong>Heuristic Repair:</strong> Minor syntax flaws like trailing commas or single quotes are cleaned automatically.</li>
+                  <li><strong>Schema Auditing:</strong> Keys are validated against size limits (1MB per entry, 2,000 keys max) and dangerous properties (<code>__proto__</code>) are stripped.</li>
+                  <li><strong>Rollback Guarantee:</strong> A snapshot of your existing browser state is captured before writes begin. If writing fails midway, all original settings and scores are restored instantly.</li>
                 </ul>
               </div>
             </div>
