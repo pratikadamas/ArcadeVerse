@@ -316,6 +316,43 @@
       });
     },
 
+    /**
+     * Prime hardware audio pipeline on WebKit/iOS devices with silent synthetic buffer
+     * Ensures sound chips wake up from low-power state upon user unlock
+     */
+    primeHardwarePipeline() {
+      const ctx = this.getAudioContext();
+      if (!ctx) return;
+      try {
+        const buffer = ctx.createBuffer(1, 1, 22050);
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        source.start(0);
+      } catch (_) {}
+    },
+
+    /**
+     * Broadcaster sending current audio configurations across all embedded frames
+     */
+    broadcastFullAudioState() {
+      try {
+        const gameIframe = document.getElementById('game-iframe');
+        if (gameIframe && gameIframe.contentWindow) {
+          gameIframe.contentWindow.postMessage({
+            type: 'ARCADEVERSE_AUDIO_STATUS_SYNC',
+            payload: {
+              enabled: this.enabled,
+              volume: this.volume,
+              unlocked: this.unlocked,
+              state: this.ctx ? this.ctx.state : 'uninitialized',
+              timestamp: Date.now()
+            }
+          }, '*');
+        }
+      } catch (_) {}
+    },
+
     notifyGameUnlocked() {
       try {
         const gameIframe = document.getElementById('game-iframe');
@@ -363,11 +400,17 @@
             <span class="eq-bar bar-2"></span>
             <span class="eq-bar bar-3"></span>
           </span>
-          <span>Click or press any key to start audio</span>
+          <span>Click or tap anywhere to enable game audio</span>
         `;
         banner.addEventListener('click', () => {
+          this.unlock(true);
           const frame = document.getElementById('game-iframe');
-          if (frame) frame.focus();
+          if (frame) {
+            try {
+              frame.focus();
+              frame.contentWindow.postMessage({ type: 'ARCADEVERSE_AUDIO_UNLOCKED' }, '*');
+            } catch (_) {}
+          }
         });
         wrapper.appendChild(banner);
       }
