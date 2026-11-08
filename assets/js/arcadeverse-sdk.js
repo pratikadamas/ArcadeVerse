@@ -982,108 +982,51 @@
     },
 
     /**
-     * Cross-platform Fullscreen helper for game canvases & WebKit mobile devices (#502)
-     * Handles standard HTML5 Fullscreen API with graceful fallback for iOS Safari
-     * @param {HTMLElement} [element] - Target element to fullscreen (defaults to documentElement)
-     * @returns {Promise<boolean>} Resolves true if fullscreen was initiated or simulated
+     * Session quit confirmation & state preservation protocol (#503)
+     * Notifies parent modal if game has unsaved run progress
+     * @param {boolean} hasUnsavedProgress
      */
-    requestAdaptiveFullscreen: function (element) {
-      var target = element || document.documentElement;
-      var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
-      if (!isIOS && target.requestFullscreen) {
-        return target.requestFullscreen().then(function () { return true; }).catch(function () { return false; });
-      } else if (!isIOS && target.webkitRequestFullscreen) {
-        target.webkitRequestFullscreen();
-        return Promise.resolve(true);
-      } else if (!isIOS && target.mozRequestFullScreen) {
-        target.mozRequestFullScreen();
-        return Promise.resolve(true);
-      } else if (!isIOS && target.msRequestFullscreen) {
-        target.msRequestFullscreen();
-        return Promise.resolve(true);
-      } else {
-        // iOS Safari or browser without standard Element.requestFullscreen support
-        // Request parent ArcadeVerse hub window to toggle pseudo-fullscreen
-        try {
-          if (window.parent && window.parent !== window) {
-            window.parent.postMessage({
-              type: 'AV_REQUEST_PSEUDO_FULLSCREEN',
-              payload: { active: true, timestamp: Date.now() }
-            }, '*');
-          }
-        } catch (_e) {}
-        return Promise.resolve(true);
-      }
-    },
-
-    /**
-     * Exits fullscreen mode or requests parent to tear down pseudo-fullscreen container
-     * @returns {Promise<boolean>}
-     */
-    exitAdaptiveFullscreen: function () {
-      if (document.exitFullscreen) {
-        return document.exitFullscreen().then(function () { return true; }).catch(function () { return false; });
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-        return Promise.resolve(true);
-      } else if (document.mozCancelFullScreen) {
-        document.mozCancelFullScreen();
-        return Promise.resolve(true);
-      } else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
-        return Promise.resolve(true);
-      } else {
-        try {
-          if (window.parent && window.parent !== window) {
-            window.parent.postMessage({
-              type: 'AV_REQUEST_PSEUDO_FULLSCREEN',
-              payload: { active: false, timestamp: Date.now() }
-            }, '*');
-          }
-        } catch (_e) {}
-        return Promise.resolve(true);
-      }
-    },
-
-    /**
-     * Checks if current runtime is in either native HTML5 fullscreen or iOS pseudo-fullscreen
-     * @returns {boolean}
-     */
-    isFullscreenActive: function () {
-      return !!(
-        document.fullscreenElement ||
-        document.webkitFullscreenElement ||
-        document.mozFullScreenElement ||
-        document.msFullscreenElement ||
-        document.body.classList.contains('modal-pseudo-fullscreen-active')
-      );
-    },
-
-    /**
-     * Registers a listener callback triggered whenever fullscreen status changes
-     * (Supports both native fullscreenchange events and custom iOS pseudo-fullscreen toggles)
-     * @param {function(boolean): void} callback
-     * @returns {function(): void} Unsubscribe function
-     */
-    onFullscreenChange: function (callback) {
-      if (typeof callback !== 'function') return function () {};
-      var self = this;
-      var handler = function () {
-        callback(self.isFullscreenActive());
-      };
-      document.addEventListener('fullscreenchange', handler);
-      document.addEventListener('webkitfullscreenchange', handler);
-      window.addEventListener('message', function (e) {
-        if (e.data && e.data.type === 'AV_FULLSCREEN_CHANGE') {
-          callback(!!e.data.payload && e.data.payload.isFullscreen);
+    setUnsavedProgressState: function (hasUnsavedProgress) {
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: 'AV_SET_UNSAVED_PROGRESS',
+            payload: { hasUnsavedProgress: !!hasUnsavedProgress, timestamp: Date.now() }
+          }, '*');
         }
-      });
-      return function () {
-        document.removeEventListener('fullscreenchange', handler);
-        document.removeEventListener('webkitfullscreenchange', handler);
+      } catch (_err) {}
+    },
+
+    /**
+     * Listen for modal pause & resume lifecycle events
+     * @param {function(): void} onPause
+     * @param {function(): void} onResume
+     * @returns {function(): void} Unsubscribe listener
+     */
+    bindSessionLifecycle: function (onPause, onResume) {
+      var handler = function (e) {
+        if (!e || !e.data) return;
+        if (e.data.type === 'ARCADEVERSE_PAUSE' && typeof onPause === 'function') {
+          onPause();
+        } else if (e.data.type === 'ARCADEVERSE_RESUME' && typeof onResume === 'function') {
+          onResume();
+        }
       };
+      window.addEventListener('message', handler);
+      return function () {
+        window.removeEventListener('message', handler);
+      };
+    },
+
+    /**
+     * Helper to prompt parent confirmation before unmounting when high score is pending
+     * @param {number} currentScore - The user's active score
+     * @returns {boolean} True if score warranting confirmation was posted
+     */
+    reportPendingScoreProgress: function (currentScore) {
+      if (typeof currentScore !== 'number' || currentScore <= 0) return false;
+      this.setUnsavedProgressState(true);
+      return true;
     }
     }
   };
