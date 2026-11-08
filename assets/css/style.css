@@ -10070,53 +10070,60 @@ html.a11y-reduced-motion .badge-count {
 }
 
 /* ========================================================
-   FRAME TEARDOWN & HARDWARE LIFECYCLE MONITOR STYLES (#497)
+   WAI-ARIA MODAL FOCUS TRAP & ACCESSIBILITY STYLES (#499)
    ======================================================== */
-.game-teardown-indicator {
+.game-modal[aria-hidden="false"] {
+  outline: none;
+}
+
+.game-modal-body:focus-within {
+  box-shadow: 0 0 0 2px var(--accent-primary, #3b82f6);
+}
+
+.modal-action-btn:focus-visible,
+.close-btn:focus-visible {
+  outline: 2px solid var(--accent-primary, #3b82f6);
+  outline-offset: 2px;
+}
+
+.focus-trap-sentinel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.modal-window:focus {
+  outline: none;
+}
+
+.modal-header-actions button:focus-visible {
+  outline: 2px solid var(--accent-primary, #3b82f6);
+  outline-offset: 2px;
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.game-modal.focus-locked {
+  isolation: isolate;
+}
+
+.game-modal.focus-locked [tabindex="-1"] {
+  pointer-events: none;
+}
+
+.modal-content-backdrop-shield {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(12, 14, 20, 0.95);
-  backdrop-filter: blur(8px);
-  z-index: 100;
-  opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease;
 }
 
-.game-teardown-indicator.active {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.teardown-spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid rgba(59, 130, 246, 0.2);
-  border-top-color: var(--accent-primary, #3b82f6);
-  border-radius: 50%;
-  animation: teardownSpin 0.7s linear infinite;
-}
-
-@keyframes teardownSpin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.game-modal-body.terminating {
-  opacity: 0.5;
-  filter: grayscale(1);
-  pointer-events: none;
-  transition: opacity 0.15s ease, filter 0.15s ease;
-}
-
-.game-modal.unmounting .modal-window {
-  filter: blur(4px);
-  pointer-events: none;
-  transition: filter 0.15s ease-out;
+.focus-trap-active-ring {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
 }
 
 /* Reduced motion: suppress chip hover lift */

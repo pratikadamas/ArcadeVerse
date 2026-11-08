@@ -53,12 +53,12 @@ To protect player profiles, ratings, and game progress from corruption or malici
 - All restored keys and values are sanitized to primitive types with a 1MB per-item threshold and a 2,000-key capacity cap.
 - Restores are executed as atomic transactions: an in-memory snapshot is recorded prior to writing, and an instant rollback is executed if quota or parse errors occur during processing.
 
-## ⚡ Client Resource Starvation & RAF Lifecycle Isolation (#497)
+## 🎯 Accessibility & Dialog Focus Isolation (#499)
 
-To prevent rogue or unmaintained games from degrading host performance or draining device battery:
-- Games are bound by the ArcadeVerse Lifecycle Bridge, which enforces automated execution suspension (ARCADEVERSE_PAUSE) and teardown (ARCADEVERSE_TEARDOWN).
-- Parent controllers systematically sweep and cancel lingering requestAnimationFrame IDs and legacy timers before modal disposal.
-- Unmounted iframes are pointed to about:blank within 100ms of closure, severing execution threads and releasing GPU/CPU cycles.
+To ensure compliant keyboard interaction and prevent background UI hijacking:
+- Active modals engage a strict focus trap intercepting Tab and Shift+Tab.
+- No keyboard events can inadvertently trigger background actions or submit forms behind active gameplay viewports.
+- Keyboard focus is securely restored to the triggering element upon modal exit.
 
 ## 💻 Web Architecture & Code Safety Guidelines
 

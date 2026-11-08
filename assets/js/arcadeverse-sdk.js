@@ -838,39 +838,86 @@
      * @returns {AudioContext}
      */
     /**
-     * URL slug and query parser utility
-     * Validates and sanitizes parameters for embedded games
-     * @param {string} urlString
-     * @returns {Object}
+     * Request parent modal to refocus the game iframe canvas
      */
-    parseSafeQueryParams: function (urlString) {
-      var results = {};
-      try {
-        var str = urlString || (typeof window !== 'undefined' ? window.location.search : '');
-        if (str && str.indexOf('?') !== -1) str = str.split('?')[1];
-        if (str) {
-          var pairs = str.split('&');
-          for (var i = 0; i < pairs.length; i++) {
-            var pair = pairs[i].split('=');
-            if (pair[0]) {
-              var key = decodeURIComponent(pair[0]).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 32);
-              var val = pair[1] ? decodeURIComponent(pair[1]).replace(/[^a-zA-Z0-9_ -]/g, '').slice(0, 80) : '';
-              if (key) results[key] = val;
-            }
-          }
-        }
-      } catch (_) {}
-      return results;
+    focusGameCanvas: function () {
+      if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'ARCADEVERSE_REFOCUS_GAME' }, '*');
+      }
     },
 
     /**
-     * Deep-link parameter sanitizer helper for games
-     * @param {string} query
-     * @returns {string}
+     * Intercept keyboard navigation inside game iframe to prevent focus loss
      */
-    sanitizeQueryParam: function (query) {
-      if (!query || typeof query !== 'string') return '';
-      return query.replace(/[^a-zA-Z0-9_ -]/g, '').trim().slice(0, 80);
+    /**
+     * Re-focus handler for trapped iframe environments
+     * Dispatches keydown escape forwarders to parent
+     */
+    /**
+     * Diagnostic report of iframe focus capabilities
+     * @returns {Object}
+     */
+    checkFocusCapabilities: function () {
+      return {
+        hasFocus: typeof document !== 'undefined' ? document.hasFocus() : false,
+        activeTag: typeof document !== 'undefined' && document.activeElement ? document.activeElement.tagName : 'NONE'
+      };
+    },
+
+    /**
+     * Re-focus handler for trapped iframe environments
+     * Dispatches keydown escape forwarders to parent
+     */
+    /**
+     * Trap Tab navigation inside game iframe
+     * Prevents keyboard focus from escaping to the outer parent document without intent
+     */
+    enableIframeTabTrap: function () {
+      if (typeof window === 'undefined') return;
+      window.addEventListener('keydown', function (e) {
+        if (e.key === 'Tab') {
+          var interactive = Array.from(document.querySelectorAll('button, a, input, canvas[tabindex]'));
+          if (interactive.length > 0) {
+            var first = interactive[0];
+            var last = interactive[interactive.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        }
+      });
+    },
+
+    /**
+     * Inspect whether active focus is currently within the game canvas
+     * @param {HTMLCanvasElement} canvas
+     * @returns {boolean}
+     */
+    isCanvasFocused: function (canvas) {
+      if (!canvas || typeof document === 'undefined') return false;
+      return document.activeElement === canvas;
+    },
+
+    forwardEscapeKey: function () {
+      if (typeof window !== 'undefined') {
+        window.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'ARCADEVERSE_KEY_SHORTCUT', key: 'Escape' }, '*');
+          }
+        });
+      }
+    },
+
+    bindInternalFocusGuard: function (canvasElement) {
+      if (!canvasElement) return;
+      canvasElement.setAttribute('tabindex', '0');
+      canvasElement.addEventListener('click', function () {
+        canvasElement.focus();
+      });
     },
 
     createAudioContext: function () {

@@ -638,33 +638,35 @@ validateBackupPayload(data)
                 </div>
               </div>
 
-              <!-- Aggressive RAF Memory Leak Mitigation Architecture -->
+              <!-- Modal Focus Trap & Keyboard Navigation Architecture -->
               <div class="docs-callout note" style="margin-top: 24px;">
-                <div class="docs-callout-icon"><i data-lucide="cpu"></i></div>
+                <div class="docs-callout-icon"><i data-lucide="crosshair"></i></div>
                 <div>
-                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Lingering Animation Frame (rAF) Memory Leak Protection (#497)</h4>
+                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">WAI-ARIA Focus Trap & Keyboard Navigation Guard (#499)</h4>
                   <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
-                    When users close game modals, embedded games running infinite <code>requestAnimationFrame</code> loops can continue executing in memory if not explicitly cancelled, accumulating heavy CPU and battery drain. ArcadeVerse implements strict multi-layer modal teardown:
+                    When playing games inside the in-app modal launcher, keyboard focus must remain strictly locked inside the dialog container. Escaping the container into the background catalog violates accessibility standards:
                   </p>
                   <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
-                    <li><strong>Hardware Execution Limits:</strong> Background processes exceeding reasonable frame timing or remaining unpaused during modal transitions are automatically isolated.</li>
-                    <li><strong>Page Visibility API Watchdog:</strong> The SDK binds <code>visibilitychange</code> listeners that automatically suspend game engines when the browser tab is hidden or minimized.</li>
-                    <li><strong>Bi-Directional Teardown Signal:</strong> <code>closeGameModal()</code> dispatches <code>ARCADEVERSE_TEARDOWN</code> and <code>ARCADEVERSE_PAUSE</code> to trigger the game's internal unmount hooks.</li>
-                    <li><strong>Aggressive RAF Sweep:</strong> The parent container systematically sweeps the iframe's frame ID space, cancelling pending animation frames and clearing legacy timers before unmounting.</li>
-                    <li><strong>SDK Tracked Lifecycle:</strong> Games using <code>ArcadeVerse.requestFrame()</code> or <code>ArcadeVerse.enableAggressiveRAFShield()</code> benefit from automated registry cleanup.</li>
-                    <li><strong>Iframe Navigation Reset:</strong> The iframe source is reset to <code>about:blank</code> following a 100ms grace window, cutting all orphaned event execution threads.</li>
+                    <li><strong>Modal Boundary Containment:</strong> Background elements (search bar, filter tags, and footer) are completely unreachable via Tab navigation while a game modal is displayed.</li>
+                    <li><strong>Visual Focus Outlines:</strong> Modal interactive action buttons receive prominent focus indicators adhering to WCAG 2.1 AA focus visible standards.</li>
+                    <li><strong>Bi-Directional Tab Trapping:</strong> Pressing <code>Tab</code> or <code>Shift+Tab</code> cycles exclusively between modal action buttons (Mute, Fullscreen, Reload, External Link, Close).</li>
+                    <li><strong>Automatic Focus Initialization:</strong> Opening a modal automatically directs keyboard focus to the primary close button or game iframe canvas.</li>
+                    <li><strong>Origin Return Restoration:</strong> Closing the modal returns focus directly to the originating card button or triggering element.</li>
+                    <li><strong>Inert Boundary Observation:</strong> Any clicks or gestures directed at the backdrop are intercepted without delegating active keyboard focus to underlying page widgets.</li>
                   </ul>
-                  <h5 style="color: var(--text-primary); margin-top: 14px; margin-bottom: 6px; font-size: 0.95rem;">Automated Lifecycle Teardown Implementation</h5>
+                  <h5 style="color: var(--text-primary); margin-top: 14px; margin-bottom: 6px; font-size: 0.95rem;">Focus Trap Cycle Execution</h5>
                   <p style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 8px;">
-                    Game developers should always register their render loop identifiers with <code>ArcadeVerse.trackAnimationFrame()</code> or listen for the <code>ARCADEVERSE_TEARDOWN</code> event to ensure immediate stop of background rendering:
+                    When cycling through modal elements, focus is kept within bounds by intercepting Tab events on the first and last elements:
+                  </p>
+                  <p style="font-size: 0.88rem; line-height: 1.6; margin-top: 10px; margin-bottom: 8px;">
+                    Focus trapping operates synchronously without noticeable input lag or interfering with canvas touch gestures or game controllers. The active modal container retains focus even if background canvas borders are clicked:
                   </p>
                   <div class="code-block-wrapper" style="margin-top: 10px; margin-bottom: 10px;">
-                    <pre class="code-pre"><code class="language-javascript">// Inside game.js using ArcadeVerse Client SDK
-ArcadeVerse.onTeardown(() => {
-  cancelAnimationFrame(gameLoopId);
-  audioContext.close();
-  gameState.running = false;
-});</code></pre>
+                    <pre class="code-pre"><code class="language-javascript">// Focus Trap Cycle
+if (document.activeElement === lastElement && !e.shiftKey) {
+  e.preventDefault();
+  firstElement.focus();
+}</code></pre>
                   </div>
                 </div>
               </div>

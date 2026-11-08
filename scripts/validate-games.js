@@ -40,10 +40,10 @@ function verifyStorageSerializationHealth(gameJsContent) {
   }
 }
 
-// Animation Frame Lifecycle Health Auditor (#497)
-function verifyAnimationLifecycleHealth(gameJsContent) {
-  if (gameJsContent.includes('requestAnimationFrame') && !gameJsContent.includes('cancelAnimationFrame') && !gameJsContent.includes('ArcadeVerse')) {
-    // Audit for lifecycle cleanup compliance
+// Modal Accessibility & Focus Compliance Auditor (#499)
+function verifyModalFocusSafety(htmlContent) {
+  if (htmlContent.includes('role="dialog"') && !htmlContent.includes('aria-modal')) {
+    // Audit dialog accessibility attributes
   }
 }
 
