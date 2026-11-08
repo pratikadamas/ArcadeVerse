@@ -245,18 +245,18 @@
         </section>
         </section>
 
-        <!-- 7b. Canvas Graphics Memory Deallocation -->
-        <section class="legal-section" id="canvas-deallocation">
+        <!-- 7b. Deep Linking & URL Protocol Acceptable Use -->
+        <section class="legal-section" id="deep-linking-rules">
           <div class="legal-section-header">
             <span class="legal-section-number">08</span>
-            <span class="legal-header-icon"><i data-lucide="layers"></i></span>
-            <h2 class="legal-section-title">Graphics Memory Deallocation & Garbage Collection</h2>
+            <span class="legal-header-icon"><i data-lucide="link-2"></i></span>
+            <h2 class="legal-section-title">Deep-Linking & Query Parameter Usage</h2>
           </div>
           <p class="legal-paragraph">
-            ArcadeVerse systematically unbinds canvas raster memory and WebGL context buffers upon the conclusion of every game session to prevent device degradation.
+            Users and external platforms may link directly to games or filter sets using standard URL query parameters. ArcadeVerse implements strict client-side parameter parsing to guard against path traversal, rogue protocols, and parameter tampering.
           </p>
           <p class="legal-paragraph">
-            All submitted game engines must tolerate canvas dimension resets and context revocations without raising uncaught exceptions or violating platform stability protocols.
+            Any attempt to craft malformed query strings for malicious exploitation, open redirects, or unauthorized resource loading is prohibited and automatically blocked by client-side filters.
           </p>
         </section>
 

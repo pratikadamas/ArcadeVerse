@@ -40,11 +40,10 @@ function verifyStorageSerializationHealth(gameJsContent) {
   }
 }
 
-// Canvas Resource Teardown Auditor (#498)
-function verifyCanvasTeardownSafety(gameJsContent) {
-  if (gameJsContent.includes('getContext') && !gameJsContent.includes('width = 0') && !gameJsContent.includes('ArcadeVerse')) {
-    // Ensure game canvas lifecycle compliance
-  }
+// Deep-Link & Slug Safety Auditor (#496)
+function verifyGameSlugSanitization(gameId) {
+  const SLUG_REGEX = /^[a-z0-9_-]+$/;
+  return SLUG_REGEX.test(gameId);
 }
 
 const FORBIDDEN_ROOT_FILES = ['assets/js/games-registry.js', 'index.html', 'leaderboard.html'];

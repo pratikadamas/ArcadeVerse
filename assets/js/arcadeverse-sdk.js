@@ -838,62 +838,39 @@
      * @returns {AudioContext}
      */
     /**
-     * Clear and collapse all canvases in the current game context (#498)
-     * Resets 2D and WebGL contexts and drops width/height to 0 to trigger garbage collection.
-     * @returns {number} count of collapsed canvases
+     * URL slug and query parser utility
+     * Validates and sanitizes parameters for embedded games
+     * @param {string} urlString
+     * @returns {Object}
      */
-    /**
-     * Inspect canvas count in current document
-     * @returns {number}
-     */
-    /**
-     * Inspect if any WebGL context is currently active
-     * @returns {boolean}
-     */
-    hasActiveWebGL: function () {
-      return registeredWebGLContexts.length > 0;
-    },
-
-    /**
-     * Force context restoration attempt on tracked contexts
-     */
-    attemptContextRestoration: function () {
-      for (var i = 0; i < registeredWebGLContexts.length; i++) {
-        var gl = registeredWebGLContexts[i];
-        if (gl) {
-          var loseExt = gl.getExtension('WEBGL_lose_context');
-          if (loseExt && typeof loseExt.restoreContext === 'function') {
-            loseExt.restoreContext();
+    parseSafeQueryParams: function (urlString) {
+      var results = {};
+      try {
+        var str = urlString || (typeof window !== 'undefined' ? window.location.search : '');
+        if (str && str.indexOf('?') !== -1) str = str.split('?')[1];
+        if (str) {
+          var pairs = str.split('&');
+          for (var i = 0; i < pairs.length; i++) {
+            var pair = pairs[i].split('=');
+            if (pair[0]) {
+              var key = decodeURIComponent(pair[0]).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 32);
+              var val = pair[1] ? decodeURIComponent(pair[1]).replace(/[^a-zA-Z0-9_ -]/g, '').slice(0, 80) : '';
+              if (key) results[key] = val;
+            }
           }
         }
-      }
-    },
-
-    countCanvases: function () {
-      return typeof document !== 'undefined' ? document.querySelectorAll('canvas').length : 0;
+      } catch (_) {}
+      return results;
     },
 
     /**
-     * Clear and collapse all canvases in the current game context (#498)
-      if (typeof document === 'undefined') return 0;
-      var canvases = document.querySelectorAll('canvas');
-      var count = 0;
-      for (var i = 0; i < canvases.length; i++) {
-        var c = canvases[i];
-        try {
-          var ctx2d = c.getContext('2d');
-          if (ctx2d) {
-            ctx2d.clearRect(0, 0, c.width, c.height);
-            if (typeof ctx2d.reset === 'function') ctx2d.reset();
-          }
-        } catch (_) {}
-        try {
-          c.width = 0;
-          c.height = 0;
-          count++;
-        } catch (_) {}
-      }
-      return count;
+     * Deep-link parameter sanitizer helper for games
+     * @param {string} query
+     * @returns {string}
+     */
+    sanitizeQueryParam: function (query) {
+      if (!query || typeof query !== 'string') return '';
+      return query.replace(/[^a-zA-Z0-9_ -]/g, '').trim().slice(0, 80);
     },
 
     createAudioContext: function () {
