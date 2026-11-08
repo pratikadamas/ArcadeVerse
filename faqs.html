@@ -795,6 +795,34 @@
           </div>
         </div>
 
+        <!-- Question 32 (#502) -->
+        <div class="faq-accordion-item" data-category="architecture" id="faq-32">
+          <button class="faq-accordion-trigger" type="button" aria-expanded="false" aria-controls="faq-ans-32">
+            <span class="faq-question-text">
+              <span class="faq-category-badge">Mobile</span>
+              32. Why doesn't iOS Safari use standard HTML5 Fullscreen, and how does ArcadeVerse fix it?
+            </span>
+            <i data-lucide="chevron-down" class="faq-chevron"></i>
+          </button>
+          <div class="faq-accordion-content" id="faq-ans-32" role="region">
+            <div class="faq-accordion-inner">
+              <div class="faq-answer-text">
+                <p>Apple WebKit on iOS disables <code>requestFullscreen()</code> on non-video elements to prevent browser UI spoofing:</p>
+                <ul>
+                  <li><strong>Pseudo-Fullscreen:</strong> ArcadeVerse activates an edge-to-edge fixed modal (<code>100vw</code> × <code>100dvh</code>) that mirrors true fullscreen behavior.</li>
+                  <li><strong>Scroll Lock:</strong> Document body scrolling is locked to eliminate viewport rubber-banding and accidental swipe navigation.</li>
+                  <li><strong>Safe Area Insets:</strong> CSS <code>env(safe-area-inset-top)</code> and bottom padding protect game controls from camera notches and dynamic islands.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- Quick Help & Issues CTA Banner -->

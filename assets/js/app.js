@@ -1763,6 +1763,14 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   fullscreenBtn.addEventListener("click", () => {
+    // Feature-detect native fullscreen support (Safari iOS / mobile WebKit lack requestFullscreen on non-video elements)
+    const hasNativeFullscreen = !!(
+      modalWindow.requestFullscreen ||
+      modalWindow.webkitRequestFullscreen ||
+      modalWindow.mozRequestFullScreen ||
+      modalWindow.msRequestFullscreen
+    );
+
     const isNowFullscreen = modalWindow.classList.toggle("fullscreen");
     if (gameModal) {
       gameModal.classList.toggle("fullscreen-mode", isNowFullscreen);
@@ -1770,33 +1778,106 @@ document.addEventListener("DOMContentLoaded", () => {
     fullscreenBtn.setAttribute("aria-pressed", isNowFullscreen ? "true" : "false");
     fullscreenBtn.title = isNowFullscreen ? "Exit Fullscreen" : "Fullscreen Game";
 
-    // Attempt native HTML5 Fullscreen API for seamless zero-chrome immersion
+    // Detect iOS / WebKit touch devices to activate pseudo-fullscreen viewport styling
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
     if (isNowFullscreen) {
-      if (modalWindow.requestFullscreen) {
-        modalWindow.requestFullscreen().catch(() => {});
-      } else if (modalWindow.webkitRequestFullscreen) {
-        modalWindow.webkitRequestFullscreen();
+      if (hasNativeFullscreen && !isIOS) {
+        try {
+          const promise = modalWindow.requestFullscreen
+            ? modalWindow.requestFullscreen()
+            : (modalWindow.webkitRequestFullscreen ? modalWindow.webkitRequestFullscreen() : null);
+          if (promise && promise.catch) {
+            promise.catch(() => {
+              // Fallback to CSS pseudo-fullscreen if native request is rejected
+              activatePseudoFullscreen();
+            });
+          }
+        } catch (_err) {
+          activatePseudoFullscreen();
+        }
+      } else {
+        // Direct CSS pseudo-fullscreen fallback on iOS Safari and mobile WebKit viewports
+        activatePseudoFullscreen();
       }
     } else {
-      if (document.fullscreenElement || document.webkitFullscreenElement) {
-        if (document.exitFullscreen) {
-          document.exitFullscreen().catch(() => {});
-        } else if (document.webkitExitFullscreen) {
-          document.webkitExitFullscreen();
-        }
+      deactivatePseudoFullscreen();
+      const currentFs = document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement;
+      if (currentFs) {
+        try {
+          if (document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          }
+        } catch (_err) {}
+      }
+    }
+
+    // Helper to lock body scroll and pin viewport on iOS Safari pseudo-fullscreen
+    function activatePseudoFullscreen() {
+      document.body.classList.add("modal-pseudo-fullscreen-active");
+      modalWindow.classList.add("pseudo-fullscreen");
+      if (gameModal) gameModal.classList.add("pseudo-fullscreen-overlay");
+      // Scroll to top of viewport to minimize iOS Safari navigation bars
+      window.scrollTo(0, 0);
+
+      // Notify game iframe about fullscreen status change
+      if (gameFrame && gameFrame.contentWindow) {
+        try {
+          gameFrame.contentWindow.postMessage({
+            type: "AV_FULLSCREEN_CHANGE",
+            payload: { isFullscreen: true, mode: "pseudo" }
+          }, "*");
+        } catch (_e) {}
+      }
+    }
+
+    function deactivatePseudoFullscreen() {
+      document.body.classList.remove("modal-pseudo-fullscreen-active");
+      modalWindow.classList.remove("pseudo-fullscreen");
+      if (gameModal) gameModal.classList.remove("pseudo-fullscreen-overlay");
+
+      // Notify game iframe about fullscreen status change
+      if (gameFrame && gameFrame.contentWindow) {
+        try {
+          gameFrame.contentWindow.postMessage({
+            type: "AV_FULLSCREEN_CHANGE",
+            payload: { isFullscreen: false, mode: "pseudo" }
+          }, "*");
+        } catch (_e) {}
       }
     }
   });
 
   // Listen to native fullscreen exit (e.g. user presses Esc in native fullscreen)
-  document.addEventListener("fullscreenchange", () => {
-    if (!document.fullscreenElement && modalWindow.classList.contains("fullscreen")) {
+  const handleNativeFullscreenChange = () => {
+    const isNativeFs = !!(
+      document.fullscreenElement ||
+      document.webkitFullscreenElement ||
+      document.mozFullScreenElement ||
+      document.msFullscreenElement
+    );
+    if (!isNativeFs && modalWindow.classList.contains("fullscreen") && !modalWindow.classList.contains("pseudo-fullscreen")) {
       modalWindow.classList.remove("fullscreen");
       if (gameModal) gameModal.classList.remove("fullscreen-mode");
+      document.body.classList.remove("modal-pseudo-fullscreen-active");
       fullscreenBtn.setAttribute("aria-pressed", "false");
       fullscreenBtn.title = "Fullscreen Game";
     }
-  });
+  };
+  document.addEventListener("fullscreenchange", handleNativeFullscreenChange);
+  document.addEventListener("webkitfullscreenchange", handleNativeFullscreenChange);
+  document.addEventListener("mozfullscreenchange", handleNativeFullscreenChange);
+  document.addEventListener("MSFullscreenChange", handleNativeFullscreenChange);
 
   // Sort Selector Change
   if (sortSelect) {
