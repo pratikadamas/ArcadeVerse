@@ -137,6 +137,35 @@ function getGitCommitCounts() {
   return commitCounts;
 }
 
+// Strict Lucide Icon & Attribute Whitelist Sanitizer (#491)
+const LUCIDE_ICON_WHITELIST = new Set([
+  "gamepad-2", "gamepad", "play", "play-circle", "trophy", "star",
+  "heart", "heart-crack", "search", "x", "refresh-cw", "maximize",
+  "maximize-2", "minimize", "external-link", "volume-2", "volume-x",
+  "moon", "sun", "help-circle", "file-code-2", "book-open", "chevron-down",
+  "chevron-up", "chevron-right", "chevron-left", "shield", "cpu",
+  "zap", "award", "crown", "sparkles", "compass", "target", "crosshair",
+  "dices", "layers", "timer", "clock", "hash", "code", "terminal",
+  "user", "users", "tag", "tags", "filter", "check", "info", "alert-triangle",
+  "alert-circle", "eye", "eye-off", "lock", "unlock", "power", "sliders",
+  "copy", "download", "folder", "flame", "skull", "ghost", "radar"
+]);
+
+function sanitizeMetadataString(val, fallback = "") {
+  if (typeof val !== "string") return fallback;
+  // Strip control characters, trailing whitespace, and normalize dangerous angle/quote breakouts
+  return val
+    .replace(/[\u0000-\u001F\u007F]/g, "")
+    .replace(/[<>"]/g, "")
+    .trim() || fallback;
+}
+
+function sanitizeIcon(val) {
+  if (typeof val !== "string") return "gamepad-2";
+  const clean = val.toLowerCase().replace(/[^a-z0-9-]/g, "").trim();
+  return LUCIDE_ICON_WHITELIST.has(clean) ? clean : "gamepad-2";
+}
+
 function buildRegistry() {
   if (!fs.existsSync(GAMES_DIR)) {
     console.error(`Error: games directory not found at ${GAMES_DIR}`);
@@ -169,16 +198,18 @@ function buildRegistry() {
       const authorName = (KNOWN_PROFILES[ghKey] && KNOWN_PROFILES[ghKey].name) || meta.author || "Contributor";
 
       const gameObj = {
-        id: gameId,
-        title: meta.title || folder,
-        category: meta.category || "Arcade",
-        lucideIcon: meta.lucideIcon || "gamepad-2",
-        description: meta.description || "",
-        author: authorName,
-        github: meta.github || "",
-        role: meta.role || "Arcade Developer",
+        id: sanitizeMetadataString(gameId, folder),
+        title: sanitizeMetadataString(meta.title, folder),
+        category: sanitizeMetadataString(meta.category, "Arcade"),
+        lucideIcon: sanitizeIcon(meta.lucideIcon),
+        description: sanitizeMetadataString(meta.description, ""),
+        author: sanitizeMetadataString(authorName, "Contributor"),
+        github: sanitizeMetadataString(meta.github, ""),
+        role: sanitizeMetadataString(meta.role, "Arcade Developer"),
         path: htmlPath,
-        tags: Array.isArray(meta.tags) ? meta.tags : ["Arcade"],
+        tags: Array.isArray(meta.tags)
+          ? meta.tags.map(t => sanitizeMetadataString(t)).filter(Boolean)
+          : ["Arcade"],
         stars: typeof meta.stars === 'number' ? meta.stars : 25,
         featured: Boolean(meta.featured)
       };

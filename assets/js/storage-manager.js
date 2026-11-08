@@ -776,6 +776,84 @@
     open: openStorageModal,
     close: closeStorageModal,
     scan: scanGameStorage,
-    export: exportAllSaves
+    export: exportAllSaves,
+    /**
+     * Isolated Storage Namespacing Helper
+     * Validates and returns all namespaced keys matching a specific game identifier.
+     * Prevents key collision across different games using global generic keys.
+     * @param {string} gameId
+     * @returns {Array<{rawKey: string, cleanKey: string, value: string, bytes: number}>}
+     */
+    getGameIsolatedKeys: function (gameId) {
+      if (!gameId || typeof gameId !== 'string') return [];
+      const cleanId = gameId.toLowerCase().trim().replace(/[^a-z0-9_-]/g, '');
+      const prefix = 'av_' + cleanId + '_';
+      const results = [];
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith(prefix)) {
+            const val = localStorage.getItem(key) || '';
+            results.push({
+              rawKey: key,
+              cleanKey: key.slice(prefix.length),
+              value: val,
+              bytes: (key.length + val.length) * 2
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('[ArcadeStorageManager] Failed to read isolated keys for:', gameId, err);
+      }
+      return results;
+    },
+    /**
+     * Clear all namespaced keys for a specific game without touching other games or global settings
+     * @param {string} gameId
+     * @returns {number} count of keys deleted
+     */
+    clearGameIsolatedKeys: function (gameId) {
+      if (!gameId || typeof gameId !== 'string') return 0;
+      const cleanId = gameId.toLowerCase().trim().replace(/[^a-z0-9_-]/g, '');
+      const prefix = 'av_' + cleanId + '_';
+      const toDelete = [];
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith(prefix)) {
+            toDelete.push(key);
+          }
+        }
+        toDelete.forEach(k => localStorage.removeItem(k));
+        console.info(`[ArcadeStorageManager] Cleared ${toDelete.length} isolated keys for game: ${cleanId}`);
+        return toDelete.length;
+      } catch (err) {
+        console.warn('[ArcadeStorageManager] Failed to clear isolated keys for:', gameId, err);
+        return 0;
+      }
+    },
+    /**
+     * Migrate unnamespaced legacy keys into the isolated format
+     * @param {string} gameId
+     * @param {string[]} legacyKeys
+     */
+    migrateLegacyKeys: function (gameId, legacyKeys) {
+      if (!gameId || !Array.isArray(legacyKeys)) return 0;
+      const cleanId = gameId.toLowerCase().trim().replace(/[^a-z0-9_-]/g, '');
+      let migrated = 0;
+      legacyKeys.forEach(rawKey => {
+        try {
+          const existing = localStorage.getItem(rawKey);
+          const targetKey = 'av_' + cleanId + '_' + rawKey;
+          if (existing !== null && localStorage.getItem(targetKey) === null) {
+            localStorage.setItem(targetKey, existing);
+            migrated++;
+          }
+        } catch (e) {
+          console.warn('[ArcadeStorageManager] Legacy migration error for key:', rawKey, e);
+        }
+      });
+      return migrated;
+    }
   };
 })();

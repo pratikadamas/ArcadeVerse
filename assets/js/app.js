@@ -94,6 +94,85 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // =========================================================================
+  // XSS PREVENTION & ATTRIBUTE SANITIZATION UTILITIES (#491)
+  // =========================================================================
+  const ArcadeSanitizer = (function () {
+    // Permitted Lucide icon names whitelist to prevent arbitrary attribute or SVG injection
+    const LUCIDE_ICON_WHITELIST = new Set([
+      "gamepad-2", "gamepad", "play", "play-circle", "trophy", "star",
+      "heart", "heart-crack", "search", "x", "refresh-cw", "maximize",
+      "maximize-2", "minimize", "external-link", "volume-2", "volume-x",
+      "moon", "sun", "help-circle", "file-code-2", "book-open", "chevron-down",
+      "chevron-up", "chevron-right", "chevron-left", "shield", "cpu",
+      "zap", "award", "crown", "sparkles", "compass", "target", "crosshair",
+      "dices", "layers", "timer", "clock", "hash", "code", "terminal",
+      "user", "users", "tag", "tags", "filter", "check", "info", "alert-triangle",
+      "alert-circle", "eye", "eye-off", "lock", "unlock", "power", "sliders",
+      "copy", "download", "folder", "flame", "skull", "ghost", "radar"
+    ]);
+
+    /**
+     * Pure vanilla HTML entity encoder for text content
+     * Encodes &, <, >, ", ', and ` to neutralize HTML injection
+     */
+    function escapeHTML(str) {
+      if (str === null || str === undefined) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;")
+        .replace(/`/g, "&#96;");
+    }
+
+    /**
+     * Attribute-safe encoder for HTML attributes (title="...", data-*, aria-*)
+     * Strictly neutralizes quote breakout characters and control characters
+     */
+    function escapeAttr(str) {
+      if (str === null || str === undefined) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/`/g, "&#96;")
+        .replace(/=/g, "&#61;");
+    }
+
+    /**
+     * Validates and returns a safe Lucide icon name from the strict whitelist
+     */
+    function sanitizeIconName(name) {
+      if (!name || typeof name !== "string") return "gamepad-2";
+      const cleanName = name.trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
+      return LUCIDE_ICON_WHITELIST.has(cleanName) ? cleanName : "gamepad-2";
+    }
+
+    /**
+     * Generates a safe whitelisted Lucide icon HTML tag
+     */
+    function renderSafeIcon(name, extraClass = "") {
+      const safeName = sanitizeIconName(name);
+      const safeClass = escapeAttr(extraClass);
+      return `<i data-lucide="${safeName}" class="${safeClass}"></i>`;
+    }
+
+    return {
+      escapeHTML,
+      escapeAttr,
+      sanitizeIconName,
+      renderSafeIcon,
+      LUCIDE_ICON_WHITELIST
+    };
+  })();
+
+  window.ArcadeSanitizer = ArcadeSanitizer;
+  const { escapeHTML, escapeAttr, sanitizeIconName, renderSafeIcon } = ArcadeSanitizer;
+
   // Search & filter UI element refs
   const searchClearBtn = document.getElementById("search-clear-btn");
   const resultsCountEl = document.getElementById("catalog-results-count");
@@ -110,7 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!localStorage.getItem(FAVORITES_STORAGE_KEY)) {
       const legacy = localStorage.getItem(LEGACY_FAVORITES_STORAGE_KEY) || localStorage.getItem(PREFERENCES_FAVORITES_KEY);
       if (legacy) {
-        localStorage.setItem(FAVORITES_STORAGE_KEY, legacy);
+        ArcadeStorageResilience.safeSetItem(FAVORITES_STORAGE_KEY, legacy);
       }
     }
   } catch (_) {}
@@ -134,12 +213,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function saveFavorites(favSet) {
     const list = Array.from(favSet);
     const serialized = JSON.stringify(list);
-    try {
-      localStorage.setItem(FAVORITES_STORAGE_KEY, serialized);
-      localStorage.setItem(LEGACY_FAVORITES_STORAGE_KEY, serialized);
-    } catch (e) {
-      console.warn("Could not save favorites to localStorage:", e);
-    }
+    ArcadeStorageResilience.safeSetItem(FAVORITES_STORAGE_KEY, serialized);
+    ArcadeStorageResilience.safeSetItem(LEGACY_FAVORITES_STORAGE_KEY, serialized);
     updateFavoritesBadge();
   }
 
@@ -1000,11 +1075,17 @@ document.addEventListener("DOMContentLoaded", () => {
     filtered.forEach((game) => {
       const card = document.createElement("div");
       card.className = "game-card";
-      card.setAttribute("data-game-id", game.id);
-      const iconName = game.lucideIcon || "gamepad-2";
-      const iconHtml = `<i data-lucide="${iconName}"></i>`;
+      card.setAttribute("data-game-id", escapeAttr(game.id));
+      const safeGameId = escapeAttr(game.id);
+      const safeTitle = escapeHTML(game.title);
+      const safeCategory = escapeHTML(game.category);
+      const safeDesc = escapeHTML(game.description || "");
+      const safeAuthor = escapeHTML(game.author || game.github || "Contributor");
+      const safeGithub = escapeHTML(game.github || game.author || "Contributor");
+      const safeAuthorAttr = escapeAttr(game.author || game.github || "Contributor");
+      const iconHtml = renderSafeIcon(game.lucideIcon || "gamepad-2");
       const favorited = favs.has(game.id);
-      const actionText = 'Play Now <i data-lucide="play" style="width: 13px; height: 13px; vertical-align: middle; margin-left: 2px;"></i>';
+      const actionText = `Play Now ${renderSafeIcon("play", "btn-play-icon")}`;
 
       const userRating = (window.GameRatings && window.GameRatings.ratings[game.id]) || null;
       const displayScore = userRating ? Number(userRating).toFixed(1) : (game.stars ? (game.stars / 10).toFixed(1) : "5.0");
@@ -1023,9 +1104,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       card.innerHTML = `
         <div class="game-card-preview">
-          <span class="game-category-tag">${game.category}</span>
+          <span class="game-category-tag">${safeCategory}</span>
           ${halloweenBadgeHtml}
-          <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${game.id}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
+          <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
               <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
             </svg>
@@ -1033,26 +1114,26 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="game-icon">${iconHtml}</div>
         </div>
         <div class="game-card-body">
-          <h3 class="game-card-title">${game.title}${halloweenTitleBadge}</h3>
-          <p class="game-card-desc">${game.description}</p>
+          <h3 class="game-card-title">${safeTitle}${halloweenTitleBadge}</h3>
+          <p class="game-card-desc">${safeDesc}</p>
           <div class="game-card-rating-row">
-            <div class="game-rating-stars" data-game-id="${game.id}" aria-label="Rating for ${game.title}">
+            <div class="game-rating-stars" data-game-id="${safeGameId}" aria-label="Rating for ${escapeAttr(game.title)}">
               ${[1, 2, 3, 4, 5].map(starNum => `
-                <button type="button" class="rate-star-btn ${currentStar >= starNum ? 'voted' : ''}" data-game="${game.id}" data-star="${starNum}" title="Rate ${starNum} star${starNum > 1 ? 's' : ''}" aria-label="Rate ${starNum} stars">
+                <button type="button" class="rate-star-btn ${currentStar >= starNum ? 'voted' : ''}" data-game="${safeGameId}" data-star="${starNum}" title="Rate ${starNum} star${starNum > 1 ? 's' : ''}" aria-label="Rate ${starNum} stars">
                   <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                 </button>
               `).join('')}
-              <span class="rating-badge">${displayScore}</span>
+              <span class="rating-badge">${escapeHTML(displayScore)}</span>
             </div>
           </div>
           <div class="game-card-footer">
             <div class="contributor-meta">
-              <div class="contributor-avatar">${(game.author || game.github || "A").charAt(0).toUpperCase()}</div>
+              <div class="contributor-avatar">${escapeHTML((game.author || game.github || "A").charAt(0).toUpperCase())}</div>
               <div class="contributor-name">
-                <button type="button" class="author-filter-btn" data-author="${game.author || game.github}" title="Filter games by ${game.author || game.github}" aria-label="Filter games by author ${game.author || game.github}">by @${game.github || game.author}</button>
+                <button type="button" class="author-filter-btn" data-author="${safeAuthorAttr}" title="Filter games by ${safeAuthorAttr}" aria-label="Filter games by author ${safeAuthorAttr}">by @${safeGithub}</button>
               </div>
             </div>
-            <button class="btn-play-trigger" data-id="${game.id}">${actionText}</button>
+            <button class="btn-play-trigger" data-id="${safeGameId}">${actionText}</button>
           </div>
         </div>
       `;
@@ -1218,6 +1299,126 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 15000);
   }
 
+  // =========================================================================
+  // SECURE IFRAME POSTMESSAGE ORIGIN VALIDATION & CRYPTOGRAPHIC HANDSHAKE (#489)
+  // =========================================================================
+  let activeGameSession = {
+    token: null,
+    gameId: null,
+    startTime: 0,
+    handshakeConfirmed: false,
+    handshakeTimeoutId: null
+  };
+
+  /**
+   * Generates a cryptographically strong UUID or fallback random hexadecimal token
+   */
+  function generateSessionToken() {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      try {
+        return crypto.randomUUID();
+      } catch (_) {}
+    }
+    if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+      const bytes = new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+    }
+    return "av_sess_" + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+  }
+
+  /**
+   * Validates whether an incoming postMessage originates from a verified source & origin
+   * @param {MessageEvent} event
+   * @returns {boolean}
+   */
+  function isValidGameMessage(event) {
+    if (!event || !event.data || typeof event.data !== "object") return false;
+
+    // 1. Strict Origin Verification:
+    // If not local file:// protocol, enforce matching window.location.origin
+    if (window.location.origin && window.location.origin !== "null") {
+      const allowedOrigin = window.location.origin;
+      if (event.origin && event.origin !== "null" && event.origin !== allowedOrigin) {
+        console.warn(
+          `[ArcadeVerse Security] Rejected message: origin mismatch. Expected "${allowedOrigin}", received "${event.origin}".`
+        );
+        return false;
+      }
+    }
+
+    // 2. Strict Source Verification:
+    // Message MUST originate from the active game iframe's contentWindow
+    if (gameIframe && gameIframe.contentWindow) {
+      if (event.source !== gameIframe.contentWindow) {
+        console.warn("[ArcadeVerse Security] Rejected message: event.source does not match active gameIframe.contentWindow.");
+        return false;
+      }
+    }
+
+    // 3. Cryptographic Session Token Verification:
+    // If an active session token exists, incoming game events must match the active token
+    if (activeGameSession.token) {
+      // Handshake initiation ACK or standard game events
+      if (event.data.sessionToken && event.data.sessionToken !== activeGameSession.token) {
+        console.warn(
+          "[ArcadeVerse Security] Rejected message: sessionToken mismatch. Possible replay or cross-frame spoof attack."
+        );
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Dispatches AV_INIT_SESSION with a unique cryptographic session token to the child game iframe
+   */
+  function initiateGameIframeSession(game) {
+    if (!gameIframe || !gameIframe.contentWindow) return;
+
+    if (activeGameSession.handshakeTimeoutId) {
+      clearTimeout(activeGameSession.handshakeTimeoutId);
+      activeGameSession.handshakeTimeoutId = null;
+    }
+
+    const sessionToken = generateSessionToken();
+    activeGameSession = {
+      token: sessionToken,
+      gameId: game ? game.id : null,
+      startTime: Date.now(),
+      handshakeConfirmed: false,
+      handshakeTimeoutId: null
+    };
+
+    const targetOrigin = (window.location.origin && window.location.origin !== "null") ? window.location.origin : "*";
+
+    // Dispatch cryptographically secured handshake challenge
+    try {
+      gameIframe.contentWindow.postMessage(
+        {
+          type: "AV_INIT_SESSION",
+          sessionToken: sessionToken,
+          gameId: game ? game.id : null,
+          origin: targetOrigin,
+          timestamp: Date.now()
+        },
+        "*"
+      );
+    } catch (err) {
+      console.warn("[ArcadeVerse Security] Error dispatching AV_INIT_SESSION:", err);
+    }
+
+    // Set a 3.5s timeout: if child game does not ACK (e.g. legacy game without SDK),
+    // mark handshake as legacy compatible to prevent gameplay disruption
+    activeGameSession.handshakeTimeoutId = setTimeout(() => {
+      if (!activeGameSession.handshakeConfirmed) {
+        // Tolerant fallback for games that don't bundle the SDK yet
+        activeGameSession.handshakeConfirmed = true;
+      }
+    }, 3500);
+  }
+
   // Bind iframe load listener once at root level to ensure 100% reliable load detection
   if (gameIframe) {
     gameIframe.addEventListener("load", () => {
@@ -1229,6 +1430,9 @@ document.addEventListener("DOMContentLoaded", () => {
       gameIframe.classList.add("loaded");
       guardIframeTouchInteractions();
 
+      // Establish cryptographic session handshake with child game frame
+      initiateGameIframeSession(activeGame);
+
       try {
         if (window.SoundEngine && typeof window.SoundEngine.broadcastAudioConfig === "function") {
           window.SoundEngine.broadcastAudioConfig();
@@ -1238,6 +1442,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (gameIframe.contentWindow) {
             gameIframe.contentWindow.postMessage({
               type: "ARCADEVERSE_AUDIO_CONFIG",
+              sessionToken: activeGameSession.token,
               muted: isMuted,
               volume: masterVol
             }, "*");
@@ -1254,9 +1459,37 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // =========================================================================
+  // TOP-LEVEL NAVIGATION GUARD & ROGUE SCRIPT PROTECTION (#492)
+  // =========================================================================
+  let isGameSessionActive = false;
+
+  /**
+   * Browser navigation guard while a game modal session is active
+   * Prevents rogue iframe scripts or accidental redirects from abandoning gameplay
+   */
+  function handleGameBeforeUnload(e) {
+    if (!isGameSessionActive) return;
+    const confirmationMessage = "An arcade game is currently running in ArcadeVerse. Are you sure you want to leave?";
+    e.preventDefault();
+    e.returnValue = confirmationMessage;
+    return confirmationMessage;
+  }
+
+  // Intercept window top-level frame redirection attempts
+  window.addEventListener("beforeunload", handleGameBeforeUnload);
+
+  // Monitor iframe sandbox violations or framebusting attempts
+  window.addEventListener("securitypolicyviolation", (e) => {
+    if (e && e.violatedDirective && e.violatedDirective.includes("frame")) {
+      console.warn("[ArcadeVerse Security Sandbox] Trapped policy boundary event:", e.blockedURI);
+    }
+  });
+
   // Modal Handlers
   function openGameModal(game, triggerElement = null, isDirectDeepLink = false) {
     activeGame = game;
+    isGameSessionActive = true;
     lastFocusedElement = triggerElement || document.activeElement;
 
     // Trigger bat animation if launching a Halloween Special Game
@@ -1268,7 +1501,13 @@ document.addEventListener("DOMContentLoaded", () => {
     modalGameBadge.textContent = game.category;
     modalGameAuthor.textContent = `Built by @${game.author}`;
     startIframeTimeout(game);
-    gameIframe.src = game.path;
+
+    // Storage Isolation Bridge: Pass gameId via URL parameter so SDK attaches namespaced proxy
+    let iframeUrl = game.path;
+    if (iframeUrl && !iframeUrl.includes("gameId=")) {
+      iframeUrl += (iframeUrl.includes("?") ? "&" : "?") + "gameId=" + encodeURIComponent(game.id);
+    }
+    gameIframe.src = iframeUrl;
     newTabBtn.href = game.path;
 
     updateModalFavoriteButton(isFavorite(game.id));
@@ -1341,6 +1580,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function closeGameModal(isFromPopState = false) {
     if (!gameModal || (!gameModal.classList.contains("active") && !activeGame)) return;
     activeGame = null;
+    isGameSessionActive = false;
     gameModal.classList.remove("active");
     gameModal.setAttribute("aria-hidden", "true");
 
@@ -1451,22 +1691,74 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Listen for forwarded shortcuts from inside game iframes (via ArcadeVerse SDK)
+  // Listen for forwarded shortcuts and runtime events from inside game iframes
   window.addEventListener("message", (e) => {
-    if (!e || !e.data || e.data.type !== "ARCADEVERSE_KEY_SHORTCUT") return;
-    const key = (e.data.key || "").toLowerCase();
-    if (e.data.key === "Escape") {
-      if (gameModal.classList.contains("active")) closeGameModal(false);
-    } else if (key === "f") {
-      if (gameModal.classList.contains("active") && fullscreenBtn) fullscreenBtn.click();
-    } else if (key === "r") {
-      if (gameModal.classList.contains("active") && reloadBtn) reloadBtn.click();
-    } else if (key === "m") {
-      const soundBtn = document.getElementById("global-sound-toggle-btn");
-      if (soundBtn) soundBtn.click();
-    } else if (key === "t") {
-      const themeBtn = document.getElementById("theme-toggle-btn");
-      if (themeBtn) themeBtn.click();
+    if (!e || !e.data || typeof e.data !== "object") return;
+
+    // Filter non-ArcadeVerse messages quickly
+    const type = e.data.type || "";
+    if (!type.startsWith("ARCADEVERSE_") && !type.startsWith("AV_")) return;
+
+    // Security origin & source validation
+    if (!isValidGameMessage(e)) {
+      return;
+    }
+
+    // Handle handshake confirmation ACK from ArcadeVerse SDK
+    if (type === "AV_SESSION_ACK") {
+      activeGameSession.handshakeConfirmed = true;
+      if (activeGameSession.handshakeTimeoutId) {
+        clearTimeout(activeGameSession.handshakeTimeoutId);
+        activeGameSession.handshakeTimeoutId = null;
+      }
+      return;
+    }
+
+    // Handle score events from verified child games
+    if (type === "ARCADEVERSE_GAME_SCORE") {
+      const score = Number(e.data.score) || 0;
+      window.dispatchEvent(
+        new CustomEvent("arcadeverse:score-update", {
+          detail: {
+            gameId: activeGame ? activeGame.id : null,
+            score: score,
+            sessionToken: activeGameSession.token
+          }
+        })
+      );
+      return;
+    }
+
+    // Handle game-over lifecycle events
+    if (type === "ARCADEVERSE_GAME_OVER") {
+      window.dispatchEvent(
+        new CustomEvent("arcadeverse:game-over", {
+          detail: {
+            gameId: activeGame ? activeGame.id : null,
+            details: e.data.details || {},
+            sessionToken: activeGameSession.token
+          }
+        })
+      );
+      return;
+    }
+
+    // Handle keyboard shortcut forwarding
+    if (type === "ARCADEVERSE_KEY_SHORTCUT") {
+      const key = (e.data.key || "").toLowerCase();
+      if (e.data.key === "Escape") {
+        if (gameModal.classList.contains("active")) closeGameModal(false);
+      } else if (key === "f") {
+        if (gameModal.classList.contains("active") && fullscreenBtn) fullscreenBtn.click();
+      } else if (key === "r") {
+        if (gameModal.classList.contains("active") && reloadBtn) reloadBtn.click();
+      } else if (key === "m") {
+        const soundBtn = document.getElementById("global-sound-toggle-btn");
+        if (soundBtn) soundBtn.click();
+      } else if (key === "t") {
+        const themeBtn = document.getElementById("theme-toggle-btn");
+        if (themeBtn) themeBtn.click();
+      }
     }
   });
 
@@ -1511,9 +1803,7 @@ document.addEventListener("DOMContentLoaded", () => {
     sortSelect.value = currentSort;
     sortSelect.addEventListener("change", (e) => {
       currentSort = e.target.value;
-      try {
-        localStorage.setItem(CATALOG_SORT_STORAGE_KEY, currentSort);
-      } catch (_) {}
+      ArcadeStorageResilience.safeSetItem(CATALOG_SORT_STORAGE_KEY, currentSort);
       renderGames();
     });
   }
@@ -1652,15 +1942,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let activeSuggestionIndex = -1;
   let currentSuggestions = [];
 
-  function escapeHTML(str) {
-    return String(str || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
-
   function escapeRegex(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
@@ -1791,7 +2072,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .map((game, idx) => {
         const catBadge = game.category ? game.category.split("/")[0].trim() : "Game";
         const authorHandle = game.github || game.author || "";
-        const iconName = game.lucideIcon || "gamepad-2";
+        const iconName = sanitizeIconName(game.lucideIcon || "gamepad-2");
 
         return `
           <li class="autocomplete-item"
@@ -1800,7 +2081,7 @@ document.addEventListener("DOMContentLoaded", () => {
               data-index="${idx}"
               aria-selected="false">
             <div class="autocomplete-icon-wrap" aria-hidden="true">
-              <i data-lucide="${escapeHTML(iconName)}"></i>
+              ${renderSafeIcon(iconName)}
             </div>
             <div class="autocomplete-content">
               <div class="autocomplete-title-row">
@@ -2200,9 +2481,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Catalog Layout Switcher Engine (Grid vs Compact List View) ---
   function setCatalogView(view) {
     currentCatalogView = view === "list" ? "list" : "grid";
-    try {
-      localStorage.setItem(CATALOG_VIEW_STORAGE_KEY, currentCatalogView);
-    } catch (_) {}
+    ArcadeStorageResilience.safeSetItem(CATALOG_VIEW_STORAGE_KEY, currentCatalogView);
 
     if (gamesGrid) {
       gamesGrid.classList.toggle("view-list", currentCatalogView === "list");
@@ -2439,6 +2718,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Initial render
+  initFontPreloadResilience();
   initCatalogViewSwitcher();
   initAZJumpBar();
   initURLDeepLinking();

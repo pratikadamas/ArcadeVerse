@@ -10,7 +10,7 @@ class Quantum2048 {
     this.board = [];
     let savedBest = 0;
     try {
-      savedBest = parseInt(localStorage.getItem("arcadeverse_q2048_best") || "0", 10) || 0;
+      savedBest = parseInt((window.ArcadeStorage ? window.ArcadeStorage.getItem("bestScore") : null) || localStorage.getItem("arcadeverse_q2048_best") || "0", 10) || 0;
     } catch (e) {}
     this.bestScore = savedBest;
     this.previousState = null;
@@ -187,7 +187,7 @@ class Quantum2048 {
     if (this.score > this.bestScore) {
       this.bestScore = this.score;
       try {
-        localStorage.setItem("arcadeverse_q2048_best", this.bestScore.toString());
+        if (window.ArcadeStorage) window.ArcadeStorage.setItem("bestScore", this.bestScore.toString()); localStorage.setItem("arcadeverse_q2048_best", this.bestScore.toString());
       } catch (e) {}
       if (this.bestScoreEl) this.bestScoreEl.textContent = this.bestScore;
     }

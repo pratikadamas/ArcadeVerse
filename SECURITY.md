@@ -89,6 +89,14 @@ To ensure client-side safety, all contributors **must** strictly adhere to the f
 
 ---
 
+### 6. 🔒 Strict Iframe Sandbox Policy (#492)
+
+- **Omission of Top Navigation:** The central game viewport #game-iframe enforces sandbox restrictions strictly omitting llow-top-navigation and llow-top-navigation-by-user-activation.
+- **Protection against Frame Hijacking:** Embedded games cannot redirect the parent hub to external or malicious sites via window location manipulation.
+- **Active Session Lock:** An active beforeunload confirmation guard warns players before leaving or reloading during ongoing gameplay sessions.
+
+---
+
 ## ⚖️ Enforcement & Code Review
 
 Every Pull Request undergoes rigorous manual code review by the Project Admin before merging:

@@ -282,6 +282,21 @@
           </ul>
         </section>
 
+        <!-- 3b. External Font Preload & CORS Safety -->
+        <section class="legal-section" id="cdn-privacy">
+          <div class="legal-section-header">
+            <span class="legal-section-number">04</span>
+            <span class="legal-header-icon"><i data-lucide="eye-off"></i></span>
+            <h2 class="legal-section-title">Zero-Tracking External Font & Asset Preloading</h2>
+          </div>
+          <p class="legal-paragraph">
+            ArcadeVerse does not transmit telemetry, player identities, or fingerprinting tokens to external webfont CDNs or third-party style providers. When external font preloads are initiated, standard CORS and privacy headers protect client integrity.
+          </p>
+          <p class="legal-paragraph">
+            Should an external font fail to load or be blocked by browser tracking protection mechanisms, ArcadeVerse immediately transitions to local system font stacks, ensuring zero data leakage and preserving complete client privacy.
+          </p>
+        </section>
+
         <!-- 4. Zero Cookies -->
         <section class="legal-section" id="cookies">
           <div class="legal-section-header">
@@ -291,6 +306,18 @@
           </div>
           <p class="legal-paragraph">
             ArcadeVerse sets <strong>zero HTTP cookies</strong>. We do not use first-party or third-party cookies, tracking beacons, fingerprinting algorithms, or session recording tools (such as Hotjar or FullStory).
+          </p>
+        </section>
+
+        <!-- 4b. Iframe Sandbox & Navigation Boundary -->
+        <section class="legal-section" id="sandbox-policy">
+          <div class="legal-section-header">
+            <span class="legal-section-number">04b</span>
+            <span class="legal-header-icon"><i data-lucide="shield-check"></i></span>
+            <h2 class="legal-section-title">Embedded Game Sandbox & Frame Isolation Policy (#492)</h2>
+          </div>
+          <p class="legal-paragraph">
+            To safeguard user privacy and prevent unapproved browser redirection, all community games are hosted inside sandboxed iframe containers omitting top navigation privileges. Games cannot hijack browser URLs or redirect users away from ArcadeVerse.
           </p>
         </section>
 

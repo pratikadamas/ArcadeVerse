@@ -153,6 +153,13 @@ To keep this project scalable and prevent hundreds of merge conflicts, I have es
 >
 > ---
 >
+> **🚨 1b. IFRAME SANDBOX SECURITY COMPLIANCE (#492)**
+>
+> - Community games run in an isolated HTML5 sandbox. Games must NEVER attempt to execute window.top.location or window.parent.location.
+> - Top-level navigation attempts will be blocked by browser sandbox boundaries and fail pre-flight verification.
+>
+> ---
+>
 > **🚨 2. ROOT FILES POLICY: GAME PRs VS. PLATFORM ISSUES**
 
 > - **For Game Contributions:** You must NEVER edit `assets/js/games-registry.js`, `index.html`, or `leaderboard.html` to register or connect your game. Game registration is 100% automated by GitHub Actions scanning your `game.json`.

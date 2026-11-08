@@ -1,0 +1,10 @@
+{
+  "title": "Microbe Medics: Outbreak Protocol",
+  "category": "Puzzle",
+  "lucideIcon": "shield-plus",
+  "description": "Contain a fictional outbreak by placing barriers and deploying limited-use cure units on a turn-based grid.",
+  "author": "Joita Paul",
+  "github": "joitapaul",
+  "role": "Arcade Developer",
+  "tags": ["Puzzle", "Strategy", "Grid", "NSOC26"]
+}
