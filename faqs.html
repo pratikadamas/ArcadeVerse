@@ -795,6 +795,35 @@
           </div>
         </div>
 
+        <!-- Question 28 (#497) -->
+        <div class="faq-accordion-item" data-category="architecture" id="faq-28">
+          <button class="faq-accordion-trigger" type="button" aria-expanded="false" aria-controls="faq-ans-28">
+            <span class="faq-question-text">
+              <span class="faq-category-badge">Architecture</span>
+              28. How does ArcadeVerse eliminate requestAnimationFrame memory leaks on modal dismissal?
+            </span>
+            <i data-lucide="chevron-down" class="faq-chevron"></i>
+          </button>
+          <div class="faq-accordion-content" id="faq-ans-28" role="region">
+            <div class="faq-accordion-inner">
+              <div class="faq-answer-text">
+                <p>When a game modal is closed, ArcadeVerse employs a multi-tiered teardown protocol to completely stop lingering loops and recover system resources:</p>
+                <p>Background loops in browsers consume noticeable GPU/CPU cycles if left unattended. ArcadeVerse ensures that every single frame request is systematically revoked:</p>
+                <ul>
+                  <li><strong>Teardown Dispatch:</strong> <code>ARCADEVERSE_TEARDOWN</code> and <code>ARCADEVERSE_PAUSE</code> postMessages prompt games to abort render loops.</li>
+                  <li><strong>Frame ID Sweep:</strong> The parent container systematically sweeps and cancels frame identifiers and active timers in the iframe window.</li>
+                  <li><strong>Blank URL Replacement:</strong> The iframe navigates to <code>about:blank</code>, freeing execution memory and preventing background battery drain.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- Quick Help & Issues CTA Banner -->

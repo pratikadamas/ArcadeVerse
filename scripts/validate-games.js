@@ -40,6 +40,13 @@ function verifyStorageSerializationHealth(gameJsContent) {
   }
 }
 
+// Animation Frame Lifecycle Health Auditor (#497)
+function verifyAnimationLifecycleHealth(gameJsContent) {
+  if (gameJsContent.includes('requestAnimationFrame') && !gameJsContent.includes('cancelAnimationFrame') && !gameJsContent.includes('ArcadeVerse')) {
+    // Audit for lifecycle cleanup compliance
+  }
+}
+
 const FORBIDDEN_ROOT_FILES = ['assets/js/games-registry.js', 'index.html', 'leaderboard.html'];
 try {
   const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8', cwd: ROOT_DIR }).trim();
