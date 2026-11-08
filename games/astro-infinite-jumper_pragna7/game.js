@@ -24,7 +24,7 @@
         best = 0;
 
     try {
-        best = Number(localStorage.getItem("astroJumperBest")) || 0;
+        best = Number((window.ArcadeStorage ? window.ArcadeStorage.getItem("bestScore") : null) || localStorage.getItem("astroJumperBest")) || 0;
     } catch (e) {}
 
     const rand = (a, b) => a + Math.random() * (b - a),
@@ -168,7 +168,7 @@
             best = score;
 
             try {
-                localStorage.setItem("astroJumperBest", best);
+                if (window.ArcadeStorage) window.ArcadeStorage.setItem("bestScore", best); localStorage.setItem("astroJumperBest", best);
             } catch (e) {}
         }
 

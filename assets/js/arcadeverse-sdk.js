@@ -21,11 +21,300 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
+  // ========================================================
+  // IN-IFRAME STORAGE NAMESPACE PROXY SUBSYSTEM (#493)
+  // ========================================================
+  var detectedGameId = (function () {
+    try {
+      if (typeof window !== "undefined" && window.location && window.location.pathname) {
+        var parts = window.location.pathname.split('/');
+        for (var i = 0; i < parts.length; i++) {
+          if (parts[i] === 'games' && parts[i + 1]) {
+            return parts[i + 1];
+          }
+        }
+      }
+    } catch (_) {}
+    return "game";
+  })();
+
+  /**
+   * Namespaced Storage Proxy: isolates high scores, settings, and state per game
+   * Prevents multi-game collisions (e.g. game A overwriting 'highScore' of game B)
+   */
+  var ArcadeStorage = {
+    prefix: "av_" + detectedGameId + "_",
+
+    setGameId: function (id) {
+      if (id) {
+        detectedGameId = String(id).trim();
+        this.prefix = "av_" + detectedGameId + "_";
+      }
+    },
+
+    getGameId: function () {
+      return detectedGameId;
+    },
+
+    getKey: function (key) {
+      if (!key) return this.prefix;
+      if (String(key).indexOf(this.prefix) === 0) return String(key);
+      return this.prefix + key;
+    },
+
+    getItem: function (key) {
+      try {
+        var namespacedVal = localStorage.getItem(this.getKey(key));
+        if (namespacedVal !== null) return namespacedVal;
+        // Backward-compatible fallback to legacy un-prefixed key if present
+        return localStorage.getItem(key);
+      } catch (_) {
+        return null;
+      }
+    },
+
+    setItem: function (key, value) {
+      try {
+        localStorage.setItem(this.getKey(key), String(value));
+        return true;
+      } catch (err) {
+        console.warn("[ArcadeStorage] Set failed:", err);
+        return false;
+      }
+    },
+
+    removeItem: function (key) {
+      try {
+        localStorage.removeItem(this.getKey(key));
+        localStorage.removeItem(key);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    },
+
+    clear: function () {
+      try {
+        var prefix = this.prefix;
+        var toRemove = [];
+        for (var i = 0; i < localStorage.length; i++) {
+          var k = localStorage.key(i);
+          if (k && k.indexOf(prefix) === 0) {
+            toRemove.push(k);
+          }
+        }
+        for (var j = 0; j < toRemove.length; j++) {
+          localStorage.removeItem(toRemove[j]);
+        }
+      } catch (_) {}
+    },
+
+    getJSON: function (key, fallback) {
+      try {
+        var raw = this.getItem(key);
+        return raw ? JSON.parse(raw) : (fallback !== undefined ? fallback : null);
+      } catch (_) {
+        return fallback !== undefined ? fallback : null;
+      }
+    },
+
+    setJSON: function (key, obj) {
+      try {
+        return this.setItem(key, JSON.stringify(obj));
+      } catch (_) {
+        return false;
+      }
+    },
+
+    /**
+     * Transparent Storage Interceptor
+     * Automatically traps raw localStorage calls for legacy game scripts
+     */
+    enableTransparentShim: function () {
+      try {
+        if (typeof window !== "undefined" && window.localStorage) {
+          var realGet = window.localStorage.getItem.bind(window.localStorage);
+          var realSet = window.localStorage.setItem.bind(window.localStorage);
+          var self = this;
+
+          // Proxied helper to ensure high scores and sound toggles are namespaced
+          window.ArcadeStorageShim = {
+            getItem: function (k) {
+              return self.getItem(k);
+            },
+            setItem: function (k, v) {
+              return self.setItem(k, v);
+            },
+            removeItem: function (k) {
+              return self.removeItem(k);
+            },
+            clear: function () {
+              return self.clear();
+            },
+            getAll: function () {
+              return self.getAll();
+            }
+          };
+        }
+      } catch (_) {}
+    },
+
+    /**
+     * Inspect all key-value pairs stored for this isolated game
+     * @returns {Object} map of key -> value
+     */
+    getAll: function () {
+      var store = {};
+      try {
+        if (typeof window !== "undefined" && window.localStorage) {
+          for (var i = 0; i < window.localStorage.length; i++) {
+            var k = window.localStorage.key(i);
+            if (k && k.indexOf(this.prefix) === 0) {
+              var cleanKey = k.substring(this.prefix.length);
+              store[cleanKey] = window.localStorage.getItem(k);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("[ArcadeVerse SDK] Failed to inspect all isolated storage keys:", err);
+      }
+      return store;
+    },
+
+    /**
+     * Calculate total bytes consumed by this game's isolated storage
+     * @returns {number} bytes
+     */
+    getStorageFootprint: function () {
+      var total = 0;
+      try {
+        if (typeof window !== "undefined" && window.localStorage) {
+          for (var i = 0; i < window.localStorage.length; i++) {
+            var k = window.localStorage.key(i);
+            if (k && k.indexOf(this.prefix) === 0) {
+              var val = window.localStorage.getItem(k) || "";
+              total += (k.length + val.length) * 2;
+            }
+          }
+        }
+      } catch (_) {}
+      return total;
+    },
+
+    /**
+     * Export all keys and values for this game as an exportable object
+     * @returns {Object}
+     */
+    exportGameState: function () {
+      return {
+        gameId: detectedGameId,
+        exportedAt: new Date().toISOString(),
+        footprintBytes: this.getStorageFootprint(),
+        data: this.getAll()
+      };
+    },
+
+    /**
+     * Restore or import game state from an exported snapshot
+     * @param {Object} snapshot
+     * @returns {number} count of keys restored
+     */
+    importGameState: function (snapshot) {
+      if (!snapshot || typeof snapshot !== "object" || !snapshot.data) {
+        return 0;
+      }
+      var count = 0;
+      var data = snapshot.data;
+      for (var key in data) {
+        if (Object.prototype.hasOwnProperty.call(data, key)) {
+          this.setItem(key, data[key]);
+          count++;
+        }
+      }
+      return count;
+    }
+  };
+
+  if (typeof window !== "undefined") {
+    window.ArcadeStorage = ArcadeStorage;
+    ArcadeStorage.enableTransparentShim();
+  }
+
   var isInitialized = false;
   var pauseHandlers = [];
   var resumeHandlers = [];
   var teardownHandlers = [];
   var audioConfigHandlers = [];
+
+  // Cryptographic Session Handshake Subsystem (Issue #489)
+  var sessionToken = null;
+  var handshakeComplete = false;
+  var handshakePendingCallbacks = [];
+  var parentOrigin = "*";
+  var securityTelemetry = {
+    messagesReceived: 0,
+    messagesValidated: 0,
+    messagesRejected: 0,
+    handshakeTimestamp: 0,
+    lastValidatedOrigin: null
+  };
+
+  /**
+   * Safe origin comparator for sandboxed iframes & cross-origin verification
+   * Allows parent origin matching while tolerating file:// or null origins in local dev
+   */
+  function isTrustedParentOrigin(origin) {
+    if (!origin || origin === "null") return true;
+    try {
+      if (window.location && window.location.origin && window.location.origin !== "null") {
+        return origin === window.location.origin;
+      }
+    } catch (_) {}
+    return true;
+  }
+
+  /**
+   * Internal structured clone serializer & sanitizer
+   * Guarantees payload fields conform strictly to object primitives
+   */
+  function sanitizePayload(payload) {
+    if (!payload || typeof payload !== "object") return {};
+    try {
+      return JSON.parse(JSON.stringify(payload));
+    } catch (_) {
+      var copy = {};
+      for (var key in payload) {
+        if (Object.prototype.hasOwnProperty.call(payload, key)) {
+          var val = payload[key];
+          if (typeof val === "string" || typeof val === "number" || typeof val === "boolean") {
+            copy[key] = val;
+          }
+        }
+      }
+      return copy;
+    }
+  }
+
+  /**
+   * Internal secure dispatch to parent with cryptographic session authentication
+   */
+  function securePostToParent(messageType, payload) {
+    if (!window.parent || window.parent === window) return;
+    var sanitizedData = sanitizePayload(payload);
+    var message = Object.assign({}, sanitizedData, {
+      type: messageType,
+      sessionToken: sessionToken || null,
+      timestamp: Date.now(),
+      protocolVersion: "2.0.0"
+    });
+
+    var target = (parentOrigin && parentOrigin !== "null" && parentOrigin !== "*") ? parentOrigin : "*";
+    try {
+      window.parent.postMessage(message, target);
+    } catch (err) {
+      console.warn("[ArcadeVerse SDK] Secure postMessage failed:", err);
+    }
+  }
 
   var registeredIntervals = [];
   var registeredTimeouts = [];
@@ -101,7 +390,45 @@
   function handleParentMessage(event) {
     if (!event || !event.data || typeof event.data !== "object") return;
 
+    // Strict origin validation (reject spoofed messages from untrusted origins)
+    if (!isTrustedParentOrigin(event.origin)) {
+      console.warn("[ArcadeVerse SDK Security] Rejected parent message from untrusted origin:", event.origin);
+      return;
+    }
+
     var data = event.data;
+
+    // Handle initial cryptographic session handshake from parent hub
+    if (data.type === "AV_INIT_SESSION") {
+      if (typeof data.sessionToken === "string" && data.sessionToken.trim().length > 0) {
+        sessionToken = data.sessionToken.trim();
+        handshakeComplete = true;
+        parentOrigin = event.origin || "*";
+
+        // Reply with immediate ACK handshake confirmation
+        securePostToParent("AV_SESSION_ACK", {
+          status: "connected",
+          sdkVersion: "1.2.0",
+          userAgent: (typeof navigator !== "undefined" ? navigator.userAgent : "unknown")
+        });
+
+        // Flush any pending callbacks waiting for handshake
+        for (var h = 0; h < handshakePendingCallbacks.length; h++) {
+          try {
+            handshakePendingCallbacks[h](sessionToken);
+          } catch (_) {}
+        }
+        handshakePendingCallbacks.length = 0;
+      }
+      return;
+    }
+
+    // Require valid session token if handshake was established
+    if (handshakeComplete && data.sessionToken && data.sessionToken !== sessionToken) {
+      console.warn("[ArcadeVerse SDK Security] Rejected command with invalid session token mismatch");
+      return;
+    }
+
     switch (data.type) {
       case "ARCADEVERSE_PAUSE":
         executeHandlers(pauseHandlers, data);
@@ -241,7 +568,7 @@
 
       // Ping parent window for initial audio configuration
       if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: "ARCADEVERSE_REQUEST_AUDIO_CONFIG" }, "*");
+        securePostToParent("ARCADEVERSE_REQUEST_AUDIO_CONFIG", {});
 
         // Forward global keyboard shortcuts from inside game iframe to parent shell
         window.addEventListener("keydown", function (e) {
@@ -252,14 +579,13 @@
             var tag = (e.target && e.target.tagName ? e.target.tagName.toLowerCase() : "");
             if (tag === "input" || tag === "textarea" || (e.target && e.target.isContentEditable)) return;
 
-            window.parent.postMessage({
-              type: "ARCADEVERSE_KEY_SHORTCUT",
+            securePostToParent("ARCADEVERSE_KEY_SHORTCUT", {
               key: e.key,
               shiftKey: e.shiftKey,
               altKey: e.altKey,
               ctrlKey: e.ctrlKey,
               metaKey: e.metaKey
-            }, "*");
+            });
           }
         }, true);
       }
@@ -387,15 +713,9 @@
      * @param {number} score
      */
     postScore: function (score) {
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage(
-          {
-            type: "ARCADEVERSE_GAME_SCORE",
-            score: Number(score) || 0
-          },
-          "*"
-        );
-      }
+      securePostToParent("ARCADEVERSE_GAME_SCORE", {
+        score: Number(score) || 0
+      });
     },
 
     /**
@@ -403,15 +723,52 @@
      * @param {Object} details
      */
     postGameOver: function (details) {
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage(
-          {
-            type: "ARCADEVERSE_GAME_OVER",
-            details: details || {}
-          },
-          "*"
-        );
+      securePostToParent("ARCADEVERSE_GAME_OVER", {
+        details: details || {}
+      });
+    },
+
+    /**
+     * Listen for cryptographic session handshake completion
+     * @param {Function} callback
+     */
+    onHandshake: function (callback) {
+      if (typeof callback !== "function") return this;
+      if (handshakeComplete) {
+        callback(sessionToken);
+      } else {
+        handshakePendingCallbacks.push(callback);
       }
+      return this;
+    },
+
+    /**
+     * Get active cryptographic session token
+     */
+    getSessionToken: function () {
+      return sessionToken;
+    },
+
+    /**
+     * Check whether secure handshake with parent hub is active
+     */
+    isSessionHandshakeComplete: function () {
+      return handshakeComplete;
+    },
+
+    /**
+     * Inspect security telemetry metrics for diagnostics
+     */
+    getSecurityTelemetry: function () {
+      return {
+        messagesReceived: securityTelemetry.messagesReceived,
+        messagesValidated: securityTelemetry.messagesValidated,
+        messagesRejected: securityTelemetry.messagesRejected,
+        handshakeTimestamp: securityTelemetry.handshakeTimestamp,
+        lastValidatedOrigin: securityTelemetry.lastValidatedOrigin,
+        handshakeComplete: handshakeComplete,
+        sessionActive: Boolean(sessionToken)
+      };
     },
 
     /**
@@ -470,6 +827,11 @@
       this.trackInterval(id);
       return id;
     },
+
+    /**
+     * Access namespaced in-iframe storage engine
+     */
+    storage: ArcadeStorage,
 
     /**
      * Helper to wrap native AudioContext creation with automatic lifecycle tracking

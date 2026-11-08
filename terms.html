@@ -197,6 +197,7 @@
             <li>Submit malicious scripts, crypto miners, keyloggers, telemetry spyware, or obfuscated payloads.</li>
             <li>Upload copyrighted game ROMs, proprietary game sprites, or commercial audio without permissible open-source / Creative Commons licensing.</li>
             <li>Engage in harassment, abusive language, discriminatory remarks, or personal attacks on pull request threads or issues.</li>
+            <li>Attempt top-level window redirects, frame-busting, or sandbox tampering from within game environments (#492).</li>
             <li>Attempt to game, falsify, or spam git commits solely to inflate Hall of Fame leaderboard statistics.</li>
           </ul>
         </section>
@@ -238,6 +239,10 @@
           <p class="legal-paragraph">
             Project administrators and maintainers retain sole discretion to accept, reject, request modifications on, or close any Pull Request or issue that fails to meet architectural guidelines, testing requirements, or community conduct standards.
           </p>
+          <p class="legal-paragraph">
+            Community games submitted to the platform are subject to client-side origin isolation, local storage namespacing protections (via the <code>av_&lt;game_id&gt;_*</code> proxy protocol), and automatic sandboxing to ensure fair play, prevent cross-game state pollution, and maintain ecosystem health.
+          </p>
+        </section>
         </section>
 
         <!-- 7b. Offline & Third-Party Service Resilience -->

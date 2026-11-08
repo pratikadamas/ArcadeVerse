@@ -477,6 +477,25 @@
             <div class="faq-accordion-inner">
               <div class="faq-answer-text">
                 <p>Whenever you launch a game inside the modal player, the <strong>Recently Played Engine</strong> automatically records the game ID and timestamp to your browser's LocalStorage (up to 6 recent titles). The Quick Resume drawer lets you jump straight back into your latest games with one click, or clear your history at any time.</p>
+                <p>If your browser storage ever reaches its 5MB capacity limit, our resilient storage quota engine automatically prunes stale session logs and search caches to guarantee your favorited games and star ratings are never lost.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 14b (Security/Sandbox) -->
+        <div class="faq-accordion-item" data-category="features" id="faq-14b">
+          <button class="faq-accordion-trigger" type="button" aria-expanded="false" aria-controls="faq-ans-14b">
+            <span class="faq-question-text">
+              <span class="faq-category-badge">Security</span>
+              14b. How does ArcadeVerse isolate embedded games and prevent rogue redirects?
+            </span>
+            <i data-lucide="chevron-down" class="faq-chevron"></i>
+          </button>
+          <div class="faq-accordion-content" id="faq-ans-14b" role="region">
+            <div class="faq-accordion-inner">
+              <div class="faq-answer-text">
+                <p>All community arcade games execute inside a secure sandboxed iframe that strictly omits top-level window navigation permissions (<code>allow-top-navigation</code>). This ensures a game script can never redirect or hijack the parent ArcadeVerse portal. Additionally, active sessions feature an automatic beforeunload confirmation lock to protect against accidental navigation away from ongoing gameplay.</p>
               </div>
             </div>
           </div>

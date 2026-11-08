@@ -39,12 +39,17 @@
     },
 
     saveState() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          lastCompletedDate: this.completed ? this.todayKey : '',
-          streak: this.streak
-        }));
-      } catch (_) {}
+      const payload = JSON.stringify({
+        lastCompletedDate: this.completed ? this.todayKey : '',
+        streak: this.streak
+      });
+      if (window.ArcadeStorageResilience && typeof window.ArcadeStorageResilience.safeSetItem === 'function') {
+        window.ArcadeStorageResilience.safeSetItem(STORAGE_KEY, payload);
+      } else {
+        try {
+          localStorage.setItem(STORAGE_KEY, payload);
+        } catch (_) {}
+      }
     },
 
     // Deterministic pseudo-random seed from date string

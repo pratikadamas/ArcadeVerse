@@ -231,8 +231,8 @@ function scanScriptSecurityViolations(jsContent, issues) {
     issues.push('⚠️ Potential DOM XSS pattern: assigning untrusted search or storage directly into innerHTML.');
     totalWarnings++;
   }
-  if (jsContent.includes('window.top.location') || jsContent.includes('window.parent.location')) {
-    issues.push('❌ Security violation: Attempt to redirect top or parent window frame.');
+  if (jsContent.includes('window.top.location') || jsContent.includes('window.parent.location') || /(window\.)?(top|parent)\.location/i.test(jsContent)) {
+    issues.push('❌ Security violation (#492): Attempt to access top or parent frame navigation.');
     totalErrors++;
   }
 }
@@ -320,6 +320,15 @@ folders.forEach(folder => {
       REQUIRED_JSON_FIELDS.forEach(field => {
         if (!meta[field]) {
           issues.push(`❌ game.json missing required field: "${field}"`);
+          totalErrors++;
+        }
+      });
+
+      // Strict XSS & Attribute Breakout Check (#491)
+      ['title', 'category', 'author', 'description'].forEach(field => {
+        const val = meta[field];
+        if (typeof val === 'string' && (val.includes('"') || val.includes('<') || val.includes('>'))) {
+          issues.push(`❌ Attribute Breakout / XSS risk: "${field}" contains unescaped quotes or angle brackets.`);
           totalErrors++;
         }
       });
