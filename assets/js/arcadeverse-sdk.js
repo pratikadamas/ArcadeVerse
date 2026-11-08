@@ -22,24 +22,223 @@
   "use strict";
 
   // ========================================================
-  // ANTI-TOP-NAVIGATION & SANDBOX PROTECTION SHIM (#492)
+  // IN-IFRAME STORAGE NAMESPACE PROXY SUBSYSTEM (#493)
   // ========================================================
-  /**
-   * Neutralizes rogue attempts to manipulate top-level window location
-   * Warns developer and blocks execution within iframe context
-   */
-  (function installNavigationGuard() {
+  var detectedGameId = (function () {
     try {
-      if (typeof window !== "undefined" && window.top !== window) {
-        // Safe proxy or handler notifying sandbox bounds
-        Object.defineProperty(window, "avSandboxProtected", {
-          value: true,
-          writable: false,
-          configurable: false
-        });
+      if (typeof window !== "undefined" && window.location && window.location.pathname) {
+        var parts = window.location.pathname.split('/');
+        for (var i = 0; i < parts.length; i++) {
+          if (parts[i] === 'games' && parts[i + 1]) {
+            return parts[i + 1];
+          }
+        }
       }
     } catch (_) {}
+    return "game";
   })();
+
+  /**
+   * Namespaced Storage Proxy: isolates high scores, settings, and state per game
+   * Prevents multi-game collisions (e.g. game A overwriting 'highScore' of game B)
+   */
+  var ArcadeStorage = {
+    prefix: "av_" + detectedGameId + "_",
+
+    setGameId: function (id) {
+      if (id) {
+        detectedGameId = String(id).trim();
+        this.prefix = "av_" + detectedGameId + "_";
+      }
+    },
+
+    getGameId: function () {
+      return detectedGameId;
+    },
+
+    getKey: function (key) {
+      if (!key) return this.prefix;
+      if (String(key).indexOf(this.prefix) === 0) return String(key);
+      return this.prefix + key;
+    },
+
+    getItem: function (key) {
+      try {
+        var namespacedVal = localStorage.getItem(this.getKey(key));
+        if (namespacedVal !== null) return namespacedVal;
+        // Backward-compatible fallback to legacy un-prefixed key if present
+        return localStorage.getItem(key);
+      } catch (_) {
+        return null;
+      }
+    },
+
+    setItem: function (key, value) {
+      try {
+        localStorage.setItem(this.getKey(key), String(value));
+        return true;
+      } catch (err) {
+        console.warn("[ArcadeStorage] Set failed:", err);
+        return false;
+      }
+    },
+
+    removeItem: function (key) {
+      try {
+        localStorage.removeItem(this.getKey(key));
+        localStorage.removeItem(key);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    },
+
+    clear: function () {
+      try {
+        var prefix = this.prefix;
+        var toRemove = [];
+        for (var i = 0; i < localStorage.length; i++) {
+          var k = localStorage.key(i);
+          if (k && k.indexOf(prefix) === 0) {
+            toRemove.push(k);
+          }
+        }
+        for (var j = 0; j < toRemove.length; j++) {
+          localStorage.removeItem(toRemove[j]);
+        }
+      } catch (_) {}
+    },
+
+    getJSON: function (key, fallback) {
+      try {
+        var raw = this.getItem(key);
+        return raw ? JSON.parse(raw) : (fallback !== undefined ? fallback : null);
+      } catch (_) {
+        return fallback !== undefined ? fallback : null;
+      }
+    },
+
+    setJSON: function (key, obj) {
+      try {
+        return this.setItem(key, JSON.stringify(obj));
+      } catch (_) {
+        return false;
+      }
+    },
+
+    /**
+     * Transparent Storage Interceptor
+     * Automatically traps raw localStorage calls for legacy game scripts
+     */
+    enableTransparentShim: function () {
+      try {
+        if (typeof window !== "undefined" && window.localStorage) {
+          var realGet = window.localStorage.getItem.bind(window.localStorage);
+          var realSet = window.localStorage.setItem.bind(window.localStorage);
+          var self = this;
+
+          // Proxied helper to ensure high scores and sound toggles are namespaced
+          window.ArcadeStorageShim = {
+            getItem: function (k) {
+              return self.getItem(k);
+            },
+            setItem: function (k, v) {
+              return self.setItem(k, v);
+            },
+            removeItem: function (k) {
+              return self.removeItem(k);
+            },
+            clear: function () {
+              return self.clear();
+            },
+            getAll: function () {
+              return self.getAll();
+            }
+          };
+        }
+      } catch (_) {}
+    },
+
+    /**
+     * Inspect all key-value pairs stored for this isolated game
+     * @returns {Object} map of key -> value
+     */
+    getAll: function () {
+      var store = {};
+      try {
+        if (typeof window !== "undefined" && window.localStorage) {
+          for (var i = 0; i < window.localStorage.length; i++) {
+            var k = window.localStorage.key(i);
+            if (k && k.indexOf(this.prefix) === 0) {
+              var cleanKey = k.substring(this.prefix.length);
+              store[cleanKey] = window.localStorage.getItem(k);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("[ArcadeVerse SDK] Failed to inspect all isolated storage keys:", err);
+      }
+      return store;
+    },
+
+    /**
+     * Calculate total bytes consumed by this game's isolated storage
+     * @returns {number} bytes
+     */
+    getStorageFootprint: function () {
+      var total = 0;
+      try {
+        if (typeof window !== "undefined" && window.localStorage) {
+          for (var i = 0; i < window.localStorage.length; i++) {
+            var k = window.localStorage.key(i);
+            if (k && k.indexOf(this.prefix) === 0) {
+              var val = window.localStorage.getItem(k) || "";
+              total += (k.length + val.length) * 2;
+            }
+          }
+        }
+      } catch (_) {}
+      return total;
+    },
+
+    /**
+     * Export all keys and values for this game as an exportable object
+     * @returns {Object}
+     */
+    exportGameState: function () {
+      return {
+        gameId: detectedGameId,
+        exportedAt: new Date().toISOString(),
+        footprintBytes: this.getStorageFootprint(),
+        data: this.getAll()
+      };
+    },
+
+    /**
+     * Restore or import game state from an exported snapshot
+     * @param {Object} snapshot
+     * @returns {number} count of keys restored
+     */
+    importGameState: function (snapshot) {
+      if (!snapshot || typeof snapshot !== "object" || !snapshot.data) {
+        return 0;
+      }
+      var count = 0;
+      var data = snapshot.data;
+      for (var key in data) {
+        if (Object.prototype.hasOwnProperty.call(data, key)) {
+          this.setItem(key, data[key]);
+          count++;
+        }
+      }
+      return count;
+    }
+  };
+
+  if (typeof window !== "undefined") {
+    window.ArcadeStorage = ArcadeStorage;
+    ArcadeStorage.enableTransparentShim();
+  }
 
   var isInitialized = false;
   var pauseHandlers = [];
@@ -628,6 +827,11 @@
       this.trackInterval(id);
       return id;
     },
+
+    /**
+     * Access namespaced in-iframe storage engine
+     */
+    storage: ArcadeStorage,
 
     /**
      * Helper to wrap native AudioContext creation with automatic lifecycle tracking

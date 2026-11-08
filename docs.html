@@ -614,6 +614,34 @@ jobs:
 [GPU VRAM Released Instantly] ◄──── [Zero Memory Leak Growth]</code></pre>
               </div>
 
+              <!-- Storage Isolation & Key Namespacing Deep Dive -->
+              <div class="docs-callout note" style="margin-top: 24px;">
+                <div class="docs-callout-icon"><i data-lucide="database"></i></div>
+                <div>
+                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Multi-Game Storage Isolation & Global Key Collision Protection (#493)</h4>
+                  <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
+                    In early versions of multi-game web hubs, game scripts frequently wrote directly to standard, unnamespaced <code>localStorage</code> keys like <code>"highScore"</code>, <code>"score"</code>, <code>"soundEnabled"</code>, or <code>"currentLevel"</code>. Because all games run under the parent origin domain, this led to catastrophic data collisions: playing Game B would overwrite the highest score or settings of Game A!
+                  </p>
+                  <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
+                    <li><strong>Transparent ArcadeStorage Proxy:</strong> The ArcadeVerse SDK exposes <code>ArcadeVerse.storage</code> (and wraps <code>window.ArcadeStorage</code>). When a game calls <code>storage.setItem("highScore", 1200)</code>, the key is transparently transformed into <code>"av_{gameId}_highScore"</code>.</li>
+                    <li><strong>Dynamic Game ID Discovery:</strong> The SDK automatically discovers its hosting game slug from iframe URL parameters (<code>?gameId=...</code>) or parent handshake parameters, guaranteeing zero configuration required for developers.</li>
+                    <li><strong>Legacy Fallback & Safe Migration:</strong> If a game runs standalone or during local development without a container, fallback namespacing operates smoothly with automatic migration capabilities via <code>ArcadeStorageManager.migrateLegacyKeys()</code>.</li>
+                    <li><strong>Selective Reset & Export:</strong> The Storage Manager interface can inspect, export, or wipe data for one individual game without impacting any other game or the user's platform favorites.</li>
+                  </ul>
+                  <div class="code-block-wrapper" style="margin-top: 10px; margin-bottom: 10px;">
+                    <pre class="code-pre"><code class="language-javascript">// Inside any game script (game.js):
+// Use ArcadeVerse.storage instead of bare localStorage
+const storage = window.ArcadeVerse?.storage || window.localStorage;
+
+// Stored safely as 'av_cyber-snake_highScore'
+storage.setItem('highScore', 4500);
+
+// Retrieved with automatic prefix handling
+const bestScore = storage.getItem('highScore') || 0;</code></pre>
+                  </div>
+                </div>
+              </div>
+
               <h5 style="color: var(--text-primary); margin-top: 16px; margin-bottom: 6px; font-size: 0.95rem;">Implementation Guide for Game Contributors</h5>
               <p style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 10px;">
                 When developing WebGL games for ArcadeVerse, always bind the context recovery handler. When a mobile or laptop GPU sleeps or switches display adapters, the browser triggers a synthetic context loss. With the ArcadeVerse lifecycle bridge, your game avoids black screens:

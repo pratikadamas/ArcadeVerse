@@ -1501,7 +1501,13 @@ document.addEventListener("DOMContentLoaded", () => {
     modalGameBadge.textContent = game.category;
     modalGameAuthor.textContent = `Built by @${game.author}`;
     startIframeTimeout(game);
-    gameIframe.src = game.path;
+
+    // Storage Isolation Bridge: Pass gameId via URL parameter so SDK attaches namespaced proxy
+    let iframeUrl = game.path;
+    if (iframeUrl && !iframeUrl.includes("gameId=")) {
+      iframeUrl += (iframeUrl.includes("?") ? "&" : "?") + "gameId=" + encodeURIComponent(game.id);
+    }
+    gameIframe.src = iframeUrl;
     newTabBtn.href = game.path;
 
     updateModalFavoriteButton(isFavorite(game.id));

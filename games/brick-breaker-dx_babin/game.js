@@ -115,7 +115,7 @@
   const sound = new SoundSynth();
 
   const STORAGE_KEY = 'arcadeverse_brick_breaker_dx_best';
-  let bestScore = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
+  let bestScore = parseInt((window.ArcadeStorage ? window.ArcadeStorage.getItem("bestScore") : null) || localStorage.getItem(STORAGE_KEY) || '0', 10);
 
   let state = {
     running: false,
@@ -337,7 +337,7 @@
     state.running = false;
     if (state.score > bestScore) {
       bestScore = state.score;
-      localStorage.setItem(STORAGE_KEY, bestScore);
+      if (window.ArcadeStorage) window.ArcadeStorage.setItem("bestScore", bestScore); localStorage.setItem(STORAGE_KEY, bestScore);
     }
     document.getElementById('final-score').textContent = state.score;
     document.getElementById('final-stage').textContent = state.stage;
