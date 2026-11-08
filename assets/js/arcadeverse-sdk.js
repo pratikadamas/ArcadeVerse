@@ -866,6 +866,127 @@
         }
       }
       return payload;
+    },
+
+    /**
+     * Resilient Autoplay Gesture Unlock Synchronizer (#505)
+     * Synchronizes child game AudioContexts with parent window gesture state
+     * Listens for ARCADEVERSE_AUDIO_UNLOCKED and automatically resumes suspended AudioContexts
+     * @param {AudioContext} [audioCtx] - The game's AudioContext to unlock
+     * @param {function(string): void} [onStateChange] - Optional callback receiving 'running' | 'suspended'
+     * @returns {{unlock: function(): Promise<boolean>, isUnlocked: function(): boolean}}
+     */
+    bindAutoplayUnlockSynchronizer: function (audioCtx, onStateChange) {
+      var self = this;
+      var ctx = audioCtx;
+      var unlocked = ctx ? ctx.state === 'running' : false;
+
+      var triggerResume = function () {
+        if (!ctx) return Promise.resolve(false);
+        if (ctx.state === 'running') {
+          unlocked = true;
+          if (typeof onStateChange === 'function') onStateChange('running');
+          return Promise.resolve(true);
+        }
+        return ctx.resume().then(function () {
+          unlocked = true;
+          if (typeof onStateChange === 'function') onStateChange('running');
+          return true;
+        }).catch(function () {
+          return false;
+        });
+      };
+
+      // Listen for parent hub unlock broadcast
+      var messageHandler = function (e) {
+        if (!e || !e.data) return;
+        if (e.data.type === 'ARCADEVERSE_AUDIO_UNLOCKED' || e.data.type === 'AV_AUDIO_UNLOCKED') {
+          triggerResume();
+        }
+      };
+      window.addEventListener('message', messageHandler);
+
+      // Listen for first-party user interactions inside game iframe
+      var gestureEvents = ['pointerdown', 'touchend', 'click', 'keydown'];
+      var gestureHandler = function () {
+        triggerResume();
+        gestureEvents.forEach(function (evt) {
+          window.removeEventListener(evt, gestureHandler, true);
+        });
+      };
+      gestureEvents.forEach(function (evt) {
+        window.addEventListener(evt, gestureHandler, { capture: true, passive: true });
+      });
+
+      return {
+        unlock: triggerResume,
+        isUnlocked: function () {
+          return !!(ctx && ctx.state === 'running');
+        }
+      };
+    },
+
+    /**
+     * Creates a self-contained zero-dependency AudioContext that automatically recovers from suspension
+     * Handles mobile WebKit visibility change and background tab pausing
+     * @returns {AudioContext|null}
+     */
+    createResilientAudioContext: function () {
+      var ctx = this.createAudioContext();
+      if (!ctx) return null;
+      var self = this;
+
+      // Auto-resume when tab regains focus
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden && ctx && ctx.state === 'suspended') {
+          ctx.resume().catch(function () {});
+        }
+      });
+
+      // Synchronize with parent unlock handshake
+      this.bindAutoplayUnlockSynchronizer(ctx);
+      return ctx;
+    },
+
+    /**
+     * Check if client browser requires user gesture interaction before Web Audio can output sound
+     * @returns {boolean} True if AudioContext is currently blocked or waiting for gesture
+     */
+    isAudioAutoplayBlocked: function () {
+      if (typeof navigator !== 'undefined' && navigator.userActivation) {
+        return !navigator.userActivation.hasBeenActive;
+      }
+      return true;
+    },
+
+    /**
+     * Synthesize an inaudible buffer pulse to prime the audio hardware pipeline
+     * Unmutes physical speakers on iOS Safari after user interaction
+     * @param {AudioContext} ctx
+     */
+    primeAudioHardware: function (ctx) {
+      if (!ctx) return;
+      try {
+        var buffer = ctx.createBuffer(1, 1, 22050);
+        var source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        source.start(0);
+      } catch (_e) {}
+    },
+
+    /**
+     * Broadcasts a custom request to parent ArcadeVerse hub to trigger gesture unlock
+     */
+    requestParentAudioUnlock: function () {
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: 'ARCADEVERSE_REQUEST_AUDIO_UNLOCK',
+            timestamp: Date.now()
+          }, '*');
+        }
+      } catch (_e) {}
     }
   };
 });

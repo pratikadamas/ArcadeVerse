@@ -795,6 +795,34 @@
           </div>
         </div>
 
+        <!-- Question 32 (#505) -->
+        <div class="faq-accordion-item" data-category="architecture" id="faq-32">
+          <button class="faq-accordion-trigger" type="button" aria-expanded="false" aria-controls="faq-ans-32">
+            <span class="faq-question-text">
+              <span class="faq-category-badge">Audio</span>
+              32. Why is game sound muted or suspended when first opening a game, and how does the Unlocker fix it?
+            </span>
+            <i data-lucide="chevron-down" class="faq-chevron"></i>
+          </button>
+          <div class="faq-accordion-content" id="faq-ans-32" role="region">
+            <div class="faq-accordion-inner">
+              <div class="faq-answer-text">
+                <p>Browser security specifications prohibit audio playback without a qualifying user interaction gesture:</p>
+                <ul>
+                  <li><strong>Gesture Synchronizer:</strong> Any tap, click, or keypress anywhere on the page instantly activates the global Web Audio context.</li>
+                  <li><strong>Cross-Frame Broadcast:</strong> The parent hub fires <code>ARCADEVERSE_AUDIO_UNLOCKED</code> to child iframes, awakening internal synthesizers without requiring a page reload.</li>
+                  <li><strong>Equalizer Pill:</strong> A dynamic status pill displays whether audio is Active, Locked, or Muted in real-time.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- Quick Help & Issues CTA Banner -->
