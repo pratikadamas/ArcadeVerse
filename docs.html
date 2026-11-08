@@ -638,32 +638,33 @@ validateBackupPayload(data)
                 </div>
               </div>
 
-              <!-- Strict URL Parameter Sanitization Architecture (#496) -->
+              <!-- Aggressive RAF Memory Leak Mitigation Architecture -->
               <div class="docs-callout note" style="margin-top: 24px;">
-                <div class="docs-callout-icon"><i data-lucide="shield-alert"></i></div>
+                <div class="docs-callout-icon"><i data-lucide="cpu"></i></div>
                 <div>
-                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">URL Parameter Query Sanitization & Deep-Link Guard (#496)</h4>
+                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Lingering Animation Frame (rAF) Memory Leak Protection (#497)</h4>
                   <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
-                    ArcadeVerse allows players to share direct links to specific games, categories, and search filters via query parameters (e.g. <code>?game=cyber-snake&amp;category=arcade</code>). To prevent open redirection, path traversal, and reflected XSS:
+                    When users close game modals, embedded games running infinite <code>requestAnimationFrame</code> loops can continue executing in memory if not explicitly cancelled, accumulating heavy CPU and battery drain. ArcadeVerse implements strict multi-layer modal teardown:
                   </p>
                   <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
-                    <li><strong>Strict Regex Token Filtering:</strong> Game IDs and category slugs must match <code>/^[a-z0-9_-]{2,64}$/i</code>. Any directory traversal tokens (<code>..</code>, <code>/</code>, <code>\</code>) or protocol handlers (<code>javascript:</code>, <code>data:</code>) are detected and stripped immediately.</li>
-                    <li><strong>Search Length Boundaries:</strong> Free-text search parameters are clamped to 80 characters with special HTML attribute breakout characters stripped.</li>
-                    <li><strong>Non-existent Game Trapping:</strong> If an invalid or unlisted game ID is queried, the hub displays a non-disruptive warning toast (<code>.deep-link-notice-toast</code>) and purges the rogue parameter via <code>history.replaceState()</code>.</li>
+                    <li><strong>Hardware Execution Limits:</strong> Background processes exceeding reasonable frame timing or remaining unpaused during modal transitions are automatically isolated.</li>
+                    <li><strong>Page Visibility API Watchdog:</strong> The SDK binds <code>visibilitychange</code> listeners that automatically suspend game engines when the browser tab is hidden or minimized.</li>
+                    <li><strong>Bi-Directional Teardown Signal:</strong> <code>closeGameModal()</code> dispatches <code>ARCADEVERSE_TEARDOWN</code> and <code>ARCADEVERSE_PAUSE</code> to trigger the game's internal unmount hooks.</li>
+                    <li><strong>Aggressive RAF Sweep:</strong> The parent container systematically sweeps the iframe's frame ID space, cancelling pending animation frames and clearing legacy timers before unmounting.</li>
+                    <li><strong>SDK Tracked Lifecycle:</strong> Games using <code>ArcadeVerse.requestFrame()</code> or <code>ArcadeVerse.enableAggressiveRAFShield()</code> benefit from automated registry cleanup.</li>
+                    <li><strong>Iframe Navigation Reset:</strong> The iframe source is reset to <code>about:blank</code> following a 100ms grace window, cutting all orphaned event execution threads.</li>
                   </ul>
-                  <p style="font-size: 0.88rem; line-height: 1.6; margin-top: 10px; margin-bottom: 8px;">
-                    All deep-linked queries undergo strict validation prior to DOM injection or modal launch. Unmatched or non-compliant queries are automatically scrubbed from the active URL without causing navigation errors:
+                  <h5 style="color: var(--text-primary); margin-top: 14px; margin-bottom: 6px; font-size: 0.95rem;">Automated Lifecycle Teardown Implementation</h5>
+                  <p style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 8px;">
+                    Game developers should always register their render loop identifiers with <code>ArcadeVerse.trackAnimationFrame()</code> or listen for the <code>ARCADEVERSE_TEARDOWN</code> event to ensure immediate stop of background rendering:
                   </p>
                   <div class="code-block-wrapper" style="margin-top: 10px; margin-bottom: 10px;">
-                    <pre class="code-pre"><code class="language-javascript">// Sanitization Rule Example
-const cleanGameId = URL_PARAM_VALIDATOR.sanitizeGameId(rawQuery);
-if (!cleanGameId) {
-  showDeepLinkNotFoundNotice(rawQuery);
-  history.replaceState({}, '', sanitizedUrl);
-}</code></pre>
-                  </div>
-                </div>
-              </div>
+                    <pre class="code-pre"><code class="language-javascript">// Inside game.js using ArcadeVerse Client SDK
+ArcadeVerse.onTeardown(() => {
+  cancelAnimationFrame(gameLoopId);
+  audioContext.close();
+  gameState.running = false;
+});</code></pre>
                   </div>
                 </div>
               </div>

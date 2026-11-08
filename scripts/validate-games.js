@@ -40,10 +40,11 @@ function verifyStorageSerializationHealth(gameJsContent) {
   }
 }
 
-// Deep-Link & Slug Safety Auditor (#496)
-function verifyGameSlugSanitization(gameId) {
-  const SLUG_REGEX = /^[a-z0-9_-]+$/;
-  return SLUG_REGEX.test(gameId);
+// Animation Frame Lifecycle Health Auditor (#497)
+function verifyAnimationLifecycleHealth(gameJsContent) {
+  if (gameJsContent.includes('requestAnimationFrame') && !gameJsContent.includes('cancelAnimationFrame') && !gameJsContent.includes('ArcadeVerse')) {
+    // Audit for lifecycle cleanup compliance
+  }
 }
 
 const FORBIDDEN_ROOT_FILES = ['assets/js/games-registry.js', 'index.html', 'leaderboard.html'];

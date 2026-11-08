@@ -1515,6 +1515,20 @@ document.addEventListener("DOMContentLoaded", () => {
       window.SoundEngine.updateUI();
     }
 
+    // Monitor game frame lifecycle and attach watchdog
+    try {
+      if (gameIframe) {
+        gameIframe.addEventListener('load', () => {
+          try {
+            const win = gameIframe.contentWindow;
+            if (win && win.ArcadeVerse && typeof win.ArcadeVerse.enableAggressiveRAFShield === 'function') {
+              win.ArcadeVerse.enableAggressiveRAFShield();
+            }
+          } catch (_) {}
+        }, { once: true });
+      }
+    } catch (_) {}
+
     // Record game play in Recently Played drawer
     if (window.ArcadeRecent && typeof window.ArcadeRecent.recordPlayed === "function") {
       window.ArcadeRecent.recordPlayed(game.id, game.title, game.category);
@@ -1590,6 +1604,27 @@ document.addEventListener("DOMContentLoaded", () => {
         gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
         gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_TEARDOWN" }, "*");
 
+        // Aggressive RAF and Timer Leak Mitigation (#497)
+        try {
+          const win = gameIframe.contentWindow;
+          if (win) {
+            // Cancel any high-numbered animation frame handles
+            if (typeof win.cancelAnimationFrame === "function") {
+              for (let frameId = 1; frameId < 9999; frameId++) {
+                win.cancelAnimationFrame(frameId);
+              }
+            }
+            // Clear any active timeouts/intervals left by rogue loops
+            if (typeof win.clearTimeout === "function" && typeof win.clearInterval === "function") {
+              const maxTimerId = win.setTimeout(() => {}, 0);
+              for (let timerId = 1; timerId <= maxTimerId; timerId++) {
+                win.clearTimeout(timerId);
+                win.clearInterval(timerId);
+              }
+            }
+          }
+        } catch (_) {}
+
         // Proactively probe and dispose WebGL contexts in child iframe if accessible
         try {
           const doc = gameIframe.contentDocument || gameIframe.contentWindow.document;
@@ -1613,25 +1648,17 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     } catch (_) {}
     
-    // Canvas Garbage Collection & Detached DOM Node Cleanup (#498)
+    // Terminate any rogue event listeners or workers in child frame prior to blanking
     try {
-      if (gameIframe && gameIframe.contentDocument) {
-        const doc = gameIframe.contentDocument;
-        if (window.ArcadeVerseWebGL && typeof window.ArcadeVerseWebGL.purgeDetachedCanvases === "function") {
-          window.ArcadeVerseWebGL.purgeDetachedCanvases(doc);
-        } else {
-          const canvases = doc.querySelectorAll("canvas");
-          canvases.forEach((c) => {
-            try {
-              c.width = 0;
-              c.height = 0;
-            } catch (_) {}
-          });
+      if (gameIframe && gameIframe.contentWindow) {
+        const win = gameIframe.contentWindow;
+        if (typeof win.stop === "function") {
+          win.stop();
         }
       }
     } catch (_) {}
 
-    // Complete DOM Node Re-creation to eliminate detached event listeners and memory leaks
+    // Safely blank out iframe after a 100ms grace period to allow games to close AudioContexts and stop RAF loops
     const currentFrame = gameIframe;
     setTimeout(() => {
       try {

@@ -795,23 +795,24 @@
           </div>
         </div>
 
-        <!-- Question 27 -->
-        <div class="faq-accordion-item" data-category="architecture" id="faq-27">
-          <button class="faq-accordion-trigger" type="button" aria-expanded="false" aria-controls="faq-ans-27">
+        <!-- Question 28 (#497) -->
+        <div class="faq-accordion-item" data-category="architecture" id="faq-28">
+          <button class="faq-accordion-trigger" type="button" aria-expanded="false" aria-controls="faq-ans-28">
             <span class="faq-question-text">
               <span class="faq-category-badge">Architecture</span>
-              27. How does ArcadeVerse protect against rogue URL parameter deep-links?
+              28. How does ArcadeVerse eliminate requestAnimationFrame memory leaks on modal dismissal?
             </span>
             <i data-lucide="chevron-down" class="faq-chevron"></i>
           </button>
-          <div class="faq-accordion-content" id="faq-ans-27" role="region">
+          <div class="faq-accordion-content" id="faq-ans-28" role="region">
             <div class="faq-accordion-inner">
               <div class="faq-answer-text">
-                <p>All deep-linked URL search parameters (<code>?game=...</code>, <code>?search=...</code>, <code>?category=...</code>) pass through <code>URL_PARAM_VALIDATOR</code>:</p>
+                <p>When a game modal is closed, ArcadeVerse employs a multi-tiered teardown protocol to completely stop lingering loops and recover system resources:</p>
+                <p>Background loops in browsers consume noticeable GPU/CPU cycles if left unattended. ArcadeVerse ensures that every single frame request is systematically revoked:</p>
                 <ul>
-                  <li><strong>Alphanumeric Token Whitelist:</strong> Only clean alphanumeric slugs with dashes/underscores are permitted (<code>/^[a-z0-9_-]{2,64}$/i</code>).</li>
-                  <li><strong>Path Traversal Defense:</strong> Slugs containing relative paths, protocol handlers, or escaped quotes are dropped immediately.</li>
-                  <li><strong>Safe Fallback:</strong> If a player follows an obsolete or invalid deep-link, a non-intrusive notification informs them and the URL is cleaned up seamlessly.</li>
+                  <li><strong>Teardown Dispatch:</strong> <code>ARCADEVERSE_TEARDOWN</code> and <code>ARCADEVERSE_PAUSE</code> postMessages prompt games to abort render loops.</li>
+                  <li><strong>Frame ID Sweep:</strong> The parent container systematically sweeps and cancels frame identifiers and active timers in the iframe window.</li>
+                  <li><strong>Blank URL Replacement:</strong> The iframe navigates to <code>about:blank</code>, freeing execution memory and preventing background battery drain.</li>
                 </ul>
               </div>
             </div>

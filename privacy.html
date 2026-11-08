@@ -297,20 +297,19 @@
           </p>
         </section>
 
-        <!-- Deep-Link Query Privacy & Zero Telemetry (#496) -->
-        <section class="legal-section" id="url-privacy">
+        <!-- 3c. Device Performance & Battery Protection -->
+        <section class="legal-section" id="device-performance">
           <div class="legal-section-header">
-            <span class="legal-section-number">03c</span>
-            <span class="legal-header-icon"><i data-lucide="shield"></i></span>
-            <h2 class="legal-section-title">Query Parameter Privacy Protection</h2>
+            <span class="legal-section-number">05</span>
+            <span class="legal-header-icon"><i data-lucide="zap"></i></span>
+            <h2 class="legal-section-title">Device Resource & Battery Life Protection</h2>
           </div>
           <p class="legal-paragraph">
-            ArcadeVerse processes deep-link query parameters entirely client-side using browser History APIs. URL parameters containing game identifiers, category filters, or search strings are not transmitted to analytics platforms, third-party loggers, or telemetry collectors.
+            ArcadeVerse does not allow game processes to run invisibly in background tabs or behind closed dialogs. Every game is immediately halted and unmounted upon modal dismissal to protect user battery health and device longevity.
           </p>
           <p class="legal-paragraph">
-            Invalid, malformed, or hostile query arguments are sanitized and immediately scrubbed from the browser navigation bar without logging user identity.
+            No telemetry, activity logs, or fingerprinting profiles are gathered during performance monitoring or frame teardown operations. All execution bounds are enforced strictly within client runtime memory.
           </p>
-        </section>
         </section>
 
         <!-- 4. Zero Cookies -->

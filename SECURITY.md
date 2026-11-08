@@ -53,13 +53,12 @@ To protect player profiles, ratings, and game progress from corruption or malici
 - All restored keys and values are sanitized to primitive types with a 1MB per-item threshold and a 2,000-key capacity cap.
 - Restores are executed as atomic transactions: an in-memory snapshot is recorded prior to writing, and an instant rollback is executed if quota or parse errors occur during processing.
 
-## 🔗 URL Query Parameter Sanitization & Deep-Link Guard (#496)
+## ⚡ Client Resource Starvation & RAF Lifecycle Isolation (#497)
 
-To protect ArcadeVerse from malicious external links, path traversal attacks, and open redirects:
-- All incoming URL query parameters (?game=..., ?category=..., ?search=...) are parsed through URL_PARAM_VALIDATOR.
-- Game identifiers and category slugs must pass a strict alphanumeric regex (^[a-z0-9_-]{2,64}$).
-- Directory traversal sequences (.., /, \), protocol schemes (javascript:, data:), and XSS characters (<, >, ", ') are strictly forbidden and immediately neutralized.
-- Malformed parameters trigger a client-side warning toast, and the browser URL is silently cleaned via window.history.replaceState.
+To prevent rogue or unmaintained games from degrading host performance or draining device battery:
+- Games are bound by the ArcadeVerse Lifecycle Bridge, which enforces automated execution suspension (ARCADEVERSE_PAUSE) and teardown (ARCADEVERSE_TEARDOWN).
+- Parent controllers systematically sweep and cancel lingering requestAnimationFrame IDs and legacy timers before modal disposal.
+- Unmounted iframes are pointed to about:blank within 100ms of closure, severing execution threads and releasing GPU/CPU cycles.
 
 ## 💻 Web Architecture & Code Safety Guidelines
 
