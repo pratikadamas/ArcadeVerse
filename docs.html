@@ -638,6 +638,36 @@ validateBackupPayload(data)
                 </div>
               </div>
 
+              <!-- Strict URL Parameter Sanitization Architecture (#496) -->
+              <div class="docs-callout note" style="margin-top: 24px;">
+                <div class="docs-callout-icon"><i data-lucide="shield-alert"></i></div>
+                <div>
+                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">URL Parameter Query Sanitization & Deep-Link Guard (#496)</h4>
+                  <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
+                    ArcadeVerse allows players to share direct links to specific games, categories, and search filters via query parameters (e.g. <code>?game=cyber-snake&amp;category=arcade</code>). To prevent open redirection, path traversal, and reflected XSS:
+                  </p>
+                  <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
+                    <li><strong>Strict Regex Token Filtering:</strong> Game IDs and category slugs must match <code>/^[a-z0-9_-]{2,64}$/i</code>. Any directory traversal tokens (<code>..</code>, <code>/</code>, <code>\</code>) or protocol handlers (<code>javascript:</code>, <code>data:</code>) are detected and stripped immediately.</li>
+                    <li><strong>Search Length Boundaries:</strong> Free-text search parameters are clamped to 80 characters with special HTML attribute breakout characters stripped.</li>
+                    <li><strong>Non-existent Game Trapping:</strong> If an invalid or unlisted game ID is queried, the hub displays a non-disruptive warning toast (<code>.deep-link-notice-toast</code>) and purges the rogue parameter via <code>history.replaceState()</code>.</li>
+                  </ul>
+                  <p style="font-size: 0.88rem; line-height: 1.6; margin-top: 10px; margin-bottom: 8px;">
+                    All deep-linked queries undergo strict validation prior to DOM injection or modal launch. Unmatched or non-compliant queries are automatically scrubbed from the active URL without causing navigation errors:
+                  </p>
+                  <div class="code-block-wrapper" style="margin-top: 10px; margin-bottom: 10px;">
+                    <pre class="code-pre"><code class="language-javascript">// Sanitization Rule Example
+const cleanGameId = URL_PARAM_VALIDATOR.sanitizeGameId(rawQuery);
+if (!cleanGameId) {
+  showDeepLinkNotFoundNotice(rawQuery);
+  history.replaceState({}, '', sanitizedUrl);
+}</code></pre>
+                  </div>
+                </div>
+              </div>
+                  </div>
+                </div>
+              </div>
+
               <h5 style="color: var(--text-primary); margin-top: 16px; margin-bottom: 6px; font-size: 0.95rem;">Implementation Guide for Game Contributors</h5>
               <p style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 10px;">
                 When developing WebGL games for ArcadeVerse, always bind the context recovery handler. When a mobile or laptop GPU sleeps or switches display adapters, the browser triggers a synthetic context loss. With the ArcadeVerse lifecycle bridge, your game avoids black screens:

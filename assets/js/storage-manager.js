@@ -854,6 +854,21 @@
         }
       });
       return migrated;
+    },
+    /**
+     * Check if current query parameter matches registered game identifier (#496)
+     * @param {string} gameId
+     * @returns {boolean}
+     */
+    isValidGameId: function (gameId) {
+      if (!gameId || typeof gameId !== 'string') return false;
+      return /^[a-z0-9_-]{2,64}$/i.test(gameId.trim());
+    },
+
+    sanitizeQueryState: function (param) {
+      if (!param || typeof param !== 'string') return '';
+      return param.replace(/[^a-zA-Z0-9_-]/g, '').trim().slice(0, 64);
+    }
     }
   };
 })();

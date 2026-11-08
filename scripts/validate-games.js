@@ -40,6 +40,12 @@ function verifyStorageSerializationHealth(gameJsContent) {
   }
 }
 
+// Deep-Link & Slug Safety Auditor (#496)
+function verifyGameSlugSanitization(gameId) {
+  const SLUG_REGEX = /^[a-z0-9_-]+$/;
+  return SLUG_REGEX.test(gameId);
+}
+
 const FORBIDDEN_ROOT_FILES = ['assets/js/games-registry.js', 'index.html', 'leaderboard.html'];
 try {
   const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8', cwd: ROOT_DIR }).trim();

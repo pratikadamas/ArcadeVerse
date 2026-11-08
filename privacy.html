@@ -285,7 +285,7 @@
         <!-- 3b. External Font Preload & CORS Safety -->
         <section class="legal-section" id="cdn-privacy">
           <div class="legal-section-header">
-            <span class="legal-section-number">04</span>
+            <span class="legal-section-number">03b</span>
             <span class="legal-header-icon"><i data-lucide="eye-off"></i></span>
             <h2 class="legal-section-title">Zero-Tracking External Font & Asset Preloading</h2>
           </div>
@@ -295,6 +295,22 @@
           <p class="legal-paragraph">
             Should an external font fail to load or be blocked by browser tracking protection mechanisms, ArcadeVerse immediately transitions to local system font stacks, ensuring zero data leakage and preserving complete client privacy.
           </p>
+        </section>
+
+        <!-- Deep-Link Query Privacy & Zero Telemetry (#496) -->
+        <section class="legal-section" id="url-privacy">
+          <div class="legal-section-header">
+            <span class="legal-section-number">03c</span>
+            <span class="legal-header-icon"><i data-lucide="shield"></i></span>
+            <h2 class="legal-section-title">Query Parameter Privacy Protection</h2>
+          </div>
+          <p class="legal-paragraph">
+            ArcadeVerse processes deep-link query parameters entirely client-side using browser History APIs. URL parameters containing game identifiers, category filters, or search strings are not transmitted to analytics platforms, third-party loggers, or telemetry collectors.
+          </p>
+          <p class="legal-paragraph">
+            Invalid, malformed, or hostile query arguments are sanitized and immediately scrubbed from the browser navigation bar without logging user identity.
+          </p>
+        </section>
         </section>
 
         <!-- 4. Zero Cookies -->
