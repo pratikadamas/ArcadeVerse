@@ -1167,6 +1167,243 @@
           }
         } catch (_e) {}
       });
+    },
+
+    /**
+     * Resilient Stereo Panner Node Factory with Mobile/Mono Fallback (#509)
+     * Detects StereoPannerNode support, mobile devices, and single-speaker mono environments
+     * Gracefully clamps extreme panning values (-0.35 to +0.35 on mobile) to prevent phase cancellation
+     * @param {AudioContext} audioCtx
+     * @param {number} [initialPan=0]
+     * @returns {{node: AudioNode, setPan: function(number): void, getPan: function(): number, isSupported: boolean, isMobile: boolean}}
+     */
+    createAdaptiveStereoPanner: function (audioCtx, initialPan) {
+      if (!audioCtx) return null;
+      var ctx = audioCtx;
+      var currentPan = typeof initialPan === 'number' ? Math.max(-1, Math.min(1, initialPan)) : 0;
+      var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        (navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
+
+      // Clamp extreme stereo separation on mobile to prevent acoustic distortion
+      var clampPan = function (val) {
+        var num = Math.max(-1, Math.min(1, Number(val) || 0));
+        if (isMobile) {
+          return Math.max(-0.35, Math.min(0.35, num));
+        }
+        return num;
+      };
+
+      if (typeof ctx.createStereoPanner === 'function') {
+        var pannerNode = ctx.createStereoPanner();
+        pannerNode.pan.setValueAtTime(clampPan(currentPan), ctx.currentTime);
+        return {
+          node: pannerNode,
+          isSupported: true,
+          isMobile: isMobile,
+          setPan: function (val) {
+            currentPan = clampPan(val);
+            if (ctx.state === 'running') {
+              pannerNode.pan.setValueAtTime(pannerNode.pan.value, ctx.currentTime);
+              pannerNode.pan.linearRampToValueAtTime(currentPan, ctx.currentTime + 0.04);
+            } else {
+              pannerNode.pan.value = currentPan;
+            }
+          },
+          getPan: function () {
+            return currentPan;
+          }
+        };
+      }
+
+      // Legacy fallback: ChannelSplitter + ChannelMerger with dual GainNodes for older WebKit viewports
+      try {
+        var splitter = ctx.createChannelSplitter(2);
+        var merger = ctx.createChannelMerger(2);
+        var leftGain = ctx.createGain();
+        var rightGain = ctx.createGain();
+
+        splitter.connect(leftGain, 0);
+        splitter.connect(rightGain, 1);
+        leftGain.connect(merger, 0, 0);
+        rightGain.connect(merger, 0, 1);
+
+        var updateGains = function (pan) {
+          var x = clampPan(pan);
+          var leftVal = Math.cos((x + 1) * 0.25 * Math.PI);
+          var rightVal = Math.sin((x + 1) * 0.25 * Math.PI);
+          if (ctx.state === 'running') {
+            leftGain.gain.setValueAtTime(leftGain.gain.value, ctx.currentTime);
+            leftGain.gain.linearRampToValueAtTime(leftVal, ctx.currentTime + 0.04);
+            rightGain.gain.setValueAtTime(rightGain.gain.value, ctx.currentTime);
+            rightGain.gain.linearRampToValueAtTime(rightVal, ctx.currentTime + 0.04);
+          } else {
+            leftGain.gain.value = leftVal;
+            rightGain.gain.value = rightVal;
+          }
+        };
+        updateGains(currentPan);
+
+        return {
+          node: {
+            connect: function (dest) { merger.connect(dest); },
+            disconnect: function () { merger.disconnect(); }
+          },
+          inputNode: splitter,
+          isSupported: false,
+          isMobile: isMobile,
+          setPan: function (val) {
+            currentPan = clampPan(val);
+            updateGains(currentPan);
+          },
+          getPan: function () {
+            return currentPan;
+          }
+        };
+      } catch (_e) {
+        // Absolute pass-through dummy node
+        var dummyGain = ctx.createGain();
+        return {
+          node: dummyGain,
+          isSupported: false,
+          isMobile: isMobile,
+          setPan: function () {},
+          getPan: function () { return 0; }
+        };
+      }
+    },
+
+    /**
+     * Maps an object's X coordinate on canvas to a normalized stereo pan value (-1.0 to +1.0)
+     * @param {number} x - Current object X position
+     * @param {number} canvasWidth - Total canvas width
+     * @returns {number} Pan value between -1.0 (far left) and +1.0 (far right)
+     */
+    calculateSpatialPanFromX: function (x, canvasWidth) {
+      if (!canvasWidth || canvasWidth <= 0) return 0;
+      var normalized = (x / canvasWidth) * 2 - 1;
+      return Math.max(-1, Math.min(1, normalized));
+    },
+
+    /**
+     * Advanced 2D Spatial Sound Attenuation and Doppler Simulation
+     * @param {AudioContext} audioCtx
+     * @param {{x: number, y: number}} listenerPos - Player coordinates
+     * @param {{x: number, y: number}} sourcePos - Emitter coordinates
+     * @param {number} maxDistance - Range at which volume drops to near zero
+     * @returns {{pan: number, gain: number}} Calculated pan and gain multipliers
+     */
+    calculate2DSpatialAudioParameters: function (audioCtx, listenerPos, sourcePos, maxDistance) {
+      if (!listenerPos || !sourcePos) return { pan: 0, gain: 1 };
+      var maxDist = typeof maxDistance === 'number' && maxDistance > 0 ? maxDistance : 800;
+      var dx = sourcePos.x - listenerPos.x;
+      var dy = sourcePos.y - listenerPos.y;
+      var distance = Math.sqrt(dx * dx + dy * dy);
+
+      // Distance attenuation (inverse square curve clamped)
+      var normalizedDist = Math.min(1, distance / maxDist);
+      var gain = Math.max(0, Math.pow(1 - normalizedDist, 1.8));
+
+      // Normalized horizontal panning (-1.0 to +1.0)
+      var pan = Math.max(-1, Math.min(1, dx / (maxDist * 0.75)));
+
+      return {
+        pan: pan,
+        gain: gain,
+        distance: distance
+      };
+    },
+
+    /**
+     * Binds spatial panning directly to a 2D canvas sprite or entity
+     * @param {AudioNode} soundNode
+     * @param {Object} entity - Must have .x coordinate
+     * @param {number} canvasWidth
+     * @param {AudioContext} audioCtx
+     * @returns {Object} Panner controller
+     */
+    attachSpatialEntityPanner: function (soundNode, entity, canvasWidth, audioCtx) {
+      if (!soundNode || !entity || !audioCtx) return null;
+      var panner = this.createAdaptiveStereoPanner(audioCtx);
+      soundNode.connect(panner.node);
+
+      var updatePosition = function () {
+        if (typeof entity.x === 'number') {
+          var panVal = (entity.x / canvasWidth) * 2 - 1;
+          panner.setPan(panVal);
+        }
+      };
+      updatePosition();
+
+      return {
+        panner: panner,
+        update: updatePosition
+      };
+    },
+
+    /**
+     * Check if client audio hardware supports discrete multi-channel output
+     * @param {AudioContext} audioCtx
+     * @returns {number} Channel count (1 for mono, 2 for stereo, >2 for surround)
+     */
+    getOutputChannelCount: function (audioCtx) {
+      if (!audioCtx || !audioCtx.destination) return 2;
+      return audioCtx.destination.maxChannelCount || audioCtx.destination.channelCount || 2;
+    },
+
+    /**
+     * Synthesizes an ambient stereo field with subtle oscillating binaural modulation
+     * @param {AudioContext} audioCtx
+     * @param {number} baseFrequencyHz
+     * @param {number} beatFrequencyHz
+     * @returns {{start: function(): void, stop: function(): void}}
+     */
+    createBinauralBeatField: function (audioCtx, baseFrequencyHz, beatFrequencyHz) {
+      if (!audioCtx) return null;
+      var baseFreq = typeof baseFrequencyHz === 'number' ? baseFrequencyHz : 216;
+      var beatFreq = typeof beatFrequencyHz === 'number' ? beatFrequencyHz : 4;
+
+      var oscL = audioCtx.createOscillator();
+      var oscR = audioCtx.createOscillator();
+      oscL.frequency.value = baseFreq;
+      oscR.frequency.value = baseFreq + beatFreq;
+
+      var merger = audioCtx.createChannelMerger(2);
+      oscL.connect(merger, 0, 0);
+      oscR.connect(merger, 0, 1);
+
+      var masterGain = audioCtx.createGain();
+      masterGain.gain.value = 0.08;
+      merger.connect(masterGain);
+
+      return {
+        outputNode: masterGain,
+        start: function () {
+          oscL.start();
+          oscR.start();
+        },
+        stop: function () {
+          try {
+            oscL.stop();
+            oscR.stop();
+          } catch (_e) {}
+        }
+      };
+    },
+
+    /**
+     * Calibrate mono downmixing when single-channel audio is explicitly requested
+     * @param {AudioNode} inputNode
+     * @param {AudioContext} audioCtx
+     * @returns {GainNode} Downmixed mono node
+     */
+    downmixToMono: function (inputNode, audioCtx) {
+      if (!inputNode || !audioCtx) return inputNode;
+      var monoGain = audioCtx.createGain();
+      monoGain.channelCount = 1;
+      monoGain.channelCountMode = 'explicit';
+      monoGain.channelInterpretation = 'speakers';
+      inputNode.connect(monoGain);
+      return monoGain;
     }
   };
 });
