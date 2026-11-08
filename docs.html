@@ -638,6 +638,34 @@ validateBackupPayload(data)
                 </div>
               </div>
 
+              <!-- Gameplay Session & High Score Quit Protection (#503) -->
+              <div class="docs-callout note" style="margin-top: 24px;">
+                <div class="docs-callout-icon"><i data-lucide="shield-alert"></i></div>
+                <div>
+                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Active Session & In-Progress Score Quit Protection (#503)</h4>
+                  <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
+                    Accidental backdrop clicks or unintended Escape keypresses during intense arcade sessions could abruptly destroy active runs and discard unsubmitted high scores. ArcadeVerse enforces an intelligent session guard:
+                  </p>
+                  <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
+                    <li><strong>15-Second Session Threshold:</strong> Games played for less than 15 seconds close instantly for frictionless catalog browsing. Sessions running longer than 15 seconds trigger an in-modal confirmation prompt.</li>
+                    <li><strong>WAI-ARIA Alert Dialog:</strong> Implements <code>role="alertdialog"</code> with default focus automatically locked to the safe "Keep Playing" primary action button.</li>
+                    <li><strong>Automatic Runtime Pausing:</strong> Sends <code>ARCADEVERSE_PAUSE</code> to the child iframe upon showing the quit warning to freeze physics, timers, and audio loops while the player decides.</li>
+                  </ul>
+                  <h5 style="color: var(--text-primary); margin-top: 14px; margin-bottom: 6px; font-size: 0.95rem;">Confirmation Flow & Resume Protocol</h5>
+                  <div class="code-block-wrapper" style="margin-top: 10px; margin-bottom: 10px;">
+                    <pre class="code-pre"><code class="language-javascript">// Protected modal dismissal flow
+function requestModalClose(isFromPopState = false) {
+  const elapsed = (Date.now() - gameSessionStartTime) / 1000;
+  if (elapsed >= 15 && !isConfirmingQuit) {
+    showQuitConfirmationModal();
+    return;
+  }
+  closeGameModal(isFromPopState);
+}</code></pre>
+                  </div>
+                </div>
+              </div>
+
               <h5 style="color: var(--text-primary); margin-top: 16px; margin-bottom: 6px; font-size: 0.95rem;">Implementation Guide for Game Contributors</h5>
               <p style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 10px;">
                 When developing WebGL games for ArcadeVerse, always bind the context recovery handler. When a mobile or laptop GPU sleeps or switches display adapters, the browser triggers a synthetic context loss. With the ArcadeVerse lifecycle bridge, your game avoids black screens:

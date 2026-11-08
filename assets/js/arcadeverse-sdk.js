@@ -866,6 +866,55 @@
         }
       }
       return payload;
+    },
+
+    /**
+     * Session quit confirmation & state preservation protocol (#503)
+     * Notifies parent modal if game has unsaved run progress
+     * @param {boolean} hasUnsavedProgress
+     */
+    setUnsavedProgressState: function (hasUnsavedProgress) {
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: 'AV_SET_UNSAVED_PROGRESS',
+            payload: { hasUnsavedProgress: !!hasUnsavedProgress, timestamp: Date.now() }
+          }, '*');
+        }
+      } catch (_err) {}
+    },
+
+    /**
+     * Listen for modal pause & resume lifecycle events
+     * @param {function(): void} onPause
+     * @param {function(): void} onResume
+     * @returns {function(): void} Unsubscribe listener
+     */
+    bindSessionLifecycle: function (onPause, onResume) {
+      var handler = function (e) {
+        if (!e || !e.data) return;
+        if (e.data.type === 'ARCADEVERSE_PAUSE' && typeof onPause === 'function') {
+          onPause();
+        } else if (e.data.type === 'ARCADEVERSE_RESUME' && typeof onResume === 'function') {
+          onResume();
+        }
+      };
+      window.addEventListener('message', handler);
+      return function () {
+        window.removeEventListener('message', handler);
+      };
+    },
+
+    /**
+     * Helper to prompt parent confirmation before unmounting when high score is pending
+     * @param {number} currentScore - The user's active score
+     * @returns {boolean} True if score warranting confirmation was posted
+     */
+    reportPendingScoreProgress: function (currentScore) {
+      if (typeof currentScore !== 'number' || currentScore <= 0) return false;
+      this.setUnsavedProgressState(true);
+      return true;
+    }
     }
   };
 });

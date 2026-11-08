@@ -1486,10 +1486,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // Track session start timestamp and score confirmation state (#503)
+  let gameSessionStartTime = null;
+  let isConfirmingQuit = false;
+
   // Modal Handlers
   function openGameModal(game, triggerElement = null, isDirectDeepLink = false) {
     activeGame = game;
     isGameSessionActive = true;
+    gameSessionStartTime = Date.now();
+    isConfirmingQuit = false;
+    hideQuitConfirmationModal();
     lastFocusedElement = triggerElement || document.activeElement;
 
     // Trigger bat animation if launching a Halloween Special Game
@@ -1577,6 +1584,89 @@ document.addEventListener("DOMContentLoaded", () => {
     count: () => getFavorites().size
   };
 
+  /**
+   * Request modal dismissal with score protection check (#503)
+   * If game session > 15s, prompt confirmation before discarding session
+   * @param {boolean} isFromPopState
+   * @param {boolean} bypassConfirmation
+   */
+  function requestModalClose(isFromPopState = false, bypassConfirmation = false) {
+    if (!gameModal || (!gameModal.classList.contains("active") && !activeGame)) return;
+
+    const sessionDurationSec = gameSessionStartTime ? (Date.now() - gameSessionStartTime) / 1000 : 0;
+    if (!bypassConfirmation && sessionDurationSec >= 15 && !isConfirmingQuit) {
+      showQuitConfirmationModal(isFromPopState);
+      return;
+    }
+
+    hideQuitConfirmationModal();
+    closeGameModal(isFromPopState);
+  }
+
+  function showQuitConfirmationModal(isFromPopState = false) {
+    isConfirmingQuit = true;
+    let quitDialog = document.getElementById("game-quit-confirmation-dialog");
+    if (!quitDialog) {
+      quitDialog = document.createElement("div");
+      quitDialog.id = "game-quit-confirmation-dialog";
+      quitDialog.className = "game-quit-dialog-backdrop";
+      quitDialog.setAttribute("role", "alertdialog");
+      quitDialog.setAttribute("aria-modal", "true");
+      quitDialog.setAttribute("aria-labelledby", "quit-dialog-title");
+      quitDialog.setAttribute("aria-describedby", "quit-dialog-desc");
+      quitDialog.innerHTML = `
+        <div class="game-quit-dialog-card">
+          <div class="game-quit-dialog-header">
+            <svg class="quit-warning-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <h3 id="quit-dialog-title">Quit Current Game Session?</h3>
+          </div>
+          <p id="quit-dialog-desc">You have an active gameplay session running. Any unsubmitted high scores or session progress will be lost if you return to the catalog.</p>
+          <div class="game-quit-dialog-actions">
+            <button id="btn-quit-keep-playing" type="button" class="btn-quit-action keep-playing" autofocus>Keep Playing</button>
+            <button id="btn-quit-confirm-exit" type="button" class="btn-quit-action confirm-exit">Quit to Catalog</button>
+          </div>
+        </div>
+      `;
+      modalWindow.appendChild(quitDialog);
+
+      quitDialog.querySelector("#btn-quit-keep-playing").addEventListener("click", () => {
+        hideQuitConfirmationModal();
+        if (gameIframe && gameIframe.contentWindow) {
+          try {
+            gameIframe.contentWindow.focus();
+            gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_RESUME" }, "*");
+          } catch (_) {}
+        }
+      });
+
+      quitDialog.querySelector("#btn-quit-confirm-exit").addEventListener("click", () => {
+        hideQuitConfirmationModal();
+        closeGameModal(isFromPopState);
+      });
+    }
+
+    quitDialog.classList.add("active");
+    const keepPlayingBtn = quitDialog.querySelector("#btn-quit-keep-playing");
+    if (keepPlayingBtn) {
+      setTimeout(() => keepPlayingBtn.focus(), 50);
+    }
+
+    // Pause game runtime while confirmation prompt is open
+    if (gameIframe && gameIframe.contentWindow) {
+      try {
+        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
+      } catch (_) {}
+    }
+  }
+
+  function hideQuitConfirmationModal() {
+    isConfirmingQuit = false;
+    const quitDialog = document.getElementById("game-quit-confirmation-dialog");
+    if (quitDialog) {
+      quitDialog.classList.remove("active");
+    }
+  }
+
   function closeGameModal(isFromPopState = false) {
     if (!gameModal || (!gameModal.classList.contains("active") && !activeGame)) return;
     activeGame = null;
@@ -1654,8 +1744,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  closeModalBtn.addEventListener("click", () => closeGameModal(false));
-  modalOverlay.addEventListener("click", () => closeGameModal(false));
+  closeModalBtn.addEventListener("click", () => requestModalClose(false));
+  modalOverlay.addEventListener("click", () => requestModalClose(false));
 
   if (modalFavBtn) {
     modalFavBtn.addEventListener("click", () => {
@@ -1687,7 +1777,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && gameModal.classList.contains("active")) {
-      closeGameModal(false);
+      if (isConfirmingQuit) {
+        hideQuitConfirmationModal();
+        return;
+      }
+      requestModalClose(false);
     }
   });
 
@@ -1747,7 +1841,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (type === "ARCADEVERSE_KEY_SHORTCUT") {
       const key = (e.data.key || "").toLowerCase();
       if (e.data.key === "Escape") {
-        if (gameModal.classList.contains("active")) closeGameModal(false);
+        if (gameModal.classList.contains("active")) {
+          if (isConfirmingQuit) {
+            hideQuitConfirmationModal();
+            return;
+          }
+          requestModalClose(false);
+        }
       } else if (key === "f") {
         if (gameModal.classList.contains("active") && fullscreenBtn) fullscreenBtn.click();
       } else if (key === "r") {
@@ -1759,6 +1859,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const themeBtn = document.getElementById("theme-toggle-btn");
         if (themeBtn) themeBtn.click();
       }
+    }
     }
   });
 

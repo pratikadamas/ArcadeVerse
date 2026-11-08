@@ -10078,6 +10078,7 @@ html.a11y-reduced-motion .search-clear-btn {
 }
 
 /* ========================================================
+/* ========================================================
    STORAGE BACKUP RECOVERY & STATUS BANNER STYLES (#495)
    ======================================================== */
 .storage-banner {
@@ -10165,4 +10166,155 @@ html.a11y-reduced-motion .search-clear-btn {
   background: rgba(240, 253, 244, 0.95);
   border-color: rgba(16, 185, 129, 0.35);
   color: #047857;
+}
+
+/* ========================================================
+   GAME QUIT CONFIRMATION DIALOG (#503)
+   Protects in-progress gameplay sessions and high scores
+   ======================================================== */
+.game-quit-dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 14, 26, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 1.5rem;
+}
+
+.game-quit-dialog-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.game-quit-dialog-card {
+  background: #111528;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 24px rgba(239, 68, 68, 0.15);
+  border-radius: 14px;
+  max-width: 440px;
+  width: 100%;
+  padding: 1.75rem;
+  transform: scale(0.94) translateY(8px);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+}
+
+.game-quit-dialog-backdrop.active .game-quit-dialog-card {
+  transform: scale(1) translateY(0);
+}
+
+.game-quit-dialog-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.quit-warning-icon {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+  padding: 8px;
+  border-radius: 50%;
+  box-sizing: content-box;
+}
+
+.game-quit-dialog-header h3 {
+  font-family: var(--font-heading, inherit);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.game-quit-dialog-card p {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--text-secondary, #94a3b8);
+  margin-bottom: 1.5rem;
+}
+
+.game-quit-dialog-actions {
+  display: flex;
+  gap: 0.85rem;
+  justify-content: center;
+}
+
+.btn-quit-action {
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.65rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  flex: 1;
+}
+
+.btn-quit-action.keep-playing {
+  background: var(--accent-primary, #6366f1);
+  color: #fff;
+  border: 1px solid var(--accent-primary, #6366f1);
+}
+
+.btn-quit-action.keep-playing:hover,
+.btn-quit-action.keep-playing:focus-visible {
+  background: var(--accent-hover, #4f46e5);
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.btn-quit-action.confirm-exit {
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.btn-quit-action.confirm-exit:hover,
+.btn-quit-action.confirm-exit:focus-visible {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+}
+
+/* Quit prompt responsive sizing */
+@media (max-width: 480px) {
+  .game-quit-dialog-card {
+    padding: 1.25rem;
+  }
+  .game-quit-dialog-header h3 {
+    font-size: 1.1rem;
+  }
+  .game-quit-dialog-card p {
+    font-size: 0.85rem;
+    margin-bottom: 1.2rem;
+  }
+  .game-quit-dialog-actions {
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+}
+
+/* High contrast accessibility mode for quit dialog */
+html.a11y-high-contrast .game-quit-dialog-card {
+  border: 2px solid #ef4444 !important;
+  background: #000 !important;
+}
+
+html.a11y-high-contrast .btn-quit-action.keep-playing {
+  background: #fff !important;
+  color: #000 !important;
+  border: 2px solid #fff !important;
+}
+
+html.a11y-high-contrast .btn-quit-action.confirm-exit {
+  border: 2px solid #ef4444 !important;
+  color: #ef4444 !important;
+}
 }
