@@ -795,23 +795,23 @@
           </div>
         </div>
 
-        <!-- Question 32 (#505) -->
+        <!-- Question 32 (#506) -->
         <div class="faq-accordion-item" data-category="architecture" id="faq-32">
           <button class="faq-accordion-trigger" type="button" aria-expanded="false" aria-controls="faq-ans-32">
             <span class="faq-question-text">
               <span class="faq-category-badge">Audio</span>
-              32. Why is game sound muted or suspended when first opening a game, and how does the Unlocker fix it?
+              32. How does muting the parent hub mute sounds inside all game iframes?
             </span>
             <i data-lucide="chevron-down" class="faq-chevron"></i>
           </button>
           <div class="faq-accordion-content" id="faq-ans-32" role="region">
             <div class="faq-accordion-inner">
               <div class="faq-answer-text">
-                <p>Browser security specifications prohibit audio playback without a qualifying user interaction gesture:</p>
+                <p>Parent mute and volume changes are propagated to game engines via postMessage:</p>
                 <ul>
-                  <li><strong>Gesture Synchronizer:</strong> Any tap, click, or keypress anywhere on the page instantly activates the global Web Audio context.</li>
-                  <li><strong>Cross-Frame Broadcast:</strong> The parent hub fires <code>ARCADEVERSE_AUDIO_UNLOCKED</code> to child iframes, awakening internal synthesizers without requiring a page reload.</li>
-                  <li><strong>Equalizer Pill:</strong> A dynamic status pill displays whether audio is Active, Locked, or Muted in real-time.</li>
+                  <li><strong>Gain Synchronization:</strong> The parent SoundEngine broadcasts <code>AV_MUTE_CHANGE</code> and <code>ARCADEVERSE_AUDIO_CONFIG</code>.</li>
+                  <li><strong>Master Gain Node:</strong> The SDK's <code>createMasterGainBridge()</code> sets the master gain to 0 with a smooth 50ms ramp, preventing pops.</li>
+                  <li><strong>Initial State Inheritance:</strong> Games query the parent hub upon launch so muted status is preserved seamlessly.</li>
                 </ul>
               </div>
             </div>

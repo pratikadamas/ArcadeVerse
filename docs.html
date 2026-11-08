@@ -638,26 +638,27 @@ validateBackupPayload(data)
                 </div>
               </div>
 
-              <!-- Web Audio Autoplay Policy & Gesture Synchronization (#505) -->
+              <!-- Master Volume & Mute Synchronization Bridge Architecture (#506) -->
               <div class="docs-callout note" style="margin-top: 24px;">
-                <div class="docs-callout-icon"><i data-lucide="volume-2"></i></div>
+                <div class="docs-callout-icon"><i data-lucide="sliders"></i></div>
                 <div>
-                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Web Audio Autoplay Policy & Cross-Frame Gesture Unlock (#505)</h4>
+                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Global Master Volume & Mute Synchronization Bridge (#506)</h4>
                   <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
-                    Modern browsers (Chrome, Safari, Firefox, Edge) enforce strict Autoplay Policies that automatically suspend <code>AudioContext</code> instances until explicit user activation. Games embedded inside cross-origin or sandboxed iframes often fail to receive user gestures directly, resulting in silent gameplay:
+                    When players toggle the sound mute control (<code>M</code>) in the modal header or global navbar, embedded games previously had no unified bus to ramp down internal synthesizers, resulting in audible audio bleed. ArcadeVerse standardizes a synchronized audio bridge:
                   </p>
                   <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
-                    <li><strong>Parent-to-Child Unlock Bridge:</strong> Once user activation is registered anywhere on the parent platform or iframe window, an <code>ARCADEVERSE_AUDIO_UNLOCKED</code> broadcast is fired to unfreeze child audio contexts.</li>
-                    <li><strong>Non-Intrusive Audio Unlock Banner:</strong> If audio remains suspended upon game launch, a floating top-bar pill invites the player to tap anywhere or click the canvas.</li>
-                    <li><strong>Real-Time Audio Status Equalizer:</strong> Visual equalizer bars provide immediate feedback showing whether game audio is <em>Running</em>, <em>Suspended (Locked)</em>, or <em>Muted</em>.</li>
+                    <li><strong>AV_MUTE_CHANGE & ARCADEVERSE_AUDIO_CONFIG:</strong> The parent hub dispatches instant gain modifications whenever volume or mute toggles occur.</li>
+                    <li><strong>Smooth Linear Gain Ramping:</strong> Prevents loud speaker pops and audio clicks using <code>gainNode.gain.linearRampToValueAtTime()</code> over a 50ms envelope window.</li>
+                    <li><strong>Automatic Parent Handshake:</strong> On initial game iframe load, games query <code>ARCADEVERSE_REQUEST_AUDIO_CONFIG</code> to inherit the player's saved volume profile instantly.</li>
                   </ul>
-                  <h5 style="color: var(--text-primary); margin-top: 14px; margin-bottom: 6px; font-size: 0.95rem;">Integrating the SDK Unlock Synchronizer</h5>
+                  <h5 style="color: var(--text-primary); margin-top: 14px; margin-bottom: 6px; font-size: 0.95rem;">Game Integration Example</h5>
                   <div class="code-block-wrapper" style="margin-top: 10px; margin-bottom: 10px;">
-                    <pre class="code-pre"><code class="language-javascript">// In game scripts: Automatically sync AudioContext with user gestures
-const myAudioCtx = ArcadeVerse.createAudioContext();
-ArcadeVerse.bindAutoplayUnlockSynchronizer(myAudioCtx, (state) => {
-  console.log(`[GameAudio] Context state is now: ${state}`);
-});</code></pre>
+                    <pre class="code-pre"><code class="language-javascript">// In game scripts: Route sound nodes through ArcadeVerse master gain
+const audioCtx = ArcadeVerse.createAudioContext();
+const { masterGain } = ArcadeVerse.createMasterGainBridge(audioCtx);
+
+// Connect all synth oscillators & sound effects to masterGain instead of ctx.destination
+soundNode.connect(masterGain);</code></pre>
                   </div>
                 </div>
               </div>
