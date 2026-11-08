@@ -147,6 +147,9 @@
           <p class="legal-paragraph">
             <strong>We do not collect, sell, rent, or monetize your personal data.</strong> There are no commercial advertisements, tracking pixels, behavioral telemetry scripts, or marketing trackers integrated into ArcadeVerse.
           </p>
+          <p class="legal-paragraph">
+            Mobile display adaptations, including pseudo-fullscreen viewport sizing and notch inset detection, execute entirely locally in-memory without remote analytics reporting or telemetry beacons.
+          </p>
         </section>
 
         <!-- 2. LocalStorage -->
@@ -285,7 +288,7 @@
         <!-- 3b. External Font Preload & CORS Safety -->
         <section class="legal-section" id="cdn-privacy">
           <div class="legal-section-header">
-            <span class="legal-section-number">04</span>
+            <span class="legal-section-number">03b</span>
             <span class="legal-header-icon"><i data-lucide="eye-off"></i></span>
             <h2 class="legal-section-title">Zero-Tracking External Font & Asset Preloading</h2>
           </div>
@@ -294,6 +297,20 @@
           </p>
           <p class="legal-paragraph">
             Should an external font fail to load or be blocked by browser tracking protection mechanisms, ArcadeVerse immediately transitions to local system font stacks, ensuring zero data leakage and preserving complete client privacy.
+          </p>
+        </section>
+
+        <!-- 3c. Screen Dimension & Orientation Privacy -->
+        <section class="legal-section" id="viewport-privacy">
+          <div class="legal-section-header">
+            <span class="legal-section-number">05</span>
+            <span class="legal-header-icon"><i data-lucide="shield"></i></span>
+            <h2 class="legal-section-title">Screen Dimension & Viewport Privacy</h2>
+          </div>
+          <p class="legal-paragraph">
+            Viewport dimensions, screen orientations, and device pixel ratios are computed client-side strictly for aspect ratio calculation and are never transmitted to analytics trackers.
+          </p>
+        </section>
           </p>
         </section>
 
