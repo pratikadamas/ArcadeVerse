@@ -795,23 +795,23 @@
           </div>
         </div>
 
-        <!-- Question 32 (#501) -->
+        <!-- Question 32 (#502) -->
         <div class="faq-accordion-item" data-category="architecture" id="faq-32">
           <button class="faq-accordion-trigger" type="button" aria-expanded="false" aria-controls="faq-ans-32">
             <span class="faq-question-text">
-              <span class="faq-category-badge">Architecture</span>
-              32. How does ArcadeVerse prevent canvas distortion when resizing or rotating devices?
+              <span class="faq-category-badge">Mobile</span>
+              32. Why doesn't iOS Safari use standard HTML5 Fullscreen, and how does ArcadeVerse fix it?
             </span>
             <i data-lucide="chevron-down" class="faq-chevron"></i>
           </button>
           <div class="faq-accordion-content" id="faq-ans-32" role="region">
             <div class="faq-accordion-inner">
               <div class="faq-answer-text">
-                <p>Canvases stay crisp and properly proportioned through debounced resize handling and letterboxing:</p>
+                <p>Apple WebKit on iOS disables <code>requestFullscreen()</code> on non-video elements to prevent browser UI spoofing:</p>
                 <ul>
-                  <li><strong>AV_RESIZE Broadcast:</strong> Modal resizing dispatches exact pixel dimensions and DPR to the iframe after 150ms.</li>
-                  <li><strong>Letterboxing Rules:</strong> CSS <code>aspect-ratio</code> rules center the canvas cleanly within the viewport.</li>
-                  <li><strong>Mobile Rotation:</strong> Orientation changes trigger instant recalculations to prevent clipping.</li>
+                  <li><strong>Pseudo-Fullscreen:</strong> ArcadeVerse activates an edge-to-edge fixed modal (<code>100vw</code> × <code>100dvh</code>) that mirrors true fullscreen behavior.</li>
+                  <li><strong>Scroll Lock:</strong> Document body scrolling is locked to eliminate viewport rubber-banding and accidental swipe navigation.</li>
+                  <li><strong>Safe Area Insets:</strong> CSS <code>env(safe-area-inset-top)</code> and bottom padding protect game controls from camera notches and dynamic islands.</li>
                 </ul>
               </div>
             </div>

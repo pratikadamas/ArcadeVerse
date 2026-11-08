@@ -638,30 +638,28 @@ validateBackupPayload(data)
                 </div>
               </div>
 
-              <!-- Canonical Aspect Ratio & Viewport Resizing Architecture -->
+              <!-- iOS Safari & WebKit Pseudo-Fullscreen Architecture (#502) -->
               <div class="docs-callout note" style="margin-top: 24px;">
                 <div class="docs-callout-icon"><i data-lucide="maximize-2"></i></div>
                 <div>
-                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Canonical Aspect Ratio Scaling & Orientation Letterboxing (#501)</h4>
+                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Mobile WebKit & iOS Safari Pseudo-Fullscreen Fallback (#502)</h4>
                   <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
-                    When users maximize their desktop browser or rotate mobile handheld devices between portrait and landscape orientations, canvas scaling can distort or stretch pixel matrices. ArcadeVerse maintains clean canonical ratios:
+                    Mobile WebKit (iOS Safari) restricts the HTML5 <code>requestFullscreen()</code> API exclusively to <code>&lt;video&gt;</code> elements. Standard iframe containers and HTML5 <code>&lt;canvas&gt;</code> elements throw rejection promises or silent no-ops when users tap the fullscreen control. ArcadeVerse resolves this mobile limitation:
                   </p>
                   <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
-                    <li><strong>Debounced AV_RESIZE Events:</strong> The parent container broadcasts <code>AV_RESIZE</code> with updated dimensions, DPR, and orientation after a 150ms stabilization debounce.</li>
-                    <li><strong>Letterboxing Matrix:</strong> Center-aligned letterbox frames preserve 16:9, 4:3, or 1:1 viewports without awkward aspect distortion.</li>
-                    <li><strong>Dynamic Coordinate Scaling:</strong> Games subscribing via <code>ArcadeVerse.onResize()</code> receive true canvas pixel bounds for physics recalculation.</li>
+                    <li><strong>Heuristic Platform Detection:</strong> Detects iPad/iPhone/iPod user-agents and MacIntel touch screens, gracefully falling back without unhandled promise rejections.</li>
+                    <li><strong>Zero-Chrome Fixed Layout:</strong> Pins <code>.modal-window.pseudo-fullscreen</code> edge-to-edge at <code>100vw</code> and <code>100dvh</code> with <code>z-index: 1000000</code>.</li>
+                    <li><strong>Document Scroll Locking:</strong> Applies <code>modal-pseudo-fullscreen-active</code> to <code>document.body</code>, preventing background inertial overscroll bouncing.</li>
+                    <li><strong>Hardware Notch Inset Awareness:</strong> Integrates <code>env(safe-area-inset-top)</code> and <code>env(safe-area-inset-bottom)</code> padding so status bars and home indicator lines never obstruct gameplay buttons.</li>
                   </ul>
-                  <h5 style="color: var(--text-primary); margin-top: 14px; margin-bottom: 6px; font-size: 0.95rem;">Canonical Aspect Scaling in Games</h5>
-                  <p style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 8px;">
-                    Games subscribe to the <code>AV_RESIZE</code> postMessage or leverage <code>ArcadeVerse.onResize()</code> to adjust viewport calculations without canvas distortion:
-                  </p>
+                  <h5 style="color: var(--text-primary); margin-top: 14px; margin-bottom: 6px; font-size: 0.95rem;">Cross-Platform Fullscreen Invocation</h5>
                   <div class="code-block-wrapper" style="margin-top: 10px; margin-bottom: 10px;">
-                    <pre class="code-pre"><code class="language-javascript">// Listening to AV_RESIZE in games
-ArcadeVerse.onResize(({ width, height, dpr }) => {
-  canvas.width = width * dpr;
-  canvas.height = height * dpr;
-  renderScene();
-});</code></pre>
+                    <pre class="code-pre"><code class="language-javascript">// Automatic native vs pseudo-fullscreen detection
+if (modalWindow.requestFullscreen && !isIOS) {
+  modalWindow.requestFullscreen().catch(() => activatePseudoFullscreen());
+} else {
+  activatePseudoFullscreen(); // Zero-chrome CSS edge-to-edge layout
+}</code></pre>
                   </div>
                 </div>
               </div>

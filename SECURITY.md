@@ -92,6 +92,7 @@ To ensure client-side safety, all contributors **must** strictly adhere to the f
 - **Cryptominers:** Any script utilizing WebAssembly, Web Workers, or canvas loops for background cryptocurrency mining will result in an immediate **permanent ban and disqualification from NSoC '26**.
 - **Persistent Tracking:** No unauthorized persistent tracking, localStorage poisoning, fingerprinting, or credential sniffing.
 - **Harmful iframes:** No hidden iframes or redirects to external malicious domains.
+- **Mobile Viewport Isolation & Screen Hijacking**: Fullscreen operations and iOS pseudo-fullscreen adaptors must operate strictly within the declared `.game-modal` viewport bounds without tampering with parent navigation bars or injecting overlay exploits.
 
 ---
 
