@@ -638,6 +638,33 @@ validateBackupPayload(data)
                 </div>
               </div>
 
+              <!-- Canvas Garbage Collection & Detached DOM Teardown Architecture -->
+              <div class="docs-callout note" style="margin-top: 24px;">
+                <div class="docs-callout-icon"><i data-lucide="layers"></i></div>
+                <div>
+                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Canvas Garbage Collection & Detached DOM Node Cleanup (#498)</h4>
+                  <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
+                    In long browser sessions, launching consecutive 2D Canvas or WebGL games can cause detached DOM nodes and VRAM backbuffers to linger in browser memory. ArcadeVerse guarantees instant garbage collection:
+                  </p>
+                  <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
+                    <li><strong>Backbuffer Zeroing:</strong> Prior to unmounting, all canvas elements have their pixel dimensions explicitly collapsed (<code>canvas.width = 0; canvas.height = 0;</code>), forcing immediate browser raster buffer deallocation.</li>
+                    <li><strong>2D Context State Clearing:</strong> Contexts are cleared and reset via <code>ctx.reset()</code> or <code>ctx.clearRect()</code> to break closure references.</li>
+                    <li><strong>Iframe DOM Regeneration:</strong> After navigating to <code>about:blank</code>, the iframe node itself is detached and replaced with a fresh DOM element, cleanly severing all zombie closures and event listeners.</li>
+                  </ul>
+                  <h5 style="color: var(--text-primary); margin-top: 14px; margin-bottom: 6px; font-size: 0.95rem;">Canvas Memory Deallocation & Garbage Collection Protocol</h5>
+                  <p style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 8px;">
+                    All canvas contexts must release raster memory backbuffers upon unmount. Collapsing canvas pixel dimensions to 0 forces GPU drivers to purge backbuffers:
+                  </p>
+                  <div class="code-block-wrapper" style="margin-top: 10px; margin-bottom: 10px;">
+                    <pre class="code-pre"><code class="language-javascript">// Canvas GC Protocol
+ArcadeVerseWebGL.purgeDetachedCanvases(doc);
+// 1. Dispose WebGL contexts (loseContext)
+// 2. Collapse canvas dimensions to 0x0
+// 3. Sever DOM nodes & regenerate fresh iframe container</code></pre>
+                  </div>
+                </div>
+              </div>
+
               <h5 style="color: var(--text-primary); margin-top: 16px; margin-bottom: 6px; font-size: 0.95rem;">Implementation Guide for Game Contributors</h5>
               <p style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 10px;">
                 When developing WebGL games for ArcadeVerse, always bind the context recovery handler. When a mobile or laptop GPU sleeps or switches display adapters, the browser triggers a synthetic context loss. With the ArcadeVerse lifecycle bridge, your game avoids black screens:

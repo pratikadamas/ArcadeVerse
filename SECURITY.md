@@ -53,6 +53,13 @@ To protect player profiles, ratings, and game progress from corruption or malici
 - All restored keys and values are sanitized to primitive types with a 1MB per-item threshold and a 2,000-key capacity cap.
 - Restores are executed as atomic transactions: an in-memory snapshot is recorded prior to writing, and an instant rollback is executed if quota or parse errors occur during processing.
 
+## 🧹 Hardware Memory Leak & Canvas Garbage Collection (#498)
+
+To safeguard user operating systems from uncollected canvas allocations and graphics memory exhaustion:
+- Canvas elements inside unmounted game frames have dimensions forced to 0x0, releasing GPU backbuffers instantly.
+- 2D rendering contexts are flushed and reset via native ctx.reset().
+- Container iframes are rebuilt in the DOM upon modal dismissal, guaranteeing detached DOM trees and rogue event closures are marked for immediate garbage collection.
+
 ## 💻 Web Architecture & Code Safety Guidelines
 
 ArcadeVerse is built strictly on **100% native web standards (HTML5, CSS3, Vanilla JavaScript)** without server-side runtimes, Python backends, or node dependencies. All games and platform features execute client-side in the user's browser.

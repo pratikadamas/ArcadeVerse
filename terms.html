@@ -245,6 +245,21 @@
         </section>
         </section>
 
+        <!-- 7b. Canvas Graphics Memory Deallocation -->
+        <section class="legal-section" id="canvas-deallocation">
+          <div class="legal-section-header">
+            <span class="legal-section-number">08</span>
+            <span class="legal-header-icon"><i data-lucide="layers"></i></span>
+            <h2 class="legal-section-title">Graphics Memory Deallocation & Garbage Collection</h2>
+          </div>
+          <p class="legal-paragraph">
+            ArcadeVerse systematically unbinds canvas raster memory and WebGL context buffers upon the conclusion of every game session to prevent device degradation.
+          </p>
+          <p class="legal-paragraph">
+            All submitted game engines must tolerate canvas dimension resets and context revocations without raising uncaught exceptions or violating platform stability protocols.
+          </p>
+        </section>
+
         <!-- 8. Contact -->
         <section class="legal-section" id="contact">
           <div class="legal-section-header">

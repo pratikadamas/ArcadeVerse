@@ -10069,6 +10069,48 @@ html.a11y-reduced-motion .badge-count {
   }
 }
 
+/* ========================================================
+   CANVAS GARBAGE COLLECTION & BACKBUFFER TEARDOWN (#498)
+   ======================================================== */
+.canvas-gc-cleaning {
+  pointer-events: none !important;
+  user-select: none !important;
+  opacity: 0 !important;
+  transition: opacity 0.1s ease !important;
+}
+
+.modal-frame-wrapper.gc-purging iframe {
+  opacity: 0;
+  transform: scale(0.98);
+  transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+}
+
+.canvas-buffer-shield {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.canvas-buffer-shield.gc-active {
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.canvas-dealloc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-code, monospace);
+  font-size: 0.72rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
 /* Reduced motion: suppress chip hover lift */
 html.a11y-reduced-motion .tag-filter-chip,
 html.a11y-reduced-motion .tag-filter-chip:hover,

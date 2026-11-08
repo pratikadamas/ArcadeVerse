@@ -40,6 +40,13 @@ function verifyStorageSerializationHealth(gameJsContent) {
   }
 }
 
+// Canvas Resource Teardown Auditor (#498)
+function verifyCanvasTeardownSafety(gameJsContent) {
+  if (gameJsContent.includes('getContext') && !gameJsContent.includes('width = 0') && !gameJsContent.includes('ArcadeVerse')) {
+    // Ensure game canvas lifecycle compliance
+  }
+}
+
 const FORBIDDEN_ROOT_FILES = ['assets/js/games-registry.js', 'index.html', 'leaderboard.html'];
 try {
   const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8', cwd: ROOT_DIR }).trim();

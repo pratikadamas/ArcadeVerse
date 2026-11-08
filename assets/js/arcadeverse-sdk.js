@@ -837,6 +837,65 @@
      * Helper to wrap native AudioContext creation with automatic lifecycle tracking
      * @returns {AudioContext}
      */
+    /**
+     * Clear and collapse all canvases in the current game context (#498)
+     * Resets 2D and WebGL contexts and drops width/height to 0 to trigger garbage collection.
+     * @returns {number} count of collapsed canvases
+     */
+    /**
+     * Inspect canvas count in current document
+     * @returns {number}
+     */
+    /**
+     * Inspect if any WebGL context is currently active
+     * @returns {boolean}
+     */
+    hasActiveWebGL: function () {
+      return registeredWebGLContexts.length > 0;
+    },
+
+    /**
+     * Force context restoration attempt on tracked contexts
+     */
+    attemptContextRestoration: function () {
+      for (var i = 0; i < registeredWebGLContexts.length; i++) {
+        var gl = registeredWebGLContexts[i];
+        if (gl) {
+          var loseExt = gl.getExtension('WEBGL_lose_context');
+          if (loseExt && typeof loseExt.restoreContext === 'function') {
+            loseExt.restoreContext();
+          }
+        }
+      }
+    },
+
+    countCanvases: function () {
+      return typeof document !== 'undefined' ? document.querySelectorAll('canvas').length : 0;
+    },
+
+    /**
+     * Clear and collapse all canvases in the current game context (#498)
+      if (typeof document === 'undefined') return 0;
+      var canvases = document.querySelectorAll('canvas');
+      var count = 0;
+      for (var i = 0; i < canvases.length; i++) {
+        var c = canvases[i];
+        try {
+          var ctx2d = c.getContext('2d');
+          if (ctx2d) {
+            ctx2d.clearRect(0, 0, c.width, c.height);
+            if (typeof ctx2d.reset === 'function') ctx2d.reset();
+          }
+        } catch (_) {}
+        try {
+          c.width = 0;
+          c.height = 0;
+          count++;
+        } catch (_) {}
+      }
+      return count;
+    },
+
     createAudioContext: function () {
       var AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (!AudioContextClass) return null;
