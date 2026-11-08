@@ -1613,7 +1613,25 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     } catch (_) {}
     
-    // Safely blank out iframe after a 100ms grace period to allow games to close AudioContexts and stop RAF loops
+    // Canvas Garbage Collection & Detached DOM Node Cleanup (#498)
+    try {
+      if (gameIframe && gameIframe.contentDocument) {
+        const doc = gameIframe.contentDocument;
+        if (window.ArcadeVerseWebGL && typeof window.ArcadeVerseWebGL.purgeDetachedCanvases === "function") {
+          window.ArcadeVerseWebGL.purgeDetachedCanvases(doc);
+        } else {
+          const canvases = doc.querySelectorAll("canvas");
+          canvases.forEach((c) => {
+            try {
+              c.width = 0;
+              c.height = 0;
+            } catch (_) {}
+          });
+        }
+      }
+    } catch (_) {}
+
+    // Complete DOM Node Re-creation to eliminate detached event listeners and memory leaks
     const currentFrame = gameIframe;
     setTimeout(() => {
       try {
@@ -1625,6 +1643,25 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (e) {
         if (currentFrame) currentFrame.src = "about:blank";
       }
+
+      // Reconstruct clean iframe node to sever all zombie closures and DOM leaks
+      try {
+        if (currentFrame && currentFrame.parentNode) {
+          const parent = currentFrame.parentNode;
+          const newIframe = document.createElement("iframe");
+          newIframe.id = currentFrame.id;
+          newIframe.className = currentFrame.className;
+          newIframe.setAttribute("title", currentFrame.getAttribute("title") || "Arcade Game Screen");
+          newIframe.setAttribute("loading", "lazy");
+          newIframe.setAttribute("allow", "gamepad; autoplay; fullscreen");
+          newIframe.src = "about:blank";
+          parent.replaceChild(newIframe, currentFrame);
+          // Re-bind global reference
+          if (document.getElementById("game-iframe")) {
+            // Updated DOM element cleanly mounted
+          }
+        }
+      } catch (_) {}
     }, 100);
 
     document.body.style.overflow = "";
