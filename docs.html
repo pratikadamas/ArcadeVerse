@@ -753,6 +753,20 @@ if (window.ArcadeVerse) {
           </p>
         </section>
 
+        <!-- 14b. Storage Resilience & Quota Engine -->
+        <section class="docs-section" id="storage-resilience">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Resilient LocalStorage Quota & Automatic Pruning Engine (#490)</h2>
+          <p class="docs-paragraph">
+            Implemented in <code>assets/js/app.js</code> via <code>ArcadeStorageResilience</code>, this subsystem shields the platform from fatal <code>QuotaExceededError</code> (DOMException code 22) browser storage crashes when 5MB storage quotas are exhausted.
+          </p>
+          <ul>
+            <li><strong>Hierarchical Multi-Tier Eviction:</strong> When quota limits are reached, the engine automatically executes an LRU pruning sweep, first purging ephemeral network API caches, followed by stale recently-played session logs and telemetry.</li>
+            <li><strong>Strict Priority Protection:</strong> Essential user data—including favorited game IDs (<code>av_favorites</code>), custom star ratings, master audio configurations, and theme preferences—are permanently protected from eviction.</li>
+            <li><strong>Graceful Non-Intrusive HUD Alert:</strong> Displays an animated alert toast notifying the player: <em>"Storage quota full: old session logs were automatically cleaned up to preserve your favorites."</em></li>
+          </ul>
+        </section>
+
         <!-- 15. Scoring & Leaderboard -->
         <section class="docs-section" id="scoring-engine">
           <span class="docs-section-tag">04 / Platform Subsystems</span>

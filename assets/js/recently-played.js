@@ -21,10 +21,15 @@
     },
 
     saveRecent(list) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(list.slice(0, MAX_HISTORY)));
-      } catch (e) {
-        console.warn('Could not save recently played history:', e);
+      const payload = JSON.stringify(list.slice(0, MAX_HISTORY));
+      if (window.ArcadeStorageResilience && typeof window.ArcadeStorageResilience.safeSetItem === 'function') {
+        window.ArcadeStorageResilience.safeSetItem(STORAGE_KEY, payload);
+      } else {
+        try {
+          localStorage.setItem(STORAGE_KEY, payload);
+        } catch (e) {
+          console.warn('Could not save recently played history:', e);
+        }
       }
     },
 

@@ -27,9 +27,14 @@
     },
 
     saveRatings() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.ratings));
-      } catch (_) {}
+      const payload = JSON.stringify(this.ratings);
+      if (window.ArcadeStorageResilience && typeof window.ArcadeStorageResilience.safeSetItem === 'function') {
+        window.ArcadeStorageResilience.safeSetItem(STORAGE_KEY, payload);
+      } else {
+        try {
+          localStorage.setItem(STORAGE_KEY, payload);
+        } catch (_) {}
+      }
     },
 
     getGameRating(gameId, defaultStars = 25) {
