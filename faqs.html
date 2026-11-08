@@ -817,6 +817,29 @@
             </div>
           </div>
         </div>
+
+        <!-- Question 33 (#510) -->
+        <div class="faq-accordion-item" data-category="architecture" id="faq-33">
+          <button class="faq-accordion-trigger" type="button" aria-expanded="false" aria-controls="faq-ans-33">
+            <span class="faq-question-text">
+              <span class="faq-category-badge">Audio</span>
+              33. How do games generate retro sound effects without loading external audio files?
+            </span>
+            <i data-lucide="chevron-down" class="faq-chevron"></i>
+          </button>
+          <div class="faq-accordion-content" id="faq-ans-33" role="region">
+            <div class="faq-accordion-inner">
+              <div class="faq-answer-text">
+                <p>ArcadeVerse provides <code>assets/js/arcade-audio.js</code>, a procedural 8-bit sound utility:</p>
+                <ul>
+                  <li><strong>Zero File Assets:</strong> Sounds are synthesized in real-time via Web Audio API oscillators and noise buffers.</li>
+                  <li><strong>Preset Functions:</strong> Call <code>ArcadeAudio.playJump()</code>, <code>playLaser()</code>, <code>playHit()</code>, or <code>playExplosion()</code> directly.</li>
+                  <li><strong>Zero Network Drops:</strong> Eliminates 404 missing audio asset errors and CORS file request failures completely.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
                 </ul>
               </div>
             </div>

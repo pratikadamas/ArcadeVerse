@@ -982,6 +982,7 @@
     },
 
     /**
+<<<<<<< HEAD
      * Global Master Volume & Mute Synchronization Bridge (#506)
      * Creates a master GainNode connected directly to audioContext.destination
      * and automatically syncs its gain value with parent hub volume/mute broadcasts
@@ -1167,6 +1168,16 @@
           }
         } catch (_e) {}
       });
+    },
+
+    /**
+     * Expose or connect ArcadeAudio sound synthesizer to SDK instance (#510)
+     */
+    getSoundSynthesizer: function () {
+      if (typeof window !== 'undefined' && window.ArcadeAudio) {
+        return window.ArcadeAudio;
+      }
+      return null;
     }
   };
 });
