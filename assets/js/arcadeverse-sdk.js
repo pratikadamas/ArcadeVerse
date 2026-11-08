@@ -837,6 +837,42 @@
      * Helper to wrap native AudioContext creation with automatic lifecycle tracking
      * @returns {AudioContext}
      */
+    /**
+     * URL slug and query parser utility
+     * Validates and sanitizes parameters for embedded games
+     * @param {string} urlString
+     * @returns {Object}
+     */
+    parseSafeQueryParams: function (urlString) {
+      var results = {};
+      try {
+        var str = urlString || (typeof window !== 'undefined' ? window.location.search : '');
+        if (str && str.indexOf('?') !== -1) str = str.split('?')[1];
+        if (str) {
+          var pairs = str.split('&');
+          for (var i = 0; i < pairs.length; i++) {
+            var pair = pairs[i].split('=');
+            if (pair[0]) {
+              var key = decodeURIComponent(pair[0]).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 32);
+              var val = pair[1] ? decodeURIComponent(pair[1]).replace(/[^a-zA-Z0-9_ -]/g, '').slice(0, 80) : '';
+              if (key) results[key] = val;
+            }
+          }
+        }
+      } catch (_) {}
+      return results;
+    },
+
+    /**
+     * Deep-link parameter sanitizer helper for games
+     * @param {string} query
+     * @returns {string}
+     */
+    sanitizeQueryParam: function (query) {
+      if (!query || typeof query !== 'string') return '';
+      return query.replace(/[^a-zA-Z0-9_ -]/g, '').trim().slice(0, 80);
+    },
+
     createAudioContext: function () {
       var AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (!AudioContextClass) return null;
