@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Navigate a dark subsea maze with sonar, avoid hazards, and rescue stranded beacons.">
+  <title>Deep Signal: Subsea Rescue</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="game-shell">
+    <header class="game-header">
+      <a class="back-link" href="../../index.html">ArcadeVerse</a>
+      <p class="eyebrow">Subsea navigation and rescue</p>
+      <h1>Deep Signal</h1>
+      <p class="subtitle">Subsea Rescue</p>
+    </header>
+
+    <section class="mission-bar" aria-label="Mission status">
+      <p id="game-status" class="game-status" role="status" aria-live="polite">
+        The water is dark. Send a sonar pulse to chart nearby terrain and rescue beacons.
+      </p>
+      <button id="restart-button" class="restart-button" type="button">Restart mission</button>
+    </section>
+
+    <div class="game-layout">
+      <section class="map-panel" aria-labelledby="map-heading">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Uncharted waters</p>
+            <h2 id="map-heading">Sonar chart</h2>
+          </div>
+          <span id="sonar-state" class="sonar-state">Sonar idle</span>
+        </div>
+
+        <div class="map-frame">
+          <div id="map" class="map" role="grid" aria-label="Subsea navigation grid"></div>
+        </div>
+        <div class="legend" aria-label="Chart legend">
+          <span><i class="legend-mark submarine-mark">S</i> Submarine</span>
+          <span><i class="legend-mark beacon-mark">B</i> Rescue beacon</span>
+          <span><i class="legend-mark hazard-mark">!</i> Hazard</span>
+          <span><i class="legend-mark wall-mark"></i> Rock wall</span>
+          <span><i class="legend-mark unknown-mark">?</i> Uncharted</span>
+        </div>
+      </section>
+
+      <aside class="control-panel" aria-label="Submarine instruments and controls">
+        <section class="instrument-card" aria-labelledby="instrument-heading">
+          <p class="eyebrow">Submarine systems</p>
+          <h2 id="instrument-heading" class="visually-hidden">Submarine systems</h2>
+          <div class="instrument-row">
+            <span>Integrity</span>
+            <strong><span id="integrity-count">4</span> / 4</strong>
+          </div>
+          <progress id="integrity-meter" class="integrity-meter" value="4" max="4">4 of 4</progress>
+          <div class="instrument-row sonar-row">
+            <span>Sonar pulses</span>
+            <strong><span id="sonar-count">5</span> / 5</strong>
+          </div>
+          <button id="sonar-button" class="sonar-button" type="button">
+            <span class="pulse-icon" aria-hidden="true"></span>
+            Send sonar pulse
+            <span class="shortcut">Space</span>
+          </button>
+          <p class="help-text">Each pulse reveals nearby walls, hazards, and beacons for 2.5 seconds.</p>
+        </section>
+
+        <section class="mission-card" aria-labelledby="objective-heading">
+          <p class="eyebrow">Rescue mission</p>
+          <h2 id="objective-heading">Reach every beacon</h2>
+          <p class="objective-copy">Navigate the dark grid, avoid rock walls, and steer clear of hazards. The mission ends when all rescue beacons are reached or integrity runs out.</p>
+          <div class="beacon-counter">
+            <span>Beacons reached</span>
+            <strong><span id="beacons-count">0</span> / <span id="beacons-total">3</span></strong>
+          </div>
+        </section>
+
+        <section class="controls-card" aria-labelledby="controls-heading">
+          <p class="eyebrow">Navigation</p>
+          <h2 id="controls-heading">Move the submarine</h2>
+          <p class="help-text">Use the arrow keys or W, A, S, D. On touch screens, use the controls below.</p>
+          <div class="direction-pad" role="group" aria-label="Touch navigation controls">
+            <span class="pad-spacer" aria-hidden="true"></span>
+            <button type="button" class="direction-button" data-direction="up" aria-label="Move up">Up</button>
+            <span class="pad-spacer" aria-hidden="true"></span>
+            <button type="button" class="direction-button" data-direction="left" aria-label="Move left">Left</button>
+            <button type="button" class="direction-button" data-direction="down" aria-label="Move down">Down</button>
+            <button type="button" class="direction-button" data-direction="right" aria-label="Move right">Right</button>
+          </div>
+        </section>
+
+        <section class="rules-card" aria-labelledby="rules-heading">
+          <p class="eyebrow">Field guide</p>
+          <h2 id="rules-heading">How to play</h2>
+          <ol>
+            <li>Move one cell at a time with the arrow keys or W, A, S, D. Touch players can use the navigation pad.</li>
+            <li>Press Space or Send sonar pulse to reveal nearby terrain, hazards, and rescue beacons for 2.5 seconds. Each pulse uses one charge.</li>
+            <li>Rock walls block movement. Entering a hazard costs one integrity point. Your submarine has four points of integrity.</li>
+            <li>Reach all three rescue beacons to win. The mission ends if integrity reaches zero. Sonar charges are limited, so plan your route.</li>
+          </ol>
+        </section>
+      </aside>
+    </div>
+    <footer class="game-footer">All locations and mission events are fictional.</footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
