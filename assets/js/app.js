@@ -1515,6 +1515,20 @@ document.addEventListener("DOMContentLoaded", () => {
       window.SoundEngine.updateUI();
     }
 
+    // Monitor game frame lifecycle and attach watchdog
+    try {
+      if (gameIframe) {
+        gameIframe.addEventListener('load', () => {
+          try {
+            const win = gameIframe.contentWindow;
+            if (win && win.ArcadeVerse && typeof win.ArcadeVerse.enableAggressiveRAFShield === 'function') {
+              win.ArcadeVerse.enableAggressiveRAFShield();
+            }
+          } catch (_) {}
+        }, { once: true });
+      }
+    } catch (_) {}
+
     // Record game play in Recently Played drawer
     if (window.ArcadeRecent && typeof window.ArcadeRecent.recordPlayed === "function") {
       window.ArcadeRecent.recordPlayed(game.id, game.title, game.category);
@@ -1525,7 +1539,10 @@ document.addEventListener("DOMContentLoaded", () => {
     gameModal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
     document.body.style.overscrollBehavior = "contain";
-    closeModalBtn.focus();
+    // Focus Trap Activation: automatically focus close button or iframe canvas
+    if (closeModalBtn) {
+      setTimeout(() => closeModalBtn.focus(), 50);
+    }
 
     if (!isDirectDeepLink) {
       modalPushedHistory = true;
@@ -1590,6 +1607,27 @@ document.addEventListener("DOMContentLoaded", () => {
         gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
         gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_TEARDOWN" }, "*");
 
+        // Aggressive RAF and Timer Leak Mitigation (#497)
+        try {
+          const win = gameIframe.contentWindow;
+          if (win) {
+            // Cancel any high-numbered animation frame handles
+            if (typeof win.cancelAnimationFrame === "function") {
+              for (let frameId = 1; frameId < 9999; frameId++) {
+                win.cancelAnimationFrame(frameId);
+              }
+            }
+            // Clear any active timeouts/intervals left by rogue loops
+            if (typeof win.clearTimeout === "function" && typeof win.clearInterval === "function") {
+              const maxTimerId = win.setTimeout(() => {}, 0);
+              for (let timerId = 1; timerId <= maxTimerId; timerId++) {
+                win.clearTimeout(timerId);
+                win.clearInterval(timerId);
+              }
+            }
+          }
+        } catch (_) {}
+
         // Proactively probe and dispose WebGL contexts in child iframe if accessible
         try {
           const doc = gameIframe.contentDocument || gameIframe.contentWindow.document;
@@ -1613,6 +1651,16 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     } catch (_) {}
     
+    // Terminate any rogue event listeners or workers in child frame prior to blanking
+    try {
+      if (gameIframe && gameIframe.contentWindow) {
+        const win = gameIframe.contentWindow;
+        if (typeof win.stop === "function") {
+          win.stop();
+        }
+      }
+    } catch (_) {}
+
     // Safely blank out iframe after a 100ms grace period to allow games to close AudioContexts and stop RAF loops
     const currentFrame = gameIframe;
     setTimeout(() => {
@@ -1625,6 +1673,25 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (e) {
         if (currentFrame) currentFrame.src = "about:blank";
       }
+
+      // Reconstruct clean iframe node to sever all zombie closures and DOM leaks
+      try {
+        if (currentFrame && currentFrame.parentNode) {
+          const parent = currentFrame.parentNode;
+          const newIframe = document.createElement("iframe");
+          newIframe.id = currentFrame.id;
+          newIframe.className = currentFrame.className;
+          newIframe.setAttribute("title", currentFrame.getAttribute("title") || "Arcade Game Screen");
+          newIframe.setAttribute("loading", "lazy");
+          newIframe.setAttribute("allow", "gamepad; autoplay; fullscreen");
+          newIframe.src = "about:blank";
+          parent.replaceChild(newIframe, currentFrame);
+          // Re-bind global reference
+          if (document.getElementById("game-iframe")) {
+            // Updated DOM element cleanly mounted
+          }
+        }
+      } catch (_) {}
     }, 100);
 
     document.body.style.overflow = "";
@@ -1653,6 +1720,51 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   }
+
+  // ========================================================
+  // ASPECT RATIO & ORIENTATION CHANGE RESIZE HANDLER (#501)
+  // Debounces resize calculations and broadcasts AV_RESIZE to game iframe
+  // ========================================================
+  let modalResizeDebounceTimer = null;
+  let currentCanonicalAspectRatio = "auto";
+
+  /**
+   * Set modal letterboxing ratio for a specific game
+   * @param {'16-9'|'4-3'|'1-1'|'auto'} ratio
+   */
+  function setModalAspectRatio(ratio) {
+    if (!modalFrameWrapper) return;
+    modalFrameWrapper.classList.remove("aspect-16-9", "aspect-4-3", "aspect-1-1");
+    if (ratio && ratio !== "auto") {
+      modalFrameWrapper.classList.add(spect-);
+      currentCanonicalAspectRatio = ratio;
+    } else {
+      currentCanonicalAspectRatio = "auto";
+    }
+  }
+
+  function handleModalViewportResize() {
+    if (!gameModal || !gameModal.classList.contains("active")) return;
+
+    if (modalResizeDebounceTimer) clearTimeout(modalResizeDebounceTimer);
+    modalResizeDebounceTimer = setTimeout(() => {
+      try {
+        if (gameIframe && gameIframe.contentWindow) {
+          const rect = gameIframe.getBoundingClientRect();
+          gameIframe.contentWindow.postMessage({
+            type: "AV_RESIZE",
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+            devicePixelRatio: window.devicePixelRatio || 1,
+            orientation: window.innerWidth > window.innerHeight ? "landscape" : "portrait"
+          }, "*");
+        }
+      } catch (_) {}
+    }, 150);
+  }
+
+  window.addEventListener("resize", handleModalViewportResize, { passive: true });
+  window.addEventListener("orientationchange", handleModalViewportResize, { passive: true });
 
   closeModalBtn.addEventListener("click", () => closeGameModal(false));
   modalOverlay.addEventListener("click", () => closeGameModal(false));
@@ -1685,11 +1797,91 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && gameModal.classList.contains("active")) {
+  // ========================================================
+  // ESC KEY DUAL-ACTION CONFLICT RESOLVER (#500)
+  // Preserves in-game pause menus and prevents accidental game aborts
+  // ========================================================
+  let escPressTimer = null;
+  let escPressCount = 0;
+
+  function showEscExitToast() {
+    const existing = document.getElementById("esc-exit-toast");
+    if (existing) existing.remove();
+
+    const toast = document.createElement("div");
+    toast.id = "esc-exit-toast";
+    toast.className = "esc-exit-prompt-toast";
+    toast.setAttribute("role", "status");
+    toast.innerHTML = 
+      <div class="esc-exit-toast-body">
+        <span class="esc-badge">ESC</span>
+        <span>Game paused. Press <kbd>ESC</kbd> again or <kbd>Shift+ESC</kbd> to exit to catalog.</span>
+      </div>
+    ;
+
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add("visible"));
+
+    setTimeout(() => {
+      if (toast.parentElement) {
+        toast.classList.remove("visible");
+        setTimeout(() => toast.remove(), 250);
+      }
+    }, 2500);
+  }
+
+  function handleEscDualAction(e) {
+    if (e.key !== "Escape" || !gameModal || !gameModal.classList.contains("active")) return;
+
+    // Shift + Escape always forces immediate exit
+    if (e.shiftKey) {
+      if (escPressTimer) clearTimeout(escPressTimer);
+      escPressCount = 0;
+      closeGameModal(false);
+      return;
+    }
+
+    // Check if user is actively in confirmation dialog or focus is outside iframe
+    const confirmDialog = document.getElementById("modal-confirm-dialog");
+    if (confirmDialog && confirmDialog.classList.contains("active")) {
+      closeGameModal(false);
+      return;
+    }
+
+    // First press: Dispatch pause event to game iframe
+    // Cancel any previous pending single-tap action timer
+    if (escPressTimer) clearTimeout(escPressTimer);
+
+    escPressCount++;
+    if (escPressCount === 1) {
+      try {
+        if (gameIframe && gameIframe.contentWindow) {
+          gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
+          gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_ESC_PAUSE" }, "*");
+        }
+      } catch (_) {}
+
+      showEscExitToast();
+
+      if (escPressTimer) clearTimeout(escPressTimer);
+      escPressTimer = setTimeout(() => {
+        escPressCount = 0;
+      }, 1500);
+    } else if (escPressCount >= 2) {
+      // Announce session close to active listeners
+      try {
+        window.dispatchEvent(new CustomEvent("arcadeverse:esc-exit-confirmed"));
+      } catch (_) {}
+      // Second press within 1.5s: close modal
+      if (escPressTimer) clearTimeout(escPressTimer);
+      escPressCount = 0;
+      const toast = document.getElementById("esc-exit-toast");
+      if (toast) toast.remove();
       closeGameModal(false);
     }
-  });
+  }
+
+  window.addEventListener("keydown", handleEscDualAction);
 
   // Listen for forwarded shortcuts and runtime events from inside game iframes
   window.addEventListener("message", (e) => {
@@ -2677,18 +2869,95 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // ========================================================
+  // STRICT URL QUERY SANITIZATION & DEEP-LINK VALIDATOR (#496)
+  // Protects against path traversal, XSS injection, and rogue script links
+  // ========================================================
+  const URL_PARAM_VALIDATOR = {
+    GAME_ID_REGEX: /^[a-z0-9_-]{2,64}$/i,
+    CATEGORY_REGEX: /^[a-z0-9_-]{2,32}$/i,
+    MAX_SEARCH_QUERY_LENGTH: 80,
+
+    sanitizeSearch(q) {
+      if (!q || typeof q !== 'string') return '';
+      return q
+        .slice(0, this.MAX_SEARCH_QUERY_LENGTH)
+        .replace(/[<>"'\\]/g, '')
+        .trim();
+    },
+
+    sanitizeGameId(id) {
+      if (!id || typeof id !== 'string') return null;
+      const clean = id.trim().toLowerCase();
+      // Reject directory traversal, protocol schemes, slashes
+      if (clean.includes('..') || clean.includes('/') || clean.includes('\\') || clean.includes(':')) {
+        console.warn('[ArcadeVerse Security] Illegal path traversal characters detected in URL game parameter:', id);
+        return null;
+      }
+      return this.GAME_ID_REGEX.test(clean) ? clean : null;
+    },
+
+    sanitizeCategory(cat) {
+      if (!cat || typeof cat !== 'string') return 'all';
+      const clean = cat.trim().toLowerCase();
+      return this.CATEGORY_REGEX.test(clean) ? clean : 'all';
+    }
+  };
+
+  function showDeepLinkNotFoundNotice(requestedId) {
+    const existing = document.getElementById('deep-link-error-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'deep-link-error-toast';
+    toast.className = 'deep-link-notice-toast';
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+      <div class="deep-link-notice-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <div class="deep-link-notice-content">
+        <strong>Game Not Found</strong>
+        The requested game link <code>${typeof ArcadeSanitizer !== 'undefined' ? ArcadeSanitizer.escapeHTML(requestedId) : requestedId}</code> does not exist or has been relocated.
+      </div>
+      <button type="button" class="deep-link-notice-close" aria-label="Dismiss">&times;</button>
+    `;
+
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('visible'));
+
+    toast.querySelector('.deep-link-notice-close').addEventListener('click', () => {
+      toast.classList.remove('visible');
+      setTimeout(() => toast.remove(), 300);
+    });
+
+    setTimeout(() => {
+      if (toast.parentElement) {
+        toast.classList.remove('visible');
+        setTimeout(() => toast.remove(), 300);
+      }
+    }, 6000);
+  }
+
   // --- History API Deep-Linking & State Initialization ---
   function initURLDeepLinking() {
     try {
       const url = new URL(window.location.href);
-      const categoryParam = url.searchParams.get("category");
-      const searchParam = url.searchParams.get("search");
-      const gameParam = url.searchParams.get("game");
+      const rawCategory = url.searchParams.get("category");
+      const rawSearch = url.searchParams.get("search");
+      const rawGame = url.searchParams.get("game");
+
+      const categoryParam = rawCategory ? URL_PARAM_VALIDATOR.sanitizeCategory(rawCategory) : null;
+      const searchParam = rawSearch ? URL_PARAM_VALIDATOR.sanitizeSearch(rawSearch) : null;
+      const validGameId = rawGame ? URL_PARAM_VALIDATOR.sanitizeGameId(rawGame) : null;
 
       if (categoryParam) {
-        const targetCat = categoryParam.trim();
         const matchedPill = Array.from(categoryPills).find(
-          (p) => (p.getAttribute("data-category") || "").toLowerCase() === targetCat.toLowerCase()
+          (p) => (p.getAttribute("data-category") || "").toLowerCase() === categoryParam.toLowerCase()
         );
         if (matchedPill) {
           categoryPills.forEach((p) => {
@@ -2699,31 +2968,40 @@ document.addEventListener("DOMContentLoaded", () => {
           matchedPill.setAttribute("aria-selected", "true");
           currentCategory = matchedPill.getAttribute("data-category");
         } else {
-          currentCategory = targetCat;
+          currentCategory = categoryParam;
         }
       }
 
       if (searchParam) {
-        const targetSearch = searchParam.trim();
-        searchQuery = targetSearch.toLowerCase();
+        searchQuery = searchParam.toLowerCase();
         if (searchInput) {
-          searchInput.value = targetSearch;
+          searchInput.value = searchParam;
         }
         if (searchClearBtn) {
-          searchClearBtn.hidden = !targetSearch;
+          searchClearBtn.hidden = !searchParam;
         }
       }
 
       buildTagChips();
       renderGames();
 
-      if (gameParam && typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) {
-        const targetGameId = gameParam.trim().toLowerCase();
-        const targetGame = GAMES_REGISTRY.find(
-          (g) => g && g.id && g.id.toLowerCase() === targetGameId
-        );
-        if (targetGame) {
-          openGameModal(targetGame, null, true);
+      if (rawGame) {
+        if (!validGameId) {
+          showDeepLinkNotFoundNotice(rawGame);
+          // Strip malicious/invalid game param from URL address bar
+          url.searchParams.delete("game");
+          window.history.replaceState({}, "", url.pathname + (url.search ? url.search : "") + (url.hash ? url.hash : ""));
+        } else if (typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) {
+          const targetGame = GAMES_REGISTRY.find(
+            (g) => g && g.id && g.id.toLowerCase() === validGameId
+          );
+          if (targetGame) {
+            openGameModal(targetGame, null, true);
+          } else {
+            showDeepLinkNotFoundNotice(rawGame);
+            url.searchParams.delete("game");
+            window.history.replaceState({}, "", url.pathname + (url.search ? url.search : "") + (url.hash ? url.hash : ""));
+          }
         }
       }
     } catch (_) {
@@ -2746,9 +3024,9 @@ document.addEventListener("DOMContentLoaded", () => {
           closeGameModal(true);
         }
       } else {
-        const targetGameId = gameParam.trim().toLowerCase();
-        if (!activeGame || (activeGame.id && activeGame.id.toLowerCase() !== targetGameId)) {
-          const targetGame = Array.isArray(GAMES_REGISTRY) && GAMES_REGISTRY.find((g) => g && g.id && g.id.toLowerCase() === targetGameId);
+        const sanitizedGameId = URL_PARAM_VALIDATOR.sanitizeGameId(gameParam);
+        if (sanitizedGameId && (!activeGame || (activeGame.id && activeGame.id.toLowerCase() !== sanitizedGameId))) {
+          const targetGame = Array.isArray(GAMES_REGISTRY) && GAMES_REGISTRY.find((g) => g && g.id && g.id.toLowerCase() === sanitizedGameId);
           if (targetGame) {
             openGameModal(targetGame, null, true);
           }

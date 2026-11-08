@@ -10180,6 +10180,115 @@ html.a11y-reduced-motion .badge-count {
   }
 }
 
+/* ========================================================
+   CANONICAL ASPECT RATIO & LETTERBOXING RULES (#501)
+   Preserves 16:9, 4:3, or 1:1 scaling without black pillarboxing distortion
+   ======================================================== */
+.modal-frame-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #000;
+}
+
+.modal-frame-wrapper iframe {
+  max-width: 100%;
+  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  margin: auto;
+  border: none;
+  object-fit: contain;
+}
+
+/* Aspect ratio classes */
+.aspect-16-9 iframe {
+  aspect-ratio: 16 / 9;
+}
+
+.aspect-4-3 iframe {
+  aspect-ratio: 4 / 3;
+}
+
+.aspect-1-1 iframe {
+  aspect-ratio: 1 / 1;
+}
+
+/* Dynamic Letterboxing borders */
+.letterbox-bars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 0 solid rgba(0, 0, 0, 0.85);
+  transition: border-width 0.15s ease-out;
+}
+
+.viewport-resize-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--font-code, monospace);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.modal-frame-wrapper:hover .viewport-resize-badge {
+  opacity: 1;
+}
+
+.letterbox-pillarbox-left,
+.letterbox-pillarbox-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  background: #000;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.letterbox-pillarbox-left { left: 0; }
+.letterbox-pillarbox-right { right: 0; }
+
+/* Additional viewport auto-scale containment (#501) */
+.game-viewport-scale-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #000;
+}
+
+.game-viewport-scale-wrapper[data-aspect="16:9"] iframe {
+  aspect-ratio: 16 / 9;
+}
+
+.game-viewport-scale-wrapper[data-aspect="4:3"] iframe {
+  aspect-ratio: 4 / 3;
+}
+
+.game-viewport-scale-wrapper[data-aspect="1:1"] iframe {
+  aspect-ratio: 1 / 1;
+}
+
+.game-viewport-scale-wrapper iframe {
+  max-width: 100%;
+  max-height: 100%;
+  border: 0;
+}
+
 /* Reduced motion: suppress chip hover lift */
 html.a11y-reduced-motion .tag-filter-chip,
 html.a11y-reduced-motion .tag-filter-chip:hover,
