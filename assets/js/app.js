@@ -95,178 +95,83 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =========================================================================
-  // RESILIENT LOCALSTORAGE QUOTA MANAGER & AUTOMATIC CACHE PRUNING (#490)
+  // XSS PREVENTION & ATTRIBUTE SANITIZATION UTILITIES (#491)
   // =========================================================================
-  const ArcadeStorageResilience = (function () {
-    const TOAST_ID = "av-storage-quota-toast";
-    let toastTimeout = null;
-
-    // Ordered eviction priority buckets: least critical items are purged first
-    const EVICTION_PRIORITIES = [
-      // Priority 1: Ephemeral API & Network Caches
-      [
-        /^arcadeverse_contributors_cache/,
-        /^av_search_cache/,
-        /^av_temp_/
-      ],
-      // Priority 2: Stale session logs, analytics, and telemetry
-      [
-        /^arcadeverse_recently_played_v2/,
-        /^arcadeverse_recently_played/,
-        /^av_play_log/,
-        /^av_session_/,
-        /^arcadeverse_telemetry/
-      ],
-      // Priority 3: Non-critical UI state toggles & filters
-      [
-        /^arcadeverse_catalog_sort/,
-        /^arcadeverse_catalog_view/,
-        /^arcadeverse_last_category/
-      ]
-      // Priority 4 (PROTECTED & NEVER EVICTED):
-      // Favorites (av_favorites), ratings, sound preferences, theme mode
-    ];
-
-    const PROTECTED_KEYS = new Set([
-      "av_favorites",
-      "arcadeverse_favorite_games",
-      "arcadeverse:preferences:favorites",
-      "arcadeverse_theme",
-      "arcadeverse_game_ratings",
-      "arcadeverse_master_volume",
-      "arcadeverse_muted"
+  const ArcadeSanitizer = (function () {
+    // Permitted Lucide icon names whitelist to prevent arbitrary attribute or SVG injection
+    const LUCIDE_ICON_WHITELIST = new Set([
+      "gamepad-2", "gamepad", "play", "play-circle", "trophy", "star",
+      "heart", "heart-crack", "search", "x", "refresh-cw", "maximize",
+      "maximize-2", "minimize", "external-link", "volume-2", "volume-x",
+      "moon", "sun", "help-circle", "file-code-2", "book-open", "chevron-down",
+      "chevron-up", "chevron-right", "chevron-left", "shield", "cpu",
+      "zap", "award", "crown", "sparkles", "compass", "target", "crosshair",
+      "dices", "layers", "timer", "clock", "hash", "code", "terminal",
+      "user", "users", "tag", "tags", "filter", "check", "info", "alert-triangle",
+      "alert-circle", "eye", "eye-off", "lock", "unlock", "power", "sliders",
+      "copy", "download", "folder", "flame", "skull", "ghost", "radar"
     ]);
 
-    function isQuotaError(err) {
-      if (!err) return false;
-      return (
-        err.name === "QuotaExceededError" ||
-        err.name === "NS_ERROR_DOM_QUOTA_REACHED" ||
-        err.code === 22 ||
-        err.code === 1014 ||
-        err.number === -2147024882 ||
-        (typeof err.message === "string" && err.message.toLowerCase().includes("quota"))
-      );
+    /**
+     * Pure vanilla HTML entity encoder for text content
+     * Encodes &, <, >, ", ', and ` to neutralize HTML injection
+     */
+    function escapeHTML(str) {
+      if (str === null || str === undefined) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;")
+        .replace(/`/g, "&#96;");
     }
 
-    function showQuotaToast(message) {
-      let toast = document.getElementById(TOAST_ID);
-      if (!toast) {
-        toast = document.createElement("div");
-        toast.id = TOAST_ID;
-        toast.className = "av-storage-quota-toast";
-        toast.setAttribute("role", "status");
-        toast.setAttribute("aria-live", "polite");
-        document.body.appendChild(toast);
-      }
-
-      toast.innerHTML = `
-        <div class="av-quota-toast-content">
-          <svg class="av-quota-toast-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-          </svg>
-          <span class="av-quota-toast-text">${message}</span>
-          <button type="button" class="av-quota-toast-close" aria-label="Dismiss Notification">&times;</button>
-        </div>
-      `;
-
-      toast.querySelector(".av-quota-toast-close").onclick = () => {
-        toast.classList.remove("visible");
-      };
-
-      toast.classList.add("visible");
-      if (toastTimeout) clearTimeout(toastTimeout);
-      toastTimeout = setTimeout(() => {
-        toast.classList.remove("visible");
-      }, 5500);
+    /**
+     * Attribute-safe encoder for HTML attributes (title="...", data-*, aria-*)
+     * Strictly neutralizes quote breakout characters and control characters
+     */
+    function escapeAttr(str) {
+      if (str === null || str === undefined) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/`/g, "&#96;")
+        .replace(/=/g, "&#61;");
     }
 
-    function pruneTier(tierRegexList) {
-      let bytesFreed = 0;
-      let keysRemoved = 0;
-      try {
-        const totalKeys = localStorage.length;
-        const candidateKeys = [];
-
-        for (let i = 0; i < totalKeys; i++) {
-          const key = localStorage.key(i);
-          if (!key || PROTECTED_KEYS.has(key)) continue;
-
-          for (let r = 0; r < tierRegexList.length; r++) {
-            if (tierRegexList[r].test(key)) {
-              candidateKeys.push(key);
-              break;
-            }
-          }
-        }
-
-        candidateKeys.forEach((key) => {
-          try {
-            const val = localStorage.getItem(key) || "";
-            bytesFreed += (key.length + val.length) * 2;
-            localStorage.removeItem(key);
-            keysRemoved++;
-          } catch (_) {}
-        });
-      } catch (_) {}
-      return { bytesFreed, keysRemoved };
+    /**
+     * Validates and returns a safe Lucide icon name from the strict whitelist
+     */
+    function sanitizeIconName(name) {
+      if (!name || typeof name !== "string") return "gamepad-2";
+      const cleanName = name.trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
+      return LUCIDE_ICON_WHITELIST.has(cleanName) ? cleanName : "gamepad-2";
     }
 
-    function pruneStorageForQuota() {
-      let totalFreed = 0;
-      let totalRemoved = 0;
-
-      for (let p = 0; p < EVICTION_PRIORITIES.length; p++) {
-        const res = pruneTier(EVICTION_PRIORITIES[p]);
-        totalFreed += res.bytesFreed;
-        totalRemoved += res.keysRemoved;
-        if (totalRemoved > 0) break; // Try writing after each tier
-      }
-
-      return { totalFreed, totalRemoved };
-    }
-
-    function safeSetItem(key, value) {
-      try {
-        localStorage.setItem(key, value);
-        return true;
-      } catch (err) {
-        if (isQuotaError(err)) {
-          console.warn(`[ArcadeVerse Storage] QuotaExceededError writing "${key}". Initiating LRU prune...`);
-          const pruneResult = pruneStorageForQuota();
-
-          if (pruneResult.totalRemoved > 0) {
-            try {
-              localStorage.setItem(key, value);
-              showQuotaToast(
-                "Storage quota full: old session logs were automatically cleaned up to preserve your favorites."
-              );
-              return true;
-            } catch (retryErr) {
-              console.error("[ArcadeVerse Storage] Write failed even after eviction:", retryErr);
-            }
-          }
-
-          showQuotaToast(
-            "Storage quota full: unable to save new data without clearing space."
-          );
-          return false;
-        } else {
-          console.warn(`[ArcadeVerse Storage] Failed to set "${key}":`, err);
-          return false;
-        }
-      }
+    /**
+     * Generates a safe whitelisted Lucide icon HTML tag
+     */
+    function renderSafeIcon(name, extraClass = "") {
+      const safeName = sanitizeIconName(name);
+      const safeClass = escapeAttr(extraClass);
+      return `<i data-lucide="${safeName}" class="${safeClass}"></i>`;
     }
 
     return {
-      safeSetItem,
-      showQuotaToast,
-      isQuotaError,
-      pruneStorageForQuota
+      escapeHTML,
+      escapeAttr,
+      sanitizeIconName,
+      renderSafeIcon,
+      LUCIDE_ICON_WHITELIST
     };
   })();
 
-  window.ArcadeStorageResilience = ArcadeStorageResilience;
+  window.ArcadeSanitizer = ArcadeSanitizer;
+  const { escapeHTML, escapeAttr, sanitizeIconName, renderSafeIcon } = ArcadeSanitizer;
 
   // Search & filter UI element refs
   const searchClearBtn = document.getElementById("search-clear-btn");
@@ -1170,11 +1075,17 @@ document.addEventListener("DOMContentLoaded", () => {
     filtered.forEach((game) => {
       const card = document.createElement("div");
       card.className = "game-card";
-      card.setAttribute("data-game-id", game.id);
-      const iconName = game.lucideIcon || "gamepad-2";
-      const iconHtml = `<i data-lucide="${iconName}"></i>`;
+      card.setAttribute("data-game-id", escapeAttr(game.id));
+      const safeGameId = escapeAttr(game.id);
+      const safeTitle = escapeHTML(game.title);
+      const safeCategory = escapeHTML(game.category);
+      const safeDesc = escapeHTML(game.description || "");
+      const safeAuthor = escapeHTML(game.author || game.github || "Contributor");
+      const safeGithub = escapeHTML(game.github || game.author || "Contributor");
+      const safeAuthorAttr = escapeAttr(game.author || game.github || "Contributor");
+      const iconHtml = renderSafeIcon(game.lucideIcon || "gamepad-2");
       const favorited = favs.has(game.id);
-      const actionText = 'Play Now <i data-lucide="play" style="width: 13px; height: 13px; vertical-align: middle; margin-left: 2px;"></i>';
+      const actionText = `Play Now ${renderSafeIcon("play", "btn-play-icon")}`;
 
       const userRating = (window.GameRatings && window.GameRatings.ratings[game.id]) || null;
       const displayScore = userRating ? Number(userRating).toFixed(1) : (game.stars ? (game.stars / 10).toFixed(1) : "5.0");
@@ -1193,9 +1104,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       card.innerHTML = `
         <div class="game-card-preview">
-          <span class="game-category-tag">${game.category}</span>
+          <span class="game-category-tag">${safeCategory}</span>
           ${halloweenBadgeHtml}
-          <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${game.id}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
+          <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
               <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
             </svg>
@@ -1203,26 +1114,26 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="game-icon">${iconHtml}</div>
         </div>
         <div class="game-card-body">
-          <h3 class="game-card-title">${game.title}${halloweenTitleBadge}</h3>
-          <p class="game-card-desc">${game.description}</p>
+          <h3 class="game-card-title">${safeTitle}${halloweenTitleBadge}</h3>
+          <p class="game-card-desc">${safeDesc}</p>
           <div class="game-card-rating-row">
-            <div class="game-rating-stars" data-game-id="${game.id}" aria-label="Rating for ${game.title}">
+            <div class="game-rating-stars" data-game-id="${safeGameId}" aria-label="Rating for ${escapeAttr(game.title)}">
               ${[1, 2, 3, 4, 5].map(starNum => `
-                <button type="button" class="rate-star-btn ${currentStar >= starNum ? 'voted' : ''}" data-game="${game.id}" data-star="${starNum}" title="Rate ${starNum} star${starNum > 1 ? 's' : ''}" aria-label="Rate ${starNum} stars">
+                <button type="button" class="rate-star-btn ${currentStar >= starNum ? 'voted' : ''}" data-game="${safeGameId}" data-star="${starNum}" title="Rate ${starNum} star${starNum > 1 ? 's' : ''}" aria-label="Rate ${starNum} stars">
                   <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                 </button>
               `).join('')}
-              <span class="rating-badge">${displayScore}</span>
+              <span class="rating-badge">${escapeHTML(displayScore)}</span>
             </div>
           </div>
           <div class="game-card-footer">
             <div class="contributor-meta">
-              <div class="contributor-avatar">${(game.author || game.github || "A").charAt(0).toUpperCase()}</div>
+              <div class="contributor-avatar">${escapeHTML((game.author || game.github || "A").charAt(0).toUpperCase())}</div>
               <div class="contributor-name">
-                <button type="button" class="author-filter-btn" data-author="${game.author || game.github}" title="Filter games by ${game.author || game.github}" aria-label="Filter games by author ${game.author || game.github}">by @${game.github || game.author}</button>
+                <button type="button" class="author-filter-btn" data-author="${safeAuthorAttr}" title="Filter games by ${safeAuthorAttr}" aria-label="Filter games by author ${safeAuthorAttr}">by @${safeGithub}</button>
               </div>
             </div>
-            <button class="btn-play-trigger" data-id="${game.id}">${actionText}</button>
+            <button class="btn-play-trigger" data-id="${safeGameId}">${actionText}</button>
           </div>
         </div>
       `;
@@ -1996,15 +1907,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let activeSuggestionIndex = -1;
   let currentSuggestions = [];
 
-  function escapeHTML(str) {
-    return String(str || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
-
   function escapeRegex(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
@@ -2135,7 +2037,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .map((game, idx) => {
         const catBadge = game.category ? game.category.split("/")[0].trim() : "Game";
         const authorHandle = game.github || game.author || "";
-        const iconName = game.lucideIcon || "gamepad-2";
+        const iconName = sanitizeIconName(game.lucideIcon || "gamepad-2");
 
         return `
           <li class="autocomplete-item"
@@ -2144,7 +2046,7 @@ document.addEventListener("DOMContentLoaded", () => {
               data-index="${idx}"
               aria-selected="false">
             <div class="autocomplete-icon-wrap" aria-hidden="true">
-              <i data-lucide="${escapeHTML(iconName)}"></i>
+              ${renderSafeIcon(iconName)}
             </div>
             <div class="autocomplete-content">
               <div class="autocomplete-title-row">
