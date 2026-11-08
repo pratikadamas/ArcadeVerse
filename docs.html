@@ -511,7 +511,8 @@ jobs:
           <ul>
             <li><strong>Protected Root Isolation:</strong> Ensures no community PR inadvertently edits protected runtime files (e.g. <code>assets/js/games-registry.js</code>, <code>index.html</code>, or <code>leaderboard.html</code>).</li>
             <li><strong>Zero Broken Relative Links:</strong> Asserts that every local image, stylesheet, script, and audio resource exists on the file system.</li>
-            <li><strong>SVG Standard:</strong> Rejects unicode emojis across game scripts and stylesheets to maintain a consistent cyber-arcade aesthetic.</li>
+            <li><strong>SVG Standard & Whitelisted Icons:</strong> Rejects unicode emojis across game scripts and stylesheets to maintain a consistent cyber-arcade aesthetic, and restricts icon names to verified whitelisted Lucide SVGs (#491).</li>
+            <li><strong>XSS & Attribute Breakout Sanitization:</strong> Ensures all dynamic game titles, author handles, and descriptions in <code>game.json</code> are stripped of raw angle brackets and unescaped quote delimiters before catalog rendering (#491).</li>
             <li><strong>Schema Conformance:</strong> Asserts that mandatory metadata fields (<code>title</code>, <code>category</code>, <code>description</code>, <code>author</code>, <code>github</code>) exist in <code>game.json</code>.</li>
           </ul>
         </section>
@@ -684,14 +685,22 @@ if (window.ArcadeVerse && ArcadeVerse.trackTexture) {
             </div>
             <pre class="code-pre"><code>// In your game.js or by importing assets/js/arcadeverse-sdk.js:
 if (window.ArcadeVerse) {
-  // 1. Automatically track Web Audio contexts for zero audio pop on close
+  // 1. Two-way cryptographic session handshake authentication (#489)
+  ArcadeVerse.onHandshake((sessionToken) => {
+    console.log("[MyGame] Secure session established with ArcadeVerse hub:", sessionToken);
+  });
+
+  // 2. Automatically track Web Audio contexts for zero audio pop on close
   ArcadeVerse.trackAudioContext(myGameAudioContext);
 
-  // 2. Track animation loop IDs
+  // 3. Track animation loop IDs
   const animId = requestAnimationFrame(gameLoop);
   ArcadeVerse.trackAnimationFrame(animId);
 
-  // 3. Register custom teardown handler
+  // 4. Secure score dispatches authenticated with active session token
+  ArcadeVerse.postScore(currentScore);
+
+  // 5. Register custom teardown handler
   ArcadeVerse.onTeardown(() => {
     cancelAnimationFrame(animId);
     if (myGameAudioContext && myGameAudioContext.state !== 'closed') {
@@ -699,11 +708,21 @@ if (window.ArcadeVerse) {
     }
   });
 
-  // 4. Listen for pause & resume events
+  // 6. Listen for pause & resume events
   ArcadeVerse.onPause(() => { gameState = 'PAUSED'; });
   ArcadeVerse.onResume(() => { gameState = 'PLAYING'; });
 }</code></pre>
           </div>
+
+          <h3 class="docs-subsection-title">Cryptographic Session Handshake Protocol (#489)</h3>
+          <p class="docs-paragraph">
+            To prevent cross-site message spoofing, fake high-score submissions, and unauthorized modal termination, ArcadeVerse enforces a strict structured clone handshake on iframe communication:
+          </p>
+          <ul>
+            <li><strong>Strict Origin Validation:</strong> All postMessage handlers reject transmissions whose <code>event.origin</code> does not strictly equal <code>window.location.origin</code> (with local <code>file://</code> and <code>null</code> origin development tolerance).</li>
+            <li><strong>Source Window Verification:</strong> Events are validated against <code>event.source === gameIframe.contentWindow</code>, guaranteeing that messages originate exclusively from the actively mounted game iframe.</li>
+            <li><strong>Cryptographic Session Token:</strong> When the iframe loads, the parent hub dispatches an <code>AV_INIT_SESSION</code> challenge with a cryptographically secure token (<code>crypto.randomUUID()</code>). The child SDK confirms with an <code>AV_SESSION_ACK</code> and signs all subsequent runtime events (such as <code>ARCADEVERSE_GAME_SCORE</code> and keyboard shortcuts) with this token.</li>
+          </ul>
         </section>
 
         <!-- 10. Accessibility Hub -->
@@ -766,6 +785,20 @@ if (window.ArcadeVerse) {
           <p class="docs-paragraph">
             Implemented in <code>assets/js/daily-challenge.js</code>, the daily quest hashes the current UTC date string (<code>YYYY-MM-DD</code>) into a deterministic integer seed. This seed picks a game from the registry and sets a target score. It tracks player streaks in LocalStorage and runs a real-time countdown to the next 00:00 UTC rotation.
           </p>
+        </section>
+
+        <!-- 14b. Storage Resilience & Quota Engine -->
+        <section class="docs-section" id="storage-resilience">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Resilient LocalStorage Quota & Automatic Pruning Engine (#490)</h2>
+          <p class="docs-paragraph">
+            Implemented in <code>assets/js/app.js</code> via <code>ArcadeStorageResilience</code>, this subsystem shields the platform from fatal <code>QuotaExceededError</code> (DOMException code 22) browser storage crashes when 5MB storage quotas are exhausted.
+          </p>
+          <ul>
+            <li><strong>Hierarchical Multi-Tier Eviction:</strong> When quota limits are reached, the engine automatically executes an LRU pruning sweep, first purging ephemeral network API caches, followed by stale recently-played session logs and telemetry.</li>
+            <li><strong>Strict Priority Protection:</strong> Essential user data—including favorited game IDs (<code>av_favorites</code>), custom star ratings, master audio configurations, and theme preferences—are permanently protected from eviction.</li>
+            <li><strong>Graceful Non-Intrusive HUD Alert:</strong> Displays an animated alert toast notifying the player: <em>"Storage quota full: old session logs were automatically cleaned up to preserve your favorites."</em></li>
+          </ul>
         </section>
 
         <!-- 15. Scoring & Leaderboard -->

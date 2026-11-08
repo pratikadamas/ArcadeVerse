@@ -316,6 +316,15 @@ folders.forEach(folder => {
           totalErrors++;
         }
       });
+
+      // Strict XSS & Attribute Breakout Check (#491)
+      ['title', 'category', 'author', 'description'].forEach(field => {
+        const val = meta[field];
+        if (typeof val === 'string' && (val.includes('"') || val.includes('<') || val.includes('>'))) {
+          issues.push(`❌ Attribute Breakout / XSS risk: "${field}" contains unescaped quotes or angle brackets.`);
+          totalErrors++;
+        }
+      });
     } catch (err) {
       issues.push(`❌ game.json contains invalid JSON: ${err.message}`);
       totalErrors++;

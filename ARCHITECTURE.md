@@ -362,6 +362,8 @@ The script audits:
 - Strict JSON schema validity and required attributes
 - Prohibition of raw Unicode emojis in markup in favor of SVG/Lucide icons
 - Proper relative asset paths
+- Sanitization of dynamic attributes & Lucide icon name whitelist enforcement (#491)
+- Strict prevention of attribute breakouts in game metadata
 
 ---
 
