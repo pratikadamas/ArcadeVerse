@@ -1867,24 +1867,63 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && gameModal.classList.contains("active")) {
-      if (isConfirmingQuit) {
-        hideQuitConfirmationModal();
-        return;
+  // ========================================================
+  // ESC KEY DUAL-ACTION CONFLICT RESOLVER (#500)
+  // Preserves in-game pause menus and prevents accidental game aborts
+  // ========================================================
+  let escPressTimer = null;
+  let escPressCount = 0;
+
+  function showEscExitToast() {
+    const existing = document.getElementById("esc-exit-toast");
+    if (existing) existing.remove();
+
+    const toast = document.createElement("div");
+    toast.id = "esc-exit-toast";
+    toast.className = "esc-exit-prompt-toast";
+    toast.setAttribute("role", "status");
+    toast.innerHTML = `
+      <div class="esc-exit-toast-body">
+        <span class="esc-badge">ESC</span>
+        <span>Game paused. Press <kbd>ESC</kbd> again or <kbd>Shift+ESC</kbd> to exit to catalog.</span>
+      </div>
+    `;
+
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add("visible"));
+
+    setTimeout(() => {
+      if (toast.parentElement) {
+        toast.classList.remove("visible");
+        setTimeout(() => toast.remove(), 250);
       }
-      requestModalClose(false);
+    }, 2500);
+  }
+
+  function handleEscDualAction(e) {
+    if (e.key !== "Escape" || !gameModal || !gameModal.classList.contains("active")) return;
+
+    if (isConfirmingQuit) {
+      hideQuitConfirmationModal();
+      return;
     }
 
-    // Check if user is actively in confirmation dialog or focus is outside iframe
-    const confirmDialog = document.getElementById("modal-confirm-dialog");
+    // Shift + Escape always forces immediate exit via score confirmation
+    if (e.shiftKey) {
+      if (escPressTimer) clearTimeout(escPressTimer);
+      escPressCount = 0;
+      requestModalClose(false);
+      return;
+    }
+
+    // Check if user is actively in confirmation dialog
+    const confirmDialog = document.getElementById("game-quit-confirmation-dialog");
     if (confirmDialog && confirmDialog.classList.contains("active")) {
-      closeGameModal(false);
+      hideQuitConfirmationModal();
       return;
     }
 
     // First press: Dispatch pause event to game iframe
-    // Cancel any previous pending single-tap action timer
     if (escPressTimer) clearTimeout(escPressTimer);
 
     escPressCount++;
@@ -1907,12 +1946,12 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         window.dispatchEvent(new CustomEvent("arcadeverse:esc-exit-confirmed"));
       } catch (_) {}
-      // Second press within 1.5s: close modal
+      // Second press within 1.5s: close modal with protection
       if (escPressTimer) clearTimeout(escPressTimer);
       escPressCount = 0;
       const toast = document.getElementById("esc-exit-toast");
       if (toast) toast.remove();
-      closeGameModal(false);
+      requestModalClose(false);
     }
   }
 
@@ -1992,7 +2031,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const themeBtn = document.getElementById("theme-toggle-btn");
         if (themeBtn) themeBtn.click();
       }
-    }
     }
   });
 
