@@ -1753,115 +1753,90 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ========================================================
-  // WAI-ARIA MODAL FOCUS TRAP ENGINE (#499)
-  // Keeps keyboard navigation strictly inside the modal dialog
+  // ESC KEY DUAL-ACTION CONFLICT RESOLVER (#500)
+  // Preserves in-game pause menus and prevents accidental game aborts
   // ========================================================
-  function getModalFocusableElements() {
-    if (!gameModal) return [];
-    const focusableSelectors = [
-      'button:not([disabled]):not([hidden]):not([tabindex="-1"])',
-      'a[href]:not([tabindex="-1"])',
-      'iframe:not([tabindex="-1"])',
-      '[tabindex]:not([tabindex="-1"])',
-      'input:not([disabled]):not([type="hidden"])'
-    ];
-    // Also include internal controls from modal header and iframe if accessible
-    const elements = Array.from(gameModal.querySelectorAll(focusableSelectors.join(', ')));
-    if (gameIframe && !elements.includes(gameIframe)) {
-      elements.splice(elements.length - 1, 0, gameIframe);
-    }
-    return elements;
-  }
+  let escPressTimer = null;
+  let escPressCount = 0;
 
-  /**
-   * Diagnostic focus trap state inspector
-   * @returns {Object} focus metrics
-   */
-  function inspectModalFocusState() {
-    const focusables = getModalFocusableElements();
-    return {
-      isOpen: !!(gameModal && gameModal.classList.contains("active")),
-      focusableCount: focusables.length,
-      currentActive: document.activeElement ? document.activeElement.tagName : null,
-      isContained: !!(gameModal && document.activeElement && gameModal.contains(document.activeElement))
-    };
-      .filter((el) => {
-        return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
-      });
-  }
+  function showEscExitToast() {
+    const existing = document.getElementById("esc-exit-toast");
+    if (existing) existing.remove();
 
-  /**
-   * Ensure focused element is visible and within bounds
-   * @param {HTMLElement} el
-   */
-  function scrollElementIntoModalView(el) {
-    if (!el || typeof el.scrollIntoView !== 'function') return;
-    try {
-      el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    } catch (_) {}
-  }
+    const toast = document.createElement("div");
+    toast.id = "esc-exit-toast";
+    toast.className = "esc-exit-prompt-toast";
+    toast.setAttribute("role", "status");
+    toast.innerHTML = 
+      <div class="esc-exit-toast-body">
+        <span class="esc-badge">ESC</span>
+        <span>Game paused. Press <kbd>ESC</kbd> again or <kbd>Shift+ESC</kbd> to exit to catalog.</span>
+      </div>
+    ;
 
-  /**
-   * Trap and redirect focus if click or touch lands on inert background
-   */
-  function handleModalFocusRetention(e) {
-    if (!gameModal || !gameModal.classList.contains('active')) return;
-    if (!gameModal.contains(e.target)) {
-      const focusables = getModalFocusableElements();
-      if (focusables.length > 0) {
-        e.preventDefault();
-        focusables[0].focus();
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add("visible"));
+
+    setTimeout(() => {
+      if (toast.parentElement) {
+        toast.classList.remove("visible");
+        setTimeout(() => toast.remove(), 250);
       }
-    }
+    }, 2500);
   }
 
-  document.addEventListener('focusin', handleModalFocusRetention);
+  function handleEscDualAction(e) {
+    if (e.key !== "Escape" || !gameModal || !gameModal.classList.contains("active")) return;
 
-  function handleModalKeyDown(e) {
-    if (!gameModal || !gameModal.classList.contains("active")) return;
-
-    if (e.key === "Escape") {
+    // Shift + Escape always forces immediate exit
+    if (e.shiftKey) {
+      if (escPressTimer) clearTimeout(escPressTimer);
+      escPressCount = 0;
       closeGameModal(false);
       return;
     }
 
-    if (e.key === "Tab") {
-      const focusables = getModalFocusableElements();
-      if (focusables.length === 0) {
-        e.preventDefault();
-        return;
-      }
+    // Check if user is actively in confirmation dialog or focus is outside iframe
+    const confirmDialog = document.getElementById("modal-confirm-dialog");
+    if (confirmDialog && confirmDialog.classList.contains("active")) {
+      closeGameModal(false);
+      return;
+    }
 
-      const firstElement = focusables[0];
-      const lastElement = focusables[focusables.length - 1];
+    // First press: Dispatch pause event to game iframe
+    // Cancel any previous pending single-tap action timer
+    if (escPressTimer) clearTimeout(escPressTimer);
 
-      if (e.shiftKey) {
-        // Shift + Tab: going backwards
-        if (document.activeElement === firstElement || !gameModal.contains(document.activeElement)) {
-          e.preventDefault();
-          lastElement.focus();
+    escPressCount++;
+    if (escPressCount === 1) {
+      try {
+        if (gameIframe && gameIframe.contentWindow) {
+          gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
+          gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_ESC_PAUSE" }, "*");
         }
-      } else {
-        // Tab: going forwards
-        if (document.activeElement === lastElement || !gameModal.contains(document.activeElement)) {
-          e.preventDefault();
-          firstElement.focus();
-        }
-      }
+      } catch (_) {}
+
+      showEscExitToast();
+
+      if (escPressTimer) clearTimeout(escPressTimer);
+      escPressTimer = setTimeout(() => {
+        escPressCount = 0;
+      }, 1500);
+    } else if (escPressCount >= 2) {
+      // Announce session close to active listeners
+      try {
+        window.dispatchEvent(new CustomEvent("arcadeverse:esc-exit-confirmed"));
+      } catch (_) {}
+      // Second press within 1.5s: close modal
+      if (escPressTimer) clearTimeout(escPressTimer);
+      escPressCount = 0;
+      const toast = document.getElementById("esc-exit-toast");
+      if (toast) toast.remove();
+      closeGameModal(false);
     }
   }
 
-  window.addEventListener("keydown", handleModalKeyDown);
-
-  // Listen for forwarded shortcuts from inside game iframes (via ArcadeVerse SDK)
-  // Re-focus request handler from SDK (#499)
-  window.addEventListener("message", (e) => {
-    if (e && e.data && e.data.type === "ARCADEVERSE_REFOCUS_GAME") {
-      if (gameIframe && typeof gameIframe.focus === "function") {
-        gameIframe.focus();
-      }
-    }
-  });
+  window.addEventListener("keydown", handleEscDualAction);
 
   // Listen for forwarded shortcuts and runtime events from inside game iframes
   window.addEventListener("message", (e) => {

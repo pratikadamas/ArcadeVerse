@@ -795,24 +795,23 @@
           </div>
         </div>
 
-        <!-- Question 30 (#499) -->
-        <div class="faq-accordion-item" data-category="architecture" id="faq-30">
-          <button class="faq-accordion-trigger" type="button" aria-expanded="false" aria-controls="faq-ans-30">
+        <!-- Question 31 (#500) -->
+        <div class="faq-accordion-item" data-category="architecture" id="faq-31">
+          <button class="faq-accordion-trigger" type="button" aria-expanded="false" aria-controls="faq-ans-31">
             <span class="faq-question-text">
               <span class="faq-category-badge">Architecture</span>
-              30. How does ArcadeVerse enforce WAI-ARIA focus traps in game modals?
+              31. How does the ESC key distinguish between opening a pause menu and exiting the modal?
             </span>
             <i data-lucide="chevron-down" class="faq-chevron"></i>
           </button>
-          <div class="faq-accordion-content" id="faq-ans-30" role="region">
+          <div class="faq-accordion-content" id="faq-ans-31" role="region">
             <div class="faq-accordion-inner">
               <div class="faq-answer-text">
-                <p>When a game launches inside the modal window, the focus manager enforces strict dialog confinement according to W3C WAI-ARIA authoring practices:</p>
-                <p>Keyboards and screen-readers are prevented from inadvertently activating background catalog links or search forms:</p>
+                <p>ArcadeVerse implements a dual-action Escape key resolver:</p>
                 <ul>
-                  <li><strong>Tab Trapping:</strong> Pressing Tab wraps from the last interactive header button back to the first.</li>
-                  <li><strong>Shift+Tab:</strong> Reversing navigation wraps backwards without leaking focus into background elements.</li>
-                  <li><strong>Restoration:</strong> When closing the modal, focus is automatically returned to the exact card button that launched the session.</li>
+                  <li><strong>Single Tap:</strong> Pauses the embedded game and prompts an on-screen hint.</li>
+                  <li><strong>Double Tap:</strong> Pressing Escape a second time within 1.5 seconds confirms modal exit to the catalog.</li>
+                  <li><strong>Shift+ESC:</strong> Instantly exits the modal without waiting for a second keypress.</li>
                 </ul>
               </div>
             </div>

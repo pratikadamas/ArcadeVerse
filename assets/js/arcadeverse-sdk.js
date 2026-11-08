@@ -838,85 +838,72 @@
      * @returns {AudioContext}
      */
     /**
-     * Request parent modal to refocus the game iframe canvas
+     * Bind standard ESC pause handler inside game script
+     * @param {Function} onPause
      */
-    focusGameCanvas: function () {
+    /**
+     * Notify parent window that game has resumed from pause state
+     */
+    postGameResume: function () {
       if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'ARCADEVERSE_REFOCUS_GAME' }, '*');
+        window.parent.postMessage({ type: 'ARCADEVERSE_GAME_RESUMED' }, '*');
       }
     },
 
     /**
-     * Intercept keyboard navigation inside game iframe to prevent focus loss
+     * Register pause toggler that responds to both hub pause and ESC signals
+     * @param {Function} toggleFn
      */
-    /**
-     * Re-focus handler for trapped iframe environments
-     * Dispatches keydown escape forwarders to parent
-     */
-    /**
-     * Diagnostic report of iframe focus capabilities
-     * @returns {Object}
-     */
-    checkFocusCapabilities: function () {
-      return {
-        hasFocus: typeof document !== 'undefined' ? document.hasFocus() : false,
-        activeTag: typeof document !== 'undefined' && document.activeElement ? document.activeElement.tagName : 'NONE'
-      };
-    },
-
-    /**
-     * Re-focus handler for trapped iframe environments
-     * Dispatches keydown escape forwarders to parent
-     */
-    /**
-     * Trap Tab navigation inside game iframe
-     * Prevents keyboard focus from escaping to the outer parent document without intent
-     */
-    enableIframeTabTrap: function () {
-      if (typeof window === 'undefined') return;
-      window.addEventListener('keydown', function (e) {
-        if (e.key === 'Tab') {
-          var interactive = Array.from(document.querySelectorAll('button, a, input, canvas[tabindex]'));
-          if (interactive.length > 0) {
-            var first = interactive[0];
-            var last = interactive[interactive.length - 1];
-            if (e.shiftKey && document.activeElement === first) {
-              e.preventDefault();
-              last.focus();
-            } else if (!e.shiftKey && document.activeElement === last) {
-              e.preventDefault();
-              first.focus();
-            }
-          }
+    registerPauseToggleHandler: function (toggleFn) {
+      if (typeof window === 'undefined' || typeof toggleFn !== 'function') return;
+      window.addEventListener('message', function (e) {
+        if (e && e.data && (e.data.type === 'ARCADEVERSE_PAUSE' || e.data.type === 'ARCADEVERSE_ESC_PAUSE')) {
+          toggleFn(true);
+        } else if (e && e.data && e.data.type === 'ARCADEVERSE_RESUME') {
+          toggleFn(false);
         }
       });
     },
 
     /**
-     * Inspect whether active focus is currently within the game canvas
-     * @param {HTMLCanvasElement} canvas
+     * Diagnostic report of keyboard shortcut forwarders
+     * @returns {Object}
+     */
+    /**
+     * Helper to test if a key event matches standard escape keys
+     * @param {KeyboardEvent} e
      * @returns {boolean}
      */
-    isCanvasFocused: function (canvas) {
-      if (!canvas || typeof document === 'undefined') return false;
-      return document.activeElement === canvas;
+    /**
+     * Programmatically simulate game resume
+     */
+    triggerResume: function () {
+      this.resume();
+      this.postGameResume();
     },
 
-    forwardEscapeKey: function () {
-      if (typeof window !== 'undefined') {
-        window.addEventListener('keydown', function (e) {
-          if (e.key === 'Escape' && window.parent && window.parent !== window) {
-            window.parent.postMessage({ type: 'ARCADEVERSE_KEY_SHORTCUT', key: 'Escape' }, '*');
-          }
-        });
-      }
+    /**
+     * Helper to test if a key event matches standard escape keys
+     * @param {KeyboardEvent} e
+     * @returns {boolean}
+     */
+    isEscapeEvent: function (e) {
+      return !!(e && (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27));
     },
 
-    bindInternalFocusGuard: function (canvasElement) {
-      if (!canvasElement) return;
-      canvasElement.setAttribute('tabindex', '0');
-      canvasElement.addEventListener('click', function () {
-        canvasElement.focus();
+    getKeyboardBridgeStatus: function () {
+      return {
+        isEscBound: true,
+        parentBridged: typeof window !== 'undefined' && window.parent && window.parent !== window
+      };
+    },
+
+    onEscPause: function (onPause) {
+      if (typeof window === 'undefined' || typeof onPause !== 'function') return;
+      window.addEventListener('message', function (e) {
+        if (e && e.data && e.data.type === 'ARCADEVERSE_ESC_PAUSE') {
+          onPause();
+        }
       });
     },
 

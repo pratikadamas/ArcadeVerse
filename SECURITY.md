@@ -53,12 +53,11 @@ To protect player profiles, ratings, and game progress from corruption or malici
 - All restored keys and values are sanitized to primitive types with a 1MB per-item threshold and a 2,000-key capacity cap.
 - Restores are executed as atomic transactions: an in-memory snapshot is recorded prior to writing, and an instant rollback is executed if quota or parse errors occur during processing.
 
-## 🎯 Accessibility & Dialog Focus Isolation (#499)
+## 🎮 Input Interception & Key Conflict Isolation (#500)
 
-To ensure compliant keyboard interaction and prevent background UI hijacking:
-- Active modals engage a strict focus trap intercepting Tab and Shift+Tab.
-- No keyboard events can inadvertently trigger background actions or submit forms behind active gameplay viewports.
-- Keyboard focus is securely restored to the triggering element upon modal exit.
+To prevent keypress hijacking and avoid unintended session termination:
+- Top-level keyboard event handlers allow game runtimes to consume in-game keys before global destruction.
+- Escape commands operate through a dual-action confirmation gate, preventing uncoordinated termination of active gameplay state.
 
 ## 💻 Web Architecture & Code Safety Guidelines
 

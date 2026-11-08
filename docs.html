@@ -638,34 +638,32 @@ validateBackupPayload(data)
                 </div>
               </div>
 
-              <!-- Modal Focus Trap & Keyboard Navigation Architecture -->
+              <!-- ESC Key Dual-Action Pause & Exit Architecture -->
               <div class="docs-callout note" style="margin-top: 24px;">
-                <div class="docs-callout-icon"><i data-lucide="crosshair"></i></div>
+                <div class="docs-callout-icon"><i data-lucide="pause-circle"></i></div>
                 <div>
-                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">WAI-ARIA Focus Trap & Keyboard Navigation Guard (#499)</h4>
+                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">ESC Key Dual-Action Conflict Resolution & In-Game Pause Guard (#500)</h4>
                   <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
-                    When playing games inside the in-app modal launcher, keyboard focus must remain strictly locked inside the dialog container. Escaping the container into the background catalog violates accessibility standards:
+                    In classical and retro video games, pressing the <code>Escape</code> key is the universal gesture to open the in-game pause menu. When the hub modal unconditionally bound Escape to terminate sessions, players accidentally lost uncommitted scores:
                   </p>
                   <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
-                    <li><strong>Modal Boundary Containment:</strong> Background elements (search bar, filter tags, and footer) are completely unreachable via Tab navigation while a game modal is displayed.</li>
-                    <li><strong>Visual Focus Outlines:</strong> Modal interactive action buttons receive prominent focus indicators adhering to WCAG 2.1 AA focus visible standards.</li>
-                    <li><strong>Bi-Directional Tab Trapping:</strong> Pressing <code>Tab</code> or <code>Shift+Tab</code> cycles exclusively between modal action buttons (Mute, Fullscreen, Reload, External Link, Close).</li>
-                    <li><strong>Automatic Focus Initialization:</strong> Opening a modal automatically directs keyboard focus to the primary close button or game iframe canvas.</li>
-                    <li><strong>Origin Return Restoration:</strong> Closing the modal returns focus directly to the originating card button or triggering element.</li>
-                    <li><strong>Inert Boundary Observation:</strong> Any clicks or gestures directed at the backdrop are intercepted without delegating active keyboard focus to underlying page widgets.</li>
+                    <li><strong>First Press (Pause Signal):</strong> The initial Escape keystroke dispatches <code>ARCADEVERSE_ESC_PAUSE</code> to the embedded game iframe, opening its internal pause or options menu.</li>
+                    <li><strong>Double-Tap Exit Window:</strong> A 1500ms safety window activates with a floating prompt (<em>"Game paused. Press ESC again or Shift+ESC to exit to catalog"</em>).</li>
+                    <li><strong>Second Press (Modal Dismissal):</strong> Pressing Escape a second time within 1.5 seconds confirms modal exit without abrupt surprise.</li>
+                    <li><strong>Immediate Override:</strong> <code>Shift+Escape</code> acts as an intentional power shortcut, immediately closing the modal container.</li>
+                    <li><strong>Event Bridge Notification:</strong> Games can listen to <code>ARCADEVERSE_ESC_PAUSE</code> to pause simulation tickers and physics loops gracefully.</li>
                   </ul>
-                  <h5 style="color: var(--text-primary); margin-top: 14px; margin-bottom: 6px; font-size: 0.95rem;">Focus Trap Cycle Execution</h5>
+                  <h5 style="color: var(--text-primary); margin-top: 14px; margin-bottom: 6px; font-size: 0.95rem;">Dual-Action Protocol Integration</h5>
                   <p style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 8px;">
-                    When cycling through modal elements, focus is kept within bounds by intercepting Tab events on the first and last elements:
-                  </p>
-                  <p style="font-size: 0.88rem; line-height: 1.6; margin-top: 10px; margin-bottom: 8px;">
-                    Focus trapping operates synchronously without noticeable input lag or interfering with canvas touch gestures or game controllers. The active modal container retains focus even if background canvas borders are clicked:
+                    Games integrate seamlessly with the dual-action ESC protocol by subscribing to <code>ARCADEVERSE_ESC_PAUSE</code> to open their internal pause menu:
                   </p>
                   <div class="code-block-wrapper" style="margin-top: 10px; margin-bottom: 10px;">
-                    <pre class="code-pre"><code class="language-javascript">// Focus Trap Cycle
-if (document.activeElement === lastElement && !e.shiftKey) {
-  e.preventDefault();
-  firstElement.focus();
+                    <pre class="code-pre"><code class="language-javascript">// Dual-Action Protocol
+if (escPressCount === 1) {
+  iframe.postMessage({ type: 'ARCADEVERSE_ESC_PAUSE' }, '*');
+  showEscExitToast();
+} else if (escPressCount >= 2 || e.shiftKey) {
+  closeGameModal(false);
 }</code></pre>
                   </div>
                 </div>

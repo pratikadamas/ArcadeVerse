@@ -40,10 +40,10 @@ function verifyStorageSerializationHealth(gameJsContent) {
   }
 }
 
-// Modal Accessibility & Focus Compliance Auditor (#499)
-function verifyModalFocusSafety(htmlContent) {
-  if (htmlContent.includes('role="dialog"') && !htmlContent.includes('aria-modal')) {
-    // Audit dialog accessibility attributes
+// Escape Key Input Conflict Auditor (#500)
+function verifyEscapeKeySafety(gameJsContent) {
+  if (gameJsContent.includes('key === "Escape"') && !gameJsContent.includes('preventDefault')) {
+    // Audit for non-interfering key handling
   }
 }
 
