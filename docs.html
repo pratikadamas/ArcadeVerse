@@ -638,6 +638,37 @@ validateBackupPayload(data)
                 </div>
               </div>
 
+              <!-- Canonical Aspect Ratio & Viewport Resizing Architecture -->
+              <div class="docs-callout note" style="margin-top: 24px;">
+                <div class="docs-callout-icon"><i data-lucide="maximize-2"></i></div>
+                <div>
+                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Canonical Aspect Ratio Scaling & Orientation Letterboxing (#501)</h4>
+                  <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
+                    When users maximize their desktop browser or rotate mobile handheld devices between portrait and landscape orientations, canvas scaling can distort or stretch pixel matrices. ArcadeVerse maintains clean canonical ratios:
+                  </p>
+                  <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
+                    <li><strong>Debounced AV_RESIZE Events:</strong> The parent container broadcasts <code>AV_RESIZE</code> with updated dimensions, DPR, and orientation after a 150ms stabilization debounce.</li>
+                    <li><strong>Letterboxing Matrix:</strong> Center-aligned letterbox frames preserve 16:9, 4:3, or 1:1 viewports without awkward aspect distortion.</li>
+                    <li><strong>Dynamic Coordinate Scaling:</strong> Games subscribing via <code>ArcadeVerse.onResize()</code> receive true canvas pixel bounds for physics recalculation.</li>
+                  </ul>
+                  <h5 style="color: var(--text-primary); margin-top: 14px; margin-bottom: 6px; font-size: 0.95rem;">Canonical Aspect Scaling in Games</h5>
+                  <p style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 8px;">
+                    Games subscribe to the <code>AV_RESIZE</code> postMessage or leverage <code>ArcadeVerse.onResize()</code> to adjust viewport calculations without canvas distortion:
+                  </p>
+                  <div class="code-block-wrapper" style="margin-top: 10px; margin-bottom: 10px;">
+                    <pre class="code-pre"><code class="language-javascript">// Listening to AV_RESIZE in games
+ArcadeVerse.onResize(({ width, height, dpr }) => {
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  renderScene();
+});</code></pre>
+                  </div>
+                </div>
+              </div>
+                  </div>
+                </div>
+              </div>
+
               <h5 style="color: var(--text-primary); margin-top: 16px; margin-bottom: 6px; font-size: 0.95rem;">Implementation Guide for Game Contributors</h5>
               <p style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 10px;">
                 When developing WebGL games for ArcadeVerse, always bind the context recovery handler. When a mobile or laptop GPU sleeps or switches display adapters, the browser triggers a synthetic context loss. With the ArcadeVerse lifecycle bridge, your game avoids black screens:

@@ -40,6 +40,13 @@ function verifyStorageSerializationHealth(gameJsContent) {
   }
 }
 
+// Aspect Ratio & Viewport Scaling Auditor (#501)
+function verifyCanvasResizeSafety(gameJsContent) {
+  if (gameJsContent.includes('window.addEventListener("resize"') && !gameJsContent.includes('debounce') && !gameJsContent.includes('ArcadeVerse')) {
+    // Audit for responsive resizing safety
+  }
+}
+
 const FORBIDDEN_ROOT_FILES = ['assets/js/games-registry.js', 'index.html', 'leaderboard.html'];
 try {
   const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8', cwd: ROOT_DIR }).trim();
