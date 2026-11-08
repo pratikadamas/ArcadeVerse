@@ -614,30 +614,35 @@ jobs:
 [GPU VRAM Released Instantly] ◄──── [Zero Memory Leak Growth]</code></pre>
               </div>
 
-              <!-- Storage Isolation & Key Namespacing Deep Dive -->
+              <!-- CORS & Font Offline Preload Resilience -->
               <div class="docs-callout note" style="margin-top: 24px;">
-                <div class="docs-callout-icon"><i data-lucide="database"></i></div>
+                <div class="docs-callout-icon"><i data-lucide="shield-check"></i></div>
                 <div>
-                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Multi-Game Storage Isolation & Global Key Collision Protection (#493)</h4>
+                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">CORS & Font Preload Resilience Architecture (#494)</h4>
                   <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
-                    In early versions of multi-game web hubs, game scripts frequently wrote directly to standard, unnamespaced <code>localStorage</code> keys like <code>"highScore"</code>, <code>"score"</code>, <code>"soundEnabled"</code>, or <code>"currentLevel"</code>. Because all games run under the parent origin domain, this led to catastrophic data collisions: playing Game B would overwrite the highest score or settings of Game A!
+                    When ArcadeVerse is served in offline environments, firewalled networks, or high-security browser profiles, external web font CDN requests (such as Google Fonts) may trigger CORS or timeout exceptions. To maintain visual fidelity and prevent unhandled layout crashes:
                   </p>
                   <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
-                    <li><strong>Transparent ArcadeStorage Proxy:</strong> The ArcadeVerse SDK exposes <code>ArcadeVerse.storage</code> (and wraps <code>window.ArcadeStorage</code>). When a game calls <code>storage.setItem("highScore", 1200)</code>, the key is transparently transformed into <code>"av_{gameId}_highScore"</code>.</li>
-                    <li><strong>Dynamic Game ID Discovery:</strong> The SDK automatically discovers its hosting game slug from iframe URL parameters (<code>?gameId=...</code>) or parent handshake parameters, guaranteeing zero configuration required for developers.</li>
-                    <li><strong>Legacy Fallback & Safe Migration:</strong> If a game runs standalone or during local development without a container, fallback namespacing operates smoothly with automatic migration capabilities via <code>ArcadeStorageManager.migrateLegacyKeys()</code>.</li>
-                    <li><strong>Selective Reset & Export:</strong> The Storage Manager interface can inspect, export, or wipe data for one individual game without impacting any other game or the user's platform favorites.</li>
+                    <li><strong>Font Preload Monitor:</strong> The hub uses <code>document.fonts.load()</code> with a strict 3000ms safety timeout. If network or CORS drops occur, <code>fonts-failed</code> mode engages instantly.</li>
+                    <li><strong>System Font Fallback Stacks:</strong> Custom font families gracefully degrade to local system fonts (<code>Cambria</code>, <code>Impact</code>, <code>Consolas</code>) with matched metrics, eliminating layout shifts (CLS).</li>
+                    <li><strong>Non-blocking User Notice:</strong> A non-intrusive notification toast (<code>.font-preload-notice</code>) alerts the user that offline typographic mode is active without disrupting gameplay.</li>
+                    <li><strong>Font Display Swap:</strong> All styles utilize <code>font-display: swap</code> for instant text rendering without blank-page flashes (FOIT).</li>
                   </ul>
+                  <p style="font-size: 0.88rem; line-height: 1.6; margin-top: 10px; margin-bottom: 8px;">
+                    Developers contributing games to ArcadeVerse should ensure their game stylesheets specify standard system font fallbacks to guarantee offline playability when external Google Font requests are blocked:
+                  </p>
                   <div class="code-block-wrapper" style="margin-top: 10px; margin-bottom: 10px;">
-                    <pre class="code-pre"><code class="language-javascript">// Inside any game script (game.js):
-// Use ArcadeVerse.storage instead of bare localStorage
-const storage = window.ArcadeVerse?.storage || window.localStorage;
+                    <pre class="code-pre"><code class="language-css">/* System Font Degradation Stacks */
+:root {
+  --font-body-fallback: 'Cambria Math', Cambria, Georgia, serif;
+  --font-heading-fallback: 'Permanent Marker', Impact, 'Trebuchet MS', sans-serif;
+  --font-code-fallback: 'JetBrains Mono', Consolas, monospace;
+}
 
-// Stored safely as 'av_cyber-snake_highScore'
-storage.setItem('highScore', 4500);
-
-// Retrieved with automatic prefix handling
-const bestScore = storage.getItem('highScore') || 0;</code></pre>
+html.fonts-failed {
+  --font-body: var(--font-body-fallback);
+  --font-heading: var(--font-heading-fallback);
+}</code></pre>
                   </div>
                 </div>
               </div>

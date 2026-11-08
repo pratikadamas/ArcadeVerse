@@ -46,6 +46,13 @@ Publicly opening an issue exposes the platform, contributors, and users to poten
 
 ---
 
+## 🌐 Cross-Origin & Font Preload Security (#494)
+
+To prevent resource starvation or CORS-related denial of service when third-party font delivery networks fail:
+- ArcadeVerse employs strict system font fallbacks (Cambria, Georgia, Impact, Consolas) with matched font metrics to prevent cumulative layout shift (CLS).
+- Web font loading utilizes the Font Loading API (document.fonts.load()) wrapped in non-blocking 3000ms safety timeouts.
+- Style sheets enforce @supports (font-display: swap) and offline fallbacks, maintaining a functional UI even in air-gapped or restricted CORS environments.
+
 ## 💻 Web Architecture & Code Safety Guidelines
 
 ArcadeVerse is built strictly on **100% native web standards (HTML5, CSS3, Vanilla JavaScript)** without server-side runtimes, Python backends, or node dependencies. All games and platform features execute client-side in the user's browser.

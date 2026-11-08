@@ -10077,96 +10077,127 @@ html.a11y-reduced-motion .search-clear-btn {
   transition: none !important;
 }
 
-/* ==========================================================================
-   SANDBOX IFRAME TOP-LEVEL NAVIGATION GUARD & SECURITY BADGING (#492)
-   ========================================================================== */
-.modal-frame-wrapper iframe[sandbox] {
-  border: none;
-  width: 100%;
-  height: 100%;
-  background: #000000;
-  display: block;
+/* ========================================================
+   CORS & FONT OFFLINE RESILIENCE SUBSYSTEM (#494)
+   Ensures seamless typographic rendering and offline font fallbacks
+   when external Google Fonts, CDNs, or third-party webfonts fail to preload.
+   ======================================================== */
+@supports (font-display: swap) {
+  @font-face {
+    font-family: 'ArcadeVerseFallbackSerif';
+    src: local('Cambria Math'), local('Cambria'), local('Georgia'), local('Times New Roman');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'ArcadeVerseFallbackMarker';
+    src: local('Permanent Marker'), local('Impact'), local('Trebuchet MS'), local('Arial Black');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'ArcadeVerseFallbackMono';
+    src: local('JetBrains Mono'), local('Cascadia Code'), local('Consolas'), local('Fira Code'), local('Courier New');
+    font-display: swap;
+  }
 }
 
-.modal-sandbox-status-pill {
+/* System Font Fallback Stacks */
+:root {
+  --font-body-fallback: 'Cambria Math', Cambria, Georgia, 'Times New Roman', serif;
+  --font-heading-fallback: 'Permanent Marker', Impact, 'Trebuchet MS', 'Arial Black', cursive, sans-serif;
+  --font-code-fallback: 'JetBrains Mono', 'Cascadia Code', Consolas, 'Fira Code', 'Courier New', monospace;
+}
+
+/* Network Font Loading Status Flags */
+html.fonts-loading {
+  --font-body: var(--font-body-fallback);
+  --font-heading: var(--font-heading-fallback);
+  --font-display: var(--font-heading-fallback);
+  --font-code: var(--font-code-fallback);
+}
+
+html.fonts-failed {
+  --font-body: var(--font-body-fallback);
+  --font-heading: var(--font-heading-fallback);
+  --font-display: var(--font-heading-fallback);
+  --font-code: var(--font-code-fallback);
+}
+
+/* Non-blocking Offline Fallback Banners & Toast Indicators */
+.font-preload-notice {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 1.5rem;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1rem;
+  background: rgba(18, 22, 34, 0.94);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(245, 158, 11, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  max-width: 380px;
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.font-preload-notice.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.font-preload-notice-icon {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-family: var(--font-code, monospace);
-  font-size: 0.72rem;
-  letter-spacing: 0.5px;
-  color: var(--accent-emerald, #10b981);
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  border-radius: 999px;
-  padding: 3px 8px;
-  text-transform: uppercase;
-}
-
-.modal-sandbox-status-pill.warning {
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.18);
   color: #f59e0b;
-  background: rgba(245, 158, 11, 0.12);
-  border-color: rgba(245, 158, 11, 0.3);
+  flex-shrink: 0;
 }
 
-.sandbox-shield-icon {
-  width: 12px;
-  height: 12px;
-  stroke: currentColor;
-  stroke-width: 2;
-  fill: none;
+.font-preload-notice-content {
+  flex: 1;
+  line-height: 1.4;
 }
 
-.sandbox-leave-confirm-dialog {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  background: var(--bg-surface-elevated, #1a1f2e);
-  border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.14));
-  border-radius: var(--radius-md, 12px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+.font-preload-notice-content strong {
+  color: #f59e0b;
+  display: block;
+  font-size: 0.85rem;
+  margin-bottom: 2px;
 }
 
-.sandbox-leave-confirm-dialog .dialog-title {
-  font-family: var(--font-heading, sans-serif);
-  font-size: 1rem;
-  color: var(--text-primary, #f8fafc);
-  display: flex;
+.font-preload-notice-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  transition: color 0.18s ease;
 }
 
-.sandbox-leave-confirm-dialog .dialog-body {
-  font-family: var(--font-body, sans-serif);
-  font-size: 0.88rem;
-  color: var(--text-secondary, #94a3b8);
-  line-height: 1.5;
+.font-preload-notice-close:hover {
+  color: var(--text-primary);
 }
 
-.sandbox-leave-confirm-dialog .dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 4px;
-}
-
-[data-theme="light"] .modal-sandbox-status-pill {
-  background: rgba(16, 185, 129, 0.08);
-  border-color: rgba(16, 185, 129, 0.25);
-  color: #059669;
-}
-
-[data-theme="light"] .sandbox-leave-confirm-dialog {
-  background: #ffffff;
-  border-color: rgba(0, 0, 0, 0.12);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-}
-
-[data-theme="light"] .sandbox-leave-confirm-dialog .dialog-title {
+[data-theme="light"] .font-preload-notice {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(217, 119, 6, 0.3);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 0 15px rgba(217, 119, 6, 0.1);
   color: #0f172a;
-}
-
-[data-theme="light"] .sandbox-leave-confirm-dialog .dialog-body {
-  color: #475569;
 }
