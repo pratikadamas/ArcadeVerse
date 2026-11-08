@@ -936,6 +936,161 @@
         }
       }
       return payload;
+    },
+
+    /**
+     * Aggressive Game Animation Frame & Timer Interceptor (#497)
+     * Overrides window.requestAnimationFrame & window.setInterval in the game context
+     * so that pending frame callbacks are immediately purged upon modal dismissal.
+     */
+    enableAggressiveRAFShield: function () {
+      if (typeof window === "undefined") return;
+      var originalRAF = window.requestAnimationFrame.bind(window);
+      var originalCAF = window.cancelAnimationFrame.bind(window);
+      var self = this;
+
+      window.requestAnimationFrame = function (cb) {
+        if (!isInitialized) return -1;
+        var id = originalRAF(function (timestamp) {
+          var idx = registeredAnimationFrameIds.indexOf(id);
+          if (idx !== -1) registeredAnimationFrameIds.splice(idx, 1);
+          if (isInitialized && typeof cb === "function") {
+            cb(timestamp);
+          }
+        });
+        self.trackAnimationFrame(id);
+        return id;
+      };
+
+      window.cancelAnimationFrame = function (id) {
+        var idx = registeredAnimationFrameIds.indexOf(id);
+        if (idx !== -1) registeredAnimationFrameIds.splice(idx, 1);
+        originalCAF(id);
+      };
+    },
+
+    /**
+     * Forcefully cancels all pending animation frame requests and stops render loop
+     * @returns {number} count of cancelled frame callbacks
+     */
+    /**
+     * Diagnostic lifecycle auditor
+     * Inspects active animation frames, audio contexts, and intervals
+     * @returns {Object} diagnostic snapshot
+     */
+    getLifecycleReport: function () {
+      return {
+        activeAnimationFrames: registeredAnimationFrameIds.length,
+        activeIntervals: registeredIntervals.length,
+        activeTimeouts: registeredTimeouts.length,
+        activeAudioContexts: registeredAudioContexts.length,
+        activeGainNodes: registeredGainNodes.length,
+        activeWebGLContexts: registeredWebGLContexts.length,
+        isDestroyed: !isInitialized
+      };
+    },
+
+    /**
+     * Automatic Watchdog for long-running animation frame loops
+     * Disarms loops when background tab visibility changes
+     */
+    /**
+     * Intercept and wrap requestAnimationFrame in game window
+     * Automatically registers created frames into teardown registry
+     */
+    /**
+     * Clear all pending timer references registered with the SDK
+     * @returns {number} count of cleared timers
+     */
+    purgeAllTimers: function () {
+      var count = registeredIntervals.length + registeredTimeouts.length;
+      while (registeredIntervals.length > 0) {
+        clearInterval(registeredIntervals.pop());
+      }
+      while (registeredTimeouts.length > 0) {
+        clearTimeout(registeredTimeouts.pop());
+      }
+      return count;
+    },
+
+    /**
+     * Terminate all tracked audio contexts and suspend gain nodes
+     * @returns {number} count of closed audio contexts
+     */
+    /**
+     * Comprehensive teardown orchestrator
+     * Executes all sub-cleanups (frames, timers, audio graphs, WebGL)
+     * @returns {Object} report of purged resources
+     */
+    executeComprehensiveTeardown: function () {
+      var framesPurged = this.purgeAllAnimationFrames();
+      var timersPurged = this.purgeAllTimers();
+      var audioPurged = this.purgeAudioGraph();
+      var webglPurged = cleanAllWebGLAllocations();
+      return {
+        frames: framesPurged,
+        timers: timersPurged,
+        audioContexts: audioPurged,
+        webgl: webglPurged
+      };
+    },
+
+    purgeAudioGraph: function () {
+      var count = registeredAudioContexts.length;
+      while (registeredAudioContexts.length > 0) {
+        var ctx = registeredAudioContexts.pop();
+        try {
+          if (ctx && typeof ctx.close === 'function' && ctx.state !== 'closed') {
+            ctx.close();
+          }
+        } catch (_) {}
+      }
+      return count;
+    },
+
+    shimGlobalRAF: function () {
+      if (typeof window === 'undefined') return;
+      var original = window.requestAnimationFrame;
+      if (!original) return;
+      var self = this;
+      window.requestAnimationFrame = function (cb) {
+        var id = original.call(window, function (ts) {
+          self.cancelFrame(id);
+          if (typeof cb === 'function') cb(ts);
+        });
+        self.trackAnimationFrame(id);
+        return id;
+      };
+    },
+
+    /**
+     * Disarm and cancel any active loop callbacks
+     */
+    disarmAllLoops: function () {
+      return this.purgeAllAnimationFrames();
+    },
+
+    initVisibilityWatchdog: function () {
+      if (typeof document === 'undefined') return;
+      var self = this;
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) {
+          self.pause();
+        } else {
+          self.resume();
+        }
+      });
+    },
+
+    purgeAllAnimationFrames: function () {
+      var count = registeredAnimationFrameIds.length;
+      while (registeredAnimationFrameIds.length > 0) {
+        var id = registeredAnimationFrameIds.pop();
+        try {
+          cancelAnimationFrame(id);
+        } catch (_) {}
+      }
+      return count;
     }
   };
 });

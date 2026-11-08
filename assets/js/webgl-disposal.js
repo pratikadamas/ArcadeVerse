@@ -152,6 +152,128 @@
     disposeContext: disposeContext,
     disposeAllCanvases: disposeAllCanvases,
     testContextRecoverySupport: testContextRecoverySupport,
+    /**
+     * Canvas Garbage Collection & Detached DOM Node Cleanup (#498)
+     * Forcibly zeroes canvas width/height to release back-buffer pixel memory in the browser engine
+     * and clears 2D context states to prevent detached DOM memory leaks.
+     * @param {HTMLCanvasElement} canvas
+     */
+    zeroCanvasDimensions: function (canvas) {
+      if (!canvas) return;
+      try {
+        var ctx2d = canvas.getContext('2d');
+        if (ctx2d) {
+          ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+          if (typeof ctx2d.reset === 'function') {
+            ctx2d.reset();
+          }
+        }
+      } catch (_) {}
+      try {
+        canvas.width = 0;
+        canvas.height = 0;
+      } catch (_) {}
+    },
+
+    /**
+     * Deep canvas and detached DOM unmount sweep
+     * Finds all canvas elements within a container or document and cleans them thoroughly
+     * @param {Document|Element} container
+     * @returns {number} count of wiped canvases
+     */
+    purgeDetachedCanvases: function (container) {
+      if (!container) return 0;
+      var canvases = container.querySelectorAll ? container.querySelectorAll('canvas') : [];
+      var count = 0;
+      for (var i = 0; i < canvases.length; i++) {
+        var c = canvases[i];
+        try {
+          var gl = c.getContext('webgl2') || c.getContext('webgl') || c.getContext('experimental-webgl');
+          if (gl) {
+            disposeContext(gl);
+          }
+          this.zeroCanvasDimensions(c);
+          if (c.parentNode) {
+            c.parentNode.removeChild(c);
+          }
+          count++;
+        } catch (_) {}
+      }
+      return count;
+    },
+
+    /**
+     * Run full garbage collection diagnostics
+     * @returns {Object} detailed GC telemetry
+     */
+    /**
+     * Diagnostic report of current context allocations
+     * @returns {Array<Object>}
+     */
+    /**
+     * Measure estimated byte footprint of all monitored canvases
+     * @returns {number} bytes
+     */
+    estimateVRAMUsageBytes: function () {
+      var total = 0;
+      activeContexts.forEach(function (item) {
+        if (item.gl && item.gl.canvas) {
+          total += (item.gl.canvas.width * item.gl.canvas.height * 4);
+        }
+      });
+      return total;
+    },
+
+    /**
+     * Safely reset all pixel buffers on a given 2D context
+     * @param {CanvasRenderingContext2D} ctx
+     */
+    flush2DContext: function (ctx) {
+      if (!ctx || !ctx.canvas) return;
+      try {
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        if (typeof ctx.reset === 'function') ctx.reset();
+      } catch (_) {}
+    },
+
+    dumpActiveContexts: function () {
+      var arr = [];
+      activeContexts.forEach(function (item) {
+        arr.push({
+          canvasWidth: item.gl && item.gl.canvas ? item.gl.canvas.width : 0,
+          canvasHeight: item.gl && item.gl.canvas ? item.gl.canvas.height : 0,
+          isLost: item.gl ? item.gl.isContextLost() : true,
+          ageMs: Date.now() - item.timestamp
+        });
+      });
+      return arr;
+    },
+
+    /**
+     * Memory pressure relief trigger
+     * Can be invoked by low-memory devices to clear unused canvas textures
+     */
+    releaseUnderMemoryPressure: function () {
+      var released = 0;
+      activeContexts.forEach(function (item) {
+        if (item.gl && !item.gl.isContextLost()) {
+          disposeContext(item.gl);
+          released++;
+        }
+      });
+      return released;
+    },
+
+    getGCDiagnostics: function () {
+      return {
+        disposedCanvases: telemetryStats.contextsDisposed,
+        freedTextures: telemetryStats.texturesFreed,
+        freedBuffers: telemetryStats.buffersFreed,
+        activeContextCount: activeContexts.size,
+        hardwareAccelerated: typeof window !== 'undefined' && 'WebGLRenderingContext' in window
+      };
+    },
+
     getStats: function () {
       return Object.assign({}, telemetryStats, {
         activeCount: activeContexts.size
