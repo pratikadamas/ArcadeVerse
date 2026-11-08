@@ -37,6 +37,7 @@
 - 🏛️ **Automated CI Architecture ([ARCHITECTURE.md](ARCHITECTURE.md)):** Detailed architectural specifications and Mermaid workflow diagrams illustrating automated game registry compilation, client DOM hydration, and sensory accessibility engines.
 - 🛠️ **Conflict-Free Automated Contribution:** Contributors simply add their files along with `game.json` in `games/` — our automated GitHub Actions workflow compiles the registry without conflicts!
 - 🏆 **Live GitHub Hall of Fame ([leaderboard.html](leaderboard.html)):** Real-time contribution scoring, podium champions, and custom rank badges fetched directly from the GitHub REST API!
+- 🔒 **Sandboxed Game Isolation (#492):** Secure HTML5 iframe sandboxing preventing unverified top navigation and rogue window frame manipulation.
 
 ---
 

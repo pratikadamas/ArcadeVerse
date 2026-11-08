@@ -1459,9 +1459,37 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // =========================================================================
+  // TOP-LEVEL NAVIGATION GUARD & ROGUE SCRIPT PROTECTION (#492)
+  // =========================================================================
+  let isGameSessionActive = false;
+
+  /**
+   * Browser navigation guard while a game modal session is active
+   * Prevents rogue iframe scripts or accidental redirects from abandoning gameplay
+   */
+  function handleGameBeforeUnload(e) {
+    if (!isGameSessionActive) return;
+    const confirmationMessage = "An arcade game is currently running in ArcadeVerse. Are you sure you want to leave?";
+    e.preventDefault();
+    e.returnValue = confirmationMessage;
+    return confirmationMessage;
+  }
+
+  // Intercept window top-level frame redirection attempts
+  window.addEventListener("beforeunload", handleGameBeforeUnload);
+
+  // Monitor iframe sandbox violations or framebusting attempts
+  window.addEventListener("securitypolicyviolation", (e) => {
+    if (e && e.violatedDirective && e.violatedDirective.includes("frame")) {
+      console.warn("[ArcadeVerse Security Sandbox] Trapped policy boundary event:", e.blockedURI);
+    }
+  });
+
   // Modal Handlers
   function openGameModal(game, triggerElement = null, isDirectDeepLink = false) {
     activeGame = game;
+    isGameSessionActive = true;
     lastFocusedElement = triggerElement || document.activeElement;
 
     // Trigger bat animation if launching a Halloween Special Game
@@ -1546,6 +1574,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function closeGameModal(isFromPopState = false) {
     if (!gameModal || (!gameModal.classList.contains("active") && !activeGame)) return;
     activeGame = null;
+    isGameSessionActive = false;
     gameModal.classList.remove("active");
     gameModal.setAttribute("aria-hidden", "true");
 

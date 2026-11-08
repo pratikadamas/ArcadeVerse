@@ -224,8 +224,8 @@ function scanScriptSecurityViolations(jsContent, issues) {
     issues.push('⚠️ Potential DOM XSS pattern: assigning untrusted search or storage directly into innerHTML.');
     totalWarnings++;
   }
-  if (jsContent.includes('window.top.location') || jsContent.includes('window.parent.location')) {
-    issues.push('❌ Security violation: Attempt to redirect top or parent window frame.');
+  if (jsContent.includes('window.top.location') || jsContent.includes('window.parent.location') || /(window\.)?(top|parent)\.location/i.test(jsContent)) {
+    issues.push('❌ Security violation (#492): Attempt to access top or parent frame navigation.');
     totalErrors++;
   }
 }
