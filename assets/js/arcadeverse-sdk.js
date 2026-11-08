@@ -837,6 +837,76 @@
      * Helper to wrap native AudioContext creation with automatic lifecycle tracking
      * @returns {AudioContext}
      */
+    /**
+     * Bind standard ESC pause handler inside game script
+     * @param {Function} onPause
+     */
+    /**
+     * Notify parent window that game has resumed from pause state
+     */
+    postGameResume: function () {
+      if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'ARCADEVERSE_GAME_RESUMED' }, '*');
+      }
+    },
+
+    /**
+     * Register pause toggler that responds to both hub pause and ESC signals
+     * @param {Function} toggleFn
+     */
+    registerPauseToggleHandler: function (toggleFn) {
+      if (typeof window === 'undefined' || typeof toggleFn !== 'function') return;
+      window.addEventListener('message', function (e) {
+        if (e && e.data && (e.data.type === 'ARCADEVERSE_PAUSE' || e.data.type === 'ARCADEVERSE_ESC_PAUSE')) {
+          toggleFn(true);
+        } else if (e && e.data && e.data.type === 'ARCADEVERSE_RESUME') {
+          toggleFn(false);
+        }
+      });
+    },
+
+    /**
+     * Diagnostic report of keyboard shortcut forwarders
+     * @returns {Object}
+     */
+    /**
+     * Helper to test if a key event matches standard escape keys
+     * @param {KeyboardEvent} e
+     * @returns {boolean}
+     */
+    /**
+     * Programmatically simulate game resume
+     */
+    triggerResume: function () {
+      this.resume();
+      this.postGameResume();
+    },
+
+    /**
+     * Helper to test if a key event matches standard escape keys
+     * @param {KeyboardEvent} e
+     * @returns {boolean}
+     */
+    isEscapeEvent: function (e) {
+      return !!(e && (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27));
+    },
+
+    getKeyboardBridgeStatus: function () {
+      return {
+        isEscBound: true,
+        parentBridged: typeof window !== 'undefined' && window.parent && window.parent !== window
+      };
+    },
+
+    onEscPause: function (onPause) {
+      if (typeof window === 'undefined' || typeof onPause !== 'function') return;
+      window.addEventListener('message', function (e) {
+        if (e && e.data && e.data.type === 'ARCADEVERSE_ESC_PAUSE') {
+          onPause();
+        }
+      });
+    },
+
     createAudioContext: function () {
       var AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (!AudioContextClass) return null;

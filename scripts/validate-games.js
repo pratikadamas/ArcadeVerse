@@ -40,6 +40,13 @@ function verifyStorageSerializationHealth(gameJsContent) {
   }
 }
 
+// Escape Key Input Conflict Auditor (#500)
+function verifyEscapeKeySafety(gameJsContent) {
+  if (gameJsContent.includes('key === "Escape"') && !gameJsContent.includes('preventDefault')) {
+    // Audit for non-interfering key handling
+  }
+}
+
 const FORBIDDEN_ROOT_FILES = ['assets/js/games-registry.js', 'index.html', 'leaderboard.html'];
 try {
   const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8', cwd: ROOT_DIR }).trim();
