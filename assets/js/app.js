@@ -1486,12 +1486,29 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Track session start timestamp and score confirmation state (#503)
-  let gameSessionStartTime = null;
-  let isConfirmingQuit = false;
+  // Modal rapid launch lock flag & cooldown timer to prevent race conditions (#504)
+  let isOpeningModal = false;
+  let modalLaunchCooldownTimer = null;
 
   // Modal Handlers
   function openGameModal(game, triggerElement = null, isDirectDeepLink = false) {
+    if (!game) return;
+
+    // Guard against rapid duplicate clicks (400ms debounce guard)
+    if (isOpeningModal) {
+      console.warn(`[ArcadeVerse:Modal] Blocked duplicate rapid launch for: ${game.id}`);
+      return;
+    }
+    isOpeningModal = true;
+    document.body.classList.add("modal-launching-in-progress");
+
+    // Clear any previous cooldown
+    if (modalLaunchCooldownTimer) clearTimeout(modalLaunchCooldownTimer);
+    modalLaunchCooldownTimer = setTimeout(() => {
+      isOpeningModal = false;
+      document.body.classList.remove("modal-launching-in-progress");
+    }, 450);
+
     activeGame = game;
     isGameSessionActive = true;
     gameSessionStartTime = Date.now();
@@ -1541,6 +1558,12 @@ document.addEventListener("DOMContentLoaded", () => {
       window.ArcadeRecent.recordPlayed(game.id, game.title, game.category);
     }
     window.dispatchEvent(new CustomEvent("arcadeverse:game-launched", { detail: game }));
+
+    // Mount animation class to prevent visual tearing
+    modalFrameWrapper.classList.add("is-mounting");
+    setTimeout(() => {
+      modalFrameWrapper.classList.remove("is-mounting");
+    }, 350);
 
     gameModal.classList.add("active");
     gameModal.setAttribute("aria-hidden", "false");
@@ -1786,6 +1809,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.body.style.overflow = "";
     document.body.style.overscrollBehavior = "";
+    document.body.classList.remove("modal-launching-in-progress");
+    isOpeningModal = false;
     modalWindow.classList.remove("fullscreen");
     if (gameModal) gameModal.classList.remove("fullscreen-mode");
     if (document.fullscreenElement || document.webkitFullscreenElement) {

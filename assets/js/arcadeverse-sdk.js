@@ -982,52 +982,186 @@
     },
 
     /**
-     * Session quit confirmation & state preservation protocol (#503)
-     * Notifies parent modal if game has unsaved run progress
-     * @param {boolean} hasUnsavedProgress
+     * Rapid action debounce wrapper to guard games against button spam and race conditions (#504)
+     * @param {Function} fn - Function to debounce
+     * @param {number} delayMs - Minimum duration between executions
+     * @returns {Function} Guarded execution function
      */
-    setUnsavedProgressState: function (hasUnsavedProgress) {
-      try {
-        if (window.parent && window.parent !== window) {
-          window.parent.postMessage({
-            type: 'AV_SET_UNSAVED_PROGRESS',
-            payload: { hasUnsavedProgress: !!hasUnsavedProgress, timestamp: Date.now() }
-          }, '*');
-        }
-      } catch (_err) {}
-    },
-
-    /**
-     * Listen for modal pause & resume lifecycle events
-     * @param {function(): void} onPause
-     * @param {function(): void} onResume
-     * @returns {function(): void} Unsubscribe listener
-     */
-    bindSessionLifecycle: function (onPause, onResume) {
-      var handler = function (e) {
-        if (!e || !e.data) return;
-        if (e.data.type === 'ARCADEVERSE_PAUSE' && typeof onPause === 'function') {
-          onPause();
-        } else if (e.data.type === 'ARCADEVERSE_RESUME' && typeof onResume === 'function') {
-          onResume();
-        }
-      };
-      window.addEventListener('message', handler);
+    debounceAction: function (fn, delayMs) {
+      var timeout = null;
+      var delay = typeof delayMs === 'number' ? delayMs : 250;
       return function () {
-        window.removeEventListener('message', handler);
+        var context = this;
+        var args = arguments;
+        if (timeout) clearTimeout(timeout);
+        timeout = setTimeout(function () {
+          timeout = null;
+          fn.apply(context, args);
+        }, delay);
       };
     },
 
     /**
-     * Helper to prompt parent confirmation before unmounting when high score is pending
-     * @param {number} currentScore - The user's active score
-     * @returns {boolean} True if score warranting confirmation was posted
+     * Rapid action throttle wrapper guaranteeing at most one execution per window interval
+     * @param {Function} fn
+     * @param {number} limitMs
+     * @returns {Function} Throttled execution function
      */
-    reportPendingScoreProgress: function (currentScore) {
-      if (typeof currentScore !== 'number' || currentScore <= 0) return false;
-      this.setUnsavedProgressState(true);
+    throttleAction: function (fn, limitMs) {
+      var inThrottle = false;
+      var limit = typeof limitMs === 'number' ? limitMs : 300;
+      return function () {
+        var context = this;
+        var args = arguments;
+        if (!inThrottle) {
+          fn.apply(context, args);
+          inThrottle = true;
+          setTimeout(function () {
+            inThrottle = false;
+          }, limit);
+        }
+      };
+    },
+
+    /**
+     * Prevents duplicate firing of user gesture input events across hybrid touch & mouse interfaces
+     * @param {HTMLElement} element - Target button or canvas
+     * @param {Function} handler - Action handler
+     */
+    bindSingleGestureAction: function (element, handler) {
+      if (!element || typeof handler !== 'function') return;
+      var lastTouchTime = 0;
+      element.addEventListener('touchend', function (e) {
+        lastTouchTime = Date.now();
+        handler(e);
+      }, { passive: true });
+      element.addEventListener('click', function (e) {
+        if (Date.now() - lastTouchTime < 450) {
+          e.preventDefault();
+          return;
+        }
+        handler(e);
+      });
+    },
+
+    /**
+     * Prevents race condition during asynchronous asset loading in games (#504)
+     * Creates an atomic promise queue where tasks execute in strict serial sequence
+     * @returns {{enqueue: function(Function): Promise<any>, isBusy: function(): boolean}}
+     */
+    createSerialActionQueue: function () {
+      var queue = Promise.resolve();
+      var count = 0;
+      return {
+        enqueue: function (task) {
+          count++;
+          var result = queue.then(function () {
+            return task();
+          });
+          queue = result.catch(function () {}).then(function () {
+            count--;
+          });
+          return result;
+        },
+        isBusy: function () {
+          return count > 0;
+        }
+      };
+    },
+
+    /**
+     * Guard against rapid audio trigger overlaps
+     * Creates a pooled audio limiter preventing more than maxConcurrent instances of the same sound
+     * @param {number} maxConcurrent
+     * @returns {function(Function): void}
+     */
+    createAudioTriggerLimiter: function (maxConcurrent) {
+      var activeCount = 0;
+      var limit = typeof maxConcurrent === 'number' && maxConcurrent > 0 ? maxConcurrent : 3;
+      return function (triggerFn) {
+        if (activeCount >= limit) return;
+        activeCount++;
+        try {
+          var res = triggerFn();
+          if (res && typeof res.then === 'function') {
+            res.finally(function () {
+              activeCount = Math.max(0, activeCount - 1);
+            });
+          } else {
+            setTimeout(function () {
+              activeCount = Math.max(0, activeCount - 1);
+            }, 300);
+          }
+        } catch (_err) {
+          activeCount = Math.max(0, activeCount - 1);
+        }
+      };
+    },
+
+    /**
+     * Idempotent initialization guard to prevent double bootstrap runs in games
+     * @param {string} key - Unique bootstrap namespace key
+     * @param {Function} initFn - Initialization logic
+     * @returns {boolean} True if initFn ran, false if it was previously initialized
+     */
+    runOnce: function (key, initFn) {
+      if (!this._runOnceRegistry) {
+        this._runOnceRegistry = {};
+      }
+      if (this._runOnceRegistry[key]) {
+        return false;
+      }
+      this._runOnceRegistry[key] = true;
+      if (typeof initFn === 'function') {
+        initFn();
+      }
       return true;
-    }
+    },
+
+    /**
+     * Resets the runOnce registry (useful during game restarts / level reloads)
+     * @param {string} [key] - Optional specific key to reset; if omitted, clears all
+     */
+    resetRunOnce: function (key) {
+      if (!this._runOnceRegistry) return;
+      if (key) {
+        delete this._runOnceRegistry[key];
+      } else {
+        this._runOnceRegistry = {};
+      }
+    },
+
+    /**
+     * Wrap animation frames to ensure only a single requestAnimationFrame loop runs at any time
+     * Prevents runaway RAF speed multipliers when users toggle focus or click rapidly
+     * @param {function(number): void} renderCallback
+     * @returns {{start: function(): void, stop: function(): void, isRunning: function(): boolean}}
+     */
+    createExclusiveRafLoop: function (renderCallback) {
+      var rafId = null;
+      var running = false;
+      var loop = function (timestamp) {
+        if (!running) return;
+        renderCallback(timestamp);
+        rafId = window.requestAnimationFrame(loop);
+      };
+      return {
+        start: function () {
+          if (running) return;
+          running = true;
+          rafId = window.requestAnimationFrame(loop);
+        },
+        stop: function () {
+          running = false;
+          if (rafId !== null) {
+            window.cancelAnimationFrame(rafId);
+            rafId = null;
+          }
+        },
+        isRunning: function () {
+          return running;
+        }
+      };
     }
   };
 });
