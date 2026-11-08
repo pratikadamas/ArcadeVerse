@@ -795,6 +795,34 @@
           </div>
         </div>
 
+        <!-- Question 29 (#498) -->
+        <div class="faq-accordion-item" data-category="architecture" id="faq-29">
+          <button class="faq-accordion-trigger" type="button" aria-expanded="false" aria-controls="faq-ans-29">
+            <span class="faq-question-text">
+              <span class="faq-category-badge">Architecture</span>
+              29. How does ArcadeVerse reclaim canvas raster memory and prevent detached DOM leaks?
+            </span>
+            <i data-lucide="chevron-down" class="faq-chevron"></i>
+          </button>
+          <div class="faq-accordion-content" id="faq-ans-29" role="region">
+            <div class="faq-accordion-inner">
+              <div class="faq-answer-text">
+                <p>When switching between arcade games, canvas backbuffers can consume gigabytes of VRAM over time. ArcadeVerse executes a complete deallocation pass:</p>
+                <ul>
+                  <li><strong>Zeroing Dimensions:</strong> Collapsing <code>canvas.width = 0; canvas.height = 0;</code> instructs browser rasterizers to immediately release memory.</li>
+                  <li><strong>Context Disposal:</strong> 2D and WebGL contexts are reset or dropped via <code>WEBGL_lose_context</code>.</li>
+                  <li><strong>Iframe Node Regeneration:</strong> The iframe is cleanly replaced in the parent DOM tree to sever stale closure references.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- Quick Help & Issues CTA Banner -->
