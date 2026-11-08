@@ -982,186 +982,124 @@
     },
 
     /**
-     * Rapid action debounce wrapper to guard games against button spam and race conditions (#504)
-     * @param {Function} fn - Function to debounce
-     * @param {number} delayMs - Minimum duration between executions
-     * @returns {Function} Guarded execution function
+     * Resilient Autoplay Gesture Unlock Synchronizer (#505)
+     * Synchronizes child game AudioContexts with parent window gesture state
+     * Listens for ARCADEVERSE_AUDIO_UNLOCKED and automatically resumes suspended AudioContexts
+     * @param {AudioContext} [audioCtx] - The game's AudioContext to unlock
+     * @param {function(string): void} [onStateChange] - Optional callback receiving 'running' | 'suspended'
+     * @returns {{unlock: function(): Promise<boolean>, isUnlocked: function(): boolean}}
      */
-    debounceAction: function (fn, delayMs) {
-      var timeout = null;
-      var delay = typeof delayMs === 'number' ? delayMs : 250;
-      return function () {
-        var context = this;
-        var args = arguments;
-        if (timeout) clearTimeout(timeout);
-        timeout = setTimeout(function () {
-          timeout = null;
-          fn.apply(context, args);
-        }, delay);
-      };
-    },
+    bindAutoplayUnlockSynchronizer: function (audioCtx, onStateChange) {
+      var self = this;
+      var ctx = audioCtx;
+      var unlocked = ctx ? ctx.state === 'running' : false;
 
-    /**
-     * Rapid action throttle wrapper guaranteeing at most one execution per window interval
-     * @param {Function} fn
-     * @param {number} limitMs
-     * @returns {Function} Throttled execution function
-     */
-    throttleAction: function (fn, limitMs) {
-      var inThrottle = false;
-      var limit = typeof limitMs === 'number' ? limitMs : 300;
-      return function () {
-        var context = this;
-        var args = arguments;
-        if (!inThrottle) {
-          fn.apply(context, args);
-          inThrottle = true;
-          setTimeout(function () {
-            inThrottle = false;
-          }, limit);
+      var triggerResume = function () {
+        if (!ctx) return Promise.resolve(false);
+        if (ctx.state === 'running') {
+          unlocked = true;
+          if (typeof onStateChange === 'function') onStateChange('running');
+          return Promise.resolve(true);
+        }
+        return ctx.resume().then(function () {
+          unlocked = true;
+          if (typeof onStateChange === 'function') onStateChange('running');
+          return true;
+        }).catch(function () {
+          return false;
+        });
+      };
+
+      // Listen for parent hub unlock broadcast
+      var messageHandler = function (e) {
+        if (!e || !e.data) return;
+        if (e.data.type === 'ARCADEVERSE_AUDIO_UNLOCKED' || e.data.type === 'AV_AUDIO_UNLOCKED') {
+          triggerResume();
         }
       };
-    },
+      window.addEventListener('message', messageHandler);
 
-    /**
-     * Prevents duplicate firing of user gesture input events across hybrid touch & mouse interfaces
-     * @param {HTMLElement} element - Target button or canvas
-     * @param {Function} handler - Action handler
-     */
-    bindSingleGestureAction: function (element, handler) {
-      if (!element || typeof handler !== 'function') return;
-      var lastTouchTime = 0;
-      element.addEventListener('touchend', function (e) {
-        lastTouchTime = Date.now();
-        handler(e);
-      }, { passive: true });
-      element.addEventListener('click', function (e) {
-        if (Date.now() - lastTouchTime < 450) {
-          e.preventDefault();
-          return;
-        }
-        handler(e);
+      // Listen for first-party user interactions inside game iframe
+      var gestureEvents = ['pointerdown', 'touchend', 'click', 'keydown'];
+      var gestureHandler = function () {
+        triggerResume();
+        gestureEvents.forEach(function (evt) {
+          window.removeEventListener(evt, gestureHandler, true);
+        });
+      };
+      gestureEvents.forEach(function (evt) {
+        window.addEventListener(evt, gestureHandler, { capture: true, passive: true });
       });
-    },
 
-    /**
-     * Prevents race condition during asynchronous asset loading in games (#504)
-     * Creates an atomic promise queue where tasks execute in strict serial sequence
-     * @returns {{enqueue: function(Function): Promise<any>, isBusy: function(): boolean}}
-     */
-    createSerialActionQueue: function () {
-      var queue = Promise.resolve();
-      var count = 0;
       return {
-        enqueue: function (task) {
-          count++;
-          var result = queue.then(function () {
-            return task();
-          });
-          queue = result.catch(function () {}).then(function () {
-            count--;
-          });
-          return result;
-        },
-        isBusy: function () {
-          return count > 0;
+        unlock: triggerResume,
+        isUnlocked: function () {
+          return !!(ctx && ctx.state === 'running');
         }
       };
     },
 
     /**
-     * Guard against rapid audio trigger overlaps
-     * Creates a pooled audio limiter preventing more than maxConcurrent instances of the same sound
-     * @param {number} maxConcurrent
-     * @returns {function(Function): void}
+     * Creates a self-contained zero-dependency AudioContext that automatically recovers from suspension
+     * Handles mobile WebKit visibility change and background tab pausing
+     * @returns {AudioContext|null}
      */
-    createAudioTriggerLimiter: function (maxConcurrent) {
-      var activeCount = 0;
-      var limit = typeof maxConcurrent === 'number' && maxConcurrent > 0 ? maxConcurrent : 3;
-      return function (triggerFn) {
-        if (activeCount >= limit) return;
-        activeCount++;
-        try {
-          var res = triggerFn();
-          if (res && typeof res.then === 'function') {
-            res.finally(function () {
-              activeCount = Math.max(0, activeCount - 1);
-            });
-          } else {
-            setTimeout(function () {
-              activeCount = Math.max(0, activeCount - 1);
-            }, 300);
-          }
-        } catch (_err) {
-          activeCount = Math.max(0, activeCount - 1);
+    createResilientAudioContext: function () {
+      var ctx = this.createAudioContext();
+      if (!ctx) return null;
+      var self = this;
+
+      // Auto-resume when tab regains focus
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden && ctx && ctx.state === 'suspended') {
+          ctx.resume().catch(function () {});
         }
-      };
+      });
+
+      // Synchronize with parent unlock handshake
+      this.bindAutoplayUnlockSynchronizer(ctx);
+      return ctx;
     },
 
     /**
-     * Idempotent initialization guard to prevent double bootstrap runs in games
-     * @param {string} key - Unique bootstrap namespace key
-     * @param {Function} initFn - Initialization logic
-     * @returns {boolean} True if initFn ran, false if it was previously initialized
+     * Check if client browser requires user gesture interaction before Web Audio can output sound
+     * @returns {boolean} True if AudioContext is currently blocked or waiting for gesture
      */
-    runOnce: function (key, initFn) {
-      if (!this._runOnceRegistry) {
-        this._runOnceRegistry = {};
-      }
-      if (this._runOnceRegistry[key]) {
-        return false;
-      }
-      this._runOnceRegistry[key] = true;
-      if (typeof initFn === 'function') {
-        initFn();
+    isAudioAutoplayBlocked: function () {
+      if (typeof navigator !== 'undefined' && navigator.userActivation) {
+        return !navigator.userActivation.hasBeenActive;
       }
       return true;
     },
 
     /**
-     * Resets the runOnce registry (useful during game restarts / level reloads)
-     * @param {string} [key] - Optional specific key to reset; if omitted, clears all
+     * Synthesize an inaudible buffer pulse to prime the audio hardware pipeline
+     * Unmutes physical speakers on iOS Safari after user interaction
+     * @param {AudioContext} ctx
      */
-    resetRunOnce: function (key) {
-      if (!this._runOnceRegistry) return;
-      if (key) {
-        delete this._runOnceRegistry[key];
-      } else {
-        this._runOnceRegistry = {};
-      }
+    primeAudioHardware: function (ctx) {
+      if (!ctx) return;
+      try {
+        var buffer = ctx.createBuffer(1, 1, 22050);
+        var source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        source.start(0);
+      } catch (_e) {}
     },
 
     /**
-     * Wrap animation frames to ensure only a single requestAnimationFrame loop runs at any time
-     * Prevents runaway RAF speed multipliers when users toggle focus or click rapidly
-     * @param {function(number): void} renderCallback
-     * @returns {{start: function(): void, stop: function(): void, isRunning: function(): boolean}}
+     * Broadcasts a custom request to parent ArcadeVerse hub to trigger gesture unlock
      */
-    createExclusiveRafLoop: function (renderCallback) {
-      var rafId = null;
-      var running = false;
-      var loop = function (timestamp) {
-        if (!running) return;
-        renderCallback(timestamp);
-        rafId = window.requestAnimationFrame(loop);
-      };
-      return {
-        start: function () {
-          if (running) return;
-          running = true;
-          rafId = window.requestAnimationFrame(loop);
-        },
-        stop: function () {
-          running = false;
-          if (rafId !== null) {
-            window.cancelAnimationFrame(rafId);
-            rafId = null;
-          }
-        },
-        isRunning: function () {
-          return running;
+    requestParentAudioUnlock: function () {
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: 'ARCADEVERSE_REQUEST_AUDIO_UNLOCK',
+            timestamp: Date.now()
+          }, '*');
         }
-      };
+      } catch (_e) {}
     }
   };
 });

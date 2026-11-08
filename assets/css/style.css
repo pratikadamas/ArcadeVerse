@@ -10389,92 +10389,139 @@ html.a11y-reduced-motion .search-clear-btn {
 }
 
 /* ========================================================
-   MODAL RAPID CLICK RACE CONDITION GUARD (#504)
-   Prevents duplicate iframe loads & overlapping audio instances
+   AUDIO AUTOPLAY GESTURE UNLOCK BANNER & EQUALIZER (#505)
+   Seamless cross-platform user-gesture audio resumption
    ======================================================== */
-body.modal-launching-in-progress .game-card-btn,
-body.modal-launching-in-progress .btn-play-game,
-body.modal-launching-in-progress .play-btn,
-body.modal-launching-in-progress #random-game-btn {
-  pointer-events: none !important;
-  cursor: wait !important;
-  opacity: 0.85;
-  transition: opacity 0.15s ease;
-}
-
-.game-modal-launching-indicator {
+.audio-unlock-banner {
   position: absolute;
-  top: 50%;
+  top: 16px;
   left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  color: var(--accent-primary, #6366f1);
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--accent-primary, #6366f1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(99, 102, 241, 0.35);
+  color: #fff;
   font-family: var(--font-heading, inherit);
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  z-index: 10;
-  pointer-events: none;
+  padding: 0.55rem 1.15rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 50;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: unlockBannerBounce 2s ease-in-out infinite;
 }
 
-.game-modal-launch-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid rgba(255, 255, 255, 0.12);
-  border-top-color: var(--accent-primary, #6366f1);
-  border-radius: 50%;
-  animation: modalLaunchSpin 0.7s linear infinite;
+.audio-unlock-banner:hover {
+  transform: translateX(-50%) scale(1.04);
+  background: rgba(30, 41, 59, 0.98);
+  border-color: #818cf8;
 }
 
-@keyframes modalLaunchSpin {
-  to { transform: rotate(360deg); }
+@keyframes unlockBannerBounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-4px); }
 }
 
-/* Debounced click feedback on interactive buttons */
-.game-card-btn.action-locked,
-.btn-play-game.action-locked {
-  pointer-events: none !important;
-  opacity: 0.65 !important;
-  filter: grayscale(0.5);
+.modal-audio-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: monospace;
+  letter-spacing: 0.05em;
   transition: all 0.2s ease;
 }
 
-/* Modal frame loading state pulse */
-.modal-frame-wrapper.is-mounting {
-  position: relative;
+.modal-audio-indicator.sound-active {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: #4ade80;
 }
 
-.modal-frame-wrapper.is-mounting::after {
+.modal-audio-indicator.sound-muted {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+.modal-audio-indicator.sound-locked {
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid rgba(234, 179, 8, 0.4);
+  color: #facc15;
+  animation: audioLockedPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes audioLockedPulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+.eq-bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+
+.eq-bar {
+  width: 2.5px;
+  background: currentColor;
+  border-radius: 1px;
+}
+
+.sound-active .eq-bar.bar-1 { animation: eqJump 0.8s ease-in-out infinite alternate; height: 10px; }
+.sound-active .eq-bar.bar-2 { animation: eqJump 0.6s ease-in-out 0.2s infinite alternate; height: 12px; }
+.sound-active .eq-bar.bar-3 { animation: eqJump 0.9s ease-in-out 0.4s infinite alternate; height: 8px; }
+
+@keyframes eqJump {
+  from { height: 3px; }
+  to { height: 12px; }
+}
+
+/* Equalizer mute line strikethrough */
+.sound-muted .eq-bars {
+  position: relative;
+  opacity: 0.5;
+}
+
+.sound-muted .eq-bars::after {
   content: "";
   position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at center, rgba(99, 102, 241, 0.15) 0%, rgba(10, 14, 26, 0.95) 70%);
-  pointer-events: none;
-  z-index: 5;
-  animation: mountingPulse 1.2s ease-in-out infinite alternate;
-}
-
-@keyframes mountingPulse {
-  from { opacity: 0.4; }
-  to { opacity: 0.85; }
-}
-
-/* Modal debounced trigger cooldown bar */
-.modal-launch-cooldown-bar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 50%;
+  left: -2px;
+  right: -2px;
   height: 2px;
-  background: linear-gradient(90deg, var(--accent-primary, #6366f1), #ec4899);
-  z-index: 100;
-  transform-origin: left center;
-  animation: cooldownProgress 0.45s linear forwards;
+  background: currentColor;
+  transform: rotate(-35deg);
 }
 
-@keyframes cooldownProgress {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
+/* Audio unlock gesture ripple effect */
+.audio-unlock-gesture-ripple {
+  position: absolute;
+  border: 2px solid var(--accent-primary, #6366f1);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: gestureRippleExpand 0.6s cubic-bezier(0, 0.2, 0.8, 1) forwards;
+}
+
+@keyframes gestureRippleExpand {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 0.8;
+  }
+  100% {
+    width: 120px;
+    height: 120px;
+    opacity: 0;
+  }
 }
