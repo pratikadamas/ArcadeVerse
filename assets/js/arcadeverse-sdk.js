@@ -838,73 +838,116 @@
      * @returns {AudioContext}
      */
     /**
-     * Bind standard ESC pause handler inside game script
-     * @param {Function} onPause
+     * Subscribe to standardized resize broadcasts from parent modal (#501)
+     * @param {Function} onResizeCallback
+     */
+    onResize: function (onResizeCallback) {
+      if (typeof window === 'undefined' || typeof onResizeCallback !== 'function') return;
+      window.addEventListener('message', function (e) {
+        if (e && e.data && e.data.type === 'AV_RESIZE') {
+          onResizeCallback(e.data);
+        }
+      });
+    },
+
+    /**
+     * Fit canvas dynamically into target aspect ratio
+     * @param {HTMLCanvasElement} canvas
+     * @param {number} targetRatio (e.g. 16/9, 4/3, 1)
      */
     /**
-     * Notify parent window that game has resumed from pause state
+     * Compute optimum canvas render resolution given display DPI
+     * @param {number} baseWidth
+     * @param {number} baseHeight
+     * @returns {{renderWidth: number, renderHeight: number, dpr: number}}
      */
-    postGameResume: function () {
-      if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'ARCADEVERSE_GAME_RESUMED' }, '*');
+    getOptimumResolution: function (baseWidth, baseHeight) {
+      var dpr = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1;
+      return {
+        renderWidth: Math.round(baseWidth * dpr),
+        renderHeight: Math.round(baseHeight * dpr),
+        dpr: dpr
+      };
+    },
+
+    /**
+     * Calculate and apply pillarbox or letterbox margins
+     * @param {HTMLElement} element
+     * @param {number} ratio
+     */
+    applyLetterboxPadding: function (element, ratio) {
+      if (!element || !element.parentElement) return;
+      var parent = element.parentElement;
+      var containerRatio = parent.clientWidth / parent.clientHeight;
+      if (containerRatio > ratio) {
+        element.style.marginTop = '0';
+        element.style.marginBottom = '0';
+      } else {
+        var diff = parent.clientHeight - (parent.clientWidth / ratio);
+        element.style.marginTop = (diff / 2) + 'px';
+        element.style.marginBottom = (diff / 2) + 'px';
+      }
+    },
+
+    fitCanvasAspectRatio: function (canvas, targetRatio) {
+      if (!canvas || !canvas.parentElement) return;
+      var parent = canvas.parentElement;
+      var pWidth = parent.clientWidth;
+      var pHeight = parent.clientHeight;
+      var currentRatio = pWidth / pHeight;
+
+      if (currentRatio > targetRatio) {
+        canvas.style.height = pHeight + 'px';
+        canvas.style.width = (pHeight * targetRatio) + 'px';
+      } else {
+        canvas.style.width = pWidth + 'px';
+        canvas.style.height = (pWidth / targetRatio) + 'px';
       }
     },
 
     /**
-     * Register pause toggler that responds to both hub pause and ESC signals
-     * @param {Function} toggleFn
+     * Compute coordinate transform for letterboxed / scaled canvas mouse & touch events
+     * @param {MouseEvent|TouchEvent} event - DOM mouse or touch event
+     * @param {HTMLCanvasElement} canvas - The target game canvas
+     * @param {number} internalWidth - Virtual canvas buffer width
+     * @param {number} internalHeight - Virtual canvas buffer height
+     * @returns {{x: number, y: number}} Scaled virtual coordinates
      */
-    registerPauseToggleHandler: function (toggleFn) {
-      if (typeof window === 'undefined' || typeof toggleFn !== 'function') return;
-      window.addEventListener('message', function (e) {
-        if (e && e.data && (e.data.type === 'ARCADEVERSE_PAUSE' || e.data.type === 'ARCADEVERSE_ESC_PAUSE')) {
-          toggleFn(true);
-        } else if (e && e.data && e.data.type === 'ARCADEVERSE_RESUME') {
-          toggleFn(false);
-        }
-      });
-    },
-
-    /**
-     * Diagnostic report of keyboard shortcut forwarders
-     * @returns {Object}
-     */
-    /**
-     * Helper to test if a key event matches standard escape keys
-     * @param {KeyboardEvent} e
-     * @returns {boolean}
-     */
-    /**
-     * Programmatically simulate game resume
-     */
-    triggerResume: function () {
-      this.resume();
-      this.postGameResume();
-    },
-
-    /**
-     * Helper to test if a key event matches standard escape keys
-     * @param {KeyboardEvent} e
-     * @returns {boolean}
-     */
-    isEscapeEvent: function (e) {
-      return !!(e && (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27));
-    },
-
-    getKeyboardBridgeStatus: function () {
+    mapEventToCanvasCoordinates: function (event, canvas, internalWidth, internalHeight) {
+      if (!canvas) return { x: 0, y: 0 };
+      var rect = canvas.getBoundingClientRect();
+      var clientX = event.clientX;
+      var clientY = event.clientY;
+      if (event.touches && event.touches.length > 0) {
+        clientX = event.touches[0].clientX;
+        clientY = event.touches[0].clientY;
+      }
+      var scaleX = (internalWidth || canvas.width) / (rect.width || 1);
+      var scaleY = (internalHeight || canvas.height) / (rect.height || 1);
       return {
-        isEscBound: true,
-        parentBridged: typeof window !== 'undefined' && window.parent && window.parent !== window
+        x: Math.max(0, Math.min(internalWidth || canvas.width, (clientX - rect.left) * scaleX)),
+        y: Math.max(0, Math.min(internalHeight || canvas.height, (clientY - rect.top) * scaleY))
       };
     },
 
-    onEscPause: function (onPause) {
-      if (typeof window === 'undefined' || typeof onPause !== 'function') return;
-      window.addEventListener('message', function (e) {
-        if (e && e.data && e.data.type === 'ARCADEVERSE_ESC_PAUSE') {
-          onPause();
-        }
-      });
+    /**
+     * Preserves retro pixel art crispness across high-DPI and scaled modal viewports
+     * @param {HTMLCanvasElement} canvas
+     * @param {CanvasRenderingContext2D} ctx
+     */
+    enforcePixelCrispness: function (canvas, ctx) {
+      if (canvas && canvas.style) {
+        canvas.style.imageRendering = '-moz-crisp-edges';
+        canvas.style.imageRendering = '-webkit-crisp-edges';
+        canvas.style.imageRendering = 'pixelated';
+        canvas.style.imageRendering = 'crisp-edges';
+      }
+      if (ctx) {
+        ctx.imageSmoothingEnabled = false;
+        ctx.webkitImageSmoothingEnabled = false;
+        ctx.mozImageSmoothingEnabled = false;
+        ctx.msImageSmoothingEnabled = false;
+      }
     },
 
     createAudioContext: function () {

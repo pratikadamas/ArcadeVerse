@@ -446,7 +446,7 @@ Before submitting your PR to me, make sure every box is checked:
 - [ ] Game contains **ONLY** `index.html`, `style.css`, `game.js`, and `game.json` (strictly 4 files — no `README.md`, no documentation files, and no extraneous assets/binaries)
 - [ ] Used **icons only (SVG / Lucide)** in the game UI — **NO emojis**
 - [ ] Verified that save keys adhere to primitive serialization (valid string/number/boolean) compatible with the Atomic Save Backup schema
-- [ ] In-game pause screens should listen for the standard ARCADEVERSE_ESC_PAUSE message to ensure unified keyboard pause behavior
+- [ ] Game canvases must respond cleanly to AV_RESIZE postMessage events without aspect ratio distortion or coordinate drift
 - [ ] Added `game.json` (I have **NOT** edited `assets/js/games-registry.js` or `index.html`)
 - [ ] I ran `node scripts/validate-games.js` (or `npm run validate`) locally and confirmed zero errors
 - [ ] The PR says `Closes #issue-number` with a short summary

@@ -638,33 +638,33 @@ validateBackupPayload(data)
                 </div>
               </div>
 
-              <!-- ESC Key Dual-Action Pause & Exit Architecture -->
+              <!-- Canonical Aspect Ratio & Viewport Resizing Architecture -->
               <div class="docs-callout note" style="margin-top: 24px;">
-                <div class="docs-callout-icon"><i data-lucide="pause-circle"></i></div>
+                <div class="docs-callout-icon"><i data-lucide="maximize-2"></i></div>
                 <div>
-                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">ESC Key Dual-Action Conflict Resolution & In-Game Pause Guard (#500)</h4>
+                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Canonical Aspect Ratio Scaling & Orientation Letterboxing (#501)</h4>
                   <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
-                    In classical and retro video games, pressing the <code>Escape</code> key is the universal gesture to open the in-game pause menu. When the hub modal unconditionally bound Escape to terminate sessions, players accidentally lost uncommitted scores:
+                    When users maximize their desktop browser or rotate mobile handheld devices between portrait and landscape orientations, canvas scaling can distort or stretch pixel matrices. ArcadeVerse maintains clean canonical ratios:
                   </p>
                   <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
-                    <li><strong>First Press (Pause Signal):</strong> The initial Escape keystroke dispatches <code>ARCADEVERSE_ESC_PAUSE</code> to the embedded game iframe, opening its internal pause or options menu.</li>
-                    <li><strong>Double-Tap Exit Window:</strong> A 1500ms safety window activates with a floating prompt (<em>"Game paused. Press ESC again or Shift+ESC to exit to catalog"</em>).</li>
-                    <li><strong>Second Press (Modal Dismissal):</strong> Pressing Escape a second time within 1.5 seconds confirms modal exit without abrupt surprise.</li>
-                    <li><strong>Immediate Override:</strong> <code>Shift+Escape</code> acts as an intentional power shortcut, immediately closing the modal container.</li>
-                    <li><strong>Event Bridge Notification:</strong> Games can listen to <code>ARCADEVERSE_ESC_PAUSE</code> to pause simulation tickers and physics loops gracefully.</li>
+                    <li><strong>Debounced AV_RESIZE Events:</strong> The parent container broadcasts <code>AV_RESIZE</code> with updated dimensions, DPR, and orientation after a 150ms stabilization debounce.</li>
+                    <li><strong>Letterboxing Matrix:</strong> Center-aligned letterbox frames preserve 16:9, 4:3, or 1:1 viewports without awkward aspect distortion.</li>
+                    <li><strong>Dynamic Coordinate Scaling:</strong> Games subscribing via <code>ArcadeVerse.onResize()</code> receive true canvas pixel bounds for physics recalculation.</li>
                   </ul>
-                  <h5 style="color: var(--text-primary); margin-top: 14px; margin-bottom: 6px; font-size: 0.95rem;">Dual-Action Protocol Integration</h5>
+                  <h5 style="color: var(--text-primary); margin-top: 14px; margin-bottom: 6px; font-size: 0.95rem;">Canonical Aspect Scaling in Games</h5>
                   <p style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 8px;">
-                    Games integrate seamlessly with the dual-action ESC protocol by subscribing to <code>ARCADEVERSE_ESC_PAUSE</code> to open their internal pause menu:
+                    Games subscribe to the <code>AV_RESIZE</code> postMessage or leverage <code>ArcadeVerse.onResize()</code> to adjust viewport calculations without canvas distortion:
                   </p>
                   <div class="code-block-wrapper" style="margin-top: 10px; margin-bottom: 10px;">
-                    <pre class="code-pre"><code class="language-javascript">// Dual-Action Protocol
-if (escPressCount === 1) {
-  iframe.postMessage({ type: 'ARCADEVERSE_ESC_PAUSE' }, '*');
-  showEscExitToast();
-} else if (escPressCount >= 2 || e.shiftKey) {
-  closeGameModal(false);
-}</code></pre>
+                    <pre class="code-pre"><code class="language-javascript">// Listening to AV_RESIZE in games
+ArcadeVerse.onResize(({ width, height, dpr }) => {
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  renderScene();
+});</code></pre>
+                  </div>
+                </div>
+              </div>
                   </div>
                 </div>
               </div>

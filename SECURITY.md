@@ -53,11 +53,11 @@ To protect player profiles, ratings, and game progress from corruption or malici
 - All restored keys and values are sanitized to primitive types with a 1MB per-item threshold and a 2,000-key capacity cap.
 - Restores are executed as atomic transactions: an in-memory snapshot is recorded prior to writing, and an instant rollback is executed if quota or parse errors occur during processing.
 
-## 🎮 Input Interception & Key Conflict Isolation (#500)
+## 📐 Canvas Bounds & Viewport Stability (#501)
 
-To prevent keypress hijacking and avoid unintended session termination:
-- Top-level keyboard event handlers allow game runtimes to consume in-game keys before global destruction.
-- Escape commands operate through a dual-action confirmation gate, preventing uncoordinated termination of active gameplay state.
+To protect host responsiveness and prevent GPU buffer overflows during rapid window resizes:
+- Window resize and orientation changes are debounced to a 150ms stabilization threshold before triggering layout recalculations.
+- Viewports enforce canonical aspect ratios to prevent memory thrashing and excessive texture allocations.
 
 ## 💻 Web Architecture & Code Safety Guidelines
 

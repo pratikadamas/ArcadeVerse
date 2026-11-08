@@ -1721,6 +1721,51 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // ========================================================
+  // ASPECT RATIO & ORIENTATION CHANGE RESIZE HANDLER (#501)
+  // Debounces resize calculations and broadcasts AV_RESIZE to game iframe
+  // ========================================================
+  let modalResizeDebounceTimer = null;
+  let currentCanonicalAspectRatio = "auto";
+
+  /**
+   * Set modal letterboxing ratio for a specific game
+   * @param {'16-9'|'4-3'|'1-1'|'auto'} ratio
+   */
+  function setModalAspectRatio(ratio) {
+    if (!modalFrameWrapper) return;
+    modalFrameWrapper.classList.remove("aspect-16-9", "aspect-4-3", "aspect-1-1");
+    if (ratio && ratio !== "auto") {
+      modalFrameWrapper.classList.add(spect-);
+      currentCanonicalAspectRatio = ratio;
+    } else {
+      currentCanonicalAspectRatio = "auto";
+    }
+  }
+
+  function handleModalViewportResize() {
+    if (!gameModal || !gameModal.classList.contains("active")) return;
+
+    if (modalResizeDebounceTimer) clearTimeout(modalResizeDebounceTimer);
+    modalResizeDebounceTimer = setTimeout(() => {
+      try {
+        if (gameIframe && gameIframe.contentWindow) {
+          const rect = gameIframe.getBoundingClientRect();
+          gameIframe.contentWindow.postMessage({
+            type: "AV_RESIZE",
+            width: Math.round(rect.width),
+            height: Math.round(rect.height),
+            devicePixelRatio: window.devicePixelRatio || 1,
+            orientation: window.innerWidth > window.innerHeight ? "landscape" : "portrait"
+          }, "*");
+        }
+      } catch (_) {}
+    }, 150);
+  }
+
+  window.addEventListener("resize", handleModalViewportResize, { passive: true });
+  window.addEventListener("orientationchange", handleModalViewportResize, { passive: true });
+
   closeModalBtn.addEventListener("click", () => closeGameModal(false));
   modalOverlay.addEventListener("click", () => closeGameModal(false));
 

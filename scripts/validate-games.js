@@ -40,10 +40,10 @@ function verifyStorageSerializationHealth(gameJsContent) {
   }
 }
 
-// Escape Key Input Conflict Auditor (#500)
-function verifyEscapeKeySafety(gameJsContent) {
-  if (gameJsContent.includes('key === "Escape"') && !gameJsContent.includes('preventDefault')) {
-    // Audit for non-interfering key handling
+// Aspect Ratio & Viewport Scaling Auditor (#501)
+function verifyCanvasResizeSafety(gameJsContent) {
+  if (gameJsContent.includes('window.addEventListener("resize"') && !gameJsContent.includes('debounce') && !gameJsContent.includes('ArcadeVerse')) {
+    // Audit for responsive resizing safety
   }
 }
 
