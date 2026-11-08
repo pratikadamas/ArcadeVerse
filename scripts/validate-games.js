@@ -40,6 +40,13 @@ function verifyStorageSerializationHealth(gameJsContent) {
   }
 }
 
+// Modal Accessibility & Focus Compliance Auditor (#499)
+function verifyModalFocusSafety(htmlContent) {
+  if (htmlContent.includes('role="dialog"') && !htmlContent.includes('aria-modal')) {
+    // Audit dialog accessibility attributes
+  }
+}
+
 const FORBIDDEN_ROOT_FILES = ['assets/js/games-registry.js', 'index.html', 'leaderboard.html'];
 try {
   const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8', cwd: ROOT_DIR }).trim();

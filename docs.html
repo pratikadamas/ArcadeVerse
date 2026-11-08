@@ -638,6 +638,39 @@ validateBackupPayload(data)
                 </div>
               </div>
 
+              <!-- Modal Focus Trap & Keyboard Navigation Architecture -->
+              <div class="docs-callout note" style="margin-top: 24px;">
+                <div class="docs-callout-icon"><i data-lucide="crosshair"></i></div>
+                <div>
+                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">WAI-ARIA Focus Trap & Keyboard Navigation Guard (#499)</h4>
+                  <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
+                    When playing games inside the in-app modal launcher, keyboard focus must remain strictly locked inside the dialog container. Escaping the container into the background catalog violates accessibility standards:
+                  </p>
+                  <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
+                    <li><strong>Modal Boundary Containment:</strong> Background elements (search bar, filter tags, and footer) are completely unreachable via Tab navigation while a game modal is displayed.</li>
+                    <li><strong>Visual Focus Outlines:</strong> Modal interactive action buttons receive prominent focus indicators adhering to WCAG 2.1 AA focus visible standards.</li>
+                    <li><strong>Bi-Directional Tab Trapping:</strong> Pressing <code>Tab</code> or <code>Shift+Tab</code> cycles exclusively between modal action buttons (Mute, Fullscreen, Reload, External Link, Close).</li>
+                    <li><strong>Automatic Focus Initialization:</strong> Opening a modal automatically directs keyboard focus to the primary close button or game iframe canvas.</li>
+                    <li><strong>Origin Return Restoration:</strong> Closing the modal returns focus directly to the originating card button or triggering element.</li>
+                    <li><strong>Inert Boundary Observation:</strong> Any clicks or gestures directed at the backdrop are intercepted without delegating active keyboard focus to underlying page widgets.</li>
+                  </ul>
+                  <h5 style="color: var(--text-primary); margin-top: 14px; margin-bottom: 6px; font-size: 0.95rem;">Focus Trap Cycle Execution</h5>
+                  <p style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 8px;">
+                    When cycling through modal elements, focus is kept within bounds by intercepting Tab events on the first and last elements:
+                  </p>
+                  <p style="font-size: 0.88rem; line-height: 1.6; margin-top: 10px; margin-bottom: 8px;">
+                    Focus trapping operates synchronously without noticeable input lag or interfering with canvas touch gestures or game controllers. The active modal container retains focus even if background canvas borders are clicked:
+                  </p>
+                  <div class="code-block-wrapper" style="margin-top: 10px; margin-bottom: 10px;">
+                    <pre class="code-pre"><code class="language-javascript">// Focus Trap Cycle
+if (document.activeElement === lastElement && !e.shiftKey) {
+  e.preventDefault();
+  firstElement.focus();
+}</code></pre>
+                  </div>
+                </div>
+              </div>
+
               <h5 style="color: var(--text-primary); margin-top: 16px; margin-bottom: 6px; font-size: 0.95rem;">Implementation Guide for Game Contributors</h5>
               <p style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 10px;">
                 When developing WebGL games for ArcadeVerse, always bind the context recovery handler. When a mobile or laptop GPU sleeps or switches display adapters, the browser triggers a synthetic context loss. With the ArcadeVerse lifecycle bridge, your game avoids black screens:

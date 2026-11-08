@@ -795,6 +795,35 @@
           </div>
         </div>
 
+        <!-- Question 30 (#499) -->
+        <div class="faq-accordion-item" data-category="architecture" id="faq-30">
+          <button class="faq-accordion-trigger" type="button" aria-expanded="false" aria-controls="faq-ans-30">
+            <span class="faq-question-text">
+              <span class="faq-category-badge">Architecture</span>
+              30. How does ArcadeVerse enforce WAI-ARIA focus traps in game modals?
+            </span>
+            <i data-lucide="chevron-down" class="faq-chevron"></i>
+          </button>
+          <div class="faq-accordion-content" id="faq-ans-30" role="region">
+            <div class="faq-accordion-inner">
+              <div class="faq-answer-text">
+                <p>When a game launches inside the modal window, the focus manager enforces strict dialog confinement according to W3C WAI-ARIA authoring practices:</p>
+                <p>Keyboards and screen-readers are prevented from inadvertently activating background catalog links or search forms:</p>
+                <ul>
+                  <li><strong>Tab Trapping:</strong> Pressing Tab wraps from the last interactive header button back to the first.</li>
+                  <li><strong>Shift+Tab:</strong> Reversing navigation wraps backwards without leaking focus into background elements.</li>
+                  <li><strong>Restoration:</strong> When closing the modal, focus is automatically returned to the exact card button that launched the session.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- Quick Help & Issues CTA Banner -->

@@ -1525,7 +1525,10 @@ document.addEventListener("DOMContentLoaded", () => {
     gameModal.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
     document.body.style.overscrollBehavior = "contain";
-    closeModalBtn.focus();
+    // Focus Trap Activation: automatically focus close button or iframe canvas
+    if (closeModalBtn) {
+      setTimeout(() => closeModalBtn.focus(), 50);
+    }
 
     if (!isDirectDeepLink) {
       modalPushedHistory = true;
@@ -1685,9 +1688,114 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && gameModal.classList.contains("active")) {
+  // ========================================================
+  // WAI-ARIA MODAL FOCUS TRAP ENGINE (#499)
+  // Keeps keyboard navigation strictly inside the modal dialog
+  // ========================================================
+  function getModalFocusableElements() {
+    if (!gameModal) return [];
+    const focusableSelectors = [
+      'button:not([disabled]):not([hidden]):not([tabindex="-1"])',
+      'a[href]:not([tabindex="-1"])',
+      'iframe:not([tabindex="-1"])',
+      '[tabindex]:not([tabindex="-1"])',
+      'input:not([disabled]):not([type="hidden"])'
+    ];
+    // Also include internal controls from modal header and iframe if accessible
+    const elements = Array.from(gameModal.querySelectorAll(focusableSelectors.join(', ')));
+    if (gameIframe && !elements.includes(gameIframe)) {
+      elements.splice(elements.length - 1, 0, gameIframe);
+    }
+    return elements;
+  }
+
+  /**
+   * Diagnostic focus trap state inspector
+   * @returns {Object} focus metrics
+   */
+  function inspectModalFocusState() {
+    const focusables = getModalFocusableElements();
+    return {
+      isOpen: !!(gameModal && gameModal.classList.contains("active")),
+      focusableCount: focusables.length,
+      currentActive: document.activeElement ? document.activeElement.tagName : null,
+      isContained: !!(gameModal && document.activeElement && gameModal.contains(document.activeElement))
+    };
+      .filter((el) => {
+        return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+      });
+  }
+
+  /**
+   * Ensure focused element is visible and within bounds
+   * @param {HTMLElement} el
+   */
+  function scrollElementIntoModalView(el) {
+    if (!el || typeof el.scrollIntoView !== 'function') return;
+    try {
+      el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    } catch (_) {}
+  }
+
+  /**
+   * Trap and redirect focus if click or touch lands on inert background
+   */
+  function handleModalFocusRetention(e) {
+    if (!gameModal || !gameModal.classList.contains('active')) return;
+    if (!gameModal.contains(e.target)) {
+      const focusables = getModalFocusableElements();
+      if (focusables.length > 0) {
+        e.preventDefault();
+        focusables[0].focus();
+      }
+    }
+  }
+
+  document.addEventListener('focusin', handleModalFocusRetention);
+
+  function handleModalKeyDown(e) {
+    if (!gameModal || !gameModal.classList.contains("active")) return;
+
+    if (e.key === "Escape") {
       closeGameModal(false);
+      return;
+    }
+
+    if (e.key === "Tab") {
+      const focusables = getModalFocusableElements();
+      if (focusables.length === 0) {
+        e.preventDefault();
+        return;
+      }
+
+      const firstElement = focusables[0];
+      const lastElement = focusables[focusables.length - 1];
+
+      if (e.shiftKey) {
+        // Shift + Tab: going backwards
+        if (document.activeElement === firstElement || !gameModal.contains(document.activeElement)) {
+          e.preventDefault();
+          lastElement.focus();
+        }
+      } else {
+        // Tab: going forwards
+        if (document.activeElement === lastElement || !gameModal.contains(document.activeElement)) {
+          e.preventDefault();
+          firstElement.focus();
+        }
+      }
+    }
+  }
+
+  window.addEventListener("keydown", handleModalKeyDown);
+
+  // Listen for forwarded shortcuts from inside game iframes (via ArcadeVerse SDK)
+  // Re-focus request handler from SDK (#499)
+  window.addEventListener("message", (e) => {
+    if (e && e.data && e.data.type === "ARCADEVERSE_REFOCUS_GAME") {
+      if (gameIframe && typeof gameIframe.focus === "function") {
+        gameIframe.focus();
+      }
     }
   });
 

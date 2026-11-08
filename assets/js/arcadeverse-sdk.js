@@ -837,6 +837,89 @@
      * Helper to wrap native AudioContext creation with automatic lifecycle tracking
      * @returns {AudioContext}
      */
+    /**
+     * Request parent modal to refocus the game iframe canvas
+     */
+    focusGameCanvas: function () {
+      if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'ARCADEVERSE_REFOCUS_GAME' }, '*');
+      }
+    },
+
+    /**
+     * Intercept keyboard navigation inside game iframe to prevent focus loss
+     */
+    /**
+     * Re-focus handler for trapped iframe environments
+     * Dispatches keydown escape forwarders to parent
+     */
+    /**
+     * Diagnostic report of iframe focus capabilities
+     * @returns {Object}
+     */
+    checkFocusCapabilities: function () {
+      return {
+        hasFocus: typeof document !== 'undefined' ? document.hasFocus() : false,
+        activeTag: typeof document !== 'undefined' && document.activeElement ? document.activeElement.tagName : 'NONE'
+      };
+    },
+
+    /**
+     * Re-focus handler for trapped iframe environments
+     * Dispatches keydown escape forwarders to parent
+     */
+    /**
+     * Trap Tab navigation inside game iframe
+     * Prevents keyboard focus from escaping to the outer parent document without intent
+     */
+    enableIframeTabTrap: function () {
+      if (typeof window === 'undefined') return;
+      window.addEventListener('keydown', function (e) {
+        if (e.key === 'Tab') {
+          var interactive = Array.from(document.querySelectorAll('button, a, input, canvas[tabindex]'));
+          if (interactive.length > 0) {
+            var first = interactive[0];
+            var last = interactive[interactive.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        }
+      });
+    },
+
+    /**
+     * Inspect whether active focus is currently within the game canvas
+     * @param {HTMLCanvasElement} canvas
+     * @returns {boolean}
+     */
+    isCanvasFocused: function (canvas) {
+      if (!canvas || typeof document === 'undefined') return false;
+      return document.activeElement === canvas;
+    },
+
+    forwardEscapeKey: function () {
+      if (typeof window !== 'undefined') {
+        window.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'ARCADEVERSE_KEY_SHORTCUT', key: 'Escape' }, '*');
+          }
+        });
+      }
+    },
+
+    bindInternalFocusGuard: function (canvasElement) {
+      if (!canvasElement) return;
+      canvasElement.setAttribute('tabindex', '0');
+      canvasElement.addEventListener('click', function () {
+        canvasElement.focus();
+      });
+    },
+
     createAudioContext: function () {
       var AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (!AudioContextClass) return null;
