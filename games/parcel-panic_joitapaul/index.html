@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Rotate conveyor tiles to route parcels safely to their matching destinations.">
+  <title>Parcel Panic: Conveyor Shift</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="game-shell">
+    <header class="game-header">
+      <a class="back-link" href="../../index.html">ArcadeVerse</a>
+      <p class="eyebrow">Conveyor routing puzzle</p>
+      <h1>Parcel Panic</h1>
+      <p class="subtitle">Conveyor Shift</p>
+    </header>
+
+    <section class="mission-bar" aria-label="Shift status">
+      <p id="game-status" class="game-status" role="status" aria-live="polite">
+        Rotate the conveyor tiles to route each parcel to its matching destination.
+      </p>
+      <button id="restart-button" class="secondary-button" type="button">Restart game</button>
+    </section>
+
+    <div class="game-layout">
+      <section class="factory-panel" aria-labelledby="factory-heading">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Sorting floor</p>
+            <h2 id="factory-heading">Conveyor grid</h2>
+          </div>
+          <span class="stage-pill">Stage <strong id="stage-count">1</strong> / <span id="stage-total">3</span></span>
+        </div>
+
+        <div class="factory-frame">
+          <div id="factory-grid" class="factory-grid" role="grid" aria-label="Parcel conveyor grid"></div>
+        </div>
+
+        <div class="legend" aria-label="Grid legend">
+          <span><i class="legend-mark source-mark">IN</i> Parcel entry</span>
+          <span><i class="legend-mark destination-mark">OUT</i> Matching destination</span>
+          <span><i class="legend-mark conveyor-mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></i> Rotating conveyor</span>
+        </div>
+
+        <div class="tile-selection" aria-live="polite">
+          <span class="selection-dot" aria-hidden="true"></span>
+          <span id="selection-status">Select a conveyor tile to rotate it.</span>
+        </div>
+      </section>
+
+      <aside class="control-panel" aria-label="Shift controls and instructions">
+        <section class="status-card">
+          <p class="eyebrow">Shift report</p>
+          <div class="stat-row">
+            <span>Parcels delivered</span>
+            <strong><span id="delivered-count">0</span> / <span id="parcel-total">1</span></strong>
+          </div>
+          <div class="stat-row">
+            <span>Remaining mistakes</span>
+            <strong id="lives-count">3</strong>
+          </div>
+          <progress id="stage-progress" value="0" max="1">0 of 1</progress>
+          <p class="small-note">A wrong route or jam costs one mistake. Reaching zero ends the shift.</p>
+          <button id="dispatch-button" class="dispatch-button" type="button">
+            <span class="play-icon" aria-hidden="true"></span>
+            Run parcels
+          </button>
+        </section>
+
+        <section class="parcel-card" aria-labelledby="parcels-heading">
+          <p class="eyebrow">Parcel manifest</p>
+          <h2 id="parcels-heading">Match each label</h2>
+          <div id="parcel-manifest" class="parcel-manifest"></div>
+        </section>
+
+        <section class="rules-card" aria-labelledby="rules-heading">
+          <p class="eyebrow">Shift guide</p>
+          <h2 id="rules-heading">How to play</h2>
+          <ol>
+            <li>Each parcel enters at its labeled IN tile. Route it to the OUT tile with the same label.</li>
+            <li>Select a conveyor with a mouse or touch, or focus it with Tab. Click, tap, Enter, or Space to rotate it clockwise.</li>
+            <li>Plan every route, then choose Run parcels. Parcels move one conveyor at a time; the direction arrow determines their next cell.</li>
+            <li>Wrong destinations, empty floor, and collisions each cost one mistake. After a failed run, parcels reset so you can adjust the route.</li>
+            <li>Deliver every parcel to advance through three stages. Lose all three mistakes and the shift ends. Restart resets the whole game.</li>
+          </ol>
+        </section>
+      </aside>
+    </div>
+    <footer class="game-footer">Sort every shipment before the shift runs out of mistakes.</footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
