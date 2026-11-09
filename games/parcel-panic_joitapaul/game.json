@@ -1,0 +1,10 @@
+{
+  "title": "Parcel Panic: Conveyor Shift",
+  "category": "Puzzle",
+  "lucideIcon": "package-check",
+  "description": "Rotate conveyor tiles to route labeled parcels through a sorting floor to their matching destinations across three stages.",
+  "author": "Joita Paul",
+  "github": "joitapaul",
+  "role": "Arcade Developer",
+  "tags": ["Puzzle", "Strategy", "Logic", "NSOC26"]
+}
