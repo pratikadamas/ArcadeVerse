@@ -368,10 +368,12 @@
       this.type = type;
       this.laneIndex = laneIndex;
       this.z = z;
+      this.prevZ = z;
       this.passed = false;
     }
 
     update(dt, speed) {
+      this.prevZ = this.z;
       this.z -= speed * dt;
     }
   }
@@ -927,11 +929,13 @@
         const obs = this.obstacles[i];
         obs.update(dt, this.speed);
 
-        // Collision Check
+        // Continuous Collision Swept Volume Check (#534)
+        // Prevents obstacle collision box desync / tunnel-through at high speeds
+        const entersWindow = obs.prevZ >= CONFIG.COLLISION_Z_MIN && obs.z <= CONFIG.COLLISION_Z_MAX;
+        const inWindow = obs.z >= CONFIG.COLLISION_Z_MIN && obs.z <= CONFIG.COLLISION_Z_MAX;
         if (
           this.player.invulnerableTimer <= 0 &&
-          obs.z >= CONFIG.COLLISION_Z_MIN &&
-          obs.z <= CONFIG.COLLISION_Z_MAX &&
+          (inWindow || entersWindow) &&
           this.isPlayerInLane(obs.laneIndex)
         ) {
           if (this.checkCollision(obs)) {
