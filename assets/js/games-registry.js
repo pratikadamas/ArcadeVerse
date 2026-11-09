@@ -1779,6 +1779,25 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "parcel-panic_joitapaul",
+    "title": "Parcel Panic: Conveyor Shift",
+    "category": "Puzzle",
+    "lucideIcon": "gamepad-2",
+    "description": "Rotate conveyor tiles to route labeled parcels through a sorting floor to their matching destinations across three stages.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/parcel-panic_joitapaul/index.html",
+    "tags": [
+      "Puzzle",
+      "Strategy",
+      "Logic",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "potion-maker_mistu7debnath",
     "title": "Potion Maker",
     "category": "Puzzle",
@@ -2347,7 +2366,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 441,
+    "commits": 442,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2457,8 +2476,8 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "joitapaul",
     "avatarInitial": "J",
     "role": "Active Contributor (NSOC '26)",
-    "commits": 22,
-    "gamesCount": 11,
+    "commits": 23,
+    "gamesCount": 12,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 1,
@@ -2471,6 +2490,7 @@ const CONTRIBUTORS_REGISTRY = [
       "Midnight Graveyard: Lantern Run",
       "Neon Asteroid Escape",
       "Neon Drift Racer",
+      "Parcel Panic: Conveyor Shift",
       "Potion Panic",
       "Prism Pulse: Laser Labyrinth",
       "Pumpkin Express: Haunted Rails",
