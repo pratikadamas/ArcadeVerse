@@ -1177,6 +1177,67 @@
         return window.ArcadeAudio;
       }
       return null;
+    },
+
+    // ========================================================
+    // DEVICE GYROSCOPE & ORIENTATION CONTROLLER (#574)
+    // Motion tilt steering for mobile racing & balance arcade games
+    // ========================================================
+    /**
+     * Initializes device orientation listener mapping gamma/beta tilt angles to normalized steering inputs [-1.0, 1.0].
+     * Handles iOS permission handshake via DeviceOrientationEvent.requestPermission().
+     * @param {Object} [options]
+     * @param {number} [options.maxTiltAngle=35] - Maximum tilt deflection angle in degrees
+     * @param {Function} [options.onTilt] - Callback receiving { gamma: number, beta: number, steer: number }
+     * @returns {Promise<{ detach: Function, isAvailable: boolean }>}
+     */
+    initTiltControls: function (options) {
+      var opts = options || {};
+      var maxTilt = typeof opts.maxTiltAngle === 'number' ? opts.maxTiltAngle : 35;
+      var onTilt = typeof opts.onTilt === 'function' ? opts.onTilt : null;
+
+      function handleOrientation(e) {
+        var gamma = e.gamma || 0; // Left-to-right tilt in degrees [-90, 90]
+        var beta = e.beta || 0;   // Front-to-back tilt in degrees [-180, 180]
+        var normalizedSteer = Math.max(-1, Math.min(1, gamma / maxTilt));
+
+        if (onTilt) {
+          try {
+            onTilt({
+              gamma: gamma,
+              beta: beta,
+              steer: normalizedSteer
+            });
+          } catch (_err) {}
+        }
+      }
+
+      function attachListener() {
+        if (typeof window !== 'undefined') {
+          window.addEventListener('deviceorientation', handleOrientation, true);
+        }
+        return {
+          detach: function () {
+            if (typeof window !== 'undefined') {
+              window.removeEventListener('deviceorientation', handleOrientation, true);
+            }
+          },
+          isAvailable: true
+        };
+      }
+
+      if (typeof window !== 'undefined' && typeof window.DeviceOrientationEvent !== 'undefined' && typeof window.DeviceOrientationEvent.requestPermission === 'function') {
+        return window.DeviceOrientationEvent.requestPermission().then(function (permissionState) {
+          if (permissionState === 'granted') {
+            return attachListener();
+          }
+          return { detach: function () {}, isAvailable: false };
+        }).catch(function () {
+          return { detach: function () {}, isAvailable: false };
+        });
+      }
+
+      return Promise.resolve(attachListener());
     }
   };
 });
