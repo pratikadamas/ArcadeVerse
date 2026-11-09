@@ -292,6 +292,37 @@
         osc.start(now);
         osc.stop(now + 0.6);
       });
+    },
+
+    // ========================================================
+    // DYNAMIC AUDIO DUCKING CONTROLLER (#567)
+    // Side-chain attenuates background music during loud SFX (explosions, jumps, impacts)
+    // ========================================================
+    /**
+     * Dynamically ducks (temporarily lowers) target music GainNode during punchy SFX.
+     * @param {GainNode} musicGainNode - The music gain node to duck
+     * @param {number} [duckAmount=0.35] - Attenuation factor (0.35 = -9dB reduction)
+     * @param {number} [holdMs=250] - Duration in ms before restoring volume
+     * @param {number} [rampMs=180] - Smoothing ramp duration in ms
+     */
+    duckMusic: function (musicGainNode, duckAmount, holdMs, rampMs) {
+      if (!musicGainNode || !musicGainNode.gain) return;
+      var ctx = getContext();
+      if (!ctx) return;
+
+      var now = ctx.currentTime;
+      var factor = duckAmount !== undefined ? duckAmount : 0.35;
+      var hold = (holdMs || 250) / 1000;
+      var ramp = (rampMs || 180) / 1000;
+
+      var currentVal = musicGainNode.gain.value;
+      musicGainNode.gain.cancelScheduledValues(now);
+      musicGainNode.gain.setValueAtTime(currentVal, now);
+      // Fast attack (25ms)
+      musicGainNode.gain.linearRampToValueAtTime(currentVal * factor, now + 0.025);
+      // Hold then smooth release back to original level
+      musicGainNode.gain.setValueAtTime(currentVal * factor, now + 0.025 + hold);
+      musicGainNode.gain.linearRampToValueAtTime(currentVal, now + 0.025 + hold + ramp);
     }
   };
 
