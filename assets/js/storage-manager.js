@@ -352,7 +352,7 @@
     }
 
     if (keys.length > BACKUP_SCHEMA.MAX_TOTAL_KEYS) {
-      return { isValid: false, error: Dataset exceeds maximum key capacity of  keys. };
+      return { isValid: false, error: 'Dataset exceeds maximum key capacity of ' + BACKUP_SCHEMA.MAX_TOTAL_KEYS + ' keys.' };
     }
 
     const sanitized = {};
@@ -370,12 +370,12 @@
       const valType = typeof val;
 
       if (!BACKUP_SCHEMA.ALLOWED_TYPE_KEYS.includes(valType) && val !== null) {
-        return { isValid: false, error: Invalid value type '' detected for key ''. Must be primitive string/number/boolean. };
+        return { isValid: false, error: 'Invalid value type "' + valType + '" detected for key "' + key + '". Must be primitive string/number/boolean.' };
       }
 
       const stringifiedVal = val === null ? '' : String(val);
       if (stringifiedVal.length > BACKUP_SCHEMA.MAX_ENTRY_SIZE_BYTES) {
-        return { isValid: false, error: Key '' exceeds individual payload limit (1MB). };
+        return { isValid: false, error: 'Key "' + key + '" exceeds individual payload limit (1MB).' };
       }
 
       sanitized[key] = stringifiedVal;
@@ -395,16 +395,16 @@
 
     const banner = document.createElement('div');
     banner.id = 'storage-modal-feedback-banner';
-    banner.className = storage-banner storage-banner-;
-    banner.innerHTML = 
+    banner.className = 'storage-banner storage-banner-' + type;
+    banner.innerHTML = `
       <div class="storage-banner-icon">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          
+          ${type === 'success' ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>'}
         </svg>
       </div>
-      <div class="storage-banner-text"></div>
+      <div class="storage-banner-text">${escapeHTML(message)}</div>
       <button type="button" class="storage-banner-close" aria-label="Dismiss banner">&times;</button>
-    ;
+    `;
 
     const body = storageModal ? storageModal.querySelector('.storage-modal-body') : null;
     if (body) {
@@ -433,12 +433,12 @@
         // Attempt basic heuristic recovery for trailing commas or single quotes
         try {
           const cleanedText = rawText
-            .replace(/,\s*([}\]])/g, '') // remove trailing commas
+            .replace(/,\s*([}\]])/g, '$1') // remove trailing commas
             .replace(/'/g, '"');          // replace single quotes
           parsed = JSON.parse(cleanedText);
           showStorageBanner('Recovered corrupted JSON syntax (repaired trailing commas/quotes).', 'warning');
         } catch (recoveryErr) {
-          showStorageBanner(Corrupted JSON file: . Import aborted safely., 'error');
+          showStorageBanner('Corrupted JSON file: ' + (recoveryErr.message || 'Parse error') + '. Import aborted safely.', 'error');
           return;
         }
       }
@@ -446,7 +446,7 @@
       // Step 2: Validate against Schema
       const validation = validateBackupPayload(parsed);
       if (!validation.isValid) {
-        showStorageBanner(Validation Error: , 'error');
+        showStorageBanner('Validation Error: ' + validation.error, 'error');
         return;
       }
 
@@ -467,7 +467,7 @@
         }
 
         renderStorageTable();
-        showStorageBanner(Backup restored successfully!  keys committed atomically., 'success');
+        showStorageBanner('Backup restored successfully! ' + appliedCount + ' keys committed atomically.', 'success');
       } catch (txErr) {
         console.error('[ArcadeStorageManager] Write transaction failed, initiating atomic rollback...', txErr);
         // Rollback to prior clean state
@@ -477,7 +477,7 @@
             localStorage.setItem(k, rollbackSnapshot[k]);
           });
           renderStorageTable();
-          showStorageBanner(Quota or Write error during import: . All settings rolled back to previous state., 'error');
+          showStorageBanner('Quota or Write error during import: ' + (txErr.message || 'Write failure') + '. All settings rolled back to previous state.', 'error');
         } catch (rollbackErr) {
           console.error('[ArcadeStorageManager] Critical: Rollback failed!', rollbackErr);
         }
@@ -868,7 +868,6 @@
     sanitizeQueryState: function (param) {
       if (!param || typeof param !== 'string') return '';
       return param.replace(/[^a-zA-Z0-9_-]/g, '').trim().slice(0, 64);
-    }
     }
   };
 })();

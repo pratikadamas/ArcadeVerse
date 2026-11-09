@@ -1628,7 +1628,10 @@ body.docs-viewport-body {
 }
 
 [data-theme="light"] .pagination-page-btn.active {
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--accent-primary, #3b82f6), #6366f1);
+  border-color: transparent;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
 }
 
 /* Mobile Responsive Breakpoint */

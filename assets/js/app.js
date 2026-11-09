@@ -173,6 +173,180 @@ document.addEventListener("DOMContentLoaded", () => {
   window.ArcadeSanitizer = ArcadeSanitizer;
   const { escapeHTML, escapeAttr, sanitizeIconName, renderSafeIcon } = ArcadeSanitizer;
 
+  // =========================================================================
+  // RESILIENT LOCALSTORAGE QUOTA MANAGER & AUTOMATIC CACHE PRUNING (#490)
+  // =========================================================================
+  const ArcadeStorageResilience = (function () {
+    const TOAST_ID = "av-storage-quota-toast";
+    let toastTimeout = null;
+
+    // Ordered eviction priority buckets: least critical items are purged first
+    const EVICTION_PRIORITIES = [
+      // Priority 1: Ephemeral API & Network Caches
+      [
+        /^arcadeverse_contributors_cache/,
+        /^av_search_cache/,
+        /^av_temp_/
+      ],
+      // Priority 2: Stale session logs, analytics, and telemetry
+      [
+        /^arcadeverse_recently_played_v2/,
+        /^arcadeverse_recently_played/,
+        /^av_play_log/,
+        /^av_session_/,
+        /^arcadeverse_telemetry/
+      ],
+      // Priority 3: Non-critical UI state toggles & filters
+      [
+        /^arcadeverse_catalog_sort/,
+        /^arcadeverse_catalog_view/,
+        /^arcadeverse_last_category/
+      ]
+      // Priority 4 (PROTECTED & NEVER EVICTED):
+      // Favorites (av_favorites), ratings, sound preferences, theme mode
+    ];
+
+    const PROTECTED_KEYS = new Set([
+      "av_favorites",
+      "arcadeverse_favorite_games",
+      "arcadeverse:preferences:favorites",
+      "arcadeverse_theme",
+      "arcadeverse_game_ratings",
+      "arcadeverse_master_volume",
+      "arcadeverse_muted"
+    ]);
+
+    function isQuotaError(err) {
+      if (!err) return false;
+      return (
+        err.name === "QuotaExceededError" ||
+        err.name === "NS_ERROR_DOM_QUOTA_REACHED" ||
+        err.code === 22 ||
+        err.code === 1014 ||
+        err.number === -2147024882 ||
+        (typeof err.message === "string" && err.message.toLowerCase().includes("quota"))
+      );
+    }
+
+    function showQuotaToast(message) {
+      let toast = document.getElementById(TOAST_ID);
+      if (!toast) {
+        toast = document.createElement("div");
+        toast.id = TOAST_ID;
+        toast.className = "av-storage-quota-toast";
+        toast.setAttribute("role", "status");
+        toast.setAttribute("aria-live", "polite");
+        document.body.appendChild(toast);
+      }
+
+      toast.innerHTML = `
+        <div class="av-quota-toast-content">
+          <svg class="av-quota-toast-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <span class="av-quota-toast-text">${message}</span>
+          <button type="button" class="av-quota-toast-close" aria-label="Dismiss Notification">&times;</button>
+        </div>
+      `;
+
+      toast.querySelector(".av-quota-toast-close").onclick = () => {
+        toast.classList.remove("visible");
+      };
+
+      toast.classList.add("visible");
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove("visible");
+      }, 5500);
+    }
+
+    function pruneTier(tierRegexList) {
+      let bytesFreed = 0;
+      let keysRemoved = 0;
+      try {
+        const totalKeys = localStorage.length;
+        const candidateKeys = [];
+
+        for (let i = 0; i < totalKeys; i++) {
+          const key = localStorage.key(i);
+          if (!key || PROTECTED_KEYS.has(key)) continue;
+
+          for (let r = 0; r < tierRegexList.length; r++) {
+            if (tierRegexList[r].test(key)) {
+              candidateKeys.push(key);
+              break;
+            }
+          }
+        }
+
+        candidateKeys.forEach((key) => {
+          try {
+            const val = localStorage.getItem(key) || "";
+            bytesFreed += (key.length + val.length) * 2;
+            localStorage.removeItem(key);
+            keysRemoved++;
+          } catch (_) {}
+        });
+      } catch (_) {}
+      return { bytesFreed, keysRemoved };
+    }
+
+    function pruneStorageForQuota() {
+      let totalFreed = 0;
+      let totalRemoved = 0;
+
+      for (let p = 0; p < EVICTION_PRIORITIES.length; p++) {
+        const res = pruneTier(EVICTION_PRIORITIES[p]);
+        totalFreed += res.bytesFreed;
+        totalRemoved += res.keysRemoved;
+        if (totalRemoved > 0) break; // Try writing after each tier
+      }
+
+      return { totalFreed, totalRemoved };
+    }
+
+    function safeSetItem(key, value) {
+      try {
+        localStorage.setItem(key, value);
+        return true;
+      } catch (err) {
+        if (isQuotaError(err)) {
+          console.warn(`[ArcadeVerse Storage] QuotaExceededError writing "${key}". Initiating LRU prune...`);
+          const pruneResult = pruneStorageForQuota();
+
+          if (pruneResult.totalRemoved > 0) {
+            try {
+              localStorage.setItem(key, value);
+              showQuotaToast(
+                "Storage quota full: old session logs were automatically cleaned up to preserve your favorites."
+              );
+              return true;
+            } catch (retryErr) {
+              console.error("[ArcadeVerse Storage] Write failed even after eviction:", retryErr);
+            }
+          }
+
+          showQuotaToast(
+            "Storage quota full: unable to save new data without clearing space."
+          );
+          return false;
+        } else {
+          console.warn(`[ArcadeVerse Storage] Failed to set "${key}":`, err);
+          return false;
+        }
+      }
+    }
+
+    return {
+      safeSetItem,
+      showQuotaToast,
+      isQuotaError,
+      pruneStorageForQuota
+    };
+  })();
+
+  window.ArcadeStorageResilience = ArcadeStorageResilience;
+
   // Search & filter UI element refs
   const searchClearBtn = document.getElementById("search-clear-btn");
   const resultsCountEl = document.getElementById("catalog-results-count");
@@ -683,7 +857,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (currentCategory.toLowerCase() === "halloween") {
           matchesCategory = isHalloweenGame(item);
         } else {
-          matchesCategory = item.category.toLowerCase() === currentCategory.toLowerCase();
+          const itemCat = (item.category || "").toLowerCase();
+          const targetCat = currentCategory.toLowerCase();
+          const catSegments = itemCat.split(/[\s/]+/).map((s) => s.trim().toLowerCase());
+          matchesCategory = itemCat === targetCat || catSegments.includes(targetCat) || itemCat.includes(targetCat);
         }
       }
 
@@ -1067,6 +1244,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       gamesGrid.appendChild(emptyCard);
+      updateFacetSummaryUI();
       if (window.lucide) lucide.createIcons();
       return;
     }
@@ -1217,8 +1395,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Only clicking the dedicated Play Now button launches the game modal
       gamesGrid.appendChild(card);
-    updateFacetSummaryUI();
     });
+
+    updateFacetSummaryUI();
 
     if (window.lucide) {
       lucide.createIcons();
@@ -1867,24 +2046,63 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && gameModal.classList.contains("active")) {
-      if (isConfirmingQuit) {
-        hideQuitConfirmationModal();
-        return;
+  // ========================================================
+  // ESC KEY DUAL-ACTION CONFLICT RESOLVER (#500)
+  // Preserves in-game pause menus and prevents accidental game aborts
+  // ========================================================
+  let escPressTimer = null;
+  let escPressCount = 0;
+
+  function showEscExitToast() {
+    const existing = document.getElementById("esc-exit-toast");
+    if (existing) existing.remove();
+
+    const toast = document.createElement("div");
+    toast.id = "esc-exit-toast";
+    toast.className = "esc-exit-prompt-toast";
+    toast.setAttribute("role", "status");
+    toast.innerHTML = `
+      <div class="esc-exit-toast-body">
+        <span class="esc-badge">ESC</span>
+        <span>Game paused. Press <kbd>ESC</kbd> again or <kbd>Shift+ESC</kbd> to exit to catalog.</span>
+      </div>
+    `;
+
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add("visible"));
+
+    setTimeout(() => {
+      if (toast.parentElement) {
+        toast.classList.remove("visible");
+        setTimeout(() => toast.remove(), 250);
       }
-      requestModalClose(false);
+    }, 2500);
+  }
+
+  function handleEscDualAction(e) {
+    if (e.key !== "Escape" || !gameModal || !gameModal.classList.contains("active")) return;
+
+    if (isConfirmingQuit) {
+      hideQuitConfirmationModal();
+      return;
     }
 
-    // Check if user is actively in confirmation dialog or focus is outside iframe
-    const confirmDialog = document.getElementById("modal-confirm-dialog");
+    // Shift + Escape always forces immediate exit via score confirmation
+    if (e.shiftKey) {
+      if (escPressTimer) clearTimeout(escPressTimer);
+      escPressCount = 0;
+      requestModalClose(false);
+      return;
+    }
+
+    // Check if user is actively in confirmation dialog
+    const confirmDialog = document.getElementById("game-quit-confirmation-dialog");
     if (confirmDialog && confirmDialog.classList.contains("active")) {
-      closeGameModal(false);
+      hideQuitConfirmationModal();
       return;
     }
 
     // First press: Dispatch pause event to game iframe
-    // Cancel any previous pending single-tap action timer
     if (escPressTimer) clearTimeout(escPressTimer);
 
     escPressCount++;
@@ -1907,12 +2125,12 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         window.dispatchEvent(new CustomEvent("arcadeverse:esc-exit-confirmed"));
       } catch (_) {}
-      // Second press within 1.5s: close modal
+      // Second press within 1.5s: close modal with protection
       if (escPressTimer) clearTimeout(escPressTimer);
       escPressCount = 0;
       const toast = document.getElementById("esc-exit-toast");
       if (toast) toast.remove();
-      closeGameModal(false);
+      requestModalClose(false);
     }
   }
 
@@ -1992,7 +2210,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const themeBtn = document.getElementById("theme-toggle-btn");
         if (themeBtn) themeBtn.click();
       }
-    }
     }
   });
 
@@ -3117,6 +3334,91 @@ document.addEventListener("DOMContentLoaded", () => {
       console.warn("[ArcadeApp] Failed to refresh UI after storage restore:", err);
     }
   });
+
+  // ========================================================
+  // CORS & THIRD-PARTY FONT/RESOURCE PRELOAD RESILIENCE (#494)
+  // Detects font preload timeouts or CORS failures and falls back gracefully
+  // ========================================================
+  function initFontPreloadResilience() {
+    if (!("fonts" in document)) return;
+
+    document.documentElement.classList.add("fonts-loading");
+
+    const fontTimeout = setTimeout(() => {
+      if (document.documentElement.classList.contains("fonts-loading")) {
+        document.documentElement.classList.remove("fonts-loading");
+        document.documentElement.classList.add("fonts-failed");
+        console.warn("[ArcadeVerse] Webfonts preload timed out (3s). Switched to system font fallbacks.");
+        showFontFallbackToast();
+      }
+    }, 3000);
+
+    Promise.all([
+      document.fonts.load('16px "Cambria Math"'),
+      document.fonts.load('16px "Permanent Marker"'),
+      document.fonts.load('16px "JetBrains Mono"')
+    ])
+      .then(() => {
+        clearTimeout(fontTimeout);
+        document.documentElement.classList.remove("fonts-loading");
+        document.documentElement.classList.add("fonts-loaded");
+      })
+      .catch((err) => {
+        clearTimeout(fontTimeout);
+        document.documentElement.classList.remove("fonts-loading");
+        document.documentElement.classList.add("fonts-failed");
+        console.warn("[ArcadeVerse] Webfonts preload rejected (CORS or network drop). Switched to system fallbacks.", err);
+        showFontFallbackToast();
+      });
+  }
+
+  function showFontFallbackToast() {
+    if (document.getElementById("font-preload-notice-banner")) return;
+    const banner = document.createElement("div");
+    banner.id = "font-preload-notice-banner";
+    banner.className = "font-preload-notice";
+    banner.setAttribute("role", "status");
+    banner.innerHTML = `
+      <div class="font-preload-notice-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <div class="font-preload-notice-content">
+        <strong>Offline Typography Fallback</strong>
+        External webfonts were unavailable. System typography was loaded seamlessly with zero layout shift.
+      </div>
+      <button type="button" class="font-preload-notice-close" aria-label="Dismiss typography notice">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    `;
+
+    document.body.appendChild(banner);
+    requestAnimationFrame(() => {
+      banner.classList.add("visible");
+    });
+
+    const closeBtn = banner.querySelector(".font-preload-notice-close");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", () => {
+        banner.classList.remove("visible");
+        setTimeout(() => banner.remove(), 300);
+      });
+    }
+
+    // Auto-dismiss notice after 6 seconds
+    setTimeout(() => {
+      if (banner.parentElement) {
+        banner.classList.remove("visible");
+        setTimeout(() => banner.remove(), 300);
+      }
+    }, 6000);
+  }
 
   // Initial render
   initFontPreloadResilience();

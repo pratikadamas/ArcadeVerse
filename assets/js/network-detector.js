@@ -185,7 +185,7 @@
      * Report CDN resource failure and register system typography fallback
      */
     reportCDNFailure(resourceName) {
-      console.warn([ArcadeNetwork] Cross-origin CDN resource unreachable or blocked: . Utilizing local bundle assets.);
+      console.warn('[ArcadeNetwork] Cross-origin CDN resource unreachable or blocked: ' + resourceName + '. Utilizing local bundle assets.');
       document.documentElement.classList.add('cdn-fallback-active');
     }
   };
