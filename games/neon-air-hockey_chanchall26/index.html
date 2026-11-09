@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Neon Air Hockey: Plasma Puck Arena | ArcadeVerse</title>
+  <meta name="description" content="Top-down neon air hockey with real puck physics and a predictive AI opponent. First to 7 wins.">
+  <meta name="theme-color" content="#050816">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/x-icon" href="../../assets/public/favicon.ico">
+</head>
+<body>
+  <div class="app">
+
+    <header class="topbar">
+      <div class="title-block">
+        <a href="../../index.html" class="back-link" aria-label="Return to ArcadeVerse Hub">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <span>Arcade Hub</span>
+        </a>
+        <h1 class="game-title">Neon Air Hockey <span class="accent">Plasma Puck Arena</span></h1>
+      </div>
+      <div class="toolbar" role="toolbar" aria-label="Game controls">
+        <button id="btn-pause" class="icon-btn" type="button" aria-label="Pause game" title="Pause (P)" disabled>
+          <svg id="icon-pause" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect></svg>
+          <svg id="icon-play" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
+        </button>
+        <button id="btn-restart" class="icon-btn" type="button" aria-label="Restart match" title="Restart (R)" disabled>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+        </button>
+        <button id="btn-sound" class="icon-btn" type="button" aria-label="Sound is on. Turn sound off" aria-pressed="false" title="Sound on (M)">
+          <svg id="icon-sound-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+          <svg id="icon-sound-off" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+        </button>
+        <button id="btn-help" class="icon-btn" type="button" aria-label="How to play" title="How to play (H)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </button>
+      </div>
+    </header>
+
+    <section class="hud" aria-label="Scoreboard">
+      <div class="score-cell you">
+        <span class="cell-label">You</span>
+        <span class="cell-value" id="score-you">0</span>
+      </div>
+      <div class="score-mid">
+        <span class="mid-top">First to 7</span>
+        <span class="mid-level" id="hud-level">Pro</span>
+        <span class="mid-rec">Session <span class="rec-w">W <span id="rec-w">0</span></span> <span class="rec-l">L <span id="rec-l">0</span></span></span>
+      </div>
+      <div class="score-cell ai">
+        <span class="cell-label">AI</span>
+        <span class="cell-value" id="score-ai">0</span>
+      </div>
+    </section>
+
+    <main class="table-col">
+      <div id="table-wrap" class="table-wrap" tabindex="0" role="group" aria-label="Air hockey table. Move your mallet in the lower half with the mouse, touch, arrow keys or WASD.">
+        <canvas id="table" aria-hidden="true"></canvas>
+        <div id="banner" class="banner" aria-hidden="true"></div>
+
+        <div id="overlay-start" class="overlay">
+          <div class="overlay-card">
+            <svg class="hero-icon" width="44" height="44" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="24" cy="24" r="19"></circle><circle cx="24" cy="24" r="7"></circle><line x1="5" y1="24" x2="17" y2="24"></line><line x1="31" y1="24" x2="43" y2="24"></line></svg>
+            <h2 class="overlay-title">Plasma Puck Arena</h2>
+            <p class="overlay-desc">Smash the puck past the AI mallet. First to 7 goals wins.</p>
+            <fieldset class="levels">
+              <legend>Difficulty</legend>
+              <label class="level-opt">
+                <input type="radio" name="level" value="0">
+                <span class="level-body"><strong>Rookie</strong><small>Slow reactions, wild aim</small></span>
+              </label>
+              <label class="level-opt">
+                <input type="radio" name="level" value="1" checked>
+                <span class="level-body"><strong>Pro</strong><small>Bank shots, fair fight</small></span>
+              </label>
+              <label class="level-opt">
+                <input type="radio" name="level" value="2">
+                <span class="level-body"><strong>Master</strong><small>Sharp reads, sharp aim</small></span>
+              </label>
+            </fieldset>
+            <div class="btn-row">
+              <button id="btn-start" class="btn btn-primary" type="button">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
+                Start Match
+              </button>
+              <button id="btn-howto-start" class="btn btn-secondary" type="button">How to Play</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="overlay-pause" class="overlay" hidden>
+          <div class="overlay-card">
+            <h2 class="overlay-title">Paused</h2>
+            <p class="overlay-desc">The puck is frozen mid-air.</p>
+            <div class="btn-col">
+              <button id="btn-resume" class="btn btn-primary" type="button">Resume</button>
+              <button id="btn-restart-pause" class="btn btn-secondary" type="button">Restart Match</button>
+              <button id="btn-howto-pause" class="btn btn-secondary" type="button">How to Play</button>
+              <button id="btn-menu-pause" class="btn btn-ghost" type="button">Change Level</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="overlay-over" class="overlay" hidden>
+          <div class="overlay-card">
+            <svg class="hero-icon" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+            <h2 id="over-title" class="overlay-title">Victory</h2>
+            <p class="final-score" id="over-score">7 : 0</p>
+            <p class="overlay-desc" id="over-note">You beat the AI.</p>
+            <p class="record-line">Session record: <strong>W <span id="over-w">0</span></strong> <strong>L <span id="over-l">0</span></strong></p>
+            <div class="btn-col">
+              <button id="btn-again" class="btn btn-primary" type="button">Play Again</button>
+              <button id="btn-menu-over" class="btn btn-secondary" type="button">Change Level</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="overlay-help" class="overlay overlay-help" role="dialog" aria-modal="true" aria-labelledby="help-title" hidden>
+          <div class="overlay-card help-card">
+            <div class="help-head">
+              <h2 id="help-title" class="overlay-title">How to Play</h2>
+              <button id="btn-help-close" class="icon-btn" type="button" aria-label="Close how to play">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+            <div class="help-body">
+              <h3>Objective</h3>
+              <p>You are the cyan mallet at the bottom. Hit the puck into the magenta goal at the top. The first side to score 7 goals wins the match.</p>
+
+              <h3>Controls</h3>
+              <ul class="control-list">
+                <li>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="6"></rect><line x1="12" y1="7" x2="12" y2="11"></line></svg>
+                  <span><strong>Mouse:</strong> move the pointer. Your mallet follows it and stays in your half.</span>
+                </li>
+                <li>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 11V6a2 2 0 0 0-4 0v5"></path><path d="M14 10V4a2 2 0 0 0-4 0v8"></path><path d="M10 10.5V6a2 2 0 0 0-4 0v8"></path><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path></svg>
+                  <span><strong>Touch:</strong> drag a finger on the table. The mallet sits just above your fingertip.</span>
+                </li>
+                <li>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"></rect><line x1="6" y1="10" x2="6.01" y2="10"></line><line x1="10" y1="10" x2="10.01" y2="10"></line><line x1="14" y1="10" x2="14.01" y2="10"></line><line x1="18" y1="10" x2="18.01" y2="10"></line><line x1="7" y1="14" x2="17" y2="14"></line></svg>
+                  <span><strong>Keyboard:</strong> <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or the arrow keys move the mallet.</span>
+                </li>
+              </ul>
+
+              <h3>Scoring</h3>
+              <p>A goal counts when the whole puck crosses a goal line. The side that conceded serves the next puck after a short 3-2-1 countdown. The score and the result are announced in the status line under the table. Your wins and losses this session are kept in the scoreboard.</p>
+
+              <h3>Pause and restart</h3>
+              <ul>
+                <li><kbd>Esc</kbd> or <kbd>P</kbd>: pause or resume.</li>
+                <li><kbd>R</kbd>: restart the match at 0 : 0.</li>
+                <li><kbd>M</kbd>: sound on or off. <kbd>H</kbd>: open this guide.</li>
+              </ul>
+
+              <h3>Tips</h3>
+              <ul>
+                <li>A moving mallet hits much harder than a still one. Swing through the puck.</li>
+                <li>The puck keeps most of its speed off the walls, so bank shots work.</li>
+                <li>The AI predicts bounces too. Rookie reacts late, Pro reads bank shots, Master is quick and accurate.</li>
+                <li>If the puck rests in a corner or is pinned against the rim, a plasma pulse nudges it free.</li>
+              </ul>
+            </div>
+            <button id="btn-help-done" class="btn btn-primary" type="button">Got it</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <section class="status-col" aria-label="Match status">
+      <p id="status" class="status-line" role="status" aria-live="polite" aria-atomic="true"></p>
+      <p class="hint-line">
+        <span>Mouse, touch or <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to move.</span>
+        <span><kbd>P</kbd> pause, <kbd>R</kbd> restart, <kbd>M</kbd> mute.</span>
+      </p>
+    </section>
+
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
