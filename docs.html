@@ -663,6 +663,32 @@ soundNode.connect(masterGain);</code></pre>
                 </div>
               </div>
 
+              <!-- Adaptive Stereo Panning & Mobile Mono Fallback Architecture (#509) -->
+              <div class="docs-callout note" style="margin-top: 24px;">
+                <div class="docs-callout-icon"><i data-lucide="headphones"></i></div>
+                <div>
+                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Adaptive Stereo Panning & Mobile Mono Acoustic Fallback (#509)</h4>
+                  <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
+                    Retro arcade games rely on directional stereo sound cues to signal player movement, projectile trajectories, and off-screen hazard threats. On mobile devices with single bottom speakers or non-standard stereo channels, hard panning values (-1.0 or +1.0) cause phase cancellation or complete sound loss. ArcadeVerse resolves spatial audio distortion:
+                  </p>
+                  <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
+                    <li><strong>Adaptive Mobile Panning Clamping:</strong> Automatically detects mobile touchscreen devices and clamps extreme pan values to a safe <code>[-0.35, +0.35]</code> corridor.</li>
+                    <li><strong>Legacy WebKit Splitter/Merger Fallback:</strong> If <code>StereoPannerNode</code> is unsupported, the SDK synthesizes a dual-gain equal-power trigonometric curve via <code>ChannelSplitter</code> and <code>ChannelMerger</code>.</li>
+                    <li><strong>Spatial Coordinate Helper:</strong> <code>calculateSpatialPanFromX(x, width)</code> normalizes canvas Cartesian positions directly into clean spatial sound cues.</li>
+                  </ul>
+                  <h5 style="color: var(--text-primary); margin-top: 14px; margin-bottom: 6px; font-size: 0.95rem;">Game Integration Example</h5>
+                  <div class="code-block-wrapper" style="margin-top: 10px; margin-bottom: 10px;">
+                    <pre class="code-pre"><code class="language-javascript">// In game scripts: Directional laser fire with mobile mono protection
+const panner = ArcadeVerse.createAdaptiveStereoPanner(audioCtx);
+oscillator.connect(panner.node);
+panner.node.connect(audioCtx.destination);
+
+// Dynamically track bullet position
+panner.setPan(ArcadeVerse.calculateSpatialPanFromX(bullet.x, canvas.width));</code></pre>
+                  </div>
+                </div>
+              </div>
+
               <h5 style="color: var(--text-primary); margin-top: 16px; margin-bottom: 6px; font-size: 0.95rem;">Implementation Guide for Game Contributors</h5>
               <p style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 10px;">
                 When developing WebGL games for ArcadeVerse, always bind the context recovery handler. When a mobile or laptop GPU sleeps or switches display adapters, the browser triggers a synthetic context loss. With the ArcadeVerse lifecycle bridge, your game avoids black screens:

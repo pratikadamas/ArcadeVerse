@@ -10481,3 +10481,82 @@ html.a11y-reduced-motion .search-clear-btn {
 .modal-volume-control-wrap:hover .volume-level-tooltip {
   opacity: 1;
 }
+
+/* ========================================================
+   ADAPTIVE STEREO PANNING & SPATIAL AUDIO STYLING (#509)
+   Visual stereo channel balancing meters and acoustic tags
+   ======================================================== */
+.stereo-pan-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: monospace;
+  font-size: 0.72rem;
+  color: var(--text-muted, #64748b);
+  padding: 2px 6px;
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stereo-pan-meter {
+  position: relative;
+  width: 36px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.stereo-pan-thumb {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background: var(--accent-primary, #6366f1);
+  border-radius: 2px;
+  transition: left 0.1s ease;
+}
+
+.stereo-channel-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+/* Spatial audio mobile adaptation tag */
+.mobile-audio-adapted {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+/* Spatial audio canvas radar overlay */
+.spatial-sound-radar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.spatial-sound-blip {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 6px #38bdf8;
+  transform: translate(-50%, -50%);
+}
+}

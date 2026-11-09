@@ -817,6 +817,29 @@
             </div>
           </div>
         </div>
+
+        <!-- Question 33 (#509) -->
+        <div class="faq-accordion-item" data-category="architecture" id="faq-33">
+          <button class="faq-accordion-trigger" type="button" aria-expanded="false" aria-controls="faq-ans-33">
+            <span class="faq-question-text">
+              <span class="faq-category-badge">Audio</span>
+              33. Why do stereo sound effects distort or drop out on mobile phone speakers?
+            </span>
+            <i data-lucide="chevron-down" class="faq-chevron"></i>
+          </button>
+          <div class="faq-accordion-content" id="faq-ans-33" role="region">
+            <div class="faq-accordion-inner">
+              <div class="faq-answer-text">
+                <p>Mobile phones often combine stereo channels into a single mono loudspeaker, resulting in acoustic dropouts:</p>
+                <ul>
+                  <li><strong>Phase Cancellation:</strong> Hard panning (-1.0 or +1.0) can cancel out sound waves or render effects silent on mono speakers.</li>
+                  <li><strong>Automatic Panning Clamp:</strong> ArcadeVerse clamps mobile pan values within [-0.35, +0.35] to preserve audible cues.</li>
+                  <li><strong>Equal-Power Fallback:</strong> On older WebKit engines without <code>StereoPannerNode</code>, equal-power trigonometric curves guarantee smooth balancing.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
                 </ul>
               </div>
             </div>
