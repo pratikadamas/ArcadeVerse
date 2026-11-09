@@ -1103,6 +1103,25 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "fossil-frontiers_joitapaul",
+    "title": "Fossil Frontiers: Dig Site Puzzle",
+    "category": "Puzzle",
+    "lucideIcon": "gamepad-2",
+    "description": "Survey a buried dig site, follow temporary fragment clues, and recover a complete fossil before tool charges run out.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/fossil-frontiers_joitapaul/index.html",
+    "tags": [
+      "Puzzle",
+      "Archaeology",
+      "Strategy",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "gravity-well_babin",
     "title": "Gravity Well: Singularity Slingshot",
     "category": "Puzzle / Physics",
@@ -2366,7 +2385,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 442,
+    "commits": 443,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2476,14 +2495,15 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "joitapaul",
     "avatarInitial": "J",
     "role": "Active Contributor (NSOC '26)",
-    "commits": 23,
-    "gamesCount": 12,
+    "commits": 24,
+    "gamesCount": 13,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 1,
     "bonusPts": 0,
     "contributions": [
       "Deep Signal: Subsea Rescue",
+      "Fossil Frontiers: Dig Site Puzzle",
       "Gridlock Escape",
       "Lunar Landing Protocol",
       "Microbe Medics: Outbreak Protocol",
