@@ -1333,6 +1333,26 @@ const GAMES_REGISTRY = [
     "featured": false
   },
   {
+    "id": "neon-air-hockey_chanchall26",
+    "title": "Neon Air Hockey: Plasma Puck Arena",
+    "category": "Arcade",
+    "lucideIcon": "gamepad-2",
+    "description": "Top-down neon air hockey with real puck physics: swing a mallet, bank shots off the rim and beat a predictive AI on three levels. First to 7 goals wins.",
+    "author": "Chanchal Gupta",
+    "github": "chanchall26",
+    "role": "Arcade Developer",
+    "path": "games/neon-air-hockey_chanchall26/index.html",
+    "tags": [
+      "Arcade",
+      "Physics",
+      "Sports",
+      "AI",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "neon-asteroid-escape_joitapaul",
     "title": "Neon Asteroid Escape",
     "category": "Arcade",
@@ -2307,7 +2327,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 437,
+    "commits": 438,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2467,8 +2487,8 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "chanchall26",
     "avatarInitial": "C",
     "role": "Arcade Developer",
-    "commits": 5,
-    "gamesCount": 5,
+    "commits": 6,
+    "gamesCount": 6,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 0,
@@ -2477,6 +2497,7 @@ const CONTRIBUTORS_REGISTRY = [
       "Cyber Connect Four",
       "Cyber Maze Runner",
       "Cyber Trajectory Bow",
+      "Neon Air Hockey: Plasma Puck Arena",
       "Neon Highway Hopper",
       "Quantum Lunar Lander"
     ]
