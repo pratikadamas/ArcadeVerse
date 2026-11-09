@@ -1177,6 +1177,106 @@
         return window.ArcadeAudio;
       }
       return null;
+    },
+
+    // ========================================================
+    // SWIPE-TO-MOVE GESTURE RECOGNIZER (#522)
+    // Translates touch swipes to directional Arrow key events for Grid, Snake & 2048 games
+    // ========================================================
+    /**
+     * Attaches a responsive 4-directional swipe gesture recognizer to a target element.
+     * Maps directional swipes to simulated keyboard events ("ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight")
+     * and invokes an optional callback with the detected direction.
+     * @param {HTMLElement} [element] - Target element (defaults to window)
+     * @param {Object} [options] - Configuration options
+     * @param {number} [options.threshold=30] - Minimum travel distance in pixels
+     * @param {number} [options.maxTime=600] - Maximum elapsed time for swipe in ms
+     * @param {Function} [options.onSwipe] - Callback receiving direction ('up'|'down'|'left'|'right')
+     * @returns {Function} Detach/cleanup function
+     */
+    initSwipeControls: function (element, options) {
+      var target = element || (typeof window !== "undefined" ? window : null);
+      if (!target) return function () {};
+
+      var opts = options || {};
+      var threshold = typeof opts.threshold === "number" ? opts.threshold : 30;
+      var maxTime = typeof opts.maxTime === "number" ? opts.maxTime : 600;
+      var onSwipe = typeof opts.onSwipe === "function" ? opts.onSwipe : null;
+
+      var startX = 0;
+      var startY = 0;
+      var startTime = 0;
+
+      function onTouchStart(e) {
+        if (!e.changedTouches || e.changedTouches.length === 0) return;
+        var touch = e.changedTouches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        startTime = Date.now();
+      }
+
+      function onTouchEnd(e) {
+        if (!e.changedTouches || e.changedTouches.length === 0) return;
+        var elapsed = Date.now() - startTime;
+        if (elapsed > maxTime) return;
+
+        var touch = e.changedTouches[0];
+        var deltaX = touch.clientX - startX;
+        var deltaY = touch.clientY - startY;
+        var absX = Math.abs(deltaX);
+        var absY = Math.abs(deltaY);
+
+        if (Math.max(absX, absY) < threshold) return;
+
+        var direction = "";
+        var keyName = "";
+
+        if (absX > absY) {
+          direction = deltaX > 0 ? "right" : "left";
+          keyName = deltaX > 0 ? "ArrowRight" : "ArrowLeft";
+        } else {
+          direction = deltaY > 0 ? "down" : "up";
+          keyName = deltaY > 0 ? "ArrowDown" : "ArrowUp";
+        }
+
+        if (e.cancelable) {
+          e.preventDefault();
+        }
+
+        // Dispatch synthetic KeyboardEvent to active document
+        try {
+          var downEvt = new KeyboardEvent("keydown", {
+            key: keyName,
+            code: keyName,
+            bubbles: true,
+            cancelable: true
+          });
+          var upEvt = new KeyboardEvent("keyup", {
+            key: keyName,
+            code: keyName,
+            bubbles: true,
+            cancelable: true
+          });
+          (target.ownerDocument || document).dispatchEvent(downEvt);
+          setTimeout(function () {
+            (target.ownerDocument || document).dispatchEvent(upEvt);
+          }, 30);
+        } catch (_kErr) {}
+
+        if (onSwipe) {
+          try {
+            onSwipe(direction);
+          } catch (_sErr) {}
+        }
+      }
+
+      target.addEventListener("touchstart", onTouchStart, { passive: true });
+      target.addEventListener("touchend", onTouchEnd, { passive: false });
+
+      return function cleanupSwipeControls() {
+        target.removeEventListener("touchstart", onTouchStart);
+        target.removeEventListener("touchend", onTouchEnd);
+      };
     }
   };
 });
