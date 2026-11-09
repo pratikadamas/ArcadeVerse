@@ -1177,6 +1177,45 @@
         return window.ArcadeAudio;
       }
       return null;
+    },
+
+    // ========================================================
+    // UNIVERSAL HIGH-DPI RETINA CANVAS RESIZER (#558)
+    // Ensures pixel-crisp rendering on 2x/3x Retina & 4K displays
+    // ========================================================
+    /**
+     * Initializes or resizes an HTML5 Canvas for High-DPI / Retina displays.
+     * Scales physical canvas resolution by devicePixelRatio while preserving logical CSS dimensions.
+     * @param {HTMLCanvasElement} canvas
+     * @param {CanvasRenderingContext2D} ctx
+     * @param {number} [logicalWidth] - Optional design width (defaults to canvas.width or clientWidth)
+     * @param {number} [logicalHeight] - Optional design height (defaults to canvas.height or clientHeight)
+     * @returns {{ dpr: number, logicalWidth: number, logicalHeight: number }}
+     */
+    initRetinaCanvas: function (canvas, ctx, logicalWidth, logicalHeight) {
+      if (!canvas || !ctx) return { dpr: 1, logicalWidth: 0, logicalHeight: 0 };
+
+      var dpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
+      var w = logicalWidth || canvas.clientWidth || canvas.width || 800;
+      var h = logicalHeight || canvas.clientHeight || canvas.height || 600;
+
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+
+      // Reset and scale coordinate matrix
+      if (typeof ctx.setTransform === 'function') {
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      } else if (typeof ctx.scale === 'function') {
+        ctx.scale(dpr, dpr);
+      }
+
+      return {
+        dpr: dpr,
+        logicalWidth: w,
+        logicalHeight: h
+      };
     }
   };
 });
