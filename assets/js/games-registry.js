@@ -337,6 +337,26 @@ const GAMES_REGISTRY = [
     "releaseDate": "2026-10-29"
   },
   {
+    "id": "cyber-bomber-grid_chanchall26",
+    "title": "Cyber Bomber Grid: Blast Protocol",
+    "category": "Arcade",
+    "lucideIcon": "gamepad-2",
+    "description": "Plant timed charges in a neon grid arena, chain explosions through blocks, grab blast range, capacity and speed upgrades, and outlast three BFS-driven bots (hunter, block-breaker, cautious) before sudden death closes the arena.",
+    "author": "Chanchal Gupta",
+    "github": "chanchall26",
+    "role": "Arcade Developer",
+    "path": "games/cyber-bomber-grid_chanchall26/index.html",
+    "tags": [
+      "Arcade",
+      "Bomberman",
+      "Grid",
+      "AI",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "cyber-brick-breaker_babin",
     "title": "Cyber Brick Breaker",
     "category": "Arcade",
@@ -2327,7 +2347,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 438,
+    "commits": 439,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2487,13 +2507,14 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "chanchall26",
     "avatarInitial": "C",
     "role": "Arcade Developer",
-    "commits": 6,
-    "gamesCount": 6,
+    "commits": 7,
+    "gamesCount": 7,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 0,
     "bonusPts": 0,
     "contributions": [
+      "Cyber Bomber Grid: Blast Protocol",
       "Cyber Connect Four",
       "Cyber Maze Runner",
       "Cyber Trajectory Bow",
