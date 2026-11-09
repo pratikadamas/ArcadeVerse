@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const adminMetaInfo = document.getElementById("admin-meta-info");
   const searchInput = document.getElementById("leaderboard-search-input");
   const exportCsvBtn = document.getElementById("export-csv-btn");
+  const exportJsonBtn = document.getElementById("export-json-btn");
   let tableSearchQuery = "";
   let searchDebounceTimer = null;
 
@@ -159,6 +160,12 @@ document.addEventListener("DOMContentLoaded", () => {
   if (exportCsvBtn) {
     exportCsvBtn.addEventListener("click", () => {
       exportStandingsCsv();
+    });
+  }
+
+  if (exportJsonBtn) {
+    exportJsonBtn.addEventListener("click", () => {
+      exportStandingsJson();
     });
   }
 
@@ -1091,31 +1098,59 @@ document.addEventListener("DOMContentLoaded", () => {
     return repoInput ? repoInput.value.trim() : "DebasmitaBose0/ArcadeVerse";
   }
 
-  function exportStandingsCsv() {
-    const list = getCommunityContributors();
-    if (!list || list.length === 0) return;
+  // The rows both exports are built from, so the CSV and the JSON always list the same people
+  // in the same order as the Community Contributors table.
+  function getStandingsRows() {
+    return getCommunityContributors().map((item, idx) => ({
+      rank: idx + 1,
+      name: item.name || "",
+      login: item.login || "",
+      games: item.gamesCount || 0,
+      commits: item.commits || 0,
+      score: calculateScore(item),
+    }));
+  }
 
-    const headers = ["Rank", "Contributor", "GitHub Handle", "Verified Games", "Commits", "Arcade Score"];
-    const rows = list.map((item, idx) => {
-      const rank = idx + 1;
-      const name = '"' + (item.name || "").replace(/"/g, '""') + '"';
-      const login = item.login || "";
-      const games = item.gamesCount || 0;
-      const commits = item.commits || 0;
-      const score = calculateScore(item);
-      return [rank, name, login, games, commits, score].join(",");
-    });
-
-    const csvContent = [headers.join(","), ...rows].join("\r\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  function downloadTextFile(content, mimeType, filename) {
+    const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", "ArcadeVerse_Leaderboard_NSOC2026.csv");
+    link.setAttribute("download", filename);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  }
+
+  function exportStandingsCsv() {
+    const list = getStandingsRows();
+    if (list.length === 0) return;
+
+    const headers = ["Rank", "Contributor", "GitHub Handle", "Verified Games", "Commits", "Arcade Score"];
+    const rows = list.map((row) => {
+      const name = '"' + row.name.replace(/"/g, '""') + '"';
+      return [row.rank, name, row.login, row.games, row.commits, row.score].join(",");
+    });
+
+    const csvContent = [headers.join(","), ...rows].join("\r\n");
+    downloadTextFile(csvContent, "text/csv;charset=utf-8;", "ArcadeVerse_Leaderboard_NSOC2026.csv");
+  }
+
+  function exportStandingsJson() {
+    const list = getStandingsRows();
+    if (list.length === 0) return;
+
+    const standings = list.map((row) => ({
+      rank: row.rank,
+      name: row.name,
+      githubHandle: row.login,
+      verifiedGames: row.games,
+      commits: row.commits,
+      arcadeScore: row.score,
+    }));
+
+    downloadTextFile(JSON.stringify(standings, null, 2), "application/json;charset=utf-8;", "ArcadeVerse_Leaderboard_NSOC2026.json");
   }
 
   if (fetchBtn) {

@@ -4493,6 +4493,17 @@ body.modal-pseudo-fullscreen-active #game-frame {
   flex-wrap: wrap;
 }
 
+/* With the Export JSON button there are four tools. On wide screens keep them on one line and let the heading block give up the space. */
+@media (min-width: 1200px) {
+  .table-header-tools {
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+  }
+  .ranking-metric-hint .badge-legend-link {
+    white-space: nowrap;
+  }
+}
+
 .leaderboard-search-wrap {
   position: relative;
   display: flex;
