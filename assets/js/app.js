@@ -683,7 +683,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (currentCategory.toLowerCase() === "halloween") {
           matchesCategory = isHalloweenGame(item);
         } else {
-          matchesCategory = item.category.toLowerCase() === currentCategory.toLowerCase();
+          const itemCat = (item.category || "").toLowerCase();
+          const targetCat = currentCategory.toLowerCase();
+          const catSegments = itemCat.split(/[\s/]+/).map((s) => s.trim().toLowerCase());
+          matchesCategory = itemCat === targetCat || catSegments.includes(targetCat) || itemCat.includes(targetCat);
         }
       }
 
@@ -1067,6 +1070,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       gamesGrid.appendChild(emptyCard);
+      updateFacetSummaryUI();
       if (window.lucide) lucide.createIcons();
       return;
     }
@@ -1217,8 +1221,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Only clicking the dedicated Play Now button launches the game modal
       gamesGrid.appendChild(card);
-    updateFacetSummaryUI();
     });
+
+    updateFacetSummaryUI();
 
     if (window.lucide) {
       lucide.createIcons();
