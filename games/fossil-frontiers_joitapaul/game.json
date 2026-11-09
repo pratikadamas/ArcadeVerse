@@ -1,0 +1,10 @@
+{
+  "title": "Fossil Frontiers: Dig Site Puzzle",
+  "category": "Puzzle",
+  "lucideIcon": "bone",
+  "description": "Survey a buried dig site, follow temporary fragment clues, and recover a complete fossil before tool charges run out.",
+  "author": "Joita Paul",
+  "github": "joitapaul",
+  "role": "Arcade Developer",
+  "tags": ["Puzzle", "Archaeology", "Strategy", "NSOC26"]
+}
