@@ -14,7 +14,7 @@
   const CANVAS_HEIGHT = 600;
   const FIXED_DELTA = 1 / 60;
   const MAX_HISTORY_FRAMES = 360; // 6.0 seconds of rewind buffer at 60Hz
-  const GHOST_RECORD_WINDOW = 300; // Up to 5.0 seconds for ghost action replay
+  const GHOST_RECORD_SECONDS = 5;
 
   const STORAGE_KEYS = {
     BEST_SCORE: 'timeWarp_bestScore',
@@ -780,7 +780,8 @@
       this.ghost = {
         active: false,
         frames: [],
-        frameIndex: 0,
+        elapsed: 0,
+        cursor: 0,
         x: 0,
         y: 0,
         vx: 0,
@@ -794,6 +795,7 @@
 
       // Time Rewind System
       this.historyBuffer = [];
+      this.historyTime = 0;
       this.rewindEnergy = 6.0; // Seconds available
       this.maxRewindEnergy = 6.0;
       this.isRewinding = false;
@@ -1069,8 +1071,10 @@
       // Reset ghost & history
       this.ghost.active = false;
       this.ghost.frames = [];
-      this.ghost.frameIndex = 0;
+      this.ghost.elapsed = 0;
+      this.ghost.cursor = 0;
       this.historyBuffer = [];
+      this.historyTime = 0;
       this.rewindEnergy = this.maxRewindEnergy;
       this.rewindsUsedInChamber = 0;
       this.isRewinding = false;
@@ -1178,19 +1182,22 @@
         return;
       }
 
-      // Record up to GHOST_RECORD_WINDOW past frames
-      const windowSize = Math.min(this.historyBuffer.length, GHOST_RECORD_WINDOW);
-      const slice = this.historyBuffer.slice(-windowSize);
+      // Copy a duration-bounded timeline. Rewind can mutate the history buffer
+      // while this ghost continues replaying its detached recording.
+      const end = this.historyBuffer[this.historyBuffer.length - 1].timestamp;
+      const slice = this.historyBuffer.filter(frame => frame.timestamp >= end - GHOST_RECORD_SECONDS)
+        .map(frame => ({ ...frame }));
 
       this.ghost.frames = slice;
-      this.ghost.frameIndex = 0;
+      this.ghost.elapsed = 0;
+      this.ghost.cursor = 0;
       this.ghost.active = true;
       this.ghost.x = slice[0].x;
       this.ghost.y = slice[0].y;
       this.ghost.vx = slice[0].vx;
       this.ghost.vy = slice[0].vy;
       this.ghost.facing = slice[0].facing;
-      this.ghost.duration = windowSize * FIXED_DELTA;
+      this.ghost.duration = slice[slice.length - 1].timestamp - slice[0].timestamp;
       this.ghost.maxDuration = this.ghost.duration;
 
       this.sound.playGhostSpawn();
@@ -1331,11 +1338,13 @@
       }
 
       // Record snapshot to circular history buffer
-      this.recordSnapshot();
+      this.recordSnapshot(dt);
     }
 
-    recordSnapshot() {
+    recordSnapshot(dt = FIXED_DELTA) {
+      this.historyTime += dt;
       const snap = {
+        timestamp: this.historyTime,
         x: this.player.x,
         y: this.player.y,
         vx: this.player.vx,
@@ -1367,6 +1376,9 @@
       for (let s = 0; s < 2; s++) {
         if (this.historyBuffer.length > 0) {
           const snap = this.historyBuffer.pop();
+          // Resume new recordings on the restored simulation timeline, not
+          // the ever-increasing chamber timer (which would introduce a gap).
+          this.historyTime = snap.timestamp;
           this.player.x = snap.x;
           this.player.y = snap.y;
           this.player.vx = snap.vx;
@@ -1401,8 +1413,9 @@
         return;
       }
 
-      this.ghost.duration -= dt;
-      if (this.ghost.duration <= 0 || this.ghost.frameIndex >= this.ghost.frames.length) {
+      this.ghost.elapsed += Math.max(0, dt);
+      this.ghost.duration = Math.max(0, this.ghost.maxDuration - this.ghost.elapsed);
+      if (this.ghost.elapsed > this.ghost.maxDuration + 1e-9) {
         // Ghost timeline finished
         this.ghost.active = false;
         this.particles.emit(this.ghost.x + 11, this.ghost.y + 17, 24, {
@@ -1413,16 +1426,19 @@
         return;
       }
 
-      // Replay next frame
-      const frame = this.ghost.frames[this.ghost.frameIndex];
-      if (frame) {
-        this.ghost.x = frame.x;
-        this.ghost.y = frame.y;
-        this.ghost.vx = frame.vx;
-        this.ghost.vy = frame.vy;
-        this.ghost.facing = frame.facing;
+      // Sample elapsed simulation time, independent of the number of calls.
+      // The existing fixed-step loop remains unchanged for puzzle physics.
+      const frames = this.ghost.frames;
+      const target = frames[0].timestamp + Math.min(this.ghost.elapsed, this.ghost.maxDuration);
+      while (this.ghost.cursor + 1 < frames.length && frames[this.ghost.cursor + 1].timestamp <= target + 1e-9) {
+        this.ghost.cursor++;
       }
-      this.ghost.frameIndex++;
+      const from = frames[this.ghost.cursor];
+      const to = frames[Math.min(this.ghost.cursor + 1, frames.length - 1)];
+      const span = to.timestamp - from.timestamp;
+      const alpha = span > 0 ? Math.max(0, Math.min(1, (target - from.timestamp) / span)) : 0;
+      for (const key of ['x', 'y', 'vx', 'vy']) this.ghost[key] = from[key] + (to[key] - from[key]) * alpha;
+      this.ghost.facing = from.facing;
 
       // Update UI Pill & Floating Banner
       const secRem = Math.max(0, this.ghost.duration).toFixed(1);
