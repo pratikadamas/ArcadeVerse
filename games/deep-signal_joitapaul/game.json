@@ -1,0 +1,10 @@
+{
+  "title": "Deep Signal: Subsea Rescue",
+  "category": "Puzzle",
+  "lucideIcon": "waves",
+  "description": "Navigate a dark subsea maze, pulse sonar to reveal nearby terrain, avoid hazards, and reach every rescue beacon.",
+  "author": "Joita Paul",
+  "github": "joitapaul",
+  "role": "Arcade Developer",
+  "tags": ["Puzzle", "Strategy", "Exploration", "NSOC26"]
+}

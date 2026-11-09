@@ -963,6 +963,25 @@ const GAMES_REGISTRY = [
     "releaseDate": "2026-11-07"
   },
   {
+    "id": "deep-signal_joitapaul",
+    "title": "Deep Signal: Subsea Rescue",
+    "category": "Puzzle",
+    "lucideIcon": "gamepad-2",
+    "description": "Navigate a dark subsea maze, pulse sonar to reveal nearby terrain, avoid hazards, and reach every rescue beacon.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/deep-signal_joitapaul/index.html",
+    "tags": [
+      "Puzzle",
+      "Strategy",
+      "Exploration",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "detective-mystery_babin",
     "title": "Detective Mystery: Neo-Tokyo Syndicate",
     "category": "Adventure / Narrative",
@@ -2288,7 +2307,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 432,
+    "commits": 434,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2308,7 +2327,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 277,
+    "commits": 271,
     "gamesCount": 76,
     "mechanicsBonus": 2,
     "platformPRs": 29,
@@ -2394,6 +2413,31 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
+    "name": "Joita Paul",
+    "github": "joitapaul",
+    "avatarInitial": "J",
+    "role": "Active Contributor (NSOC '26)",
+    "commits": 22,
+    "gamesCount": 11,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 1,
+    "bonusPts": 0,
+    "contributions": [
+      "Deep Signal: Subsea Rescue",
+      "Gridlock Escape",
+      "Lunar Landing Protocol",
+      "Microbe Medics: Outbreak Protocol",
+      "Midnight Graveyard: Lantern Run",
+      "Neon Asteroid Escape",
+      "Neon Drift Racer",
+      "Potion Panic",
+      "Prism Pulse: Laser Labyrinth",
+      "Pumpkin Express: Haunted Rails",
+      "Quantum Pinball: Reactor Run"
+    ]
+  },
+  {
     "name": "Manisha Debnath",
     "github": "mistu7debnath",
     "avatarInitial": "M",
@@ -2416,30 +2460,6 @@ const CONTRIBUTORS_REGISTRY = [
       "Potion Maker",
       "Robo Factory",
       "Time Warp: Chrono Shift"
-    ]
-  },
-  {
-    "name": "Joita Paul",
-    "github": "joitapaul",
-    "avatarInitial": "J",
-    "role": "Active Contributor (NSOC '26)",
-    "commits": 21,
-    "gamesCount": 10,
-    "mechanicsBonus": 0,
-    "platformPRs": 0,
-    "qualityPRs": 1,
-    "bonusPts": 0,
-    "contributions": [
-      "Gridlock Escape",
-      "Lunar Landing Protocol",
-      "Microbe Medics: Outbreak Protocol",
-      "Midnight Graveyard: Lantern Run",
-      "Neon Asteroid Escape",
-      "Neon Drift Racer",
-      "Potion Panic",
-      "Prism Pulse: Laser Labyrinth",
-      "Pumpkin Express: Haunted Rails",
-      "Quantum Pinball: Reactor Run"
     ]
   },
   {

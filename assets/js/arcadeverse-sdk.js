@@ -982,7 +982,6 @@
     },
 
     /**
-<<<<<<< HEAD
      * Global Master Volume & Mute Synchronization Bridge (#506)
      * Creates a master GainNode connected directly to audioContext.destination
      * and automatically syncs its gain value with parent hub volume/mute broadcasts
