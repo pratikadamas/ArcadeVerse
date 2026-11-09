@@ -87,6 +87,14 @@ const KNOWN_PROFILES = {
     mechanicsBonus: 0,
     platformPRs: 1,
     qualityPRs: 0
+  },
+  "sarbajit-sengupta": {
+    name: "Sarbajit Sengupta",
+    github: "Sarbajit-Sengupta",
+    role: "Contributor (NSOC '26)",
+    mechanicsBonus: 0,
+    platformPRs: 0,
+    qualityPRs: 0
   }
 };
 
@@ -100,7 +108,9 @@ const EMAIL_MAP = {
   "seethapragna2005@gmail.com": "pragna7",
   "arshi900389@gmail.com": "arshibansal",
   "abhishekcse2004@gmail.com": "anshuu2004",
-  "pratikgiri585@gmail.com": "pratikadamas"
+  "pratikgiri585@gmail.com": "pratikadamas",
+  "sarbajitsengupta1712@gmail.com": "sarbajit-sengupta",
+  "73594751+sarbajit-sengupta@users.noreply.github.com": "sarbajit-sengupta"
 };
 
 function getGitCommitCounts() {
