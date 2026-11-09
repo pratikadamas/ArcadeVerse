@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#17251f">
+  <title>Fossil Frontiers: Dig Site Puzzle</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="game.js" defer></script>
+</head>
+<body>
+  <main class="excavation-shell">
+    <header class="masthead">
+      <a class="back-link" href="../../index.html">ArcadeVerse</a>
+      <p class="eyebrow">Field journal / excavation 08</p>
+      <h1>Fossil Frontiers</h1>
+      <p class="subtitle">Dig Site Puzzle</p>
+    </header>
+
+    <section class="mission-bar" aria-label="Excavation status">
+      <p id="game-status" role="status" aria-live="polite">A specimen is buried somewhere in the dig grid. Survey carefully, then excavate its fragments.</p>
+      <button id="restart-button" class="button button-secondary" type="button">Restart expedition</button>
+    </section>
+
+    <div class="game-layout">
+      <section class="site-panel" aria-labelledby="site-heading">
+        <div class="panel-heading">
+          <div>
+            <p class="section-kicker">Active site</p>
+            <h2 id="site-heading">North Ridge</h2>
+          </div>
+          <span class="site-coordinate">NR / 08</span>
+        </div>
+        <div id="excavation-grid" class="excavation-grid" role="grid" aria-label="Archaeology excavation grid"></div>
+        <div class="map-legend" aria-label="Grid legend">
+          <span><i class="legend-swatch legend-surveyed" aria-hidden="true"></i> Surveyed ground</span>
+          <span><i class="legend-swatch legend-fragment" aria-hidden="true"></i> Fossil fragment</span>
+          <span><i class="legend-swatch legend-clue" aria-hidden="true">3</i> Temporary scan clue</span>
+        </div>
+        <p id="selection-status" class="selection-status" aria-live="polite">Selected: row 1, column 1. Use arrow keys to move, then Enter to act.</p>
+      </section>
+
+      <aside class="mission-panel" aria-label="Expedition controls and report">
+        <section class="resource-card" aria-labelledby="report-heading">
+          <p class="section-kicker">Expedition report</p>
+          <h2 id="report-heading">Field resources</h2>
+          <div class="resource-list">
+            <div class="resource-row">
+              <span class="resource-icon tool-icon" aria-hidden="true">D</span>
+              <span class="resource-name">Dig charges</span>
+              <strong><span id="dig-count">19</span><small> / 19</small></strong>
+            </div>
+            <div class="resource-row">
+              <span class="resource-icon scan-icon" aria-hidden="true">S</span>
+              <span class="resource-name">Survey scans</span>
+              <strong><span id="scan-count">3</span><small> / 3</small></strong>
+            </div>
+          </div>
+          <div class="progress-label">
+            <span>Specimen recovered</span>
+            <strong><span id="fragment-count">0</span> / <span id="fragment-total">8</span></strong>
+          </div>
+          <progress id="excavation-progress" max="8" value="0">0 of 8 fragments</progress>
+        </section>
+
+        <section class="action-card" aria-labelledby="action-heading">
+          <p class="section-kicker">Field tools</p>
+          <h2 id="action-heading">Choose an action</h2>
+          <div class="mode-switch" role="group" aria-label="Choose cell action">
+            <button id="dig-mode" class="mode-button active" type="button" aria-pressed="true">
+              <span class="mode-mark" aria-hidden="true">D</span>
+              Excavate
+            </button>
+            <button id="survey-mode" class="mode-button" type="button" aria-pressed="false">
+              <span class="mode-mark" aria-hidden="true">S</span>
+              Survey
+            </button>
+          </div>
+          <p id="mode-description" class="mode-description">Select untouched ground to spend one dig charge and check for a fossil fragment.</p>
+          <div class="rules-note">
+            <h3>Field protocol</h3>
+            <ul>
+              <li>Survey a cell to count fragments in its surrounding 3 × 3 area. Each scan marks that area and reveals its clue for your next 2 excavations.</li>
+              <li>Each excavation costs 1 of 19 dig charges. Empty cells use a charge too.</li>
+              <li>Recover all 8 fragments to win. Running out of dig charges first ends the expedition.</li>
+              <li>Click or tap a cell, or focus it and press Enter/Space. Arrow keys move the selected cell. Press 1 to excavate or 2 to survey.</li>
+            </ul>
+          </div>
+        </section>
+      </aside>
+    </div>
+
+    <footer class="footer-note">Careful fieldwork brings the past to light.</footer>
+  </main>
+</body>
+</html>
