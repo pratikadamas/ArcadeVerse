@@ -2083,6 +2083,12 @@ document.addEventListener("DOMContentLoaded", () => {
   function handleEscDualAction(e) {
     if (e.key !== "Escape" || !gameModal || !gameModal.classList.contains("active")) return;
 
+    // If game controls legend is open, dismiss it first
+    if (controlsLegendDialog && controlsLegendDialog.style.display === "flex") {
+      closeControlsLegend();
+      return;
+    }
+
     if (isConfirmingQuit) {
       hideQuitConfirmationModal();
       return;
@@ -2193,6 +2199,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (type === "ARCADEVERSE_KEY_SHORTCUT") {
       const key = (e.data.key || "").toLowerCase();
       if (e.data.key === "Escape") {
+        if (controlsLegendDialog && controlsLegendDialog.style.display === "flex") {
+          closeControlsLegend();
+          return;
+        }
         if (gameModal.classList.contains("active")) {
           if (isConfirmingQuit) {
             hideQuitConfirmationModal();
@@ -2200,6 +2210,8 @@ document.addEventListener("DOMContentLoaded", () => {
           }
           requestModalClose(false);
         }
+      } else if (key === "k") {
+        if (gameModal.classList.contains("active") && controlsLegendBtn) controlsLegendBtn.click();
       } else if (key === "f") {
         if (gameModal.classList.contains("active") && fullscreenBtn) fullscreenBtn.click();
       } else if (key === "r") {
@@ -3699,13 +3711,96 @@ document.addEventListener("DOMContentLoaded", () => {
       if (dialogDismissBtn) dialogDismissBtn.addEventListener("click", closeControlsLegend);
     }
 
+    // Tactile Web Audio Mechanical Switch Sound Synthesizer
+    function playKeycapAudio() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        if (window.ArcadeAudio && typeof window.ArcadeAudio.isMuted === "function" && window.ArcadeAudio.isMuted()) return;
+        const ctx = new AudioCtx();
+        if (ctx.state === "suspended") {
+          ctx.resume();
+        }
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(650, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(160, ctx.currentTime + 0.02);
+
+        filter.type = "bandpass";
+        filter.frequency.setValueAtTime(800, ctx.currentTime);
+        filter.Q.setValueAtTime(2, ctx.currentTime);
+
+        gain.gain.setValueAtTime(0.06, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.025);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start();
+        osc.stop(ctx.currentTime + 0.03);
+        setTimeout(() => {
+          if (ctx.state !== "closed") ctx.close();
+        }, 60);
+      } catch (_) {}
+    }
+
+    // Live Physical Keypress Tester Event Handlers
+    function handleKeyTesterDown(e) {
+      if (!controlsLegendDialog || controlsLegendDialog.style.display !== "flex") return;
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        closeControlsLegend();
+        return;
+      }
+
+      const code = e.code;
+      const keycap = controlsLegendDialog.querySelector(`.legend-keycap[data-code="${code}"]`);
+      if (keycap) {
+        if (!keycap.classList.contains("pressed")) {
+          keycap.classList.add("pressed");
+          playKeycapAudio();
+        }
+      } else if (code === "ShiftRight") {
+        const shiftKeycap = controlsLegendDialog.querySelector(`.legend-keycap[data-code="ShiftLeft"]`);
+        if (shiftKeycap && !shiftKeycap.classList.contains("pressed")) {
+          shiftKeycap.classList.add("pressed");
+          playKeycapAudio();
+        }
+      }
+    }
+
+    function handleKeyTesterUp(e) {
+      if (!controlsLegendDialog || controlsLegendDialog.style.display !== "flex") return;
+      const code = e.code;
+      const keycap = controlsLegendDialog.querySelector(`.legend-keycap[data-code="${code}"]`);
+      if (keycap) {
+        keycap.classList.remove("pressed");
+      } else if (code === "ShiftRight") {
+        const shiftKeycap = controlsLegendDialog.querySelector(`.legend-keycap[data-code="ShiftLeft"]`);
+        if (shiftKeycap) shiftKeycap.classList.remove("pressed");
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyTesterDown);
+    window.addEventListener("keyup", handleKeyTesterUp);
+
     closeControlsLegend = function () {
       if (!controlsLegendDialog) return;
       controlsLegendDialog.style.display = "none";
       if (controlsLegendBtn) {
         controlsLegendBtn.classList.remove("active");
         controlsLegendBtn.setAttribute("aria-expanded", "false");
+        try {
+          controlsLegendBtn.focus();
+        } catch (_) {}
       }
+      const pressed = controlsLegendDialog.querySelectorAll(".legend-keycap.pressed");
+      pressed.forEach((p) => p.classList.remove("pressed"));
     };
 
     function openControlsLegend() {
@@ -3717,7 +3812,9 @@ document.addEventListener("DOMContentLoaded", () => {
         controlsLegendBtn.setAttribute("aria-expanded", "true");
       }
       const closeBtn = controlsLegendDialog.querySelector("#close-controls-legend-btn");
-      if (closeBtn) closeBtn.focus();
+      if (closeBtn) {
+        setTimeout(() => closeBtn.focus(), 50);
+      }
     }
 
     controlsLegendBtn.addEventListener("click", (e) => {
@@ -3732,6 +3829,21 @@ document.addEventListener("DOMContentLoaded", () => {
     controlsLegendDialog.addEventListener("click", (e) => {
       if (e.target === controlsLegendDialog) {
         closeControlsLegend();
+      }
+    });
+
+    // Global 'K' shortcut toggle when modal is active
+    window.addEventListener("keydown", (e) => {
+      if ((e.key === "k" || e.key === "K") && gameModal && gameModal.classList.contains("active")) {
+        const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : "";
+        if (tag !== "input" && tag !== "textarea") {
+          e.preventDefault();
+          if (controlsLegendDialog && controlsLegendDialog.style.display === "flex") {
+            closeControlsLegend();
+          } else if (controlsLegendBtn) {
+            controlsLegendBtn.click();
+          }
+        }
       }
     });
   }
