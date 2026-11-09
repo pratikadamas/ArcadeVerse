@@ -1177,6 +1177,54 @@
         return window.ArcadeAudio;
       }
       return null;
+    },
+
+    // ========================================================
+    // MOBILE WEB VIBRATION API (HAPTIC FEEDBACK) (#521)
+    // Tactile pulses for collisions, button presses, and impacts
+    // ========================================================
+    /**
+     * Triggers mobile haptic vibration feedback with graceful no-op fallback.
+     * Supports single pulse (e.g. 20ms) or rhythmic patterns (e.g. [30, 50, 30]).
+     * @param {number|number[]} pattern - Milliseconds to vibrate or pattern array
+     * @returns {boolean} Whether the vibration was dispatched
+     */
+    vibrate: function (pattern) {
+      try {
+        var p = pattern !== undefined ? pattern : 20;
+        if (typeof window !== "undefined" && window.navigator && typeof window.navigator.vibrate === "function") {
+          return window.navigator.vibrate(p);
+        }
+        // Send message to parent frame in case running in sandboxed iframe with allow-vibrate delegation
+        if (typeof window !== "undefined" && window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: "ARCADEVERSE_HAPTIC",
+            pattern: p
+          }, "*");
+        }
+      } catch (_e) {}
+      return false;
+    },
+
+    /**
+     * Light haptic pulse (15ms) for UI button taps, selections, and menus
+     */
+    hapticTap: function () {
+      return this.vibrate(15);
+    },
+
+    /**
+     * Medium haptic bump (40ms) for collisions, obstacle hits, and rebounds
+     */
+    hapticBump: function () {
+      return this.vibrate(40);
+    },
+
+    /**
+     * Heavy haptic blast ([50, 40, 80]ms) for game-over or explosions
+     */
+    hapticExplosion: function () {
+      return this.vibrate([50, 40, 80]);
     }
   };
 });
