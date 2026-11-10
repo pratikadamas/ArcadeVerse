@@ -1312,6 +1312,7 @@
       this.sound.playBounce();
       this.screenShake = 6;
       this.announce('Ceiling descended!');
+      this.dropFloatingClusters();
       this.checkDangerThreshold();
     }
 
