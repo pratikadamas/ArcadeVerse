@@ -2202,6 +2202,16 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // Handle mobile haptic vibration forwarding from iframe games (#521)
+    if (type === "ARCADEVERSE_HAPTIC") {
+      try {
+        if (navigator && typeof navigator.vibrate === "function") {
+          navigator.vibrate(e.data.pattern || 20);
+        }
+      } catch (_) {}
+      return;
+    }
+
     // Handle score events from verified child games
     if (type === "ARCADEVERSE_GAME_SCORE") {
       const score = Number(e.data.score) || 0;

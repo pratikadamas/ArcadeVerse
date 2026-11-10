@@ -1180,64 +1180,51 @@
     },
 
     // ========================================================
-    // DEVICE GYROSCOPE & ORIENTATION CONTROLLER (#574)
-    // Motion tilt steering for mobile racing & balance arcade games
+    // MOBILE WEB VIBRATION API (HAPTIC FEEDBACK) (#521)
+    // Tactile pulses for collisions, button presses, and impacts
     // ========================================================
     /**
-     * Initializes device orientation listener mapping gamma/beta tilt angles to normalized steering inputs [-1.0, 1.0].
-     * Handles iOS permission handshake via DeviceOrientationEvent.requestPermission().
-     * @param {Object} [options]
-     * @param {number} [options.maxTiltAngle=35] - Maximum tilt deflection angle in degrees
-     * @param {Function} [options.onTilt] - Callback receiving { gamma: number, beta: number, steer: number }
-     * @returns {Promise<{ detach: Function, isAvailable: boolean }>}
+     * Triggers mobile haptic vibration feedback with graceful no-op fallback.
+     * Supports single pulse (e.g. 20ms) or rhythmic patterns (e.g. [30, 50, 30]).
+     * @param {number|number[]} pattern - Milliseconds to vibrate or pattern array
+     * @returns {boolean} Whether the vibration was dispatched
      */
-    initTiltControls: function (options) {
-      var opts = options || {};
-      var maxTilt = typeof opts.maxTiltAngle === 'number' ? opts.maxTiltAngle : 35;
-      var onTilt = typeof opts.onTilt === 'function' ? opts.onTilt : null;
-
-      function handleOrientation(e) {
-        var gamma = e.gamma || 0; // Left-to-right tilt in degrees [-90, 90]
-        var beta = e.beta || 0;   // Front-to-back tilt in degrees [-180, 180]
-        var normalizedSteer = Math.max(-1, Math.min(1, gamma / maxTilt));
-
-        if (onTilt) {
-          try {
-            onTilt({
-              gamma: gamma,
-              beta: beta,
-              steer: normalizedSteer
-            });
-          } catch (_err) {}
+    vibrate: function (pattern) {
+      try {
+        var p = pattern !== undefined ? pattern : 20;
+        if (typeof window !== "undefined" && window.navigator && typeof window.navigator.vibrate === "function") {
+          return window.navigator.vibrate(p);
         }
-      }
-
-      function attachListener() {
-        if (typeof window !== 'undefined') {
-          window.addEventListener('deviceorientation', handleOrientation, true);
+        // Send message to parent frame in case running in sandboxed iframe with allow-vibrate delegation
+        if (typeof window !== "undefined" && window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: "ARCADEVERSE_HAPTIC",
+            pattern: p
+          }, "*");
         }
-        return {
-          detach: function () {
-            if (typeof window !== 'undefined') {
-              window.removeEventListener('deviceorientation', handleOrientation, true);
-            }
-          },
-          isAvailable: true
-        };
-      }
+      } catch (_e) {}
+      return false;
+    },
 
-      if (typeof window !== 'undefined' && typeof window.DeviceOrientationEvent !== 'undefined' && typeof window.DeviceOrientationEvent.requestPermission === 'function') {
-        return window.DeviceOrientationEvent.requestPermission().then(function (permissionState) {
-          if (permissionState === 'granted') {
-            return attachListener();
-          }
-          return { detach: function () {}, isAvailable: false };
-        }).catch(function () {
-          return { detach: function () {}, isAvailable: false };
-        });
-      }
+    /**
+     * Light haptic pulse (15ms) for UI button taps, selections, and menus
+     */
+    hapticTap: function () {
+      return this.vibrate(15);
+    },
 
-      return Promise.resolve(attachListener());
+    /**
+     * Medium haptic bump (40ms) for collisions, obstacle hits, and rebounds
+     */
+    hapticBump: function () {
+      return this.vibrate(40);
+    },
+
+    /**
+     * Heavy haptic blast ([50, 40, 80]ms) for game-over or explosions
+     */
+    hapticExplosion: function () {
+      return this.vibrate([50, 40, 80]);
     }
   };
 });
