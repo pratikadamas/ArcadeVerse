@@ -1819,6 +1819,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     hideQuitConfirmationModal();
+    closeControlsLegend();
     closeGameModal(isFromPopState);
   }
 
@@ -2082,6 +2083,12 @@ document.addEventListener("DOMContentLoaded", () => {
   function handleEscDualAction(e) {
     if (e.key !== "Escape" || !gameModal || !gameModal.classList.contains("active")) return;
 
+    // If game controls legend is open, dismiss it first
+    if (controlsLegendDialog && controlsLegendDialog.style.display === "flex") {
+      closeControlsLegend();
+      return;
+    }
+
     if (isConfirmingQuit) {
       hideQuitConfirmationModal();
       return;
@@ -2136,6 +2143,42 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("keydown", handleEscDualAction);
 
+  // ========================================================
+  // ACCESSIBILITY & GAMEPLAY KEYBOARD SCROLL SUPPRESSOR (#512)
+  // Prevents arrow keys and Space from scrolling the underlying background page
+  // during active gameplay inside the modal while permitting typing in text inputs
+  // ========================================================
+  const GAMEPLAY_SCROLL_KEYS = new Set([
+    "ArrowUp",
+    "ArrowDown",
+    "ArrowLeft",
+    "ArrowRight",
+    "Space",
+    " ",
+    "PageUp",
+    "PageDown",
+    "Home",
+    "End"
+  ]);
+
+  window.addEventListener("keydown", (e) => {
+    if (!gameModal || !gameModal.classList.contains("active")) return;
+
+    // Check if key is a default scroll trigger
+    if (!GAMEPLAY_SCROLL_KEYS.has(e.key) && !GAMEPLAY_SCROLL_KEYS.has(e.code)) return;
+
+    // Preserve standard typing / cursor navigation inside form elements (search/report inputs)
+    const targetTag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : "";
+    const isEditable = e.target && (e.target.isContentEditable || targetTag === "input" || targetTag === "textarea" || targetTag === "select");
+    if (isEditable) return;
+
+    // If modal is active and target is inside modal or focus slipped to window, prevent default page scroll
+    const isInsideModal = e.target && (gameModal.contains(e.target) || e.target === document.body || e.target === document.documentElement);
+    if (isInsideModal) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
   // Listen for forwarded shortcuts and runtime events from inside game iframes
   window.addEventListener("message", (e) => {
     if (!e || !e.data || typeof e.data !== "object") return;
@@ -2156,6 +2199,16 @@ document.addEventListener("DOMContentLoaded", () => {
         clearTimeout(activeGameSession.handshakeTimeoutId);
         activeGameSession.handshakeTimeoutId = null;
       }
+      return;
+    }
+
+    // Handle mobile haptic vibration forwarding from iframe games (#521)
+    if (type === "ARCADEVERSE_HAPTIC") {
+      try {
+        if (navigator && typeof navigator.vibrate === "function") {
+          navigator.vibrate(e.data.pattern || 20);
+        }
+      } catch (_) {}
       return;
     }
 
@@ -2192,6 +2245,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (type === "ARCADEVERSE_KEY_SHORTCUT") {
       const key = (e.data.key || "").toLowerCase();
       if (e.data.key === "Escape") {
+        if (controlsLegendDialog && controlsLegendDialog.style.display === "flex") {
+          closeControlsLegend();
+          return;
+        }
         if (gameModal.classList.contains("active")) {
           if (isConfirmingQuit) {
             hideQuitConfirmationModal();
@@ -2199,6 +2256,8 @@ document.addEventListener("DOMContentLoaded", () => {
           }
           requestModalClose(false);
         }
+      } else if (key === "k") {
+        if (gameModal.classList.contains("active") && controlsLegendBtn) controlsLegendBtn.click();
       } else if (key === "f") {
         if (gameModal.classList.contains("active") && fullscreenBtn) fullscreenBtn.click();
       } else if (key === "r") {
@@ -3425,4 +3484,412 @@ document.addEventListener("DOMContentLoaded", () => {
   initCatalogViewSwitcher();
   initAZJumpBar();
   initURLDeepLinking();
+  initControlsLegend();
 });
+
+  // ========================================================
+  // INTERACTIVE GAME CONTROLS LEGEND & INPUT MAP ENGINE (#Feature)
+  // Dynamic extraction, keymap visualization, and toolbar integration
+  // ========================================================
+  let controlsLegendDialog = null;
+  let controlsLegendBtn = null;
+  let closeControlsLegend = () => {};
+
+  function getGameControlsConfig(game) {
+    if (!game) {
+      return {
+        bindings: [
+          { keys: ["W", "A", "S", "D"], codeKeys: ["KeyW", "KeyA", "KeyS", "KeyD"], action: "Directional Movement" },
+          { keys: ["↑", "←", "↓", "→"], codeKeys: ["ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight"], action: "Alternative Directional Move" },
+          { keys: ["Space"], codeKeys: ["Space"], action: "Primary Action / Jump" },
+          { keys: ["P"], codeKeys: ["KeyP"], action: "Pause / Resume Game" },
+          { keys: ["R"], codeKeys: ["KeyR"], action: "Restart Session" },
+          { keys: ["Esc"], codeKeys: ["Escape"], action: "Close Game Player" }
+        ],
+        activeKeys: new Set(["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight", "Space", "KeyP", "KeyR", "Escape"]),
+        touchControls: [
+          { label: "Tap Screen", desc: "Jump / Fire / Confirm" },
+          { label: "Swipe / Drag", desc: "Directional Motion / Aim" }
+        ]
+      };
+    }
+
+    const category = (game.category || "").toLowerCase();
+    const tags = Array.isArray(game.tags) ? game.tags.map((t) => t.toLowerCase()) : [];
+    const title = (game.title || "").toLowerCase();
+    const desc = (game.description || "").toLowerCase();
+
+    const isShooter = category.includes("shooter") || tags.includes("shooter") || desc.includes("shoot") || desc.includes("blast") || desc.includes("laser");
+    const isPlatformer = category.includes("platformer") || tags.includes("platformer") || desc.includes("jump") || desc.includes("bounce");
+    const isRacing = category.includes("racing") || tags.includes("racing") || desc.includes("drive") || desc.includes("drift") || desc.includes("racer");
+    const isPuzzle = category.includes("puzzle") || tags.includes("puzzle") || category.includes("board") || tags.includes("logic") || tags.includes("word");
+    const isRhythm = category.includes("rhythm") || tags.includes("rhythm") || tags.includes("music") || title.includes("typer") || tags.includes("typing");
+
+    const bindings = [];
+    const activeKeys = new Set(["KeyP", "KeyR", "Escape"]);
+
+    if (isShooter) {
+      bindings.push({ keys: ["W", "A", "S", "D"], codeKeys: ["KeyW", "KeyA", "KeyS", "KeyD"], action: "Thrust & Directional Steering" });
+      bindings.push({ keys: ["↑", "←", "↓", "→"], codeKeys: ["ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight"], action: "Alternative Arrow Steering" });
+      bindings.push({ keys: ["Space"], codeKeys: ["Space"], action: "Primary Fire / Plasma Blaster" });
+      bindings.push({ keys: ["Shift"], codeKeys: ["ShiftLeft", "ShiftRight"], action: "Hyper-Drive / Afterburner Boost" });
+      ["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight", "Space", "ShiftLeft", "ShiftRight"].forEach((k) => activeKeys.add(k));
+    } else if (isPlatformer || isRacing) {
+      bindings.push({ keys: ["A", "D"], codeKeys: ["KeyA", "KeyD"], action: "Steer Left / Steer Right" });
+      bindings.push({ keys: ["←", "→"], codeKeys: ["ArrowLeft", "ArrowRight"], action: "Alternative Steering Keys" });
+      bindings.push({ keys: ["W", "↑", "Space"], codeKeys: ["KeyW", "ArrowUp", "Space"], action: "Jump / Accelerate" });
+      bindings.push({ keys: ["S", "↓"], codeKeys: ["KeyS", "ArrowDown"], action: "Duck / Slide / Brake" });
+      ["KeyA", "KeyD", "ArrowLeft", "ArrowRight", "KeyW", "ArrowUp", "Space", "KeyS", "ArrowDown"].forEach((k) => activeKeys.add(k));
+    } else if (isRhythm) {
+      bindings.push({ keys: ["D", "F", "J", "K"], codeKeys: ["KeyD", "KeyF", "KeyJ", "KeyK"], action: "Rhythm Lane Beats" });
+      bindings.push({ keys: ["Space"], codeKeys: ["Space"], action: "Bass Beat / Stomp" });
+      bindings.push({ keys: ["A - Z"], codeKeys: ["KeyA", "KeyB", "KeyC", "KeyD", "KeyE", "KeyF"], action: "Typing Terminal Defense Keys" });
+      ["KeyD", "KeyF", "KeyJ", "KeyK", "Space", "KeyA", "KeyB", "KeyC"].forEach((k) => activeKeys.add(k));
+    } else if (isPuzzle) {
+      bindings.push({ keys: ["Left Click"], codeKeys: [], action: "Select & Interact with Puzzle Elements" });
+      bindings.push({ keys: ["↑", "←", "↓", "→"], codeKeys: ["ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight"], action: "Grid Shift / Tile Navigation" });
+      bindings.push({ keys: ["Space"], codeKeys: ["Space"], action: "Confirm / Rotate Piece" });
+      ["ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight", "Space"].forEach((k) => activeKeys.add(k));
+    } else {
+      bindings.push({ keys: ["W", "A", "S", "D"], codeKeys: ["KeyW", "KeyA", "KeyS", "KeyD"], action: "Directional Motion" });
+      bindings.push({ keys: ["↑", "←", "↓", "→"], codeKeys: ["ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight"], action: "Alternative Arrow Movement" });
+      bindings.push({ keys: ["Space"], codeKeys: ["Space"], action: "Primary Action / Start" });
+      ["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight", "Space"].forEach((k) => activeKeys.add(k));
+    }
+
+    bindings.push({ keys: ["P"], codeKeys: ["KeyP"], action: "Pause / Resume Gameplay" });
+    bindings.push({ keys: ["R"], codeKeys: ["KeyR"], action: "Quick Restart Session" });
+    bindings.push({ keys: ["Esc"], codeKeys: ["Escape"], action: "Exit Player Modal" });
+
+    const touchControls = [
+      { label: "Tap Screen", desc: "Jump / Fire / Select Action" },
+      { label: "Swipe / Drag", desc: "Directional Motion / Aim Cursor" }
+    ];
+
+    return { bindings, activeKeys, touchControls };
+  }
+
+  function renderKeyboardVisualizer(activeKeys) {
+    const isWActive = activeKeys.has("KeyW");
+    const isAActive = activeKeys.has("KeyA");
+    const isSActive = activeKeys.has("KeyS");
+    const isDActive = activeKeys.has("KeyD");
+    const isUpActive = activeKeys.has("ArrowUp");
+    const isLeftActive = activeKeys.has("ArrowLeft");
+    const isDownActive = activeKeys.has("ArrowDown");
+    const isRightActive = activeKeys.has("ArrowRight");
+    const isSpaceActive = activeKeys.has("Space");
+    const isShiftActive = activeKeys.has("ShiftLeft") || activeKeys.has("ShiftRight");
+    const isPActive = activeKeys.has("KeyP");
+    const isRActive = activeKeys.has("KeyR");
+    const isEscActive = activeKeys.has("Escape");
+
+    return `
+      <div class="legend-keyboard-grid">
+        <div class="legend-keys-cluster-row">
+          <!-- WASD Cluster -->
+          <div class="legend-keys-cluster">
+            <div class="legend-keys-wasd">
+              <span class="legend-keycap legend-key-w ${isWActive ? 'highlighted' : ''}" data-code="KeyW" title="Key: W">W</span>
+              <span class="legend-keycap legend-key-a ${isAActive ? 'highlighted' : ''}" data-code="KeyA" title="Key: A">A</span>
+              <span class="legend-keycap legend-key-s ${isSActive ? 'highlighted' : ''}" data-code="KeyS" title="Key: S">S</span>
+              <span class="legend-keycap legend-key-d ${isDActive ? 'highlighted' : ''}" data-code="KeyD" title="Key: D">D</span>
+            </div>
+          </div>
+
+          <!-- Spacebar -->
+          <div class="legend-keys-cluster">
+            <span class="legend-keycap legend-keycap-space ${isSpaceActive ? 'highlighted' : ''}" data-code="Space" title="Spacebar">Spacebar</span>
+          </div>
+
+          <!-- Arrow Keys Cluster -->
+          <div class="legend-keys-cluster">
+            <div class="legend-keys-arrows">
+              <span class="legend-keycap legend-key-up ${isUpActive ? 'highlighted' : ''}" data-code="ArrowUp" title="Up Arrow">↑</span>
+              <span class="legend-keycap legend-key-left ${isLeftActive ? 'highlighted' : ''}" data-code="ArrowLeft" title="Left Arrow">←</span>
+              <span class="legend-keycap legend-key-down ${isDownActive ? 'highlighted' : ''}" data-code="ArrowDown" title="Down Arrow">↓</span>
+              <span class="legend-keycap legend-key-right ${isRightActive ? 'highlighted' : ''}" data-code="ArrowRight" title="Right Arrow">→</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="legend-keys-cluster-row" style="margin-top: 4px;">
+          <span class="legend-keycap legend-keycap-wide ${isShiftActive ? 'highlighted' : ''}" data-code="ShiftLeft" title="Shift">Shift</span>
+          <span class="legend-keycap ${isPActive ? 'highlighted' : ''}" data-code="KeyP" title="P (Pause)">P</span>
+          <span class="legend-keycap ${isRActive ? 'highlighted' : ''}" data-code="KeyR" title="R (Restart)">R</span>
+          <span class="legend-keycap legend-keycap-wide ${isEscActive ? 'highlighted' : ''}" data-code="Escape" title="Esc (Close)">Esc</span>
+        </div>
+      </div>
+    `;
+  }
+
+  function initControlsLegend() {
+    const modalControls = document.querySelector(".modal-controls");
+    const modalWindow = document.querySelector(".modal-window");
+    if (!modalControls || !modalWindow) return;
+
+    // Inject Toolbar Button before bug report button or close button
+    controlsLegendBtn = document.createElement("button");
+    controlsLegendBtn.type = "button";
+    controlsLegendBtn.className = "btn btn-sm btn-icon btn-controls-legend";
+    controlsLegendBtn.id = "modal-controls-legend-btn";
+    controlsLegendBtn.title = "View Game Controls & Input Map (K)";
+    controlsLegendBtn.setAttribute("aria-label", "View Game Controls and Input Map");
+    controlsLegendBtn.setAttribute("aria-haspopup", "dialog");
+    controlsLegendBtn.setAttribute("aria-expanded", "false");
+    controlsLegendBtn.innerHTML = `
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+        <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"></path>
+      </svg>
+    `;
+
+    const reportBugBtn = document.getElementById("modal-report-bug-btn");
+    const closeBtn = document.getElementById("close-modal-btn");
+    if (reportBugBtn) {
+      modalControls.insertBefore(controlsLegendBtn, reportBugBtn);
+    } else if (closeBtn) {
+      modalControls.insertBefore(controlsLegendBtn, closeBtn);
+    } else {
+      modalControls.appendChild(controlsLegendBtn);
+    }
+
+    // Build Floating Controls Legend Dialog
+    controlsLegendDialog = document.createElement("div");
+    controlsLegendDialog.id = "modal-controls-legend-dialog";
+    controlsLegendDialog.className = "controls-legend-overlay";
+    controlsLegendDialog.setAttribute("role", "dialog");
+    controlsLegendDialog.setAttribute("aria-modal", "true");
+    controlsLegendDialog.setAttribute("aria-labelledby", "controls-legend-title");
+    controlsLegendDialog.style.display = "none";
+    modalWindow.appendChild(controlsLegendDialog);
+
+    function updateControlsContent() {
+      const config = getGameControlsConfig(activeGame);
+      const gameTitle = activeGame ? activeGame.title : "Community Arcade Game";
+
+      const actionsHtml = config.bindings
+        .map((b) => `
+          <div class="legend-action-row">
+            <div class="legend-action-keys">
+              ${b.keys.map((k) => `<span class="legend-action-key-pill">${k}</span>`).join("")}
+            </div>
+            <span class="legend-action-desc">${b.action}</span>
+          </div>
+        `)
+        .join("");
+
+      const touchHtml = config.touchControls
+        .map((t) => `
+          <div class="legend-touch-card">
+            <svg class="legend-touch-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect>
+              <line x1="12" y1="18" x2="12.01" y2="18"></line>
+            </svg>
+            <div class="legend-touch-text">
+              <span class="legend-touch-label">${t.label}</span>
+              <span class="legend-touch-desc">${t.desc}</span>
+            </div>
+          </div>
+        `)
+        .join("");
+
+      controlsLegendDialog.innerHTML = `
+        <div class="controls-legend-card">
+          <div class="controls-legend-header">
+            <div class="controls-legend-title-wrap">
+              <svg class="legend-header-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"></path>
+              </svg>
+              <div>
+                <h4 id="controls-legend-title" class="controls-legend-title">Game Controls &amp; Input Map</h4>
+                <span class="controls-legend-subtitle" id="controls-legend-game-name">${gameTitle}</span>
+              </div>
+            </div>
+            <button type="button" class="btn-legend-close" id="close-controls-legend-btn" aria-label="Close controls legend (Esc)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+
+          <div class="controls-legend-body">
+            <div class="legend-section">
+              <div class="legend-section-title-wrap">
+                <span class="legend-section-title">Interactive Keymap</span>
+                <span class="legend-live-badge">Live Input Tester</span>
+              </div>
+              ${renderKeyboardVisualizer(config.activeKeys)}
+              <p class="legend-hint">Press keys on your keyboard to test inputs in real time</p>
+            </div>
+
+            <div class="legend-section">
+              <div class="legend-section-title">Action Bindings</div>
+              <div class="legend-actions-list">
+                ${actionsHtml}
+              </div>
+            </div>
+
+            <div class="legend-section">
+              <div class="legend-section-title">Mouse &amp; Touch Controls</div>
+              <div class="legend-touch-grid">
+                ${touchHtml}
+              </div>
+            </div>
+          </div>
+
+          <div class="controls-legend-footer">
+            <div class="legend-shortcut-tip">
+              <span>Shortcut: Press <kbd class="legend-kbd">K</kbd> to toggle</span>
+            </div>
+            <button type="button" class="btn btn-sm btn-primary btn-legend-dismiss" id="dismiss-controls-legend-btn">
+              <span>Got It, Let's Play!</span>
+            </button>
+          </div>
+        </div>
+      `;
+
+      const dialogCloseBtn = controlsLegendDialog.querySelector("#close-controls-legend-btn");
+      const dialogDismissBtn = controlsLegendDialog.querySelector("#dismiss-controls-legend-btn");
+      if (dialogCloseBtn) dialogCloseBtn.addEventListener("click", closeControlsLegend);
+      if (dialogDismissBtn) dialogDismissBtn.addEventListener("click", closeControlsLegend);
+    }
+
+    // Tactile Web Audio Mechanical Switch Sound Synthesizer
+    function playKeycapAudio() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        if (window.ArcadeAudio && typeof window.ArcadeAudio.isMuted === "function" && window.ArcadeAudio.isMuted()) return;
+        const ctx = new AudioCtx();
+        if (ctx.state === "suspended") {
+          ctx.resume();
+        }
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(650, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(160, ctx.currentTime + 0.02);
+
+        filter.type = "bandpass";
+        filter.frequency.setValueAtTime(800, ctx.currentTime);
+        filter.Q.setValueAtTime(2, ctx.currentTime);
+
+        gain.gain.setValueAtTime(0.06, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.025);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start();
+        osc.stop(ctx.currentTime + 0.03);
+        setTimeout(() => {
+          if (ctx.state !== "closed") ctx.close();
+        }, 60);
+      } catch (_) {}
+    }
+
+    // Live Physical Keypress Tester Event Handlers
+    function handleKeyTesterDown(e) {
+      if (!controlsLegendDialog || controlsLegendDialog.style.display !== "flex") return;
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        closeControlsLegend();
+        return;
+      }
+
+      const code = e.code;
+      const keycap = controlsLegendDialog.querySelector(`.legend-keycap[data-code="${code}"]`);
+      if (keycap) {
+        if (!keycap.classList.contains("pressed")) {
+          keycap.classList.add("pressed");
+          playKeycapAudio();
+        }
+      } else if (code === "ShiftRight") {
+        const shiftKeycap = controlsLegendDialog.querySelector(`.legend-keycap[data-code="ShiftLeft"]`);
+        if (shiftKeycap && !shiftKeycap.classList.contains("pressed")) {
+          shiftKeycap.classList.add("pressed");
+          playKeycapAudio();
+        }
+      }
+    }
+
+    function handleKeyTesterUp(e) {
+      if (!controlsLegendDialog || controlsLegendDialog.style.display !== "flex") return;
+      const code = e.code;
+      const keycap = controlsLegendDialog.querySelector(`.legend-keycap[data-code="${code}"]`);
+      if (keycap) {
+        keycap.classList.remove("pressed");
+      } else if (code === "ShiftRight") {
+        const shiftKeycap = controlsLegendDialog.querySelector(`.legend-keycap[data-code="ShiftLeft"]`);
+        if (shiftKeycap) shiftKeycap.classList.remove("pressed");
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyTesterDown);
+    window.addEventListener("keyup", handleKeyTesterUp);
+
+    closeControlsLegend = function () {
+      if (!controlsLegendDialog) return;
+      controlsLegendDialog.style.display = "none";
+      if (controlsLegendBtn) {
+        controlsLegendBtn.classList.remove("active");
+        controlsLegendBtn.setAttribute("aria-expanded", "false");
+        try {
+          controlsLegendBtn.focus();
+        } catch (_) {}
+      }
+      const pressed = controlsLegendDialog.querySelectorAll(".legend-keycap.pressed");
+      pressed.forEach((p) => p.classList.remove("pressed"));
+    };
+
+    function openControlsLegend() {
+      if (!controlsLegendDialog) return;
+      updateControlsContent();
+      controlsLegendDialog.style.display = "flex";
+      if (controlsLegendBtn) {
+        controlsLegendBtn.classList.add("active");
+        controlsLegendBtn.setAttribute("aria-expanded", "true");
+      }
+      const closeBtn = controlsLegendDialog.querySelector("#close-controls-legend-btn");
+      if (closeBtn) {
+        setTimeout(() => closeBtn.focus(), 50);
+      }
+    }
+
+    controlsLegendBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (controlsLegendDialog.style.display === "flex") {
+        closeControlsLegend();
+      } else {
+        openControlsLegend();
+      }
+    });
+
+    controlsLegendDialog.addEventListener("click", (e) => {
+      if (e.target === controlsLegendDialog) {
+        closeControlsLegend();
+      }
+    });
+
+    // Global 'K' shortcut toggle when modal is active
+    window.addEventListener("keydown", (e) => {
+      if ((e.key === "k" || e.key === "K") && gameModal && gameModal.classList.contains("active")) {
+        const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : "";
+        if (tag !== "input" && tag !== "textarea") {
+          e.preventDefault();
+          if (controlsLegendDialog && controlsLegendDialog.style.display === "flex") {
+            closeControlsLegend();
+          } else if (controlsLegendBtn) {
+            controlsLegendBtn.click();
+          }
+        }
+      }
+    });
+  }

@@ -1305,6 +1305,11 @@
     togglePause() {
       if (this.gameState === "PLAYING") {
         this.gameState = "PAUSED";
+        // Issue #537: Reset turret placement ghost on pause to prevent wave corruption
+        this.selectedBuildType = null;
+        this.hoverCol = -1;
+        this.hoverRow = -1;
+        this.updateBuildTrayUI();
         this.pauseOverlay.classList.remove("ngd-hidden");
         this.iconPause.classList.add("ngd-hidden");
         this.iconPlay.classList.remove("ngd-hidden");
