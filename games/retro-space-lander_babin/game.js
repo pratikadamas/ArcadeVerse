@@ -25,6 +25,47 @@
   let fuel = 100;
   let landings = 0;
 
+  /**
+   * Safe 64-bit integer addition accumulator with boundary clamping.
+   * Prevents 16-bit/32-bit bitwise overflow, wrapping, or negative number rollbacks.
+   * Clamps safely against Number.MAX_SAFE_INTEGER (9,007,199,254,740,991).
+   */
+  function safeAddScore(currentScore, delta) {
+    if (typeof delta !== 'number' || !Number.isFinite(delta)) return currentScore;
+    const safeDelta = Math.max(0, Math.floor(delta));
+    if (currentScore >= Number.MAX_SAFE_INTEGER - safeDelta) {
+      return Number.MAX_SAFE_INTEGER;
+    }
+    return Math.max(0, currentScore + safeDelta);
+  }
+
+  /**
+   * Calculates fuel conservation multiplier and touchdown score.
+   * Perfect touchdowns on difficulty 5 with full fuel (100%) award substantial bonus points
+   * (>65,535 pts), safely handled via standard 64-bit float math.
+   */
+  function calculateLandingBonus(pad, landerVy, currentFuel, currentLandings) {
+    const difficulty = Math.min(5, Math.floor(currentLandings / 2) + 1);
+    const basePoints = 300 * pad.mult;
+
+    // Fuel conservation bonus: fuel percentage * 50 pts/unit * difficulty * pad multiplier
+    // e.g. 100% fuel on diff 5 with 3x pad gives 75,000 bonus pts
+    const fuelBonus = Math.round(Math.max(0, currentFuel) * 50 * difficulty * pad.mult);
+
+    // Smooth touchdown precision bonus: softer vertical landing velocity yields bonus reward
+    const precisionRatio = Math.max(0, (1.8 - Math.abs(landerVy)) / 1.8);
+    const precisionBonus = Math.round(precisionRatio * 200 * difficulty * pad.mult);
+
+    const totalAward = basePoints + fuelBonus + precisionBonus;
+    return {
+      total: totalAward,
+      base: basePoints,
+      fuelBonus: fuelBonus,
+      precisionBonus: precisionBonus,
+      difficulty: difficulty
+    };
+  }
+
   // Web Audio Synth
   let audioCtx = null;
   function playSound(type) {
@@ -194,7 +235,8 @@
         // Check landing conditions: low vertical & horizontal speed, upright angle
         if (Math.abs(lander.vy) < 1.8 && Math.abs(lander.vx) < 1.2 && Math.abs(lander.angle) < 0.25) {
           // Success landing!
-          score += 300 * pad.mult;
+          const bonus = calculateLandingBonus(pad, lander.vy, fuel, landings);
+          score = safeAddScore(score, bonus.total);
           landings++;
           fuel = Math.min(100, fuel + 40);
           playSound('land');
