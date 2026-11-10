@@ -1180,102 +1180,41 @@
     },
 
     // ========================================================
-    // SWIPE-TO-MOVE GESTURE RECOGNIZER (#522)
-    // Translates touch swipes to directional Arrow key events for Grid, Snake & 2048 games
+    // UNIVERSAL HIGH-DPI RETINA CANVAS RESIZER (#558)
+    // Ensures pixel-crisp rendering on 2x/3x Retina & 4K displays
     // ========================================================
     /**
-     * Attaches a responsive 4-directional swipe gesture recognizer to a target element.
-     * Maps directional swipes to simulated keyboard events ("ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight")
-     * and invokes an optional callback with the detected direction.
-     * @param {HTMLElement} [element] - Target element (defaults to window)
-     * @param {Object} [options] - Configuration options
-     * @param {number} [options.threshold=30] - Minimum travel distance in pixels
-     * @param {number} [options.maxTime=600] - Maximum elapsed time for swipe in ms
-     * @param {Function} [options.onSwipe] - Callback receiving direction ('up'|'down'|'left'|'right')
-     * @returns {Function} Detach/cleanup function
+     * Initializes or resizes an HTML5 Canvas for High-DPI / Retina displays.
+     * Scales physical canvas resolution by devicePixelRatio while preserving logical CSS dimensions.
+     * @param {HTMLCanvasElement} canvas
+     * @param {CanvasRenderingContext2D} ctx
+     * @param {number} [logicalWidth] - Optional design width (defaults to canvas.width or clientWidth)
+     * @param {number} [logicalHeight] - Optional design height (defaults to canvas.height or clientHeight)
+     * @returns {{ dpr: number, logicalWidth: number, logicalHeight: number }}
      */
-    initSwipeControls: function (element, options) {
-      var target = element || (typeof window !== "undefined" ? window : null);
-      if (!target) return function () {};
+    initRetinaCanvas: function (canvas, ctx, logicalWidth, logicalHeight) {
+      if (!canvas || !ctx) return { dpr: 1, logicalWidth: 0, logicalHeight: 0 };
 
-      var opts = options || {};
-      var threshold = typeof opts.threshold === "number" ? opts.threshold : 30;
-      var maxTime = typeof opts.maxTime === "number" ? opts.maxTime : 600;
-      var onSwipe = typeof opts.onSwipe === "function" ? opts.onSwipe : null;
+      var dpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
+      var w = logicalWidth || canvas.clientWidth || canvas.width || 800;
+      var h = logicalHeight || canvas.clientHeight || canvas.height || 600;
 
-      var startX = 0;
-      var startY = 0;
-      var startTime = 0;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
 
-      function onTouchStart(e) {
-        if (!e.changedTouches || e.changedTouches.length === 0) return;
-        var touch = e.changedTouches[0];
-        startX = touch.clientX;
-        startY = touch.clientY;
-        startTime = Date.now();
+      // Reset and scale coordinate matrix
+      if (typeof ctx.setTransform === 'function') {
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      } else if (typeof ctx.scale === 'function') {
+        ctx.scale(dpr, dpr);
       }
 
-      function onTouchEnd(e) {
-        if (!e.changedTouches || e.changedTouches.length === 0) return;
-        var elapsed = Date.now() - startTime;
-        if (elapsed > maxTime) return;
-
-        var touch = e.changedTouches[0];
-        var deltaX = touch.clientX - startX;
-        var deltaY = touch.clientY - startY;
-        var absX = Math.abs(deltaX);
-        var absY = Math.abs(deltaY);
-
-        if (Math.max(absX, absY) < threshold) return;
-
-        var direction = "";
-        var keyName = "";
-
-        if (absX > absY) {
-          direction = deltaX > 0 ? "right" : "left";
-          keyName = deltaX > 0 ? "ArrowRight" : "ArrowLeft";
-        } else {
-          direction = deltaY > 0 ? "down" : "up";
-          keyName = deltaY > 0 ? "ArrowDown" : "ArrowUp";
-        }
-
-        if (e.cancelable) {
-          e.preventDefault();
-        }
-
-        // Dispatch synthetic KeyboardEvent to active document
-        try {
-          var downEvt = new KeyboardEvent("keydown", {
-            key: keyName,
-            code: keyName,
-            bubbles: true,
-            cancelable: true
-          });
-          var upEvt = new KeyboardEvent("keyup", {
-            key: keyName,
-            code: keyName,
-            bubbles: true,
-            cancelable: true
-          });
-          (target.ownerDocument || document).dispatchEvent(downEvt);
-          setTimeout(function () {
-            (target.ownerDocument || document).dispatchEvent(upEvt);
-          }, 30);
-        } catch (_kErr) {}
-
-        if (onSwipe) {
-          try {
-            onSwipe(direction);
-          } catch (_sErr) {}
-        }
-      }
-
-      target.addEventListener("touchstart", onTouchStart, { passive: true });
-      target.addEventListener("touchend", onTouchEnd, { passive: false });
-
-      return function cleanupSwipeControls() {
-        target.removeEventListener("touchstart", onTouchStart);
-        target.removeEventListener("touchend", onTouchEnd);
+      return {
+        dpr: dpr,
+        logicalWidth: w,
+        logicalHeight: h
       };
     }
   };
