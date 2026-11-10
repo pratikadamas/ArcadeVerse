@@ -2143,6 +2143,42 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.addEventListener("keydown", handleEscDualAction);
 
+  // ========================================================
+  // ACCESSIBILITY & GAMEPLAY KEYBOARD SCROLL SUPPRESSOR (#512)
+  // Prevents arrow keys and Space from scrolling the underlying background page
+  // during active gameplay inside the modal while permitting typing in text inputs
+  // ========================================================
+  const GAMEPLAY_SCROLL_KEYS = new Set([
+    "ArrowUp",
+    "ArrowDown",
+    "ArrowLeft",
+    "ArrowRight",
+    "Space",
+    " ",
+    "PageUp",
+    "PageDown",
+    "Home",
+    "End"
+  ]);
+
+  window.addEventListener("keydown", (e) => {
+    if (!gameModal || !gameModal.classList.contains("active")) return;
+
+    // Check if key is a default scroll trigger
+    if (!GAMEPLAY_SCROLL_KEYS.has(e.key) && !GAMEPLAY_SCROLL_KEYS.has(e.code)) return;
+
+    // Preserve standard typing / cursor navigation inside form elements (search/report inputs)
+    const targetTag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : "";
+    const isEditable = e.target && (e.target.isContentEditable || targetTag === "input" || targetTag === "textarea" || targetTag === "select");
+    if (isEditable) return;
+
+    // If modal is active and target is inside modal or focus slipped to window, prevent default page scroll
+    const isInsideModal = e.target && (gameModal.contains(e.target) || e.target === document.body || e.target === document.documentElement);
+    if (isInsideModal) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
   // Listen for forwarded shortcuts and runtime events from inside game iframes
   window.addEventListener("message", (e) => {
     if (!e || !e.data || typeof e.data !== "object") return;
