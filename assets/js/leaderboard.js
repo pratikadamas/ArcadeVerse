@@ -1112,7 +1112,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function downloadTextFile(content, mimeType, filename) {
-    const blob = new Blob([content], { type: mimeType });
+    // Prepend UTF-8 Byte Order Mark (\uFEFF) for CSV to ensure correct character encoding in Excel & Calc
+    const payload = mimeType.includes("csv") && !content.startsWith("\uFEFF")
+      ? "\uFEFF" + content
+      : content;
+    const blob = new Blob([payload], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
@@ -1123,14 +1127,27 @@ document.addEventListener("DOMContentLoaded", () => {
     URL.revokeObjectURL(url);
   }
 
+  function escapeCsvCell(val) {
+    if (val === null || val === undefined) return '""';
+    const str = String(val);
+    // Double quotes escape inside quotes, wraps all fields safely
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+
   function exportStandingsCsv() {
     const list = getStandingsRows();
     if (list.length === 0) return;
 
-    const headers = ["Rank", "Contributor", "GitHub Handle", "Verified Games", "Commits", "Arcade Score"];
+    const headers = ["Rank", "Contributor", "GitHub Handle", "Verified Games", "Commits", "Arcade Score"].map(escapeCsvCell);
     const rows = list.map((row) => {
-      const name = '"' + row.name.replace(/"/g, '""') + '"';
-      return [row.rank, name, row.login, row.games, row.commits, row.score].join(",");
+      return [
+        row.rank,
+        escapeCsvCell(row.name),
+        escapeCsvCell(row.login),
+        row.games,
+        row.commits,
+        row.score
+      ].join(",");
     });
 
     const csvContent = [headers.join(","), ...rows].join("\r\n");
