@@ -1048,6 +1048,12 @@
 
       this.canvas.addEventListener('pointerdown', (e) => {
         e.preventDefault();
+        const rect = this.canvas.getBoundingClientRect();
+        const scaleX = CANVAS_WIDTH / rect.width;
+        const scaleY = CANVAS_HEIGHT / rect.height;
+        const mouseX = (e.clientX - rect.left) * scaleX;
+        const mouseY = (e.clientY - rect.top) * scaleY;
+        this.updateHoverTile(mouseX, mouseY);
         if (this.hoverCol >= 0 && this.hoverRow >= 0) {
           this.orderExcavation(this.hoverCol, this.hoverRow);
         }
