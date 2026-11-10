@@ -8658,6 +8658,8 @@ html.light-mode .trophy-modal-title {
 
   .modal-frame-wrapper {
     height: calc(100vh - 54px) !important;
+    height: calc(100dvh - 54px) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     flex: 1 1 auto;
   }
 
