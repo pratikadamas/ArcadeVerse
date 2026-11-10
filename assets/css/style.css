@@ -6650,17 +6650,68 @@ body.modal-pseudo-fullscreen-active #game-frame {
   font-weight: 800;
 }
 
+/* ========================================================
+   WCAG 2.1 AAA COLOR CONTRAST ENHANCEMENTS IN LIGHT THEME (#514)
+   Deepens badge borders, metadata subtext, and author filter buttons
+   to satisfy strict 7:1 (AAA) and 4.5:1 (AA) color contrast standards.
+   ======================================================== */
 [data-theme="light"] .author-filter-btn {
-  color: #0284c7 !important;
+  color: #0369a1 !important;
+  font-weight: 700;
 }
 
 [data-theme="light"] .author-filter-btn:hover {
-  color: #0369a1 !important;
-  text-decoration-color: #0369a1 !important;
+  color: #0c4a6e !important;
+  text-decoration-color: #0c4a6e !important;
 }
 
 [data-theme="light"] .author-filter-btn:focus-visible {
-  outline: 2px solid #0284c7 !important;
+  outline: 2px solid #0369a1 !important;
+}
+
+[data-theme="light"] .meta-badge,
+[data-theme="light"] .podium-meta-tags .meta-badge {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+  font-weight: 600;
+}
+
+[data-theme="light"] .game-meta-badge {
+  color: #0f172a !important;
+  font-weight: 700;
+  background: #e2e8f0 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+[data-theme="light"] .tag-filter-chip {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #1e293b !important;
+  font-weight: 600;
+}
+
+[data-theme="light"] .tag-filter-chip:hover {
+  background: #e2e8f0 !important;
+  border-color: #0369a1 !important;
+  color: #0369a1 !important;
+}
+
+[data-theme="light"] .tag-filter-chip.active {
+  background: #0369a1 !important;
+  border-color: #0369a1 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .results-count {
+  color: #334155 !important;
+  font-weight: 600;
+}
+
+[data-theme="light"] .btn-reset-facets {
+  border-color: #94a3b8 !important;
+  color: #334155 !important;
+  font-weight: 600;
 }
 
 [data-theme="light"] .btn-card-favorite {
