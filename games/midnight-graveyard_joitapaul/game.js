@@ -69,6 +69,9 @@
   let statusTimeout = 0;
   let ambientTime = 0;
   let nearLockedGate = false;
+  // Issue #597: Bounded particle emitter pool preventing lingering memory leaks
+  const MAX_GHOST_PARTICLES = 36;
+  let ghostParticles = [];
 
   function centerOf(cell) {
     return { x: (cell.x + 0.5) * tileSize, y: (cell.y + 0.5) * tileSize };
@@ -122,6 +125,7 @@
   function resetRun() {
     window.cancelAnimationFrame(animationFrame);
     pressedDirections.clear();
+    ghostParticles = [];
     keyLocations.forEach((key) => { key.collected = false; });
     ghosts.forEach((ghost, index) => {
       const start = centerOf(ghost.route[0]);
@@ -278,7 +282,31 @@
     }
     invulnerability = Math.max(0, invulnerability - delta);
     movePlayer(delta);
-    ghosts.forEach((ghost) => advanceGhost(ghost, delta));
+    ghosts.forEach((ghost) => {
+      advanceGhost(ghost, delta);
+      // Spawn subtle ethereal wisps pooled to cap
+      if (ghostParticles.length < MAX_GHOST_PARTICLES && Math.random() < 0.25) {
+        ghostParticles.push({
+          x: ghost.x + (Math.random() * 8 - 4),
+          y: ghost.y + (Math.random() * 8 - 4),
+          vx: (Math.random() - 0.5) * 6,
+          vy: -Math.random() * 8 - 4,
+          life: 0.55,
+          maxLife: 0.55
+        });
+      }
+    });
+
+    // Update ghost particles with instant cleanup upon expiration
+    for (let i = ghostParticles.length - 1; i >= 0; i--) {
+      const p = ghostParticles[i];
+      p.x += p.vx * delta;
+      p.y += p.vy * delta;
+      p.life -= delta;
+      if (p.life <= 0) {
+        ghostParticles.splice(i, 1);
+      }
+    }
     collectKeys();
     checkGhostContact();
     updateGateHint();
@@ -516,6 +544,16 @@
     shrineLocations.forEach(drawShrine);
     keyLocations.forEach(drawKey);
     drawExit();
+    // Render ethereal particle wisps
+    ghostParticles.forEach(p => {
+      context.save();
+      const alpha = Math.max(0, p.life / p.maxLife) * 0.35;
+      context.fillStyle = `rgba(180, 217, 194, ${alpha})`;
+      context.beginPath();
+      context.arc(p.x, p.y, 2, 0, Math.PI * 2);
+      context.fill();
+      context.restore();
+    });
     ghosts.forEach(drawGhost);
     drawFog();
     drawPlayer();

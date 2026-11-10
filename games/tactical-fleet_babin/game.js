@@ -96,7 +96,8 @@
       let placed = false;
       let attempts = 0;
 
-      while (!placed && attempts < 200) {
+      const MAX_SEARCH_STEPS = 1200;
+      while (!placed && attempts < MAX_SEARCH_STEPS) {
         attempts++;
         const isHorizontal = Math.random() < 0.5;
         const r = Math.floor(Math.random() * (isHorizontal ? GRID_SIZE : GRID_SIZE - spec.size + 1));

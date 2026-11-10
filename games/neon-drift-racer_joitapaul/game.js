@@ -151,6 +151,9 @@ const PLAYER_Y = HEIGHT - 96;
 const BEST_SCORE_KEY = "neon-drift-racer-best";
 
 let playerLane = 1;
+let playerX = LANES[1];
+let driftAngle = 0;
+let angularVelocity = 0;
 let objects = [];
 let score = 0;
 let energy = 0;
@@ -182,6 +185,9 @@ function saveBestScore() {
 
 function startGame() {
   playerLane = 1;
+  playerX = LANES[1];
+  driftAngle = 0;
+  angularVelocity = 0;
   objects = [];
   score = 0;
   energy = 0;
@@ -234,6 +240,15 @@ function update(delta) {
   roadOffset = (roadOffset + speed * delta) % 90;
   score = Math.floor(elapsed * 5) + energy * 25;
   scoreValue.textContent = score;
+
+  // Issue #595: Smooth exponential angular momentum and drift damping
+  const targetX = LANES[playerLane];
+  const deltaX = targetX - playerX;
+  playerX += deltaX * Math.min(1, delta * 14);
+  const targetAngle = (deltaX / LANE_WIDTH) * 0.35;
+  angularVelocity += (targetAngle - driftAngle) * 24 * delta;
+  angularVelocity *= 0.88; // Exponential friction decay on zero-throttle
+  driftAngle += angularVelocity * delta;
 
   spawnTimer -= delta;
   if (spawnTimer <= 0) {
@@ -298,9 +313,10 @@ function drawRoad() {
   }
 }
 
-function drawCar(x, y, color, isPlayer) {
+function drawCar(x, y, color, isPlayer, angle = 0) {
   context.save();
   context.translate(x, y);
+  if (angle) context.rotate(angle);
   context.shadowColor = color;
   context.shadowBlur = isPlayer ? 22 : 12;
 
@@ -369,7 +385,7 @@ function draw() {
     if (object.type === "energy") drawEnergyOrb(x, object.y);
     else drawCar(x, object.y, "#fb5368", false);
   }
-  drawCar(LANES[playerLane], PLAYER_Y, "#39c9ff", true);
+  drawCar(playerX, PLAYER_Y, "#39c9ff", true, driftAngle);
 }
 
 function frame(timestamp) {
