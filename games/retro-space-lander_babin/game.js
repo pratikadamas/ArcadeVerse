@@ -120,6 +120,7 @@
   let terrain = [];
   let landingPads = [];
   let exhaust = [];
+  let floatingTexts = [];
 
   function generateTerrain() {
     terrain = [];
@@ -177,6 +178,7 @@
     lander.vy = 0;
     lander.angle = 0;
     exhaust = [];
+    floatingTexts = [];
     generateTerrain();
     updateHUD();
     gameLoop();
@@ -184,21 +186,23 @@
 
   function gameOver(crashed) {
     isPlaying = false;
+    const finalScore = score.toLocaleString();
     if (crashed) {
       playSound('crash');
       overlayHeading.textContent = 'MODULE CRUSHED';
-      overlayDesc.textContent = 'Descent velocity or orientation exceeded safety limits! Final Score: ' + score;
+      overlayDesc.textContent = 'Descent velocity or orientation exceeded safety limits! Final Score: ' + finalScore + ' (Landings: ' + landings + ')';
     } else {
       overlayHeading.textContent = 'OUT OF FUEL';
-      overlayDesc.textContent = 'Thruster fuel depleted in zero gravity! Final Score: ' + score;
+      overlayDesc.textContent = 'Thruster fuel depleted in zero gravity! Final Score: ' + finalScore + ' (Landings: ' + landings + ')';
     }
     btnActionStart.textContent = 'RESTART DESCENT';
     overlayScreen.classList.remove('hidden');
   }
 
   function updateHUD() {
-    scoreVal.textContent = score;
-    levelVal.textContent = 'Fuel: ' + Math.round(fuel) + '% | V: ' + lander.vy.toFixed(1);
+    scoreVal.textContent = score.toLocaleString();
+    const difficulty = Math.min(5, Math.floor(landings / 2) + 1);
+    levelVal.textContent = 'Diff ' + difficulty + ' | Fuel ' + Math.round(fuel) + '% | V: ' + lander.vy.toFixed(1);
   }
 
   function update() {
@@ -241,6 +245,14 @@
           fuel = Math.min(100, fuel + 40);
           playSound('land');
 
+          // Floating score feedback showing safe score & fuel bonus breakdown
+          floatingTexts.push({
+            text: '+' + bonus.total.toLocaleString() + ' (Fuel Bonus +' + bonus.fuelBonus.toLocaleString() + ')',
+            x: Math.min(700, Math.max(100, (pad.x1 + pad.x2) / 2)),
+            y: pad.y - 18,
+            alpha: 1.0
+          });
+
           // Reset to top
           lander.x = 100 + Math.random() * 600;
           lander.y = 80;
@@ -280,6 +292,14 @@
       if (ex.alpha <= 0) exhaust.splice(p, 1);
     }
 
+    // Floating score particles
+    for (let f = floatingTexts.length - 1; f >= 0; f--) {
+      const ft = floatingTexts[f];
+      ft.y -= 0.6;
+      ft.alpha -= 0.015;
+      if (ft.alpha <= 0) floatingTexts.splice(f, 1);
+    }
+
     updateHUD();
   }
 
@@ -313,6 +333,18 @@
       ctx.fillStyle = '#00f5ff';
       ctx.font = '10px monospace';
       ctx.fillText(pad.mult + 'X BONUS', pad.x1 + 10, pad.y + 16);
+    }
+
+    // Floating score bonus indicators
+    for (const ft of floatingTexts) {
+      ctx.save();
+      ctx.font = 'bold 12px monospace';
+      ctx.fillStyle = 'rgba(0, 245, 255, ' + Math.max(0, ft.alpha).toFixed(2) + ')';
+      ctx.textAlign = 'center';
+      ctx.shadowColor = '#00f5ff';
+      ctx.shadowBlur = 4;
+      ctx.fillText(ft.text, ft.x, ft.y);
+      ctx.restore();
     }
 
     // Exhaust
