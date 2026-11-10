@@ -363,7 +363,67 @@
       }
       this.activeVirtualKeys.clear();
     }
+
+    // ========================================================
+    // GAMEPAD DUAL-RUMBLE HAPTIC VIBRATION INTEGRATION (#515)
+    // Fires physical dual-rumble feedback via GamepadHapticActuator API
+    // ========================================================
+    /**
+     * Triggers dual-rumble haptic vibration on all connected gamepads.
+     * @param {number} [durationMs=150] - Vibration duration in milliseconds
+     * @param {number} [strongMagnitude=0.5] - Low-frequency heavy rumble motor [0.0 - 1.0]
+     * @param {number} [weakMagnitude=0.5] - High-frequency light buzz motor [0.0 - 1.0]
+     */
+    triggerGamepadRumble(durationMs = 150, strongMagnitude = 0.5, weakMagnitude = 0.5) {
+      if (typeof navigator === 'undefined' || !navigator.getGamepads) return;
+
+      const gamepads = navigator.getGamepads();
+      for (let i = 0; i < gamepads.length; i++) {
+        const gp = gamepads[i];
+        if (!gp) continue;
+
+        // W3C Standard: Gamepad.vibrationActuator
+        if (gp.vibrationActuator && typeof gp.vibrationActuator.playEffect === 'function') {
+          try {
+            gp.vibrationActuator.playEffect('dual-rumble', {
+              startDelay: 0,
+              duration: durationMs,
+              weakMagnitude: Math.max(0, Math.min(1, weakMagnitude)),
+              strongMagnitude: Math.max(0, Math.min(1, strongMagnitude))
+            }).catch(() => {});
+          } catch (_) {}
+        }
+        // Legacy WebKit / Chrome hapticActuators array fallback
+        else if (gp.hapticActuators && gp.hapticActuators.length > 0) {
+          try {
+            gp.hapticActuators.forEach(actuator => {
+              if (actuator && typeof actuator.pulse === 'function') {
+                actuator.pulse(strongMagnitude, durationMs);
+              }
+            });
+          } catch (_) {}
+        }
+      }
+    }
   }
+
+  // Global helper export for in-game impacts, explosions, and damage (#515)
+  window.triggerGamepadRumble = function (durationMs, strongMagnitude, weakMagnitude) {
+    if (window.ArcadeGamepad && typeof window.ArcadeGamepad.triggerGamepadRumble === 'function') {
+      window.ArcadeGamepad.triggerGamepadRumble(durationMs, strongMagnitude, weakMagnitude);
+    }
+  };
+
+  // Listen for ARCADEVERSE_GAMEPAD_RUMBLE messages forwarded from sandboxed game frames
+  window.addEventListener('message', (e) => {
+    if (!e || !e.data || typeof e.data !== 'object') return;
+    if (e.data.type === 'ARCADEVERSE_GAMEPAD_RUMBLE' || e.data.type === 'ARCADEVERSE_HAPTIC') {
+      const dur = e.data.duration || (typeof e.data.pattern === 'number' ? e.data.pattern : 150);
+      const strong = e.data.strong !== undefined ? e.data.strong : 0.6;
+      const weak = e.data.weak !== undefined ? e.data.weak : 0.4;
+      window.triggerGamepadRumble(dur, strong, weak);
+    }
+  });
 
   // Initialize on DOM load
   if (document.readyState === 'loading') {
