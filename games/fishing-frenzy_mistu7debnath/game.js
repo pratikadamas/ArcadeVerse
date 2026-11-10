@@ -114,13 +114,13 @@
       points: 110,
       color: '#10b981',
       accentColor: '#ec4899',
-      biteWindow: 0.75,
+      biteWindow: 1.05,
       weightMin: 3.0,
       weightMax: 7.0,
       bodyLength: 52,
       bodyHeight: 20,
       finStyle: 'sleek',
-      probability: 0.07,
+      probability: 0.12,
       swimSpeed: 120
     },
     {
@@ -131,13 +131,13 @@
       points: 200,
       color: '#ef4444',
       accentColor: '#fbbf24',
-      biteWindow: 0.65,
+      biteWindow: 0.95,
       weightMin: 6.0,
       weightMax: 14.0,
       bodyLength: 60,
       bodyHeight: 26,
       finStyle: 'ribbon',
-      probability: 0.03,
+      probability: 0.08,
       swimSpeed: 140
     }
   ];
