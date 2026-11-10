@@ -10570,4 +10570,553 @@ html.a11y-reduced-motion .search-clear-btn {
   box-shadow: 0 0 6px #38bdf8;
   transform: translate(-50%, -50%);
 }
+
+/* ========================================================
+   INTERACTIVE GAME CONTROLS LEGEND & ON-SCREEN KEYMAP OVERLAY
+   Visual keycap layout, live input feedback tester & haptics
+   ======================================================== */
+
+.btn-controls-legend.active {
+  background: rgba(59, 130, 246, 0.22) !important;
+  border-color: #3b82f6 !important;
+  color: #60a5fa !important;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.45);
+}
+
+.controls-legend-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(10, 14, 24, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  animation: legendOverlayFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+@keyframes legendOverlayFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.controls-legend-card {
+  max-width: 620px;
+  width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: rgba(18, 24, 38, 0.97);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: var(--radius-lg, 16px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75), 0 0 30px rgba(59, 130, 246, 0.16);
+  display: flex;
+  flex-direction: column;
+  color: var(--text-primary, #f8fafc);
+  overscroll-behavior: contain;
+}
+
+.controls-legend-card::-webkit-scrollbar {
+  width: 6px;
+}
+.controls-legend-card::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 3px;
+}
+
+.controls-legend-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.4rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.controls-legend-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.legend-header-icon {
+  color: var(--accent-primary, #3b82f6);
+  flex-shrink: 0;
+}
+
+.controls-legend-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+
+.controls-legend-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-muted, #94a3b8);
+  font-family: var(--font-code, monospace);
+  display: block;
+  margin-top: 2px;
+}
+
+.btn-legend-close {
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: var(--text-muted, #94a3b8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-legend-close:hover {
+  background: rgba(244, 63, 94, 0.2);
+  border-color: rgba(244, 63, 94, 0.5);
+  color: #fda4af;
+  transform: translateY(-1px);
+}
+
+.controls-legend-body {
+  padding: 1.25rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.legend-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.legend-section-title-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.legend-section-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #94a3b8);
+}
+
+.legend-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 12px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+}
+
+.legend-live-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+  animation: liveBadgePulse 1.5s infinite ease-in-out;
+}
+
+@keyframes liveBadgePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+/* Keyboard Visualizer Grid */
+.legend-keyboard-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.9rem;
+  background: rgba(10, 14, 24, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md, 12px);
+}
+
+.legend-keys-cluster-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.legend-keys-cluster {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.legend-keys-wasd {
+  display: grid;
+  grid-template-columns: repeat(3, 38px);
+  grid-template-rows: repeat(2, 38px);
+  gap: 4px;
+}
+.legend-key-w { grid-column: 2; grid-row: 1; }
+.legend-key-a { grid-column: 1; grid-row: 2; }
+.legend-key-s { grid-column: 2; grid-row: 2; }
+.legend-key-d { grid-column: 3; grid-row: 2; }
+
+.legend-keys-arrows {
+  display: grid;
+  grid-template-columns: repeat(3, 38px);
+  grid-template-rows: repeat(2, 38px);
+  gap: 4px;
+}
+.legend-key-up    { grid-column: 2; grid-row: 1; }
+.legend-key-left  { grid-column: 1; grid-row: 2; }
+.legend-key-down  { grid-column: 2; grid-row: 2; }
+.legend-key-right { grid-column: 3; grid-row: 2; }
+
+/* Tactile 3D Keycap */
+.legend-keycap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 0.5rem;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-bottom: 3px solid rgba(255, 255, 255, 0.28);
+  border-radius: 6px;
+  font-family: var(--font-code, monospace);
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #f8fafc;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.35);
+  transition: all 0.08s ease;
+  user-select: none;
+  cursor: default;
+  box-sizing: border-box;
+}
+
+.legend-keycap-space {
+  min-width: 140px;
+}
+
+.legend-keycap-wide {
+  min-width: 60px;
+}
+
+.legend-keycap.highlighted {
+  border-color: rgba(59, 130, 246, 0.65);
+  background: linear-gradient(180deg, #1e3a8a 0%, #0f172a 100%);
+  color: #93c5fd;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.35), 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Pressed State triggered by live physical keydown */
+.legend-keycap.pressed {
+  transform: translateY(2px) scale(0.98);
+  border-bottom-width: 1px;
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.95), inset 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+.legend-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-muted, #94a3b8);
+  text-align: center;
+  font-style: italic;
+}
+
+/* Action Bindings Table */
+.legend-actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.legend-actions-list::-webkit-scrollbar {
+  width: 4px;
+}
+.legend-actions-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+.legend-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.45rem 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  font-size: 0.82rem;
+  transition: background 0.15s ease;
+}
+
+.legend-action-row:hover {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+.legend-action-keys {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.legend-action-key-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  font-family: var(--font-code, monospace);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #60a5fa;
+}
+
+.legend-action-desc {
+  color: var(--text-secondary, #cbd5e1);
+  font-weight: 500;
+}
+
+/* Touch Grid */
+.legend-touch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.5rem;
+}
+
+.legend-touch-card {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+}
+
+.legend-touch-icon {
+  color: var(--accent-primary, #3b82f6);
+  flex-shrink: 0;
+}
+
+.legend-touch-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.legend-touch-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.legend-touch-desc {
+  font-size: 0.72rem;
+  color: var(--text-muted, #94a3b8);
+}
+
+/* Footer */
+.controls-legend-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.4rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.legend-shortcut-tip {
+  font-size: 0.75rem;
+  color: var(--text-muted, #94a3b8);
+}
+
+.legend-kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  font-family: var(--font-code, monospace);
+  font-size: 0.7rem;
+  color: #fff;
+}
+
+.btn-legend-dismiss {
+  padding: 0.45rem 1rem !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  cursor: pointer;
+  background: var(--accent-primary, #3b82f6);
+  color: #fff;
+  border: none;
+  transition: all 0.15s ease;
+}
+
+.btn-legend-dismiss:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+/* ========================================================
+   LIGHT THEME OVERRIDES
+   ======================================================== */
+[data-theme="light"] .btn-controls-legend.active {
+  background: #dbeafe !important;
+  border-color: #2563eb !important;
+  color: #1d4ed8 !important;
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.3);
+}
+
+[data-theme="light"] .controls-legend-overlay {
+  background: rgba(15, 23, 42, 0.45);
+}
+
+[data-theme="light"] .controls-legend-card {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2), 0 0 20px rgba(37, 99, 235, 0.1);
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .controls-legend-header {
+  border-bottom-color: #e2e8f0;
+  background: #f8fafc;
+}
+
+[data-theme="light"] .controls-legend-title {
+  color: #0f172a;
+}
+
+[data-theme="light"] .controls-legend-subtitle {
+  color: #64748b;
+}
+
+[data-theme="light"] .btn-legend-close {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+[data-theme="light"] .btn-legend-close:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+[data-theme="light"] .legend-section-title {
+  color: #64748b;
+}
+
+[data-theme="light"] .legend-keyboard-grid {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .legend-keycap {
+  background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%) !important;
+  border-color: #cbd5e1 !important;
+  border-bottom: 3px solid #94a3b8 !important;
+  color: #0f172a !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .legend-keycap.highlighted {
+  border-color: #2563eb !important;
+  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%) !important;
+  color: #1d4ed8 !important;
+  box-shadow: 0 0 8px rgba(37, 99, 235, 0.25);
+}
+
+[data-theme="light"] .legend-keycap.pressed {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #1d4ed8 !important;
+  box-shadow: 0 0 16px rgba(37, 99, 235, 0.8) !important;
+}
+
+[data-theme="light"] .legend-action-row {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .legend-action-row:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+[data-theme="light"] .legend-action-key-pill {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #2563eb;
+}
+
+[data-theme="light"] .legend-action-desc {
+  color: #1e293b;
+}
+
+[data-theme="light"] .legend-touch-card {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .legend-touch-label {
+  color: #0f172a;
+}
+
+[data-theme="light"] .controls-legend-footer {
+  background: #f8fafc;
+  border-top-color: #e2e8f0;
+}
+
+[data-theme="light"] .legend-kbd {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .controls-legend-overlay {
+    animation: none;
+  }
+  .legend-live-badge::before {
+    animation: none;
+  }
+  .legend-keycap {
+    transition: none;
+  }
 }
