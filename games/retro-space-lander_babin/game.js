@@ -184,6 +184,20 @@
     gameLoop();
   }
 
+  function syncScoreToPlatform() {
+    try {
+      if (window.ArcadeVerse && typeof ArcadeVerse.postScore === 'function') {
+        ArcadeVerse.postScore(score);
+      }
+      if (window.ArcadeStorage && typeof ArcadeStorage.getItem === 'function') {
+        const prevBest = Number(ArcadeStorage.getItem('highScore')) || 0;
+        if (score > prevBest) {
+          ArcadeStorage.setItem('highScore', score);
+        }
+      }
+    } catch (_) {}
+  }
+
   function gameOver(crashed) {
     isPlaying = false;
     const finalScore = score.toLocaleString();
@@ -197,6 +211,17 @@
     }
     btnActionStart.textContent = 'RESTART DESCENT';
     overlayScreen.classList.remove('hidden');
+
+    syncScoreToPlatform();
+    try {
+      if (window.ArcadeVerse && typeof ArcadeVerse.postGameOver === 'function') {
+        ArcadeVerse.postGameOver({
+          score: score,
+          landings: landings,
+          crashed: Boolean(crashed)
+        });
+      }
+    } catch (_) {}
   }
 
   function updateHUD() {
@@ -244,6 +269,7 @@
           landings++;
           fuel = Math.min(100, fuel + 40);
           playSound('land');
+          syncScoreToPlatform();
 
           // Floating score feedback showing safe score & fuel bonus breakdown
           floatingTexts.push({
