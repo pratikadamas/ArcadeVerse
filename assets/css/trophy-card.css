@@ -362,23 +362,26 @@ html.light-mode .activity-link-btn.table-trophy-btn:hover {
     size: landscape;
     margin: 0;
   }
-  body * {
-    visibility: hidden;
+  body.printing-trophy > :not(#trophy-card-modal) {
+    display: none !important;
   }
-  #trophy-card-modal,
-  #trophy-card-modal * {
-    visibility: visible;
+  body.printing-trophy,
+  html {
+    height: auto !important;
+    overflow: hidden !important;
+    background: transparent !important;
   }
-  #trophy-card-modal {
-    position: fixed;
-    inset: 0;
+  body.printing-trophy #trophy-card-modal {
+    position: static !important;
+    display: flex !important;
     background: transparent !important;
     backdrop-filter: none !important;
-    padding: 0;
-    margin: 0;
-    display: flex !important;
+    padding: 0 !important;
+    margin: 0 !important;
     align-items: center;
     justify-content: center;
+    width: 100vw !important;
+    height: 100vh !important;
   }
   .trophy-modal-content {
     background: transparent !important;

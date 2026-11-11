@@ -504,6 +504,10 @@
       const btnPrint = modal.querySelector('#btn-print-trophy');
       if (btnPrint) {
         btnPrint.onclick = () => {
+          document.body.classList.add('printing-trophy');
+          window.addEventListener('afterprint', () => {
+            document.body.classList.remove('printing-trophy');
+          }, { once: true });
           window.print();
         };
       }
