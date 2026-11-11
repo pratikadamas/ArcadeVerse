@@ -25,10 +25,14 @@
     ctx: null,
 
     init() {
+      const dpr = Math.max(window.devicePixelRatio || 1, 2);
       this.canvas = document.createElement('canvas');
-      this.canvas.width = 1200;
-      this.canvas.height = 750;
+      this.canvas.width = Math.round(1200 * dpr);
+      this.canvas.height = Math.round(750 * dpr);
+      this.canvas.style.width = '1200px';
+      this.canvas.style.height = '750px';
       this.ctx = this.canvas.getContext('2d');
+      this.ctx.scale(dpr, dpr);
       this.bindEvents();
     },
 
@@ -464,6 +468,7 @@
             </div>
             <div class="trophy-modal-actions">
               <button id="btn-download-trophy" class="btn-trophy primary">Download Certificate (PNG)</button>
+              <button id="btn-print-trophy" class="btn-trophy secondary">Print Certificate</button>
               <button id="btn-copy-trophy" class="btn-trophy secondary">Copy Certificate</button>
             </div>
           </div>
@@ -495,6 +500,17 @@
 
       const btnDownload = modal.querySelector('#btn-download-trophy');
       btnDownload.onclick = () => this.downloadCard(data);
+
+      const btnPrint = modal.querySelector('#btn-print-trophy');
+      if (btnPrint) {
+        btnPrint.onclick = () => {
+          document.body.classList.add('printing-trophy');
+          window.addEventListener('afterprint', () => {
+            document.body.classList.remove('printing-trophy');
+          }, { once: true });
+          window.print();
+        };
+      }
 
       const btnCopy = modal.querySelector('#btn-copy-trophy');
       btnCopy.onclick = async () => {
