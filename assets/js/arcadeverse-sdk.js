@@ -444,6 +444,24 @@
         performAutomaticCleanup();
         break;
 
+      case "ARCADEVERSE_GAMEPAD_KEY":
+        if (data.eventType && data.key) {
+          try {
+            var keyCode = data.keyCode || 0;
+            var keyEvent = new KeyboardEvent(data.eventType, {
+              key: data.key,
+              code: data.code || data.key,
+              keyCode: keyCode,
+              which: keyCode,
+              bubbles: true,
+              cancelable: true
+            });
+            window.dispatchEvent(keyEvent);
+            document.dispatchEvent(keyEvent);
+          } catch (_) {}
+        }
+        break;
+
       case "ARCADEVERSE_AUDIO_CONFIG":
         if (typeof data.muted === "boolean") currentAudioConfig.muted = data.muted;
         if (typeof data.volume === "number") currentAudioConfig.volume = data.volume;
