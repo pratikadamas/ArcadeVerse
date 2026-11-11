@@ -31,6 +31,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const nextBtn = document.getElementById("pagination-next-btn");
   const pagesContainer = document.getElementById("pagination-pages-container");
 
+  // Safeguard admin avatar with offline fallback handler
+  const adminAvatarImg = document.querySelector(".admin-avatar-img");
+  if (adminAvatarImg) {
+    adminAvatarImg.addEventListener("error", function () {
+      this.onerror = null;
+      this.src = getFallbackAvatarSvg("Debasmita Bose", "DebasmitaBose0");
+    });
+  }
+
   let currentPage = 1;
   let pageSize = 10;
   let currentTotalPages = 1;
