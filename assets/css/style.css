@@ -160,6 +160,106 @@ button, input, select, textarea {
   transform: translateY(0);
 }
 
+/* ========================================================
+   REBINDABLE KEYBOARD CONTROLS DIALOG (#516)
+   ======================================================== */
+.controls-dialog {
+  border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.15));
+  border-radius: 12px;
+  background: var(--bg-surface-elevated, #111827);
+  color: var(--text-primary, #f8fafc);
+  padding: 0;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.controls-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.controls-dialog-card {
+  padding: 1.5rem;
+}
+
+.controls-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.controls-dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--accent-cyan, #06b6d4);
+  margin: 0;
+}
+
+.controls-dialog-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted, #94a3b8);
+  margin-bottom: 1.2rem;
+}
+
+.controls-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  border-radius: 6px;
+}
+
+.control-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.keybind-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.keybind-btn kbd {
+  display: inline-block;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: var(--font-code, monospace);
+  background: var(--bg-surface, #1e293b);
+  border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.2));
+  border-radius: 4px;
+  color: var(--accent-cyan, #38bdf8);
+}
+
+.keybind-btn.listening kbd {
+  background: #0284c7;
+  color: #fff;
+  border-color: #38bdf8;
+  animation: pulse-border 1s infinite alternate;
+}
+
+.controls-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
