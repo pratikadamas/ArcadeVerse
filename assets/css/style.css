@@ -160,6 +160,119 @@ button, input, select, textarea {
   transform: translateY(0);
 }
 
+/* ========================================================
+   UNIVERSAL VIRTUAL TOUCH D-PAD & ACTION CONTROLS (#517)
+   ======================================================== */
+.av-virtual-controller {
+  display: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  touch-action: none;
+  user-select: none;
+}
+
+.av-virtual-controller.active {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 1.5rem;
+}
+
+.virtual-controller-toggle-btn {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #94a3b8;
+}
+
+.virtual-controller-toggle-btn.active {
+  background: rgba(6, 182, 212, 0.25);
+  border-color: #06b6d4;
+  color: #22d3ee;
+}
+
+.virtual-dpad {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  pointer-events: auto;
+}
+
+.dpad-btn {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dpad-btn.pressed {
+  background: rgba(6, 182, 212, 0.6);
+  border-color: #06b6d4;
+  transform: scale(0.92);
+}
+
+.dpad-up { top: 0; left: 48px; }
+.dpad-down { bottom: 0; left: 48px; }
+.dpad-left { top: 48px; left: 0; }
+.dpad-right { top: 48px; right: 0; }
+
+.dpad-center {
+  position: absolute;
+  top: 48px;
+  left: 48px;
+  width: 44px;
+  height: 44px;
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.virtual-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  pointer-events: auto;
+}
+
+.action-btn {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.7);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.action-a {
+  border-color: #10b981;
+  color: #34d399;
+}
+
+.action-b {
+  border-color: #ef4444;
+  color: #f87171;
+  margin-bottom: 1.5rem;
+}
+
+.action-btn.pressed {
+  transform: scale(0.9);
+  background: rgba(255, 255, 255, 0.2);
+}
+
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
