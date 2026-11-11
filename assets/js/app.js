@@ -4,6 +4,12 @@
  */
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Ensure viewport has viewport-fit=cover for safe-area insets on mobile
+  const metaViewport = document.querySelector('meta[name="viewport"]');
+  if (metaViewport && !metaViewport.content.includes("viewport-fit=cover")) {
+    metaViewport.content += ", viewport-fit=cover";
+  }
+
   const gamesGrid = document.getElementById("games-grid");
   const totalGamesCount = document.getElementById("total-games-count");
   const totalContributorsCount = document.getElementById("total-contributors-count");
