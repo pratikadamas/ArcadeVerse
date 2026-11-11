@@ -531,6 +531,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // 1. Total Arcade Score (primary)
   // 2. Verified Games count (secondary)
   // 3. Merged Commits (tiebreaker)
+  // Deterministic 4-Tier Tie-Breaking Ranking Engine (#525):
+  // 1. Total Arcade Score descending
+  // 2. Verified Games count descending
+  // 3. Merged Git Commits count descending
+  // 4. GitHub Login handle ascending (alphabetical case-insensitive)
   function getCommunityContributors() {
     return contributorsData
       .filter(item => item.login && item.login.toLowerCase() !== "debasmitabose0" && !isBotAccount(item.login))
@@ -540,7 +545,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if ((b.gamesCount || 0) !== (a.gamesCount || 0)) {
           return (b.gamesCount || 0) - (a.gamesCount || 0);
         }
-        return (b.commits || 0) - (a.commits || 0);
+        if ((b.commits || 0) !== (a.commits || 0)) {
+          return (b.commits || 0) - (a.commits || 0);
+        }
+        const loginA = (a.login || "").toLowerCase();
+        const loginB = (b.login || "").toLowerCase();
+        return loginA.localeCompare(loginB);
       });
   }
 
