@@ -48,6 +48,254 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   } catch (_) {}
   let lastFocusedElement = null;
+
+  // ========================================================
+  // REBINDABLE KEYBOARD CONTROLS SUBSYSTEM (#516)
+  // Allows customizing and remapping Up, Down, Left, Right, Action 1, Action 2
+  // ========================================================
+  const DEFAULT_KEYBINDINGS = {
+    up: "ArrowUp",
+    down: "ArrowDown",
+    left: "ArrowLeft",
+    right: "ArrowRight",
+    action1: "Space",
+    action2: "z"
+  };
+
+  const DEFAULT_KEY_HINTS = {
+    up: "ArrowUp / W",
+    down: "ArrowDown / S",
+    left: "ArrowLeft / A",
+    right: "ArrowRight / D",
+    action1: "Space",
+    action2: "Z"
+  };
+
+  const KEYBINDINGS_STORAGE_KEY = "av_keybindings";
+  let activeKeybindings = Object.assign({}, DEFAULT_KEYBINDINGS);
+
+  try {
+    const savedBindings = localStorage.getItem(KEYBINDINGS_STORAGE_KEY);
+    if (savedBindings) {
+      activeKeybindings = Object.assign({}, DEFAULT_KEYBINDINGS, JSON.parse(savedBindings));
+    }
+  } catch (_) {}
+
+  function ensureControlsSettingsDOM() {
+    let btn = document.getElementById("modal-controls-btn");
+    const modalControlsWrap = document.querySelector(".modal-controls");
+    if (!btn && modalControlsWrap) {
+      btn = document.createElement("button");
+      btn.id = "modal-controls-btn";
+      btn.type = "button";
+      btn.className = "btn btn-sm btn-icon";
+      btn.title = "Controls Settings (Rebind Keys)";
+      btn.setAttribute("aria-label", "Controls Settings");
+      btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M6 8h.001M10 8h.001M14 8h.001M18 8h.001M8 12h.001M12 12h.001M16 12h.001M7 16h10"></path></svg>`;
+      const reloadBtnEl = document.getElementById("reload-btn");
+      if (reloadBtnEl && reloadBtnEl.nextSibling) {
+        modalControlsWrap.insertBefore(btn, reloadBtnEl.nextSibling);
+      } else {
+        modalControlsWrap.appendChild(btn);
+      }
+    }
+
+    let dialog = document.getElementById("controls-settings-dialog");
+    if (!dialog) {
+      dialog = document.createElement("dialog");
+      dialog.id = "controls-settings-dialog";
+      dialog.className = "controls-dialog";
+      dialog.setAttribute("aria-labelledby", "controls-dialog-title");
+      dialog.innerHTML = `<div class="controls-dialog-card"><div class="controls-dialog-header"><h3 id="controls-dialog-title" class="controls-dialog-title"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M6 8h.001M10 8h.001M14 8h.001M18 8h.001M8 12h.001M12 12h.001M16 12h.001M7 16h10"></path></svg> Controls Settings</h3><button type="button" class="btn btn-sm btn-icon" id="controls-dialog-close" aria-label="Close Controls Dialog"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button></div><p class="controls-dialog-desc">Customize controls for WASD, Arrow keys, or custom layouts. Click a key to rebind.</p><div id="controls-conflict-warning" style="display:none; color:#f43f5e; font-size:0.85rem; margin-bottom:0.75rem; font-weight:600;"></div><div class="controls-grid" id="controls-rebind-grid"><div class="control-row"><span class="control-label">Move Up</span><button type="button" class="keybind-btn" data-action="up"><kbd id="kb-up">ArrowUp / W</kbd></button></div><div class="control-row"><span class="control-label">Move Down</span><button type="button" class="keybind-btn" data-action="down"><kbd id="kb-down">ArrowDown / S</kbd></button></div><div class="control-row"><span class="control-label">Move Left</span><button type="button" class="keybind-btn" data-action="left"><kbd id="kb-left">ArrowLeft / A</kbd></button></div><div class="control-row"><span class="control-label">Move Right</span><button type="button" class="keybind-btn" data-action="right"><kbd id="kb-right">ArrowRight / D</kbd></button></div><div class="control-row"><span class="control-label">Action 1 (Jump / Select)</span><button type="button" class="keybind-btn" data-action="action1"><kbd id="kb-action1">Space</kbd></button></div><div class="control-row"><span class="control-label">Action 2 (Fire / Secondary)</span><button type="button" class="keybind-btn" data-action="action2"><kbd id="kb-action2">Z</kbd></button></div></div><div class="controls-dialog-footer"><button type="button" class="btn btn-secondary btn-sm" id="controls-reset-btn">Reset to Defaults</button><button type="button" class="btn btn-primary btn-sm" id="controls-save-btn">Save & Close</button></div></div>`;
+      document.body.appendChild(dialog);
+    }
+    return { btn, dialog };
+  }
+
+  const { btn: modalControlsBtn, dialog: controlsDialog } = ensureControlsSettingsDOM();
+  const closeControlsBtn = document.getElementById("controls-dialog-close");
+  const resetControlsBtn = document.getElementById("controls-reset-btn");
+  const saveControlsBtn = document.getElementById("controls-save-btn");
+  let currentlyRebindingAction = null;
+
+  function cancelRebinding() {
+    currentlyRebindingAction = null;
+    document.querySelectorAll(".keybind-btn").forEach(b => b.classList.remove("listening"));
+    const conflictEl = document.getElementById("controls-conflict-warning");
+    if (conflictEl) conflictEl.style.display = "none";
+    updateControlsUI();
+  }
+
+  function updateControlsUI() {
+    const isCustomized = JSON.stringify(activeKeybindings) !== JSON.stringify(DEFAULT_KEYBINDINGS);
+    for (const [action, keyVal] of Object.entries(activeKeybindings)) {
+      const el = document.getElementById(`kb-${action}`);
+      if (el) {
+        if (!isCustomized && DEFAULT_KEY_HINTS[action]) {
+          el.textContent = DEFAULT_KEY_HINTS[action];
+        } else {
+          el.textContent = keyVal;
+        }
+      }
+    }
+  }
+
+  if (controlsDialog) {
+    if (modalControlsBtn) {
+      modalControlsBtn.addEventListener("click", () => {
+        cancelRebinding();
+        if (typeof controlsDialog.showModal === "function") {
+          controlsDialog.showModal();
+        } else {
+          controlsDialog.setAttribute("open", "true");
+        }
+      });
+    }
+
+    if (closeControlsBtn) {
+      closeControlsBtn.addEventListener("click", () => {
+        cancelRebinding();
+        if (typeof controlsDialog.close === "function") controlsDialog.close();
+        else controlsDialog.removeAttribute("open");
+      });
+    }
+
+    controlsDialog.addEventListener("click", (e) => {
+      if (e.target === controlsDialog) {
+        cancelRebinding();
+        if (typeof controlsDialog.close === "function") controlsDialog.close();
+        else controlsDialog.removeAttribute("open");
+      }
+    });
+
+    controlsDialog.addEventListener("close", () => {
+      cancelRebinding();
+    });
+
+    if (resetControlsBtn) {
+      resetControlsBtn.addEventListener("click", () => {
+        activeKeybindings = Object.assign({}, DEFAULT_KEYBINDINGS);
+        try {
+          localStorage.removeItem(KEYBINDINGS_STORAGE_KEY);
+        } catch (_) {}
+        cancelRebinding();
+      });
+    }
+
+    if (saveControlsBtn) {
+      saveControlsBtn.addEventListener("click", () => {
+        try {
+          localStorage.setItem(KEYBINDINGS_STORAGE_KEY, JSON.stringify(activeKeybindings));
+        } catch (_) {}
+        cancelRebinding();
+        if (typeof controlsDialog.close === "function") controlsDialog.close();
+        else controlsDialog.removeAttribute("open");
+      });
+    }
+
+    document.querySelectorAll(".keybind-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const action = btn.dataset.action;
+        currentlyRebindingAction = action;
+        document.querySelectorAll(".keybind-btn").forEach(b => b.classList.remove("listening"));
+        btn.classList.add("listening");
+        const kbd = btn.querySelector("kbd");
+        if (kbd) kbd.textContent = "Press key (Esc to cancel)...";
+        const conflictEl = document.getElementById("controls-conflict-warning");
+        if (conflictEl) conflictEl.style.display = "none";
+      });
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (!currentlyRebindingAction) return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (e.key === "Escape" || e.code === "Escape") {
+        cancelRebinding();
+        return;
+      }
+
+      const newKey = e.code === "Space" ? "Space" : (e.key.length === 1 ? e.key.toLowerCase() : e.key);
+
+      const conflictAction = Object.keys(activeKeybindings).find(
+        act => act !== currentlyRebindingAction && activeKeybindings[act].toLowerCase() === newKey.toLowerCase()
+      );
+
+      if (conflictAction) {
+        const conflictEl = document.getElementById("controls-conflict-warning");
+        if (conflictEl) {
+          conflictEl.textContent = `"${newKey}" was already bound to ${conflictAction.toUpperCase()}. Swapped automatically!`;
+          conflictEl.style.display = "block";
+        }
+        activeKeybindings[conflictAction] = activeKeybindings[currentlyRebindingAction];
+      }
+
+      activeKeybindings[currentlyRebindingAction] = newKey;
+      currentlyRebindingAction = null;
+      document.querySelectorAll(".keybind-btn").forEach(b => b.classList.remove("listening"));
+      updateControlsUI();
+    }, true);
+  }
+
+  // Runtime Keyboard Remapping Translation Engine (#516)
+  // Maps player customized keys to corresponding standard game controls (Arrow keys, Space, Z)
+  const ACTION_GAME_DISPATCH = {
+    up: { key: "ArrowUp", code: "ArrowUp", keyCode: 38 },
+    down: { key: "ArrowDown", code: "ArrowDown", keyCode: 40 },
+    left: { key: "ArrowLeft", code: "ArrowLeft", keyCode: 37 },
+    right: { key: "ArrowRight", code: "ArrowRight", keyCode: 39 },
+    action1: { key: " ", code: "Space", keyCode: 32 },
+    action2: { key: "z", code: "KeyZ", keyCode: 90 }
+  };
+
+  function translateAndDispatchRemappedKey(e, eventType) {
+    if (!gameModal || !gameModal.classList.contains("active") || !activeGame) return;
+    if (controlsDialog && controlsDialog.hasAttribute("open")) return;
+
+    const tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || (e.target && e.target.isContentEditable)) return;
+
+    const pressedKey = e.code === "Space" ? "Space" : (e.key.length === 1 ? e.key.toLowerCase() : e.key);
+
+    for (const [action, boundKey] of Object.entries(activeKeybindings)) {
+      if (boundKey.toLowerCase() === pressedKey.toLowerCase()) {
+        const targetMapping = ACTION_GAME_DISPATCH[action];
+        if (!targetMapping) continue;
+
+        const iframe = document.getElementById("game-iframe");
+        if (iframe && iframe.contentWindow) {
+          try {
+            const frameDoc = iframe.contentDocument || iframe.contentWindow.document;
+            const FrameKeyboardEvent = iframe.contentWindow.KeyboardEvent || KeyboardEvent;
+            const evt = new FrameKeyboardEvent(eventType, {
+              key: targetMapping.key,
+              code: targetMapping.code,
+              keyCode: targetMapping.keyCode,
+              which: targetMapping.keyCode,
+              bubbles: true,
+              cancelable: true
+            });
+            if (frameDoc) {
+              frameDoc.dispatchEvent(evt);
+            }
+          } catch (_) {
+            iframe.contentWindow.postMessage({
+              type: "ARCADEVERSE_GAMEPAD_KEY",
+              eventType: eventType,
+              key: targetMapping.key,
+              code: targetMapping.code,
+              keyCode: targetMapping.keyCode
+            }, "*");
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  window.addEventListener("keydown", (e) => translateAndDispatchRemappedKey(e, "keydown"), false);
+  window.addEventListener("keyup", (e) => translateAndDispatchRemappedKey(e, "keyup"), false);
   let activeGame = null;
   let modalPushedHistory = false;
   let closeAutocomplete = () => {};
@@ -229,6 +477,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function showQuotaToast(message) {
+      announceToScreenReader(`Storage notice: ${message}`);
       let toast = document.getElementById(TOAST_ID);
       if (!toast) {
         toast = document.createElement("div");
@@ -1399,6 +1648,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateFacetSummaryUI();
 
+    // Assistive Screen Reader Notification for Catalog Filter/Search Updates (#513)
+    if (typeof announceToScreenReader === "function") {
+      const count = finalResults.length;
+      let filterDesc = [];
+      if (currentCategory && currentCategory !== "all") filterDesc.push(`category "${currentCategory}"`);
+      if (searchQuery) filterDesc.push(`matching "${searchQuery}"`);
+      if (currentTagFilter) filterDesc.push(`tag "${currentTagFilter}"`);
+      if (currentDurationFacet !== "all") filterDesc.push(`duration "${currentDurationFacet}"`);
+      if (currentControlsFacet !== "all") filterDesc.push(`controls "${currentControlsFacet}"`);
+      if (currentLetterFilter !== "all") filterDesc.push(`letter "${currentLetterFilter}"`);
+
+      const descString = filterDesc.length > 0 ? ` for ${filterDesc.join(", ")}` : "";
+      announceToScreenReader(`Catalog updated. Showing ${count} game${count === 1 ? "" : "s"}${descString}.`);
+    }
+
     if (window.lucide) {
       lucide.createIcons();
     }
@@ -1703,6 +1967,9 @@ document.addEventListener("DOMContentLoaded", () => {
     modalGameTitle.textContent = game.title;
     modalGameBadge.textContent = game.category;
     modalGameAuthor.textContent = `Built by @${game.author}`;
+    lastAnnouncedScore = 0;
+    lastScoreAnnouncementTime = Date.now();
+    announceToScreenReader(`Launching ${game.title}. Category: ${game.category}. Built by ${game.author}.`);
     startIframeTimeout(game);
 
     // Storage Isolation Bridge: Pass gameId via URL parameter so SDK attaches namespaced proxy
@@ -2055,6 +2322,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let escPressCount = 0;
 
   function showEscExitToast() {
+    announceToScreenReader("Game paused. Press Escape again or Shift Escape to exit to catalog.");
     const existing = document.getElementById("esc-exit-toast");
     if (existing) existing.remove();
 
@@ -2212,9 +2480,20 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Handle score events from verified child games
+  // Screen reader score announcement throttler (#513)
+  let lastAnnouncedScore = 0;
+  let lastScoreAnnouncementTime = 0;
+
+  // Handle score events from verified child games
     if (type === "ARCADEVERSE_GAME_SCORE") {
       const score = Number(e.data.score) || 0;
+      const now = Date.now();
+      // Announce milestone scores or periodically (every 5 seconds or on major point jumps) without flooding every frame
+      if (typeof announceToScreenReader === "function" && (score >= lastAnnouncedScore + 100 || (now - lastScoreAnnouncementTime > 5000 && score !== lastAnnouncedScore))) {
+        announceToScreenReader(`Score: ${score}`);
+        lastAnnouncedScore = score;
+        lastScoreAnnouncementTime = now;
+      }
       window.dispatchEvent(
         new CustomEvent("arcadeverse:score-update", {
           detail: {
@@ -2229,11 +2508,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Handle game-over lifecycle events
     if (type === "ARCADEVERSE_GAME_OVER") {
+      const details = e.data.details || {};
+      const finalScore = details.score != null ? details.score : lastAnnouncedScore;
+      if (typeof announceToScreenReader === "function") {
+        announceToScreenReader(`Game over. Final score: ${finalScore}.`);
+      }
       window.dispatchEvent(
         new CustomEvent("arcadeverse:game-over", {
           detail: {
             gameId: activeGame ? activeGame.id : null,
-            details: e.data.details || {},
+            details: details,
             sessionToken: activeGameSession.token
           }
         })
@@ -3223,6 +3507,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   function showDeepLinkNotFoundNotice(requestedId) {
+    announceToScreenReader(`Game not found: The requested game link "${requestedId}" does not exist or has been relocated.`);
     const existing = document.getElementById('deep-link-error-toast');
     if (existing) existing.remove();
 

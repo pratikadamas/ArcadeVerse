@@ -444,6 +444,24 @@
         performAutomaticCleanup();
         break;
 
+      case "ARCADEVERSE_GAMEPAD_KEY":
+        if (data.eventType && data.key) {
+          try {
+            var keyCode = data.keyCode || 0;
+            var keyEvent = new KeyboardEvent(data.eventType, {
+              key: data.key,
+              code: data.code || data.key,
+              keyCode: keyCode,
+              which: keyCode,
+              bubbles: true,
+              cancelable: true
+            });
+            window.dispatchEvent(keyEvent);
+            document.dispatchEvent(keyEvent);
+          } catch (_) {}
+        }
+        break;
+
       case "ARCADEVERSE_AUDIO_CONFIG":
         if (typeof data.muted === "boolean") currentAudioConfig.muted = data.muted;
         if (typeof data.volume === "number") currentAudioConfig.volume = data.volume;
@@ -715,6 +733,20 @@
     postScore: function (score) {
       securePostToParent("ARCADEVERSE_GAME_SCORE", {
         score: Number(score) || 0
+      });
+    },
+
+    /**
+     * Trigger controller haptic rumble on connected physical gamepads (#515)
+     * @param {number} [durationMs=150] Duration of vibration in milliseconds
+     * @param {number} [strongMagnitude=0.6] Low-frequency motor intensity (0.0 to 1.0)
+     * @param {number} [weakMagnitude=0.4] High-frequency motor intensity (0.0 to 1.0)
+     */
+    triggerGamepadRumble: function (durationMs, strongMagnitude, weakMagnitude) {
+      securePostToParent("ARCADEVERSE_GAMEPAD_RUMBLE", {
+        duration: typeof durationMs === "number" ? durationMs : 150,
+        strong: typeof strongMagnitude === "number" ? strongMagnitude : 0.6,
+        weak: typeof weakMagnitude === "number" ? weakMagnitude : 0.4
       });
     },
 

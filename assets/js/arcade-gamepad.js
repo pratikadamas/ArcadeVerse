@@ -208,6 +208,9 @@
       this.showToast(`Gamepad connected: ${gp.id.split('(')[0].trim() || 'Controller'}`, 'connected');
       this.startPolling();
 
+      // Trigger a brief 120ms acknowledgment rumble pulse upon connection (#515)
+      this.triggerGamepadRumble(120, 0.4, 0.2);
+
       window.dispatchEvent(new CustomEvent('arcadeverse:gamepad-connected', { detail: { gamepad: gp } }));
     }
 
@@ -363,7 +366,84 @@
       }
       this.activeVirtualKeys.clear();
     }
+
+    // ========================================================
+    // GAMEPAD DUAL-RUMBLE HAPTIC VIBRATION INTEGRATION (#515)
+    // Fires physical dual-rumble feedback via GamepadHapticActuator API
+    // ========================================================
+    /**
+     * Triggers dual-rumble haptic vibration on all connected gamepads.
+     * @param {number} [durationMs=150] - Vibration duration in milliseconds
+     * @param {number} [strongMagnitude=0.5] - Low-frequency heavy rumble motor [0.0 - 1.0]
+     * @param {number} [weakMagnitude=0.5] - High-frequency light buzz motor [0.0 - 1.0]
+     */
+    triggerGamepadRumble(durationMs = 150, strongMagnitude = 0.5, weakMagnitude = 0.5) {
+      if (typeof navigator === 'undefined' || !navigator.getGamepads) return;
+
+      const gamepads = navigator.getGamepads();
+      for (let i = 0; i < gamepads.length; i++) {
+        const gp = gamepads[i];
+        if (!gp) continue;
+
+        // W3C Standard: Gamepad.vibrationActuator
+        if (gp.vibrationActuator && typeof gp.vibrationActuator.playEffect === 'function') {
+          try {
+            gp.vibrationActuator.playEffect('dual-rumble', {
+              startDelay: 0,
+              duration: durationMs,
+              weakMagnitude: Math.max(0, Math.min(1, weakMagnitude)),
+              strongMagnitude: Math.max(0, Math.min(1, strongMagnitude))
+            }).catch(() => {});
+          } catch (_) {}
+        }
+        // Legacy WebKit / Chrome hapticActuators array fallback
+        else if (gp.hapticActuators && gp.hapticActuators.length > 0) {
+          try {
+            gp.hapticActuators.forEach(actuator => {
+              if (actuator && typeof actuator.pulse === 'function') {
+                actuator.pulse(strongMagnitude, durationMs);
+              }
+            });
+          } catch (_) {}
+        }
+      }
+    }
   }
+
+  // Global helper export for in-game impacts, explosions, and damage (#515)
+  window.triggerGamepadRumble = function (durationMs, strongMagnitude, weakMagnitude) {
+    if (window.ArcadeGamepad && typeof window.ArcadeGamepad.triggerGamepadRumble === 'function') {
+      window.ArcadeGamepad.triggerGamepadRumble(durationMs, strongMagnitude, weakMagnitude);
+    }
+  };
+
+  // Listen for ARCADEVERSE_GAMEPAD_RUMBLE messages forwarded from sandboxed game frames
+  // Validates message origin/source consistently with active game iframe
+  window.addEventListener('message', (e) => {
+    if (!e || !e.data || typeof e.data !== 'object') return;
+    const type = e.data.type || '';
+    if (type !== 'ARCADEVERSE_GAMEPAD_RUMBLE' && type !== 'ARCADEVERSE_HAPTIC') return;
+
+    // Validate origin against active game iframe
+    const gameIframe = document.getElementById('game-iframe');
+    if (gameIframe && gameIframe.contentWindow && e.source !== gameIframe.contentWindow) {
+      return;
+    }
+
+    let dur = 150;
+    if (typeof e.data.duration === 'number') {
+      dur = e.data.duration;
+    } else if (typeof e.data.pattern === 'number') {
+      dur = e.data.pattern;
+    } else if (Array.isArray(e.data.pattern)) {
+      // Sum pattern pulses (e.g. [50, 40, 80] -> 170ms)
+      dur = e.data.pattern.reduce((acc, val) => acc + (Number(val) || 0), 0);
+    }
+
+    const strong = typeof e.data.strong === 'number' ? e.data.strong : 0.6;
+    const weak = typeof e.data.weak === 'number' ? e.data.weak : 0.4;
+    window.triggerGamepadRumble(dur, strong, weak);
+  });
 
   // Initialize on DOM load
   if (document.readyState === 'loading') {
