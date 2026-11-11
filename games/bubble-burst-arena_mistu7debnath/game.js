@@ -1274,33 +1274,46 @@
 
     // --- Descending Ceiling Mechanism ---
     descendCeiling() {
-      // Shift all grid rows downwards by 1 row
-      this.gridOffsetRows++;
+      // Shift all grid rows downwards by 2 rows to preserve hex-grid parity and alignment
+      this.gridOffsetRows += 2;
       const newGrid = [];
 
-      // Create new top row populated with random bubbles
       const availableColors = CONFIG.COLORS.slice(0, this.currentLevel.colorsCount);
-      const topRow = [];
+
+      // Create new Row 0 (Even - 10 cols)
+      const topRow0 = [];
       for (let c = 0; c < CONFIG.GRID_COLS_EVEN; c++) {
-        topRow.push({
+        topRow0.push({
           color: availableColors[Math.floor(Math.random() * availableColors.length)].id,
           type: 'normal',
           r: 0,
           c: c
         });
       }
-      newGrid.push(topRow);
+      newGrid.push(topRow0);
 
-      // Shift existing rows down
-      for (let r = 0; r < CONFIG.GRID_MAX_ROWS - 1; r++) {
+      // Create new Row 1 (Odd - 9 cols)
+      const topRow1 = [];
+      for (let c = 0; c < CONFIG.GRID_COLS_ODD; c++) {
+        topRow1.push({
+          color: availableColors[Math.floor(Math.random() * availableColors.length)].id,
+          type: 'normal',
+          r: 1,
+          c: c
+        });
+      }
+      newGrid.push(topRow1);
+
+      // Shift existing rows down by 2 (preserving row parity so column counts and hex stagger remain aligned)
+      for (let r = 0; r < CONFIG.GRID_MAX_ROWS - 2; r++) {
         const shiftedRow = [];
-        const isNextEven = (r + 1) % 2 === 0;
-        const targetCols = isNextEven ? CONFIG.GRID_COLS_EVEN : CONFIG.GRID_COLS_ODD;
+        const isTargetEven = (r + 2) % 2 === 0;
+        const targetCols = isTargetEven ? CONFIG.GRID_COLS_EVEN : CONFIG.GRID_COLS_ODD;
 
         for (let c = 0; c < targetCols; c++) {
-          const orig = this.grid[r][c] || null;
+          const orig = (this.grid[r] && this.grid[r][c]) ? this.grid[r][c] : null;
           if (orig) {
-            orig.r = r + 1;
+            orig.r = r + 2;
             orig.c = c;
           }
           shiftedRow.push(orig);
@@ -1312,7 +1325,6 @@
       this.sound.playBounce();
       this.screenShake = 6;
       this.announce('Ceiling descended!');
-      this.dropFloatingClusters();
       this.checkDangerThreshold();
     }
 
