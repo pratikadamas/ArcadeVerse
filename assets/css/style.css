@@ -161,103 +161,116 @@ button, input, select, textarea {
 }
 
 /* ========================================================
-   REBINDABLE KEYBOARD CONTROLS DIALOG (#516)
+   UNIVERSAL VIRTUAL TOUCH D-PAD & ACTION CONTROLS (#517)
    ======================================================== */
-.controls-dialog {
-  border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.15));
-  border-radius: 12px;
-  background: var(--bg-surface-elevated, #111827);
-  color: var(--text-primary, #f8fafc);
-  padding: 0;
-  max-width: 440px;
-  width: 90%;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+.av-virtual-controller {
+  display: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  touch-action: none;
+  user-select: none;
 }
 
-.controls-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
-}
-
-.controls-dialog-card {
+.av-virtual-controller.active {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
   padding: 1.5rem;
 }
 
-.controls-dialog-header {
+.virtual-controller-toggle-btn {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #94a3b8;
+}
+
+.virtual-controller-toggle-btn.active {
+  background: rgba(6, 182, 212, 0.25);
+  border-color: #06b6d4;
+  color: #22d3ee;
+}
+
+.virtual-dpad {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  pointer-events: auto;
+}
+
+.dpad-btn {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #fff;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  -webkit-tap-highlight-color: transparent;
 }
 
-.controls-dialog-title {
+.dpad-btn.pressed {
+  background: rgba(6, 182, 212, 0.6);
+  border-color: #06b6d4;
+  transform: scale(0.92);
+}
+
+.dpad-up { top: 0; left: 48px; }
+.dpad-down { bottom: 0; left: 48px; }
+.dpad-left { top: 48px; left: 0; }
+.dpad-right { top: 48px; right: 0; }
+
+.dpad-center {
+  position: absolute;
+  top: 48px;
+  left: 48px;
+  width: 44px;
+  height: 44px;
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.virtual-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  pointer-events: auto;
+}
+
+.action-btn {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.7);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 800;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--accent-cyan, #06b6d4);
-  margin: 0;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  -webkit-tap-highlight-color: transparent;
 }
 
-.controls-dialog-desc {
-  font-size: 0.85rem;
-  color: var(--text-muted, #94a3b8);
-  margin-bottom: 1.2rem;
+.action-a {
+  border-color: #10b981;
+  color: #34d399;
 }
 
-.controls-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+.action-b {
+  border-color: #ef4444;
+  color: #f87171;
   margin-bottom: 1.5rem;
 }
 
-.control-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem 0.75rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
-  border-radius: 6px;
-}
-
-.control-label {
-  font-size: 0.88rem;
-  font-weight: 600;
-}
-
-.keybind-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-}
-
-.keybind-btn kbd {
-  display: inline-block;
-  padding: 0.3rem 0.6rem;
-  font-size: 0.8rem;
-  font-weight: 700;
-  font-family: var(--font-code, monospace);
-  background: var(--bg-surface, #1e293b);
-  border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.2));
-  border-radius: 4px;
-  color: var(--accent-cyan, #38bdf8);
-}
-
-.keybind-btn.listening kbd {
-  background: #0284c7;
-  color: #fff;
-  border-color: #38bdf8;
-  animation: pulse-border 1s infinite alternate;
-}
-
-.controls-dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
+.action-btn.pressed {
+  transform: scale(0.9);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 a:focus-visible,

@@ -4178,3 +4178,12 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  // Universal Virtual Touch Controller Loader (#517)
+  if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
+    if (!document.querySelector('script[src*="virtual-controller.js"]')) {
+      const vcScript = document.createElement('script');
+      vcScript.src = 'assets/js/virtual-controller.js';
+      document.body.appendChild(vcScript);
+    }
+  }
