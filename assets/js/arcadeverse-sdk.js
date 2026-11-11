@@ -719,6 +719,20 @@
     },
 
     /**
+     * Trigger controller haptic rumble on connected physical gamepads (#515)
+     * @param {number} [durationMs=150] Duration of vibration in milliseconds
+     * @param {number} [strongMagnitude=0.6] Low-frequency motor intensity (0.0 to 1.0)
+     * @param {number} [weakMagnitude=0.4] High-frequency motor intensity (0.0 to 1.0)
+     */
+    triggerGamepadRumble: function (durationMs, strongMagnitude, weakMagnitude) {
+      securePostToParent("ARCADEVERSE_GAMEPAD_RUMBLE", {
+        duration: typeof durationMs === "number" ? durationMs : 150,
+        strong: typeof strongMagnitude === "number" ? strongMagnitude : 0.6,
+        weak: typeof weakMagnitude === "number" ? weakMagnitude : 0.4
+      });
+    },
+
+    /**
      * Notify parent window that game has completed
      * @param {Object} details
      */

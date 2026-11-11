@@ -208,6 +208,9 @@
       this.showToast(`Gamepad connected: ${gp.id.split('(')[0].trim() || 'Controller'}`, 'connected');
       this.startPolling();
 
+      // Trigger a brief 120ms acknowledgment rumble pulse upon connection (#515)
+      this.triggerGamepadRumble(120, 0.4, 0.2);
+
       window.dispatchEvent(new CustomEvent('arcadeverse:gamepad-connected', { detail: { gamepad: gp } }));
     }
 
@@ -415,14 +418,31 @@
   };
 
   // Listen for ARCADEVERSE_GAMEPAD_RUMBLE messages forwarded from sandboxed game frames
+  // Validates message origin/source consistently with active game iframe
   window.addEventListener('message', (e) => {
     if (!e || !e.data || typeof e.data !== 'object') return;
-    if (e.data.type === 'ARCADEVERSE_GAMEPAD_RUMBLE' || e.data.type === 'ARCADEVERSE_HAPTIC') {
-      const dur = e.data.duration || (typeof e.data.pattern === 'number' ? e.data.pattern : 150);
-      const strong = e.data.strong !== undefined ? e.data.strong : 0.6;
-      const weak = e.data.weak !== undefined ? e.data.weak : 0.4;
-      window.triggerGamepadRumble(dur, strong, weak);
+    const type = e.data.type || '';
+    if (type !== 'ARCADEVERSE_GAMEPAD_RUMBLE' && type !== 'ARCADEVERSE_HAPTIC') return;
+
+    // Validate origin against active game iframe
+    const gameIframe = document.getElementById('game-iframe');
+    if (gameIframe && gameIframe.contentWindow && e.source !== gameIframe.contentWindow) {
+      return;
     }
+
+    let dur = 150;
+    if (typeof e.data.duration === 'number') {
+      dur = e.data.duration;
+    } else if (typeof e.data.pattern === 'number') {
+      dur = e.data.pattern;
+    } else if (Array.isArray(e.data.pattern)) {
+      // Sum pattern pulses (e.g. [50, 40, 80] -> 170ms)
+      dur = e.data.pattern.reduce((acc, val) => acc + (Number(val) || 0), 0);
+    }
+
+    const strong = typeof e.data.strong === 'number' ? e.data.strong : 0.6;
+    const weak = typeof e.data.weak === 'number' ? e.data.weak : 0.4;
+    window.triggerGamepadRumble(dur, strong, weak);
   });
 
   // Initialize on DOM load
