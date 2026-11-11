@@ -368,6 +368,7 @@ html, body {
   height: 100%;
   object-fit: contain;
   display: block;
+  touch-action: none;
 }
 
 /* Right Information Panel */

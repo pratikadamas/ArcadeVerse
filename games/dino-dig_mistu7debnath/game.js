@@ -1009,6 +1009,31 @@
     // INPUT & INTERACTION
     // -----------------------------------------------------------------------
 
+    getCanvasCoordinates(e) {
+      const rect = this.canvas.getBoundingClientRect();
+      const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
+
+      const canvasAspect = CANVAS_WIDTH / CANVAS_HEIGHT;
+      const rectAspect = rect.width / rect.height;
+      let renderWidth = rect.width;
+      let renderHeight = rect.height;
+      let offsetX = 0;
+      let offsetY = 0;
+
+      if (rectAspect > canvasAspect) {
+        renderWidth = rect.height * canvasAspect;
+        offsetX = (rect.width - renderWidth) / 2;
+      } else {
+        renderHeight = rect.width / canvasAspect;
+        offsetY = (rect.height - renderHeight) / 2;
+      }
+
+      const x = ((clientX - rect.left - offsetX) / renderWidth) * CANVAS_WIDTH;
+      const y = ((clientY - rect.top - offsetY) / renderHeight) * CANVAS_HEIGHT;
+      return { x, y };
+    }
+
     initListeners() {
       // Keyboard input
       window.addEventListener('keydown', (e) => {
@@ -1030,28 +1055,36 @@
         }
       });
 
-      // Canvas pointer motion & clicking
-      this.canvas.addEventListener('pointermove', (e) => {
-        const rect = this.canvas.getBoundingClientRect();
-        const scaleX = CANVAS_WIDTH / rect.width;
-        const scaleY = CANVAS_HEIGHT / rect.height;
-        const mouseX = (e.clientX - rect.left) * scaleX;
-        const mouseY = (e.clientY - rect.top) * scaleY;
+      // Pointer motion & touch listeners
+      const handlePointerMove = (e) => {
+        const coords = this.getCanvasCoordinates(e);
+        this.updateHoverTile(coords.x, coords.y);
+      };
 
-        this.updateHoverTile(mouseX, mouseY);
-      });
+      const handlePointerDown = (e) => {
+        if (e.cancelable) e.preventDefault();
+        const coords = this.getCanvasCoordinates(e);
+        this.updateHoverTile(coords.x, coords.y);
+        if (this.hoverCol >= 0 && this.hoverRow >= 0) {
+          this.orderExcavation(this.hoverCol, this.hoverRow);
+        }
+      };
+
+      this.canvas.addEventListener('pointermove', handlePointerMove);
+      this.canvas.addEventListener('pointerdown', handlePointerDown);
 
       this.canvas.addEventListener('pointerleave', () => {
         this.hoverCol = -1;
         this.hoverRow = -1;
       });
-
-      this.canvas.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        if (this.hoverCol >= 0 && this.hoverRow >= 0) {
-          this.orderExcavation(this.hoverCol, this.hoverRow);
-        }
+      this.canvas.addEventListener('pointercancel', () => {
+        this.hoverCol = -1;
+        this.hoverRow = -1;
       });
+
+      // Touch fallback listeners for mobile Safari/WebKit browsers
+      this.canvas.addEventListener('touchmove', handlePointerMove, { passive: true });
+      this.canvas.addEventListener('touchstart', handlePointerDown, { passive: false });
 
       // Tool bar button clicks
       Object.entries(this.toolBtns).forEach(([key, btn]) => {
