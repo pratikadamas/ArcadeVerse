@@ -11171,3 +11171,67 @@ html.a11y-reduced-motion .search-clear-btn {
     transition: none;
   }
 }
+
+/* Mobile Landscape Orientation Auto-Prompt (#520) */
+.orientation-landscape-prompt {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: rgba(10, 15, 29, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  text-align: center;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.orientation-prompt-card {
+  max-width: 340px;
+  background: var(--bg-surface, #111827);
+  border: 1px solid var(--border-medium, #1f2937);
+  border-radius: var(--radius-lg, 12px);
+  padding: 1.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.orientation-icon-wrapper {
+  color: var(--accent-primary, #6366f1);
+  animation: rotatePhone 2.2s ease-in-out infinite;
+}
+
+@keyframes rotatePhone {
+  0%, 15% { transform: rotate(0deg); }
+  45%, 70% { transform: rotate(-90deg); }
+  85%, 100% { transform: rotate(0deg); }
+}
+
+.orientation-prompt-card h4 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary, #f9fafb);
+  margin: 0;
+}
+
+.orientation-prompt-card p {
+  font-size: 0.85rem;
+  color: var(--text-muted, #9ca3af);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.orientation-actions {
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.orientation-actions button {
+  width: 100%;
+}
+
