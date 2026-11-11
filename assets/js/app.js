@@ -48,6 +48,30 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   } catch (_) {}
   let lastFocusedElement = null;
+
+  // ========================================================
+  // ACCESSIBILITY & SCREEN READER LIVE REGION BROADCASTER (#513)
+  // Broadcasts game launches, filter updates, and toasts to assistive tech
+  // ========================================================
+  function announceToScreenReader(message) {
+    if (!message) return;
+    let liveRegion = document.getElementById("a11y-live-region");
+    if (!liveRegion) {
+      liveRegion = document.createElement("div");
+      liveRegion.id = "a11y-live-region";
+      liveRegion.className = "sr-only";
+      liveRegion.setAttribute("role", "status");
+      liveRegion.setAttribute("aria-live", "polite");
+      liveRegion.setAttribute("aria-atomic", "true");
+      document.body.appendChild(liveRegion);
+    }
+    // Clearing before updating forces NVDA/JAWS/ChromeVox to announce identical or rapid strings
+    liveRegion.textContent = "";
+    setTimeout(() => {
+      liveRegion.textContent = message;
+    }, 50);
+  }
+  window.announceToScreenReader = announceToScreenReader;
   let activeGame = null;
   let modalPushedHistory = false;
   let closeAutocomplete = () => {};
@@ -229,6 +253,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function showQuotaToast(message) {
+      announceToScreenReader(`Storage notice: ${message}`);
       let toast = document.getElementById(TOAST_ID);
       if (!toast) {
         toast = document.createElement("div");
@@ -1399,6 +1424,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateFacetSummaryUI();
 
+    // Assistive Screen Reader Notification for Catalog Filter/Search Updates (#513)
+    if (typeof announceToScreenReader === "function") {
+      const count = finalResults.length;
+      let filterDesc = [];
+      if (currentCategory && currentCategory !== "all") filterDesc.push(`category "${currentCategory}"`);
+      if (searchQuery) filterDesc.push(`matching "${searchQuery}"`);
+      if (currentTagFilter) filterDesc.push(`tag "${currentTagFilter}"`);
+      if (currentDurationFacet !== "all") filterDesc.push(`duration "${currentDurationFacet}"`);
+      if (currentControlsFacet !== "all") filterDesc.push(`controls "${currentControlsFacet}"`);
+      if (currentLetterFilter !== "all") filterDesc.push(`letter "${currentLetterFilter}"`);
+
+      const descString = filterDesc.length > 0 ? ` for ${filterDesc.join(", ")}` : "";
+      announceToScreenReader(`Catalog updated. Showing ${count} game${count === 1 ? "" : "s"}${descString}.`);
+    }
+
     if (window.lucide) {
       lucide.createIcons();
     }
@@ -1703,6 +1743,9 @@ document.addEventListener("DOMContentLoaded", () => {
     modalGameTitle.textContent = game.title;
     modalGameBadge.textContent = game.category;
     modalGameAuthor.textContent = `Built by @${game.author}`;
+    lastAnnouncedScore = 0;
+    lastScoreAnnouncementTime = Date.now();
+    announceToScreenReader(`Launching ${game.title}. Category: ${game.category}. Built by ${game.author}.`);
     startIframeTimeout(game);
 
     // Storage Isolation Bridge: Pass gameId via URL parameter so SDK attaches namespaced proxy
@@ -2055,6 +2098,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let escPressCount = 0;
 
   function showEscExitToast() {
+    announceToScreenReader("Game paused. Press Escape again or Shift Escape to exit to catalog.");
     const existing = document.getElementById("esc-exit-toast");
     if (existing) existing.remove();
 
@@ -2212,9 +2256,20 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Handle score events from verified child games
+  // Screen reader score announcement throttler (#513)
+  let lastAnnouncedScore = 0;
+  let lastScoreAnnouncementTime = 0;
+
+  // Handle score events from verified child games
     if (type === "ARCADEVERSE_GAME_SCORE") {
       const score = Number(e.data.score) || 0;
+      const now = Date.now();
+      // Announce milestone scores or periodically (every 5 seconds or on major point jumps) without flooding every frame
+      if (typeof announceToScreenReader === "function" && (score >= lastAnnouncedScore + 100 || (now - lastScoreAnnouncementTime > 5000 && score !== lastAnnouncedScore))) {
+        announceToScreenReader(`Score: ${score}`);
+        lastAnnouncedScore = score;
+        lastScoreAnnouncementTime = now;
+      }
       window.dispatchEvent(
         new CustomEvent("arcadeverse:score-update", {
           detail: {
@@ -2229,11 +2284,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Handle game-over lifecycle events
     if (type === "ARCADEVERSE_GAME_OVER") {
+      const details = e.data.details || {};
+      const finalScore = details.score != null ? details.score : lastAnnouncedScore;
+      if (typeof announceToScreenReader === "function") {
+        announceToScreenReader(`Game over. Final score: ${finalScore}.`);
+      }
       window.dispatchEvent(
         new CustomEvent("arcadeverse:game-over", {
           detail: {
             gameId: activeGame ? activeGame.id : null,
-            details: e.data.details || {},
+            details: details,
             sessionToken: activeGameSession.token
           }
         })
@@ -3223,6 +3283,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   function showDeepLinkNotFoundNotice(requestedId) {
+    announceToScreenReader(`Game not found: The requested game link "${requestedId}" does not exist or has been relocated.`);
     const existing = document.getElementById('deep-link-error-toast');
     if (existing) existing.remove();
 
