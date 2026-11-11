@@ -118,6 +118,7 @@ body {
   overflow-x: hidden;
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--bg-main);
   background-image: 
     radial-gradient(var(--dot-pattern-color) 1px, transparent 1px),
@@ -8604,11 +8605,15 @@ html.light-mode .trophy-modal-title {
     border-radius: 0 !important;
     border: none !important;
     margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
   }
 
   .modal-topbar {
     padding: 0.55rem 0.75rem !important;
     gap: 0.4rem;
+    flex: 0 0 auto !important;
   }
 
   .modal-game-info {
@@ -8657,10 +8662,11 @@ html.light-mode .trophy-modal-title {
   }
 
   .modal-frame-wrapper {
-    height: calc(100vh - 54px) !important;
-    height: calc(100dvh - 54px) !important;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    flex: 1 1 auto;
+    height: 100% !important;
+    max-height: none !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
   }
 
   .modal-controls {
