@@ -2026,6 +2026,8 @@ document.addEventListener("DOMContentLoaded", () => {
       setTimeout(() => closeModalBtn.focus(), 50);
     }
 
+    checkOrientationLandscapePrompt(game);
+
     if (!isDirectDeepLink) {
       modalPushedHistory = true;
       syncURLState(true);
@@ -2162,6 +2164,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeGameModal(isFromPopState = false) {
     if (!gameModal || (!gameModal.classList.contains("active") && !activeGame)) return;
+    hideLandscapePrompt();
     activeGame = null;
     isGameSessionActive = false;
     gameModal.classList.remove("active");
@@ -3356,6 +3359,128 @@ document.addEventListener("DOMContentLoaded", () => {
       if (isFullscreen) {
         modalWindow.style.height = (window.innerHeight) + 'px';
       }
+      if (activeGame) {
+        checkOrientationLandscapePrompt(activeGame);
+      }
+    }
+  });
+
+  // Mobile Landscape Orientation Auto-Prompt Controller (#520)
+  let isLandscapePromptDismissed = false;
+
+  function ensureLandscapePromptDOM() {
+    let promptEl = document.getElementById("orientation-landscape-prompt");
+    if (!promptEl) {
+      const wrapper = document.querySelector(".modal-frame-wrapper");
+      if (!wrapper) return null;
+      promptEl = document.createElement("div");
+      promptEl.id = "orientation-landscape-prompt";
+      promptEl.className = "orientation-landscape-prompt";
+      promptEl.style.display = "none";
+      promptEl.setAttribute("aria-live", "polite");
+      promptEl.innerHTML = `
+        <div class="orientation-prompt-card">
+          <div class="orientation-icon-wrapper">
+            <svg class="rotate-phone-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect>
+              <path d="M12 18h.01"></path>
+            </svg>
+          </div>
+          <h4>Rotate Device for Best Experience</h4>
+          <p>This wide-ratio arcade game is designed for horizontal widescreen play.</p>
+          <div class="orientation-actions">
+            <button type="button" id="dismiss-landscape-prompt-btn" class="btn btn-sm btn-secondary">Play in Portrait Anyway</button>
+          </div>
+        </div>
+      `;
+      wrapper.insertBefore(promptEl, wrapper.firstChild);
+      const dismissBtn = promptEl.querySelector("#dismiss-landscape-prompt-btn");
+      if (dismissBtn) {
+        dismissBtn.addEventListener("click", () => {
+          promptEl.style.display = "none";
+          isLandscapePromptDismissed = true;
+        });
+      }
+    }
+    return promptEl;
+  }
+
+  function hideLandscapePrompt() {
+    const promptEl = document.getElementById("orientation-landscape-prompt");
+    if (promptEl) {
+      promptEl.style.display = "none";
+    }
+    isLandscapePromptDismissed = false;
+  }
+
+  function isWideRatioGame(game) {
+    if (!game) return false;
+
+    // Explicitly exclude known portrait-first / vertical-first games
+    const portraitKeywords = /bubble-burst|potion|matrix|sudoku|wordle|solitaire|slide|connect-four|minesweeper|stacker/i;
+    const gameIdentifier = (game.folderName || game.id || game.title || "");
+    if (portraitKeywords.test(gameIdentifier)) {
+      return false;
+    }
+
+    // Check aspect ratio if declared
+    if (game.aspectRatio === "16:9" || game.aspectRatio === "4:3") {
+      return true;
+    }
+
+    // Inspect iframe canvas dimensions if accessible
+    try {
+      if (gameIframe && gameIframe.contentDocument) {
+        const canvas = gameIframe.contentDocument.querySelector("canvas");
+        if (canvas && canvas.width && canvas.height) {
+          if (canvas.width > canvas.height * 1.15) {
+            return true;
+          } else if (canvas.height >= canvas.width) {
+            return false;
+          }
+        }
+      }
+    } catch (_) {}
+
+    // Match wide action / arcade / racer / flight games
+    const wideKeywords = /racer|drive|flight|pong|hockey|lander|defense|invaders|tanks|runner|flappy|space|retro|miner|breakout|curling|glider|rogue|sub|fleet|wave/i;
+    const tagsStr = Array.isArray(game.tags) ? game.tags.join(" ") : "";
+    return wideKeywords.test(game.title + " " + gameIdentifier + " " + tagsStr);
+  }
+
+  function checkOrientationLandscapePrompt(game) {
+    if (!game || isLandscapePromptDismissed) return;
+    const promptEl = ensureLandscapePromptDOM();
+    if (!promptEl) return;
+
+    if (!isWideRatioGame(game)) {
+      promptEl.style.display = "none";
+      return;
+    }
+
+    const isTouch = window.matchMedia && (window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(hover: none)').matches);
+    
+    // Check orientation accurately across modern and older mobile browsers
+    const isPortrait = (screen.orientation && screen.orientation.type)
+      ? screen.orientation.type.startsWith('portrait')
+      : (window.innerHeight > window.innerWidth);
+
+    if (isTouch && isPortrait) {
+      promptEl.style.display = "flex";
+    } else {
+      promptEl.style.display = "none";
+    }
+  }
+
+  window.addEventListener("resize", () => {
+    if (gameModal && gameModal.classList.contains("active") && activeGame) {
+      setTimeout(() => checkOrientationLandscapePrompt(activeGame), 100);
+    }
+  });
+
+  window.addEventListener("orientationchange", () => {
+    if (gameModal && gameModal.classList.contains("active") && activeGame) {
+      setTimeout(() => checkOrientationLandscapePrompt(activeGame), 150);
     }
   });
 
