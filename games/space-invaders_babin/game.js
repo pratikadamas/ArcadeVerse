@@ -67,6 +67,7 @@
     hiScore = 0;
   }
   let animId = null;
+  let gameOverTimer = null;
 
   hiScoreDisplay.textContent = String(hiScore).padStart(4, "0");
 
@@ -254,6 +255,14 @@
 
   function gameOver(won = false) {
     isPlaying = false;
+    if (animId) {
+      cancelAnimationFrame(animId);
+      animId = null;
+    }
+    if (gameOverTimer) {
+      clearTimeout(gameOverTimer);
+      gameOverTimer = null;
+    }
     finalScoreEl.textContent = score;
     finalWaveEl.textContent = wave;
     finalKillsEl.textContent = kills;
@@ -266,7 +275,12 @@
       gameoverIcon.innerHTML = `<svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--accent-red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
     }
 
-    setTimeout(() => {
+    try {
+      window.parent.postMessage({ type: 'ARCADEVERSE_GAME_SCORE', score: score }, '*');
+      window.parent.postMessage({ type: 'ARCADEVERSE_GAME_OVER' }, '*');
+    } catch (_) {}
+
+    gameOverTimer = setTimeout(() => {
       gameoverOverlay.classList.add("active");
     }, 600);
   }
@@ -367,8 +381,10 @@
       wave++;
       score += 500 * wave;
       // Bunker durability recovery
-      for (const b of bunkers) {
-        if (b.health < 4) b.health++;
+      for (const cluster of bunkers) {
+        for (const cell of cluster) {
+          if (cell.health < 3) cell.health++;
+        }
       }
       updateHUD();
       playTone(660, "triangle", 0.3);
@@ -587,5 +603,46 @@
   closeRulesBtn.addEventListener("click", () => rulesModal.classList.remove("active"));
   rulesModal.addEventListener("click", (e) => {
     if (e.target === rulesModal) rulesModal.classList.remove("active");
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && isPlaying) {
+      if (animId) {
+        cancelAnimationFrame(animId);
+        animId = null;
+      }
+    } else if (!document.hidden && isPlaying && !animId) {
+      animId = requestAnimationFrame(loop);
+    }
+  });
+
+  window.addEventListener("message", (e) => {
+    if (!e.data || typeof e.data !== "object") return;
+    const type = e.data.type;
+    if (type === "ARCADEVERSE_PAUSE") {
+      if (animId) {
+        cancelAnimationFrame(animId);
+        animId = null;
+      }
+    } else if (type === "ARCADEVERSE_RESUME") {
+      if (isPlaying && !animId) {
+        animId = requestAnimationFrame(loop);
+      }
+    } else if (type === "ARCADEVERSE_TEARDOWN") {
+      if (animId) {
+        cancelAnimationFrame(animId);
+        animId = null;
+      }
+      if (gameOverTimer) {
+        clearTimeout(gameOverTimer);
+        gameOverTimer = null;
+      }
+    } else if (type === "AV_RESIZE") {
+      const d = e.data;
+      if (d.width && d.height && canvas) {
+        canvas.width = d.width;
+        canvas.height = d.height;
+      }
+    }
   });
 })();
