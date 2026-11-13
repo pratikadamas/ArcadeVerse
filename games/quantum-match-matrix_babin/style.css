@@ -288,3 +288,26 @@ body {
   color: var(--text-muted);
   margin-bottom: 1.25rem;
 }
+
+@media (max-width: 600px) {
+  body {
+    padding: 0.5rem;
+  }
+  .game-wrapper {
+    max-width: 100%;
+    gap: 0.5rem;
+  }
+  .game-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+  }
+  .stats-panel {
+    gap: 0.5rem;
+  }
+  .matrix-grid {
+    gap: 4px;
+    padding: 6px;
+  }
+}
