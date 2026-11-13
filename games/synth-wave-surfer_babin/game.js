@@ -101,8 +101,14 @@
   let score = 0;
   let distance = 0;
   let multiplier = 1.0;
-  let highRun = parseInt(localStorage.getItem('synth_surfer_high') || '0', 10);
+  let highRun = 0;
+  try {
+    highRun = parseInt(localStorage.getItem('synth_surfer_high') || '0', 10);
+  } catch (_) {
+    highRun = 0;
+  }
   statHighEl.textContent = highRun;
+  let lastTime = performance.now();
 
   let waveOffset = 0;
   const surfer = {
@@ -155,24 +161,25 @@
 
   function jump() {
     if (!isRunning || isPaused) return;
+    if (surfer.isJumping) return;
     sfx.init();
     surfer.vy = -7.5;
     surfer.isJumping = true;
     sfx.jump();
   }
 
-  function update() {
+  function update(dt = 1) {
     if (!isRunning || isPaused) return;
 
-    waveOffset += 4.5;
-    distance += 1;
-    score += Math.round(multiplier);
+    waveOffset += 4.5 * dt;
+    distance += Math.round(1 * dt);
+    score += Math.round(multiplier * dt);
 
     const waveY = getWaveY(surfer.x, waveOffset);
 
     if (surfer.isJumping) {
-      surfer.vy += 0.38; // gravity
-      surfer.y += surfer.vy;
+      surfer.vy += 0.38 * dt; // gravity
+      surfer.y += surfer.vy * dt;
 
       if (surfer.y >= waveY) {
         surfer.y = waveY;
@@ -190,7 +197,7 @@
 
     for (let i = items.length - 1; i >= 0; i--) {
       const item = items[i];
-      item.x -= 4.5;
+      item.x -= 4.5 * dt;
 
       const d = Math.hypot(surfer.x - item.x, surfer.y - item.y);
       if (d < surfer.radius + item.radius) {
@@ -211,20 +218,25 @@
       }
     }
 
-    multiplier = Math.max(1.0, multiplier - 0.0005);
+    multiplier = Math.max(1.0, multiplier - 0.0005 * dt);
     updateUI();
   }
 
   function endGame() {
     isRunning = false;
     sfx.crash();
-    if (animId) cancelAnimationFrame(animId);
+    if (animId) { cancelAnimationFrame(animId); animId = null; }
 
     if (score > highRun) {
       highRun = score;
-      localStorage.setItem('synth_surfer_high', highRun.toString());
+      try { localStorage.setItem('synth_surfer_high', highRun.toString()); } catch (_) {}
       statHighEl.textContent = highRun;
     }
+
+    try {
+      window.parent.postMessage({ type: 'ARCADEVERSE_GAME_SCORE', score: score }, '*');
+      window.parent.postMessage({ type: 'ARCADEVERSE_GAME_OVER' }, '*');
+    } catch (_) {}
 
     finalDistEl.textContent = `${distance}m`;
     finalScoreEl.textContent = score;
@@ -323,8 +335,12 @@
     ctx.restore();
   }
 
-  function loop() {
-    update();
+  function loop(timestamp) {
+    if (timestamp === undefined) timestamp = performance.now();
+    const deltaMs = Math.min(100, timestamp - lastTime);
+    lastTime = timestamp;
+    const dt = deltaMs / 16.667;
+    update(dt);
     render();
     if (isRunning) {
       animId = requestAnimationFrame(loop);
@@ -339,6 +355,8 @@
     startScreen.classList.add('hidden');
     gameOverScreen.classList.add('hidden');
     pauseScreen.classList.add('hidden');
+    if (animId) { cancelAnimationFrame(animId); animId = null; }
+    lastTime = performance.now();
     animId = requestAnimationFrame(loop);
   }
 
@@ -362,6 +380,8 @@
   });
 
   canvas.addEventListener('click', jump);
+  canvas.addEventListener('pointerdown', (e) => { e.preventDefault(); jump(); });
+  canvas.addEventListener('touchstart', (e) => { e.preventDefault(); jump(); }, { passive: false });
   if (btnJump) btnJump.addEventListener('click', jump);
 
   btnStart.addEventListener('click', startGame);
@@ -376,5 +396,26 @@
   btnMute.addEventListener('click', () => {
     sfx.muted = !sfx.muted;
     btnMute.classList.toggle('active', sfx.muted);
+  });
+
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden && isRunning && !isPaused) togglePause();
+  });
+
+  window.addEventListener('message', function(e) {
+    if (!e.data || typeof e.data !== 'object') return;
+    var t = e.data.type;
+    if (t === 'ARCADEVERSE_PAUSE') {
+      if (isRunning && !isPaused) togglePause();
+    } else if (t === 'ARCADEVERSE_RESUME') {
+      if (isPaused) togglePause();
+    } else if (t === 'ARCADEVERSE_TEARDOWN') {
+      if (animId) { cancelAnimationFrame(animId); animId = null; }
+    } else if (t === 'AV_RESIZE') {
+      if (e.data.width && e.data.height && canvas) {
+        canvas.width = e.data.width;
+        canvas.height = e.data.height;
+      }
+    }
   });
 })();
