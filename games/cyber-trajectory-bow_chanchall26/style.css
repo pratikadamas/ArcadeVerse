@@ -10,8 +10,8 @@
   --gold: #ffe14d;
   --text: #eaf4ff;
   --dim: #8fa3c4;
-  --font-title: 'Orbitron', 'Segoe UI', system-ui, sans-serif;
-  --font-body: 'Rajdhani', 'Segoe UI', system-ui, sans-serif;
+  --font-title: 'Orbitron', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-body: 'Rajdhani', 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
 * {
