@@ -55,6 +55,27 @@ document.addEventListener("DOMContentLoaded", () => {
   } catch (_) {}
   let lastFocusedElement = null;
 
+  // Screen reader live region, used by the launch / catalog / pause announcements below
+  function announceToScreenReader(message) {
+    if (!message) return;
+    let liveRegion = document.getElementById("a11y-live-region");
+    if (!liveRegion) {
+      liveRegion = document.createElement("div");
+      liveRegion.id = "a11y-live-region";
+      liveRegion.className = "sr-only";
+      liveRegion.setAttribute("role", "status");
+      liveRegion.setAttribute("aria-live", "polite");
+      liveRegion.setAttribute("aria-atomic", "true");
+      document.body.appendChild(liveRegion);
+    }
+    // Clear first so a repeated message is announced again
+    liveRegion.textContent = "";
+    setTimeout(() => {
+      liveRegion.textContent = message;
+    }, 50);
+  }
+  window.announceToScreenReader = announceToScreenReader;
+
   // ========================================================
   // REBINDABLE KEYBOARD CONTROLS SUBSYSTEM (#516)
   // Allows customizing and remapping Up, Down, Left, Right, Action 1, Action 2
@@ -1752,7 +1773,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Assistive Screen Reader Notification for Catalog Filter/Search Updates (#513)
     if (typeof announceToScreenReader === "function") {
-      const count = finalResults.length;
+      const count = filtered.length;
       let filterDesc = [];
       if (currentCategory && currentCategory !== "all") filterDesc.push(`category "${currentCategory}"`);
       if (searchQuery) filterDesc.push(`matching "${searchQuery}"`);
