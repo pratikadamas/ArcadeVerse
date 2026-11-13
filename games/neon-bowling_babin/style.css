@@ -415,3 +415,44 @@ kbd {
   display: flex;
   justify-content: flex-end;
 }
+
+@media (max-width: 540px) {
+  body {
+    padding: 6px;
+  }
+
+  .bowling-arena {
+    border-radius: 10px;
+  }
+
+  .scoreboard-bar {
+    padding: 8px 10px;
+  }
+
+  .scorecard-frames {
+    gap: 3px;
+  }
+
+  .frame-card {
+    min-width: 38px;
+    padding: 3px 2px;
+  }
+
+  .frame-number {
+    font-size: 0.65rem;
+  }
+
+  .frame-score {
+    font-size: 0.75rem;
+  }
+
+  .alley-controls-bar {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .action-btn {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+  }
+}
