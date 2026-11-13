@@ -191,7 +191,7 @@
       let curr = ec;
       while (curr !== cc) {
         const next = curr - dir;
-        board[curr] = board[next];
+        board[cr * 4 + curr] = board[cr * 4 + next];
         curr = next;
       }
       board[clickedIdx] = 0;
@@ -230,17 +230,29 @@
     clearInterval(timerInterval);
     sound.playWin();
 
-    const bestMoves = parseInt(localStorage.getItem(STORAGE_KEY_MOVES) || '9999', 10);
-    if (moveCount < bestMoves) {
-      localStorage.setItem(STORAGE_KEY_MOVES, moveCount);
-    }
+    let bestMoves = 9999;
+    try {
+      bestMoves = parseInt(localStorage.getItem(STORAGE_KEY_MOVES) || '9999', 10);
+      if (moveCount < bestMoves) {
+        bestMoves = moveCount;
+        localStorage.setItem(STORAGE_KEY_MOVES, moveCount);
+      }
+    } catch (_) {}
+
+    try {
+      window.parent.postMessage({ type: 'ARCADEVERSE_GAME_SCORE', score: Math.max(0, 1000 - moveCount * 5) }, '*');
+      window.parent.postMessage({ type: 'ARCADEVERSE_GAME_OVER' }, '*');
+    } catch (_) {}
 
     setTimeout(() => {
       document.getElementById('final-moves').textContent = moveCount;
       const m = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
       const s = String(timerSeconds % 60).padStart(2, '0');
       document.getElementById('final-time').textContent = `${m}:${s}`;
-      const rec = localStorage.getItem(STORAGE_KEY_MOVES);
+      let rec = moveCount;
+      try {
+        rec = localStorage.getItem(STORAGE_KEY_MOVES) || moveCount;
+      } catch (_) {}
       document.getElementById('best-moves').textContent = rec;
       document.getElementById('victory-modal').classList.remove('hidden');
     }, 300);
