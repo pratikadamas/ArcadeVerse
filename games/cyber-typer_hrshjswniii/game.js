@@ -231,7 +231,7 @@
   // ---------------------------------------------------------------------------
   // 3. Game State & Telemetry Variables
   // ---------------------------------------------------------------------------
-  let gameState = 'START'; // 'START' | 'PLAYING' | 'GAMEOVER'
+  let gameState = 'START'; // 'START' | 'PLAYING' | 'PAUSED' | 'GAMEOVER'
   let difficulty = 'easy'; // 'easy' | 'normal' | 'hard'
 
   let score = 0;
@@ -242,6 +242,8 @@
   let correctKeystrokes = 0;
   let totalWordsEliminated = 0;
   let gameStartTime = 0;
+  let activeElapsedSeconds = 0;
+  let lastLoopTime = 0;
   let peakWPM = 0;
 
   // Active Target Word Management
@@ -546,8 +548,9 @@
     hudScore.textContent = score.toLocaleString();
 
     // Calculate WPM: (characters / 5) / elapsedMinutes
-    if (gameStartTime > 0) {
-      const elapsedMinutes = (Date.now() - gameStartTime) / 60000;
+    // Accumulate active gameplay seconds from clamped dt rather than raw wall-clock time
+    if (activeElapsedSeconds > 0) {
+      const elapsedMinutes = activeElapsedSeconds / 60;
       if (elapsedMinutes > 0.05) {
         const currentWPM = Math.floor((correctKeystrokes / 5) / elapsedMinutes);
         hudWpm.textContent = currentWPM;
@@ -555,7 +558,19 @@
       } else {
         hudWpm.textContent = '0';
       }
+    } else {
+      hudWpm.textContent = '0';
     }
+
+    // Telemetry bridge to parent hub
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'ARCADEVERSE_GAME_SCORE',
+          score: score
+        }, '*');
+      }
+    } catch (_) {}
 
     // Accuracy
     const acc = totalKeystrokes > 0 ? Math.round((correctKeystrokes / totalKeystrokes) * 100) : 100;
@@ -633,13 +648,38 @@
     if (gameOverScreen) {
       gameOverScreen.style.display = 'flex';
     }
+
+    // Telemetry game over event
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'ARCADEVERSE_GAME_OVER',
+          score: score,
+          details: {
+            score: score,
+            peakWPM: peakWPM,
+            accuracy: acc,
+            wordsEliminated: totalWordsEliminated,
+            difficulty: difficulty
+          }
+        }, '*');
+      }
+    } catch (_) {}
   }
 
   // ---------------------------------------------------------------------------
   // 9. 60 FPS Canvas Render Loop
   // ---------------------------------------------------------------------------
   function gameLoop(timestamp) {
+    if (!lastLoopTime) lastLoopTime = timestamp;
+    const deltaMs = Math.min(100, Math.max(0, timestamp - lastLoopTime));
+    lastLoopTime = timestamp;
+    const dt = deltaMs / 1000;
+    const dtScale = deltaMs / 16.667;
+
     if (gameState === 'PLAYING') {
+      activeElapsedSeconds += dt;
+
       // 1. Spawn threats
       if (timestamp - lastSpawnTime > spawnInterval) {
         createThreat();
@@ -691,7 +731,7 @@
         ctx.stroke();
         ctx.restore();
 
-        beam.alpha -= 0.08;
+        beam.alpha -= 0.08 * dtScale;
         if (beam.alpha <= 0) {
           laserBeams.splice(i, 1);
         }
@@ -700,8 +740,8 @@
       // 4. Update and Draw Threats
       for (let i = threats.length - 1; i >= 0; i--) {
         const t = threats[i];
-        t.y += t.speed;
-        t.glowPulse += 0.05;
+        t.y += t.speed * dtScale;
+        t.glowPulse += 0.05 * dtScale;
 
         const isLocked = activeTarget && activeTarget.id === t.id;
 
@@ -787,9 +827,9 @@
       // 5. Update and Draw Particles
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.alpha -= 0.025;
+        p.x += p.vx * dtScale;
+        p.y += p.vy * dtScale;
+        p.alpha -= 0.025 * dtScale;
 
         if (p.alpha <= 0) {
           particles.splice(i, 1);
@@ -848,6 +888,8 @@
     correctKeystrokes = 0;
     totalWordsEliminated = 0;
     gameStartTime = Date.now();
+    activeElapsedSeconds = 0;
+    lastLoopTime = performance.now();
     peakWPM = 0;
 
     threats = [];
@@ -863,6 +905,7 @@
 
     updatePromptDisplay();
     updateTelemetryHUD();
+    startRenderLoop();
   }
 
   // ---------------------------------------------------------------------------
@@ -981,9 +1024,62 @@
     });
   }
 
+  function startRenderLoop() {
+    if (animationFrameId !== null) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+    lastLoopTime = performance.now();
+    animationFrameId = requestAnimationFrame(gameLoop);
+  }
+
+  function pauseGame() {
+    if (gameState === 'PLAYING') {
+      gameState = 'PAUSED';
+      lastLoopTime = 0;
+    }
+  }
+
+  function resumeGame() {
+    if (gameState === 'PAUSED') {
+      gameState = 'PLAYING';
+      lastLoopTime = performance.now();
+      startRenderLoop();
+    }
+  }
+
+  // Lifecycle listeners
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      pauseGame();
+    } else {
+      if (gameState === 'PAUSED') {
+        resumeGame();
+      }
+    }
+  });
+
+  window.addEventListener('message', (e) => {
+    if (!e.data || typeof e.data !== 'object') return;
+    const type = e.data.type;
+    if (type === 'ARCADEVERSE_PAUSE') {
+      pauseGame();
+    } else if (type === 'ARCADEVERSE_RESUME') {
+      resumeGame();
+    } else if (type === 'ARCADEVERSE_TEARDOWN') {
+      pauseGame();
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+    } else if (type === 'AV_RESIZE') {
+      resizeCanvas();
+    }
+  });
+
   // ---------------------------------------------------------------------------
   // 12. Initialization
   // ---------------------------------------------------------------------------
   resizeCanvas();
-  animationFrameId = requestAnimationFrame(gameLoop);
+  startRenderLoop();
 })();
