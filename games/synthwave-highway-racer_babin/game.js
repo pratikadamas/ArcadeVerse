@@ -1,4 +1,4 @@
-(() => {
+﻿(() => {
   const canvas = document.getElementById('game-canvas');
   const ctx = canvas.getContext('2d');
 
@@ -70,11 +70,15 @@
 
   // State
   let isRunning = false;
+  let isPaused = false;
+  let rafId = null;
+  let lastTime = performance.now();
   let distance = 0;
   let speed = 120; // km/h
   let nitro = 100;
   let isNitroActive = false;
-  let bestDist = parseInt(localStorage.getItem('synthwave_racer_best') || '0', 10);
+  let bestDist = 0;
+  try { bestDist = parseInt(localStorage.getItem('synthwave_racer_best') || '0', 10); } catch (_) {}
   bestDisplay.textContent = `${bestDist} KM`;
 
   // Player Car
@@ -119,6 +123,7 @@
     gameoverOverlay.classList.remove('active');
     startOverlay.classList.remove('active');
     isRunning = true;
+    isPaused = false;
     lastTrafficSpawn = performance.now();
     lastBatterySpawn = performance.now();
   }
@@ -173,44 +178,49 @@
 
   function gameOver() {
     isRunning = false;
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
     stopAllAudio();
     const finalDist = Math.floor(distance / 10);
     if (finalDist > bestDist) {
       bestDist = finalDist;
-      localStorage.setItem('synthwave_racer_best', bestDist);
+      try { localStorage.setItem('synthwave_racer_best', bestDist); } catch (_) {}
       bestDisplay.textContent = `${bestDist} KM`;
     }
-    gameoverStats.textContent = `Distance: ${finalDist} KM • Max Speed: ${Math.floor(speed)} KM/H`;
+    gameoverStats.textContent = `Distance: ${finalDist} KM - Max Speed: ${Math.floor(speed)} KM/H`;
     gameoverOverlay.classList.add('active');
     playTone(140, 'sawtooth', 0.5, 0.3);
+    try {
+      window.parent.postMessage({ type: 'ARCADEVERSE_GAME_SCORE', score: finalDist }, '*');
+      window.parent.postMessage({ type: 'ARCADEVERSE_GAME_OVER' }, '*');
+    } catch (_) {}
   }
 
-  function update() {
-    if (!isRunning) return;
+  function update(dt) {
+    if (!isRunning || isPaused) return;
 
     // Nitro Logic
     if ((keys.nitro || isNitroActive) && nitro > 0) {
-      speed = Math.min(240, speed + 1.2);
-      nitro = Math.max(0, nitro - 0.45);
+      speed = Math.min(240, speed + 1.2 * dt);
+      nitro = Math.max(0, nitro - 0.45 * dt);
       createParticles(player.x - 12, player.y + 32, '#06b6d4', 2);
       createParticles(player.x + 12, player.y + 32, '#06b6d4', 2);
     } else {
-      speed = Math.max(120, speed - 0.8);
-      nitro = Math.min(100, nitro + 0.05); // slow regen
+      speed = Math.max(120, speed - 0.8 * dt);
+      nitro = Math.min(100, nitro + 0.05 * dt);
     }
 
-    distance += speed * 0.003;
+    distance += speed * 0.003 * dt;
     updateHUD();
 
     // Steering
-    if (keys.left) player.x -= 5.5;
-    if (keys.right) player.x += 5.5;
+    if (keys.left) player.x -= 5.5 * dt;
+    if (keys.right) player.x += 5.5 * dt;
 
     // Boundary constraints
     player.x = Math.max(roadLeft + 24, Math.min(roadRight - 24, player.x));
 
     // Road markings scroll
-    const scrollDelta = speed * 0.08;
+    const scrollDelta = speed * 0.08 * dt;
     for (let i = 0; i < roadLines.length; i++) {
       roadLines[i] += scrollDelta;
       if (roadLines[i] > 700) {
@@ -231,10 +241,9 @@
     // Update Traffic
     for (let i = trafficCars.length - 1; i >= 0; i--) {
       const car = trafficCars[i];
-      const relativeSpeed = (speed - car.speed) * 0.06;
+      const relativeSpeed = (speed - car.speed) * 0.06 * dt;
       car.y += relativeSpeed;
 
-      // Hit Detection
       if (
         player.x - player.width / 2 < car.x + car.width / 2 &&
         player.x + player.width / 2 > car.x - car.width / 2 &&
@@ -254,7 +263,7 @@
     // Update Batteries
     for (let i = batteries.length - 1; i >= 0; i--) {
       const b = batteries[i];
-      b.y += speed * 0.06;
+      b.y += speed * 0.06 * dt;
 
       const dx = player.x - b.x;
       const dy = player.y - b.y;
@@ -275,9 +284,9 @@
     // Update Particles
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.life -= p.decay;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.life -= p.decay * dt;
       if (p.life <= 0) {
         particles.splice(i, 1);
       }
@@ -287,24 +296,20 @@
   function render() {
     ctx.clearRect(0, 0, 600, 700);
 
-    // Neon horizon sky
     const skyGrd = ctx.createLinearGradient(0, 0, 0, 240);
     skyGrd.addColorStop(0, '#1e0533');
     skyGrd.addColorStop(1, '#07010f');
     ctx.fillStyle = skyGrd;
     ctx.fillRect(0, 0, 600, 240);
 
-    // Synthwave Sun
     ctx.fillStyle = '#ec4899';
     ctx.beginPath();
     ctx.arc(300, 150, 48, 0, Math.PI * 2);
     ctx.fill();
 
-    // Road surface
     ctx.fillStyle = '#0a0d18';
     ctx.fillRect(roadLeft, 0, roadWidth, 700);
 
-    // Road edge neon rails
     ctx.strokeStyle = '#ec4899';
     ctx.lineWidth = 4;
     ctx.shadowColor = '#ec4899';
@@ -315,7 +320,6 @@
     ctx.stroke();
     ctx.shadowBlur = 0;
 
-    // Road dashed dividers
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
     ctx.lineWidth = 3;
     const dividerLanes = [200, 300, 400];
@@ -328,7 +332,6 @@
       });
     });
 
-    // Batteries
     batteries.forEach(b => {
       ctx.fillStyle = '#06b6d4';
       ctx.shadowColor = '#06b6d4';
@@ -339,7 +342,6 @@
     });
     ctx.shadowBlur = 0;
 
-    // Traffic Cars
     trafficCars.forEach(car => {
       ctx.fillStyle = car.color;
       ctx.shadowColor = car.color;
@@ -347,15 +349,12 @@
       ctx.beginPath();
       ctx.roundRect(car.x - car.width / 2, car.y - car.height / 2, car.width, car.height, 6);
       ctx.fill();
-
-      // Taillights
       ctx.fillStyle = '#ef4444';
       ctx.fillRect(car.x - car.width / 2 + 4, car.y + car.height / 2 - 6, 8, 4);
       ctx.fillRect(car.x + car.width / 2 - 12, car.y + car.height / 2 - 6, 8, 4);
     });
     ctx.shadowBlur = 0;
 
-    // Player Supercar
     ctx.fillStyle = '#ec4899';
     ctx.shadowColor = '#ec4899';
     ctx.shadowBlur = 14;
@@ -363,17 +362,14 @@
     ctx.roundRect(player.x - player.width / 2, player.y - player.height / 2, player.width, player.height, 8);
     ctx.fill();
 
-    // Windshield
     ctx.fillStyle = '#030712';
     ctx.fillRect(player.x - 12, player.y - 12, 24, 18);
 
-    // Headlights
     ctx.fillStyle = '#38bdf8';
     ctx.fillRect(player.x - 14, player.y - player.height / 2 + 2, 7, 5);
     ctx.fillRect(player.x + 7, player.y - player.height / 2 + 2, 7, 5);
     ctx.shadowBlur = 0;
 
-    // Particles
     particles.forEach(p => {
       ctx.fillStyle = p.color;
       ctx.globalAlpha = p.life;
@@ -382,13 +378,22 @@
       ctx.fill();
     });
     ctx.globalAlpha = 1.0;
-
-    requestAnimationFrame(render);
   }
 
-  function loop() {
-    update();
-    requestAnimationFrame(loop);
+  function loop(timestamp) {
+    if (timestamp === undefined) timestamp = performance.now();
+    const deltaMs = Math.min(100, timestamp - lastTime);
+    lastTime = timestamp;
+    const dt = deltaMs / 16.667;
+    update(dt);
+    render();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function startLoop() {
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    lastTime = performance.now();
+    rafId = requestAnimationFrame(loop);
   }
 
   // Keyboard Handlers
@@ -407,7 +412,6 @@
     if (e.code === 'Space' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') keys.nitro = false;
   });
 
-  // Touch handlers
   steerLeftBtn.addEventListener('pointerdown', () => { initAudio(); keys.left = true; });
   steerLeftBtn.addEventListener('pointerup', () => { keys.left = false; });
   steerLeftBtn.addEventListener('pointerleave', () => { keys.left = false; });
@@ -420,18 +424,34 @@
   nitroBtn.addEventListener('pointerup', () => { isNitroActive = false; });
   nitroBtn.addEventListener('pointerleave', () => { isNitroActive = false; });
 
-  startBtn.addEventListener('click', () => { initAudio(); resetGame(); });
-  restartBtn.addEventListener('click', () => { initAudio(); resetGame(); });
+  startBtn.addEventListener('click', () => { initAudio(); resetGame(); startLoop(); });
+  restartBtn.addEventListener('click', () => { initAudio(); resetGame(); startLoop(); });
   rulesBtn.addEventListener('click', () => rulesModal.classList.add('active'));
   closeRulesBtn.addEventListener('click', () => rulesModal.classList.remove('active'));
   rulesConfirmBtn.addEventListener('click', () => rulesModal.classList.remove('active'));
 
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && isRunning) isPaused = true;
+    else if (!document.hidden && isPaused) isPaused = false;
+  });
+
   window.addEventListener('message', (e) => {
-    if (e.data && (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE')) {
+    if (!e.data || typeof e.data !== 'object') return;
+    const t = e.data.type;
+    if (t === 'ARCADEVERSE_PAUSE') { isPaused = true; stopAllAudio(); }
+    else if (t === 'ARCADEVERSE_RESUME') { isPaused = false; }
+    else if (t === 'ARCADEVERSE_TEARDOWN') {
+      isRunning = false;
+      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
       stopAllAudio();
+    } else if (t === 'AV_RESIZE') {
+      if (e.data.width && e.data.height) {
+        canvas.width = e.data.width;
+        canvas.height = e.data.height;
+      }
     }
   });
 
-  render();
-  loop();
+  startLoop();
 })();
+
