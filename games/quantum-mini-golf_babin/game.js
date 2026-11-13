@@ -191,8 +191,13 @@ class QuantumMiniGolfGame {
     this.ball = {
       x: 100, y: 240,
       vx: 0, vy: 0,
-      r: 8, inCup: false
+      r: 8, inCup: false,
+      warpCooldown: 0,
+      boostCooldown: 0
     };
+    this.lastTime = performance.now();
+    this.rafId = null;
+    this.isPaused = false;
 
     // Slingshot Aim & Drag
     this.isAiming = false;
@@ -254,6 +259,10 @@ class QuantumMiniGolfGame {
           this.loadHole(this.currentHoleIdx + 1);
         } else {
           this.showToast(`MATCH COMPLETE! TOTAL: ${this.totalStrokes}`);
+          try {
+            window.parent.postMessage({ type: 'ARCADEVERSE_GAME_SCORE', score: Math.max(0, 1000 - this.totalStrokes * 20) }, '*');
+            window.parent.postMessage({ type: 'ARCADEVERSE_GAME_OVER' }, '*');
+          } catch (_) {}
         }
       }
     });
@@ -360,50 +369,62 @@ class QuantumMiniGolfGame {
     this.totalStrokesVal.textContent = this.totalStrokes;
   }
 
-  animate() {
-    this.update();
+  animate(timestamp) {
+    if (this.isPaused) return;
+    if (timestamp === undefined) timestamp = performance.now();
+    const deltaMs = Math.min(100, timestamp - this.lastTime);
+    this.lastTime = timestamp;
+    const dt = deltaMs / 16.667;
+
+    this.update(dt);
     this.render();
-    requestAnimationFrame(() => this.animate());
+    this.rafId = requestAnimationFrame((t) => this.animate(t));
   }
 
-  update() {
+  update(dt = 1) {
     if (this.ball.inCup) return;
     const h = HOLES[this.currentHoleIdx];
 
+    if (this.ball.warpCooldown > 0) this.ball.warpCooldown -= dt;
+    if (this.ball.boostCooldown > 0) this.ball.boostCooldown -= dt;
+
     // Standard Felt Rolling Friction
-    let friction = 0.982;
+    let friction = Math.pow(0.982, dt);
 
     // Sand Traps (Higher friction)
     h.sand.forEach(s => {
       if (this.ball.x >= s.x && this.ball.x <= s.x + s.w &&
           this.ball.y >= s.y && this.ball.y <= s.y + s.h) {
-        friction = 0.91; // High drag
+        friction = Math.pow(0.91, dt); // High drag
       }
     });
 
     // Booster Pads
     h.boosters.forEach(b => {
-      if (this.ball.x >= b.x && this.ball.x <= b.x + b.w &&
+      if (this.ball.boostCooldown <= 0 &&
+          this.ball.x >= b.x && this.ball.x <= b.x + b.w &&
           this.ball.y >= b.y && this.ball.y <= b.y + b.h) {
         this.ball.vx += b.vx * 0.4;
         this.ball.vy += b.vy * 0.4;
+        this.ball.boostCooldown = 15;
         this.audio.playBoost();
       }
     });
 
     // Quantum Portals
     h.portals.forEach(p => {
-      if (Math.hypot(this.ball.x - p.inX, this.ball.y - p.inY) < 18) {
+      if (this.ball.warpCooldown <= 0 && Math.hypot(this.ball.x - p.inX, this.ball.y - p.inY) < 18) {
         this.ball.x = p.outX;
         this.ball.y = p.outY;
+        this.ball.warpCooldown = 25;
         this.audio.playPortalWarp();
         this.showToast('WARP JUMP!');
       }
     });
 
     // Ball movement
-    this.ball.x += this.ball.vx;
-    this.ball.y += this.ball.vy;
+    this.ball.x += this.ball.vx * dt;
+    this.ball.y += this.ball.vy * dt;
     this.ball.vx *= friction;
     this.ball.vy *= friction;
 
@@ -432,14 +453,34 @@ class QuantumMiniGolfGame {
       this.audio.playWallBounce();
     }
 
-    // Inner Obstacle Wall Collisions
+    // Inner Obstacle Wall Collisions (Closest-point separation)
     h.walls.forEach(w => {
-      if (this.ball.x + this.ball.r > w.x && this.ball.x - this.ball.r < w.x + w.w &&
-          this.ball.y + this.ball.r > w.y && this.ball.y - this.ball.r < w.y + w.h) {
-        // Simple AABB rebound
-        this.ball.vx = -this.ball.vx * 0.85;
-        this.ball.vy = -this.ball.vy * 0.85;
-        this.audio.playWallBounce();
+      const closestX = Math.max(w.x, Math.min(this.ball.x, w.x + w.w));
+      const closestY = Math.max(w.y, Math.min(this.ball.y, w.y + w.h));
+      const distX = this.ball.x - closestX;
+      const distY = this.ball.y - closestY;
+      const dist = Math.hypot(distX, distY);
+
+      if (dist < this.ball.r) {
+        if (dist > 1e-4) {
+          const nx = distX / dist;
+          const ny = distY / dist;
+          const penetration = this.ball.r - dist;
+          this.ball.x += nx * penetration;
+          this.ball.y += ny * penetration;
+
+          const dot = this.ball.vx * nx + this.ball.vy * ny;
+          if (dot < 0) {
+            this.ball.vx = (this.ball.vx - 2 * dot * nx) * 0.85;
+            this.ball.vy = (this.ball.vy - 2 * dot * ny) * 0.85;
+            this.audio.playWallBounce();
+          }
+        } else {
+          // Inside wall center fallback
+          this.ball.vx = -this.ball.vx * 0.85;
+          this.ball.vy = -this.ball.vy * 0.85;
+          this.audio.playWallBounce();
+        }
       }
     });
 
@@ -582,5 +623,51 @@ class QuantumMiniGolfGame {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  new QuantumMiniGolfGame();
+  const game = new QuantumMiniGolfGame();
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      game.isPaused = true;
+      if (game.rafId) {
+        cancelAnimationFrame(game.rafId);
+        game.rafId = null;
+      }
+    } else {
+      if (game.isPaused) {
+        game.isPaused = false;
+        game.lastTime = performance.now();
+        game.animate();
+      }
+    }
+  });
+
+  window.addEventListener('message', (e) => {
+    if (!e.data || typeof e.data !== 'object') return;
+    const type = e.data.type;
+    if (type === 'ARCADEVERSE_PAUSE') {
+      game.isPaused = true;
+      if (game.rafId) {
+        cancelAnimationFrame(game.rafId);
+        game.rafId = null;
+      }
+    } else if (type === 'ARCADEVERSE_RESUME') {
+      if (game.isPaused) {
+        game.isPaused = false;
+        game.lastTime = performance.now();
+        game.animate();
+      }
+    } else if (type === 'ARCADEVERSE_TEARDOWN') {
+      game.isPaused = true;
+      if (game.rafId) {
+        cancelAnimationFrame(game.rafId);
+        game.rafId = null;
+      }
+    } else if (type === 'AV_RESIZE') {
+      const d = e.data;
+      if (d.width && d.height && game.canvas) {
+        game.canvas.width = d.width;
+        game.canvas.height = d.height;
+      }
+    }
+  });
 });
