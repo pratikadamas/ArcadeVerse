@@ -102,6 +102,12 @@
 
   // Game State
   let gameState = 'start';
+  let rafId = null;
+  let flashTimers = [];
+  function clearFlashTimers() {
+    flashTimers.forEach(t => clearTimeout(t));
+    flashTimers = [];
+  }
   let score = 0;
   let level = 1;
   let totalHits = 0;
@@ -195,9 +201,9 @@
   function showJudgment(text, type) {
     judgmentBanner.textContent = text;
     judgmentBanner.className = `judgment-banner flash ${type}`;
-    setTimeout(() => {
+    flashTimers.push(setTimeout(() => {
       judgmentBanner.classList.remove('flash');
-    }, 220);
+    }, 220));
   }
 
   function triggerHit(lane) {
@@ -207,7 +213,7 @@
     // Highlight pad
     if (touchPads[lane]) {
       touchPads[lane].classList.add('pressed');
-      setTimeout(() => touchPads[lane].classList.remove('pressed'), 120);
+      flashTimers.push(setTimeout(() => touchPads[lane].classList.remove('pressed'), 120));
     }
 
     // Find nearest note in this lane
@@ -305,6 +311,7 @@
   });
 
   function startSession() {
+    clearFlashTimers();
     initAudio();
     gameState = 'playing';
     score = 0;
@@ -323,15 +330,28 @@
 
     startOverlay.classList.remove('active');
     gameOverOverlay.classList.remove('active');
+
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    lastTime = performance.now();
+    rafId = requestAnimationFrame(loop);
   }
 
   function endSession() {
     gameState = 'gameover';
+    clearFlashTimers();
     finalScoreEl.textContent = score;
     finalComboEl.textContent = `${maxCombo}x`;
     const acc = totalNotesSpawned > 0 ? Math.round((totalNotesHit / totalNotesSpawned) * 100) : 100;
     finalAccEl.textContent = `${acc}%`;
     gameOverOverlay.classList.add('active');
+
+    try {
+      window.parent.postMessage({ type: 'ARCADEVERSE_GAME_SCORE', score: score }, '*');
+      window.parent.postMessage({ type: 'ARCADEVERSE_GAME_OVER' }, '*');
+    } catch (_) {}
   }
 
   let lastTime = 0;
@@ -344,7 +364,9 @@
     update(dt);
     draw();
 
-    requestAnimationFrame(loop);
+    if (gameState === 'playing' || gameState === 'start') {
+      rafId = requestAnimationFrame(loop);
+    }
   }
 
   function update(dt) {
@@ -469,5 +491,47 @@
     if (e.target === helpModal) helpModal.classList.remove('active');
   });
 
-  requestAnimationFrame(loop);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+    } else {
+      if ((gameState === 'playing' || gameState === 'start') && !rafId) {
+        lastTime = performance.now();
+        rafId = requestAnimationFrame(loop);
+      }
+    }
+  });
+
+  window.addEventListener('message', (e) => {
+    if (!e.data || typeof e.data !== 'object') return;
+    const type = e.data.type;
+    if (type === 'ARCADEVERSE_PAUSE') {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+    } else if (type === 'ARCADEVERSE_RESUME') {
+      if ((gameState === 'playing' || gameState === 'start') && !rafId) {
+        lastTime = performance.now();
+        rafId = requestAnimationFrame(loop);
+      }
+    } else if (type === 'ARCADEVERSE_TEARDOWN') {
+      clearFlashTimers();
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+    } else if (type === 'AV_RESIZE') {
+      const d = e.data;
+      if (d.width && d.height && canvas) {
+        canvas.width = d.width;
+        canvas.height = d.height;
+      }
+    }
+  });
+
+  rafId = requestAnimationFrame(loop);
 })();
