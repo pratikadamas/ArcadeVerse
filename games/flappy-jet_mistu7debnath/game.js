@@ -273,6 +273,7 @@
     constructor() {
       this.ctx = null;
       this.isMuted = Storage.get('fcj_sound_muted', false);
+      this.activeNodes = new Set();
     }
 
     init() {
@@ -287,8 +288,32 @@
       }
     }
 
+    trackNode(osc) {
+      if (!this.activeNodes) this.activeNodes = new Set();
+      this.activeNodes.add(osc);
+      osc.onended = () => {
+        if (this.activeNodes) this.activeNodes.delete(osc);
+      };
+      return osc;
+    }
+
+    stopAll() {
+      if (this.activeNodes) {
+        this.activeNodes.forEach(node => {
+          try {
+            node.stop();
+            node.disconnect();
+          } catch (_) {}
+        });
+        this.activeNodes.clear();
+      }
+    }
+
     toggleMute() {
       this.isMuted = !this.isMuted;
+      if (this.isMuted) {
+        this.stopAll();
+      }
       Storage.set('fcj_sound_muted', this.isMuted);
       return this.isMuted;
     }
@@ -316,6 +341,7 @@
         filter.connect(gain);
         gain.connect(this.ctx.destination);
 
+        this.trackNode(osc);
         osc.start(t);
         osc.stop(t + 0.12);
       } catch (e) {}
@@ -340,6 +366,7 @@
           osc.connect(gain);
           gain.connect(this.ctx.destination);
 
+          this.trackNode(osc);
           osc.start(noteTime);
           osc.stop(noteTime + 0.18);
         });
@@ -363,6 +390,7 @@
         osc.connect(gain);
         gain.connect(this.ctx.destination);
 
+        this.trackNode(osc);
         osc.start(t);
         osc.stop(t + 0.35);
       } catch (e) {}
@@ -386,6 +414,7 @@
           osc.connect(gain);
           gain.connect(this.ctx.destination);
 
+          this.trackNode(osc);
           osc.start(noteTime);
           osc.stop(noteTime + 0.22);
         });
@@ -409,6 +438,7 @@
         osc.connect(gain);
         gain.connect(this.ctx.destination);
 
+        this.trackNode(osc);
         osc.start(t);
         osc.stop(t + 0.04);
       } catch (e) {}
@@ -432,6 +462,7 @@
           osc.connect(gain);
           gain.connect(this.ctx.destination);
 
+          this.trackNode(osc);
           osc.start(noteTime);
           osc.stop(noteTime + 0.25);
         });
@@ -456,6 +487,7 @@
           osc.connect(gain);
           gain.connect(this.ctx.destination);
 
+          this.trackNode(osc);
           osc.start(noteTime);
           osc.stop(noteTime + 0.4);
         });
@@ -1670,6 +1702,7 @@
       this.progression.setSelectedLevel(this.currentLevel);
 
       // Fresh round state initialization
+      this.sound.stopAll();
       this.state = STATE.PLAYING;
       this.score = 0;
       this.levelCompletedInRound = false;
@@ -1780,6 +1813,7 @@
 
     triggerGameOver() {
       this.state = STATE.GAMEOVER;
+      this.sound.stopAll();
       this.sound.playCrash();
       this.screenShake = 0.35; // 350ms shake
 
@@ -1987,7 +2021,12 @@
 
   // --- Bootstrap Engine on DOM Load ---
   document.addEventListener('DOMContentLoaded', () => {
-    new GameController();
+    const controller = new GameController();
+    window.addEventListener('message', (e) => {
+      if (e.data && (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE')) {
+        if (controller && controller.sound) controller.sound.stopAll();
+      }
+    });
   });
 
 })();

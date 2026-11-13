@@ -4,6 +4,7 @@ class GliderAudio {
   constructor() {
     this.ctx = null;
     this.muted = false;
+    this.activeNodes = new Set();
   }
 
   init() {
@@ -13,6 +14,27 @@ class GliderAudio {
     }
     if (this.ctx && this.ctx.state === 'suspended') {
       this.ctx.resume();
+    }
+  }
+
+  trackNode(osc) {
+    if (!this.activeNodes) this.activeNodes = new Set();
+    this.activeNodes.add(osc);
+    osc.onended = () => {
+      if (this.activeNodes) this.activeNodes.delete(osc);
+    };
+    return osc;
+  }
+
+  stopAll() {
+    if (this.activeNodes) {
+      this.activeNodes.forEach(node => {
+        try {
+          node.stop();
+          node.disconnect();
+        } catch (_) {}
+      });
+      this.activeNodes.clear();
     }
   }
 
@@ -28,6 +50,7 @@ class GliderAudio {
     gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.15);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
+    this.trackNode(osc);
     osc.start();
     osc.stop(this.ctx.currentTime + 0.15);
   }
@@ -45,6 +68,7 @@ class GliderAudio {
     gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.25);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
+    this.trackNode(osc);
     osc.start();
     osc.stop(this.ctx.currentTime + 0.25);
   }
@@ -62,6 +86,7 @@ class GliderAudio {
     gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.15);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
+    this.trackNode(osc);
     osc.start();
     osc.stop(this.ctx.currentTime + 0.15);
   }
@@ -79,6 +104,7 @@ class GliderAudio {
     gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.35);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
+    this.trackNode(osc);
     osc.start();
     osc.stop(this.ctx.currentTime + 0.35);
   }
@@ -189,6 +215,7 @@ class CyberGliderGame {
     this.diveBtn.addEventListener('touchstart', (e) => { e.preventDefault(); dive(); }, { passive: false });
 
     this.restartFlightBtn.addEventListener('click', () => {
+      this.audio.stopAll();
       this.initWorld();
       this.showToast('NEW FLIGHT LAUNCHED');
     });
@@ -207,6 +234,9 @@ class CyberGliderGame {
     // Sound toggle
     this.soundToggleBtn.addEventListener('click', () => {
       this.audio.muted = !this.audio.muted;
+      if (this.audio.muted) {
+        this.audio.stopAll();
+      }
       this.soundIcon.innerHTML = this.audio.muted
         ? '<line x1="1" y1="1" x2="23" y2="23"></line><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>'
         : '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>';
@@ -330,6 +360,7 @@ class CyberGliderGame {
 
   crashGlider(reason) {
     this.glider.alive = false;
+    this.audio.stopAll();
     this.audio.playCrash();
     this.showToast(reason);
   }
@@ -441,5 +472,10 @@ class CyberGliderGame {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  new CyberGliderGame();
+  const game = new CyberGliderGame();
+  window.addEventListener('message', (e) => {
+    if (e.data && (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE')) {
+      if (game && game.audio) game.audio.stopAll();
+    }
+  });
 });

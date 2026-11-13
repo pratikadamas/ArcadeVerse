@@ -12,6 +12,8 @@
     constructor() {
       this.ctx = null;
       this.muted = false;
+      this.droneStarted = false;
+      this.activeNodes = new Set();
     }
 
     init() {
@@ -21,6 +23,28 @@
       }
       if (this.ctx && this.ctx.state === 'suspended') {
         this.ctx.resume();
+      }
+    }
+
+    trackNode(osc) {
+      if (!this.activeNodes) this.activeNodes = new Set();
+      this.activeNodes.add(osc);
+      osc.onended = () => {
+        if (this.activeNodes) this.activeNodes.delete(osc);
+      };
+      return osc;
+    }
+
+    stopAll() {
+      this.droneStarted = false;
+      if (this.activeNodes) {
+        this.activeNodes.forEach(node => {
+          try {
+            node.stop();
+            node.disconnect();
+          } catch (_) {}
+        });
+        this.activeNodes.clear();
       }
     }
 
@@ -37,6 +61,7 @@
       gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.09);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start();
       osc.stop(this.ctx.currentTime + 0.09);
     }
@@ -54,6 +79,7 @@
       gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start();
       osc.stop(this.ctx.currentTime + 0.08);
     }
@@ -71,6 +97,7 @@
       gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.14);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start();
       osc.stop(this.ctx.currentTime + 0.14);
     }
@@ -91,6 +118,7 @@
           gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.07);
           osc.connect(gain);
           gain.connect(this.ctx.destination);
+          this.trackNode(osc);
           osc.start();
           osc.stop(this.ctx.currentTime + 0.07);
         }, delay * 1000);
@@ -110,6 +138,7 @@
       gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start();
       osc.stop(this.ctx.currentTime + 0.15);
     }
@@ -127,6 +156,7 @@
       gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 1.2);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start();
       osc.stop(this.ctx.currentTime + 1.2);
     }
@@ -147,6 +177,7 @@
           gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.45);
           osc.connect(gain);
           gain.connect(this.ctx.destination);
+          this.trackNode(osc);
           osc.start();
           osc.stop(this.ctx.currentTime + 0.45);
         }, idx * 160);
@@ -168,6 +199,7 @@
       gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 1.4);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start();
       osc.stop(this.ctx.currentTime + 1.4);
 
@@ -183,6 +215,7 @@
         pGain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
         pop.connect(pGain);
         pGain.connect(this.ctx.destination);
+        this.trackNode(pop);
         pop.start();
         pop.stop(this.ctx.currentTime + 0.3);
       }, 1200);
@@ -203,6 +236,7 @@
       gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 5.5);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start();
       osc.stop(this.ctx.currentTime + 5.5);
     }
@@ -219,6 +253,7 @@
         gain.gain.setValueAtTime(0.04, this.ctx.currentTime);
         osc.connect(gain);
         gain.connect(this.ctx.destination);
+        this.trackNode(osc);
         osc.start();
         this.droneStarted = true;
       } catch (e) {}
@@ -240,6 +275,7 @@
           gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
           osc.connect(gain);
           gain.connect(this.ctx.destination);
+          this.trackNode(osc);
           osc.start();
           osc.stop(this.ctx.currentTime + 0.12);
         }, delay * 1000);
@@ -259,6 +295,7 @@
       gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start();
       osc.stop(this.ctx.currentTime + 0.35);
     }
@@ -1256,6 +1293,7 @@
   // --- Trigger Endings ---
   function triggerEnding(type) {
     state.running = false;
+    sound.stopAll();
     statDays.textContent = state.day;
     statCrafted.textContent = state.statsCrafted;
     statScore.textContent = state.statsScore;
@@ -2695,6 +2733,7 @@
   soundToggle.addEventListener('click', () => {
     sound.muted = !sound.muted;
     if (sound.muted) {
+      sound.stopAll();
       soundIcon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>';
     } else {
       sound.init();
@@ -2704,7 +2743,14 @@
   });
 
   document.getElementById('btnRestartGame').addEventListener('click', () => {
+    sound.stopAll();
     window.location.reload();
+  });
+
+  window.addEventListener('message', (e) => {
+    if (e.data && (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE')) {
+      sound.stopAll();
+    }
   });
 
   updateUI();

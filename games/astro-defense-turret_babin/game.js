@@ -7,6 +7,7 @@
     constructor() {
       this.ctx = null;
       this.muted = false;
+      this.activeNodes = new Set();
     }
     init() {
       if (!this.ctx) {
@@ -15,6 +16,25 @@
       }
       if (this.ctx && this.ctx.state === 'suspended') {
         this.ctx.resume();
+      }
+    }
+    trackNode(osc) {
+      if (!this.activeNodes) this.activeNodes = new Set();
+      this.activeNodes.add(osc);
+      osc.onended = () => {
+        if (this.activeNodes) this.activeNodes.delete(osc);
+      };
+      return osc;
+    }
+    stopAll() {
+      if (this.activeNodes) {
+        this.activeNodes.forEach(node => {
+          try {
+            node.stop();
+            node.disconnect();
+          } catch (_) {}
+        });
+        this.activeNodes.clear();
       }
     }
     laser() {
@@ -29,6 +49,7 @@
         gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
         osc.connect(gain);
         gain.connect(this.ctx.destination);
+        this.trackNode(osc);
         osc.start();
         osc.stop(this.ctx.currentTime + 0.12);
       } catch (e) {}
@@ -45,6 +66,7 @@
         gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.25);
         osc.connect(gain);
         gain.connect(this.ctx.destination);
+        this.trackNode(osc);
         osc.start();
         osc.stop(this.ctx.currentTime + 0.25);
       } catch (e) {}
@@ -61,6 +83,7 @@
         gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.2);
         osc.connect(gain);
         gain.connect(this.ctx.destination);
+        this.trackNode(osc);
         osc.start();
         osc.stop(this.ctx.currentTime + 0.2);
       } catch (e) {}
@@ -77,6 +100,7 @@
         gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.6);
         osc.connect(gain);
         gain.connect(this.ctx.destination);
+        this.trackNode(osc);
         osc.start();
         osc.stop(this.ctx.currentTime + 0.6);
       } catch (e) {}
@@ -338,6 +362,7 @@
 
   function endGame() {
     isRunning = false;
+    sfx.stopAll();
     sfx.gameOver();
     if (animId) cancelAnimationFrame(animId);
 
@@ -469,6 +494,7 @@
 
   function startGame() {
     sfx.init();
+    sfx.stopAll();
     resetGame();
     isRunning = true;
     isPaused = false;
@@ -571,7 +597,16 @@
 
   btnMute.addEventListener('click', () => {
     sfx.muted = !sfx.muted;
+    if (sfx.muted) {
+      sfx.stopAll();
+    }
     btnMute.classList.toggle('active', sfx.muted);
+  });
+
+  window.addEventListener('message', (e) => {
+    if (e.data && (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE')) {
+      sfx.stopAll();
+    }
   });
 
 })();

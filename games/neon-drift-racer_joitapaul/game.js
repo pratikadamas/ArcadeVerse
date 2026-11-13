@@ -20,6 +20,25 @@ const soundIconOff = document.getElementById("sound-icon-off");
 
 let soundEnabled = true;
 let audioCtx = null;
+const activeNodes = new Set();
+
+function trackNode(osc) {
+  activeNodes.add(osc);
+  osc.onended = () => {
+    activeNodes.delete(osc);
+  };
+  return osc;
+}
+
+function stopAllAudio() {
+  activeNodes.forEach(node => {
+    try {
+      node.stop();
+      node.disconnect();
+    } catch (_) {}
+  });
+  activeNodes.clear();
+}
 
 try {
   const saved = localStorage.getItem("neon-drift-racer-sound-enabled");
@@ -59,6 +78,7 @@ function playTone(freq, type = "sine", duration = 0.08, gainVal = 0.14) {
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
+    trackNode(osc);
     osc.start();
     osc.stop(audioCtx.currentTime + duration);
   } catch (_) {}
@@ -81,6 +101,7 @@ function playSteerSound(dir) {
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
+    trackNode(osc);
     osc.start(now);
     osc.stop(now + 0.08);
   } catch (_) {}
@@ -114,6 +135,7 @@ function playStartSound() {
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
+    trackNode(osc);
     osc.start(now);
     osc.stop(now + 0.25);
   } catch (_) {}
@@ -122,6 +144,9 @@ function playStartSound() {
 if (soundToggleBtn) {
   soundToggleBtn.addEventListener("click", () => {
     soundEnabled = !soundEnabled;
+    if (!soundEnabled) {
+      stopAllAudio();
+    }
     try {
       localStorage.setItem("neon-drift-racer-sound-enabled", String(soundEnabled));
     } catch (_) {}
@@ -198,11 +223,13 @@ function startGame() {
   scoreValue.textContent = "0";
   energyValue.textContent = "0";
   overlay.classList.add("is-hidden");
+  stopAllAudio();
   playStartSound();
 }
 
 function finishGame() {
   gameState = "over";
+  stopAllAudio();
   playCrashSound();
   if (score > bestScore) {
     bestScore = score;
@@ -407,6 +434,12 @@ document.addEventListener("keydown", (event) => {
 document.getElementById("left-button").addEventListener("click", () => steer(-1));
 document.getElementById("right-button").addEventListener("click", () => steer(1));
 startButton.addEventListener("click", startGame);
+
+window.addEventListener("message", (e) => {
+  if (e.data && (e.data.type === "ARCADEVERSE_TEARDOWN" || e.data.type === "ARCADEVERSE_PAUSE")) {
+    stopAllAudio();
+  }
+});
 
 draw();
 requestAnimationFrame(frame);
