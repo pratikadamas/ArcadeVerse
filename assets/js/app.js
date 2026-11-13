@@ -2180,10 +2180,21 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
           const win = gameIframe.contentWindow;
           if (win) {
-            // Cancel any high-numbered animation frame handles
+            // Dynamically discover and cancel active animation frame handles (#497, #825)
             if (typeof win.cancelAnimationFrame === "function") {
-              for (let frameId = 1; frameId < 9999; frameId++) {
-                win.cancelAnimationFrame(frameId);
+              if (typeof win.requestAnimationFrame === "function") {
+                const maxFrameId = win.requestAnimationFrame(() => {});
+                win.cancelAnimationFrame(maxFrameId);
+                if (typeof maxFrameId === "number" && maxFrameId > 0) {
+                  const minFrameId = Math.max(1, maxFrameId - 50000);
+                  for (let frameId = maxFrameId; frameId >= minFrameId; frameId--) {
+                    win.cancelAnimationFrame(frameId);
+                  }
+                }
+              } else {
+                for (let frameId = 1; frameId <= 1000; frameId++) {
+                  win.cancelAnimationFrame(frameId);
+                }
               }
             }
             // Clear any active timeouts/intervals left by rogue loops
