@@ -52,8 +52,16 @@
   let distance = 0;
   let cellsCollected = 0;
   let warpFactor = 1;
-  let bestDist = parseInt(localStorage.getItem('stellar_warp_best') || '0', 10);
+  let bestDist = 0;
+  try {
+    bestDist = parseInt(localStorage.getItem('stellar_warp_best') || '0', 10);
+  } catch (_) {
+    bestDist = 0;
+  }
   bestDisplay.textContent = `${bestDist} LY`;
+  let gameTime = 0;
+  let rafId = null;
+  let lastTime = 0;
 
   // Lanes (0: Left, 1: Center, 2: Right)
   const lanesX = [130, 300, 470];
@@ -88,12 +96,14 @@
     obstacles = [];
     energyCells = [];
     particles = [];
+    gameTime = 0;
     updateHUD();
     gameoverOverlay.classList.remove('active');
     startOverlay.classList.remove('active');
     isRunning = true;
-    lastObstacleSpawn = performance.now();
-    lastCellSpawn = performance.now();
+    lastObstacleSpawn = 0;
+    lastCellSpawn = 0;
+    lastTime = performance.now();
   }
 
   function updateHUD() {
@@ -148,24 +158,33 @@
     const finalDist = Math.floor(distance);
     if (finalDist > bestDist) {
       bestDist = finalDist;
-      localStorage.setItem('stellar_warp_best', bestDist);
+      try {
+        localStorage.setItem('stellar_warp_best', bestDist);
+      } catch (_) {}
       bestDisplay.textContent = `${bestDist} LY`;
     }
     gameoverStats.textContent = `Distance: ${finalDist} LY • Energy Cells: ${cellsCollected}`;
     gameoverOverlay.classList.add('active');
     playTone(150, 'sawtooth', 0.45, 0.3);
+
+    try {
+      window.parent.postMessage({ type: 'ARCADEVERSE_GAME_SCORE', score: finalDist }, '*');
+      window.parent.postMessage({ type: 'ARCADEVERSE_GAME_OVER' }, '*');
+    } catch (_) {}
   }
 
-  function update() {
+  function update(dt = 1) {
     if (!isRunning) return;
+
+    gameTime += dt * 16.667;
 
     // Smooth lane interpolation
     const targetX = lanesX[currentLane];
-    playerX += (targetX - playerX) * 0.22;
+    playerX += (targetX - playerX) * (1 - Math.pow(0.78, dt));
 
     // Advance distance
     const baseSpeed = 5 + warpFactor * 1.5;
-    distance += baseSpeed * 0.06;
+    distance += baseSpeed * 0.06 * dt;
 
     // Increase warp factor as distance increases
     warpFactor = 1 + Math.floor(distance / 150);
@@ -173,7 +192,7 @@
 
     // Starfield
     stars.forEach(s => {
-      s.y += s.speed * (1 + warpFactor * 0.25);
+      s.y += s.speed * (1 + warpFactor * 0.25) * dt;
       if (s.y > 700) {
         s.y = 0;
         s.x = Math.random() * 600;
@@ -182,19 +201,19 @@
 
     // Spawn hazards & cells
     const spawnRate = Math.max(750, 1500 - warpFactor * 120);
-    if (performance.now() - lastObstacleSpawn > spawnRate) {
+    if (gameTime - lastObstacleSpawn > spawnRate) {
       spawnObstacle();
-      lastObstacleSpawn = performance.now();
+      lastObstacleSpawn = gameTime;
     }
-    if (performance.now() - lastCellSpawn > 2200) {
+    if (gameTime - lastCellSpawn > 2200) {
       spawnEnergyCell();
-      lastCellSpawn = performance.now();
+      lastCellSpawn = gameTime;
     }
 
     // Update Obstacles
     for (let i = obstacles.length - 1; i >= 0; i--) {
       const obs = obstacles[i];
-      obs.y += baseSpeed;
+      obs.y += baseSpeed * dt;
 
       // Hit test with player
       if (
@@ -215,8 +234,8 @@
     // Update Energy Cells
     for (let i = energyCells.length - 1; i >= 0; i--) {
       const cell = energyCells[i];
-      cell.y += baseSpeed;
-      cell.pulse += 0.08;
+      cell.y += baseSpeed * dt;
+      cell.pulse += 0.08 * dt;
 
       // Collection
       const dx = playerX - cell.x;
@@ -239,9 +258,9 @@
     // Update particles
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.life -= p.decay;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.life -= p.decay * dt;
       if (p.life <= 0) {
         particles.splice(i, 1);
       }
@@ -328,13 +347,19 @@
       ctx.fill();
     });
     ctx.globalAlpha = 1.0;
-
-    requestAnimationFrame(render);
   }
 
-  function loop() {
-    update();
-    requestAnimationFrame(loop);
+  function loop(timestamp) {
+    if (timestamp === undefined) timestamp = performance.now();
+    if (!lastTime) lastTime = timestamp;
+    const deltaMs = Math.min(100, timestamp - lastTime);
+    lastTime = timestamp;
+    const dt = deltaMs / 16.667;
+
+    update(dt);
+    render();
+
+    rafId = requestAnimationFrame(loop);
   }
 
   // Controls
@@ -380,6 +405,47 @@
   closeRulesBtn.addEventListener('click', () => { rulesModal.classList.remove('active'); });
   rulesConfirmBtn.addEventListener('click', () => { rulesModal.classList.remove('active'); });
 
-  render();
-  loop();
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+    } else {
+      if (isRunning && !rafId) {
+        lastTime = performance.now();
+        rafId = requestAnimationFrame(loop);
+      }
+    }
+  });
+
+  window.addEventListener('message', e => {
+    if (!e.data || typeof e.data !== 'object') return;
+    const type = e.data.type;
+    if (type === 'ARCADEVERSE_PAUSE') {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+    } else if (type === 'ARCADEVERSE_RESUME') {
+      if (isRunning && !rafId) {
+        lastTime = performance.now();
+        rafId = requestAnimationFrame(loop);
+      }
+    } else if (type === 'ARCADEVERSE_TEARDOWN') {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+    } else if (type === 'AV_RESIZE') {
+      const d = e.data;
+      if (d.width && d.height && canvas) {
+        canvas.width = d.width;
+        canvas.height = d.height;
+      }
+    }
+  });
+
+  lastTime = performance.now();
+  rafId = requestAnimationFrame(loop);
 })();
