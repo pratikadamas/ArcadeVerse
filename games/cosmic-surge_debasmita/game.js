@@ -11,7 +11,11 @@
   // --- Web Audio Procedural Synthesizer ---
   const Sound = {
     ctx: null,
+    masterGain: null,
+    limiter: null,
     muted: false,
+    activeVoices: new Set(),
+    maxVoices: 6,
 
     init() {
       try {
@@ -22,6 +26,23 @@
       } catch (e) {
         // AudioContext not available
       }
+      if (this.ctx && !this.masterGain) {
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+        try {
+          const comp = this.ctx.createDynamicsCompressor();
+          comp.threshold.setValueAtTime(-0.5, this.ctx.currentTime);
+          comp.knee.setValueAtTime(0, this.ctx.currentTime);
+          comp.ratio.setValueAtTime(20.0, this.ctx.currentTime);
+          comp.attack.setValueAtTime(0.001, this.ctx.currentTime);
+          comp.release.setValueAtTime(0.05, this.ctx.currentTime);
+          this.limiter = comp;
+          this.masterGain.connect(this.limiter);
+          this.limiter.connect(this.ctx.destination);
+        } catch (_) {
+          this.masterGain.connect(this.ctx.destination);
+        }
+      }
       this.muted = localStorage.getItem('cosmic_surge_muted') === 'true';
     },
 
@@ -31,8 +52,49 @@
       }
     },
 
+    trackVoice(node) {
+      if (!node) return node;
+      if (!this.activeVoices) this.activeVoices = new Set();
+      while (this.activeVoices.size >= this.maxVoices) {
+        const oldest = this.activeVoices.values().next().value;
+        if (oldest) {
+          try {
+            if (typeof oldest.stop === 'function') oldest.stop();
+            if (typeof oldest.disconnect === 'function') oldest.disconnect();
+          } catch (_) {}
+          this.activeVoices.delete(oldest);
+        } else {
+          break;
+        }
+      }
+      this.activeVoices.add(node);
+      const onEnded = () => {
+        if (this.activeVoices) this.activeVoices.delete(node);
+      };
+      if (typeof node.addEventListener === 'function') {
+        node.addEventListener('ended', onEnded, { once: true });
+      } else {
+        node.onended = onEnded;
+      }
+      return node;
+    },
+
+    stopAll() {
+      if (this.activeVoices) {
+        this.activeVoices.forEach((node) => {
+          try {
+            if (typeof node.stop === 'function') node.stop();
+            if (typeof node.disconnect === 'function') node.disconnect();
+          } catch (_) {}
+        });
+        this.activeVoices.clear();
+      }
+    },
+
     laser() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       this.resume();
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
@@ -46,13 +108,16 @@
       gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
 
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(osc);
       osc.start(now);
       osc.stop(now + 0.1);
     },
 
     hit() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       this.resume();
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
@@ -66,13 +131,16 @@
       gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
 
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(osc);
       osc.start(now);
       osc.stop(now + 0.15);
     },
 
     explode() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       this.resume();
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
@@ -86,13 +154,16 @@
       gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
 
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(osc);
       osc.start(now);
       osc.stop(now + 0.35);
     },
 
     powerup() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       this.resume();
       const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
       notes.forEach((freq, idx) => {
@@ -107,14 +178,17 @@
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
 
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
         osc.start(now);
         osc.stop(now + 0.1);
       });
     },
 
     nova() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       this.resume();
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
@@ -128,7 +202,8 @@
       gain.gain.linearRampToValueAtTime(0.01, now + 0.7);
 
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(osc);
       osc.start(now);
       osc.stop(now + 0.7);
     }
@@ -382,6 +457,7 @@
 
   // --- Game Loop Management ---
   function startGame() {
+    Sound.stopAll();
     Sound.init();
     mode = GameMode.PLAYING;
     score = 0;
@@ -1086,4 +1162,14 @@
   }
 
   document.addEventListener('DOMContentLoaded', init);
+
+  // Clean audio on teardown (#507)
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      Sound.stopAll();
+      if (Sound.ctx && Sound.ctx.state !== 'closed') {
+        try { Sound.ctx.close(); } catch (_) {}
+      }
+    }
+  });
 })();

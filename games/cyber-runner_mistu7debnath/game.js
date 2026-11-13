@@ -64,12 +64,16 @@
     }
   };
 
-  // --- Procedural Web Audio API Sound Engine ---
+  // --- Procedural Web Audio API Sound Engine (#507) ---
   class SoundEngine {
     constructor() {
       this.ctx = null;
+      this.masterGain = null;
+      this.limiter = null;
       this.muted = false;
       this.initialized = false;
+      this.activeVoices = new Set();
+      this.maxVoices = 6;
     }
 
     init() {
@@ -79,6 +83,21 @@
         if (AudioCtx) {
           this.ctx = new AudioCtx();
           this.initialized = true;
+          this.masterGain = this.ctx.createGain();
+          this.masterGain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+          try {
+            const comp = this.ctx.createDynamicsCompressor();
+            comp.threshold.setValueAtTime(-0.5, this.ctx.currentTime);
+            comp.knee.setValueAtTime(0, this.ctx.currentTime);
+            comp.ratio.setValueAtTime(20.0, this.ctx.currentTime);
+            comp.attack.setValueAtTime(0.001, this.ctx.currentTime);
+            comp.release.setValueAtTime(0.05, this.ctx.currentTime);
+            this.limiter = comp;
+            this.masterGain.connect(this.limiter);
+            this.limiter.connect(this.ctx.destination);
+          } catch (_) {
+            this.masterGain.connect(this.ctx.destination);
+          }
         }
       } catch (e) {
         console.warn('Web Audio API not supported on this browser.');
@@ -91,12 +110,53 @@
       }
     }
 
+    trackVoice(node) {
+      if (!node) return node;
+      if (!this.activeVoices) this.activeVoices = new Set();
+      while (this.activeVoices.size >= this.maxVoices) {
+        const oldest = this.activeVoices.values().next().value;
+        if (oldest) {
+          try {
+            if (typeof oldest.stop === 'function') oldest.stop();
+            if (typeof oldest.disconnect === 'function') oldest.disconnect();
+          } catch (_) {}
+          this.activeVoices.delete(oldest);
+        } else {
+          break;
+        }
+      }
+      this.activeVoices.add(node);
+      const onEnded = () => {
+        if (this.activeVoices) this.activeVoices.delete(node);
+      };
+      if (typeof node.addEventListener === 'function') {
+        node.addEventListener('ended', onEnded, { once: true });
+      } else {
+        node.onended = onEnded;
+      }
+      return node;
+    }
+
+    stopAll() {
+      if (this.activeVoices) {
+        this.activeVoices.forEach((node) => {
+          try {
+            if (typeof node.stop === 'function') node.stop();
+            if (typeof node.disconnect === 'function') node.disconnect();
+          } catch (_) {}
+        });
+        this.activeVoices.clear();
+      }
+    }
+
     setMuted(mute) {
       this.muted = mute;
     }
 
     playStart() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       this.resume();
       const now = this.ctx.currentTime;
       // Dual-tone cyber synth chime
@@ -110,7 +170,8 @@
         gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.35);
 
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
 
         osc.start(now + idx * 0.06);
         osc.stop(now + idx * 0.06 + 0.35);
@@ -118,7 +179,9 @@
     }
 
     playLaneSwitch() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       this.resume();
       const now = this.ctx.currentTime;
       const osc = this.ctx.createOscillator();
@@ -131,14 +194,17 @@
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
 
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(osc);
 
       osc.start(now);
       osc.stop(now + 0.09);
     }
 
     playJump() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       this.resume();
       const now = this.ctx.currentTime;
       const osc = this.ctx.createOscillator();
@@ -151,18 +217,21 @@
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
 
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(osc);
 
       osc.start(now);
       osc.stop(now + 0.22);
     }
 
     playSlide() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       this.resume();
       const now = this.ctx.currentTime;
       // High-pass friction sizzle
-      const bufferSize = this.ctx.sampleRate * 0.15;
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.15);
       const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
       const data = buffer.getChannelData(0);
       for (let i = 0; i < bufferSize; i++) {
@@ -182,14 +251,17 @@
 
       noise.connect(filter);
       filter.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(noise);
 
       noise.start(now);
       noise.stop(now + 0.15);
     }
 
     playCoin() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       this.resume();
       const now = this.ctx.currentTime;
       // Sparkling arpeggio (C6 - E6 - G6)
@@ -203,7 +275,8 @@
         gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.04 + 0.2);
 
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
 
         osc.start(now + idx * 0.04);
         osc.stop(now + idx * 0.04 + 0.2);
@@ -211,7 +284,9 @@
     }
 
     playCrash() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       this.resume();
       const now = this.ctx.currentTime;
 
@@ -226,14 +301,15 @@
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
 
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(osc);
 
       osc.start(now);
       osc.stop(now + 0.45);
 
       // Glitch noise burst
       try {
-        const bufferSize = this.ctx.sampleRate * 0.3;
+        const bufferSize = Math.floor(this.ctx.sampleRate * 0.3);
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
@@ -253,7 +329,8 @@
 
         noise.connect(filter);
         filter.connect(nGain);
-        nGain.connect(this.ctx.destination);
+        nGain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(noise);
 
         noise.start(now);
         noise.stop(now + 0.3);
@@ -261,7 +338,9 @@
     }
 
     playClick() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       this.resume();
       const now = this.ctx.currentTime;
       const osc = this.ctx.createOscillator();
@@ -273,7 +352,8 @@
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
 
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(osc);
 
       osc.start(now);
       osc.stop(now + 0.05);
@@ -645,6 +725,7 @@
 
     // --- Game Lifecycle ---
     startNewGame() {
+      this.sound.stopAll();
       this.sound.init();
       this.sound.playStart();
 
@@ -1777,8 +1858,21 @@
   }
 
   // --- Bootstrap on DOM Ready ---
+  let activeGameInstance = null;
   window.addEventListener('DOMContentLoaded', () => {
-    new CyberRunnerGame();
+    activeGameInstance = new CyberRunnerGame();
+  });
+
+  // Clean audio on teardown (#507)
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      if (activeGameInstance && activeGameInstance.sound) {
+        activeGameInstance.sound.stopAll();
+        if (activeGameInstance.sound.ctx && activeGameInstance.sound.ctx.state !== 'closed') {
+          try { activeGameInstance.sound.ctx.close(); } catch (_) {}
+        }
+      }
+    }
   });
 
 })();

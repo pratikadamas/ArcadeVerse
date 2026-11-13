@@ -686,10 +686,11 @@
   };
 
   // ---------------------------------------------------------------
-  // 4. Sound (procedural Web Audio, nothing is downloaded)
+  // 4. Sound (procedural Web Audio, nothing is downloaded) (#507)
   // ---------------------------------------------------------------
   function Sound() {
-    this.ctx = null; this.master = null; this.muted = false; this.hubMuted = false;
+    this.ctx = null; this.master = null; this.limiter = null; this.muted = false; this.hubMuted = false;
+    this.activeVoices = [];
     this.last = {};
   }
   Sound.prototype.ensure = function () {
@@ -703,10 +704,60 @@
       this.ctx = new AC();
       this.master = this.ctx.createGain();
       this.master.gain.value = 0.55;
-      this.master.connect(this.ctx.destination);
+      try {
+        var comp = this.ctx.createDynamicsCompressor();
+        comp.threshold.setValueAtTime(-0.5, this.ctx.currentTime);
+        comp.knee.setValueAtTime(0, this.ctx.currentTime);
+        comp.ratio.setValueAtTime(20.0, this.ctx.currentTime);
+        comp.attack.setValueAtTime(0.001, this.ctx.currentTime);
+        comp.release.setValueAtTime(0.05, this.ctx.currentTime);
+        this.limiter = comp;
+        this.master.connect(this.limiter);
+        this.limiter.connect(this.ctx.destination);
+      } catch (_) {
+        this.master.connect(this.ctx.destination);
+      }
     } catch (e) { this.ctx = null; }
   };
+  Sound.prototype.trackVoice = function (node) {
+    if (!node) return node;
+    if (!this.activeVoices) this.activeVoices = [];
+    while (this.activeVoices.length >= 6) {
+      var oldest = this.activeVoices.shift();
+      if (oldest) {
+        try {
+          if (typeof oldest.stop === 'function') oldest.stop();
+          if (typeof oldest.disconnect === 'function') oldest.disconnect();
+        } catch (_) {}
+      }
+    }
+    this.activeVoices.push(node);
+    var self = this;
+    var onEnded = function () {
+      if (!self.activeVoices) return;
+      var idx = self.activeVoices.indexOf(node);
+      if (idx !== -1) self.activeVoices.splice(idx, 1);
+    };
+    if (typeof node.addEventListener === 'function') {
+      node.addEventListener('ended', onEnded, { once: true });
+    } else {
+      node.onended = onEnded;
+    }
+    return node;
+  };
+  Sound.prototype.stopAll = function () {
+    if (this.activeVoices) {
+      while (this.activeVoices.length > 0) {
+        var v = this.activeVoices.pop();
+        try {
+          if (typeof v.stop === 'function') v.stop();
+          if (typeof v.disconnect === 'function') v.disconnect();
+        } catch (_) {}
+      }
+    }
+  };
   Sound.prototype.close = function () {
+    this.stopAll();
     if (this.ctx) { try { this.ctx.close(); } catch (e) { /* ignore */ } }
     this.ctx = null; this.master = null;
   };
@@ -727,6 +778,7 @@
     g.gain.exponentialRampToValueAtTime(vol, t + 0.006);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.connect(g); g.connect(this.master);
+    this.trackVoice(o);
     o.start(t); o.stop(t + dur + 0.02);
   };
   Sound.prototype.noise = function (dur, vol, freq) {
@@ -738,7 +790,9 @@
     var f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 0.9;
     var g = ctx.createGain(); g.gain.value = vol;
     src.connect(f); f.connect(g); g.connect(this.master);
+    this.trackVoice(src);
     src.start(t);
+    src.stop(t + dur + 0.01);
   };
   Sound.prototype.hit = function (speed) {
     if (!this.ok('hit', 0.035)) return;

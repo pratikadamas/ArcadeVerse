@@ -11,9 +11,13 @@
   'use strict';
 
   // ---------------------------------------------------------------------------
-  // 1. Procedural Web Audio API Sound Synthesizer (Zero External Assets)
+  // 1. Procedural Web Audio API Sound Synthesizer (#507)
   // ---------------------------------------------------------------------------
   let audioCtx = null;
+  let masterGain = null;
+  let limiterNode = null;
+  const activeVoices = new Set();
+  const MAX_VOICES = 6;
   let isMuted = false;
 
   function initAudio() {
@@ -23,9 +27,62 @@
         audioCtx = new AudioContextClass();
       }
     }
+    if (audioCtx && !masterGain) {
+      masterGain = audioCtx.createGain();
+      masterGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+      try {
+        const comp = audioCtx.createDynamicsCompressor();
+        comp.threshold.setValueAtTime(-0.5, audioCtx.currentTime);
+        comp.knee.setValueAtTime(0, audioCtx.currentTime);
+        comp.ratio.setValueAtTime(20.0, audioCtx.currentTime);
+        comp.attack.setValueAtTime(0.001, audioCtx.currentTime);
+        comp.release.setValueAtTime(0.05, audioCtx.currentTime);
+        limiterNode = comp;
+        masterGain.connect(limiterNode);
+        limiterNode.connect(audioCtx.destination);
+      } catch (_) {
+        masterGain.connect(audioCtx.destination);
+      }
+    }
     if (audioCtx && audioCtx.state === 'suspended') {
       audioCtx.resume();
     }
+  }
+
+  function trackVoice(node) {
+    if (!node) return node;
+    while (activeVoices.size >= MAX_VOICES) {
+      const oldest = activeVoices.values().next().value;
+      if (oldest) {
+        try {
+          if (typeof oldest.stop === 'function') oldest.stop();
+          if (typeof oldest.disconnect === 'function') oldest.disconnect();
+        } catch (_) {}
+        activeVoices.delete(oldest);
+      } else {
+        break;
+      }
+    }
+    activeVoices.add(node);
+    const onEnded = () => {
+      activeVoices.delete(node);
+    };
+    if (typeof node.addEventListener === 'function') {
+      node.addEventListener('ended', onEnded, { once: true });
+    } else {
+      node.onended = onEnded;
+    }
+    return node;
+  }
+
+  function stopAllAudio() {
+    activeVoices.forEach((node) => {
+      try {
+        if (typeof node.stop === 'function') node.stop();
+        if (typeof node.disconnect === 'function') node.disconnect();
+      } catch (_) {}
+    });
+    activeVoices.clear();
   }
 
   // Load mute state from localStorage
@@ -52,7 +109,8 @@
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
 
       osc.connect(gain);
-      gain.connect(audioCtx.destination);
+      gain.connect(masterGain || audioCtx.destination);
+      trackVoice(osc);
 
       osc.start(now);
       osc.stop(now + 0.045);
@@ -78,7 +136,8 @@
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
 
       osc.connect(gain);
-      gain.connect(audioCtx.destination);
+      gain.connect(masterGain || audioCtx.destination);
+      trackVoice(osc);
 
       osc.start(now);
       osc.stop(now + 0.085);
@@ -94,7 +153,7 @@
       if (!audioCtx) return;
 
       // Noise buffer for blast
-      const bufferSize = audioCtx.sampleRate * 0.2;
+      const bufferSize = Math.floor(audioCtx.sampleRate * 0.2);
       const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
       const data = buffer.getChannelData(0);
       for (let i = 0; i < bufferSize; i++) {
@@ -115,9 +174,11 @@
 
       noise.connect(filter);
       filter.connect(gain);
-      gain.connect(audioCtx.destination);
+      gain.connect(masterGain || audioCtx.destination);
+      trackVoice(noise);
 
       noise.start();
+      noise.stop(audioCtx.currentTime + 0.2);
     } catch {
       // Audio playback unavailable
     }
@@ -140,7 +201,8 @@
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
 
       osc.connect(gain);
-      gain.connect(audioCtx.destination);
+      gain.connect(masterGain || audioCtx.destination);
+      trackVoice(osc);
 
       osc.start(now);
       osc.stop(now + 0.13);
@@ -166,7 +228,8 @@
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
 
       osc.connect(gain);
-      gain.connect(audioCtx.destination);
+      gain.connect(masterGain || audioCtx.destination);
+      trackVoice(osc);
 
       osc.start(now);
       osc.stop(now + 0.21);
@@ -192,7 +255,8 @@
         gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.1);
 
         osc.connect(gain);
-        gain.connect(audioCtx.destination);
+        gain.connect(masterGain || audioCtx.destination);
+        trackVoice(osc);
 
         osc.start(now + idx * 0.08);
         osc.stop(now + idx * 0.08 + 0.11);
@@ -836,6 +900,7 @@
   // 10. Game Flow & State Transitions
   // ---------------------------------------------------------------------------
   function startGame() {
+    stopAllAudio();
     initAudio();
     resizeCanvas();
 
@@ -986,4 +1051,14 @@
   // ---------------------------------------------------------------------------
   resizeCanvas();
   animationFrameId = requestAnimationFrame(gameLoop);
+
+  // Clean audio on teardown (#507)
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      stopAllAudio();
+      if (audioCtx && audioCtx.state !== 'closed') {
+        try { audioCtx.close(); } catch (_) {}
+      }
+    }
+  });
 })();

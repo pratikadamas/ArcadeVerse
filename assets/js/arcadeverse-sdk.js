@@ -670,7 +670,120 @@
     },
 
     /**
-     * Creates and registers a master GainNode connected to AudioContext destination.
+     * Micro-Limiter for Master Audio Bus (#507)
+     * Creates a brickwall DynamicsCompressorNode calibrated to suppress harsh clipping above 0dB.
+     * @param {AudioContext} audioCtx
+     * @returns {DynamicsCompressorNode|null}
+     */
+    createMicroLimiter: function (audioCtx) {
+      if (!audioCtx) return null;
+      try {
+        var comp = audioCtx.createDynamicsCompressor();
+        // Brickwall micro-limiter calibration (prevents digital clipping above 0dB)
+        comp.threshold.setValueAtTime(-0.5, audioCtx.currentTime); // -0.5 dBFS ceiling
+        comp.knee.setValueAtTime(0, audioCtx.currentTime);          // Hard knee
+        comp.ratio.setValueAtTime(20.0, audioCtx.currentTime);      // Brickwall 20:1 ratio
+        comp.attack.setValueAtTime(0.001, audioCtx.currentTime);    // 1ms peak suppress
+        comp.release.setValueAtTime(0.05, audioCtx.currentTime);    // 50ms fast recovery
+        return comp;
+      } catch (_e) {
+        return null;
+      }
+    },
+
+    /**
+     * Voice-Stealing Audio Pool (#507)
+     * Limits concurrent active sound effects voices to a safe budget (default 6).
+     * Automatically steals the oldest playing voice when capacity is reached to prevent mixer distortion.
+     * @param {Object} [options]
+     * @param {number} [options.maxVoices=6] Maximum concurrent voices
+     * @param {AudioContext} [options.audioCtx] Optional AudioContext for time calculations
+     * @returns {{ maxVoices: number, addVoice: function, getActiveVoiceCount: function, stopAll: function }}
+     */
+    createVoicePool: function (options) {
+      var opts = options || {};
+      var maxVoices = typeof opts.maxVoices === "number" && opts.maxVoices > 0 ? opts.maxVoices : 6;
+      var activeVoices = []; // { node: AudioNode, onStop?: Function, startedAt: number }
+
+      return {
+        maxVoices: maxVoices,
+
+        getActiveVoiceCount: function () {
+          return activeVoices.length;
+        },
+
+        addVoice: function (node, onStop) {
+          if (!node) return null;
+
+          // Voice stealing: steal oldest voice if capacity reached
+          while (activeVoices.length >= maxVoices) {
+            var oldest = activeVoices.shift();
+            if (oldest) {
+              try {
+                if (typeof oldest.onStop === "function") {
+                  oldest.onStop();
+                } else {
+                  if (oldest.node && typeof oldest.node.stop === "function") {
+                    oldest.node.stop();
+                  }
+                  if (oldest.node && typeof oldest.node.disconnect === "function") {
+                    oldest.node.disconnect();
+                  }
+                }
+              } catch (_) {}
+            }
+          }
+
+          var voiceEntry = {
+            node: node,
+            onStop: onStop,
+            startedAt: Date.now()
+          };
+          activeVoices.push(voiceEntry);
+
+          var removeVoice = function () {
+            var idx = activeVoices.indexOf(voiceEntry);
+            if (idx !== -1) {
+              activeVoices.splice(idx, 1);
+            }
+          };
+
+          var origOnEnded = node.onended;
+          node.onended = function (e) {
+            removeVoice();
+            if (typeof origOnEnded === "function") {
+              try {
+                origOnEnded.call(node, e);
+              } catch (_) {}
+            }
+          };
+
+          return voiceEntry;
+        },
+
+        stopAll: function () {
+          while (activeVoices.length > 0) {
+            var v = activeVoices.pop();
+            try {
+              if (typeof v.onStop === "function") {
+                v.onStop();
+              } else {
+                if (v.node && typeof v.node.stop === "function") {
+                  v.node.stop();
+                }
+                if (v.node && typeof v.node.disconnect === "function") {
+                  v.node.disconnect();
+                }
+              }
+            } catch (_) {}
+          }
+        }
+      };
+    },
+
+    /**
+     * Creates and registers a master GainNode connected through a 0dB micro-limiter
+     * to AudioContext destination.
      * All game sound oscillators and buffer nodes should connect to this node!
      * @param {AudioContext} ctx
      * @returns {GainNode}
@@ -679,7 +792,13 @@
       if (!ctx) return null;
       var gainNode = ctx.createGain();
       gainNode.gain.setValueAtTime(currentAudioConfig.muted ? 0 : currentAudioConfig.volume, 0);
-      gainNode.connect(ctx.destination);
+      var limiter = this.createMicroLimiter(ctx);
+      if (limiter) {
+        gainNode.connect(limiter);
+        limiter.connect(ctx.destination);
+      } else {
+        gainNode.connect(ctx.destination);
+      }
       if (registeredGainNodes.indexOf(gainNode) === -1) {
         registeredGainNodes.push(gainNode);
       }
@@ -1025,7 +1144,13 @@
       if (!audioCtx) return null;
       var ctx = audioCtx;
       var masterGain = ctx.createGain();
-      masterGain.connect(ctx.destination);
+      var limiter = this.createMicroLimiter(ctx);
+      if (limiter) {
+        masterGain.connect(limiter);
+        limiter.connect(ctx.destination);
+      } else {
+        masterGain.connect(ctx.destination);
+      }
 
       var currentVolume = 0.5;
       var isMuted = false;

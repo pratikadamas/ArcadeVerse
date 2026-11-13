@@ -13,6 +13,10 @@
   class CyberAudioSynthesizer {
     constructor() {
       this.ctx = null;
+      this.masterGain = null;
+      this.limiter = null;
+      this.activeVoices = new Set();
+      this.maxVoices = 6;
       this.muted = localStorage.getItem("cyber_brick_breaker_sound") === "muted";
     }
 
@@ -23,8 +27,63 @@
           this.ctx = new AudioContextClass();
         }
       }
+      if (this.ctx && !this.masterGain) {
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+        try {
+          const comp = this.ctx.createDynamicsCompressor();
+          comp.threshold.setValueAtTime(-0.5, this.ctx.currentTime);
+          comp.knee.setValueAtTime(0, this.ctx.currentTime);
+          comp.ratio.setValueAtTime(20.0, this.ctx.currentTime);
+          comp.attack.setValueAtTime(0.001, this.ctx.currentTime);
+          comp.release.setValueAtTime(0.05, this.ctx.currentTime);
+          this.limiter = comp;
+          this.masterGain.connect(this.limiter);
+          this.limiter.connect(this.ctx.destination);
+        } catch (_) {
+          this.masterGain.connect(this.ctx.destination);
+        }
+      }
       if (this.ctx && this.ctx.state === "suspended") {
         this.ctx.resume();
+      }
+    }
+
+    trackVoice(node) {
+      if (!node) return node;
+      while (this.activeVoices.size >= this.maxVoices) {
+        const oldest = this.activeVoices.values().next().value;
+        if (oldest) {
+          try {
+            if (typeof oldest.stop === 'function') oldest.stop();
+            if (typeof oldest.disconnect === 'function') oldest.disconnect();
+          } catch (_) {}
+          this.activeVoices.delete(oldest);
+        } else {
+          break;
+        }
+      }
+      this.activeVoices.add(node);
+      const onEnded = () => {
+        this.activeVoices.delete(node);
+      };
+      if (typeof node.addEventListener === 'function') {
+        node.addEventListener('ended', onEnded, { once: true });
+      } else {
+        node.onended = onEnded;
+      }
+      return node;
+    }
+
+    stopAll() {
+      if (this.activeVoices) {
+        this.activeVoices.forEach((node) => {
+          try {
+            if (typeof node.stop === 'function') node.stop();
+            if (typeof node.disconnect === 'function') node.disconnect();
+          } catch (_) {}
+        });
+        this.activeVoices.clear();
       }
     }
 
@@ -40,7 +99,9 @@
 
     // Dynamic paddle bounce tone modulated by strike position
     playPaddleBounce(offsetFactor = 0) {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       try {
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
@@ -56,7 +117,8 @@
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
 
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
 
         osc.start(now);
         osc.stop(now + 0.1);
@@ -67,7 +129,9 @@
 
     // Boundary wall reflection chirp
     playWallBounce() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       try {
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
@@ -81,7 +145,8 @@
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
 
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
 
         osc.start(now);
         osc.stop(now + 0.07);
@@ -90,7 +155,9 @@
 
     // Armored brick impact hit
     playBrickHit(durability = 1) {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       try {
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
@@ -105,7 +172,8 @@
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
 
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
 
         osc.start(now);
         osc.stop(now + 0.08);
@@ -114,7 +182,9 @@
 
     // Brick shattered
     playBrickDestroy() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       try {
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
@@ -128,7 +198,8 @@
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
 
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
 
         osc.start(now);
         osc.stop(now + 0.13);
@@ -137,7 +208,9 @@
 
     // EMP blast detonator
     playExplosion() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       try {
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
@@ -151,7 +224,8 @@
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
 
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
 
         osc.start(now);
         osc.stop(now + 0.38);
@@ -160,7 +234,9 @@
 
     // Plasma laser bolt discharge
     playLaserShot() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       try {
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
@@ -174,7 +250,8 @@
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
 
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
 
         osc.start(now);
         osc.stop(now + 0.1);
@@ -183,7 +260,9 @@
 
     // Power-up collected chime (major arpeggio)
     playPowerupCollect() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       try {
         const now = this.ctx.currentTime;
         const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
@@ -198,7 +277,8 @@
           gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.05 + 0.12);
 
           osc.connect(gain);
-          gain.connect(this.ctx.destination);
+          gain.connect(this.masterGain || this.ctx.destination);
+          this.trackVoice(osc);
 
           osc.start(now + i * 0.05);
           osc.stop(now + i * 0.05 + 0.12);
@@ -208,7 +288,9 @@
 
     // Energy shield breach
     playLifeLost() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       try {
         const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
@@ -222,7 +304,8 @@
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
 
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
 
         osc.start(now);
         osc.stop(now + 0.42);
@@ -231,7 +314,9 @@
 
     // Sector victory fanfare
     playVictory() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       try {
         const now = this.ctx.currentTime;
         const notes = [440, 554.37, 659.25, 880];
@@ -246,7 +331,8 @@
           gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.28);
 
           osc.connect(gain);
-          gain.connect(this.ctx.destination);
+          gain.connect(this.masterGain || this.ctx.destination);
+          this.trackVoice(osc);
 
           osc.start(now + idx * 0.1);
           osc.stop(now + idx * 0.1 + 0.28);
@@ -571,6 +657,7 @@
     // 4. GAME FLOW & SECTOR INITIALIZATION
     // ========================================================
     startGame() {
+      this.audio.stopAll();
       this.audio.init();
       this.score = 0;
       this.combo = 1.0;
@@ -1453,7 +1540,20 @@
   }
 
   // Initialize once DOM is ready
+  let activeInstance = null;
   document.addEventListener("DOMContentLoaded", () => {
-    new CyberBrickBreakerGame();
+    activeInstance = new CyberBrickBreakerGame();
+  });
+
+  // Clean audio on teardown (#507)
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      if (activeInstance && activeInstance.audio) {
+        activeInstance.audio.stopAll();
+        if (activeInstance.audio.ctx && activeInstance.audio.ctx.state !== 'closed') {
+          try { activeInstance.audio.ctx.close(); } catch (_) {}
+        }
+      }
+    }
   });
 })();

@@ -25,8 +25,49 @@
   let cargo = 0;
   let fuel = 100;
 
-  // Web Audio Synth
+  // Web Audio Synth (#507)
   let audioCtx = null;
+  let masterGain = null;
+  let limiterNode = null;
+  const activeVoices = new Set();
+  const MAX_VOICES = 6;
+
+  function trackVoice(node) {
+    if (!node) return node;
+    while (activeVoices.size >= MAX_VOICES) {
+      const oldest = activeVoices.values().next().value;
+      if (oldest) {
+        try {
+          if (typeof oldest.stop === 'function') oldest.stop();
+          if (typeof oldest.disconnect === 'function') oldest.disconnect();
+        } catch (_) {}
+        activeVoices.delete(oldest);
+      } else {
+        break;
+      }
+    }
+    activeVoices.add(node);
+    const onEnded = () => {
+      activeVoices.delete(node);
+    };
+    if (typeof node.addEventListener === 'function') {
+      node.addEventListener('ended', onEnded, { once: true });
+    } else {
+      node.onended = onEnded;
+    }
+    return node;
+  }
+
+  function stopAllAudio() {
+    activeVoices.forEach((node) => {
+      try {
+        if (typeof node.stop === 'function') node.stop();
+        if (typeof node.disconnect === 'function') node.disconnect();
+      } catch (_) {}
+    });
+    activeVoices.clear();
+  }
+
   function playSound(type) {
     try {
       if (!audioCtx) {
@@ -34,12 +75,30 @@
         if (AudioClass) audioCtx = new AudioClass();
       }
       if (!audioCtx) return;
+      if (!masterGain) {
+        masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        try {
+          const comp = audioCtx.createDynamicsCompressor();
+          comp.threshold.setValueAtTime(-0.5, audioCtx.currentTime);
+          comp.knee.setValueAtTime(0, audioCtx.currentTime);
+          comp.ratio.setValueAtTime(20.0, audioCtx.currentTime);
+          comp.attack.setValueAtTime(0.001, audioCtx.currentTime);
+          comp.release.setValueAtTime(0.05, audioCtx.currentTime);
+          limiterNode = comp;
+          masterGain.connect(limiterNode);
+          limiterNode.connect(audioCtx.destination);
+        } catch (_) {
+          masterGain.connect(audioCtx.destination);
+        }
+      }
       if (audioCtx.state === 'suspended') audioCtx.resume();
 
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.connect(gain);
-      gain.connect(audioCtx.destination);
+      gain.connect(masterGain || audioCtx.destination);
+      trackVoice(osc);
 
       if (type === 'laser') {
         osc.type = 'sawtooth';
@@ -158,6 +217,7 @@
   }
 
   function startGame() {
+    stopAllAudio();
     overlayScreen.classList.add('hidden');
     isPlaying = true;
     score = 0;
@@ -377,10 +437,20 @@
     ArcadeVerse.onResume(() => { if (overlayScreen.classList.contains('hidden')) { isPlaying = true; gameLoop(); } });
     ArcadeVerse.onTeardown(() => {
       isPlaying = false;
+      stopAllAudio();
       if (animationId) cancelAnimationFrame(animationId);
       if (audioCtx) audioCtx.close().catch(() => {});
     });
   }
+
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      stopAllAudio();
+      if (audioCtx && audioCtx.state !== 'closed') {
+        try { audioCtx.close(); } catch (_) {}
+      }
+    }
+  });
 
   initInputs();
 })();

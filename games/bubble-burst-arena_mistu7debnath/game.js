@@ -105,11 +105,15 @@
     GAME_OVER: 'GAME_OVER'
   };
 
-  // --- Sound Synthesizer (Native Web Audio API) ---
+  // --- Sound Synthesizer (Native Web Audio API) (#507) ---
   class SoundFX {
     constructor() {
       this.ctx = null;
+      this.masterGain = null;
+      this.limiter = null;
       this.enabled = true;
+      this.activeVoices = new Set();
+      this.maxVoices = 6;
       try {
         const saved = localStorage.getItem(CONFIG.STORAGE_KEY_SOUND);
         if (saved !== null) {
@@ -127,8 +131,64 @@
           this.ctx = new AudioCtx();
         }
       }
+      if (this.ctx && !this.masterGain) {
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+        try {
+          const comp = this.ctx.createDynamicsCompressor();
+          comp.threshold.setValueAtTime(-0.5, this.ctx.currentTime);
+          comp.knee.setValueAtTime(0, this.ctx.currentTime);
+          comp.ratio.setValueAtTime(20.0, this.ctx.currentTime);
+          comp.attack.setValueAtTime(0.001, this.ctx.currentTime);
+          comp.release.setValueAtTime(0.05, this.ctx.currentTime);
+          this.limiter = comp;
+          this.masterGain.connect(this.limiter);
+          this.limiter.connect(this.ctx.destination);
+        } catch (_) {
+          this.masterGain.connect(this.ctx.destination);
+        }
+      }
       if (this.ctx && this.ctx.state === 'suspended') {
         this.ctx.resume();
+      }
+    }
+
+    trackVoice(node) {
+      if (!node) return node;
+      if (!this.activeVoices) this.activeVoices = new Set();
+      while (this.activeVoices.size >= this.maxVoices) {
+        const oldest = this.activeVoices.values().next().value;
+        if (oldest) {
+          try {
+            if (typeof oldest.stop === 'function') oldest.stop();
+            if (typeof oldest.disconnect === 'function') oldest.disconnect();
+          } catch (_) {}
+          this.activeVoices.delete(oldest);
+        } else {
+          break;
+        }
+      }
+      this.activeVoices.add(node);
+      const onEnded = () => {
+        if (this.activeVoices) this.activeVoices.delete(node);
+      };
+      if (typeof node.addEventListener === 'function') {
+        node.addEventListener('ended', onEnded, { once: true });
+      } else {
+        node.onended = onEnded;
+      }
+      return node;
+    }
+
+    stopAll() {
+      if (this.activeVoices) {
+        this.activeVoices.forEach((node) => {
+          try {
+            if (typeof node.stop === 'function') node.stop();
+            if (typeof node.disconnect === 'function') node.disconnect();
+          } catch (_) {}
+        });
+        this.activeVoices.clear();
       }
     }
 
@@ -153,7 +213,8 @@
       gain.gain.setValueAtTime(0.2, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(osc);
       osc.start(now);
       osc.stop(now + 0.12);
     }
@@ -171,7 +232,8 @@
       gain.gain.setValueAtTime(0.12, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(osc);
       osc.start(now);
       osc.stop(now + 0.05);
     }
@@ -189,7 +251,8 @@
       gain.gain.setValueAtTime(0.18, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(osc);
       osc.start(now);
       osc.stop(now + 0.08);
     }
@@ -208,7 +271,8 @@
       gain.gain.setValueAtTime(0.28, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(osc);
       osc.start(now);
       osc.stop(now + 0.15);
     }
@@ -227,7 +291,8 @@
       gain.gain.setValueAtTime(0.4, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(osc);
       osc.start(now);
       osc.stop(now + 0.35);
     }
@@ -245,7 +310,8 @@
         gain.gain.setValueAtTime(0.18, now + idx * 0.06);
         gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.18);
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
         osc.start(now + idx * 0.06);
         osc.stop(now + idx * 0.06 + 0.18);
       });
@@ -264,7 +330,8 @@
         gain.gain.setValueAtTime(0.16, now + idx * 0.05);
         gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.05 + 0.14);
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
         osc.start(now + idx * 0.05);
         osc.stop(now + idx * 0.05 + 0.14);
       });
@@ -284,7 +351,8 @@
         gain.gain.setValueAtTime(0.2, now + idx * 0.08);
         gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.45);
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
         osc.start(now + idx * 0.08);
         osc.stop(now + idx * 0.08 + 0.45);
       });
@@ -304,7 +372,8 @@
         gain.gain.setValueAtTime(0.2, now + idx * 0.12);
         gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.3);
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
         osc.start(now + idx * 0.12);
         osc.stop(now + idx * 0.12 + 0.3);
       });
@@ -632,6 +701,7 @@
 
     // --- State Transitions ---
     startGameSession() {
+      this.sound.stopAll();
       this.score = 0;
       this.currentLevelIndex = 0;
       this.startLevel(this.currentLevelIndex);
@@ -1986,4 +2056,16 @@
   } else {
     initGame();
   }
+
+  // Clean audio on teardown (#507)
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      if (window.__bbaGame && window.__bbaGame.sound) {
+        window.__bbaGame.sound.stopAll();
+        if (window.__bbaGame.sound.ctx && window.__bbaGame.sound.ctx.state !== 'closed') {
+          try { window.__bbaGame.sound.ctx.close(); } catch (_) {}
+        }
+      }
+    }
+  });
 })();
