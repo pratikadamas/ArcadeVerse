@@ -18,10 +18,18 @@
   const startOverlay = document.getElementById('start-overlay');
   const gameoverOverlay = document.getElementById('gameover-overlay');
   const stageClearOverlay = document.getElementById('stage-clear-overlay');
+  const stageFailedOverlay = document.getElementById('stage-failed-overlay');
+  const stageClearScore = document.getElementById('stage-clear-score');
+  const stageClearHits = document.getElementById('stage-clear-hits');
+  const stageClearTotal = document.getElementById('stage-clear-total');
+  const stageFailedScore = document.getElementById('stage-failed-score');
+  const stageFailedHits = document.getElementById('stage-failed-hits');
+  const stageFailedReq = document.getElementById('stage-failed-req');
   const instructionsModal = document.getElementById('instructions-modal');
   const startBtn = document.getElementById('start-btn');
   const restartBtn = document.getElementById('restart-btn');
   const nextStageBtn = document.getElementById('next-stage-btn');
+  const retryStageBtn = document.getElementById('retry-stage-btn');
   const helpBtn = document.getElementById('help-btn');
   const closeHelpBtn = document.getElementById('close-help-btn');
   const soundBtn = document.getElementById('sound-btn');
@@ -114,6 +122,32 @@
         gain.connect(audioCtx.destination);
         osc.start(now);
         osc.stop(now + 0.16);
+      } else if (type === 'stage_clear') {
+        [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+          gain.gain.setValueAtTime(0.18, now + idx * 0.07);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.22);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + idx * 0.07);
+          osc.stop(now + idx * 0.07 + 0.22);
+        });
+      } else if (type === 'stage_failed') {
+        [330, 261.63, 196].forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+          gain.gain.setValueAtTime(0.2, now + idx * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.2);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + idx * 0.1);
+          osc.stop(now + idx * 0.1 + 0.2);
+        });
       }
     } catch (_) {}
   }
@@ -122,11 +156,15 @@
   const WIDTH = canvas.width;
   const HEIGHT = canvas.height;
   const TOTAL_STAGES = 5;
+  const MIN_HITS_TO_PASS = [0, 3, 3, 4, 4, 5];
+  const MIN_STAGE_SCORE = [0, 75, 100, 150, 200, 250];
 
-  let gameState = 'ready'; // ready, playing, stage_clear, gameover
+  let gameState = 'ready'; // ready, playing, stage_clear, stage_failed, gameover
   let stage = 1;
   let score = 0;
   let arrows = 10;
+  let stageScore = 0;
+  let stageHits = 0;
   let combo = 0;
   let maxCombo = 0;
   let bullseyesCount = 0;
@@ -152,6 +190,8 @@
   function initStage(stageNum) {
     stage = stageNum;
     arrows = 10;
+    stageScore = 0;
+    stageHits = 0;
     activeArrow = null;
     particles = [];
     popups = [];
@@ -173,6 +213,7 @@
     gameState = 'playing';
     startOverlay.classList.add('hidden');
     stageClearOverlay.classList.add('hidden');
+    if (stageFailedOverlay) stageFailedOverlay.classList.add('hidden');
     gameoverOverlay.classList.add('hidden');
     updateHUD();
   }
@@ -295,6 +336,8 @@
         spawnParticles(activeArrow.x, activeArrow.y, '#00f0ff', 12);
       }
 
+      stageHits++;
+      stageScore += points;
       score += points;
       spawnScorePopup(activeArrow.x, activeArrow.y - 10, text, color);
       activeArrow = null;
@@ -314,26 +357,83 @@
 
   function checkQuiverEmpty() {
     if (arrows <= 0 && !activeArrow) {
-      // Stage completed or Game Over
-      if (stage < TOTAL_STAGES) {
-        setTimeout(() => {
-          gameState = 'stage_clear';
-          stageClearOverlay.classList.remove('hidden');
-        }, 500);
+      const minHits = MIN_HITS_TO_PASS[stage] || 3;
+      const minScore = MIN_STAGE_SCORE[stage] || 75;
+      const stagePassed = stageHits >= minHits && stageScore >= minScore;
+      if (stagePassed) {
+        if (stage < TOTAL_STAGES) {
+          setTimeout(() => {
+            gameState = 'stage_clear';
+            playSound('stage_clear');
+            if (stageClearScore) stageClearScore.textContent = stageScore;
+            if (stageClearHits) stageClearHits.textContent = stageHits;
+            if (stageClearTotal) stageClearTotal.textContent = score;
+            stageClearOverlay.classList.remove('hidden');
+            if (nextStageBtn) nextStageBtn.focus();
+            try {
+              if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                  type: 'ARCADEVERSE_GAME_SCORE',
+                  score: score
+                }, '*');
+              }
+            } catch (_) {}
+          }, 500);
+        } else {
+          setTimeout(() => {
+            triggerGameOver(true);
+          }, 500);
+        }
       } else {
         setTimeout(() => {
-          triggerGameOver();
+          gameState = 'stage_failed';
+          playSound('stage_failed');
+          if (stageFailedScore) stageFailedScore.textContent = stageScore;
+          if (stageFailedHits) stageFailedHits.textContent = stageHits;
+          if (stageFailedReq) stageFailedReq.textContent = `${minHits} hits / ${minScore} pts`;
+          if (stageFailedOverlay) stageFailedOverlay.classList.remove('hidden');
+          if (retryStageBtn) retryStageBtn.focus();
         }, 500);
       }
     }
   }
 
-  function triggerGameOver() {
+  function triggerGameOver(isVictory = false) {
     gameState = 'gameover';
     finalScore.textContent = score;
     finalBullseyes.textContent = bullseyesCount;
     finalStreak.textContent = `${maxCombo}x`;
+    const titleEl = gameoverOverlay.querySelector('.overlay-title');
+    const descEl = gameoverOverlay.querySelector('.overlay-desc');
+    if (isVictory) {
+      if (titleEl) {
+        titleEl.textContent = 'Range Champion!';
+        titleEl.className = 'overlay-title win-text';
+      }
+      if (descEl) descEl.textContent = 'All stages cleared with precision!';
+      playSound('bullseye');
+    } else {
+      if (titleEl) {
+        titleEl.textContent = 'Quiver Depleted';
+        titleEl.className = 'overlay-title gameover-text';
+      }
+      if (descEl) descEl.textContent = 'Range challenge concluded.';
+    }
     gameoverOverlay.classList.remove('hidden');
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'ARCADEVERSE_GAME_OVER',
+          score: score,
+          details: {
+            score: score,
+            stagesCompleted: isVictory ? TOTAL_STAGES : Math.max(0, stage - 1),
+            bullseyes: bullseyesCount,
+            maxStreak: maxCombo
+          }
+        }, '*');
+      }
+    } catch (_) {}
   }
 
   function update() {
@@ -544,6 +644,15 @@
     bullseyesCount = 0;
     combo = 0;
     maxCombo = 0;
+    stageHits = 0;
+    stageScore = 0;
+    const titleEl = gameoverOverlay.querySelector('.overlay-title');
+    const descEl = gameoverOverlay.querySelector('.overlay-desc');
+    if (titleEl) {
+      titleEl.textContent = 'Quiver Depleted';
+      titleEl.className = 'overlay-title gameover-text';
+    }
+    if (descEl) descEl.textContent = 'Range challenge concluded.';
     initStage(1);
   });
 
@@ -552,12 +661,27 @@
     bullseyesCount = 0;
     combo = 0;
     maxCombo = 0;
+    stageHits = 0;
+    stageScore = 0;
+    const titleEl = gameoverOverlay.querySelector('.overlay-title');
+    const descEl = gameoverOverlay.querySelector('.overlay-desc');
+    if (titleEl) {
+      titleEl.textContent = 'Quiver Depleted';
+      titleEl.className = 'overlay-title gameover-text';
+    }
+    if (descEl) descEl.textContent = 'Range challenge concluded.';
     initStage(1);
   });
 
   nextStageBtn.addEventListener('click', () => {
     initStage(stage + 1);
   });
+
+  if (retryStageBtn) {
+    retryStageBtn.addEventListener('click', () => {
+      initStage(stage);
+    });
+  }
 
   soundBtn.addEventListener('click', () => {
     soundEnabled = !soundEnabled;
