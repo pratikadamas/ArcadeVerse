@@ -355,3 +355,30 @@ kbd {
   font-weight: 700;
   font-size: 0.85rem;
 }
+
+@media (max-width: 620px) {
+  body {
+    padding: 6px;
+  }
+
+  .game-container {
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .scoreboard-bar {
+    gap: 6px;
+  }
+
+  .score-card {
+    padding: 4px 6px;
+  }
+
+  .score-card .value {
+    font-size: 0.85rem;
+  }
+
+  .flight-btn {
+    height: 42px;
+  }
+}
