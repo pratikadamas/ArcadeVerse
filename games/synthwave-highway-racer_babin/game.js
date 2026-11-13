@@ -22,6 +22,26 @@
 
   // Audio Synth
   let audioCtx = null;
+  const activeNodes = new Set();
+
+  function trackNode(osc) {
+    activeNodes.add(osc);
+    osc.onended = () => {
+      activeNodes.delete(osc);
+    };
+    return osc;
+  }
+
+  function stopAllAudio() {
+    activeNodes.forEach(node => {
+      try {
+        node.stop();
+        node.disconnect();
+      } catch (_) {}
+    });
+    activeNodes.clear();
+  }
+
   function initAudio() {
     if (!audioCtx) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -42,6 +62,7 @@
       gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
+      trackNode(osc);
       osc.start();
       osc.stop(audioCtx.currentTime + duration);
     } catch (_) {}
@@ -84,6 +105,7 @@
   let lastBatterySpawn = 0;
 
   function resetGame() {
+    stopAllAudio();
     distance = 0;
     speed = 120;
     nitro = 100;
@@ -151,6 +173,7 @@
 
   function gameOver() {
     isRunning = false;
+    stopAllAudio();
     const finalDist = Math.floor(distance / 10);
     if (finalDist > bestDist) {
       bestDist = finalDist;
@@ -402,6 +425,12 @@
   rulesBtn.addEventListener('click', () => rulesModal.classList.add('active'));
   closeRulesBtn.addEventListener('click', () => rulesModal.classList.remove('active'));
   rulesConfirmBtn.addEventListener('click', () => rulesModal.classList.remove('active'));
+
+  window.addEventListener('message', (e) => {
+    if (e.data && (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE')) {
+      stopAllAudio();
+    }
+  });
 
   render();
   loop();

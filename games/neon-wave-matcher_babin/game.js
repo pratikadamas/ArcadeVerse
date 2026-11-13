@@ -40,6 +40,7 @@
   let audioCtx = null;
   let activeOsc = null;
   let activeGain = null;
+  const activeNodes = new Set();
   let soundEnabled = localStorage.getItem('neon-wave-sound') !== 'false';
 
   function initAudio() {
@@ -50,6 +51,25 @@
     if (audioCtx && audioCtx.state === 'suspended') {
       audioCtx.resume();
     }
+  }
+
+  function trackNode(osc) {
+    activeNodes.add(osc);
+    osc.onended = () => {
+      activeNodes.delete(osc);
+    };
+    return osc;
+  }
+
+  function stopAllAudio() {
+    stopDrone();
+    activeNodes.forEach(node => {
+      try {
+        node.stop();
+        node.disconnect();
+      } catch (_) {}
+    });
+    activeNodes.clear();
   }
 
   function startDrone() {
@@ -64,6 +84,7 @@
       activeGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
       activeOsc.connect(activeGain);
       activeGain.connect(audioCtx.destination);
+      trackNode(activeOsc);
       activeOsc.start();
     } catch (_) {}
   }
@@ -78,6 +99,7 @@
   function stopDrone() {
     if (activeOsc) {
       try {
+        activeNodes.delete(activeOsc);
         activeOsc.stop();
         activeOsc.disconnect();
       } catch (_) {}
@@ -96,7 +118,7 @@
       soundIconOn.classList.add('hidden');
       soundIconOff.classList.remove('hidden');
       soundBtn.setAttribute('aria-label', 'Unmute Sound');
-      stopDrone();
+      stopAllAudio();
     }
   }
 
@@ -117,6 +139,7 @@
           gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.25);
           osc.connect(gain);
           gain.connect(audioCtx.destination);
+          trackNode(osc);
           osc.start(now + idx * 0.06);
           osc.stop(now + idx * 0.06 + 0.25);
         });
@@ -130,6 +153,7 @@
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.48);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
+        trackNode(osc);
         osc.start(now);
         osc.stop(now + 0.48);
       }
@@ -170,6 +194,7 @@
   }
 
   function resetGame() {
+    stopAllAudio();
     score = 0;
     currentSignal = 1;
     signalsDecrypted = 0;
@@ -254,7 +279,7 @@
 
   function triggerGameOver() {
     gameState = 'gameover';
-    stopDrone();
+    stopAllAudio();
     playSound('fail');
     if (timerInterval) clearInterval(timerInterval);
 
@@ -391,6 +416,12 @@
 
   closeHelpBtn.addEventListener('click', () => {
     instructionsModal.classList.add('hidden');
+  });
+
+  window.addEventListener('message', (e) => {
+    if (e.data && (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE')) {
+      stopAllAudio();
+    }
   });
 
   // Initialize

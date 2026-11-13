@@ -12,6 +12,7 @@
   const Sound = {
     ctx: null,
     muted: false,
+    activeNodes: new Set(),
 
     init() {
       try {
@@ -23,6 +24,27 @@
         // AudioContext not available
       }
       this.muted = localStorage.getItem('cosmic_surge_muted') === 'true';
+    },
+
+    trackNode(osc) {
+      if (!this.activeNodes) this.activeNodes = new Set();
+      this.activeNodes.add(osc);
+      osc.onended = () => {
+        if (this.activeNodes) this.activeNodes.delete(osc);
+      };
+      return osc;
+    },
+
+    stopAll() {
+      if (this.activeNodes) {
+        this.activeNodes.forEach(node => {
+          try {
+            node.stop();
+            node.disconnect();
+          } catch (_) {}
+        });
+        this.activeNodes.clear();
+      }
     },
 
     resume() {
@@ -47,6 +69,7 @@
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start(now);
       osc.stop(now + 0.1);
     },
@@ -67,6 +90,7 @@
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start(now);
       osc.stop(now + 0.15);
     },
@@ -87,6 +111,7 @@
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start(now);
       osc.stop(now + 0.35);
     },
@@ -108,6 +133,7 @@
 
         osc.connect(gain);
         gain.connect(this.ctx.destination);
+        this.trackNode(osc);
         osc.start(now);
         osc.stop(now + 0.1);
       });
@@ -129,6 +155,7 @@
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start(now);
       osc.stop(now + 0.7);
     }
@@ -383,6 +410,7 @@
   // --- Game Loop Management ---
   function startGame() {
     Sound.init();
+    Sound.stopAll();
     mode = GameMode.PLAYING;
     score = 0;
     wave = 1;
@@ -417,6 +445,7 @@
 
   function gameOver() {
     mode = GameMode.GAMEOVER;
+    Sound.stopAll();
     Sound.explode();
     screenShake = 22;
     addExplosion(ship.x, ship.y, '#f43f5e', 45, 7);
@@ -1051,10 +1080,19 @@
     // Audio Toggle
     btnSound.addEventListener('click', () => {
       Sound.muted = !Sound.muted;
+      if (Sound.muted) {
+        Sound.stopAll();
+      }
       localStorage.setItem('cosmic_surge_muted', Sound.muted ? 'true' : 'false');
       if (soundIcon) {
         soundIcon.setAttribute('data-lucide', Sound.muted ? 'volume-x' : 'volume-2');
         if (window.lucide) lucide.createIcons();
+      }
+    });
+
+    window.addEventListener('message', (e) => {
+      if (e.data && (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE')) {
+        Sound.stopAll();
       }
     });
 
