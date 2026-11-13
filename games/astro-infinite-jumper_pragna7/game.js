@@ -201,7 +201,7 @@
         if (player.x + player.w < 0) player.x = W;
         if (player.x > W) player.x = -player.w;
 
-        let oldBottom = player.y + player.h;
+        const prevBottom = player.y + player.h;
 
         player.vy += .34 * dt;
 
@@ -209,8 +209,11 @@
             player.rocket -= dt;
             player.vy = Math.min(player.vy, -13.5);
         }
+        player.vy = Math.min(player.vy, 14);
 
         player.y += player.vy * dt;
+
+        const currBottom = player.y + player.h;
 
         platforms.forEach(p => {
             if (!p.alive) return;
@@ -223,8 +226,8 @@
 
             if (
                 player.vy > 0 &&
-                oldBottom <= p.y + 4 &&
-                player.y + player.h >= p.y &&
+                prevBottom <= p.y + 6 &&
+                currBottom >= p.y &&
                 player.x + player.w > p.x &&
                 player.x < p.x + p.w
             ) {
