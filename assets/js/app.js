@@ -1678,6 +1678,23 @@ document.addEventListener("DOMContentLoaded", () => {
   let iframeLoadTimeout = null;
   let iframeLoadSucceeded = false;
 
+  /**
+   * Constructs an isolated game iframe URL with ?gameId= query parameter
+   * for namespaced storage isolation (#493, #824).
+   * @param {Object|string} gameObj - Game object from registry or path string
+   * @returns {string} Fully qualified isolated URL
+   */
+  function buildIsolatedGameUrl(gameObj) {
+    if (!gameObj) return "";
+    const rawPath = typeof gameObj === "string" ? gameObj : (gameObj.path || "");
+    const gameId = typeof gameObj === "object" && gameObj !== null ? gameObj.id : "";
+    if (!rawPath) return "";
+    if (gameId && !rawPath.includes("gameId=")) {
+      return rawPath + (rawPath.includes("?") ? "&" : "?") + "gameId=" + encodeURIComponent(gameId);
+    }
+    return rawPath;
+  }
+
   function resetIframeBoundary() {
     if (iframeLoadTimeout) {
       clearTimeout(iframeLoadTimeout);
@@ -1730,7 +1747,7 @@ document.addEventListener("DOMContentLoaded", () => {
         resetIframeBoundary();
         iframeLoadSucceeded = false;
         if (gameIframe && gameObj) {
-          gameIframe.src = gameObj.path;
+          gameIframe.src = buildIsolatedGameUrl(gameObj);
           startIframeTimeout(gameObj);
         }
       });
@@ -1978,11 +1995,8 @@ document.addEventListener("DOMContentLoaded", () => {
     announceToScreenReader(`Launching ${game.title}. Category: ${game.category}. Built by ${game.author}.`);
     startIframeTimeout(game);
 
-    // Storage Isolation Bridge: Pass gameId via URL parameter so SDK attaches namespaced proxy
-    let iframeUrl = game.path;
-    if (iframeUrl && !iframeUrl.includes("gameId=")) {
-      iframeUrl += (iframeUrl.includes("?") ? "&" : "?") + "gameId=" + encodeURIComponent(game.id);
-    }
+    // Storage Isolation Bridge: Pass gameId via URL parameter so SDK attaches namespaced proxy (#493, #824)
+    const iframeUrl = buildIsolatedGameUrl(game);
     gameIframe.src = iframeUrl;
     newTabBtn.href = game.path;
 
@@ -2313,11 +2327,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (reloadBtn) {
     reloadBtn.addEventListener("click", () => {
-      if (gameIframe.src) {
-        const currentSrc = gameIframe.src;
+      const targetSrc = (activeGame && buildIsolatedGameUrl(activeGame)) || gameIframe.src;
+      if (targetSrc) {
         gameIframe.src = "";
         setTimeout(() => {
-          gameIframe.src = currentSrc;
+          gameIframe.src = targetSrc;
         }, 50);
       }
     });
