@@ -1984,7 +1984,9 @@ document.addEventListener("DOMContentLoaded", () => {
       iframeUrl += (iframeUrl.includes("?") ? "&" : "?") + "gameId=" + encodeURIComponent(game.id);
     }
     gameIframe.src = iframeUrl;
-    newTabBtn.href = game.path;
+    if (newTabBtn) {
+      newTabBtn.href = iframeUrl;
+    }
 
     updateModalFavoriteButton(isFavorite(game.id));
     if (window.SoundEngine && typeof window.SoundEngine.updateUI === "function") {
@@ -2169,6 +2171,9 @@ document.addEventListener("DOMContentLoaded", () => {
     isGameSessionActive = false;
     gameModal.classList.remove("active");
     gameModal.setAttribute("aria-hidden", "true");
+    if (newTabBtn) {
+      newTabBtn.href = "#";
+    }
 
     // Standardized Game Lifecycle Bridge: Dispatch teardown & pause events before unmounting iframe
     try {
