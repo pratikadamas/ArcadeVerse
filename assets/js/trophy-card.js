@@ -23,6 +23,9 @@
   const TrophyCardEngine = {
     canvas: null,
     ctx: null,
+    previouslyFocusedElement: null,
+    handleKeydown: null,
+    isExporting: false,
 
     init() {
       const dpr = Math.max(window.devicePixelRatio || 1, 2);
@@ -442,21 +445,59 @@
           const avatarUrl = trigger.dataset.avatar || '';
           const rank = trigger.dataset.rank || 'Verified Contributor';
           const badge = trigger.dataset.badge || 'NSOC 2026';
-          this.showModal({ gameTitle: game, score, playerName: player, handle, avatarUrl, rank, badge });
+          this.showModal({ gameTitle: game, score, playerName: player, handle, avatarUrl, rank, badge }, trigger);
         }
       });
     },
 
-    async showModal(data) {
+    closeModal() {
+      const modal = document.getElementById('trophy-card-modal');
+      if (!modal || !modal.classList.contains('active')) return;
+      modal.classList.remove('active');
+
+      if (this.handleKeydown) {
+        document.removeEventListener('keydown', this.handleKeydown);
+        this.handleKeydown = null;
+      }
+
+      this.isExporting = false;
+      const allBtns = modal.querySelectorAll('.btn-trophy');
+      allBtns.forEach((btn) => {
+        btn.disabled = false;
+        btn.style.pointerEvents = '';
+        btn.style.opacity = '';
+      });
+
+      const btnDownload = modal.querySelector('#btn-download-trophy');
+      if (btnDownload) btnDownload.textContent = 'Download Certificate (PNG)';
+      const btnCopy = modal.querySelector('#btn-copy-trophy');
+      if (btnCopy) btnCopy.textContent = 'Copy Certificate';
+      const btnPrint = modal.querySelector('#btn-print-trophy');
+      if (btnPrint) btnPrint.textContent = 'Print Certificate';
+
+      if (this.previouslyFocusedElement && typeof this.previouslyFocusedElement.focus === 'function') {
+        try {
+          this.previouslyFocusedElement.focus();
+        } catch (_) {}
+      }
+      this.previouslyFocusedElement = null;
+    },
+
+    async showModal(data, triggerEl) {
+      this.previouslyFocusedElement = triggerEl || document.activeElement;
+
       let modal = document.getElementById('trophy-card-modal');
       if (!modal) {
         modal = document.createElement('div');
         modal.id = 'trophy-card-modal';
         modal.className = 'trophy-modal';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-labelledby', 'trophy-modal-title');
         modal.innerHTML = `
           <div class="trophy-modal-content">
             <div class="trophy-modal-header">
-              <h3 class="trophy-modal-title">Verified Achievement Certificate</h3>
+              <h3 id="trophy-modal-title" class="trophy-modal-title">Verified Achievement Certificate</h3>
               <button class="trophy-modal-close" aria-label="Close Certificate Modal">&times;</button>
             </div>
             <div class="trophy-card-preview-wrap">
@@ -475,12 +516,23 @@
         `;
         document.body.appendChild(modal);
 
-        modal.querySelector('.trophy-modal-close').addEventListener('click', () => {
-          modal.classList.remove('active');
-        });
+        const closeBtn = modal.querySelector('.trophy-modal-close');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', () => {
+            this.closeModal();
+          });
+        }
         modal.addEventListener('click', (e) => {
-          if (e.target === modal) modal.classList.remove('active');
+          if (e.target === modal) this.closeModal();
         });
+      } else {
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-labelledby', 'trophy-modal-title');
+        const titleEl = modal.querySelector('.trophy-modal-title');
+        if (titleEl && !titleEl.id) {
+          titleEl.id = 'trophy-modal-title';
+        }
       }
 
       const img = modal.querySelector('#trophy-preview-img');
@@ -489,6 +541,54 @@
       if (img) img.style.display = 'none';
 
       modal.classList.add('active');
+
+      // Bind Escape key dismissal & Tab focus cycling
+      if (this.handleKeydown) {
+        document.removeEventListener('keydown', this.handleKeydown);
+      }
+      this.handleKeydown = (e) => {
+        if (!modal.classList.contains('active')) return;
+
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          this.closeModal();
+          return;
+        }
+
+        if (e.key === 'Tab') {
+          const focusable = modal.querySelectorAll(
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          );
+          if (focusable.length === 0) return;
+
+          const firstEl = focusable[0];
+          const lastEl = focusable[focusable.length - 1];
+
+          if (e.shiftKey) {
+            if (document.activeElement === firstEl || !modal.contains(document.activeElement)) {
+              e.preventDefault();
+              lastEl.focus();
+            }
+          } else {
+            if (document.activeElement === lastEl || !modal.contains(document.activeElement)) {
+              e.preventDefault();
+              firstEl.focus();
+            }
+          }
+        }
+      };
+      document.addEventListener('keydown', this.handleKeydown);
+
+      // Set initial focus to close button
+      const closeBtn = modal.querySelector('.trophy-modal-close');
+      if (closeBtn) {
+        setTimeout(() => {
+          if (modal.classList.contains('active')) {
+            closeBtn.focus();
+          }
+        }, 50);
+      }
 
       const dataUrl = await this.generateCard(data);
 
@@ -499,30 +599,103 @@
       if (spinner) spinner.style.display = 'none';
 
       const btnDownload = modal.querySelector('#btn-download-trophy');
-      btnDownload.onclick = () => this.downloadCard(data);
-
       const btnPrint = modal.querySelector('#btn-print-trophy');
+      const btnCopy = modal.querySelector('#btn-copy-trophy');
+
+      if (btnDownload) {
+        btnDownload.onclick = async () => {
+          if (this.isExporting) return;
+          this.isExporting = true;
+          btnDownload.disabled = true;
+          btnDownload.style.pointerEvents = 'none';
+          btnDownload.style.opacity = '0.7';
+          const originalText = btnDownload.textContent;
+          btnDownload.textContent = 'Downloading...';
+          try {
+            await this.downloadCard(data);
+            btnDownload.textContent = 'Certificate Downloaded!';
+            setTimeout(() => {
+              btnDownload.textContent = originalText;
+              btnDownload.disabled = false;
+              btnDownload.style.pointerEvents = '';
+              btnDownload.style.opacity = '';
+              this.isExporting = false;
+            }, 1200);
+          } catch (err) {
+            console.error('[TrophyCard] Download failed:', err);
+            btnDownload.textContent = originalText;
+            btnDownload.disabled = false;
+            btnDownload.style.pointerEvents = '';
+            btnDownload.style.opacity = '';
+            this.isExporting = false;
+          }
+        };
+      }
+
       if (btnPrint) {
         btnPrint.onclick = () => {
+          if (this.isExporting) return;
+          this.isExporting = true;
+          btnPrint.disabled = true;
+          btnPrint.style.pointerEvents = 'none';
+          btnPrint.style.opacity = '0.7';
           document.body.classList.add('printing-trophy');
           window.addEventListener('afterprint', () => {
             document.body.classList.remove('printing-trophy');
+            btnPrint.disabled = false;
+            btnPrint.style.pointerEvents = '';
+            btnPrint.style.opacity = '';
+            this.isExporting = false;
           }, { once: true });
+          setTimeout(() => {
+            document.body.classList.remove('printing-trophy');
+            btnPrint.disabled = false;
+            btnPrint.style.pointerEvents = '';
+            btnPrint.style.opacity = '';
+            this.isExporting = false;
+          }, 3000);
           window.print();
         };
       }
 
-      const btnCopy = modal.querySelector('#btn-copy-trophy');
-      btnCopy.onclick = async () => {
-        try {
-          const blob = await (await fetch(dataUrl)).blob();
-          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-          btnCopy.textContent = 'Certificate Copied to Clipboard!';
-          setTimeout(() => { btnCopy.textContent = 'Copy Certificate'; }, 2000);
-        } catch (_) {
-          this.downloadCard(data);
-        }
-      };
+      if (btnCopy) {
+        btnCopy.onclick = async () => {
+          if (this.isExporting) return;
+          this.isExporting = true;
+          btnCopy.disabled = true;
+          btnCopy.style.pointerEvents = 'none';
+          btnCopy.style.opacity = '0.7';
+          const originalText = btnCopy.textContent;
+          btnCopy.textContent = 'Copying...';
+          try {
+            const targetDataUrl = dataUrl || (await this.generateCard(data));
+            const blob = await (await fetch(targetDataUrl)).blob();
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+            btnCopy.textContent = 'Certificate Copied to Clipboard!';
+            setTimeout(() => {
+              btnCopy.textContent = originalText;
+              btnCopy.disabled = false;
+              btnCopy.style.pointerEvents = '';
+              btnCopy.style.opacity = '';
+              this.isExporting = false;
+            }, 2000);
+          } catch (_) {
+            try {
+              await this.downloadCard(data);
+              btnCopy.textContent = 'Downloaded (Clipboard Blocked)';
+            } catch (e) {
+              btnCopy.textContent = originalText;
+            }
+            setTimeout(() => {
+              btnCopy.textContent = originalText;
+              btnCopy.disabled = false;
+              btnCopy.style.pointerEvents = '';
+              btnCopy.style.opacity = '';
+              this.isExporting = false;
+            }, 2000);
+          }
+        };
+      }
     }
   };
 
