@@ -142,6 +142,22 @@
       osc.start(now);
       osc.stop(now + 0.8);
     }
+
+    playSlice() {
+      if (!this.enabled || !this.ctx) return;
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(980, now);
+      osc.frequency.exponentialRampToValueAtTime(240, now + 0.14);
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.14);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.14);
+    }
   }
 
   // --- GAME STATE & ENTITIES ---
@@ -206,10 +222,80 @@
   let enemies = [];
   let particles = [];
   let floatingTexts = [];
+  let fruits = [];
+  let slicedHalves = [];
   let boss = null;
   let waveTimer = 0;
+  let fruitTimer = 0;
   let waveEnemiesSpawned = 0;
   let waveEnemiesTotal = 8;
+  let swingCounter = 0;
+  let isPointerDown = false;
+
+  // --- SLICE TRAJECTORY TRACKER & 3-POINT MOVING AVERAGE SMOOTHING ---
+  const sliceTracker = {
+    history: [],
+    lastCutAngle: 0,
+    lastImpulse: 3.5,
+    minDistance: 15 // Discard slice events where travel distance is under 15 pixels
+  };
+
+  function addPointerPoint(x, y) {
+    const now = performance.now();
+    sliceTracker.history.push({ x, y, time: now });
+    // Retain recent points within 150ms window, at most 12 points
+    while (sliceTracker.history.length > 12 || (sliceTracker.history.length > 0 && now - sliceTracker.history[0].time > 150)) {
+      sliceTracker.history.shift();
+    }
+  }
+
+  function computeSmoothedTrajectory() {
+    const pts = sliceTracker.history;
+    if (pts.length < 3) return null;
+
+    // Apply historical 3-point moving average smoothing
+    const smoothed = [];
+    for (let i = 0; i < pts.length; i++) {
+      if (i === 0) {
+        smoothed.push({ x: pts[0].x, y: pts[0].y, time: pts[0].time });
+      } else if (i === 1) {
+        smoothed.push({ x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2, time: pts[1].time });
+      } else {
+        smoothed.push({
+          x: (pts[i - 2].x + pts[i - 1].x + pts[i].x) / 3,
+          y: (pts[i - 2].y + pts[i - 1].y + pts[i].y) / 3,
+          time: pts[i].time
+        });
+      }
+    }
+
+    const first = smoothed[0];
+    const last = smoothed[smoothed.length - 1];
+    const dx = last.x - first.x;
+    const dy = last.y - first.y;
+    const travelDistance = Math.hypot(dx, dy);
+
+    // Discard slice events where travel distance is under 15 pixels
+    if (travelDistance < sliceTracker.minDistance) {
+      return null;
+    }
+
+    // Direction unit vector and true cutting angle
+    const ux = dx / travelDistance;
+    const uy = dy / travelDistance;
+    const cutAngle = Math.atan2(uy, ux);
+    const impulseMagnitude = Math.min(8.0, Math.max(3.5, travelDistance * 0.12));
+
+    return {
+      dx,
+      dy,
+      distance: travelDistance,
+      ux,
+      uy,
+      cutAngle,
+      impulseMagnitude
+    };
+  }
 
   function resizeCanvas() {
     canvas.width = canvas.parentElement.clientWidth;
@@ -236,7 +322,8 @@
     }
     if (e.code === 'Space') {
       e.preventDefault();
-      executeSlash();
+      const traj = computeSmoothedTrajectory();
+      executeSlash(traj);
     }
     if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
       executeDash();
@@ -257,13 +344,25 @@
     const rect = canvas.getBoundingClientRect();
     mousePos.x = e.clientX - rect.left;
     mousePos.y = e.clientY - rect.top;
+    addPointerPoint(mousePos.x, mousePos.y);
+
+    if (isPointerDown && state.running && !state.paused) {
+      const traj = computeSmoothedTrajectory();
+      if (traj) {
+        executeSlash(traj);
+        sliceTracker.history = sliceTracker.history.slice(-2);
+      }
+    }
   });
 
   canvas.addEventListener('mousedown', (e) => {
     sound.init();
     if (!state.running || state.paused) return;
     if (e.button === 0) {
-      executeSlash();
+      isPointerDown = true;
+      addPointerPoint(mousePos.x, mousePos.y);
+      const traj = computeSmoothedTrajectory();
+      executeSlash(traj);
     } else if (e.button === 2) {
       e.preventDefault();
       executeDash();
@@ -271,6 +370,43 @@
       e.preventDefault();
       toggleBulletTime();
     }
+  });
+
+  window.addEventListener('mouseup', () => {
+    isPointerDown = false;
+  });
+
+  // Touch Drag Slicing Support
+  canvas.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 0) {
+      sound.init();
+      const rect = canvas.getBoundingClientRect();
+      mousePos.x = e.touches[0].clientX - rect.left;
+      mousePos.y = e.touches[0].clientY - rect.top;
+      addPointerPoint(mousePos.x, mousePos.y);
+      isPointerDown = true;
+    }
+  }, { passive: true });
+
+  canvas.addEventListener('touchmove', (e) => {
+    if (e.touches.length > 0) {
+      const rect = canvas.getBoundingClientRect();
+      mousePos.x = e.touches[0].clientX - rect.left;
+      mousePos.y = e.touches[0].clientY - rect.top;
+      addPointerPoint(mousePos.x, mousePos.y);
+
+      if (state.running && !state.paused) {
+        const traj = computeSmoothedTrajectory();
+        if (traj) {
+          executeSlash(traj);
+          sliceTracker.history = sliceTracker.history.slice(-2);
+        }
+      }
+    }
+  }, { passive: true });
+
+  canvas.addEventListener('touchend', () => {
+    isPointerDown = false;
   });
 
   canvas.addEventListener('contextmenu', e => e.preventDefault());
@@ -295,7 +431,10 @@
     bindTouch('btn-down', () => { keys.s = true; }, () => { keys.s = false; });
     bindTouch('btn-left', () => { keys.a = true; }, () => { keys.a = false; });
     bindTouch('btn-right', () => { keys.d = true; }, () => { keys.d = false; });
-    bindTouch('touch-slash', () => executeSlash());
+    bindTouch('touch-slash', () => {
+      const traj = computeSmoothedTrajectory();
+      executeSlash(traj);
+    });
     bindTouch('touch-dash', () => executeDash());
   }
   setupTouch();
@@ -341,11 +480,31 @@
     }
   }
 
-  function executeSlash() {
+  function executeSlash(trajectory = null) {
     if (player.isSwinging) return;
     player.isSwinging = true;
     player.swingProgress = 0;
-    player.swingDir *= -1;
+    swingCounter++;
+
+    if (trajectory) {
+      player.angle = trajectory.cutAngle;
+      sliceTracker.lastCutAngle = trajectory.cutAngle;
+      sliceTracker.lastImpulse = trajectory.impulseMagnitude;
+
+      // Determine swingDir so blade sweep matches true swipe motion vector
+      const rx = mousePos.x - player.x;
+      const ry = mousePos.y - player.y;
+      const cross = rx * trajectory.uy - ry * trajectory.ux;
+      player.swingDir = cross >= 0 ? 1 : -1;
+    } else {
+      player.angle = Math.atan2(mousePos.y - player.y, mousePos.x - player.x);
+      sliceTracker.lastCutAngle = player.angle;
+      sliceTracker.lastImpulse = 3.5;
+      player.swingDir = (player.swingDir === 1 ? -1 : 1);
+    }
+
+    // Reset blade trail for this swing to prevent cross-swing connection artifacts
+    player.trail = [];
     sound.playSlash();
   }
 
@@ -436,6 +595,176 @@
       c.textAlign = 'center';
       c.fillText(this.text, this.x, this.y);
       c.restore();
+    }
+  }
+
+  // --- SLICED OBJECTS & CYBER TARGETS ---
+  class SlicedHalf {
+    constructor(x, y, radius, color, type, side, cutAngle, uBladeX, uBladeY, forwardImpulse) {
+      this.x = x;
+      this.y = y;
+      this.radius = radius;
+      this.color = color;
+      this.type = type;
+      this.side = side; // -1 for left half, +1 for right half
+      this.cutAngle = cutAngle;
+      this.rot = cutAngle;
+      this.rotSpeed = side * (0.09 + Math.random() * 0.05);
+
+      // Perpendicular split vector normal to true blade motion vector:
+      // Normal vector is (-uBladeY * side, uBladeX * side)
+      const perpX = -uBladeY * side;
+      const perpY = uBladeX * side;
+
+      // Apply directional impulse matching true blade motion vector + perpendicular split drift
+      const forwardMag = forwardImpulse || 3.5;
+      const splitMag = 4.2 + Math.random() * 1.2;
+
+      this.vx = uBladeX * forwardMag + perpX * splitMag;
+      this.vy = uBladeY * forwardMag + perpY * splitMag;
+
+      this.life = 45;
+      this.maxLife = 45;
+    }
+
+    update(dt) {
+      this.x += this.vx * dt;
+      this.y += this.vy * dt;
+      this.vx *= 0.95;
+      this.vy *= 0.95;
+      this.rot += this.rotSpeed * dt;
+      this.life -= dt;
+      return this.life > 0;
+    }
+
+    draw(c) {
+      const alpha = Math.max(0, this.life / this.maxLife);
+      c.save();
+      c.globalAlpha = alpha;
+      c.translate(this.x, this.y);
+      c.rotate(this.rot);
+
+      c.strokeStyle = this.color;
+      c.fillStyle = '#0f172a';
+      c.lineWidth = 2.5;
+      c.shadowColor = this.color;
+      c.shadowBlur = 14;
+
+      c.beginPath();
+      if (this.type === 'turret') {
+        if (this.side === -1) {
+          c.rect(-this.radius, -this.radius, this.radius, this.radius * 2);
+        } else {
+          c.rect(0, -this.radius, this.radius, this.radius * 2);
+        }
+      } else {
+        // Semi-circular half for drones, fruits, and cyber cores
+        if (this.side === -1) {
+          c.arc(0, 0, this.radius, Math.PI * 0.5, Math.PI * 1.5);
+          c.closePath();
+        } else {
+          c.arc(0, 0, this.radius, -Math.PI * 0.5, Math.PI * 0.5);
+          c.closePath();
+        }
+      }
+      c.fill();
+      c.stroke();
+
+      // Glowing neon severance cut line at boundary
+      c.beginPath();
+      c.strokeStyle = '#00f3ff';
+      c.lineWidth = 3;
+      c.shadowColor = '#00f3ff';
+      c.shadowBlur = 16;
+      c.moveTo(0, -this.radius);
+      c.lineTo(0, this.radius);
+      c.stroke();
+
+      c.restore();
+    }
+  }
+
+  const FRUIT_VARIANTS = [
+    { name: 'NEON MELON', color: '#00ff88', radius: 18 },
+    { name: 'CYBER PITAYA', color: '#ff007f', radius: 16 },
+    { name: 'GLITCH CITRUS', color: '#ffe600', radius: 15 },
+    { name: 'QUANTUM BERRY', color: '#00f3ff', radius: 14 }
+  ];
+
+  class CyberFruit {
+    constructor() {
+      const variant = FRUIT_VARIANTS[Math.floor(Math.random() * FRUIT_VARIANTS.length)];
+      this.label = variant.name;
+      this.color = variant.color;
+      this.radius = variant.radius;
+
+      // Launch trajectory across the arena from left or right edge
+      const fromLeft = Math.random() > 0.5;
+      this.x = fromLeft ? -20 : canvas.width + 20;
+      this.y = canvas.height * (0.35 + Math.random() * 0.35);
+      this.vx = fromLeft ? (2.8 + Math.random() * 2.2) : -(2.8 + Math.random() * 2.2);
+      this.vy = -(2.8 + Math.random() * 2.5);
+      this.gravity = 0.07;
+      this.rot = 0;
+      this.rotSpeed = (Math.random() - 0.5) * 0.08;
+    }
+
+    update(dt) {
+      this.x += this.vx * dt;
+      this.y += this.vy * dt;
+      this.vy += this.gravity * dt;
+      this.rot += this.rotSpeed * dt;
+      return this.y < canvas.height + 60 && this.x > -60 && this.x < canvas.width + 60;
+    }
+
+    draw(c) {
+      c.save();
+      c.translate(this.x, this.y);
+      c.rotate(this.rot);
+      c.strokeStyle = this.color;
+      c.lineWidth = 2.5;
+      c.fillStyle = '#0f172a';
+      c.shadowColor = this.color;
+      c.shadowBlur = 16;
+
+      c.beginPath();
+      c.arc(0, 0, this.radius, 0, Math.PI * 2);
+      c.fill();
+      c.stroke();
+
+      // Cyber geometric core ring
+      c.beginPath();
+      c.strokeStyle = '#ffffff';
+      c.lineWidth = 1.5;
+      c.arc(0, 0, this.radius * 0.5, 0, Math.PI * 2);
+      c.stroke();
+
+      c.restore();
+    }
+  }
+
+  function createSliceHalves(x, y, radius, color, type, cutAngle, forwardImpulse = 3.5) {
+    const uBladeX = Math.cos(cutAngle);
+    const uBladeY = Math.sin(cutAngle);
+
+    // Spawn 2 split halves: left (-1) and right (+1)
+    for (const side of [-1, 1]) {
+      slicedHalves.push(new SlicedHalf(x, y, radius, color, type, side, cutAngle, uBladeX, uBladeY, forwardImpulse));
+    }
+
+    sound.playSlice();
+
+    // Severance neon sparks along the cut axis
+    for (let i = -radius; i <= radius; i += 7) {
+      particles.push(new Particle(
+        x - uBladeY * (i * 0.7),
+        y + uBladeX * (i * 0.7),
+        uBladeX * 4 + (Math.random() - 0.5) * 4,
+        uBladeY * 4 + (Math.random() - 0.5) * 4,
+        '#00f3ff',
+        20,
+        3
+      ));
     }
   }
 
@@ -642,10 +971,13 @@
 
     bullets = [];
     enemies = [];
+    fruits = [];
+    slicedHalves = [];
     particles = [];
     floatingTexts = [];
     boss = null;
     waveTimer = 0;
+    fruitTimer = 0;
     waveEnemiesSpawned = 0;
     waveEnemiesTotal = 6;
 
@@ -781,7 +1113,10 @@
       const tipX = player.x + Math.cos(currentBladeAngle) * player.bladeLength;
       const tipY = player.y + Math.sin(currentBladeAngle) * player.bladeLength;
 
-      player.trail.push({ x: tipX, y: tipY, alpha: 1.0 });
+      player.trail.push({ x: tipX, y: tipY, alpha: 1.0, swingId: swingCounter });
+
+      const cutAngle = sliceTracker.lastCutAngle || currentBladeAngle;
+      const impulse = sliceTracker.lastImpulse || 3.5;
 
       // Check blade intersection with incoming enemy bullets
       bullets.forEach(b => {
@@ -821,6 +1156,57 @@
         }
       });
 
+      // Direct Melee Slicing of Enemies
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const e = enemies[i];
+        const dToPlayer = Math.hypot(e.x - player.x, e.y - player.y);
+        if (dToPlayer <= player.bladeLength + e.radius + 10) {
+          const eAngle = Math.atan2(e.y - player.y, e.x - player.x);
+          let diff = Math.abs(eAngle - currentBladeAngle);
+          while (diff > Math.PI) diff = Math.PI * 2 - diff;
+
+          if (diff < 0.65) {
+            e.hp -= 2;
+            sound.playHit();
+            state.cameraShake = 6;
+            if (e.hp <= 0) {
+              const pts = 300 * state.combo;
+              state.score += pts;
+              state.combo = Math.min(8, state.combo + 1);
+              state.comboTimer = 140;
+              floatingTexts.push(new FloatingText(`SLICED! +${pts}`, e.x, e.y, '#ffe600'));
+              createSliceHalves(e.x, e.y, e.radius, e.color, e.type, cutAngle, impulse);
+              enemies.splice(i, 1);
+              updateHUD();
+            }
+          }
+        }
+      }
+
+      // Slicing Cyber-Fruits / Bonus Holo-Targets
+      for (let i = fruits.length - 1; i >= 0; i--) {
+        const f = fruits[i];
+        const dToPlayer = Math.hypot(f.x - player.x, f.y - player.y);
+        if (dToPlayer <= player.bladeLength + f.radius + 12) {
+          const fAngle = Math.atan2(f.y - player.y, f.x - player.x);
+          let diff = Math.abs(fAngle - currentBladeAngle);
+          while (diff > Math.PI) diff = Math.PI * 2 - diff;
+
+          if (diff < 0.75) {
+            const pts = 500 * state.combo;
+            state.score += pts;
+            state.combo = Math.min(8, state.combo + 1);
+            state.comboTimer = 160;
+            sound.playCombo();
+            state.cameraShake = 8;
+            floatingTexts.push(new FloatingText(`${f.label} SLICE! +${pts}`, f.x, f.y, f.color));
+            createSliceHalves(f.x, f.y, f.radius, f.color, 'fruit', cutAngle, impulse);
+            fruits.splice(i, 1);
+            updateHUD();
+          }
+        }
+      }
+
       if (player.swingProgress >= player.swingDuration) {
         player.isSwinging = false;
       }
@@ -831,6 +1217,21 @@
       t.alpha -= 0.15 * dt;
       return t.alpha > 0;
     });
+
+    // Cyber Fruit Spawning
+    fruitTimer += dt;
+    if (fruitTimer >= 220) {
+      fruitTimer = 0;
+      if (fruits.length < 3) {
+        fruits.push(new CyberFruit());
+      }
+    }
+
+    // Update Fruits
+    fruits = fruits.filter(f => f.update(dt));
+
+    // Update Sliced Halves
+    slicedHalves = slicedHalves.filter(sh => sh.update(dt));
 
     // Wave Spawning
     waveTimer += dt;
@@ -858,6 +1259,7 @@
         state.score += 2500 * state.combo;
         sound.playCombo();
         floatingTexts.push(new FloatingText(`SENTINEL DESTROYED! +${2500 * state.combo}`, boss.x, boss.y, '#ffe600'));
+        createSliceHalves(boss.x, boss.y, boss.radius, boss.color, 'turret', sliceTracker.lastCutAngle || 0, 4.5);
         for (let i = 0; i < 40; i++) {
           particles.push(new Particle(boss.x, boss.y, (Math.random() - 0.5) * 15, (Math.random() - 0.5) * 15, '#ff007f', 45, 5));
         }
@@ -909,12 +1311,27 @@
               const pts = 250 * state.combo;
               state.score += pts;
               floatingTexts.push(new FloatingText(`+${pts}`, e.x, e.y, '#ffe600'));
+              createSliceHalves(e.x, e.y, e.radius, e.color, e.type, Math.atan2(b.vy, b.vx), 3.0);
               for (let p = 0; p < 18; p++) {
                 particles.push(new Particle(e.x, e.y, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, e.color, 25));
               }
               enemies.splice(i, 1);
               updateHUD();
             }
+            return false;
+          }
+        }
+
+        // Check collision with Cyber Fruits (if deflected by Player)
+        for (let i = fruits.length - 1; i >= 0; i--) {
+          const f = fruits[i];
+          if (Math.hypot(b.x - f.x, b.y - f.y) < f.radius + b.radius) {
+            const pts = 400 * state.combo;
+            state.score += pts;
+            floatingTexts.push(new FloatingText(`+${pts}`, f.x, f.y, f.color));
+            createSliceHalves(f.x, f.y, f.radius, f.color, 'fruit', Math.atan2(b.vy, b.vx), 3.0);
+            fruits.splice(i, 1);
+            updateHUD();
             return false;
           }
         }
@@ -951,6 +1368,12 @@
     // Draw Cyber Grid
     drawGrid();
 
+    // Draw Sliced Halves (Clean perpendicular split drift)
+    slicedHalves.forEach(sh => sh.draw(ctx));
+
+    // Draw Cyber Fruits
+    fruits.forEach(f => f.draw(ctx));
+
     // Draw Ghosts
     player.ghosts.forEach(g => {
       ctx.save();
@@ -964,20 +1387,22 @@
       ctx.restore();
     });
 
-    // Draw Blade Trail
+    // Draw Blade Trail with zero vector inversions
     if (player.trail.length > 1) {
       ctx.save();
       for (let i = 0; i < player.trail.length - 1; i++) {
         const p1 = player.trail[i];
         const p2 = player.trail[i + 1];
-        ctx.strokeStyle = '#00f3ff';
-        ctx.shadowColor = '#00f3ff';
-        ctx.shadowBlur = 18;
-        ctx.lineWidth = 6 * p1.alpha;
-        ctx.beginPath();
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p2.x, p2.y);
-        ctx.stroke();
+        if (p1.swingId === p2.swingId && Math.hypot(p2.x - p1.x, p2.y - p1.y) < 70) {
+          ctx.strokeStyle = '#00f3ff';
+          ctx.shadowColor = '#00f3ff';
+          ctx.shadowBlur = 18;
+          ctx.lineWidth = Math.max(1, 6 * p1.alpha);
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.stroke();
+        }
       }
       ctx.restore();
     }
