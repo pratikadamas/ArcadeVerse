@@ -13,107 +13,109 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const GAMES_DIR = path.join(ROOT_DIR, 'games');
 const REGISTRY_FILE = path.join(ROOT_DIR, 'assets', 'js', 'games-registry.js');
 
-// Known display name & email aliases to ensure 100% accurate attribution
-const KNOWN_PROFILES = {
-  debasmitabose0: {
-    name: "Debasmita Bose",
-    github: "DebasmitaBose0",
-    role: "Project Admin & Lead (NSOC '26)",
-    mechanicsBonus: 2,
-    platformPRs: 2,
-    qualityPRs: 0
-  },
-  babin123456: {
-    name: "Babin Bid",
-    github: "Babin123456",
-    role: "Arcade Developer (NSOC '26)",
-    mechanicsBonus: 2,
-    platformPRs: 29,
-    qualityPRs: 1
-  },
-  mistu7debnath: {
-    name: "Manisha Debnath",
-    github: "mistu7debnath",
-    role: "Contributor (NSOC '26)",
-    mechanicsBonus: 1,
-    platformPRs: 0,
-    qualityPRs: 0
-  },
-  joitapaul: {
-    name: "Joita Paul",
-    github: "joitapaul",
-    role: "Active Contributor (NSOC '26)",
-    mechanicsBonus: 0,
-    platformPRs: 0,
-    qualityPRs: 1
-  },
-  hrshjswniii: {
-    name: "Harsh Jaiswani",
-    github: "hrshjswniii",
-    role: "Active Contributor (NSOC '26)",
-    mechanicsBonus: 0,
-    platformPRs: 0,
-    qualityPRs: 1
-  },
-  pragna7: {
-    name: "Pragna Seetha",
-    github: "pragna7",
-    role: "Contributor (NSOC '26)",
-    mechanicsBonus: 0,
-    platformPRs: 0,
-    qualityPRs: 0
-  },
-  arshibansal: {
-    name: "Arshi Bansal",
-    github: "ArshiBansal",
-    role: "Puzzle Developer (NSOC '26)",
-    mechanicsBonus: 0,
-    platformPRs: 0,
-    qualityPRs: 0
-  },
-  anshuu2004: {
-    name: "Abhishek",
-    github: "Anshuu2004",
-    role: "Contributor (NSOC '26)",
-    mechanicsBonus: 0,
-    platformPRs: 0,
-    qualityPRs: 0
-  },
-  pratikadamas: {
-    name: "Pratik Giri",
-    github: "pratikadamas",
-    role: "Contributor (NSOC '26)",
-    commits: 17,
-    mechanicsBonus: 0,
-    platformPRs: 1,
-    qualityPRs: 0
-  },
-  "sarbajit-sengupta": {
-    name: "Sarbajit Sengupta",
-    github: "Sarbajit-Sengupta",
-    role: "Contributor (NSOC '26)",
-    mechanicsBonus: 0,
-    platformPRs: 0,
-    qualityPRs: 0
+const OVERRIDES_FILE = path.join(ROOT_DIR, 'scripts', 'contributor-overrides.json');
+
+/**
+ * Validates the schema and structure of contributor-overrides.json.
+ * Enforces versioning, profile object shapes, types, and constraints.
+ *
+ * @param {object} data
+ * @param {string} sourcePath
+ */
+function validateContributorOverrides(data, sourcePath = 'contributor-overrides.json') {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    throw new TypeError(`[Schema Error] ${sourcePath}: Root configuration must be an object.`);
   }
-};
 
-const EMAIL_MAP = {
-  "dbose272@gmail.com": "debasmitabose0",
-  "144198639+debasmitabose0@users.noreply.github.com": "debasmitabose0",
-  "265290994+babin123456@users.noreply.github.com": "babin123456",
-  "joitapaul61@gmail.com": "joitapaul",
-  "mistu7debnath2021@gmail.com": "mistu7debnath",
-  "harshjeswanitech95722@gmail.com": "hrshjswniii",
-  "seethapragna2005@gmail.com": "pragna7",
-  "arshi900389@gmail.com": "arshibansal",
-  "abhishekcse2004@gmail.com": "anshuu2004",
-  "pratikgiri585@gmail.com": "pratikadamas",
-  "sarbajitsengupta1712@gmail.com": "sarbajit-sengupta",
-  "73594751+sarbajit-sengupta@users.noreply.github.com": "sarbajit-sengupta"
-};
+  // Enforce versioning
+  if (!data.version || typeof data.version !== 'string') {
+    throw new TypeError(`[Schema Error] ${sourcePath}: Missing or invalid "version" field (expected semantic version string, e.g. "1.0.0").`);
+  }
 
-function getGitCommitCounts() {
+  const profiles = data.profiles || data.knownProfiles;
+  if (!profiles || typeof profiles !== 'object' || Array.isArray(profiles)) {
+    throw new TypeError(`[Schema Error] ${sourcePath}: Missing or invalid "profiles" mapping object.`);
+  }
+
+  for (const [key, profile] of Object.entries(profiles)) {
+    if (!profile || typeof profile !== 'object' || Array.isArray(profile)) {
+      throw new TypeError(`[Schema Error] ${sourcePath}: Profile entry for "${key}" must be an object.`);
+    }
+
+    if (typeof profile.name !== 'string' || !profile.name.trim()) {
+      throw new TypeError(`[Schema Error] ${sourcePath}: Profile "${key}" missing required string "name".`);
+    }
+
+    if (typeof profile.github !== 'string' || !profile.github.trim()) {
+      throw new TypeError(`[Schema Error] ${sourcePath}: Profile "${key}" missing required string "github".`);
+    }
+
+    if (profile.role !== undefined && typeof profile.role !== 'string') {
+      throw new TypeError(`[Schema Error] ${sourcePath}: Profile "${key}" property "role" must be a string.`);
+    }
+
+    const numericFields = ['mechanicsBonus', 'platformPRs', 'qualityPRs', 'bonusPts', 'commits'];
+    for (const field of numericFields) {
+      if (profile[field] !== undefined) {
+        if (typeof profile[field] !== 'number' || !Number.isFinite(profile[field]) || profile[field] < 0) {
+          throw new TypeError(`[Schema Error] ${sourcePath}: Profile "${key}" property "${field}" must be a non-negative number.`);
+        }
+      }
+    }
+  }
+
+  const aliases = data.emailAliases || data.emailMap;
+  if (aliases !== undefined) {
+    if (!aliases || typeof aliases !== 'object' || Array.isArray(aliases)) {
+      throw new TypeError(`[Schema Error] ${sourcePath}: "emailAliases" must be an object mapping emails to github usernames.`);
+    }
+    for (const [email, handle] of Object.entries(aliases)) {
+      if (typeof email !== 'string' || !email.includes('@')) {
+        throw new TypeError(`[Schema Error] ${sourcePath}: Invalid email address "${email}" in emailAliases.`);
+      }
+      if (typeof handle !== 'string' || !handle.trim()) {
+        throw new TypeError(`[Schema Error] ${sourcePath}: Target handle for email "${email}" must be a non-empty string.`);
+      }
+    }
+  }
+}
+
+/**
+ * Loads and validates contributor overrides from a JSON configuration file.
+ *
+ * @param {string} filePath
+ * @returns {{ profiles: Record<string, object>, emailAliases: Record<string, string>, raw: object }}
+ */
+function loadContributorOverrides(filePath = OVERRIDES_FILE) {
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`[Config Error] Contributor overrides file not found: ${filePath}`);
+  }
+
+  let content;
+  try {
+    content = fs.readFileSync(filePath, 'utf8');
+  } catch (err) {
+    throw new Error(`[Config Error] Unable to read contributor overrides at ${filePath}: ${err.message}`);
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(content);
+  } catch (err) {
+    throw new Error(`[Config Error] Malformed JSON in contributor overrides at ${filePath}: ${err.message}`);
+  }
+
+  validateContributorOverrides(parsed, path.relative(ROOT_DIR, filePath).replace(/\\/g, '/'));
+
+  const profiles = parsed.profiles || parsed.knownProfiles || {};
+  const emailAliases = parsed.emailAliases || parsed.emailMap || {};
+
+  return { profiles, emailAliases, raw: parsed };
+}
+
+const { profiles: KNOWN_PROFILES, emailAliases: EMAIL_MAP } = loadContributorOverrides(OVERRIDES_FILE);
+
+function getGitCommitCounts(emailMap = EMAIL_MAP) {
   const commitCounts = new Map();
   try {
     const rawShortlog = execSync('git shortlog -sne --all', { cwd: ROOT_DIR, encoding: 'utf8' });
@@ -176,11 +178,15 @@ function sanitizeIcon(val) {
   return LUCIDE_ICON_WHITELIST.has(clean) ? clean : "gamepad-2";
 }
 
-function buildRegistry() {
+function buildRegistry(options = {}) {
   if (!fs.existsSync(GAMES_DIR)) {
     console.error(`Error: games directory not found at ${GAMES_DIR}`);
     process.exit(1);
   }
+
+  const targetRegistryFile = options.registryFile || REGISTRY_FILE;
+  const activeProfiles = options.profiles || KNOWN_PROFILES;
+  const activeEmailMap = options.emailAliases || EMAIL_MAP;
 
   // 1. Compile Games Registry
   const gameEntries = fs.readdirSync(GAMES_DIR, { withFileTypes: true });
@@ -205,7 +211,7 @@ function buildRegistry() {
       const htmlPath = `games/${folder}/index.html`;
 
       const ghKey = (meta.github || "").toLowerCase();
-      const authorName = (KNOWN_PROFILES[ghKey] && KNOWN_PROFILES[ghKey].name) || meta.author || "Contributor";
+      const authorName = (activeProfiles[ghKey] && activeProfiles[ghKey].name) || meta.author || "Contributor";
 
       const gameObj = {
         id: sanitizeMetadataString(gameId, folder),
@@ -248,13 +254,13 @@ function buildRegistry() {
   }
 
   // 2. Fetch Git commit counts dynamically
-  const gitCommits = getGitCommitCounts();
+  const gitCommits = getGitCommitCounts(activeEmailMap);
 
   // 3. Collect all unique contributors across games, git, and known profiles
   const allUserKeys = new Set([
     ...contributorGames.keys(),
     ...gitCommits.keys(),
-    ...Object.keys(KNOWN_PROFILES)
+    ...Object.keys(activeProfiles)
   ]);
 
   const contributorsRegistry = [];
@@ -262,7 +268,7 @@ function buildRegistry() {
   for (const key of allUserKeys) {
     if (!key || key.includes('bot')) continue;
 
-    const profile = KNOWN_PROFILES[key] || {};
+    const profile = activeProfiles[key] || {};
     const meta = contributorMeta.get(key) || {};
     const gamesList = (contributorGames.get(key) || []).sort();
 
@@ -322,8 +328,20 @@ function buildRegistry() {
 
   const code = `const GAMES_REGISTRY = ${JSON.stringify(gamesRegistry, null, 2)};\n\nconst FEATURES_REGISTRY = ${JSON.stringify(featuresRegistry, null, 2)};\n\nconst CONTRIBUTORS_REGISTRY = ${JSON.stringify(cleanContributors, null, 2)};\n\nif (typeof window !== 'undefined') {\n  window.GAMES_REGISTRY = GAMES_REGISTRY;\n  window.FEATURES_REGISTRY = FEATURES_REGISTRY;\n  window.CONTRIBUTORS_REGISTRY = CONTRIBUTORS_REGISTRY;\n}\n`;
 
-  fs.writeFileSync(REGISTRY_FILE, code, 'utf8');
-  console.log(`✅ Successfully compiled ${gamesRegistry.length} games and ${cleanContributors.length} contributors into ${path.relative(ROOT_DIR, REGISTRY_FILE)}`);
+  fs.writeFileSync(targetRegistryFile, code, 'utf8');
+  console.log(`[OK] Successfully compiled ${gamesRegistry.length} games and ${cleanContributors.length} contributors into ${path.relative(ROOT_DIR, targetRegistryFile)}`);
+  return { gamesRegistry, featuresRegistry, contributorsRegistry: cleanContributors };
 }
 
-buildRegistry();
+if (require.main === module) {
+  buildRegistry();
+}
+
+module.exports = {
+  buildRegistry,
+  loadContributorOverrides,
+  validateContributorOverrides,
+  OVERRIDES_FILE,
+  KNOWN_PROFILES,
+  EMAIL_MAP
+};
