@@ -635,9 +635,39 @@
     return 1 + 0.25 * Math.min(Math.max(S.streak - 1, 0), 8);
   }
 
+  function emitTelemetryScore() {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'ARCADEVERSE_GAME_SCORE',
+          score: S.score,
+          level: S.stageIdx + 1
+        }, '*');
+      }
+    } catch (_) {}
+  }
+
+  function emitTelemetryGameOver(cleared) {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'ARCADEVERSE_GAME_OVER',
+          score: S.score,
+          details: {
+            score: S.score,
+            stage: S.stageIdx + 1,
+            cleared: !!cleared,
+            accuracy: S.shots > 0 ? Math.round((S.hits / S.shots) * 100) : 0
+          }
+        }, '*');
+      }
+    } catch (_) {}
+  }
+
   function addScore(n) {
     S.score += n;
     if (S.score > save.best) save.best = S.score;
+    emitTelemetryScore();
   }
 
   /* ======================================================================
@@ -1137,6 +1167,7 @@
       $('victory-star-count').textContent = total + ' / ' + STAGES.length * 3;
       $('victory-stars').innerHTML = starRow(Math.round(total / STAGES.length), true);
       showOverlay('victory');
+      emitTelemetryGameOver(true);
     } else {
       showOverlay('clear');
     }
@@ -1154,6 +1185,7 @@
     $('fail-score').textContent = String(S.score);
     $('fail-best').textContent = String(save.best);
     showOverlay('fail');
+    emitTelemetryGameOver(false);
   }
 
   /* ======================================================================
@@ -2087,8 +2119,19 @@
   });
 
   window.addEventListener('message', function (e) {
-    if (e.data && (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE')) {
+    if (!e.data || typeof e.data !== 'object') return;
+    const type = e.data.type;
+    if (type === 'AV_RESIZE') {
+      fitCanvas();
+    } else if (type === 'ARCADEVERSE_PAUSE') {
       audio.stopAll();
+      if (S.mode === 'playing') pauseGame();
+    } else if (type === 'ARCADEVERSE_RESUME') {
+      if (S.mode === 'playing' && S.paused) resumeGame();
+    } else if (type === 'ARCADEVERSE_TEARDOWN') {
+      audio.stopAll();
+      cancelAim();
+      if (S.mode === 'playing') pauseGame();
     }
   });
 
