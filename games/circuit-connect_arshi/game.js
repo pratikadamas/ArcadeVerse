@@ -432,7 +432,7 @@
   function updateStats() {
     levelNumEl.textContent = levelIndex + 1;
     moveCountEl.textContent = moves;
-    scoreEl.textContent = score;
+    scoreEl.textContent = totalScore;
   }
 
   function formatTime(ms) {
@@ -486,11 +486,36 @@
     document.getElementById("final-time").textContent = formatTime(
       Date.now() - startTime,
     );
-    document.getElementById("final-score").textContent = levelScore;
+    document.getElementById("final-score").textContent = totalScore;
     document.getElementById("complete-msg").textContent =
       levelIndex < LEVELS.length - 1
         ? "Circuit complete! Ready for the next challenge?"
         : "Final circuit solved!";
+
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: "ARCADEVERSE_GAME_SCORE",
+          score: totalScore
+        }, "*");
+      }
+    } catch (_) {}
+
+    if (levelIndex >= LEVELS.length - 1) {
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: "ARCADEVERSE_GAME_OVER",
+            score: totalScore,
+            levelsCompleted: LEVELS.length,
+            details: {
+              score: totalScore,
+              levelsCompleted: LEVELS.length
+            }
+          }, "*");
+        }
+      } catch (_) {}
+    }
 
     setTimeout(() => {
       completeOverlay.classList.remove("hidden");
@@ -545,6 +570,19 @@
       document.getElementById("total-score").textContent = totalScore;
       completeOverlay.classList.add("hidden");
       winOverlay.classList.remove("hidden");
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: "ARCADEVERSE_GAME_OVER",
+            score: totalScore,
+            levelsCompleted: LEVELS.length,
+            details: {
+              score: totalScore,
+              levelsCompleted: LEVELS.length
+            }
+          }, "*");
+        }
+      } catch (_) {}
     }
   }
 
