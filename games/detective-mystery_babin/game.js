@@ -209,6 +209,34 @@
   let collectedClues = [];
   let examinedHotspots = new Set();
   let activeSuspectId = null;
+  let totalScore = 0;
+
+  function emitTelemetryScore() {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'ARCADEVERSE_GAME_SCORE',
+          score: totalScore
+        }, '*');
+      }
+    } catch (_) {}
+  }
+
+  function emitTelemetryGameOver(won) {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'ARCADEVERSE_GAME_OVER',
+          score: totalScore,
+          details: {
+            score: totalScore,
+            caseId: currentCaseIdx + 1,
+            solved: !!won
+          }
+        }, '*');
+      }
+    } catch (_) {}
+  }
 
   // --- INIT & SETUP ---
   function loadCase(idx) {
@@ -401,22 +429,39 @@
 
     document.getElementById('warrant-modal').classList.add('hidden');
 
-    const isCorrect = (chosenSuspect === c.solution.culprit && chosenEvidence === c.solution.evidence);
+    const suspectMatches = (chosenSuspect === c.solution.culprit);
+    const motiveMatches = (chosenMotive === c.solution.motive);
+    const evidenceMatches = (chosenEvidence === c.solution.evidence);
+    const isCorrect = suspectMatches && motiveMatches && evidenceMatches;
 
     if (isCorrect) {
       sound.playContradictionSuccess();
+      totalScore += 500;
+      emitTelemetryScore();
       document.getElementById('verdict-badge').className = 'badge-tag';
       document.getElementById('verdict-badge').textContent = 'VERDICT AFFIRMED';
       document.getElementById('verdict-title').textContent = 'CASE CLOSED SUCCESSFULLY';
-      document.getElementById('verdict-desc').textContent = `Correct deduction! The perpetrator was apprehended with undeniable forensic proof.`;
+      document.getElementById('verdict-desc').textContent = `Correct deduction! The perpetrator, criminal motive, and critical forensic evidence all align perfectly. Warrant affirmed!`;
       document.getElementById('new-case-btn').textContent = currentCaseIdx + 1 < CASES.length ? 'PROCEED TO CASE #02' : 'RESTART INVESTIGATION';
+      emitTelemetryGameOver(true);
     } else {
       sound.playError();
       document.getElementById('verdict-badge').className = 'badge-tag red';
       document.getElementById('verdict-badge').textContent = 'INDICTMENT DISMISSED';
       document.getElementById('verdict-title').textContent = 'FALSE ACCUSATION';
-      document.getElementById('verdict-desc').textContent = `Insufficient proof or wrongful accusation! The true culprit covered their tracks. Re-examine the evidence and alibis.`;
+
+      let failReason = "Insufficient proof or wrongful accusation! Re-examine the evidence and alibis.";
+      if (suspectMatches && evidenceMatches && !motiveMatches) {
+        failReason = `You named the correct suspect and forensic proof, but the stated criminal motive was flawed! The indictment was thrown out on legal technicalities.`;
+      } else if (suspectMatches && !evidenceMatches) {
+        failReason = `You suspected the right person, but the submitted physical forensic evidence failed to conclusively prove their guilt beyond reasonable doubt!`;
+      } else if (!suspectMatches) {
+        failReason = `Wrongful accusation! An innocent citizen was framed while the real perpetrator escaped through the neon shadows.`;
+      }
+
+      document.getElementById('verdict-desc').textContent = failReason;
       document.getElementById('new-case-btn').textContent = 'TRY AGAIN';
+      emitTelemetryGameOver(false);
     }
 
     document.getElementById('verdict-modal').classList.remove('hidden');
@@ -462,6 +507,17 @@
     sound.enabled = !sound.enabled;
     document.getElementById('sound-on').classList.toggle('hidden', !sound.enabled);
     document.getElementById('sound-off').classList.toggle('hidden', sound.enabled);
+  });
+
+  // Hub lifecycle bridge
+  window.addEventListener('message', (e) => {
+    if (!e.data || typeof e.data !== 'object') return;
+    const type = e.data.type;
+    if (type === 'ARCADEVERSE_PAUSE' || type === 'ARCADEVERSE_TEARDOWN') {
+      sound.enabled = false;
+      document.getElementById('sound-on').classList.add('hidden');
+      document.getElementById('sound-off').classList.remove('hidden');
+    }
   });
 
   // Launch initial case
