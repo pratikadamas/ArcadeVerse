@@ -32,6 +32,7 @@
   let totalPointsScored = 0;
   let hits180 = 0;
   let clockTarget = 1;
+  let isLegFinished = false;
 
   // Aiming & Physics
   let mousePos = { x: 300, y: 300 };
@@ -231,7 +232,7 @@
 
   // Execute Throw
   function throwDart() {
-    if (dartsInHand <= 0) return;
+    if (isLegFinished || dartsInHand <= 0) return;
 
     // Apply sway + wind + power error
     const windEffectX = Math.cos(windAngle) * windSpeed * 7;
@@ -260,8 +261,8 @@
 
     updateUI();
 
-    // Check end of 3-dart turn
-    if (dartsInHand === 0) {
+    // Check end of 3-dart turn (only if leg is still active)
+    if (!isLegFinished && dartsInHand === 0) {
       setTimeout(endTurn, 1000);
     }
   }
@@ -284,9 +285,31 @@
       scoreRemaining = 0;
       currentTurnScore += hit.score;
       totalPointsScored += hit.score;
+      dartsInHand = 0; // Immediately lock remaining turn throws
+      isLegFinished = true;
       playSound('bull');
       showAnnouncement(`LEG WON! Final checkout: ${hit.text}`);
       logMessage(`Leg completed in ${totalDartsThrown} darts!`);
+
+      // Trigger victory celebration modal & post score to platform bridge
+      try {
+        if (window.ArcadeVerse && typeof window.ArcadeVerse.postGameOver === 'function') {
+          window.ArcadeVerse.postGameOver({ score: totalPointsScored, dartsThrown: totalDartsThrown, won: true });
+        }
+        if (window.ArcadeVerse && typeof window.ArcadeVerse.postScore === 'function') {
+          window.ArcadeVerse.postScore(totalPointsScored);
+        }
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'ARCADEVERSE_GAME_OVER', score: totalPointsScored, dartsThrown: totalDartsThrown, won: true }, '*');
+          window.parent.postMessage({ type: 'ARCADEVERSE_GAME_SCORE', score: totalPointsScored }, '*');
+        }
+      } catch (_) {}
+
+      setTimeout(() => {
+        if (isLegFinished) {
+          showVictoryModal(`Checked out on ${hit.text}`);
+        }
+      }, 500);
     } else {
       scoreRemaining = potentialRemaining;
       currentTurnScore += hit.score;
@@ -303,8 +326,27 @@
       logMessage(`Clock target #${clockTarget} hit!`);
       clockTarget++;
       if (clockTarget > 20) {
+        dartsInHand = 0;
+        isLegFinished = true;
         showAnnouncement('AROUND THE CLOCK COMPLETE!');
         logMessage(`Course cleared in ${totalDartsThrown} darts!`);
+        try {
+          if (window.ArcadeVerse && typeof window.ArcadeVerse.postGameOver === 'function') {
+            window.ArcadeVerse.postGameOver({ score: totalDartsThrown, dartsThrown: totalDartsThrown, won: true });
+          }
+          if (window.ArcadeVerse && typeof window.ArcadeVerse.postScore === 'function') {
+            window.ArcadeVerse.postScore(totalPointsScored || 20);
+          }
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'ARCADEVERSE_GAME_OVER', score: totalDartsThrown, dartsThrown: totalDartsThrown, won: true }, '*');
+            window.parent.postMessage({ type: 'ARCADEVERSE_GAME_SCORE', score: totalPointsScored || 20 }, '*');
+          }
+        } catch (_) {}
+        setTimeout(() => {
+          if (isLegFinished) {
+            showVictoryModal('Course cleared in 20 sectors!');
+          }
+        }, 500);
       }
     } else {
       showAnnouncement(`MISSED TARGET #${clockTarget} (${hit.text})`);
@@ -312,6 +354,7 @@
   }
 
   function endTurn() {
+    if (isLegFinished) return;
     if (currentTurnScore === 180) {
       hits180++;
       showAnnouncement('MAXIMUM 180!');
@@ -373,8 +416,243 @@
     statClockTargetElem.textContent = `#${clockTarget}`;
   }
 
+  // Victory Celebration Modal
+  function ensureVictoryStyles() {
+    if (document.getElementById('victory-modal-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'victory-modal-styles';
+    style.textContent = `
+      .victory-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(8, 12, 20, 0.88);
+        backdrop-filter: blur(8px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+        animation: victoryFadeIn 0.3s ease;
+      }
+      @keyframes victoryFadeIn {
+        from { opacity: 0; transform: scale(0.96); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      .victory-modal {
+        background: rgba(15, 23, 42, 0.95);
+        border: 2px solid var(--neon-cyan, #00f0ff);
+        border-radius: 12px;
+        box-shadow: 0 0 35px rgba(0, 240, 255, 0.45), inset 0 0 20px rgba(0, 240, 255, 0.08);
+        padding: 24px 30px;
+        max-width: 460px;
+        width: 90%;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .victory-badge {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .victory-badge svg {
+        width: 52px;
+        height: 52px;
+        stroke: var(--neon-cyan, #00f0ff);
+        filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.7));
+      }
+      .victory-title {
+        font-family: var(--font-mono, monospace);
+        font-size: 1.5rem;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #fff;
+        text-shadow: 0 0 14px rgba(0, 240, 255, 0.8);
+      }
+      .victory-checkout {
+        font-size: 0.9rem;
+        color: var(--neon-green, #10b981);
+        font-family: var(--font-mono, monospace);
+        letter-spacing: 1px;
+      }
+      .victory-stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 6px 0;
+      }
+      .victory-stat-card {
+        background: rgba(8, 12, 20, 0.75);
+        border: 1px solid var(--border-dim, #1e293b);
+        border-radius: 8px;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .victory-stat-label {
+        font-size: 0.7rem;
+        color: var(--text-muted, #94a3b8);
+        font-weight: bold;
+        letter-spacing: 0.5px;
+      }
+      .victory-stat-val {
+        font-family: var(--font-mono, monospace);
+        font-size: 1.25rem;
+        font-weight: bold;
+        color: #fff;
+      }
+      .victory-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        margin-top: 6px;
+      }
+      .victory-btn {
+        flex: 1;
+        padding: 10px 16px;
+        border-radius: 6px;
+        font-family: var(--font-mono, monospace);
+        font-weight: 800;
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      }
+      .victory-btn-primary {
+        background: var(--neon-cyan, #00f0ff);
+        color: #080c14;
+        border: 1px solid var(--neon-cyan, #00f0ff);
+        box-shadow: 0 0 16px rgba(0, 240, 255, 0.4);
+      }
+      .victory-btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 24px rgba(0, 240, 255, 0.7);
+      }
+      .victory-btn-secondary {
+        background: transparent;
+        color: var(--neon-cyan, #00f0ff);
+        border: 1px solid var(--border-neon, #00f0ff);
+      }
+      .victory-btn-secondary:hover {
+        background: rgba(0, 240, 255, 0.12);
+        transform: translateY(-2px);
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function createVictoryModal() {
+    ensureVictoryStyles();
+    const overlay = document.createElement('div');
+    overlay.id = 'victory-overlay';
+    overlay.className = 'victory-overlay hidden';
+    overlay.innerHTML = `
+      <div class="victory-modal" role="dialog" aria-labelledby="victory-modal-title" aria-modal="true">
+        <div class="victory-badge" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="6"></circle>
+            <circle cx="12" cy="12" r="2"></circle>
+            <path d="M12 2v2"></path>
+            <path d="M12 20v2"></path>
+            <path d="M2 12h2"></path>
+            <path d="M20 12h2"></path>
+          </svg>
+        </div>
+        <h2 id="victory-modal-title" class="victory-title">LEG WON!</h2>
+        <div id="victory-checkout-text" class="victory-checkout">Checked out on Double 20</div>
+        <div class="victory-stats-grid">
+          <div class="victory-stat-card">
+            <span class="victory-stat-label">FINAL SCORE</span>
+            <span id="victory-final-score" class="victory-stat-val">501</span>
+          </div>
+          <div class="victory-stat-card">
+            <span class="victory-stat-label">TOTAL DARTS</span>
+            <span id="victory-total-darts" class="victory-stat-val">0</span>
+          </div>
+          <div class="victory-stat-card">
+            <span class="victory-stat-label">3-DART AVG</span>
+            <span id="victory-avg" class="victory-stat-val">0.0</span>
+          </div>
+          <div class="victory-stat-card">
+            <span class="victory-stat-label">180s HIT</span>
+            <span id="victory-180s" class="victory-stat-val">0</span>
+          </div>
+        </div>
+        <div class="victory-actions">
+          <button id="btn-next-leg" class="victory-btn victory-btn-primary" type="button">PLAY NEXT LEG</button>
+          <button id="btn-restart-match" class="victory-btn victory-btn-secondary" type="button">RESTART MATCH</button>
+        </div>
+      </div>
+    `;
+
+    const container = document.querySelector('.cabinet-container') || document.body;
+    container.appendChild(overlay);
+
+    overlay.querySelector('#btn-next-leg').addEventListener('click', () => {
+      startNextLeg();
+    });
+
+    overlay.querySelector('#btn-restart-match').addEventListener('click', () => {
+      hideVictoryModal();
+      resetLeg();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (isLegFinished && e.key === 'Enter') {
+        const ov = document.getElementById('victory-overlay');
+        if (ov && !ov.classList.contains('hidden')) {
+          e.preventDefault();
+          startNextLeg();
+        }
+      }
+    });
+
+    return overlay;
+  }
+
+  function showVictoryModal(checkoutText) {
+    let overlay = document.getElementById('victory-overlay');
+    if (!overlay) {
+      overlay = createVictoryModal();
+    }
+    const avg = totalDartsThrown > 0 ? ((totalPointsScored / totalDartsThrown) * 3).toFixed(1) : '0.0';
+    document.getElementById('victory-modal-title').textContent = mode === '501' ? 'LEG WON!' : 'ROUND WON!';
+    document.getElementById('victory-checkout-text').textContent = checkoutText || 'Checkout Completed!';
+    document.getElementById('victory-final-score').textContent = totalPointsScored;
+    document.getElementById('victory-total-darts').textContent = totalDartsThrown;
+    document.getElementById('victory-avg').textContent = avg;
+    document.getElementById('victory-180s').textContent = hits180;
+    overlay.classList.remove('hidden');
+  }
+
+  function hideVictoryModal() {
+    const overlay = document.getElementById('victory-overlay');
+    if (overlay) {
+      overlay.classList.add('hidden');
+    }
+  }
+
+  function startNextLeg() {
+    hideVictoryModal();
+    isLegFinished = false;
+    scoreRemaining = 501;
+    dartsInHand = 3;
+    currentTurnScore = 0;
+    turnThrows = [];
+    thrownDarts = [];
+    clockTarget = 1;
+    randomizeWind();
+    updateUI();
+    showAnnouncement(mode === '501' ? 'NEXT LEG // 501' : 'AROUND THE CLOCK');
+    logMessage(mode === '501' ? `New leg started. Double or Bull to finish! (Match total darts: ${totalDartsThrown})` : 'New clock round started!');
+  }
+
   // Reset Match
   function resetLeg() {
+    hideVictoryModal();
+    isLegFinished = false;
     scoreRemaining = 501;
     dartsInHand = 3;
     currentTurnScore = 0;
@@ -549,6 +827,7 @@
 
   // Pointer & Throw Controls
   canvas.addEventListener('mousemove', (e) => {
+    if (isLegFinished) return;
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
@@ -557,6 +836,7 @@
   });
 
   canvas.addEventListener('mousedown', () => {
+    if (isLegFinished) return;
     isCharging = true;
     chargePower = 0;
     chargeDirection = 1;
@@ -565,7 +845,9 @@
   window.addEventListener('mouseup', () => {
     if (isCharging) {
       isCharging = false;
-      throwDart();
+      if (!isLegFinished) {
+        throwDart();
+      }
       chargePower = 0;
       powerIndicator.style.width = '0%';
     }
@@ -574,6 +856,7 @@
   // Touch controls
   canvas.addEventListener('touchstart', (e) => {
     e.preventDefault();
+    if (isLegFinished) return;
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
@@ -587,6 +870,7 @@
 
   canvas.addEventListener('touchmove', (e) => {
     e.preventDefault();
+    if (isLegFinished) return;
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
@@ -599,7 +883,9 @@
     e.preventDefault();
     if (isCharging) {
       isCharging = false;
-      throwDart();
+      if (!isLegFinished) {
+        throwDart();
+      }
       chargePower = 0;
       powerIndicator.style.width = '0%';
     }
@@ -627,6 +913,31 @@
     svgAudioOn.classList.toggle('hidden', !soundEnabled);
     svgAudioOff.classList.toggle('hidden', soundEnabled);
   });
+
+  // Lifecycle Bridge & Message Listener
+  window.addEventListener('message', (e) => {
+    const data = e.data;
+    if (!data || typeof data !== 'object') return;
+    if (data.type === 'ARCADEVERSE_TEARDOWN') {
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+      if (audioCtx) {
+        audioCtx.close().catch(() => {});
+      }
+    } else if (data.type === 'ARCADEVERSE_AUDIO_CONFIG' && typeof data.muted === 'boolean') {
+      soundEnabled = !data.muted;
+      svgAudioOn.classList.toggle('hidden', !soundEnabled);
+      svgAudioOff.classList.toggle('hidden', soundEnabled);
+    }
+  });
+
+  if (window.ArcadeVerse) {
+    if (typeof window.ArcadeVerse.onTeardown === 'function') {
+      window.ArcadeVerse.onTeardown(() => {
+        if (animFrameId) cancelAnimationFrame(animFrameId);
+        if (audioCtx) audioCtx.close().catch(() => {});
+      });
+    }
+  }
 
   // Init
   randomizeWind();
