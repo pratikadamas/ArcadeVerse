@@ -4,7 +4,12 @@
   "description": "The Open-Source Community Arcade Station for Nexus Spring of Code – Winter Edition 2026",
   "main": "assets/js/app.js",
   "scripts": {
-    "test": "node scripts/validate-games.js",
+    "test": "node scripts/verify-catalog-syntax.js && node scripts/verify-leaderboard-highlight.js && node scripts/test-playlist-codes.js && node scripts/test-time-warp-replay.mjs",
+    "test:catalog": "node scripts/verify-catalog-syntax.js",
+    "test:leaderboard": "node scripts/verify-leaderboard-highlight.js",
+    "test:playlist": "node scripts/test-playlist-codes.js",
+    "test:timewarp": "node scripts/test-time-warp-replay.mjs",
+    "verify:all": "node scripts/verify-catalog-syntax.js && node scripts/verify-leaderboard-highlight.js && node scripts/test-playlist-codes.js && node scripts/test-time-warp-replay.mjs",
     "validate": "node scripts/validate-games.js",
     "build": "node scripts/build-registry.js",
     "build:registry": "node scripts/build-registry.js",
