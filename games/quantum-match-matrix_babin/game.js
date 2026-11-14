@@ -64,6 +64,7 @@
     score = 0;
     updateHUD();
     generateGrid();
+    ensureSolvableBoard();
   }
 
   function updateHUD() {
@@ -129,6 +130,12 @@
     const prevC = selectedTile.c;
     const prevEl = selectedTile.el;
     prevEl.classList.remove('selected');
+
+    // Deselect if clicking the same tile
+    if (prevR === r && prevC === c) {
+      selectedTile = null;
+      return;
+    }
 
     // Check adjacency
     const dist = Math.abs(r - prevR) + Math.abs(c - prevC);
@@ -206,6 +213,66 @@
     });
   }
 
+  function hasValidMoves() {
+    for (let r = 0; r < GRID_SIZE; r++) {
+      for (let c = 0; c < GRID_SIZE; c++) {
+        // Swap right
+        if (c < GRID_SIZE - 1) {
+          const t = grid[r][c];
+          grid[r][c] = grid[r][c + 1];
+          grid[r][c + 1] = t;
+          const matches = findMatches();
+          grid[r][c + 1] = grid[r][c];
+          grid[r][c] = t;
+          if (matches.length > 0) return true;
+        }
+        // Swap down
+        if (r < GRID_SIZE - 1) {
+          const t = grid[r][c];
+          grid[r][c] = grid[r + 1][c];
+          grid[r + 1][c] = t;
+          const matches = findMatches();
+          grid[r + 1][c] = grid[r][c];
+          grid[r][c] = t;
+          if (matches.length > 0) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  function ensureSolvableBoard() {
+    let attempts = 0;
+    while (!hasValidMoves() && attempts < 20) {
+      shuffleBoard();
+      attempts++;
+    }
+  }
+
+  function shuffleBoard() {
+    const flat = [];
+    for (let r = 0; r < GRID_SIZE; r++) {
+      for (let c = 0; c < GRID_SIZE; c++) {
+        flat.push(grid[r][c]);
+      }
+    }
+    // Fisher-Yates shuffle
+    for (let i = flat.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = flat[i];
+      flat[i] = flat[j];
+      flat[j] = temp;
+    }
+    let idx = 0;
+    for (let r = 0; r < GRID_SIZE; r++) {
+      for (let c = 0; c < GRID_SIZE; c++) {
+        grid[r][c] = flat[idx++];
+        const el = getTileEl(r, c);
+        if (el) renderTileContent(el, grid[r][c]);
+      }
+    }
+  }
+
   async function resolveMatches(matches) {
     playTone(780, 'sine', 0.15, 0.2);
     score += matches.length * 30;
@@ -253,6 +320,7 @@
       await new Promise(res => setTimeout(res, 180));
       await resolveMatches(cascades);
     } else {
+      ensureSolvableBoard();
       checkGameStatus();
       isProcessing = false;
     }
@@ -265,12 +333,19 @@
       statusActionBtn.textContent = 'Proceed to Level ' + (level + 1);
       statusOverlay.classList.add('active');
       playTone(880, 'triangle', 0.3, 0.25);
+      try {
+        window.parent.postMessage({ type: 'ARCADEVERSE_GAME_SCORE', score: score }, '*');
+      } catch (_) {}
     } else if (movesLeft <= 0) {
       statusTitle.textContent = 'QUANTUM ENTROPY';
       statusDesc.textContent = `Out of moves! Score: ${score} / Target: ${targetScore}`;
       statusActionBtn.textContent = 'Try Again';
       statusOverlay.classList.add('active');
       playTone(180, 'sawtooth', 0.4, 0.25);
+      try {
+        window.parent.postMessage({ type: 'ARCADEVERSE_GAME_SCORE', score: score }, '*');
+        window.parent.postMessage({ type: 'ARCADEVERSE_GAME_OVER' }, '*');
+      } catch (_) {}
     }
   }
 
