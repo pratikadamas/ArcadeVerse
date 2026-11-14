@@ -1239,6 +1239,7 @@
 
       // Start the core render loop
       this.lastTime = performance.now();
+      if (this.rafId) cancelAnimationFrame(this.rafId);
       this.rafId = requestAnimationFrame((ts) => this.loop(ts));
     }
 
@@ -1486,15 +1487,14 @@
     }
 
     updateSoundButtonUI() {
+      const SVG_VOL_ON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>';
+      const SVG_VOL_OFF = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>';
       if (this.sound.isMuted) {
-        this.soundIcon.innerHTML = '<i data-lucide="volume-x"></i>';
+        this.soundIcon.innerHTML = SVG_VOL_OFF;
         this.btnSound.setAttribute('aria-label', 'Unmute sound');
       } else {
-        this.soundIcon.innerHTML = '<i data-lucide="volume-2"></i>';
+        this.soundIcon.innerHTML = SVG_VOL_ON;
         this.btnSound.setAttribute('aria-label', 'Mute sound');
-      }
-      if (window.lucide) {
-        lucide.createIcons();
       }
     }
 
@@ -1600,13 +1600,13 @@
         let statusDesc = '';
 
         if (!isUnlocked) {
-          statusIcon = '<i data-lucide="lock"></i>';
+          statusIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>';
           statusDesc = 'Locked';
         } else if (isCompleted) {
-          statusIcon = '<i data-lucide="check"></i>';
+          statusIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 12 4 16"></polyline></svg>';
           statusDesc = `Completed, Best score ${this.progression.getBestScore(i)}`;
         } else {
-          statusIcon = '<i data-lucide="play"></i>';
+          statusIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
           statusDesc = 'Unlocked';
         }
 
@@ -1631,10 +1631,6 @@
       }
 
       this.updateProgressionUI();
-
-      if (window.lucide) {
-        lucide.createIcons();
-      }
     }
 
     selectLevel(level) {
@@ -1766,6 +1762,15 @@
         this.state = STATE.VICTORY;
         this.sound.playVictory();
         this.particles.addVictorySparks(this.jet.x, this.jet.y);
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+              type: 'ARCADEVERSE_GAME_OVER',
+              score: this.score,
+              details: { score: this.score, level: this.currentLevel, cleared: true, victory: true }
+            }, '*');
+          }
+        } catch (_) {}
 
         if (this.victoryScoreVal) {
           this.victoryScoreVal.textContent = this.score;
@@ -1775,7 +1780,6 @@
           if (this.state === STATE.VICTORY) {
             this.victoryScreen.classList.remove('fcj-hidden');
             this.announce('CYBER FLIGHT COMPLETE! All 20 missions conquered! You are the ultimate cyber pilot!');
-            if (window.lucide) lucide.createIcons();
           }
         }, 300);
       } else {
@@ -1805,7 +1809,6 @@
           if (this.state === STATE.LEVEL_COMPLETE) {
             this.completeScreen.classList.remove('fcj-hidden');
             this.announce(`Level ${this.currentLevel} complete! Level ${nextLvl} unlocked.`);
-            if (window.lucide) lucide.createIcons();
           }
         }, 300);
       }
@@ -1816,6 +1819,15 @@
       this.sound.stopAll();
       this.sound.playCrash();
       this.screenShake = 0.35; // 350ms shake
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: 'ARCADEVERSE_GAME_OVER',
+            score: this.score,
+            details: { score: this.score, level: this.currentLevel, cleared: false }
+          }, '*');
+        }
+      } catch (_) {}
 
       // Explosion sparks
       this.particles.addExplosion(this.jet.x, this.jet.y);
@@ -1843,7 +1855,6 @@
         if (this.state === STATE.GAMEOVER) {
           this.gameOverScreen.classList.remove('fcj-hidden');
           this.announce(`Mission over. Final score: ${this.score}. Level target was: ${this.getLevelConfig(this.currentLevel).target}.`);
-          if (window.lucide) lucide.createIcons();
         }
       }, 350);
     }
@@ -1906,6 +1917,7 @@
 
     // --- Core Game Loop ---
     loop(timestamp) {
+      if (this.rafId) cancelAnimationFrame(this.rafId);
       this.rafId = requestAnimationFrame((ts) => this.loop(ts));
 
       const dt = Math.min((timestamp - this.lastTime) / 1000, 0.1);
@@ -1945,6 +1957,11 @@
             this.score++;
             this.hudScore.textContent = this.score;
             this.sound.playScore();
+            try {
+              if (window.parent && window.parent !== window) {
+                window.parent.postMessage({ type: 'ARCADEVERSE_GAME_SCORE', score: this.score, level: this.currentLevel }, '*');
+              }
+            } catch (_) {}
 
             // Spawn score ring & floating +1 at gap center
             const gapCenterY = obs.topHeight + obs.gap * 0.5;
@@ -2022,9 +2039,27 @@
   // --- Bootstrap Engine on DOM Load ---
   document.addEventListener('DOMContentLoaded', () => {
     const controller = new GameController();
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && controller && controller.state === STATE.PLAYING) {
+        controller.pauseGame();
+      }
+    });
+
     window.addEventListener('message', (e) => {
-      if (e.data && (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE')) {
-        if (controller && controller.sound) controller.sound.stopAll();
+      if (!e.data || typeof e.data !== 'object') return;
+      const type = e.data.type;
+      if (type === 'ARCADEVERSE_PAUSE') {
+        if (controller && controller.state === STATE.PLAYING) controller.pauseGame();
+      } else if (type === 'ARCADEVERSE_RESUME') {
+        if (controller && controller.state === STATE.PAUSED) controller.resumeGame();
+      } else if (type === 'ARCADEVERSE_TEARDOWN') {
+        if (controller) {
+          if (controller.sound) controller.sound.stopAll();
+          if (controller.rafId) { cancelAnimationFrame(controller.rafId); controller.rafId = null; }
+        }
+      } else if (type === 'AV_RESIZE') {
+        if (controller) controller.handleResize();
       }
     });
   });
