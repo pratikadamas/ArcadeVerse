@@ -2385,7 +2385,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 520,
+    "commits": 521,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2564,6 +2564,21 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
+    "name": "Pratik Giri",
+    "github": "pratikadamas",
+    "avatarInitial": "P",
+    "role": "Contributor (NSOC '26)",
+    "commits": 41,
+    "gamesCount": 1,
+    "mechanicsBonus": 0,
+    "platformPRs": 1,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Math Blitz: 60s Arithmetic Sprint"
+    ]
+  },
+  {
     "name": "Harsh Jaiswani",
     "github": "hrshjswniii",
     "avatarInitial": "H",
@@ -2577,21 +2592,6 @@ const CONTRIBUTORS_REGISTRY = [
     "contributions": [
       "Cyber Brick Breaker",
       "Cyber Typer: Terminal Hacker"
-    ]
-  },
-  {
-    "name": "Pratik Giri",
-    "github": "pratikadamas",
-    "avatarInitial": "P",
-    "role": "Contributor (NSOC '26)",
-    "commits": 30,
-    "gamesCount": 1,
-    "mechanicsBonus": 0,
-    "platformPRs": 1,
-    "qualityPRs": 0,
-    "bonusPts": 0,
-    "contributions": [
-      "Math Blitz: 60s Arithmetic Sprint"
     ]
   },
   {
@@ -2640,9 +2640,9 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "Sarbajit Sengupta",
-    "github": "Sarbajit-Sengupta",
-    "avatarInitial": "S",
+    "name": "nilesh0199",
+    "github": "nilesh0199",
+    "avatarInitial": "N",
     "role": "Contributor (NSOC '26)",
     "commits": 2,
     "gamesCount": 0,
@@ -2655,11 +2655,11 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "nilesh0199",
-    "github": "nilesh0199",
-    "avatarInitial": "N",
+    "name": "Sarbajit Sengupta",
+    "github": "Sarbajit-Sengupta",
+    "avatarInitial": "S",
     "role": "Contributor (NSOC '26)",
-    "commits": 1,
+    "commits": 2,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,
