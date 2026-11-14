@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalGameTitle = document.getElementById("modal-game-title");
   const modalGameBadge = document.getElementById("modal-game-badge");
   const modalGameAuthor = document.getElementById("modal-game-author");
-  const gameIframe = document.getElementById("game-iframe");
+  let gameIframe = document.getElementById("game-iframe");
   const fullscreenBtn = document.getElementById("fullscreen-btn");
   const newTabBtn = document.getElementById("new-tab-btn");
   const reloadBtn = document.getElementById("reload-btn");
@@ -1955,6 +1955,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Modal rapid launch lock flag & cooldown timer to prevent race conditions (#504)
   let isOpeningModal = false;
   let modalLaunchCooldownTimer = null;
+  let closeModalCleanupTimer = null;
 
   // Modal Handlers
   function openGameModal(game, triggerElement = null, isDirectDeepLink = false) {
@@ -1967,6 +1968,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     isOpeningModal = true;
     document.body.classList.add("modal-launching-in-progress");
+
+    // Cancel any in-flight close cleanup that could rebind or blank the iframe mid-relaunch
+    if (closeModalCleanupTimer) { clearTimeout(closeModalCleanupTimer); closeModalCleanupTimer = null; }
 
     // Clear any previous cooldown
     if (modalLaunchCooldownTimer) clearTimeout(modalLaunchCooldownTimer);
@@ -2257,7 +2261,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Safely blank out iframe after a 100ms grace period to allow games to close AudioContexts and stop RAF loops
     const currentFrame = gameIframe;
-    setTimeout(() => {
+    closeModalCleanupTimer = setTimeout(() => {
+      closeModalCleanupTimer = null;
       try {
         if (currentFrame && currentFrame.contentWindow) {
           currentFrame.contentWindow.location.replace("about:blank");
@@ -2280,10 +2285,9 @@ document.addEventListener("DOMContentLoaded", () => {
           newIframe.setAttribute("allow", "gamepad; autoplay; fullscreen");
           newIframe.src = "about:blank";
           parent.replaceChild(newIframe, currentFrame);
-          // Re-bind global reference
-          if (document.getElementById("game-iframe")) {
-            // Updated DOM element cleanly mounted
-          }
+          // Re-bind global reference so openGameModal can find the new live iframe node
+          gameIframe = document.getElementById("game-iframe");
+          if (!gameIframe) gameIframe = newIframe;
         }
       } catch (_) {}
     }, 100);
