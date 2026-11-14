@@ -157,6 +157,7 @@
             <ul class="docs-nav-list">
               <li><a href="#sound-engine" class="docs-nav-link"><i data-lucide="volume-2"></i> Sound Synthesizer</a></li>
               <li><a href="#lifecycle-bridge" class="docs-nav-link"><i data-lucide="activity"></i> Lifecycle Bridge SDK</a></li>
+              <li><a href="#sdk-sandbox" class="docs-nav-link"><i data-lucide="terminal"></i> Interactive SDK Sandbox</a></li>
               <li><a href="#a11y-hub" class="docs-nav-link"><i data-lucide="eye"></i> Accessibility Engine</a></li>
               <li><a href="#trophy-engine" class="docs-nav-link"><i data-lucide="award"></i> Trophy Certificate Canvas</a></li>
               <li><a href="#shortcuts-engine" class="docs-nav-link"><i data-lucide="keyboard"></i> Keyboard Shortcuts</a></li>
@@ -801,6 +802,113 @@ if (window.ArcadeVerse) {
           </ul>
         </section>
 
+        <!-- 9c. Interactive ArcadeVerse SDK Sandbox Playground (#726) -->
+        <section class="docs-section" id="sdk-sandbox">
+          <span class="docs-section-tag">04 / Platform Subsystems & Developer Tooling</span>
+          <h2 class="docs-section-title">Interactive ArcadeVerse SDK Sandbox Playground</h2>
+          <p class="docs-paragraph">
+            Test SDK lifecycle events, real-time message bridging, procedural Web Audio chiptune synthesis, and namespaced storage directly in your browser. Select a preset snippet below or edit the code freely to see real-time canvas feedback and live intercepted event telemetry with zero remote servers.
+          </p>
+
+          <div class="sdk-sandbox-wrapper">
+            <!-- Preset Selector Tabs -->
+            <div class="sdk-sandbox-presets" role="toolbar" aria-label="SDK Code Presets">
+              <span class="sdk-preset-label">
+                <i data-lucide="sliders"></i> Snippet Presets:
+              </span>
+              <button type="button" class="sdk-preset-btn active" data-preset="score">
+                <i data-lucide="award"></i> arcadeverse.score()
+              </button>
+              <button type="button" class="sdk-preset-btn" data-preset="audio">
+                <i data-lucide="volume-2"></i> arcadeverse.audio()
+              </button>
+              <button type="button" class="sdk-preset-btn" data-preset="storage">
+                <i data-lucide="database"></i> arcadeverse.save()
+              </button>
+              <button type="button" class="sdk-preset-btn" data-preset="gameover">
+                <i data-lucide="flag"></i> ArcadeVerse.postGameOver()
+              </button>
+              <button type="button" class="sdk-preset-btn" data-preset="canvas">
+                <i data-lucide="play"></i> Interactive Canvas Loop
+              </button>
+            </div>
+
+            <!-- Editor & Live Preview Grid -->
+            <div class="sdk-sandbox-grid">
+              <!-- Left Pane: Code Editor -->
+              <div class="sdk-editor-pane">
+                <div class="sdk-pane-header">
+                  <div class="sdk-pane-title">
+                    <i data-lucide="code"></i>
+                    <span>JavaScript (Client SDK Bridge)</span>
+                  </div>
+                  <div class="sdk-pane-actions">
+                    <button type="button" class="sdk-btn sdk-btn-reset" id="sdk-btn-reset" title="Reset snippet to default">
+                      <i data-lucide="rotate-ccw"></i> Reset
+                    </button>
+                    <button type="button" class="sdk-btn sdk-btn-run" id="sdk-btn-run" title="Execute snippet (Ctrl + Enter)">
+                      <i data-lucide="play"></i> Run Code
+                    </button>
+                  </div>
+                </div>
+
+                <div class="sdk-editor-body">
+                  <div class="sdk-line-numbers" id="sdk-line-numbers" aria-hidden="true">1</div>
+                  <textarea id="sdk-code-input" class="sdk-code-input" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Editable JavaScript Code Playground"></textarea>
+                </div>
+
+                <div class="sdk-editor-footer">
+                  <div class="sdk-quick-snippets">
+                    <span style="font-weight:600; margin-right:4px;">Insert:</span>
+                    <button type="button" class="sdk-chip-insert" data-snippet="arcadeverse.score(100);">+ score(100)</button>
+                    <button type="button" class="sdk-chip-insert" data-snippet="arcadeverse.audio('laser');">+ audio('laser')</button>
+                    <button type="button" class="sdk-chip-insert" data-snippet="arcadeverse.save('highScore', 5000);">+ save()</button>
+                    <button type="button" class="sdk-chip-insert" data-snippet="ArcadeAudio.playCoin();">+ playCoin()</button>
+                  </div>
+                  <span class="sdk-shortcut-hint">Ctrl + Enter to run</span>
+                </div>
+              </div>
+
+              <!-- Right Pane: Live Canvas Preview & Intercepted Console -->
+              <div class="sdk-preview-pane">
+                <!-- Preview Canvas -->
+                <div class="sdk-canvas-wrapper">
+                  <div class="sdk-canvas-header">
+                    <div class="sdk-hud-stats">
+                      <div class="sdk-hud-stat-item">SCORE: <span id="sdk-hud-score">000000</span></div>
+                      <div class="sdk-hud-stat-item">HIGH: <span id="sdk-hud-high">005000</span></div>
+                    </div>
+                    <div id="sdk-hud-status" style="color:#10b981; font-weight:700;">LIVE PREVIEW</div>
+                  </div>
+                  <canvas id="sdk-preview-canvas" class="sdk-preview-canvas" width="480" height="180" role="img" aria-label="Interactive Game Preview Canvas"></canvas>
+                  <div class="sdk-canvas-hint">
+                    <i data-lucide="mouse-pointer-click"></i> Click inside preview canvas to trigger interactive score & sound events!
+                  </div>
+                </div>
+
+                <!-- Intercepted SDK Events Console -->
+                <div class="sdk-console-wrapper">
+                  <div class="sdk-console-header">
+                    <div class="sdk-console-title">
+                      <i data-lucide="terminal"></i>
+                      <span>Intercepted SDK Event Stream</span>
+                      <span class="sdk-console-count" id="sdk-console-count">0 Events</span>
+                    </div>
+                    <div class="sdk-console-actions">
+                      <button type="button" class="sdk-btn-clear" id="sdk-btn-clear" title="Clear console stream">
+                        <i data-lucide="trash-2"></i> Clear
+                      </button>
+                    </div>
+                  </div>
+                  <div class="sdk-console-body" id="sdk-console-body" role="log" aria-live="polite">
+                    <!-- Event log items dynamically injected here -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- 10. Accessibility Hub -->
         <section class="docs-section" id="a11y-hub">
           <span class="docs-section-tag">04 / Platform Subsystems</span>
@@ -1181,6 +1289,8 @@ function updateCategoryPillCounts() {
   <script src="assets/js/sound-engine.js"></script>
   <script src="assets/js/keyboard-shortcuts.js"></script>
   <script src="assets/js/network-detector.js"></script>
+  <script src="assets/js/arcade-audio.js"></script>
+  <script src="assets/js/arcadeverse-sdk.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // Copy code snippet buttons
@@ -1349,6 +1459,497 @@ function updateCategoryPillCounts() {
     });
   </script>
 
+  <!-- Interactive ArcadeVerse SDK Sandbox Playground Controller (#726) -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const codeInput = document.getElementById("sdk-code-input");
+      const lineNumbers = document.getElementById("sdk-line-numbers");
+      const runBtn = document.getElementById("sdk-btn-run");
+      const resetBtn = document.getElementById("sdk-btn-reset");
+      const clearBtn = document.getElementById("sdk-btn-clear");
+      const consoleBody = document.getElementById("sdk-console-body");
+      const consoleCount = document.getElementById("sdk-console-count");
+      const canvas = document.getElementById("sdk-preview-canvas");
+      const hudScore = document.getElementById("sdk-hud-score");
+      const hudHigh = document.getElementById("sdk-hud-high");
+      const hudStatus = document.getElementById("sdk-hud-status");
+      const presetBtns = document.querySelectorAll(".sdk-preset-btn");
+      const snippetChips = document.querySelectorAll(".sdk-chip-insert");
+
+      if (!codeInput || !canvas || !consoleBody) return;
+
+      const ctx = canvas.getContext("2d");
+      let eventCounter = 0;
+      let currentScore = 0;
+      let targetScore = 0;
+      let highScore = parseInt(localStorage.getItem("av_sandbox_high") || "5000", 10);
+      let currentPreset = "score";
+
+      const PRESETS = {
+        score: `// 1. Post real-time score updates to ArcadeVerse shell
+const points = 250;
+arcadeverse.score(points);
+
+// Trigger chiptune coin fanfare
+arcadeverse.audio("coin");
+
+console.log("Score updated by +" + points + " pts!");`,
+
+        audio: `// 2. Synthesize authentic retro chiptune audio with Web Audio API
+arcadeverse.audio("laser");
+
+// Sequence procedural waveforms over time:
+setTimeout(() => arcadeverse.audio("coin"), 250);
+setTimeout(() => arcadeverse.audio("powerup"), 500);
+setTimeout(() => arcadeverse.audio("jump"), 750);`,
+
+        storage: `// 3. Isolated per-game storage proxy (prevents multi-game collisions)
+const profile = {
+  player: "NeonCoder",
+  stage: 4,
+  achievements: ["SpeedRunner", "FirstBlood"]
+};
+
+arcadeverse.save("player_data", profile);
+const loaded = arcadeverse.load("player_data");
+console.log("Restored state from storage:", loaded);`,
+
+        gameover: `// 4. Dispatch final match telemetry and victory state
+ArcadeVerse.postGameOver({
+  score: 4850,
+  won: true,
+  stage: 7,
+  difficulty: "Hardcore"
+});
+
+arcadeverse.audio("powerup");
+console.log("Game Over telemetry dispatched!");`,
+
+        canvas: `// 5. Direct 2D canvas drawing and animated particle burst
+ctx.fillStyle = "#00f0ff";
+ctx.font = "bold 16px monospace";
+ctx.fillText("CUSTOM RUNTIME TICK", 30, 45);
+
+arcadeverse.score(500);
+arcadeverse.audio("jump");`
+      };
+
+      // Particles & Animation State
+      const particles = [];
+      const ripples = [];
+      const orb = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        vx: 2.2,
+        vy: 1.8,
+        radius: 8,
+        trail: []
+      };
+
+      // Pad string for 6-digit arcade HUD
+      function padZero(num, size = 6) {
+        let s = String(Math.max(0, Math.floor(num)));
+        while (s.length < size) s = "0" + s;
+        return s;
+      }
+
+      function updateHud() {
+        if (hudScore) hudScore.textContent = padZero(currentScore);
+        if (hudHigh) hudHigh.textContent = padZero(highScore);
+      }
+      updateHud();
+
+      // Console Logger
+      function logEvent(tag, message) {
+        eventCounter++;
+        if (consoleCount) {
+          consoleCount.textContent = eventCounter + (eventCounter === 1 ? " Event" : " Events");
+        }
+
+        const now = new Date();
+        const timeStr = now.toTimeString().split(" ")[0] + "." + String(now.getMilliseconds()).padStart(3, "0");
+
+        const row = document.createElement("div");
+        row.className = "sdk-log-entry";
+
+        const timeSpan = document.createElement("span");
+        timeSpan.className = "sdk-log-time";
+        timeSpan.textContent = timeStr;
+
+        const tagSpan = document.createElement("span");
+        const cleanTag = String(tag || "INFO").toLowerCase();
+        tagSpan.className = "sdk-log-tag tag-" + cleanTag;
+        tagSpan.textContent = "[" + tag.toUpperCase() + "]";
+
+        const msgSpan = document.createElement("span");
+        msgSpan.className = "sdk-log-msg";
+        msgSpan.textContent = message;
+
+        row.appendChild(timeSpan);
+        row.appendChild(tagSpan);
+        row.appendChild(msgSpan);
+
+        consoleBody.appendChild(row);
+        consoleBody.scrollTop = consoleBody.scrollHeight;
+      }
+
+      function addScoreParticle(text, x, y, color = "#10b981") {
+        particles.push({
+          text: text,
+          x: x || canvas.width / 2,
+          y: y || canvas.height / 2,
+          vy: -1.2,
+          alpha: 1.0,
+          color: color
+        });
+      }
+
+      function addAudioRipple(x, y, color = "#00f0ff") {
+        ripples.push({
+          x: x || canvas.width / 2,
+          y: y || canvas.height / 2,
+          radius: 6,
+          maxRadius: 45,
+          alpha: 1.0,
+          color: color
+        });
+      }
+
+      // Sandboxed arcadeverse proxy object
+      const sandboxArcadeVerse = {
+        score: function (pts) {
+          const num = Number(pts) || 0;
+          targetScore += num;
+          if (targetScore > highScore) {
+            highScore = targetScore;
+            try { localStorage.setItem("av_sandbox_high", String(highScore)); } catch (_) {}
+          }
+          addScoreParticle("+" + num, canvas.width / 2, canvas.height / 2 - 15, "#34d399");
+          logEvent("SCORE", "Dispatched ARCADEVERSE_GAME_SCORE: +" + num + " pts (Total: " + targetScore + ")");
+          if (window.ArcadeVerse && typeof window.ArcadeVerse.postScore === "function") {
+            try { window.ArcadeVerse.postScore(targetScore); } catch (_) {}
+          }
+          return targetScore;
+        },
+        audio: function (soundName) {
+          const name = String(soundName || "coin").toLowerCase();
+          addAudioRipple(canvas.width / 2, canvas.height / 2, "#a855f7");
+          if (window.ArcadeAudio) {
+            try {
+              const methodName = "play" + name.charAt(0).toUpperCase() + name.slice(1);
+              if (typeof window.ArcadeAudio[methodName] === "function") {
+                window.ArcadeAudio[methodName]();
+              } else if (typeof window.ArcadeAudio.playLaser === "function") {
+                window.ArcadeAudio.playLaser();
+              }
+            } catch (_) {}
+          }
+          logEvent("AUDIO", 'Synthesized 8-bit procedural waveform: "' + name + '"');
+        },
+        save: function (key, value) {
+          try {
+            if (window.ArcadeStorage) {
+              window.ArcadeStorage.setJSON(key, value);
+            } else {
+              localStorage.setItem("av_sandbox_" + key, JSON.stringify(value));
+            }
+            addScoreParticle("DATA SAVED", canvas.width - 90, 30, "#3b82f6");
+            logEvent("STORAGE", 'Isolated storage write: "' + key + '" = ' + JSON.stringify(value));
+            return true;
+          } catch (err) {
+            logEvent("ERROR", "Storage write error: " + err.message);
+            return false;
+          }
+        },
+        load: function (key) {
+          try {
+            let val = null;
+            if (window.ArcadeStorage) {
+              val = window.ArcadeStorage.getJSON(key, null);
+            } else {
+              const raw = localStorage.getItem("av_sandbox_" + key);
+              val = raw ? JSON.parse(raw) : null;
+            }
+            logEvent("STORAGE", 'Isolated storage read: "' + key + '" => ' + JSON.stringify(val));
+            return val;
+          } catch (err) {
+            logEvent("ERROR", "Storage read error: " + err.message);
+            return null;
+          }
+        },
+        postGameOver: function (details) {
+          addScoreParticle("GAME OVER", canvas.width / 2, canvas.height / 2 - 20, "#f43f5e");
+          logEvent("GAMEOVER", "Dispatched ARCADEVERSE_GAME_OVER: " + JSON.stringify(details || {}));
+          if (window.ArcadeVerse && typeof window.ArcadeVerse.postGameOver === "function") {
+            try { window.ArcadeVerse.postGameOver(details); } catch (_) {}
+          }
+        }
+      };
+
+      // Custom sandbox console
+      const sandboxConsole = {
+        log: function (...args) {
+          logEvent("LOG", args.map(a => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" "));
+        },
+        info: function (...args) {
+          logEvent("INFO", args.map(a => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" "));
+        },
+        warn: function (...args) {
+          logEvent("EVENT", args.map(a => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" "));
+        },
+        error: function (...args) {
+          logEvent("ERROR", args.map(a => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" "));
+        }
+      };
+
+      // Line numbers sync
+      function updateLineNumbers() {
+        const lines = codeInput.value.split("\n").length;
+        let nums = "";
+        for (let i = 1; i <= lines; i++) {
+          nums += i + "\n";
+        }
+        lineNumbers.textContent = nums;
+      }
+
+      codeInput.addEventListener("input", updateLineNumbers);
+      codeInput.addEventListener("scroll", () => {
+        lineNumbers.scrollTop = codeInput.scrollTop;
+      });
+
+      // Tab key support & Ctrl+Enter to run
+      codeInput.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+          e.preventDefault();
+          executeCode();
+        } else if (e.key === "Tab") {
+          e.preventDefault();
+          const start = codeInput.selectionStart;
+          const end = codeInput.selectionEnd;
+          codeInput.value = codeInput.value.substring(0, start) + "  " + codeInput.value.substring(end);
+          codeInput.selectionStart = codeInput.selectionEnd = start + 2;
+          updateLineNumbers();
+        }
+      });
+
+      // Code Execution Handler
+      function executeCode() {
+        const code = codeInput.value;
+        if (hudStatus) {
+          hudStatus.textContent = "EXECUTING...";
+          hudStatus.style.color = "#3b82f6";
+        }
+
+        try {
+          // If AudioContext exists and suspended, resume on user interaction
+          if (window.ArcadeAudio && typeof window.ArcadeAudio.init === "function") {
+            window.ArcadeAudio.init();
+          }
+
+          const runFn = new Function(
+            "arcadeverse",
+            "ArcadeVerse",
+            "ArcadeAudio",
+            "ArcadeStorage",
+            "canvas",
+            "ctx",
+            "console",
+            code
+          );
+
+          runFn(
+            sandboxArcadeVerse,
+            window.ArcadeVerse || sandboxArcadeVerse,
+            window.ArcadeAudio || {},
+            window.ArcadeStorage || {},
+            canvas,
+            ctx,
+            sandboxConsole
+          );
+
+          if (hudStatus) {
+            hudStatus.textContent = "LIVE PREVIEW";
+            hudStatus.style.color = "#10b981";
+          }
+        } catch (err) {
+          logEvent("ERROR", err.toString());
+          if (hudStatus) {
+            hudStatus.textContent = "RUNTIME ERROR";
+            hudStatus.style.color = "#f43f5e";
+          }
+        }
+      }
+
+      runBtn.addEventListener("click", executeCode);
+
+      // Reset Button Handler
+      resetBtn.addEventListener("click", () => {
+        codeInput.value = PRESETS[currentPreset] || PRESETS.score;
+        updateLineNumbers();
+        logEvent("INFO", 'Reset snippet to default "' + currentPreset + '" preset.');
+      });
+
+      // Clear Console Handler
+      clearBtn.addEventListener("click", () => {
+        consoleBody.innerHTML = "";
+        eventCounter = 0;
+        if (consoleCount) consoleCount.textContent = "0 Events";
+      });
+
+      // Preset Switcher
+      presetBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+          presetBtns.forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          const presetKey = btn.dataset.preset;
+          currentPreset = presetKey;
+          if (PRESETS[presetKey]) {
+            codeInput.value = PRESETS[presetKey];
+            updateLineNumbers();
+            logEvent("INFO", 'Loaded preset: "' + presetKey + '"');
+          }
+        });
+      });
+
+      // Insert Chips
+      snippetChips.forEach(chip => {
+        chip.addEventListener("click", () => {
+          const snippet = chip.dataset.snippet;
+          if (!snippet) return;
+          const start = codeInput.selectionStart;
+          const end = codeInput.selectionEnd;
+          const before = codeInput.value.substring(0, start);
+          const after = codeInput.value.substring(end);
+          codeInput.value = before + (before.endsWith("\n") || before === "" ? "" : "\n") + snippet + "\n" + after;
+          updateLineNumbers();
+          codeInput.focus();
+        });
+      });
+
+      // Interactive Canvas Click
+      canvas.addEventListener("click", (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const clickX = (e.clientX - rect.left) * scaleX;
+        const clickY = (e.clientY - rect.top) * scaleY;
+
+        addScoreParticle("+100", clickX, clickY, "#34d399");
+        addAudioRipple(clickX, clickY, "#00f0ff");
+        sandboxArcadeVerse.score(100);
+        sandboxArcadeVerse.audio("coin");
+      });
+
+      // Set initial code
+      codeInput.value = PRESETS.score;
+      updateLineNumbers();
+      logEvent("INFO", "Interactive SDK Sandbox initialized. Ready for real-time tests.");
+
+      // Canvas Animation Loop
+      function renderCanvas() {
+        ctx.fillStyle = "#080c16";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Grid Background
+        ctx.strokeStyle = "rgba(0, 240, 255, 0.05)";
+        ctx.lineWidth = 1;
+        const gridSize = 20;
+        for (let x = 0; x < canvas.width; x += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, canvas.height);
+          ctx.stroke();
+        }
+        for (let y = 0; y < canvas.height; y += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(canvas.width, y);
+          ctx.stroke();
+        }
+
+        // Smooth score increment
+        if (currentScore < targetScore) {
+          const diff = targetScore - currentScore;
+          currentScore += Math.max(1, Math.ceil(diff * 0.1));
+          updateHud();
+        }
+
+        // Update & Render Bouncing Orb
+        orb.x += orb.vx;
+        orb.y += orb.vy;
+        if (orb.x - orb.radius <= 0 || orb.x + orb.radius >= canvas.width) {
+          orb.vx *= -1;
+          addAudioRipple(orb.x, orb.y, "rgba(59, 130, 246, 0.6)");
+        }
+        if (orb.y - orb.radius <= 0 || orb.y + orb.radius >= canvas.height) {
+          orb.vy *= -1;
+          addAudioRipple(orb.x, orb.y, "rgba(59, 130, 246, 0.6)");
+        }
+
+        // Orb Trail
+        orb.trail.push({ x: orb.x, y: orb.y });
+        if (orb.trail.length > 8) orb.trail.shift();
+        for (let t = 0; t < orb.trail.length; t++) {
+          const pt = orb.trail[t];
+          const trailAlpha = (t + 1) / orb.trail.length * 0.3;
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, orb.radius * (0.5 + 0.5 * (t / orb.trail.length)), 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(0, 240, 255, " + trailAlpha + ")";
+          ctx.fill();
+        }
+
+        // Orb Body
+        ctx.beginPath();
+        ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
+        ctx.fillStyle = "#00f0ff";
+        ctx.shadowColor = "#00f0ff";
+        ctx.shadowBlur = 10;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Render Ripples
+        for (let r = ripples.length - 1; r >= 0; r--) {
+          const rip = ripples[r];
+          rip.radius += 1.8;
+          rip.alpha -= 0.035;
+          if (rip.alpha <= 0) {
+            ripples.splice(r, 1);
+            continue;
+          }
+          ctx.beginPath();
+          ctx.arc(rip.x, rip.y, rip.radius, 0, Math.PI * 2);
+          ctx.strokeStyle = rip.color.replace(")", ", " + rip.alpha + ")").replace("rgb(", "rgba(");
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        // Render Floating Score Particles
+        for (let p = particles.length - 1; p >= 0; p--) {
+          const part = particles[p];
+          part.y += part.vy;
+          part.alpha -= 0.02;
+          if (part.alpha <= 0) {
+            particles.splice(p, 1);
+            continue;
+          }
+          ctx.save();
+          ctx.font = "bold 13px 'JetBrains Mono', monospace";
+          ctx.fillStyle = part.color;
+          ctx.globalAlpha = Math.max(0, part.alpha);
+          ctx.fillText(part.text, part.x, part.y);
+          ctx.restore();
+        }
+
+        requestAnimationFrame(renderCanvas);
+      }
+
+      requestAnimationFrame(renderCanvas);
+
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+    });
+  </script>
 </body>
 </html>
 
