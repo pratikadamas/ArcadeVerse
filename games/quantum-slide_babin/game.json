@@ -3,5 +3,6 @@
   "category": "Puzzle / Logic",
   "description": "Rearrange scrambled cyber-chips into sequential order on a glowing circuit matrix with guaranteed solvable boards.",
   "author": "Babin Bid",
-  "github": "Babin123456"
+  "github": "Babin123456",
+  "lucideIcon": "layout-grid"
 }
