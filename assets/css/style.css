@@ -3133,6 +3133,14 @@ body.modal-pseudo-fullscreen-active #game-frame {
   transform: translateY(-1px);
 }
 
+.modal-controls .btn-icon:focus-visible,
+.modal-controls .btn-close:focus-visible,
+.modal-controls a.btn-icon:focus-visible {
+  outline: 2px solid var(--accent-primary, #00f0ff);
+  outline-offset: 2px;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.45);
+}
+
 #modal-fav-btn.favorited {
   color: #f43f5e;
   border-color: rgba(244, 63, 94, 0.5);
@@ -9002,9 +9010,16 @@ html.light-mode .trophy-modal-title {
 
 /* Keyboard Accessibility Focus Indicators */
 .modal-controls .btn-icon:focus-visible,
-.modal-controls .btn-close:focus-visible {
-  outline: 2px solid var(--accent-primary) !important;
+.modal-controls .btn-close:focus-visible,
+.modal-controls a.btn-icon:focus-visible {
+  outline: 2px solid var(--accent-primary, #00f0ff) !important;
   outline-offset: 2px;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.45);
+}
+
+.modal-frame-wrapper iframe:focus-visible {
+  outline: 2px solid var(--accent-primary, #00f0ff) !important;
+  outline-offset: -2px;
 }
 
 /* Screen Orientation Transitions for Modal Frame */

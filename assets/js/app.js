@@ -1984,7 +1984,13 @@ document.addEventListener("DOMContentLoaded", () => {
     gameSessionStartTime = Date.now();
     isConfirmingQuit = false;
     hideQuitConfirmationModal();
-    lastFocusedElement = triggerElement || document.activeElement;
+
+    // Cache triggering element or activeElement to restore focus upon modal close (#736)
+    const triggeringCard = (game && game.id) ? (
+      document.querySelector(`.game-card[data-game-id="${game.id}"] .btn-play-trigger`) ||
+      document.querySelector(`.game-card[data-game-id="${game.id}"]`)
+    ) : null;
+    lastFocusedElement = triggerElement || (document.activeElement && document.activeElement !== document.body ? document.activeElement : triggeringCard);
 
     // Trigger bat animation if launching a Halloween Special Game
     if (isHalloweenGame(game) && typeof window.triggerHalloweenBatAnimation === "function") {
@@ -2002,6 +2008,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Storage Isolation Bridge: Pass gameId via URL parameter so SDK attaches namespaced proxy (#493, #824)
     const iframeUrl = buildIsolatedGameUrl(game);
     gameIframe.src = iframeUrl;
+    if (!gameIframe.hasAttribute("tabindex")) {
+      gameIframe.setAttribute("tabindex", "0");
+    }
     if (newTabBtn) {
       newTabBtn.href = iframeUrl;
     }
@@ -2184,6 +2193,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeGameModal(isFromPopState = false) {
     if (!gameModal || (!gameModal.classList.contains("active") && !activeGame)) return;
+    const closedGameId = activeGame ? activeGame.id : null;
+    const elementToRestore = lastFocusedElement;
     hideLandscapePrompt();
     activeGame = null;
     isGameSessionActive = false;
@@ -2309,9 +2320,26 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.fullscreenElement || document.webkitFullscreenElement) {
       if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
     }
-    if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
-      lastFocusedElement.focus();
-    }
+    // Restore focus to triggering card or cached activeElement upon closing (#736)
+    const restoreFocus = () => {
+      if (elementToRestore && typeof elementToRestore.focus === "function" && document.body.contains(elementToRestore)) {
+        try {
+          elementToRestore.focus();
+          return;
+        } catch (_) {}
+      }
+      if (closedGameId) {
+        const fallbackEl = document.querySelector(`.game-card[data-game-id="${closedGameId}"] .btn-play-trigger`) ||
+                           document.querySelector(`.game-card[data-game-id="${closedGameId}"]`);
+        if (fallbackEl && typeof fallbackEl.focus === "function") {
+          try {
+            fallbackEl.focus();
+          } catch (_) {}
+        }
+      }
+    };
+    restoreFocus();
+    setTimeout(restoreFocus, 50);
 
     if (isFromPopState) {
       modalPushedHistory = false;
@@ -2456,6 +2484,105 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   window.addEventListener("keydown", handleEscDualAction);
+
+  // ========================================================
+  // ACCESSIBILITY: MODAL KEYBOARD FOCUS TRAP (#736)
+  // Keeps Tab and Shift+Tab cycling strictly between modal controls and game frame.
+  // Prevents focus from escaping to hidden catalog cards beneath the backdrop blur.
+  // ========================================================
+  function getModalFocusableElements() {
+    if (!gameModal || !gameModal.classList.contains("active")) return [];
+
+    // If quit confirmation dialog is active, trap focus strictly inside it
+    const quitDialog = document.getElementById("game-quit-confirmation-dialog");
+    if (quitDialog && quitDialog.classList.contains("active")) {
+      const quitFocusables = Array.from(
+        quitDialog.querySelectorAll('button:not([disabled]), [tabindex]:not([tabindex="-1"])')
+      ).filter((el) => el.offsetWidth > 0 || el.offsetHeight > 0 || window.getComputedStyle(el).display !== "none");
+      if (quitFocusables.length > 0) return quitFocusables;
+    }
+
+    // Modal controls, optional landscape prompt buttons, and game frame
+    const selector = '.modal-controls button:not([disabled]), .modal-controls a[href]:not([disabled]), #orientation-landscape-prompt button:not([disabled]), #game-iframe, .modal-frame-wrapper iframe, [tabindex]:not([tabindex="-1"])';
+    const elements = Array.from(gameModal.querySelectorAll(selector));
+
+    return elements.filter((el) => {
+      if (el.hasAttribute("disabled") || el.getAttribute("aria-hidden") === "true") return false;
+      const style = window.getComputedStyle(el);
+      if (style.display === "none" || style.visibility === "hidden") return false;
+      if (quitDialog && !quitDialog.classList.contains("active") && quitDialog.contains(el)) return false;
+      return true;
+    });
+  }
+
+  function handleModalFocusTrap(e) {
+    if (e.key !== "Tab" && e.keyCode !== 9) return;
+    if (!gameModal || !gameModal.classList.contains("active")) return;
+
+    const focusableElements = getModalFocusableElements();
+    if (focusableElements.length === 0) {
+      e.preventDefault();
+      return;
+    }
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+    const activeEl = document.activeElement;
+
+    // If focus is outside the trap or on an untrapped container, snap into the trap
+    if (!focusableElements.includes(activeEl)) {
+      e.preventDefault();
+      if (e.shiftKey) {
+        lastElement.focus();
+      } else {
+        firstElement.focus();
+      }
+      return;
+    }
+
+    if (e.shiftKey) {
+      // Shift + Tab: reverse cycling
+      if (activeEl === firstElement) {
+        e.preventDefault();
+        lastElement.focus();
+      }
+    } else {
+      // Tab: forward cycling
+      if (activeEl === lastElement) {
+        e.preventDefault();
+        firstElement.focus();
+      }
+    }
+  }
+
+  window.addEventListener("keydown", handleModalFocusTrap);
+
+  // Background focus leakage suppressor: redirect accidental focus back inside modal
+  document.addEventListener("focusin", (e) => {
+    if (!gameModal || !gameModal.classList.contains("active")) return;
+
+    const quitDialog = document.getElementById("game-quit-confirmation-dialog");
+    if (quitDialog && quitDialog.classList.contains("active")) {
+      if (!quitDialog.contains(e.target)) {
+        const keepPlayingBtn = quitDialog.querySelector("#btn-quit-keep-playing") || quitDialog.querySelector("button");
+        if (keepPlayingBtn && typeof keepPlayingBtn.focus === "function") {
+          keepPlayingBtn.focus();
+        }
+      }
+      return;
+    }
+
+    if (!gameModal.contains(e.target)) {
+      const focusables = getModalFocusableElements();
+      if (focusables.length > 0) {
+        if (closeModalBtn && focusables.includes(closeModalBtn)) {
+          closeModalBtn.focus();
+        } else {
+          focusables[0].focus();
+        }
+      }
+    }
+  });
 
   // ========================================================
   // ACCESSIBILITY & GAMEPLAY KEYBOARD SCROLL SUPPRESSOR (#512)
