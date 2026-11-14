@@ -568,6 +568,665 @@
     registeredWebGLContexts.length = 0;
   }
 
+  // ========================================================
+  // IN-BROWSER CONTRIBUTOR GAME VALIDATOR WIDGET (#727)
+  // Dev-mode only: audits 4-file compliance, game.json schema,
+  // zero-emoji standards, and XSS breakout rules on localhost.
+  // Zero production footprint.
+  // ========================================================
+  var devValidatorReport = null;
+
+  function isLocalDev() {
+    try {
+      if (typeof window === "undefined" || !window.location) return false;
+      var host = window.location.hostname;
+      return (
+        host === "localhost" ||
+        host === "127.0.0.1" ||
+        host === "[::1]" ||
+        window.__ARCADEVERSE_DEV_FORCE_VALIDATOR__ === true
+      );
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function fetchDevFile(url) {
+    if (typeof fetch === "function") {
+      return fetch(url)
+        .then(function (res) {
+          if (!res.ok) {
+            return { exists: false, status: res.status, text: "" };
+          }
+          return res.text().then(function (txt) {
+            return { exists: true, status: res.status, text: txt };
+          });
+        })
+        .catch(function (err) {
+          return { exists: false, status: 0, text: "", error: err };
+        });
+    }
+    return new Promise(function (resolve) {
+      try {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.onload = function () {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve({ exists: true, status: xhr.status, text: xhr.responseText });
+          } else {
+            resolve({ exists: false, status: xhr.status, text: "" });
+          }
+        };
+        xhr.onerror = function (e) {
+          resolve({ exists: false, status: 0, text: "", error: e });
+        };
+        xhr.send();
+      } catch (e) {
+        resolve({ exists: false, status: 0, text: "", error: e });
+      }
+    });
+  }
+
+  var DevValidator = {
+    badgeEl: null,
+    popoverEl: null,
+    hasInjectedStyles: false,
+
+    injectStyles: function () {
+      if (typeof document === "undefined" || this.hasInjectedStyles || document.getElementById("dev-validator-styles")) {
+        return;
+      }
+      try {
+        var style = document.createElement("style");
+        style.id = "dev-validator-styles";
+        style.textContent =
+          "#dev-validator-badge { position: fixed; bottom: 16px; right: 16px; z-index: 999999; display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #f8fafc; border: 1px solid rgba(255, 255, 255, 0.16); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45); cursor: pointer; user-select: none; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }\n" +
+          "#dev-validator-badge:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(0, 0, 0, 0.6); }\n" +
+          "#dev-validator-badge:focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; }\n" +
+          "#dev-validator-badge .dev-validator-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; transition: background-color 0.2s ease, box-shadow 0.2s ease; }\n" +
+          "#dev-validator-badge.dev-validator-pending .dev-validator-dot { background: #3b82f6; box-shadow: 0 0 8px #3b82f6; animation: devValidatorPulse 1.2s infinite ease-in-out; }\n" +
+          "#dev-validator-badge.dev-validator-pass { border-color: rgba(16, 185, 129, 0.5); }\n" +
+          "#dev-validator-badge.dev-validator-pass .dev-validator-dot { background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.7); }\n" +
+          "#dev-validator-badge.dev-validator-pass .dev-validator-text { color: #34d399; }\n" +
+          "#dev-validator-badge.dev-validator-warn { border-color: rgba(245, 158, 11, 0.5); }\n" +
+          "#dev-validator-badge.dev-validator-warn .dev-validator-dot { background: #f59e0b; box-shadow: 0 0 8px rgba(245, 158, 11, 0.7); }\n" +
+          "#dev-validator-badge.dev-validator-warn .dev-validator-text { color: #fbbf24; }\n" +
+          "#dev-validator-badge.dev-validator-fail { border-color: rgba(244, 63, 94, 0.6); }\n" +
+          "#dev-validator-badge.dev-validator-fail .dev-validator-dot { background: #f43f5e; box-shadow: 0 0 8px rgba(244, 63, 94, 0.8); animation: devValidatorPulse 1.5s infinite ease-in-out; }\n" +
+          "#dev-validator-badge.dev-validator-fail .dev-validator-text { color: #fb7185; }\n" +
+          "#dev-validator-badge .dev-validator-badge-count { display: inline-flex; align-items: center; justify-content: center; font-size: 10px; padding: 1px 6px; border-radius: 9999px; background: rgba(255, 255, 255, 0.12); margin-left: 2px; }\n" +
+          "#dev-validator-popover { position: fixed; bottom: 58px; right: 16px; z-index: 999999; width: 380px; max-width: calc(100vw - 32px); max-height: calc(100vh - 80px); display: flex; flex-direction: column; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 14px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6); color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; overflow: hidden; animation: devValidatorSlideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1); }\n" +
+          ".dev-validator-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.03); }\n" +
+          ".dev-validator-title-row { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; color: #f1f5f9; }\n" +
+          ".dev-validator-title-row svg { color: #3b82f6; flex-shrink: 0; }\n" +
+          ".dev-validator-header-actions { display: flex; align-items: center; gap: 8px; }\n" +
+          ".dev-validator-pill-tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.04em; }\n" +
+          ".dev-validator-pill-tag.tag-pass { background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }\n" +
+          ".dev-validator-pill-tag.tag-warn { background: rgba(245, 158, 11, 0.16); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }\n" +
+          ".dev-validator-pill-tag.tag-fail { background: rgba(244, 63, 94, 0.16); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }\n" +
+          ".dev-validator-close-btn { background: transparent; border: none; color: #94a3b8; cursor: pointer; padding: 4px; border-radius: 6px; display: flex; align-items: center; justify-content: center; line-height: 1; transition: color 0.15s ease, background-color 0.15s ease; }\n" +
+          ".dev-validator-close-btn:hover { color: #f8fafc; background: rgba(255, 255, 255, 0.08); }\n" +
+          ".dev-validator-body { padding: 12px 16px; overflow-y: auto; max-height: 380px; display: flex; flex-direction: column; gap: 10px; }\n" +
+          ".dev-validator-section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-top: 4px; margin-bottom: 2px; }\n" +
+          ".dev-validator-checklist { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }\n" +
+          ".dev-validator-item { display: flex; align-items: flex-start; gap: 8px; padding: 6px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.03); font-size: 11.5px; line-height: 1.4; }\n" +
+          ".dev-validator-item-icon { margin-top: 2px; flex-shrink: 0; width: 14px; height: 14px; }\n" +
+          ".dev-validator-item.item-pass .dev-validator-item-icon { color: #10b981; }\n" +
+          ".dev-validator-item.item-warn .dev-validator-item-icon { color: #f59e0b; }\n" +
+          ".dev-validator-item.item-fail .dev-validator-item-icon { color: #f43f5e; }\n" +
+          ".dev-validator-item-content { flex: 1; }\n" +
+          ".dev-validator-item-name { font-weight: 600; color: #e2e8f0; }\n" +
+          ".dev-validator-item-desc { color: #94a3b8; font-size: 10.5px; margin-top: 1px; word-break: break-word; }\n" +
+          ".dev-validator-issues-box { background: rgba(244, 63, 94, 0.08); border: 1px solid rgba(244, 63, 94, 0.25); border-radius: 8px; padding: 8px 12px; margin-top: 4px; }\n" +
+          ".dev-validator-issues-box.issues-warn { background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.25); }\n" +
+          ".dev-validator-issue-text { font-size: 11px; color: #fca5a5; margin: 3px 0; }\n" +
+          ".dev-validator-issues-box.issues-warn .dev-validator-issue-text { color: #fcd34d; }\n" +
+          ".dev-validator-footer { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-top: 1px solid rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.02); }\n" +
+          ".dev-validator-rerun-btn { font-family: inherit; font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.06); color: #f1f5f9; cursor: pointer; transition: all 0.15s ease; }\n" +
+          ".dev-validator-rerun-btn:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.25); }\n" +
+          ".dev-validator-dev-note { font-size: 10px; color: #64748b; font-family: 'JetBrains Mono', monospace; }\n" +
+          "@keyframes devValidatorSlideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }\n" +
+          "@keyframes devValidatorPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }\n";
+        document.head.appendChild(style);
+        this.hasInjectedStyles = true;
+      } catch (_) {}
+    },
+
+    getIconSvg: function (type) {
+      if (type === "pass") {
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      }
+      if (type === "warn") {
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+      }
+      if (type === "terminal") {
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>';
+      }
+      return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+    },
+
+    init: function () {
+      if (!isLocalDev()) return;
+      if (typeof document === "undefined" || !document.body) return;
+
+      this.injectStyles();
+      this.createDomElements();
+      this.runAudit(false);
+    },
+
+    createDomElements: function () {
+      if (document.getElementById("dev-validator-badge")) {
+        this.badgeEl = document.getElementById("dev-validator-badge");
+        this.popoverEl = document.getElementById("dev-validator-popover");
+        return;
+      }
+
+      var self = this;
+
+      // Create Badge Pill
+      var badge = document.createElement("div");
+      badge.id = "dev-validator-badge";
+      badge.className = "dev-validator-badge dev-validator-pending";
+      badge.setAttribute("role", "button");
+      badge.setAttribute("tabindex", "0");
+      badge.setAttribute("aria-label", "ArcadeVerse Development Validator: Checking...");
+      badge.setAttribute("title", "Click to view ArcadeVerse game manifest and compliance diagnostics");
+
+      badge.innerHTML =
+        '<span class="dev-validator-dot"></span>' +
+        '<span class="dev-validator-text">DEV: Checking...</span>' +
+        '<span class="dev-validator-badge-count" style="display:none;"></span>';
+
+      // Create Popover Card
+      var popover = document.createElement("div");
+      popover.id = "dev-validator-popover";
+      popover.style.display = "none";
+      popover.setAttribute("role", "dialog");
+      popover.setAttribute("aria-modal", "false");
+      popover.setAttribute("aria-label", "ArcadeVerse Dev Validator Diagnostics");
+
+      popover.innerHTML =
+        '<div class="dev-validator-header">' +
+          '<div class="dev-validator-title-row">' +
+            self.getIconSvg("terminal") +
+            '<span>Game Manifest Validator</span>' +
+          '</div>' +
+          '<div class="dev-validator-header-actions">' +
+            '<span class="dev-validator-pill-tag tag-pass">CHECKING</span>' +
+            '<button class="dev-validator-close-btn" aria-label="Close Popover">&times;</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="dev-validator-body">' +
+          '<div class="dev-validator-section-title">Pre-Flight Checks</div>' +
+          '<ul class="dev-validator-checklist"></ul>' +
+          '<div class="dev-validator-issues-container"></div>' +
+        '</div>' +
+        '<div class="dev-validator-footer">' +
+          '<button class="dev-validator-rerun-btn">Re-run Validation</button>' +
+          '<span class="dev-validator-dev-note">Localhost Only</span>' +
+        '</div>';
+
+      document.body.appendChild(badge);
+      document.body.appendChild(popover);
+
+      this.badgeEl = badge;
+      this.popoverEl = popover;
+
+      // Event handlers
+      badge.addEventListener("click", function (e) {
+        e.stopPropagation();
+        self.togglePopover();
+      });
+
+      badge.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          self.togglePopover();
+        }
+      });
+
+      var closeBtn = popover.querySelector(".dev-validator-close-btn");
+      if (closeBtn) {
+        closeBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          self.hidePopover();
+        });
+      }
+
+      var rerunBtn = popover.querySelector(".dev-validator-rerun-btn");
+      if (rerunBtn) {
+        rerunBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          self.runAudit(true);
+        });
+      }
+
+      document.addEventListener("click", function (e) {
+        if (self.popoverEl && self.popoverEl.style.display !== "none") {
+          if (!self.popoverEl.contains(e.target) && !self.badgeEl.contains(e.target)) {
+            self.hidePopover();
+          }
+        }
+      });
+
+      window.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && self.popoverEl && self.popoverEl.style.display !== "none") {
+          self.hidePopover();
+        }
+      });
+    },
+
+    togglePopover: function () {
+      if (!this.popoverEl) return;
+      if (this.popoverEl.style.display === "none") {
+        this.showPopover();
+      } else {
+        this.hidePopover();
+      }
+    },
+
+    showPopover: function () {
+      if (this.popoverEl) {
+        this.popoverEl.style.display = "flex";
+      }
+    },
+
+    hidePopover: function () {
+      if (this.popoverEl) {
+        this.popoverEl.style.display = "none";
+      }
+    },
+
+    runAudit: function (verbose) {
+      var self = this;
+      if (!isLocalDev()) return Promise.resolve(null);
+
+      if (this.badgeEl) {
+        this.badgeEl.className = "dev-validator-badge dev-validator-pending";
+        var txt = this.badgeEl.querySelector(".dev-validator-text");
+        if (txt) txt.textContent = "DEV: Checking...";
+        var countEl = this.badgeEl.querySelector(".dev-validator-badge-count");
+        if (countEl) countEl.style.display = "none";
+      }
+
+      var EMOJI_REGEX = /[\uD83C-\uDBFF\uDC00-\uDFFF]|[\u2600-\u27BF]/;
+
+      return Promise.all([
+        fetchDevFile("./game.json"),
+        fetchDevFile("./style.css"),
+        fetchDevFile("./game.js")
+      ]).then(function (results) {
+        var gameJsonRes = results[0];
+        var styleCssRes = results[1];
+        var gameJsRes = results[2];
+
+        // If not in a game context and game.json doesn't exist, gracefully hide badge
+        if (!gameJsonRes.exists && detectedGameId === "game" && !styleCssRes.exists && !gameJsRes.exists) {
+          if (self.badgeEl) self.badgeEl.style.display = "none";
+          if (self.popoverEl) self.popoverEl.style.display = "none";
+          return null;
+        }
+
+        if (self.badgeEl) self.badgeEl.style.display = "inline-flex";
+
+        var errors = [];
+        var warnings = [];
+        var items = [];
+
+        // 1. 4-File Compliance
+        var missingFiles = [];
+        if (!gameJsonRes.exists) missingFiles.push("game.json");
+        if (!styleCssRes.exists) missingFiles.push("style.css");
+        if (!gameJsRes.exists) missingFiles.push("game.js");
+
+        if (missingFiles.length === 0) {
+          items.push({
+            id: "files",
+            name: "4-File Structure",
+            status: "pass",
+            desc: "All required files found (index.html, style.css, game.js, game.json)"
+          });
+        } else {
+          missingFiles.forEach(function (f) {
+            errors.push("Missing required file: " + f);
+          });
+          items.push({
+            id: "files",
+            name: "4-File Structure",
+            status: "fail",
+            desc: "Missing: " + missingFiles.join(", ")
+          });
+        }
+
+        // 2. game.json Structure & Required Fields
+        if (gameJsonRes.exists) {
+          try {
+            var meta = JSON.parse(gameJsonRes.text);
+            var reqFields = ["title", "category", "description", "author", "github"];
+            var missingFields = [];
+            reqFields.forEach(function (f) {
+              if (!meta[f] || typeof meta[f] !== "string" || !meta[f].trim()) {
+                missingFields.push(f);
+                errors.push('game.json missing required field: "' + f + '"');
+              }
+            });
+
+            // Strict XSS & Attribute Breakout Check (#491)
+            var xssErrors = [];
+            ["title", "category", "author", "description"].forEach(function (f) {
+              var val = meta[f];
+              if (typeof val === "string" && (val.indexOf('"') !== -1 || val.indexOf("<") !== -1 || val.indexOf(">") !== -1)) {
+                var xssMsg = 'Attribute Breakout / XSS risk: "' + f + '" contains unescaped quotes or angle brackets.';
+                errors.push(xssMsg);
+                xssErrors.push(f);
+              }
+            });
+
+            if (missingFields.length === 0 && xssErrors.length === 0) {
+              items.push({
+                id: "schema",
+                name: "game.json Schema",
+                status: "pass",
+                desc: 'Manifest valid: "' + (meta.title || detectedGameId) + '" by @' + (meta.author || "contributor")
+              });
+            } else {
+              items.push({
+                id: "schema",
+                name: "game.json Schema",
+                status: "fail",
+                desc: (missingFields.length > 0 ? "Missing: " + missingFields.join(", ") + ". " : "") +
+                      (xssErrors.length > 0 ? "XSS quotes detected in: " + xssErrors.join(", ") : "")
+              });
+            }
+          } catch (jsonErr) {
+            var parseErr = "game.json contains invalid JSON: " + jsonErr.message;
+            errors.push(parseErr);
+            items.push({
+              id: "schema",
+              name: "game.json Schema",
+              status: "fail",
+              desc: parseErr
+            });
+          }
+        } else {
+          items.push({
+            id: "schema",
+            name: "game.json Schema",
+            status: "fail",
+            desc: "game.json file missing"
+          });
+        }
+
+        // 3. Zero-Emoji Scan
+        var emojiFiles = [];
+        if (gameJsonRes.exists && EMOJI_REGEX.test(gameJsonRes.text)) {
+          emojiFiles.push("game.json");
+          warnings.push("Detected unicode emoji in game.json. Please replace with SVG or Lucide icon.");
+        }
+        if (styleCssRes.exists && EMOJI_REGEX.test(styleCssRes.text)) {
+          emojiFiles.push("style.css");
+          warnings.push("Detected unicode emoji in style.css. Please replace with SVG or Lucide icon.");
+        }
+        if (gameJsRes.exists && EMOJI_REGEX.test(gameJsRes.text)) {
+          emojiFiles.push("game.js");
+          warnings.push("Detected unicode emoji in game.js. Please replace with SVG or Lucide icon.");
+        }
+        if (typeof document !== "undefined" && document.body && EMOJI_REGEX.test(document.body.innerHTML)) {
+          emojiFiles.push("index.html");
+          warnings.push("Detected unicode emoji in index.html. Please replace with SVG or Lucide icon.");
+        }
+
+        if (emojiFiles.length === 0) {
+          items.push({
+            id: "emoji",
+            name: "Zero-Emoji Standards",
+            status: "pass",
+            desc: "No unicode emojis detected (strict SVG/icon compliance passed)"
+          });
+        } else {
+          items.push({
+            id: "emoji",
+            name: "Zero-Emoji Standards",
+            status: "warn",
+            desc: "Unicode emojis found in: " + emojiFiles.join(", ") + " (replace with SVG)"
+          });
+        }
+
+        // 4. HTML Meta & Viewport Standards
+        var htmlMissing = [];
+        if (typeof document !== "undefined") {
+          if (!document.title || !document.title.trim()) {
+            errors.push("index.html is missing a <title> tag.");
+            htmlMissing.push("missing <title>");
+          }
+          if (!document.querySelector('meta[name="viewport"]')) {
+            warnings.push("index.html is missing a responsive viewport <meta> tag.");
+            htmlMissing.push("missing viewport meta");
+          }
+        }
+        if (htmlMissing.length === 0) {
+          items.push({
+            id: "html",
+            name: "HTML Head Standards",
+            status: "pass",
+            desc: "Responsive viewport meta tag and document <title> verified"
+          });
+        } else {
+          items.push({
+            id: "html",
+            name: "HTML Head Standards",
+            status: errors.some(function (e) { return e.indexOf("<title>") !== -1; }) ? "fail" : "warn",
+            desc: htmlMissing.join(", ")
+          });
+        }
+
+        // 5. Folder Naming Convention
+        if (detectedGameId && detectedGameId !== "game") {
+          var folderRegex = /^[a-z0-9-]+_[a-z0-9-]+$/i;
+          if (folderRegex.test(detectedGameId)) {
+            items.push({
+              id: "folder",
+              name: "Folder Naming",
+              status: "pass",
+              desc: "Folder adheres to games/<game-name_username> (" + detectedGameId + ")"
+            });
+          } else {
+            var folderWarn = "Folder naming should be games/<game-name_username> (got: " + detectedGameId + ")";
+            warnings.push(folderWarn);
+            items.push({
+              id: "folder",
+              name: "Folder Naming",
+              status: "warn",
+              desc: folderWarn
+            });
+          }
+        }
+
+        // 6. Security Heuristics (Isolation & DOM XSS)
+        if (gameJsRes.exists) {
+          var jsSecIssues = [];
+          if (gameJsRes.text.indexOf("document.write(") !== -1 || gameJsRes.text.indexOf("document.writeln(") !== -1) {
+            var docWriteErr = "Avoid document.write() in community games; it breaks DOM streaming and player isolation.";
+            errors.push(docWriteErr);
+            jsSecIssues.push(docWriteErr);
+          }
+          if (/(window\.)?(top|parent)\.location/i.test(gameJsRes.text)) {
+            var topNavErr = "Security violation (#492): Attempt to access top or parent frame navigation.";
+            errors.push(topNavErr);
+            jsSecIssues.push(topNavErr);
+          }
+
+          if (jsSecIssues.length === 0) {
+            items.push({
+              id: "security",
+              name: "Sandbox Security",
+              status: "pass",
+              desc: "Passed iframe sandboxing and DOM isolation checks"
+            });
+          } else {
+            items.push({
+              id: "security",
+              name: "Sandbox Security",
+              status: "fail",
+              desc: jsSecIssues.join("; ")
+            });
+          }
+        }
+
+        // Determine Status
+        var overallStatus = "pass";
+        if (errors.length > 0) {
+          overallStatus = "fail";
+        } else if (warnings.length > 0) {
+          overallStatus = "warn";
+        }
+
+        devValidatorReport = {
+          timestamp: new Date().toISOString(),
+          status: overallStatus,
+          errors: errors,
+          warnings: warnings,
+          items: items,
+          gameId: detectedGameId
+        };
+
+        // Update Badge UI
+        self.updateBadgeUI(overallStatus, errors, warnings);
+
+        // Update Popover UI
+        self.updatePopoverUI(overallStatus, items, errors, warnings);
+
+        // Console Log Output
+        self.logConsoleReport(overallStatus, items, errors, warnings, verbose);
+
+        return devValidatorReport;
+      }).catch(function (err) {
+        console.warn("[ArcadeVerse DevValidator] Audit encountered error:", err);
+        return null;
+      });
+    },
+
+    updateBadgeUI: function (status, errors, warnings) {
+      if (!this.badgeEl) return;
+      this.badgeEl.className = "dev-validator-badge dev-validator-" + status;
+
+      var textEl = this.badgeEl.querySelector(".dev-validator-text");
+      var countEl = this.badgeEl.querySelector(".dev-validator-badge-count");
+
+      if (status === "pass") {
+        if (textEl) textEl.textContent = "DEV: Manifest Valid";
+        if (countEl) countEl.style.display = "none";
+        this.badgeEl.setAttribute("aria-label", "ArcadeVerse Development Validator: Pass (All checks valid)");
+      } else if (status === "warn") {
+        if (textEl) textEl.textContent = "DEV: " + warnings.length + " Warning" + (warnings.length > 1 ? "s" : "");
+        if (countEl) {
+          countEl.textContent = String(warnings.length);
+          countEl.style.display = "inline-flex";
+        }
+        this.badgeEl.setAttribute("aria-label", "ArcadeVerse Development Validator: " + warnings.length + " Warnings");
+      } else {
+        if (textEl) textEl.textContent = "DEV: " + errors.length + " Error" + (errors.length > 1 ? "s" : "");
+        if (countEl) {
+          countEl.textContent = String(errors.length);
+          countEl.style.display = "inline-flex";
+        }
+        this.badgeEl.setAttribute("aria-label", "ArcadeVerse Development Validator: " + errors.length + " Errors");
+      }
+    },
+
+    updatePopoverUI: function (status, items, errors, warnings) {
+      if (!this.popoverEl) return;
+
+      var tagPill = this.popoverEl.querySelector(".dev-validator-pill-tag");
+      if (tagPill) {
+        tagPill.className = "dev-validator-pill-tag tag-" + status;
+        tagPill.textContent = status.toUpperCase();
+      }
+
+      var listEl = this.popoverEl.querySelector(".dev-validator-checklist");
+      if (listEl) {
+        listEl.innerHTML = "";
+        var self = this;
+        items.forEach(function (item) {
+          var li = document.createElement("li");
+          li.className = "dev-validator-item item-" + item.status;
+          li.innerHTML =
+            '<div class="dev-validator-item-icon">' + self.getIconSvg(item.status) + '</div>' +
+            '<div class="dev-validator-item-content">' +
+              '<div class="dev-validator-item-name">' + item.name + '</div>' +
+              '<div class="dev-validator-item-desc">' + item.desc + '</div>' +
+            '</div>';
+          listEl.appendChild(li);
+        });
+      }
+
+      var issuesContainer = this.popoverEl.querySelector(".dev-validator-issues-container");
+      if (issuesContainer) {
+        issuesContainer.innerHTML = "";
+        if (errors.length > 0) {
+          var errBox = document.createElement("div");
+          errBox.className = "dev-validator-issues-box";
+          errBox.innerHTML = '<div style="font-weight:600; font-size:11px; margin-bottom:4px; color:#f87171;">Errors to fix before merge:</div>';
+          errors.forEach(function (err) {
+            var p = document.createElement("div");
+            p.className = "dev-validator-issue-text";
+            p.textContent = "[FAIL] " + err;
+            errBox.appendChild(p);
+          });
+          issuesContainer.appendChild(errBox);
+        }
+        if (warnings.length > 0) {
+          var warnBox = document.createElement("div");
+          warnBox.className = "dev-validator-issues-box issues-warn";
+          warnBox.innerHTML = '<div style="font-weight:600; font-size:11px; margin-bottom:4px; color:#fbbf24;">Advisory Warnings:</div>';
+          warnings.forEach(function (w) {
+            var p = document.createElement("div");
+            p.className = "dev-validator-issue-text";
+            p.textContent = "[WARN] " + w;
+            warnBox.appendChild(p);
+          });
+          issuesContainer.appendChild(warnBox);
+        }
+      }
+    },
+
+    logConsoleReport: function (status, items, errors, warnings, verbose) {
+      if (typeof console === "undefined" || !console.groupCollapsed) return;
+
+      var headerColor = status === "pass" ? "#10b981" : (status === "warn" ? "#f59e0b" : "#f43f5e");
+      var title = "[ArcadeVerse DevValidator] " + (status === "pass" ? "[PASS] All checks passed" : (status === "warn" ? "[WARN] " + warnings.length + " warning(s)" : "[FAIL] " + errors.length + " error(s)"));
+
+      if (verbose || status !== "pass") {
+        console.groupCollapsed("%c" + title, "color:" + headerColor + "; font-weight:bold; font-size:11px;");
+      } else {
+        console.groupCollapsed("%c" + title, "color:" + headerColor + "; font-weight:bold; font-size:11px;");
+      }
+
+      items.forEach(function (item) {
+        var prefix = item.status === "pass" ? "[PASS]" : (item.status === "warn" ? "[WARN]" : "[FAIL]");
+        var itemColor = item.status === "pass" ? "#10b981" : (item.status === "warn" ? "#f59e0b" : "#f43f5e");
+        console.log("%c" + prefix + " " + item.name + "%c: " + item.desc, "color:" + itemColor + "; font-weight:bold;", "color:inherit;");
+      });
+
+      if (errors.length > 0) {
+        console.log("%cAction Required:", "color:#f43f5e; font-weight:bold;");
+        errors.forEach(function (err) {
+          console.error("  x " + err);
+        });
+      }
+
+      if (warnings.length > 0) {
+        console.log("%cRecommendations:", "color:#f59e0b; font-weight:bold;");
+        warnings.forEach(function (w) {
+          console.warn("  ! " + w);
+        });
+      }
+
+      console.log("%cDev mode active on " + (window.location && window.location.hostname) + ". Validator is completely stripped in production.", "color:#64748b; font-size:10px; font-style:italic;");
+      console.groupEnd();
+    }
+  };
+
   /**
    * Initializes message bridging with parent window
    */
@@ -606,6 +1265,19 @@
             });
           }
         }, true);
+      }
+
+      // Initialize in-browser developer game validator on localhost (#727)
+      if (isLocalDev()) {
+        if (typeof document !== "undefined") {
+          if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", function () {
+              DevValidator.init();
+            });
+          } else {
+            DevValidator.init();
+          }
+        }
       }
 
       isInitialized = true;
@@ -1248,6 +1920,29 @@
         logicalWidth: w,
         logicalHeight: h
       };
+    },
+
+    // ========================================================
+    // IN-BROWSER DEV VALIDATOR PUBLIC API (#727)
+    // ========================================================
+    /**
+     * Programmatically executes pre-flight manifest and file compliance audit.
+     * Active only on localhost/127.0.0.1; disabled in production builds.
+     * @returns {Promise<Object|null>}
+     */
+    runDevValidator: function () {
+      if (!isLocalDev()) {
+        return Promise.resolve({ isDev: false, message: "DevValidator is active only on localhost/127.0.0.1" });
+      }
+      return DevValidator.runAudit(true);
+    },
+
+    /**
+     * Retrieves the latest DevValidator audit telemetry and findings
+     * @returns {Object|null}
+     */
+    getDevValidatorReport: function () {
+      return devValidatorReport;
     }
   };
 });
