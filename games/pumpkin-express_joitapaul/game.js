@@ -54,6 +54,8 @@
   const blocked = new Set(brokenCells.map((cell) => cellId(cell.x, cell.y)));
   const selection = { x: 1, y: 2 };
   const train = { x: route[0].x, y: route[0].y, from: null, progress: 0 };
+  const switchQueue = [];
+  const SWITCH_TURN_RADIUS = 38;
 
   let state = "ready";
   let moves = 0;
@@ -128,6 +130,32 @@
       won: "Station reached",
       derailed: "Train derailed"
     })[state];
+
+    // Synchronize lantern SVG light colors with underlying track graph pointer (#734)
+    const switchCardSvg = document.querySelector(".hud-card svg");
+    if (switchCardSvg) {
+      const misplacedCount = switches.filter((s) => s.orientation !== 0).length;
+      if (switchQueue.length > 0) {
+        switchCardSvg.style.stroke = "#f59e0b"; // Queued switch pending
+      } else if (misplacedCount === 0) {
+        switchCardSvg.style.stroke = "#22c55e"; // All switches aligned to station route
+      } else {
+        switchCardSvg.style.stroke = "#e48159"; // Misaligned branch warning
+      }
+    }
+
+    const trainCardSvg = document.querySelector(".train-card svg");
+    if (trainCardSvg) {
+      if (state === "won") {
+        trainCardSvg.style.stroke = "#22c55e";
+      } else if (state === "derailed") {
+        trainCardSvg.style.stroke = "#ef4444";
+      } else if (state === "running") {
+        trainCardSvg.style.stroke = "#e7a34e";
+      } else {
+        trainCardSvg.style.stroke = "var(--amber)";
+      }
+    }
   }
 
   function setFeedback(message, duration = 2400) {
@@ -146,6 +174,7 @@
 
   function resetLevel() {
     window.cancelAnimationFrame(animationFrame);
+    switchQueue.length = 0;
     switches.forEach((piece) => { piece.orientation = piece.initial; });
     selection.x = 1;
     selection.y = 2;
@@ -181,6 +210,7 @@
     overlay.hidden = true;
     dispatchElapsed = 0;
     lastFrame = 0;
+    switchQueue.length = 0;
     setFeedback("Train in motion. Switch the rails before it reaches them.");
     updateHud();
     canvas.focus({ preventScroll: true });
@@ -203,18 +233,95 @@
   function finishRun(won, message) {
     state = won ? "won" : "derailed";
     window.cancelAnimationFrame(animationFrame);
+    switchQueue.length = 0;
     overlayTitle.textContent = won ? "Station reached" : "Train derailed";
     overlayMessage.textContent = message;
     startButton.textContent = "Retry level";
     overlay.hidden = false;
     setFeedback(won ? "The pumpkin express made it safely to the station." : message, 0);
+
+    // Platform Bridge: Dispatch score to ArcadeVerse host upon victory (#734)
+    if (won) {
+      const finalScore = Math.max(100, 2000 - moves * 150 - Math.floor(dispatchElapsed) * 30);
+      try {
+        if (window.ArcadeVerse && typeof window.ArcadeVerse.postScore === "function") {
+          window.ArcadeVerse.postScore(finalScore);
+        } else if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: "ARCADEVERSE_GAME_SCORE", score: finalScore }, "*");
+        }
+      } catch (_) {}
+    }
+
     updateHud();
     drawBoard();
   }
 
-  function rotateSwitch(piece) {
+  function getLocomotiveCenter() {
+    const current = centerOf(train);
+    if (state === "running" && train.from) {
+      const previous = centerOf(train.from);
+      const progress = Math.min(1, train.progress);
+      return {
+        x: previous.x + (current.x - previous.x) * progress,
+        y: previous.y + (current.y - previous.y) * progress
+      };
+    }
+    return current;
+  }
+
+  function isLocomotiveIntersectingSwitch(piece) {
+    if (state !== "running") return false;
+    const loco = getLocomotiveCenter();
+    const swCenter = centerOf(piece);
+    const dist = Math.hypot(loco.x - swCenter.x, loco.y - swCenter.y);
+    if (dist <= SWITCH_TURN_RADIUS) {
+      return true;
+    }
+    const dx = Math.abs(loco.x - swCenter.x);
+    const dy = Math.abs(loco.y - swCenter.y);
+    return dx < 32 && dy < 28;
+  }
+
+  function applyQueuedSwitches() {
+    if (switchQueue.length === 0) return;
+    let appliedCount = 0;
+    while (switchQueue.length > 0) {
+      const item = switchQueue.shift();
+      if (item.piece && item.piece.orientation !== item.targetOrientation) {
+        item.piece.orientation = item.targetOrientation;
+        appliedCount++;
+      }
+    }
+    if (appliedCount > 0) {
+      moves += appliedCount;
+      updateHud();
+      setFeedback("Queued switch applied at junction boundary.");
+    }
+  }
+
+  function requestSwitchToggle(piece, desiredOrientation = null) {
     if (!piece || state === "paused" || state === "won" || state === "derailed") return;
-    piece.orientation = piece.orientation === 0 ? 1 : 0;
+
+    const nextOrientation = desiredOrientation !== null
+      ? desiredOrientation
+      : (piece.orientation === 0 ? 1 : 0);
+
+    if (piece.orientation === nextOrientation) return;
+
+    // Prevent toggling while locomotive intersects switch turn radius (#734)
+    if (state === "running" && isLocomotiveIntersectingSwitch(piece)) {
+      const existing = switchQueue.find((item) => item.piece === piece);
+      if (existing) {
+        existing.targetOrientation = nextOrientation;
+      } else {
+        switchQueue.push({ piece, targetOrientation: nextOrientation });
+      }
+      setFeedback("Switch locked by locomotive. Toggle queued for junction boundary.");
+      drawBoard();
+      return;
+    }
+
+    piece.orientation = nextOrientation;
     moves++;
     updateHud();
     if (state === "ready") {
@@ -224,6 +331,45 @@
       setFeedback("Switch changed. The train is approaching.");
     }
     drawBoard();
+  }
+
+  function rotateSwitch(piece) {
+    requestSwitchToggle(piece);
+  }
+
+  function getApproachingSwitch() {
+    if (state !== "running") return null;
+    const targetPiece = pieceAt(train.x, train.y);
+    if (targetPiece && targetPiece.type === "switch") {
+      return switches.find((s) => s.x === train.x && s.y === train.y);
+    }
+    if (train.from) {
+      const fromPiece = pieceAt(train.from.x, train.from.y);
+      if (fromPiece && fromPiece.type === "switch") {
+        return switches.find((s) => s.x === train.from.x && s.y === train.from.y);
+      }
+    }
+    return null;
+  }
+
+  function handleDirectionHotkey(dirKey) {
+    let sw = null;
+    const selectedPiece = pieceAt(selection.x, selection.y);
+    if (selectedPiece && selectedPiece.type === "switch") {
+      sw = switches.find((item) => item.x === selection.x && item.y === selection.y);
+    } else if (state === "running") {
+      sw = getApproachingSwitch();
+    }
+    if (!sw) return false;
+
+    if (sw.correct === dirKey) {
+      requestSwitchToggle(sw, 0);
+      return true;
+    } else if (sw.branch === dirKey) {
+      requestSwitchToggle(sw, 1);
+      return true;
+    }
+    return false;
   }
 
   function pieceAt(x, y) {
@@ -296,6 +442,8 @@
 
     if (train.progress >= 1) {
       train.progress = 0;
+      // Atomically apply queued switch requests at node boundaries (#734)
+      applyQueuedSwitches();
       advanceTrain();
     }
     if (state === "running" && dispatchElapsed >= 30) {
@@ -402,29 +550,89 @@
     const center = centerOf(piece);
     const switchPiece = switches.find((item) => item.x === piece.x && item.y === piece.y);
     const activeConnections = currentConnections(piece);
-    const inactiveDirection = switchPiece.orientation === 0 ? switchPiece.branch : switchPiece.correct;
+    // Active outgoing direction is the branch currently connected to incoming
+    const activeOutgoing = switchPiece.orientation === 0 ? switchPiece.correct : switchPiece.branch;
+    const isQueued = switchQueue.some((item) => item.piece === switchPiece);
+
+    // Draw rail segments: active rail is highlighted, inactive is dimmed
     piece.connections.forEach((direction) => {
       drawRailSegment(center, direction, activeConnections.includes(direction), true);
     });
 
+    // Lantern color scheme: Emerald for aligned station path, Crimson for misaligned branch, Amber for queued toggle
+    const bulbColor = isQueued
+      ? "#f59e0b"
+      : switchPiece.orientation === 0
+        ? "#22c55e"
+        : "#ef4444";
+    const bulbGlow = isQueued
+      ? 14 + Math.sin(ambientTime * 12) * 5
+      : 12;
+
     context.save();
-    context.fillStyle = "#dfab62";
-    context.shadowColor = "#e7a34e";
-    context.shadowBlur = 12;
+
+    // 1. Lantern Housing Base
+    context.fillStyle = "#221914";
+    context.strokeStyle = isQueued ? "#f59e0b" : "#69503b";
+    context.lineWidth = isQueued ? 2 : 1.5;
     context.beginPath();
-    context.arc(center.x, center.y, 7, 0, Math.PI * 2);
+    context.arc(center.x, center.y, 9, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+
+    // 2. Glowing Lantern Lens (SVG Signal Light sync)
+    context.fillStyle = bulbColor;
+    context.shadowColor = bulbColor;
+    context.shadowBlur = bulbGlow;
+    context.beginPath();
+    context.arc(center.x, center.y, 5.5, 0, Math.PI * 2);
     context.fill();
     context.shadowBlur = 0;
-    context.strokeStyle = "#f4d6a0";
-    context.lineWidth = 2;
+
+    // 3. Directional Traversal Pointer Needle
+    // Strictly matches the active pathing graph outgoing direction (#734)
+    const offset = directions[activeOutgoing];
+    const tipX = center.x + offset.dx * 20;
+    const tipY = center.y + offset.dy * 20;
+
+    context.strokeStyle = isQueued ? "#fde68a" : "#f4d6a0";
+    context.lineWidth = 2.5;
+    context.lineCap = "round";
     context.beginPath();
     context.moveTo(center.x, center.y);
-    const offset = directions[inactiveDirection];
-    context.lineTo(center.x + offset.dx * 17, center.y + offset.dy * 17);
+    context.lineTo(tipX, tipY);
     context.stroke();
+
+    // Arrowhead at pointer needle tip
+    const arrowPerpX = -offset.dy * 4;
+    const arrowPerpY = offset.dx * 4;
+    context.fillStyle = isQueued ? "#fde68a" : "#f4d6a0";
+    context.beginPath();
+    context.moveTo(tipX + offset.dx * 2, tipY + offset.dy * 2);
+    context.lineTo(tipX - offset.dx * 5 + arrowPerpX, tipY - offset.dy * 5 + arrowPerpY);
+    context.lineTo(tipX - offset.dx * 5 - arrowPerpX, tipY - offset.dy * 5 - arrowPerpY);
+    context.closePath();
+    context.fill();
+
     context.restore();
 
-    if ((state === "ready" || state === "running") && switchPiece.orientation !== 0) {
+    // Queued junction pulse ring
+    if (isQueued) {
+      context.save();
+      const pulseRadius = 22 + Math.sin(ambientTime * 10) * 4;
+      context.strokeStyle = "#f59e0b";
+      context.lineWidth = 2;
+      context.setLineDash([3, 3]);
+      context.beginPath();
+      context.arc(center.x, center.y, pulseRadius, 0, Math.PI * 2);
+      context.stroke();
+      context.setLineDash([]);
+      context.font = "800 8px Segoe UI, sans-serif";
+      context.fillStyle = "#fbbf24";
+      context.textAlign = "center";
+      context.fillText("QUEUED", center.x, center.y + 36);
+      context.restore();
+    } else if ((state === "ready" || state === "running") && switchPiece.orientation !== 0) {
       context.save();
       context.strokeStyle = "#e48159";
       context.fillStyle = "#f2a17b";
@@ -599,8 +807,9 @@
     selection.x = point.x;
     selection.y = point.y;
     const piece = pieceAt(point.x, point.y);
-    if (piece && piece.type === "switch") rotateSwitch(switches.find((item) => item.x === point.x && item.y === point.y));
-    else {
+    if (piece && piece.type === "switch") {
+      requestSwitchToggle(switches.find((item) => item.x === point.x && item.y === point.y));
+    } else {
       setFeedback(blocked.has(cellId(point.x, point.y)) ? "Broken rail. The train cannot pass here." : "Select a golden switch to change the route.");
       drawBoard();
     }
@@ -611,20 +820,34 @@
     if (event.target instanceof HTMLElement && event.target.closest("button") && event.key !== "Escape") return;
     if (event.key === "ArrowUp") {
       event.preventDefault();
+      handleDirectionHotkey("N");
       moveSelection(0, -1);
     } else if (event.key === "ArrowDown") {
       event.preventDefault();
+      handleDirectionHotkey("S");
       moveSelection(0, 1);
     } else if (event.key === "ArrowLeft") {
       event.preventDefault();
+      handleDirectionHotkey("W");
       moveSelection(-1, 0);
     } else if (event.key === "ArrowRight") {
       event.preventDefault();
+      handleDirectionHotkey("E");
       moveSelection(1, 0);
     } else if (event.code === "Space") {
       event.preventDefault();
       const piece = pieceAt(selection.x, selection.y);
-      if (piece && piece.type === "switch") rotateSwitch(switches.find((item) => item.x === selection.x && item.y === selection.y));
+      if (piece && piece.type === "switch") {
+        requestSwitchToggle(switches.find((item) => item.x === selection.x && item.y === selection.y));
+      }
+    } else if (event.key.toLowerCase() === "w") {
+      if (handleDirectionHotkey("N")) event.preventDefault();
+    } else if (event.key.toLowerCase() === "s") {
+      if (handleDirectionHotkey("S")) event.preventDefault();
+    } else if (event.key.toLowerCase() === "a") {
+      if (handleDirectionHotkey("W")) event.preventDefault();
+    } else if (event.key.toLowerCase() === "d") {
+      if (handleDirectionHotkey("E")) event.preventDefault();
     } else if (event.key === "Enter" && (state === "ready" || state === "paused")) {
       startTrain();
     } else if (event.key.toLowerCase() === "p") {
