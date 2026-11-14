@@ -654,6 +654,9 @@ document.addEventListener("DOMContentLoaded", () => {
           <button type="button" class="podium-trophy-btn" data-action="open-trophy-card" data-player="${escapeAttr(item.name || item.login)}" data-handle="${escapeAttr(item.login)}" data-avatar="${escapeAttr(item.avatar_url || '')}" data-score="${score} PTS" data-game="NSOC 2026 Hall of Fame" data-rank="${escapeAttr(slot.badgeLabel)}" data-badge="NSOC 2026" title="Generate Verified Achievement Certificate">
             <i data-lucide="award"></i> Trophy Certificate
           </button>
+          <button type="button" class="podium-share-btn" data-action="share-standing" data-name="${escapeAttr(item.name)}" data-handle="${escapeAttr(item.login)}" data-rank="${slot.rank}" data-score="${score}" title="Share Contributor Standing">
+            <i data-lucide="share-2"></i> Share Rank
+          </button>
         </div>
       `;
 
@@ -1353,6 +1356,51 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && badgeLegendModal && badgeLegendModal.style.display !== "none") {
       closeBadgeLegend();
+    }
+  });
+
+  // Web Share API & Clipboard One-Click Standings Snippet Generator (#579)
+  function showLeaderboardToast(message) {
+    let toast = document.getElementById("leaderboard-share-toast");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "leaderboard-share-toast";
+      toast.className = "leaderboard-toast";
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add("visible");
+    setTimeout(() => {
+      toast.classList.remove("visible");
+    }, 2800);
+  }
+
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-action='share-standing']");
+    if (!btn) return;
+    const name = btn.getAttribute("data-name") || "Contributor";
+    const handle = btn.getAttribute("data-handle") || "contributor";
+    const rank = btn.getAttribute("data-rank") || "1";
+    const score = btn.getAttribute("data-score") || "0";
+
+    const shareTitle = `ArcadeVerse Hall of Fame - Rank #${rank}`;
+    const shareText = `Check out ${name} (@${handle}) ranked #${rank} on ArcadeVerse with ${score} Arcade Points!`;
+    const shareUrl = window.location.href;
+
+    if (navigator.share) {
+      navigator.share({
+        title: shareTitle,
+        text: shareText,
+        url: shareUrl
+      }).catch(() => {});
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(`${shareText}\n${shareUrl}`).then(() => {
+        showLeaderboardToast("Copied Standings to Clipboard!");
+      }).catch(() => {
+        showLeaderboardToast("Standing details ready to share!");
+      });
+    } else {
+      showLeaderboardToast("Standing details ready to share!");
     }
   });
 
