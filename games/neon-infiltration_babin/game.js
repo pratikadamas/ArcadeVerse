@@ -296,7 +296,7 @@
     if (isGameOver || isMissionWon) return;
 
     // Posture & speed
-    player.isSneaking = keys['ShiftLeft'] || keys['ShiftRight'];
+    player.isSneaking = keys['ShiftLeft'] || keys['ShiftRight'] || !!keys['touch_sneak'];
     player.isSprinting = keys['Space'];
 
     if (player.isSneaking) {
@@ -319,20 +319,22 @@
     // Move player
     let moveX = 0;
     let moveY = 0;
-    if (keys['KeyW'] || keys['ArrowUp']) moveY -= 1;
-    if (keys['KeyS'] || keys['ArrowDown']) moveY += 1;
-    if (keys['KeyA'] || keys['ArrowLeft']) moveX -= 1;
-    if (keys['KeyD'] || keys['ArrowRight']) moveX += 1;
+    if (keys['KeyW'] || keys['ArrowUp'] || keys['touch_up']) moveY -= 1;
+    if (keys['KeyS'] || keys['ArrowDown'] || keys['touch_down']) moveY += 1;
+    if (keys['KeyA'] || keys['ArrowLeft'] || keys['touch_left']) moveX -= 1;
+    if (keys['KeyD'] || keys['ArrowRight'] || keys['touch_right']) moveX += 1;
 
     if (moveX !== 0 || moveY !== 0) {
-      const len = Math.sqrt(moveX * moveX + moveY * moveY);
-      const nextX = player.x + (moveX / len) * player.speed;
-      const nextY = player.y + (moveY / len) * player.speed;
+      const len = Math.hypot(moveX, moveY);
+      if (len > 1e-4) {
+        const nextX = player.x + (moveX / len) * player.speed;
+        const nextY = player.y + (moveY / len) * player.speed;
 
-      if (canMoveTo(nextX, player.y)) player.x = nextX;
-      if (canMoveTo(player.x, nextY)) player.y = nextY;
+        if (canMoveTo(nextX, player.y)) player.x = nextX;
+        if (canMoveTo(player.x, nextY)) player.y = nextY;
 
-      player.angle = Math.atan2(moveY, moveX);
+        player.angle = Math.atan2(moveY, moveX);
+      }
     }
 
     // Guard AI & Patrolling
@@ -447,6 +449,20 @@
     modalDesc.textContent = 'Facility alert reached 100%. Security forces neutralized the operative.';
     btnModalAction.textContent = 'RETRY PROTOCOL';
     missionModal.classList.remove('hidden');
+
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'ARCADEVERSE_GAME_OVER',
+          score: 0,
+          details: {
+            won: false,
+            missionTime: missionSeconds,
+            alertLevel: 100
+          }
+        }, '*');
+      }
+    } catch (_) {}
   }
 
   function triggerMissionVictory() {
@@ -458,6 +474,27 @@
     modalDesc.textContent = `Operative escaped undetected with all classified memory cores in ${timeVal.textContent}!`;
     btnModalAction.textContent = 'PLAY AGAIN';
     missionModal.classList.remove('hidden');
+
+    const score = Math.max(100, Math.round(1000 - missionSeconds * 8 - alertMeter * 3));
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'ARCADEVERSE_GAME_SCORE',
+          score,
+          missionTime: missionSeconds,
+          alertLevel: Math.round(alertMeter)
+        }, '*');
+        window.parent.postMessage({
+          type: 'ARCADEVERSE_GAME_OVER',
+          score,
+          details: {
+            won: true,
+            missionTime: missionSeconds,
+            alertLevel: Math.round(alertMeter)
+          }
+        }, '*');
+      }
+    } catch (_) {}
   }
 
   // Draw Raycasted Cones
@@ -589,12 +626,23 @@
 
   // Reset Mission
   function rebootMission() {
+    if (missionTimerInterval) {
+      clearInterval(missionTimerInterval);
+      missionTimerInterval = null;
+    }
+    if (animFrameId) {
+      cancelAnimationFrame(animFrameId);
+      animFrameId = null;
+    }
+
     player.x = 40;
     player.y = 300;
+    player.angle = 0;
     alertMeter = 0;
     isGameOver = false;
     isMissionWon = false;
     missionSeconds = 0;
+    timeVal.textContent = '00:00';
     TERMINALS.forEach((t) => {
       t.hacked = false;
       t.progress = 0;
@@ -605,6 +653,17 @@
     missionModal.classList.add('hidden');
     hackProgressBox.classList.add('hidden');
     tacticalLogUl.innerHTML = '<li>Mission rebooted. Avoid sentinel flashlight cones.</li>';
+
+    missionTimerInterval = setInterval(() => {
+      if (!isGameOver && !isMissionWon) {
+        missionSeconds++;
+        const m = String(Math.floor(missionSeconds / 60)).padStart(2, '0');
+        const s = String(missionSeconds % 60).padStart(2, '0');
+        timeVal.textContent = `${m}:${s}`;
+      }
+    }, 1000);
+
+    animFrameId = requestAnimationFrame(gameLoop);
   }
 
   // Input Listeners
@@ -625,17 +684,89 @@
     svgSoundOff.classList.toggle('hidden', soundEnabled);
   });
 
-  // Mission Timer
-  missionTimerInterval = setInterval(() => {
-    if (!isGameOver && !isMissionWon) {
-      missionSeconds++;
-      const m = String(Math.floor(missionSeconds / 60)).padStart(2, '0');
-      const s = String(missionSeconds % 60).padStart(2, '0');
-      timeVal.textContent = `${m}:${s}`;
+  // Mobile Touch Controls
+  const touchDpad = document.getElementById('touch-controls');
+  if (touchDpad) {
+    const bindTouchButton = (btn, keyName) => {
+      const press = (e) => {
+        e.preventDefault();
+        keys[keyName] = true;
+        btn.classList.add('active');
+      };
+      const release = (e) => {
+        e.preventDefault();
+        keys[keyName] = false;
+        btn.classList.remove('active');
+      };
+      btn.addEventListener('pointerdown', press);
+      btn.addEventListener('pointerup', release);
+      btn.addEventListener('pointercancel', release);
+      btn.addEventListener('pointerleave', release);
+    };
+
+    document.querySelectorAll('.dpad-btn[data-dir]').forEach((btn) => {
+      const dir = btn.dataset.dir;
+      bindTouchButton(btn, `touch_${dir}`);
+    });
+
+    const touchSneakBtn = document.getElementById('touch-sneak');
+    if (touchSneakBtn) {
+      touchSneakBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        keys['touch_sneak'] = !keys['touch_sneak'];
+        touchSneakBtn.classList.toggle('active', !!keys['touch_sneak']);
+      });
     }
-  }, 1000);
+  }
+
+  // Lifecycle & Messages
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      Object.keys(keys).forEach((k) => (keys[k] = false));
+    }
+  });
+
+  window.addEventListener('message', (event) => {
+    if (!event.data || typeof event.data !== 'object') return;
+    const type = event.data.type;
+    if (type === 'ARCADEVERSE_PAUSE') {
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+      if (missionTimerInterval) {
+        clearInterval(missionTimerInterval);
+        missionTimerInterval = null;
+      }
+    } else if (type === 'ARCADEVERSE_RESUME') {
+      if (!animFrameId && !isGameOver && !isMissionWon) {
+        animFrameId = requestAnimationFrame(gameLoop);
+        if (!missionTimerInterval) {
+          missionTimerInterval = setInterval(() => {
+            if (!isGameOver && !isMissionWon) {
+              missionSeconds++;
+              const m = String(Math.floor(missionSeconds / 60)).padStart(2, '0');
+              const s = String(missionSeconds % 60).padStart(2, '0');
+              timeVal.textContent = `${m}:${s}`;
+            }
+          }, 1000);
+        }
+      }
+    } else if (type === 'ARCADEVERSE_TEARDOWN') {
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+      if (missionTimerInterval) {
+        clearInterval(missionTimerInterval);
+        missionTimerInterval = null;
+      }
+      if (audioCtx) {
+        try { audioCtx.close(); } catch (_) {}
+      }
+    }
+  });
 
   // Initialize
   rebootMission();
-  animFrameId = requestAnimationFrame(gameLoop);
 })();
