@@ -4,6 +4,8 @@ class BowlingAudio {
   constructor() {
     this.ctx = null;
     this.muted = false;
+    this.lastCrashTime = 0;
+    this.activeCrashVoices = 0;
   }
 
   init() {
@@ -37,18 +39,28 @@ class BowlingAudio {
     if (this.muted) return;
     this.init();
     if (!this.ctx) return;
+    const nowMs = performance.now();
+    if (nowMs - this.lastCrashTime < 35) return;
+    if (this.activeCrashVoices >= 4) return;
+    this.lastCrashTime = nowMs;
+
     const now = this.ctx.currentTime;
-    for (let i = 0; i < Math.min(count, 5); i++) {
+    const voicesToPlay = Math.min(count, 3);
+    for (let i = 0; i < voicesToPlay; i++) {
+      this.activeCrashVoices++;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(400 + Math.random() * 600, now + i * 0.03);
-      gain.gain.setValueAtTime(0.2, now + i * 0.03);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.03 + 0.18);
+      gain.gain.setValueAtTime(0.15, now + i * 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.03 + 0.16);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
       osc.start(now + i * 0.03);
-      osc.stop(now + i * 0.03 + 0.18);
+      osc.stop(now + i * 0.03 + 0.16);
+      osc.onended = () => {
+        this.activeCrashVoices = Math.max(0, this.activeCrashVoices - 1);
+      };
     }
   }
 
@@ -234,6 +246,8 @@ class NeonBowlingGame {
     // Pins: 10 pins in triangle
     this.pins = [];
     this.initPinFormation();
+    this.resolveTimer = null;
+    this.rafId = null;
 
     this.initDOM();
     this.setupEvents();
@@ -315,6 +329,10 @@ class NeonBowlingGame {
     this.launchBtn.addEventListener('click', () => this.handleActionStep());
 
     this.resetAlleyBtn.addEventListener('click', () => {
+      if (this.resolveTimer) {
+        clearTimeout(this.resolveTimer);
+        this.resolveTimer = null;
+      }
       this.scoreEngine.initFrames();
       this.resetBall();
       this.initPinFormation();
@@ -381,6 +399,39 @@ class NeonBowlingGame {
       if (e.touches.length > 0) moveDrag(e.touches[0].clientX);
     }, { passive: true });
     window.addEventListener('touchend', endDrag);
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && this.resolveTimer) {
+        // Paused in background
+      }
+    });
+
+    window.addEventListener('message', (event) => {
+      if (!event.data || typeof event.data !== 'object') return;
+      const type = event.data.type;
+      if (type === 'ARCADEVERSE_PAUSE') {
+        if (this.state === 'ROLLING' || this.state === 'AIMING' || this.state === 'POWER') {
+          this.savedState = this.state;
+          this.state = 'PAUSED';
+        }
+      } else if (type === 'ARCADEVERSE_RESUME') {
+        if (this.state === 'PAUSED') {
+          this.state = this.savedState || 'AIMING';
+        }
+      } else if (type === 'ARCADEVERSE_TEARDOWN') {
+        if (this.resolveTimer) {
+          clearTimeout(this.resolveTimer);
+          this.resolveTimer = null;
+        }
+        if (this.rafId) {
+          cancelAnimationFrame(this.rafId);
+          this.rafId = null;
+        }
+        if (this.audio && this.audio.ctx) {
+          try { this.audio.ctx.close(); } catch (_) {}
+        }
+      }
+    });
   }
 
   handleActionStep() {
@@ -470,16 +521,22 @@ class NeonBowlingGame {
     });
   }
 
-  animate() {
-    this.update();
+  animate(timestamp = performance.now()) {
+    const deltaMs = Math.min(100, timestamp - this.lastTime);
+    this.lastTime = timestamp;
+    const dt = deltaMs / 16.667;
+
+    this.update(dt);
     this.render();
-    requestAnimationFrame(() => this.animate());
+    this.rafId = requestAnimationFrame((ts) => this.animate(ts));
   }
 
-  update() {
+  update(dt = 1) {
+    if (this.state === 'PAUSED') return;
+
     // Oscillate Aim Line
     if (this.state === 'AIMING') {
-      this.aimAngle += this.aimSweepSpeed * this.aimSweepDir;
+      this.aimAngle += this.aimSweepSpeed * this.aimSweepDir * dt;
       if (this.aimAngle > 0.28) {
         this.aimAngle = 0.28;
         this.aimSweepDir = -1;
@@ -491,7 +548,7 @@ class NeonBowlingGame {
 
     // Oscillate Power Gauge
     if (this.state === 'POWER') {
-      this.power += this.powerSweepSpeed * this.powerSweepDir;
+      this.power += this.powerSweepSpeed * this.powerSweepDir * dt;
       if (this.power > 1) {
         this.power = 1;
         this.powerSweepDir = -1;
@@ -505,9 +562,9 @@ class NeonBowlingGame {
     // Ball Rolling Physics
     if (this.state === 'ROLLING' && this.ball.active) {
       // Apply oil pattern spin hook
-      this.ball.vx += this.ball.spin;
-      this.ball.x += this.ball.vx;
-      this.ball.y += this.ball.vy;
+      this.ball.vx += this.ball.spin * dt;
+      this.ball.x += this.ball.vx * dt;
+      this.ball.y += this.ball.vy * dt;
 
       // Gutter detection
       if (this.ball.x - this.ball.radius < this.laneLeft) {
@@ -547,10 +604,10 @@ class NeonBowlingGame {
     // Pin-to-pin chain reactions
     this.pins.forEach(pin => {
       if (pin.knockedDown) {
-        pin.x += pin.vx;
-        pin.y += pin.vy;
-        pin.vx *= 0.92;
-        pin.vy *= 0.92;
+        pin.x += pin.vx * dt;
+        pin.y += pin.vy * dt;
+        pin.vx *= Math.pow(0.92, dt);
+        pin.vy *= Math.pow(0.92, dt);
 
         this.pins.forEach(other => {
           if (other !== pin && other.standing) {
@@ -570,14 +627,27 @@ class NeonBowlingGame {
 
   resolveRoll() {
     this.state = 'RESOLVING';
+    if (this.resolveTimer) clearTimeout(this.resolveTimer);
 
-    setTimeout(() => {
+    this.resolveTimer = setTimeout(() => {
+      this.resolveTimer = null;
       const pinsDownThisRoll = this.pins.filter(p => !p.standing).length;
       const prevPinsDown = this.scoreEngine.frames[this.scoreEngine.currentFrameIdx].rolls.reduce((a, b) => a + b, 0);
       const newlyKnocked = pinsDownThisRoll - (this.scoreEngine.currentRollIdx > 0 ? prevPinsDown : 0);
 
       this.scoreEngine.recordRoll(newlyKnocked);
       this.updateScorecardUI();
+
+      // Emit score update telemetry
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: 'ARCADEVERSE_GAME_SCORE',
+            score: this.scoreEngine.getTotalScore(),
+            frame: this.scoreEngine.currentFrameIdx + 1
+          }, '*');
+        }
+      } catch (_) {}
 
       // Celebration sound
       if (newlyKnocked === 10 && this.scoreEngine.currentRollIdx === 0) {
@@ -591,6 +661,18 @@ class NeonBowlingGame {
         this.state = 'GAMEOVER';
         this.launchBtnText.textContent = 'MATCH COMPLETE';
         this.showToast(`FINAL: ${this.scoreEngine.getTotalScore()}`);
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+              type: 'ARCADEVERSE_GAME_OVER',
+              score: this.scoreEngine.getTotalScore(),
+              details: {
+                totalScore: this.scoreEngine.getTotalScore(),
+                frames: this.scoreEngine.frames
+              }
+            }, '*');
+          }
+        } catch (_) {}
       } else {
         // Next roll setup
         if (this.scoreEngine.currentRollIdx === 0) {
