@@ -2290,6 +2290,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.body.style.overflow = "";
     document.body.style.overscrollBehavior = "";
+    if (gameIframe) gameIframe.style.touchAction = "";
+    const modalBodyReset = document.querySelector(".game-modal-body") || modalFrameWrapper;
+    if (modalBodyReset) modalBodyReset.style.touchAction = "";
     document.body.classList.remove("modal-launching-in-progress");
     isOpeningModal = false;
     modalWindow.classList.remove("fullscreen");
@@ -2807,39 +2810,272 @@ document.addEventListener("DOMContentLoaded", () => {
     }, { passive: false });
   }
 
-  // Inject gesture protections and styles inside the game iframe on load
-  function guardIframeTouchInteractions() {
+  // ==========================================================================
+  // ADAPTIVE IFRAME TOUCH & GESTURE GUARD (Issue #519, #827)
+  // Restricts strict touch-action: none to canvas action games, while enabling
+  // native vertical pan-y touch scrolling for scrollable narrative & puzzle games.
+  // ==========================================================================
+  function guardIframeTouchInteractions(iframeElement) {
     try {
-      if (!gameIframe) return;
-      const doc = gameIframe.contentDocument || (gameIframe.contentWindow && gameIframe.contentWindow.document);
+      const targetIframe = (iframeElement && iframeElement.nodeType) ? iframeElement : (document.getElementById("game-iframe") || gameIframe);
+      if (!targetIframe) return;
+      const win = targetIframe.contentWindow;
+      const doc = targetIframe.contentDocument || (win && win.document);
       if (!doc) return;
 
-      if (doc.documentElement) {
-        doc.documentElement.style.overscrollBehavior = "contain";
-        doc.documentElement.style.touchAction = "none";
-      }
-      if (doc.body) {
-        doc.body.style.overscrollBehavior = "contain";
-        doc.body.style.touchAction = "none";
+      // Helper to detect explicit scroll locking attributes
+      function hasExplicitScrollLock(targetDoc) {
+        if (!targetDoc) return false;
+        if (targetDoc.documentElement) {
+          const val = targetDoc.documentElement.getAttribute("data-scroll-lock");
+          if (val === "true" || val === "") return true;
+          if (val === "false") return false;
+        }
+        if (targetDoc.body) {
+          const val = targetDoc.body.getAttribute("data-scroll-lock");
+          if (val === "true" || val === "") return true;
+          if (val === "false") return false;
+        }
+        const el = targetDoc.querySelector("[data-scroll-lock]");
+        if (el) {
+          const val = el.getAttribute("data-scroll-lock");
+          return val !== "false";
+        }
+        return false;
       }
 
-      if (doc.head && !doc.getElementById("arcadeverse-touch-guard-css")) {
-        const style = doc.createElement("style");
-        style.id = "arcadeverse-touch-guard-css";
-        style.textContent = `
-          html, body, canvas, #canvas, .game-canvas {
-            touch-action: none !important;
-            overscroll-behavior: contain !important;
-            overscroll-behavior-y: contain !important;
-            -webkit-user-select: none !important;
-            user-select: none !important;
-            -webkit-touch-callout: none !important;
+      // Helper to detect explicit scrollable opt-in attributes
+      function hasExplicitScrollable(targetDoc) {
+        if (!targetDoc) return false;
+        if (targetDoc.documentElement) {
+          const val = targetDoc.documentElement.getAttribute("data-scrollable");
+          if (val === "true" || val === "") return true;
+          if (val === "false") return false;
+        }
+        if (targetDoc.body) {
+          const val = targetDoc.body.getAttribute("data-scrollable");
+          if (val === "true" || val === "") return true;
+          if (val === "false") return false;
+        }
+        const el = targetDoc.querySelector("[data-scrollable]");
+        if (el) {
+          const val = el.getAttribute("data-scrollable");
+          return val !== "false";
+        }
+        return false;
+      }
+
+      // Determine whether the game document is scrollable or locked
+      function detectIsScrollable() {
+        try {
+          if (!doc) return false;
+
+          // 1. Explicit opt-ins / opt-outs
+          if (hasExplicitScrollLock(doc)) return false;
+          if (hasExplicitScrollable(doc)) return true;
+
+          // 2. Viewport height vs child document height
+          const winHeight = (win && win.innerHeight) || (targetIframe && targetIframe.clientHeight) || window.innerHeight || 0;
+          const rootScrollHeight = doc.documentElement ? doc.documentElement.scrollHeight : 0;
+          const bodyScrollHeight = doc.body ? doc.body.scrollHeight : 0;
+          const maxDocHeight = Math.max(rootScrollHeight, bodyScrollHeight);
+
+          if (winHeight > 0 && maxDocHeight > winHeight + 8) {
+            return true;
           }
-        `;
-        doc.head.appendChild(style);
+
+          // 3. Scrollable non-canvas containers inside child document (e.g. overflow: auto/scroll panels)
+          const scrollableContainers = doc.querySelectorAll("div, section, main, article, ul, ol");
+          for (let i = 0; i < scrollableContainers.length; i++) {
+            const el = scrollableContainers[i];
+            if (el.clientHeight > 0 && el.scrollHeight > el.clientHeight + 8) {
+              const compStyle = win && win.getComputedStyle ? win.getComputedStyle(el) : null;
+              const overflowY = compStyle ? compStyle.overflowY : "";
+              if (overflowY === "auto" || overflowY === "scroll" || el.scrollHeight > winHeight) {
+                return true;
+              }
+            }
+          }
+
+          // 4. Pure DOM / puzzle / narrative games without canvas elements
+          const canvases = doc.querySelectorAll("canvas, #canvas, .game-canvas");
+          if (canvases.length === 0) {
+            return true;
+          }
+
+          return false;
+        } catch (_) {
+          return false;
+        }
       }
 
-      preventMultiTouchGestures(doc);
+      function applyAdaptiveTouchGuard() {
+        try {
+          if (!doc || !doc.body) return;
+          const isScrollable = detectIsScrollable();
+
+          // Sync parent wrapper and iframe touch-actions
+          if (targetIframe) {
+            targetIframe.style.touchAction = isScrollable ? "pan-y" : "none";
+          }
+          const modalBodyEl = document.querySelector(".game-modal-body") || modalFrameWrapper;
+          if (modalBodyEl) {
+            modalBodyEl.style.touchAction = isScrollable ? "pan-y" : "none";
+          }
+
+          let styleEl = doc.getElementById("arcadeverse-touch-guard-css");
+          if (!styleEl && doc.head) {
+            styleEl = doc.createElement("style");
+            styleEl.id = "arcadeverse-touch-guard-css";
+            doc.head.appendChild(styleEl);
+          }
+
+          if (isScrollable) {
+            // Narrative / Puzzle / Scrollable DOM Games
+            if (doc.documentElement) {
+              doc.documentElement.style.overscrollBehavior = "contain";
+              doc.documentElement.style.overscrollBehaviorY = "contain";
+              doc.documentElement.style.touchAction = "pan-y";
+            }
+            if (doc.body) {
+              doc.body.style.overscrollBehavior = "contain";
+              doc.body.style.overscrollBehaviorY = "contain";
+              doc.body.style.touchAction = "pan-y";
+            }
+
+            if (styleEl) {
+              styleEl.textContent = `
+                html, body {
+                  touch-action: pan-y !important;
+                  overscroll-behavior: contain !important;
+                  overscroll-behavior-y: contain !important;
+                  -webkit-overflow-scrolling: touch;
+                }
+                canvas, #canvas, .game-canvas {
+                  touch-action: none !important;
+                  overscroll-behavior: contain !important;
+                  overscroll-behavior-y: contain !important;
+                  -webkit-user-select: none !important;
+                  user-select: none !important;
+                  -webkit-touch-callout: none !important;
+                }
+              `;
+            }
+          } else {
+            // Full-Viewport Locked Games (e.g. Canvas Action / Joystick Games)
+            if (doc.documentElement) {
+              doc.documentElement.style.overscrollBehavior = "contain";
+              doc.documentElement.style.overscrollBehaviorY = "contain";
+              doc.documentElement.style.touchAction = "none";
+            }
+            if (doc.body) {
+              doc.body.style.overscrollBehavior = "contain";
+              doc.body.style.overscrollBehaviorY = "contain";
+              doc.body.style.touchAction = "none";
+            }
+
+            if (styleEl) {
+              styleEl.textContent = `
+                html, body, canvas, #canvas, .game-canvas {
+                  touch-action: none !important;
+                  overscroll-behavior: contain !important;
+                  overscroll-behavior-y: contain !important;
+                  -webkit-user-select: none !important;
+                  user-select: none !important;
+                  -webkit-touch-callout: none !important;
+                }
+              `;
+            }
+          }
+        } catch (_) {}
+      }
+
+      // Apply initial guard styling
+      applyAdaptiveTouchGuard();
+
+      // Attach gesture safety listeners inside child frame (only once per child document)
+      if (!doc.__arcadeverseTouchGuarded) {
+        doc.__arcadeverseTouchGuarded = true;
+
+        // Prevent multi-touch pinch-zoom (2 or more touches)
+        doc.addEventListener("touchstart", (e) => {
+          if (e.touches && e.touches.length > 1 && e.cancelable) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+
+        doc.addEventListener("touchmove", (e) => {
+          // Block multi-touch pinch-zoom
+          if (e.touches && e.touches.length > 1) {
+            if (e.cancelable) e.preventDefault();
+            return;
+          }
+
+          // Allow vertical scrolling on scrollable DOM/narrative games,
+          // while blocking pull-to-refresh and unintended scrolling on canvases or locked action games
+          const isScrollable = detectIsScrollable();
+          const isCanvasTarget = e.target && (
+            e.target.tagName === "CANVAS" ||
+            (typeof e.target.closest === "function" && e.target.closest("canvas, .game-canvas, #canvas"))
+          );
+
+          if (!isScrollable || isCanvasTarget) {
+            if (e.cancelable) {
+              e.preventDefault();
+            }
+          }
+        }, { passive: false });
+
+        // Prevent iOS WebKit pinch-to-zoom / multi-finger gesture events
+        ["gesturestart", "gesturechange", "gestureend"].forEach((evtName) => {
+          doc.addEventListener(evtName, (e) => {
+            if (e.cancelable) e.preventDefault();
+          }, { passive: false });
+        });
+      }
+
+      // Re-evaluate on orientation change, window resize, or dynamic DOM changes
+      let debounceTimer = null;
+      function debouncedApply() {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          applyAdaptiveTouchGuard();
+        }, 50);
+      }
+
+      if (win && !win.__arcadeverseTouchGuardBound) {
+        win.__arcadeverseTouchGuardBound = true;
+        win.addEventListener("resize", debouncedApply, { passive: true });
+        win.addEventListener("orientationchange", debouncedApply, { passive: true });
+
+        if (typeof win.ResizeObserver === "function" && doc.body) {
+          try {
+            const ro = new win.ResizeObserver(() => {
+              debouncedApply();
+            });
+            ro.observe(doc.body);
+          } catch (_) {}
+        }
+
+        if (typeof win.MutationObserver === "function" && doc.body) {
+          try {
+            const mo = new win.MutationObserver(() => {
+              debouncedApply();
+            });
+            mo.observe(doc.body, {
+              childList: true,
+              subtree: true,
+              attributes: true,
+              attributeFilter: ["data-scroll-lock", "data-scrollable", "style", "class"]
+            });
+          } catch (_) {}
+        }
+      }
+
+      // Deferred checks to catch delayed async rendering
+      setTimeout(applyAdaptiveTouchGuard, 120);
+      setTimeout(applyAdaptiveTouchGuard, 400);
+      setTimeout(applyAdaptiveTouchGuard, 1000);
     } catch (_) {}
   }
 
