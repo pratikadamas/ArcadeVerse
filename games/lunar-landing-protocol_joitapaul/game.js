@@ -13,8 +13,20 @@
   const overlayTitle = document.getElementById("overlay-title");
   const overlayCopy = document.getElementById("overlay-copy");
   const launchButton = document.getElementById("launch-button");
-  const width = canvas.width;
-  const height = canvas.height;
+  const baseWidth = 720;
+  const baseHeight = 500;
+  let dpr = window.devicePixelRatio || 1;
+  const width = baseWidth;
+  const height = baseHeight;
+
+  function resizeCanvas() {
+    dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(baseWidth * dpr);
+    canvas.height = Math.round(baseHeight * dpr);
+    context.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw();
+  }
+  resizeCanvas();
   const landerSize = { width: 30, height: 38 };
   const pad = { left: 500, right: 620, top: 420 };
   const gravity = 64;
@@ -71,9 +83,9 @@
 
   function readControls() {
     return {
-      main: controls.main || keys.has("ArrowUp") || keys.has("w") || keys.has("W"),
-      left: controls.left || keys.has("ArrowLeft") || keys.has("a") || keys.has("A"),
-      right: controls.right || keys.has("ArrowRight") || keys.has("d") || keys.has("D")
+      main: controls.main || keys.has("arrowup") || keys.has("w") || keys.has("keyw"),
+      left: controls.left || keys.has("arrowleft") || keys.has("a") || keys.has("keya"),
+      right: controls.right || keys.has("arrowright") || keys.has("d") || keys.has("keyd")
     };
   }
 
@@ -165,6 +177,28 @@
       : reason;
     launchButton.textContent = "Restart mission";
     missionOverlay.hidden = false;
+
+    const finalScore = success ? Math.max(10, Math.round(fuel * 10 + Math.max(0, 100 - elapsed) * 5)) : Math.round(fuel * 2);
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: "ARCADEVERSE_GAME_SCORE",
+          score: finalScore,
+          fuelRemaining: Math.ceil(fuel),
+          timeSeconds: parseFloat(elapsed.toFixed(1)),
+          success
+        }, "*");
+        window.parent.postMessage({
+          type: "ARCADEVERSE_GAME_OVER",
+          score: finalScore,
+          details: {
+            success,
+            fuelRemaining: Math.ceil(fuel),
+            timeSeconds: parseFloat(elapsed.toFixed(1))
+          }
+        }, "*");
+      }
+    } catch (_) {}
   }
 
   function updateTelemetry() {
@@ -306,15 +340,74 @@
     button.classList.toggle("pressed", isPressed);
   }
 
+  function pauseMission() {
+    if (missionState === "flying") {
+      missionState = "paused";
+      cancelAnimationFrame(animationFrame);
+      clearControls();
+      overlayTitle.textContent = "Descent Paused";
+      overlayCopy.textContent = "Mission telemetry suspended. Thrusters locked.";
+      launchButton.textContent = "Resume descent";
+      missionOverlay.hidden = false;
+    }
+  }
+
+  function resumeMission() {
+    if (missionState === "paused") {
+      missionState = "flying";
+      previousFrame = 0;
+      missionOverlay.hidden = true;
+      animationFrame = requestAnimationFrame(frame);
+    }
+  }
+
   document.addEventListener("keydown", (event) => {
-    const handledKeys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "W", "a", "A", "d", "D", " "];
-    if (handledKeys.includes(event.key)) event.preventDefault();
-    if (event.code === "Space" && missionState === "ready") beginDescent();
-    keys.add(event.key);
+    const keyLower = event.key.toLowerCase();
+    const codeLower = event.code.toLowerCase();
+    const handledKeys = ["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "d", " "];
+    if (handledKeys.includes(keyLower) || handledKeys.includes(codeLower)) event.preventDefault();
+    if (event.code === "Space" && missionState === "ready") {
+      beginDescent();
+      return;
+    }
+    if (event.key === "p" || event.key === "P" || event.key === "Escape") {
+      if (missionState === "flying") pauseMission();
+      else if (missionState === "paused") resumeMission();
+      return;
+    }
+    keys.add(keyLower);
+    keys.add(codeLower);
   });
 
-  document.addEventListener("keyup", (event) => keys.delete(event.key));
+  document.addEventListener("keyup", (event) => {
+    keys.delete(event.key.toLowerCase());
+    keys.delete(event.code.toLowerCase());
+  });
+
   window.addEventListener("blur", clearControls);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      clearControls();
+      if (missionState === "flying") pauseMission();
+    }
+  });
+
+  window.addEventListener("message", (event) => {
+    if (!event.data || typeof event.data !== "object") return;
+    const type = event.data.type;
+    if (type === "ARCADEVERSE_PAUSE") {
+      pauseMission();
+    } else if (type === "ARCADEVERSE_RESUME") {
+      resumeMission();
+    } else if (type === "ARCADEVERSE_TEARDOWN") {
+      cancelAnimationFrame(animationFrame);
+      clearControls();
+    } else if (type === "AV_RESIZE") {
+      resizeCanvas();
+    }
+  });
+
+  window.addEventListener("resize", resizeCanvas);
 
   document.querySelectorAll("[data-control]").forEach((button) => {
     button.addEventListener("pointerdown", (event) => {
@@ -331,6 +424,7 @@
 
   launchButton.addEventListener("click", () => {
     if (missionState === "ready") beginDescent();
+    else if (missionState === "paused") resumeMission();
     else resetMission();
   });
 
