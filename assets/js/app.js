@@ -1983,6 +1983,11 @@ document.addEventListener("DOMContentLoaded", () => {
     isGameSessionActive = true;
     gameSessionStartTime = Date.now();
     isConfirmingQuit = false;
+
+    // LRU Game Cache Manager record play touch (#556)
+    if (window.AvGameLruCacheManager) {
+      window.AvGameLruCacheManager.recordGamePlay(game.id);
+    }
     hideQuitConfirmationModal();
     lastFocusedElement = triggerElement || document.activeElement;
 
@@ -4171,6 +4176,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initAZJumpBar();
   initURLDeepLinking();
   initControlsLegend();
+  initGameLruCacheManager();
 });
 
   // ========================================================
@@ -4587,4 +4593,117 @@ document.addEventListener("DOMContentLoaded", () => {
       vcScript.src = 'assets/js/virtual-controller.js';
       document.body.appendChild(vcScript);
     }
+  }
+
+  // ========================================================
+  // LRU GAME ASSETS CACHE MANAGER WITH 50MB BUDGET GUARD (#556)
+  // Auto-evicts oldest unplayed games while protecting favorites
+  // ========================================================
+  const AvGameLruCacheManager = (function () {
+    const LRU_TRACKER_KEY = 'av_lru_game_access';
+    const MAX_BUDGET_BYTES = 50 * 1024 * 1024; // 50MB Threshold
+    const GAME_CACHE_PREFIX = 'av-game-';
+
+    function getAccessMap() {
+      try {
+        const raw = localStorage.getItem(LRU_TRACKER_KEY);
+        return raw ? JSON.parse(raw) : {};
+      } catch (_) {
+        return {};
+      }
+    }
+
+    function saveAccessMap(map) {
+      try {
+        localStorage.setItem(LRU_TRACKER_KEY, JSON.stringify(map));
+      } catch (_) {}
+    }
+
+    function recordGamePlay(gameId) {
+      if (!gameId) return;
+      const map = getAccessMap();
+      map[gameId] = Date.now();
+      saveAccessMap(map);
+      checkStorageBudget();
+    }
+
+    async function checkStorageBudget() {
+      if (!('storage' in navigator && 'estimate' in navigator.storage)) return;
+      if (!('caches' in window)) return;
+
+      try {
+        const estimate = await navigator.storage.estimate();
+        const usage = estimate.usage || 0;
+
+        // If usage approaches or exceeds 50MB, perform LRU eviction
+        if (usage > MAX_BUDGET_BYTES) {
+          await performLruEviction();
+        }
+      } catch (err) {
+        console.warn('[ArcadeVerse:LRU] Storage estimate failed:', err);
+      }
+    }
+
+    async function performLruEviction() {
+      const favSet = getFavorites();
+      const accessMap = getAccessMap();
+      const allCacheKeys = await caches.keys();
+      const gameCaches = allCacheKeys.filter((k) => k.startsWith(GAME_CACHE_PREFIX));
+
+      if (gameCaches.length === 0) return;
+
+      // Map cache to gameId and last accessed timestamp
+      const candidates = gameCaches.map((cacheKey) => {
+        const gameId = cacheKey.replace(GAME_CACHE_PREFIX, '');
+        return {
+          cacheKey,
+          gameId,
+          isFavorite: favSet.has(gameId),
+          lastAccess: accessMap[gameId] || 0
+        };
+      });
+
+      // Filter out favorites (locked and exempt from eviction)
+      const evictable = candidates.filter((c) => !c.isFavorite);
+
+      // Sort ascending by lastAccess (oldest unplayed first)
+      evictable.sort((a, b) => a.lastAccess - b.lastAccess);
+
+      // Evict oldest unplayed caches until under threshold or top 30% cleared
+      const toEvict = evictable.slice(0, Math.max(1, Math.ceil(evictable.length * 0.35)));
+      for (const item of toEvict) {
+        await caches.delete(item.cacheKey);
+        delete accessMap[item.gameId];
+        console.log(`[ArcadeVerse:LRU] Evicted game cache under 50MB budget: ${item.gameId}`);
+      }
+      saveAccessMap(accessMap);
+
+      // Signal Service Worker
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'AV_EVICT_GAME_CACHES',
+          evictList: toEvict.map((i) => i.gameId)
+        });
+      }
+    }
+
+    return {
+      recordGamePlay,
+      checkStorageBudget,
+      performLruEviction
+    };
+  })();
+
+  window.AvGameLruCacheManager = AvGameLruCacheManager;
+
+  function initGameLruCacheManager() {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+    // Check initial storage budget on launch
+    setTimeout(() => {
+      AvGameLruCacheManager.checkStorageBudget();
+    }, 2000);
   }
