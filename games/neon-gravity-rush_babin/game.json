@@ -1,6 +1,7 @@
 {
   "title": "Neon Gravity Rush",
   "category": "Action",
+  "lucideIcon": "arrow-up-down",
   "description": "High-octane gravity-inversion corridor runner. Invert gravitational vectors between floor and ceiling to dodge laser barriers, plasma spikes, and quantum anomalies at 60 FPS.",
   "author": "Babin Bid",
   "github": "Babin123456",
