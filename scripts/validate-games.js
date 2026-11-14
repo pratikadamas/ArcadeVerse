@@ -244,6 +244,159 @@ function scanScriptSecurityViolations(jsContent, issues) {
   }
 }
 
+// Helper: Collect all JavaScript files within a game directory
+function findGameJsFiles(dir) {
+  let results = [];
+  try {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    entries.forEach(entry => {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name !== 'node_modules' && entry.name !== '.git') {
+          results = results.concat(findGameJsFiles(fullPath));
+        }
+      } else if (entry.isFile() && entry.name.endsWith('.js')) {
+        results.push(fullPath);
+      }
+    });
+  } catch (_) {}
+  return results;
+}
+
+// Static Code Smell & Console Pollution Linter (#684)
+// Scans community game JavaScript files for unmanaged console.log statements that clutter DevTools
+// and degrade performance inside 60 FPS animation loops.
+// Permitted: console.warn and console.error for legitimate error handling and diagnostics.
+function auditConsolePollution(gamePath, folder, issues) {
+  const jsFiles = findGameJsFiles(gamePath);
+  jsFiles.forEach(filePath => {
+    let content;
+    try {
+      content = fs.readFileSync(filePath, 'utf8');
+    } catch (_) {
+      return;
+    }
+
+    const relFilePath = path.relative(gamePath, filePath).replace(/\\/g, '/');
+    const displayPath = `games/${folder}/${relFilePath}`;
+    const lines = content.split('\n');
+    let inBlockComment = false;
+    let templateParenDepth = 0;
+    const fileMatches = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const lineText = lines[i];
+      const lineNum = i + 1;
+      let sanitized = '';
+      let j = 0;
+      const len = lineText.length;
+
+      while (j < len) {
+        if (inBlockComment) {
+          if (lineText[j] === '*' && lineText[j + 1] === '/') {
+            inBlockComment = false;
+            j += 2;
+          } else {
+            j++;
+          }
+          continue;
+        }
+
+        if (templateParenDepth > 0) {
+          if (lineText[j] === '\\') {
+            j += 2;
+            continue;
+          }
+          if (lineText[j] === '`') {
+            templateParenDepth--;
+            j++;
+            continue;
+          }
+          if (lineText[j] === '$' && lineText[j + 1] === '{') {
+            sanitized += '${';
+            j += 2;
+            while (j < len) {
+              if (lineText[j] === '}') {
+                sanitized += '}';
+                j++;
+                break;
+              }
+              if (lineText[j] === '"' || lineText[j] === "'") {
+                const q = lineText[j];
+                j++;
+                while (j < len) {
+                  if (lineText[j] === '\\') j += 2;
+                  else if (lineText[j] === q) { j++; break; }
+                  else j++;
+                }
+                sanitized += '""';
+                continue;
+              }
+              sanitized += lineText[j];
+              j++;
+            }
+            continue;
+          }
+          j++;
+          continue;
+        }
+
+        if (lineText[j] === '/' && lineText[j + 1] === '/') {
+          break;
+        }
+
+        if (lineText[j] === '/' && lineText[j + 1] === '*') {
+          inBlockComment = true;
+          j += 2;
+          continue;
+        }
+
+        if (lineText[j] === '`') {
+          templateParenDepth++;
+          j++;
+          continue;
+        }
+
+        if (lineText[j] === '"' || lineText[j] === "'") {
+          const quote = lineText[j];
+          j++;
+          while (j < len) {
+            if (lineText[j] === '\\') {
+              j += 2;
+            } else if (lineText[j] === quote) {
+              j++;
+              break;
+            } else {
+              j++;
+            }
+          }
+          sanitized += '""';
+          continue;
+        }
+
+        sanitized += lineText[j];
+        j++;
+      }
+
+      if (/\bconsole\s*\.\s*log\b/.test(sanitized)) {
+        fileMatches.push({ lineNum, snippet: lineText.trim() });
+      }
+    }
+
+    if (fileMatches.length > 0) {
+      const maxToDisplay = 10;
+      fileMatches.slice(0, maxToDisplay).forEach(m => {
+        const snippet = m.snippet.length > 70 ? m.snippet.slice(0, 67) + '...' : m.snippet;
+        issues.push(`⚠️ Console pollution: unmanaged "console.log" statement in ${displayPath}:${m.lineNum} -> "${snippet}"`);
+      });
+      if (fileMatches.length > maxToDisplay) {
+        issues.push(`⚠️ ... and ${fileMatches.length - maxToDisplay} more unmanaged console.log statement(s) in ${displayPath}`);
+      }
+      totalWarnings += fileMatches.length;
+    }
+  });
+}
+
 const folders = fs.readdirSync(GAMES_DIR, { withFileTypes: true })
   .filter(d => d.isDirectory())
   .map(d => d.name);
@@ -258,11 +411,14 @@ console.log(`Found ${folders.length} community games to audit...\n`);
 /**
  * Parses command-line audit arguments:
  * --strict-assets : Fails if any optional assets or audio triggers are missing
+ * --strict        : Fails with exit code 1 on warnings (including console pollution and code smells)
+ * --strict-lint   : Alias for --strict
  * --summary-json  : Emits pre-flight audit findings as machine-readable JSON
  * --audit-hub     : Deep audits parent hub files (docs.html, 404.html, faqs.html)
  */
 const CLI_ARGS = process.argv.slice(2);
 const IS_STRICT = CLI_ARGS.includes('--strict-assets');
+const IS_STRICT_MODE = CLI_ARGS.includes('--strict') || CLI_ARGS.includes('--strict-lint');
 const IS_AUDIT_HUB = CLI_ARGS.includes('--audit-hub');
 const SUMMARY_JSON_PATH = (() => {
   const idx = CLI_ARGS.indexOf('--summary-json');
@@ -390,6 +546,17 @@ folders.forEach(folder => {
   // 8. Game Resource Bounds & Sub-Directory Audit
   auditGameResourceBounds(gamePath, issues);
 
+  // 9. Static Code Smell & Console Pollution Linter (#684)
+  auditConsolePollution(gamePath, folder, issues);
+
+  if (SUMMARY_JSON_PATH) {
+    auditTelemetry.gameReports.push({
+      folder,
+      passed: issues.length === 0,
+      issues
+    });
+  }
+
   // Print Report for this game
   if (issues.length === 0) {
     console.log(`  ✅ [PASS] ${folder}`);
@@ -403,8 +570,20 @@ console.log('\n========================================================');
 console.log(`Audited ${folders.length} games: ${totalErrors} Errors, ${totalWarnings} Warnings`);
 console.log('========================================================\n');
 
-if (totalErrors > 0) {
-  console.error('❌ Validation failed! Please fix the errors listed above before submitting your PR.\n');
+if (SUMMARY_JSON_PATH) {
+  auditTelemetry.totalErrors = totalErrors;
+  auditTelemetry.totalWarnings = totalWarnings;
+  try {
+    fs.writeFileSync(SUMMARY_JSON_PATH, JSON.stringify(auditTelemetry, null, 2), 'utf8');
+  } catch (_) {}
+}
+
+if (totalErrors > 0 || (IS_STRICT_MODE && totalWarnings > 0)) {
+  if (totalErrors === 0 && IS_STRICT_MODE && totalWarnings > 0) {
+    console.error(`❌ Validation failed in --strict mode: ${totalWarnings} warning(s) detected. Please resolve them before submitting your PR.\n`);
+  } else {
+    console.error('❌ Validation failed! Please fix the errors listed above before submitting your PR.\n');
+  }
   process.exit(1);
 } else {
   
@@ -417,6 +596,7 @@ function printTelemetryRecommendations(auditData) {
   console.log('• Monitored relative asset URLs against disk targets for zero 404 network request drops.');
   console.log('• Validated SVG icon standards across stylesheets and templates (zero unicode emojis).');
   console.log('• Inspected AudioContext instances and lifecycle hooks for graceful teardown compliance.');
+  console.log('• Scanned game runtimes for console pollution & debug statements (clean 60 FPS loops).');
   console.log('• Enforced isolation boundary against top-level window tampering in game runtimes.\n');
 }
 
