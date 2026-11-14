@@ -573,6 +573,147 @@ progress::-moz-progress-bar {
   text-align: center;
 }
 
+/* Victory Modal */
+.victory-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 11, 18, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1.5rem;
+}
+
+.victory-modal-overlay.hidden {
+  display: none !important;
+}
+
+.victory-card {
+  background: #1a1b25;
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(196, 164, 255, 0.15);
+  border-radius: 16px;
+  padding: 2rem 2.2rem;
+  max-width: 440px;
+  width: 100%;
+  text-align: center;
+  animation: victoryCardPop 0.25s ease-out;
+}
+
+@keyframes victoryCardPop {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.victory-icon-banner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(196, 164, 255, 0.12);
+  border: 1.5px solid var(--accent);
+  margin-bottom: 0.8rem;
+  color: var(--accent);
+}
+
+.victory-card h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.6rem;
+  color: #f0eff5;
+  letter-spacing: -0.02em;
+}
+
+.victory-desc {
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin: 0 0 1.2rem;
+  line-height: 1.45;
+}
+
+.victory-stars {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.victory-stars .star-icon {
+  width: 30px;
+  height: 30px;
+}
+
+.victory-stars .star-icon.filled {
+  color: var(--amber);
+  fill: var(--amber);
+}
+
+.victory-stars .star-icon.empty {
+  color: #434658;
+  stroke: #434658;
+  fill: none;
+}
+
+.victory-tier {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 1.25rem;
+}
+
+.victory-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  background: #101117;
+  padding: 0.9rem 0.6rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border);
+}
+
+.victory-stats .v-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.victory-stats .v-label {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  display: block;
+}
+
+.victory-stats .v-value {
+  font-size: 1.25rem;
+  color: #f0eff5;
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.victory-button {
+  width: 100%;
+  margin-top: 0.2rem;
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 @media (max-width: 760px) {
   .game-shell {
     padding: 20px 14px 16px;
@@ -631,5 +772,18 @@ progress::-moz-progress-bar {
 
   .factory-cell {
     border-radius: 5px;
+  }
+
+  .victory-card {
+    padding: 1.5rem 1.1rem;
+  }
+
+  .victory-stats {
+    gap: 0.35rem;
+    padding: 0.75rem 0.4rem;
+  }
+
+  .victory-stats .v-value {
+    font-size: 1.05rem;
   }
 }

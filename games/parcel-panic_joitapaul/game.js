@@ -13,6 +13,13 @@
   const STARTING_LIVES = 3;
   const PARCEL_COLORS = ["#ffc974", "#75dce2", "#a9e687"];
   const ARROW_SVG = '<svg class="conveyor-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg>';
+  const STAR_FILLED_SVG = '<svg class="star-icon filled" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+  const STAR_EMPTY_SVG = '<svg class="star-icon empty" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+  const PERFORMANCE_TIERS = {
+    3: "Master Dispatcher",
+    2: "Senior Dispatcher",
+    1: "Junior Dispatcher"
+  };
 
   const STAGES = [
     {
@@ -51,9 +58,17 @@
   const selectionDot = document.querySelector(".selection-dot");
   const dispatchButton = document.querySelector("#dispatch-button");
   const restartButton = document.querySelector("#restart-button");
+  const victoryModal = document.querySelector("#victory-modal");
+  const victoryScoreElement = document.querySelector("#victory-score");
+  const victoryStarsElement = document.querySelector("#victory-stars");
+  const victoryTierElement = document.querySelector("#victory-tier");
+  const victoryMistakesElement = document.querySelector("#victory-mistakes");
+  const victoryStepsElement = document.querySelector("#victory-steps");
+  const victoryRestartBtn = document.querySelector("#victory-restart-btn");
 
   let stageIndex = 0;
   let lives = STARTING_LIVES;
+  let totalStepsTaken = 0;
   let stage;
   let cells = [];
   let parcels = [];
@@ -112,6 +127,37 @@
 
   function setStatus(message) {
     statusElement.textContent = message;
+  }
+
+  function showVictoryModal(score) {
+    if (!victoryModal) return;
+    if (victoryScoreElement) victoryScoreElement.textContent = String(score);
+    if (victoryStepsElement) victoryStepsElement.textContent = String(totalStepsTaken);
+    if (victoryMistakesElement) {
+      const mistakesUsed = STARTING_LIVES - lives;
+      victoryMistakesElement.textContent = `${mistakesUsed} / ${STARTING_LIVES}`;
+    }
+    if (victoryTierElement) {
+      victoryTierElement.textContent = PERFORMANCE_TIERS[lives] || "Dispatcher";
+    }
+    if (victoryStarsElement) {
+      const starCount = Math.max(1, Math.min(3, lives));
+      let starsHtml = "";
+      for (let i = 0; i < 3; i++) {
+        starsHtml += i < starCount ? STAR_FILLED_SVG : STAR_EMPTY_SVG;
+      }
+      victoryStarsElement.innerHTML = starsHtml;
+    }
+    victoryModal.classList.remove("hidden");
+    if (victoryRestartBtn) {
+      victoryRestartBtn.focus();
+    }
+  }
+
+  function hideVictoryModal() {
+    if (victoryModal) {
+      victoryModal.classList.add("hidden");
+    }
   }
 
   function setSelectionMessage() {
@@ -268,6 +314,7 @@
   }
 
   function advanceParcels() {
+    totalStepsTaken += 1;
     const active = parcels.filter((parcel) => parcel.state === "moving");
     const proposals = active.map((parcel) => {
       const cell = cells[parcel.position];
@@ -330,9 +377,42 @@
     if (parcels.every((parcel) => parcel.state === "delivered")) {
       if (stageIndex === STAGES.length - 1) {
         gameState = "won";
-        setStatus("Every parcel reached its matching destination. All three stages cleared!");
+        const totalEfficiencyScore = Math.max(100, (lives * 500) + Math.max(0, 1500 - totalStepsTaken * 25));
+        setStatus(`Every parcel reached its matching destination. All three stages cleared! Efficiency score: ${totalEfficiencyScore}`);
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+              type: "ARCADEVERSE_GAME_SCORE",
+              score: totalEfficiencyScore
+            }, "*");
+            window.parent.postMessage({
+              type: "ARCADEVERSE_GAME_OVER",
+              score: totalEfficiencyScore,
+              stagesCleared: 3,
+              livesRemaining: lives,
+              details: {
+                score: totalEfficiencyScore,
+                stagesCleared: 3,
+                livesRemaining: lives,
+                totalStepsTaken
+              }
+            }, "*");
+          }
+        } catch (_) {}
+        setTimeout(() => {
+          showVictoryModal(totalEfficiencyScore);
+        }, 350);
       } else {
         stageIndex += 1;
+        try {
+          if (window.parent && window.parent !== window) {
+            const intermediateScore = Math.max(100, (lives * 500) + Math.max(0, 1500 - totalStepsTaken * 25));
+            window.parent.postMessage({
+              type: "ARCADEVERSE_GAME_SCORE",
+              score: intermediateScore
+            }, "*");
+          }
+        } catch (_) {}
         loadStage();
         setStatus(`Stage cleared. Stage ${stageIndex + 1} is ready; route the next manifest.`);
       }
@@ -358,6 +438,22 @@
     }
     setStatus("No mistakes remain. The shift is over. Restart the game to try again.");
     updateDisplay();
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: "ARCADEVERSE_GAME_OVER",
+          score: 0,
+          stagesCleared: stageIndex,
+          livesRemaining: 0,
+          details: {
+            score: 0,
+            stagesCleared: stageIndex,
+            livesRemaining: 0,
+            totalStepsTaken
+          }
+        }, "*");
+      }
+    } catch (_) {}
   }
 
   function runParcels() {
@@ -381,8 +477,10 @@
       clearInterval(stepTimer);
       stepTimer = null;
     }
+    hideVictoryModal();
     stageIndex = 0;
     lives = STARTING_LIVES;
+    totalStepsTaken = 0;
     gameState = "playing";
     isRunning = false;
     loadStage();
@@ -391,5 +489,13 @@
 
   dispatchButton.addEventListener("click", runParcels);
   restartButton.addEventListener("click", restartGame);
+  if (victoryRestartBtn) {
+    victoryRestartBtn.addEventListener("click", restartGame);
+  }
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && victoryModal && !victoryModal.classList.contains("hidden")) {
+      restartGame();
+    }
+  });
   loadStage();
 })();
