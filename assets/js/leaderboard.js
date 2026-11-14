@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const exportJsonBtn = document.getElementById("export-json-btn");
   let tableSearchQuery = "";
   let searchDebounceTimer = null;
+  let currentTierFilter = "all";
 
   // Standings Table Pagination & Page Size State
   const paginationBar = document.getElementById("leaderboard-pagination-bar");
@@ -139,6 +140,75 @@ document.addEventListener("DOMContentLoaded", () => {
     if (tableCard) {
       tableCard.scrollIntoView({ behavior: "smooth", block: "start" });
     }
+  }
+
+  // Contributor Milestone Tier Filter Pills Engine (#691)
+  function matchesTier(item, tier) {
+    const games = item.gamesCount || 0;
+    switch (tier) {
+      case "explorers":
+        return games >= 1 && games <= 3;
+      case "developers":
+        return games >= 4 && games <= 7;
+      case "hyper":
+        return games >= 8 && games <= 14;
+      case "architects":
+        return games >= 15;
+      case "all":
+      default:
+        return true;
+    }
+  }
+
+  function updateTierPillCounts() {
+    const allContribs = getCommunityContributors();
+    const counts = {
+      all: allContribs.length,
+      explorers: 0,
+      developers: 0,
+      hyper: 0,
+      architects: 0
+    };
+
+    allContribs.forEach(item => {
+      const games = item.gamesCount || 0;
+      if (games >= 15) {
+        counts.architects++;
+      } else if (games >= 8) {
+        counts.hyper++;
+      } else if (games >= 4) {
+        counts.developers++;
+      } else if (games >= 1) {
+        counts.explorers++;
+      }
+    });
+
+    for (const [tier, count] of Object.entries(counts)) {
+      const el = document.getElementById(`tier-count-${tier}`);
+      if (el) {
+        el.textContent = String(count);
+      }
+    }
+  }
+
+  const tierPillButtons = document.querySelectorAll(".tier-pill-btn");
+  if (tierPillButtons.length > 0) {
+    tierPillButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const selectedTier = btn.dataset.tier || "all";
+        if (currentTierFilter === selectedTier) return;
+        currentTierFilter = selectedTier;
+        currentPage = 1;
+
+        tierPillButtons.forEach(b => {
+          const isActive = (b.dataset.tier || "all") === selectedTier;
+          b.classList.toggle("active", isActive);
+          b.setAttribute("aria-selected", isActive ? "true" : "false");
+        });
+
+        renderTable();
+      });
+    });
   }
 
   function getPageNumbers(current, total) {
@@ -669,6 +739,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderTable() {
     if (!tableBody) return;
     tableBody.innerHTML = "";
+    updateTierPillCounts();
+
     const allCommunityContributors = getCommunityContributors().map((item, idx) => {
       return {
         ...item,
@@ -677,6 +749,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const communityContributors = allCommunityContributors.filter(item => {
+      if (!matchesTier(item, currentTierFilter)) return false;
       if (!tableSearchQuery) return true;
       const q = tableSearchQuery;
       const nameMatch = (item.name || "").toLowerCase().includes(q);
@@ -692,14 +765,22 @@ document.addEventListener("DOMContentLoaded", () => {
     if (totalItems === 0) {
       if (paginationBar) paginationBar.style.display = "none";
       const emptyTr = document.createElement("tr");
-      if (tableSearchQuery && allCommunityContributors.length > 0) {
+      if ((tableSearchQuery || currentTierFilter !== "all") && allCommunityContributors.length > 0) {
+        let emptyMsg = `No contributors found`;
+        if (currentTierFilter !== "all" && tableSearchQuery) {
+          emptyMsg = `No contributors in the selected tier matching "<strong>${escapeHTML(tableSearchQuery)}</strong>"`;
+        } else if (currentTierFilter !== "all") {
+          emptyMsg = `No contributors currently in this milestone tier`;
+        } else {
+          emptyMsg = `No contributors found matching "<strong>${escapeHTML(tableSearchQuery)}</strong>"`;
+        }
         emptyTr.innerHTML = `
           <td colspan="9" style="text-align: center; padding: 2.2rem; color: var(--text-muted);">
             <div style="font-size: 1.05rem; margin-bottom: 0.5rem; color: var(--text-secondary);">
-              No contributors found matching "<strong>${tableSearchQuery}</strong>"
+              ${emptyMsg}
             </div>
             <button type="button" class="btn btn-secondary btn-sm" id="reset-table-search-btn">
-              <span><i data-lucide="rotate-ccw"></i> Clear Filter</span>
+              <span><i data-lucide="rotate-ccw"></i> Clear Filters</span>
             </button>
           </td>
         `;
@@ -708,8 +789,14 @@ document.addEventListener("DOMContentLoaded", () => {
         if (resetBtn) {
           resetBtn.addEventListener("click", () => {
             tableSearchQuery = "";
+            currentTierFilter = "all";
             currentPage = 1;
             if (searchInput) searchInput.value = "";
+            tierPillButtons.forEach(b => {
+              const isAll = (b.dataset.tier || "all") === "all";
+              b.classList.toggle("active", isAll);
+              b.setAttribute("aria-selected", isAll ? "true" : "false");
+            });
             renderTable();
           });
         }

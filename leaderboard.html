@@ -201,6 +201,36 @@
             </button>
           </div>
         </div>
+        <!-- Contributor Milestone Tier Filter Pills (#691) -->
+        <div class="leaderboard-tier-filters-wrap" role="region" aria-label="Milestone tier filters">
+          <div class="leaderboard-tier-pills" id="leaderboard-tier-pills" role="tablist" aria-label="Contributor Milestone Tiers">
+            <button type="button" class="tier-pill-btn active" data-tier="all" role="tab" aria-selected="true" title="Show all contributors across all milestone tiers">
+              <i data-lucide="layers"></i>
+              <span class="tier-pill-label">All Tiers</span>
+              <span class="tier-pill-count" id="tier-count-all">0</span>
+            </button>
+            <button type="button" class="tier-pill-btn" data-tier="explorers" role="tab" aria-selected="false" title="Contributors who authored 1 to 3 verified games">
+              <i data-lucide="compass"></i>
+              <span class="tier-pill-label">Arcade Explorers (1–3 games)</span>
+              <span class="tier-pill-count" id="tier-count-explorers">0</span>
+            </button>
+            <button type="button" class="tier-pill-btn" data-tier="developers" role="tab" aria-selected="false" title="Contributors who authored 4 to 7 verified games">
+              <i data-lucide="gamepad-2"></i>
+              <span class="tier-pill-label">Arcade Developers (4–7 games)</span>
+              <span class="tier-pill-count" id="tier-count-developers">0</span>
+            </button>
+            <button type="button" class="tier-pill-btn" data-tier="hyper" role="tab" aria-selected="false" title="Contributors who authored 8 to 14 verified games">
+              <i data-lucide="flame"></i>
+              <span class="tier-pill-label">Hyper Devs (8–14 games)</span>
+              <span class="tier-pill-count" id="tier-count-hyper">0</span>
+            </button>
+            <button type="button" class="tier-pill-btn" data-tier="architects" role="tab" aria-selected="false" title="Contributors who authored 15 or more verified games">
+              <i data-lucide="crown"></i>
+              <span class="tier-pill-label">Master Architects (15+ games)</span>
+              <span class="tier-pill-count" id="tier-count-architects">0</span>
+            </button>
+          </div>
+        </div>
         <div class="table-responsive">
           <table class="leaderboard-table" id="leaderboard-table">
             <thead>
