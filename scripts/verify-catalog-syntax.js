@@ -34,17 +34,17 @@ let successCount = 0;
 function testSyntax(filePath) {
   const relPath = path.relative(ROOT_DIR, filePath).replace(/\\/g, '/');
   if (!fs.existsSync(filePath)) {
-    console.error(`  ❌ [MISSING] File not found: ${relPath}`);
+    console.error(`  [FAIL] [MISSING] File not found: ${relPath}`);
     errorCount++;
     return;
   }
 
   try {
     execSync(`node -c "${filePath}"`, { stdio: 'pipe' });
-    console.log(`  ✅ [SYNTAX OK] ${relPath}`);
+    console.log(`  [OK] [SYNTAX OK] ${relPath}`);
     successCount++;
   } catch (err) {
-    console.error(`  ❌ [SYNTAX ERROR] ${relPath}`);
+    console.error(`  [FAIL] [SYNTAX ERROR] ${relPath}`);
     console.error(`     ${err.stderr ? err.stderr.toString().trim() : err.message}`);
     errorCount++;
   }
@@ -64,17 +64,17 @@ function testCatalogStructure() {
   // 1. Check for renderAutocomplete signature
   const autocompleteIndex = content.indexOf('function renderAutocomplete(query)');
   if (autocompleteIndex === -1) {
-    console.warn('  ⚠️ [WARN] renderAutocomplete function definition not detected.');
+    console.warn('  [WARN] renderAutocomplete function definition not detected.');
   } else {
-    console.log('  ✅ [OK] renderAutocomplete definition located.');
+    console.log('  [OK] renderAutocomplete definition located.');
   }
 
   // 2. Check for Faceted Filters header
   const facetHeaderIndex = content.indexOf('// --- Faceted Filters Event Listeners (Duration, Controls, Reset) ---');
   if (facetHeaderIndex === -1) {
-    console.warn('  ⚠️ [WARN] Faceted Filters section header not detected.');
+    console.warn('  [WARN] Faceted Filters section header not detected.');
   } else {
-    console.log('  ✅ [OK] Faceted Filters section located.');
+    console.log('  [OK] Faceted Filters section located.');
   }
 
   // 3. Inspect block balance between renderAutocomplete and Faceted Filters
@@ -89,10 +89,10 @@ function testCatalogStructure() {
     }
 
     if (openBraces === closeBraces) {
-      console.log(`  ✅ [OK] renderAutocomplete curly brace balance verified (${openBraces} open, ${closeBraces} close).`);
+      console.log(`  [OK] renderAutocomplete curly brace balance verified (${openBraces} open, ${closeBraces} close).`);
       successCount++;
     } else {
-      console.error(`  ❌ [FAIL] Brace mismatch inside renderAutocomplete block: ${openBraces} { vs ${closeBraces} }`);
+      console.error(`  [FAIL] Brace mismatch inside renderAutocomplete block: ${openBraces} { vs ${closeBraces} }`);
       errorCount++;
     }
   }
@@ -106,16 +106,16 @@ function testCatalogStructure() {
 
   initCalls.forEach((callee) => {
     if (content.includes(callee)) {
-      console.log(`  ✅ [OK] Found critical runtime hook: ${callee}`);
+      console.log(`  [OK] Found critical runtime hook: ${callee}`);
       successCount++;
     } else {
-      console.warn(`  ⚠️ [WARN] Missing expected runtime hook: ${callee}`);
+      console.warn(`  [WARN] Missing expected runtime hook: ${callee}`);
     }
   });
 
   // 5. Verify modal iframe orientation listener
   if (content.includes('orientationchange')) {
-    console.log('  ✅ [OK] Found responsive orientationchange listener for game modal.');
+    console.log('  [OK] Found responsive orientationchange listener for game modal.');
     successCount++;
   }
 }
@@ -132,10 +132,10 @@ function testRegistryPayload() {
 
   // Verify GAMES_REGISTRY array declaration
   if (content.includes('const GAMES_REGISTRY = [') || content.includes('window.GAMES_REGISTRY = [')) {
-    console.log('  ✅ [OK] GAMES_REGISTRY array successfully declared.');
+    console.log('  [OK] GAMES_REGISTRY array successfully declared.');
     successCount++;
   } else {
-    console.error('  ❌ [FAIL] GAMES_REGISTRY array declaration missing in registry file.');
+    console.error('  [FAIL] GAMES_REGISTRY array declaration missing in registry file.');
     errorCount++;
   }
 }
@@ -157,6 +157,6 @@ console.log('========================================================\n');
 if (errorCount > 0) {
   process.exit(1);
 } else {
-  console.log('✨ All catalog & core syntax audits passed successfully with zero errors!\n');
+  console.log('[SUCCESS] All catalog & core syntax audits passed successfully with zero errors!\n');
   process.exit(0);
 }

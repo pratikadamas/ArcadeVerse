@@ -52,7 +52,7 @@ function promptQuestion(rl, query, defaultValue) {
 }
 
 async function main() {
-  console.log('\n🎮 ========================================================');
+  console.log('\n[INFO] ====================================================');
   console.log('   ArcadeVerse Interactive Game Scaffolder CLI (v1.0.0)');
   console.log('========================================================\n');
 
@@ -65,21 +65,21 @@ async function main() {
     // 1. Game Title
     let title = await promptQuestion(rl, '1. Enter Game Title (e.g. Cyber Katana)');
     while (!title) {
-      console.log('   ⚠️  Title cannot be empty.');
+      console.log('   [WARN] Title cannot be empty.');
       title = await promptQuestion(rl, '1. Enter Game Title');
     }
 
     // 2. Author Name
     let author = await promptQuestion(rl, '2. Enter Author Full Name (e.g. Jane Doe)');
     while (!author) {
-      console.log('   ⚠️  Author name cannot be empty.');
+      console.log('   [WARN] Author name cannot be empty.');
       author = await promptQuestion(rl, '2. Enter Author Full Name');
     }
 
     // 3. GitHub Username
     let github = await promptQuestion(rl, '3. Enter GitHub Username (e.g. janedoe)');
     while (!github) {
-      console.log('   ⚠️  GitHub username cannot be empty.');
+      console.log('   [WARN] GitHub username cannot be empty.');
       github = await promptQuestion(rl, '3. Enter GitHub Username');
     }
     github = github.replace(/^@/, '').toLowerCase().trim();
@@ -108,7 +108,7 @@ async function main() {
     const folderName = `${titleSlug}_${github}`;
     const targetDir = path.join(process.cwd(), 'games', folderName);
 
-    console.log('\n📋 ----------------------------------------------------');
+    console.log('\n[INFO] ----------------------------------------------------');
     console.log('   Scaffolding Preview');
     console.log('----------------------------------------------------');
     console.log(`   • Title:       ${title}`);
@@ -120,14 +120,14 @@ async function main() {
 
     const confirm = await promptQuestion(rl, 'Proceed with scaffolding? (Y/n)', 'Y');
     if (confirm.toLowerCase() !== 'y') {
-      console.log('\n❌ Operation cancelled by user.\n');
+      console.log('\n[INFO] Operation cancelled by user.\n');
       rl.close();
       return;
     }
 
     // Ensure Directory Exists
     if (fs.existsSync(targetDir)) {
-      console.error(`\n❌ Error: Directory already exists: games/${folderName}\n`);
+      console.error(`\n[FAIL] Error: Directory already exists: games/${folderName}\n`);
       rl.close();
       return;
     }
@@ -477,18 +477,18 @@ canvas#gameCanvas {
 `;
     fs.writeFileSync(path.join(targetDir, 'game.js'), gameJsContent, 'utf8');
 
-    console.log(`\n✅ Successfully scaffolded: games/${folderName}`);
+    console.log(`\n[OK] Successfully scaffolded: games/${folderName}`);
     console.log('   ├── game.json');
     console.log('   ├── index.html');
     console.log('   ├── style.css');
     console.log('   └── game.js\n');
-    console.log('💡 Next Steps:');
+    console.log('[INFO] Next Steps:');
     console.log('   1. Customize your game logic in games/' + folderName + '/game.js');
     console.log('   2. Verify standards: node scripts/validate-games.js\n');
 
     rl.close();
   } catch (err) {
-    console.error('\n❌ Scaffolder encountered an unexpected error:', err);
+    console.error('\n[FAIL] Scaffolder encountered an unexpected error:', err);
     rl.close();
   }
 }

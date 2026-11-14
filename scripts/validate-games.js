@@ -23,12 +23,12 @@ const EMOJI_REGEX = /[\uD83C-\uDBFF\uDC00-\uDFFF]|[\u2600-\u27BF]/;
 let totalErrors = 0;
 let totalWarnings = 0;
 
-console.log('\n🔍 ========================================================');
+console.log('\n[INFO] ====================================================');
 console.log('   ArcadeVerse Pre-Flight Contributor Game Validator');
 console.log('========================================================\n');
 
 if (!fs.existsSync(GAMES_DIR)) {
-  console.error('❌ Critical: games directory not found at:', GAMES_DIR);
+  console.error('[FAIL] Critical: games directory not found at:', GAMES_DIR);
   process.exit(1);
 }
 
@@ -63,13 +63,13 @@ try {
     const illegalFiles = touchedFiles.filter(f => FORBIDDEN_ROOT_FILES.includes(f));
 
     if (illegalFiles.length > 0) {
-      console.log('🚨 ========================================================');
+      console.log('[ALERT] ====================================================');
       console.log('   Strict File Protection Check (CONTRIBUTING.md Compliance)');
       console.log('========================================================\n');
       illegalFiles.forEach(f => {
-        console.log(`❌ Unauthorized modification detected: "${f}"`);
+        console.log(`[FAIL] Unauthorized modification detected: "${f}"`);
         if (f.includes('games-registry.js')) {
-          console.log(`   💡 NOTE: 'assets/js/games-registry.js' is auto-compiled upon merge by GitHub Actions.`);
+          console.log(`   [NOTE] 'assets/js/games-registry.js' is auto-compiled upon merge by GitHub Actions.`);
           console.log(`   Editing it in a PR causes MERGE CONFLICTS with the main branch.`);
           console.log(`   To revert: git checkout ${baseRef} -- assets/js/games-registry.js\n`);
         }
@@ -115,14 +115,14 @@ function verifyRelativeAsset(gamePath, referenceUri, sourceFile, issues) {
   }
 
   if (!fs.existsSync(resolvedPath)) {
-    issues.push(`❌ Broken asset reference in ${sourceFile}: "${referenceUri}" (Target does not exist on disk: ${resolvedPath})`);
+    issues.push(`[FAIL] Broken asset reference in ${sourceFile}: "${referenceUri}" (Target does not exist on disk: ${resolvedPath})`);
     totalErrors++;
   } else {
     // Audit file readability and zero-byte corruption
     try {
       const stats = fs.statSync(resolvedPath);
       if (stats.size === 0 && !cleanUri.endsWith('.gitkeep')) {
-        issues.push(`⚠️ Zero-byte corrupted asset file detected in ${sourceFile}: "${referenceUri}"`);
+        issues.push(`[WARN] Zero-byte corrupted asset file detected in ${sourceFile}: "${referenceUri}"`);
         totalWarnings++;
       }
     } catch (_) {}
@@ -194,7 +194,7 @@ function auditGameResourceBounds(gamePath, issues) {
           const filePath = path.join(fullDirPath, subFile);
           const stats = fs.statSync(filePath);
           if (stats.size > 5 * 1024 * 1024) {
-            issues.push(`⚠️ Sub-asset "${path.join(dirName, subFile)}" exceeds 5MB size limit (${(stats.size / (1024 * 1024)).toFixed(1)}MB). Please compress before merge.`);
+            issues.push(`[WARN] Sub-asset "${path.join(dirName, subFile)}" exceeds 5MB size limit (${(stats.size / (1024 * 1024)).toFixed(1)}MB). Please compress before merge.`);
             totalWarnings++;
           }
         });
@@ -209,7 +209,7 @@ function auditGameResourceBounds(gamePath, issues) {
     if ((code.includes('AudioContext') || code.includes('webkitAudioContext')) && !code.includes('ArcadeVerse') && !code.includes('ARCADEVERSE_TEARDOWN')) {
       // Advisory recommendation for graceful teardown
       if (IS_STRICT) {
-        issues.push('⚠️ Game instantiates AudioContext without listening to ARCADEVERSE_TEARDOWN or using ArcadeVerse SDK helper.');
+        issues.push('[WARN] Game instantiates AudioContext without listening to ARCADEVERSE_TEARDOWN or using ArcadeVerse SDK helper.');
         totalWarnings++;
       }
     }
@@ -219,11 +219,11 @@ function auditGameResourceBounds(gamePath, issues) {
 // Audits character encoding and doctype specifications
 function auditHtmlEncodingStandards(htmlContent, issues) {
   if (!/<!DOCTYPE\s+html>/i.test(htmlContent)) {
-    issues.push('⚠️ index.html is missing standard <!DOCTYPE html> doctype.');
+    issues.push('[WARN] index.html is missing standard <!DOCTYPE html> doctype.');
     totalWarnings++;
   }
   if (!/<meta\s+[^>]*?charset=["']?utf-8["']?/i.test(htmlContent)) {
-    issues.push('⚠️ index.html is missing UTF-8 charset declaration meta tag.');
+    issues.push('[WARN] index.html is missing UTF-8 charset declaration meta tag.');
     totalWarnings++;
   }
 }
@@ -231,15 +231,15 @@ function auditHtmlEncodingStandards(htmlContent, issues) {
 // Static Security & Anti-Defacement Heuristics Scanner
 function scanScriptSecurityViolations(jsContent, issues) {
   if (jsContent.includes('document.write(') || jsContent.includes('document.writeln(')) {
-    issues.push('❌ Avoid document.write() in community games; it breaks DOM streaming and player isolation.');
+    issues.push('[FAIL] Avoid document.write() in community games; it breaks DOM streaming and player isolation.');
     totalErrors++;
   }
   if (/innerHTML\s*=\s*.*(location\.search|localStorage\.getItem)/i.test(jsContent)) {
-    issues.push('⚠️ Potential DOM XSS pattern: assigning untrusted search or storage directly into innerHTML.');
+    issues.push('[WARN] Potential DOM XSS pattern: assigning untrusted search or storage directly into innerHTML.');
     totalWarnings++;
   }
   if (jsContent.includes('window.top.location') || jsContent.includes('window.parent.location') || /(window\.)?(top|parent)\.location/i.test(jsContent)) {
-    issues.push('❌ Security violation (#492): Attempt to access top or parent frame navigation.');
+    issues.push('[FAIL] Security violation (#492): Attempt to access top or parent frame navigation.');
     totalErrors++;
   }
 }
@@ -278,7 +278,7 @@ const auditTelemetry = {
 };
 
 function performHubAssetAudit() {
-  console.log('🔍 Auditing Parent Hub Pages & Asset Boundaries...');
+  console.log('[INFO] Auditing Parent Hub Pages & Asset Boundaries...');
   const hubPages = ['docs.html', '404.html', 'faqs.html', 'terms.html', 'privacy.html'];
   hubPages.forEach(page => {
     const pagePath = path.join(ROOT_DIR, page);
@@ -287,10 +287,10 @@ function performHubAssetAudit() {
     const pageIssues = [];
     auditHtmlAssetIntegrity(ROOT_DIR, content, pageIssues);
     if (pageIssues.length > 0) {
-      console.log(`  ⚠️ [HUB AUDIT] ${page}`);
+      console.log(`  [WARN] [HUB AUDIT] ${page}`);
       pageIssues.forEach(msg => console.log(`      ${msg}`));
     } else {
-      console.log(`  ✅ [HUB PASS] ${page}`);
+      console.log(`  [OK] [HUB PASS] ${page}`);
     }
   });
   console.log('');
@@ -306,7 +306,7 @@ folders.forEach(folder => {
 
   // 1. Folder Naming Convention: <game-name_username>
   if (!/^[a-z0-9-]+_[a-z0-9-]+$/i.test(folder)) {
-    issues.push(`⚠️ Folder naming convention should be games/<game-name_username> (got: ${folder})`);
+    issues.push(`[WARN] Folder naming convention should be games/<game-name_username> (got: ${folder})`);
     totalWarnings++;
   }
 
@@ -314,7 +314,7 @@ folders.forEach(folder => {
   REQUIRED_FILES.forEach(file => {
     const filePath = path.join(gamePath, file);
     if (!fs.existsSync(filePath)) {
-      issues.push(`❌ Missing required file: ${file}`);
+      issues.push(`[FAIL] Missing required file: ${file}`);
       totalErrors++;
     }
   });
@@ -326,7 +326,7 @@ folders.forEach(folder => {
       const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
       REQUIRED_JSON_FIELDS.forEach(field => {
         if (!meta[field]) {
-          issues.push(`❌ game.json missing required field: "${field}"`);
+          issues.push(`[FAIL] game.json missing required field: "${field}"`);
           totalErrors++;
         }
       });
@@ -335,12 +335,12 @@ folders.forEach(folder => {
       ['title', 'category', 'author', 'description'].forEach(field => {
         const val = meta[field];
         if (typeof val === 'string' && (val.includes('"') || val.includes('<') || val.includes('>'))) {
-          issues.push(`❌ Attribute Breakout / XSS risk: "${field}" contains unescaped quotes or angle brackets.`);
+          issues.push(`[FAIL] Attribute Breakout / XSS risk: "${field}" contains unescaped quotes or angle brackets.`);
           totalErrors++;
         }
       });
     } catch (err) {
-      issues.push(`❌ game.json contains invalid JSON: ${err.message}`);
+      issues.push(`[FAIL] game.json contains invalid JSON: ${err.message}`);
       totalErrors++;
     }
   }
@@ -351,7 +351,7 @@ folders.forEach(folder => {
     if (fs.existsSync(filePath)) {
       const content = fs.readFileSync(filePath, 'utf8');
       if (EMOJI_REGEX.test(content)) {
-        issues.push(`⚠️ Detected unicode emoji in ${file}. Please replace with SVG or Lucide icon.`);
+        issues.push(`[WARN] Detected unicode emoji in ${file}. Please replace with SVG or Lucide icon.`);
         totalWarnings++;
       }
     }
@@ -362,11 +362,11 @@ folders.forEach(folder => {
   if (fs.existsSync(htmlPath)) {
     const htmlContent = fs.readFileSync(htmlPath, 'utf8');
     if (!/<title>.*<\/title>/i.test(htmlContent)) {
-      issues.push(`❌ index.html is missing a <title> tag.`);
+      issues.push(`[FAIL] index.html is missing a <title> tag.`);
       totalErrors++;
     }
     if (!/viewport/i.test(htmlContent)) {
-      issues.push(`⚠️ index.html is missing a responsive viewport <meta> tag.`);
+      issues.push(`[WARN] index.html is missing a responsive viewport <meta> tag.`);
       totalWarnings++;
     }
     auditHtmlAssetIntegrity(gamePath, htmlContent, issues);
@@ -392,9 +392,9 @@ folders.forEach(folder => {
 
   // Print Report for this game
   if (issues.length === 0) {
-    console.log(`  ✅ [PASS] ${folder}`);
+    console.log(`  [PASS] ${folder}`);
   } else {
-    console.log(`  ⚠️ [AUDIT] ${folder}`);
+    console.log(`  [WARN] [AUDIT] ${folder}`);
     issues.forEach(msg => console.log(`      ${msg}`));
   }
 });
@@ -404,13 +404,13 @@ console.log(`Audited ${folders.length} games: ${totalErrors} Errors, ${totalWarn
 console.log('========================================================\n');
 
 if (totalErrors > 0) {
-  console.error('❌ Validation failed! Please fix the errors listed above before submitting your PR.\n');
+  console.error('[FAIL] Validation failed! Please fix the errors listed above before submitting your PR.\n');
   process.exit(1);
 } else {
   
 // Terminal Summary & Actionable Recommendations Report
 function printTelemetryRecommendations(auditData) {
-  console.log('📋 ----------------------------------------------------');
+  console.log('[INFO] ----------------------------------------------------');
   console.log('   Validator Diagnostics & Optimization Suggestions');
   console.log('----------------------------------------------------');
   console.log(`• Verified ${auditData.gamesAudited} games against 4-file structure (index.html, style.css, game.js, game.json).`);
@@ -421,6 +421,6 @@ function printTelemetryRecommendations(auditData) {
 }
 
   printTelemetryRecommendations(auditTelemetry);
-  console.log('✨ All community games pass pre-flight verification!\n');
+  console.log('[SUCCESS] All community games pass pre-flight verification!\n');
   process.exit(0);
 }

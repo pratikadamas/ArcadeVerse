@@ -19,10 +19,10 @@ let failCount = 0;
 
 function assert(condition, message) {
   if (condition) {
-    console.log(`  ✅ [PASS] ${message}`);
+    console.log(`  [PASS] ${message}`);
     passCount++;
   } else {
-    console.error(`  ❌ [FAIL] ${message}`);
+    console.error(`  [FAIL] ${message}`);
     failCount++;
   }
 }
@@ -75,6 +75,6 @@ console.log('========================================================\n');
 if (failCount > 0) {
   process.exit(1);
 } else {
-  console.log('✨ All Leaderboard substring highlight checks passed successfully!\n');
+  console.log('[SUCCESS] All Leaderboard substring highlight checks passed successfully!\n');
   process.exit(0);
 }
