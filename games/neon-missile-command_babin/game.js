@@ -36,7 +36,10 @@
 
   // Audio Synthesizer via Web Audio API
   let audioCtx = null;
-  let soundEnabled = localStorage.getItem('neon-missile-sound') !== 'false';
+  let soundEnabled = true;
+  try {
+    soundEnabled = localStorage.getItem('neon-missile-sound') !== 'false';
+  } catch (_) {}
 
   function initAudio() {
     if (!audioCtx) {
@@ -127,10 +130,15 @@
 
   let gameState = 'ready'; // ready, playing, wave_clear, gameover
   let score = 0;
-  let bestScore = parseInt(localStorage.getItem('neon-missile-best') || '0', 10);
+  let bestScore = 0;
+  try {
+    bestScore = parseInt(localStorage.getItem('neon-missile-best') || '0', 10);
+  } catch (_) {}
   let wave = 1;
   let ammo = 30;
   let totalIntercepts = 0;
+  let rafId = null;
+  let lastTime = performance.now();
 
   let enemyMissiles = [];
   let playerMissiles = [];
@@ -182,12 +190,13 @@
       const dy = target.y - startY;
       const dist = Math.hypot(dx, dy);
       const speed = baseSpeed * (Math.random() * 0.4 + 0.8);
+      const safeDist = dist < 1e-4 ? 1 : dist;
 
       waveSpawnQueue.push({
         x: startX,
         y: startY,
-        vx: (dx / dist) * speed,
-        vy: (dy / dist) * speed,
+        vx: (dx / safeDist) * speed,
+        vy: (dy / safeDist) * speed,
         targetX: target.x,
         targetY: target.y,
         delay: i * (120 - Math.min(60, waveNum * 8)) + Math.random() * 40
@@ -221,6 +230,7 @@
     const dx = targetX - origin.x;
     const dy = targetY - origin.y;
     const dist = Math.hypot(dx, dy);
+    if (dist < 1e-4) return;
     const speed = 7.5;
 
     playerMissiles.push({
@@ -271,7 +281,9 @@
     gameState = 'gameover';
     if (score > bestScore) {
       bestScore = score;
-      localStorage.setItem('neon-missile-best', bestScore.toString());
+      try {
+        localStorage.setItem('neon-missile-best', bestScore.toString());
+      } catch (_) {}
     }
     updateHUD();
 
@@ -296,7 +308,9 @@
     score += totalBonus;
     if (score > bestScore) {
       bestScore = score;
-      localStorage.setItem('neon-missile-best', bestScore.toString());
+      try {
+        localStorage.setItem('neon-missile-best', bestScore.toString());
+      } catch (_) {}
     }
     updateHUD();
     playSound('wave_clear');
@@ -307,10 +321,10 @@
     waveClearOverlay.classList.remove('hidden');
   }
 
-  function update() {
+  function update(dt = 1) {
     if (gameState !== 'playing') return;
 
-    spawnTimer++;
+    spawnTimer += dt;
 
     // Spawn enemy missiles from queue
     for (let i = waveSpawnQueue.length - 1; i >= 0; i--) {
@@ -333,8 +347,8 @@
     // Update player interceptor missiles
     for (let i = playerMissiles.length - 1; i >= 0; i--) {
       const m = playerMissiles[i];
-      m.x += m.vx;
-      m.y += m.vy;
+      m.x += m.vx * dt;
+      m.y += m.vy * dt;
 
       // Check if missile reached target
       const distToTarget = Math.hypot(m.targetX - m.x, m.targetY - m.y);
@@ -348,10 +362,10 @@
     for (let i = explosions.length - 1; i >= 0; i--) {
       const exp = explosions[i];
       if (exp.growing) {
-        exp.radius += 1.6;
+        exp.radius += 1.6 * dt;
         if (exp.radius >= exp.maxRadius) exp.growing = false;
       } else {
-        exp.radius -= 0.8;
+        exp.radius -= 0.8 * dt;
         exp.alpha = exp.radius / exp.maxRadius;
         if (exp.radius <= 0) {
           explosions.splice(i, 1);
@@ -376,8 +390,8 @@
     // Update enemy missiles
     for (let i = enemyMissiles.length - 1; i >= 0; i--) {
       const em = enemyMissiles[i];
-      em.x += em.vx;
-      em.y += em.vy;
+      em.x += em.vx * dt;
+      em.y += em.vy * dt;
 
       // Check if hit ground or target
       if (em.y >= GROUND_Y) {
@@ -414,9 +428,9 @@
     // Update particles
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.alpha -= p.decay;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.alpha -= p.decay * dt;
       if (p.alpha <= 0) particles.splice(i, 1);
     }
 
@@ -580,10 +594,14 @@
     }
   }
 
-  function gameLoop() {
-    update();
+  function gameLoop(timestamp = performance.now()) {
+    const deltaMs = Math.min(100, timestamp - lastTime);
+    lastTime = timestamp;
+    const dt = deltaMs / 16.667;
+
+    update(dt);
     render();
-    requestAnimationFrame(gameLoop);
+    rafId = requestAnimationFrame(gameLoop);
   }
 
   // Canvas Click / Touch to Target
@@ -610,28 +628,39 @@
   // Buttons & Controls
   startBtn.addEventListener('click', () => {
     initAudio();
+    if (rafId) cancelAnimationFrame(rafId);
+    lastTime = performance.now();
     batteries.forEach(b => b.alive = true);
     cities.forEach(c => c.alive = true);
     score = 0;
     totalIntercepts = 0;
     initWave(1);
+    gameLoop();
   });
 
   restartBtn.addEventListener('click', () => {
+    if (rafId) cancelAnimationFrame(rafId);
+    lastTime = performance.now();
     batteries.forEach(b => b.alive = true);
     cities.forEach(c => c.alive = true);
     score = 0;
     totalIntercepts = 0;
     initWave(1);
+    gameLoop();
   });
 
   nextWaveBtn.addEventListener('click', () => {
+    if (rafId) cancelAnimationFrame(rafId);
+    lastTime = performance.now();
     initWave(wave + 1);
+    gameLoop();
   });
 
   soundBtn.addEventListener('click', () => {
     soundEnabled = !soundEnabled;
-    localStorage.setItem('neon-missile-sound', soundEnabled.toString());
+    try {
+      localStorage.setItem('neon-missile-sound', soundEnabled.toString());
+    } catch (_) {}
     updateSoundUI();
     if (soundEnabled) playSound('launch');
   });
@@ -642,6 +671,37 @@
 
   closeHelpBtn.addEventListener('click', () => {
     instructionsModal.classList.add('hidden');
+  });
+
+  // Lifecycle & Messages
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && gameState === 'playing') {
+      gameState = 'paused';
+    } else if (!document.hidden && gameState === 'paused') {
+      gameState = 'playing';
+      lastTime = performance.now();
+    }
+  });
+
+  window.addEventListener('message', (event) => {
+    if (!event.data || typeof event.data !== 'object') return;
+    const type = event.data.type;
+    if (type === 'ARCADEVERSE_PAUSE') {
+      if (gameState === 'playing') gameState = 'paused';
+    } else if (type === 'ARCADEVERSE_RESUME') {
+      if (gameState === 'paused') {
+        gameState = 'playing';
+        lastTime = performance.now();
+      }
+    } else if (type === 'ARCADEVERSE_TEARDOWN') {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      if (audioCtx) {
+        try { audioCtx.close(); } catch (_) {}
+      }
+    }
   });
 
   // Initialize
