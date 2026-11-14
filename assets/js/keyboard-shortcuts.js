@@ -204,6 +204,9 @@
         // When typing in text input, don't trigger global shortcuts
         if (isEditing) return;
 
+        const gameModal = document.getElementById('game-modal');
+        const isGameActive = Boolean(gameModal && gameModal.classList.contains('active'));
+
         // ? or Shift + /: Toggle shortcuts modal
         if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
           e.preventDefault();
@@ -211,8 +214,9 @@
           return;
         }
 
-        // /: Focus search bar
+        // /: Focus search bar (suppressed during active gameplay)
         if (e.key === '/') {
+          if (isGameActive) return;
           const searchInput = document.getElementById('game-search-input') || document.getElementById('leaderboard-search-input');
           if (searchInput) {
             e.preventDefault();
@@ -254,32 +258,36 @@
           }
         };
 
-        // H: Go Home
+        // H: Go Home (suppressed during active gameplay)
         if (e.key === 'h' || e.key === 'H') {
+          if (isGameActive) return;
           if (!window.location.pathname.endsWith('index.html') && !window.location.pathname.endsWith('/')) {
             navigateWithLoader('index.html');
           }
           return;
         }
 
-        // L: Go to Leaderboard
+        // L: Go to Leaderboard (suppressed during active gameplay)
         if (e.key === 'l' || e.key === 'L') {
+          if (isGameActive) return;
           if (!window.location.pathname.endsWith('leaderboard.html')) {
             navigateWithLoader('leaderboard.html');
           }
           return;
         }
 
-        // D: Go to Documentation
+        // D: Go to Documentation (suppressed during active gameplay)
         if (e.key === 'd' || e.key === 'D') {
+          if (isGameActive) return;
           if (!window.location.pathname.endsWith('docs.html')) {
             navigateWithLoader('docs.html');
           }
           return;
         }
 
-        // Q: Go to FAQs
+        // Q: Go to FAQs (suppressed during active gameplay)
         if (e.key === 'q' || e.key === 'Q') {
+          if (isGameActive) return;
           if (!window.location.pathname.endsWith('faqs.html')) {
             navigateWithLoader('faqs.html');
           }
@@ -288,8 +296,7 @@
 
         // F: Toggle Game Fullscreen (when modal is open)
         if (e.key === 'f' || e.key === 'F') {
-          const gameModal = document.getElementById('game-modal');
-          if (gameModal && gameModal.classList.contains('active')) {
+          if (isGameActive) {
             const fsBtn = document.getElementById('fullscreen-btn');
             if (fsBtn) {
               fsBtn.click();
@@ -301,8 +308,7 @@
 
         // R: Reload / Restart Game (when modal is open)
         if (e.key === 'r' || e.key === 'R') {
-          const gameModal = document.getElementById('game-modal');
-          if (gameModal && gameModal.classList.contains('active')) {
+          if (isGameActive) {
             const reloadBtn = document.getElementById('reload-btn');
             if (reloadBtn) {
               reloadBtn.click();
@@ -314,8 +320,7 @@
 
         // B: Bookmark / Toggle Favorite (in modal or jump to favorites tab)
         if (e.key === 'b' || e.key === 'B') {
-          const gameModal = document.getElementById('game-modal');
-          if (gameModal && gameModal.classList.contains('active')) {
+          if (isGameActive) {
             const favBtn = document.getElementById('modal-fav-btn');
             if (favBtn) {
               favBtn.click();
