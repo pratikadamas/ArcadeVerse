@@ -248,8 +248,22 @@
     }
   }
 
-  function loop() {
-    update();
+  // Multi-Monitor Refresh Rate Decoupling (Fixed Timestep Accumulator #560)
+  const FIXED_DT = 1 / 60;
+  let accumulator = 0;
+  let lastTime = performance.now();
+
+  function loop(now) {
+    if (now === undefined) now = performance.now();
+    const dt = Math.min((now - lastTime) / 1000, 0.1);
+    lastTime = now;
+    accumulator += dt;
+
+    while (accumulator >= FIXED_DT) {
+      update();
+      accumulator -= FIXED_DT;
+    }
+
     draw();
     animId = requestAnimationFrame(loop);
   }
@@ -287,6 +301,8 @@
     gameoverOverlay.classList.remove("active");
 
     if (animId) cancelAnimationFrame(animId);
+    accumulator = 0;
+    lastTime = performance.now();
     loop();
   }
 

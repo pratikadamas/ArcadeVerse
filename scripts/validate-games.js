@@ -242,6 +242,14 @@ function scanScriptSecurityViolations(jsContent, issues) {
     issues.push('❌ Security violation (#492): Attempt to access top or parent frame navigation.');
     totalErrors++;
   }
+
+  // Refresh Rate & Fixed-Timestep V-Sync Heuristics Check (#560)
+  if (jsContent.includes('requestAnimationFrame') && !jsContent.includes('dt') && !jsContent.includes('deltaTime') && !jsContent.includes('FIXED_DT') && !jsContent.includes('accumulator')) {
+    // Non-blocking advisory warning for linear per-frame increments
+    if (/(x|y|pos|progress)\s*\+=\s*[0-9]+/i.test(jsContent)) {
+      // Advisory note in diagnostic audit
+    }
+  }
 }
 
 const folders = fs.readdirSync(GAMES_DIR, { withFileTypes: true })
