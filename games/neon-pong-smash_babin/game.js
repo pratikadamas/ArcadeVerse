@@ -141,6 +141,7 @@
   let isRunning = false;
   let isPaused = false;
   let animId = null;
+  let lastTime = performance.now();
 
   let playerScore = 0;
   let aiScore = 0;
@@ -228,16 +229,16 @@
     }
   }
 
-  function update() {
+  function update(dt = 1) {
     if (!isRunning || isPaused) return;
 
     // Player Movement
     let moveSpeed = player.turbo || keys.smash ? PLAYER_SPEED * 1.5 : PLAYER_SPEED;
     if (keys.up) {
-      player.y -= moveSpeed;
+      player.y -= moveSpeed * dt;
       player.vy = -moveSpeed;
     } else if (keys.down) {
-      player.y += moveSpeed;
+      player.y += moveSpeed * dt;
       player.vy = moveSpeed;
     } else {
       player.vy = 0;
@@ -253,9 +254,9 @@
     // Target ball with a minor human-like tracking delay
     const targetY = ball.y - ai.height / 2 + ai.reactionOffset;
     if (ai.y < targetY - 4) {
-      ai.y += AI_SPEED;
+      ai.y += AI_SPEED * dt;
     } else if (ai.y > targetY + 4) {
-      ai.y -= AI_SPEED;
+      ai.y -= AI_SPEED * dt;
     }
 
     // Clamp AI
@@ -268,88 +269,98 @@
     ball.trail.push({ x: ball.x, y: ball.y });
     if (ball.trail.length > 8) ball.trail.shift();
 
-    // Ball movement with spin curve
-    ball.x += ball.vx;
-    ball.y += ball.vy + ball.spin * 0.2;
+    // Sub-stepping to prevent tunneling through paddles at high velocities
+    const steps = Math.max(1, Math.ceil(Math.abs(ball.vx * dt) / (player.width * 0.5)));
+    const stepDt = dt / steps;
+
+    for (let s = 0; s < steps; s++) {
+      // Ball movement with spin curve
+      ball.x += ball.vx * stepDt;
+      ball.y += (ball.vy + ball.spin * 0.2) * stepDt;
+
+      // Bounce off Top / Bottom boundaries
+      if (ball.y - ball.radius < 0) {
+        ball.y = ball.radius;
+        ball.vy = -ball.vy;
+        sfx.wall();
+      } else if (ball.y + ball.radius > canvas.height) {
+        ball.y = canvas.height - ball.radius;
+        ball.vy = -ball.vy;
+        sfx.wall();
+      }
+
+      // Paddle Hit Detection: Player
+      if (
+        ball.vx < 0 &&
+        ball.x - ball.radius <= player.x + player.width &&
+        ball.x + ball.radius >= player.x &&
+        ball.y >= player.y &&
+        ball.y <= player.y + player.height
+      ) {
+        // Calculate impact point relative to center (-1 to 1)
+        const hitPoint = (ball.y - (player.y + player.height / 2)) / (player.height / 2);
+        const smashActive = keys.smash || player.turbo;
+
+        // Increase speed slightly with each rally
+        ball.speed = Math.min(14, ball.speed + (smashActive ? 1.5 : 0.4));
+        const bounceAngle = hitPoint * (Math.PI / 3); // Max 60 deg
+
+        ball.x = player.x + player.width + ball.radius;
+        ball.vx = ball.speed * Math.cos(bounceAngle);
+        ball.vy = ball.speed * Math.sin(bounceAngle);
+        ball.spin = player.vy * 0.8;
+
+        rallyCount++;
+        if (rallyCount > maxRally) {
+          maxRally = rallyCount;
+          maxRallyEl.textContent = maxRally;
+        }
+        rallyCountEl.textContent = rallyCount;
+
+        if (smashActive) {
+          sfx.smash();
+          addHitParticles(ball.x, ball.y, '#00f0ff', 20);
+        } else {
+          sfx.hit(360 + rallyCount * 15);
+          addHitParticles(ball.x, ball.y, '#00f0ff', 8);
+        }
+
+        // Add a small randomized inaccuracy to AI tracking for next rally
+        ai.reactionOffset = (Math.random() - 0.5) * 40;
+        break;
+      }
+
+      // Paddle Hit Detection: AI
+      if (
+        ball.vx > 0 &&
+        ball.x + ball.radius >= ai.x &&
+        ball.x - ball.radius <= ai.x + ai.width &&
+        ball.y >= ai.y &&
+        ball.y <= ai.y + ai.height
+      ) {
+        const hitPoint = (ball.y - (ai.y + ai.height / 2)) / (ai.height / 2);
+        ball.speed = Math.min(14, ball.speed + 0.4);
+        const bounceAngle = hitPoint * (Math.PI / 3);
+
+        ball.x = ai.x - ball.radius;
+        ball.vx = -ball.speed * Math.cos(bounceAngle);
+        ball.vy = ball.speed * Math.sin(bounceAngle);
+
+        rallyCount++;
+        if (rallyCount > maxRally) {
+          maxRally = rallyCount;
+          maxRallyEl.textContent = maxRally;
+        }
+        rallyCountEl.textContent = rallyCount;
+
+        sfx.hit(480 + rallyCount * 15);
+        addHitParticles(ball.x, ball.y, '#ec4899', 8);
+        break;
+      }
+    }
 
     // Spin decay
-    ball.spin *= 0.98;
-
-    // Bounce off Top / Bottom boundaries
-    if (ball.y - ball.radius < 0) {
-      ball.y = ball.radius;
-      ball.vy = -ball.vy;
-      sfx.wall();
-    } else if (ball.y + ball.radius > canvas.height) {
-      ball.y = canvas.height - ball.radius;
-      ball.vy = -ball.vy;
-      sfx.wall();
-    }
-
-    // Paddle Hit Detection: Player
-    if (
-      ball.vx < 0 &&
-      ball.x - ball.radius <= player.x + player.width &&
-      ball.x + ball.radius >= player.x &&
-      ball.y >= player.y &&
-      ball.y <= player.y + player.height
-    ) {
-      // Calculate impact point relative to center (-1 to 1)
-      const hitPoint = (ball.y - (player.y + player.height / 2)) / (player.height / 2);
-      const smashActive = keys.smash || player.turbo;
-
-      // Increase speed slightly with each rally
-      ball.speed = Math.min(14, ball.speed + (smashActive ? 1.5 : 0.4));
-      const bounceAngle = hitPoint * (Math.PI / 3); // Max 60 deg
-
-      ball.vx = ball.speed * Math.cos(bounceAngle);
-      ball.vy = ball.speed * Math.sin(bounceAngle);
-      ball.spin = player.vy * 0.8;
-
-      rallyCount++;
-      if (rallyCount > maxRally) {
-        maxRally = rallyCount;
-        maxRallyEl.textContent = maxRally;
-      }
-      rallyCountEl.textContent = rallyCount;
-
-      if (smashActive) {
-        sfx.smash();
-        addHitParticles(ball.x, ball.y, '#00f0ff', 20);
-      } else {
-        sfx.hit(360 + rallyCount * 15);
-        addHitParticles(ball.x, ball.y, '#00f0ff', 8);
-      }
-
-      // Add a small randomized inaccuracy to AI tracking for next rally
-      ai.reactionOffset = (Math.random() - 0.5) * 40;
-    }
-
-    // Paddle Hit Detection: AI
-    if (
-      ball.vx > 0 &&
-      ball.x + ball.radius >= ai.x &&
-      ball.x - ball.radius <= ai.x + ai.width &&
-      ball.y >= ai.y &&
-      ball.y <= ai.y + ai.height
-    ) {
-      const hitPoint = (ball.y - (ai.y + ai.height / 2)) / (ai.height / 2);
-      ball.speed = Math.min(14, ball.speed + 0.4);
-      const bounceAngle = hitPoint * (Math.PI / 3);
-
-      ball.vx = -ball.speed * Math.cos(bounceAngle);
-      ball.vy = ball.speed * Math.sin(bounceAngle);
-
-      rallyCount++;
-      if (rallyCount > maxRally) {
-        maxRally = rallyCount;
-        maxRallyEl.textContent = maxRally;
-      }
-      rallyCountEl.textContent = rallyCount;
-
-      sfx.hit(480 + rallyCount * 15);
-      addHitParticles(ball.x, ball.y, '#ec4899', 8);
-    }
+    ball.spin *= Math.pow(0.98, dt);
 
     // Score: AI Scores
     if (ball.x + ball.radius < 0) {
@@ -370,9 +381,9 @@
     // Particles update
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.life--;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.life -= dt;
       if (p.life <= 0) particles.splice(i, 1);
     }
   }
@@ -387,7 +398,10 @@
 
   function endMatch() {
     isRunning = false;
-    if (animId) cancelAnimationFrame(animId);
+    if (animId) {
+      cancelAnimationFrame(animId);
+      animId = null;
+    }
 
     const playerWon = playerScore >= WINNING_SCORE;
     if (playerWon) sfx.win();
@@ -398,6 +412,15 @@
     finalMaxRally.textContent = maxRally;
 
     gameOverScreen.classList.remove('hidden');
+
+    try {
+      window.parent.postMessage({
+        type: 'ARCADEVERSE_GAME_SCORE',
+        score: playerScore,
+        won: playerWon
+      }, '*');
+      window.parent.postMessage({ type: 'ARCADEVERSE_GAME_OVER' }, '*');
+    } catch (e) {}
   }
 
   function render() {
@@ -485,8 +508,12 @@
     ctx.restore();
   }
 
-  function loop() {
-    update();
+  function loop(timestamp) {
+    if (timestamp === undefined) timestamp = performance.now();
+    const deltaMs = Math.min(100, timestamp - lastTime);
+    lastTime = timestamp;
+    const dt = deltaMs / 16.667;
+    update(dt);
     render();
     if (isRunning) {
       animId = requestAnimationFrame(loop);
@@ -494,6 +521,12 @@
   }
 
   function startMatch() {
+    if (animId) {
+      cancelAnimationFrame(animId);
+      animId = null;
+    }
+    lastTime = performance.now();
+
     sfx.init();
     playerScore = 0;
     aiScore = 0;
@@ -596,6 +629,31 @@
   btnMute.addEventListener('click', () => {
     sfx.muted = !sfx.muted;
     btnMute.classList.toggle('active', sfx.muted);
+  });
+
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden && isRunning && !isPaused) togglePause();
+  });
+
+  window.addEventListener('message', function(e) {
+    if (!e.data || typeof e.data !== 'object') return;
+    var t = e.data.type;
+    if (t === 'ARCADEVERSE_PAUSE') {
+      if (isRunning && !isPaused) togglePause();
+    } else if (t === 'ARCADEVERSE_RESUME') {
+      if (isPaused) togglePause();
+    } else if (t === 'ARCADEVERSE_TEARDOWN') {
+      if (animId) {
+        cancelAnimationFrame(animId);
+        animId = null;
+      }
+    } else if (t === 'AV_RESIZE') {
+      var d = e.data;
+      if (d.width && d.height) {
+        canvas.width = d.width;
+        canvas.height = d.height;
+      }
+    }
   });
 
 })();
