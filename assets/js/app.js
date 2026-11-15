@@ -1654,6 +1654,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateFacetSummaryUI();
 
+    // Lightweight DOM Windowing / Virtualization for Catalog Cards (#590)
+    // Ensures silky 60 FPS scrolling on mobile devices by checking IntersectionObserver
+    if (window.IntersectionObserver) {
+      const cardObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          const el = entry.target;
+          if (entry.isIntersecting) {
+            el.classList.remove("card-virtual-hidden");
+          } else {
+            // Keep height spacer for off-screen cards
+            el.classList.add("card-virtual-hidden");
+          }
+        });
+      }, { rootMargin: "250px 0px" });
+
+      const allCards = gamesGrid.querySelectorAll(".game-card");
+      allCards.forEach((c) => cardObserver.observe(c));
+    }
+
     // Assistive Screen Reader Notification for Catalog Filter/Search Updates (#513)
     if (typeof announceToScreenReader === "function") {
       const count = finalResults.length;
@@ -3439,7 +3458,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (playlistTrigger) {
     playlistTrigger.addEventListener("click", () => {
       if (window.ArcadePlaylists) {
-        window.ArcadePlaylists.openDrawer();
+        window.ArcadePlaylists.openDrawer(playlistTrigger);
       }
     });
   }
@@ -3462,7 +3481,10 @@ document.addEventListener("DOMContentLoaded", () => {
         playlistDrawer.classList.remove("open");
         playlistDrawer.setAttribute("aria-hidden", "true");
       }
-      if (playlistTrigger) playlistTrigger.classList.remove("active");
+      if (playlistTrigger) {
+        playlistTrigger.classList.remove("active");
+        playlistTrigger.setAttribute("aria-expanded", "false");
+      }
 
       categoryPills.forEach((p) => {
         p.classList.remove("active");
