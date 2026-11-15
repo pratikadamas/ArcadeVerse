@@ -1940,6 +1940,13 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
       } catch (_) {}
+
+      // Synchronize game simulation speed multiplier (#656)
+      try {
+        if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.broadcastSpeedConfig === "function") {
+          window.GameSpeedRegulator.broadcastSpeedConfig();
+        }
+      } catch (_) {}
     });
 
     gameIframe.addEventListener("error", () => {
@@ -2034,6 +2041,9 @@ document.addEventListener("DOMContentLoaded", () => {
     updateModalFavoriteButton(isFavorite(game.id));
     if (window.SoundEngine && typeof window.SoundEngine.updateUI === "function") {
       window.SoundEngine.updateUI();
+    }
+    if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.mountControls === "function") {
+      window.GameSpeedRegulator.mountControls();
     }
 
     // Monitor game frame lifecycle and attach watchdog
@@ -2209,6 +2219,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeGameModal(isFromPopState = false) {
     if (!gameModal || (!gameModal.classList.contains("active") && !activeGame)) return;
+    if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.closeMenu === "function") {
+      window.GameSpeedRegulator.closeMenu();
+    }
     hideLandscapePrompt();
     activeGame = null;
     isGameSessionActive = false;
@@ -4868,4 +4881,20 @@ document.addEventListener("DOMContentLoaded", () => {
         AvAudioMixer.broadcastConfig();
       }
     });
+  }
+
+  // ========================================================
+  // GAME SPEED & FRAME-PACING REGULATOR INITIALIZER
+  // ========================================================
+  if (!window.GameSpeedRegulator) {
+    const speedScript = document.createElement('script');
+    speedScript.src = 'assets/js/game-speed-regulator.js';
+    speedScript.onload = () => {
+      if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.init === 'function') {
+        window.GameSpeedRegulator.init();
+      }
+    };
+    document.body.appendChild(speedScript);
+  } else if (typeof window.GameSpeedRegulator.init === 'function') {
+    window.GameSpeedRegulator.init();
   }
