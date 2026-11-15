@@ -4584,48 +4584,57 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ========================================================
-  // SPECULATIVE GAME IFRAME PRE-WARMING & IDLE PREFETCH (#663)
-  // Debounced card hover prefetcher with link rel=prefetch
+  // VISUAL AUDIO WAVEFORM & SFX CAPTION FLASH OVERLAY (#662)
+  // Displays edge flashes and accessible sound caption chips
   // ========================================================
-  function initSpeculativePrefetch() {
-    if (navigator.connection && (navigator.connection.saveData || /(2g)/.test(navigator.connection.effectiveType))) {
-      return; // Respect low-bandwidth / data-saver preferences
+  function initA11yAudioCaptions() {
+    let captionContainer = document.getElementById("av-a11y-caption-container");
+    if (!captionContainer) {
+      captionContainer = document.createElement("div");
+      captionContainer.id = "av-a11y-caption-container";
+      captionContainer.className = "av-a11y-caption-container";
+      document.body.appendChild(captionContainer);
     }
 
-    const prefetchedUrls = new Set();
-    let prefetchTimeout = null;
+    function showSoundCaption(label, type = "info") {
+      const chip = document.createElement("div");
+      chip.className = `av-sound-caption-chip av-caption-${type}`;
+      chip.textContent = `[${label}]`;
+      captionContainer.appendChild(chip);
 
-    function prefetchGame(gameFolder) {
-      if (!gameFolder || prefetchedUrls.has(gameFolder)) return;
-      prefetchedUrls.add(gameFolder);
+      // Trigger visual edge flash on active game modal or body
+      const gameContainer = document.querySelector(".game-container") || document.body;
+      gameContainer.classList.add(`flash-${type}`);
+      setTimeout(() => {
+        gameContainer.classList.remove(`flash-${type}`);
+      }, 350);
 
-      const link = document.createElement("link");
-      link.rel = "prefetch";
-      link.href = `games/${encodeURIComponent(gameFolder)}/index.html`;
-      link.as = "document";
-      document.head.appendChild(link);
+      setTimeout(() => {
+        chip.classList.add("fade-out");
+        setTimeout(() => chip.remove(), 400);
+      }, 1500);
     }
 
-    document.addEventListener("pointerover", (e) => {
-      const card = e.target.closest(".game-card");
-      if (!card) return;
-      const gameFolder = card.dataset.folder;
-      if (!gameFolder) return;
-
-      clearTimeout(prefetchTimeout);
-      prefetchTimeout = setTimeout(() => {
-        prefetchGame(gameFolder);
-      }, 120);
-    });
-
-    document.addEventListener("pointerout", (e) => {
-      if (e.target.closest(".game-card")) {
-        clearTimeout(prefetchTimeout);
+    window.addEventListener("message", (e) => {
+      if (!e.data || typeof e.data !== "object") return;
+      if (e.data.type === "AV_SFX_EVENT" && e.data.sound) {
+        const sfx = String(e.data.sound).toLowerCase();
+        if (sfx.includes("hit") || sfx.includes("damage") || sfx.includes("explosion")) {
+          showSoundCaption(e.data.sound, "danger");
+        } else if (sfx.includes("powerup") || sfx.includes("score") || sfx.includes("coin")) {
+          showSoundCaption(e.data.sound, "success");
+        } else {
+          showSoundCaption(e.data.sound, "info");
+        }
       }
     });
+
+    window.ArcadeA11y = {
+      showCaption: showSoundCaption
+    };
   }
 
-  initSpeculativePrefetch();
+  initA11yAudioCaptions();
 
   // Universal Virtual Touch Controller Loader (#517)
   if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
