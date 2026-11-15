@@ -311,5 +311,23 @@
 
   document.addEventListener('DOMContentLoaded', bindPageTransitionLoader);
 
+  // Non-intrusive Service Worker Registration for PWA & Offline Shell Support
+  if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      const isLocalhost = Boolean(
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '[::1]' ||
+        window.location.hostname.match(/^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/)
+      );
+      if (window.location.protocol === 'https:' || isLocalhost || window.location.protocol === 'http:') {
+        navigator.serviceWorker
+          .register('./sw.js', { scope: './' })
+          .catch(() => {
+            // Graceful fallback: non-intrusive if restricted or offline
+          });
+      }
+    });
+  }
+
 })();
 
