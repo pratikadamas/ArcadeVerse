@@ -196,26 +196,28 @@
     if (keys.left) ship.angle -= ship.rotSpeed;
     if (keys.right) ship.angle += ship.rotSpeed;
 
-    if (keys.thrust) {
+    // Vacuum inertia mode: fuel only drains when thrusters are actively engaged (#667)
+    if (keys.thrust && fuel > 0) {
       ship.vx += Math.cos(ship.angle) * ship.thrust;
       ship.vy += Math.sin(ship.angle) * ship.thrust;
-      fuel = Math.max(0, fuel - 0.05);
+      // 1 unit per second calibrated at 60 FPS (~0.0167 / frame)
+      fuel = Math.max(0, fuel - 0.0167);
 
-      // Engine particles
+      // Engine particles with active thruster flame
       particles.push({
         x: ship.x - Math.cos(ship.angle) * ship.radius,
         y: ship.y - Math.sin(ship.angle) * ship.radius,
-        vx: -Math.cos(ship.angle) * 2 + (Math.random() - 0.5),
-        vy: -Math.sin(ship.angle) * 2 + (Math.random() - 0.5),
-        size: 3,
+        vx: -Math.cos(ship.angle) * 2.5 + (Math.random() - 0.5),
+        vy: -Math.sin(ship.angle) * 2.5 + (Math.random() - 0.5),
+        size: 3.5,
         alpha: 1,
-        color: '#f59e0b'
+        color: Math.random() > 0.5 ? '#f59e0b' : '#ef4444'
       });
     }
 
-    // Drag
-    ship.vx *= 0.985;
-    ship.vy *= 0.985;
+    // Pure vacuum inertia: coasting smoothly with minimal space friction
+    ship.vx *= 0.998;
+    ship.vy *= 0.998;
     ship.x += ship.vx;
     ship.y += ship.vy;
 
@@ -353,6 +355,19 @@
     ctx.strokeStyle = '#f8fafc';
     ctx.fillStyle = '#0284c7';
     ctx.lineWidth = 2;
+
+    // Thruster flame when thrust is active
+    if (keys.thrust && fuel > 0) {
+      ctx.fillStyle = Math.random() > 0.5 ? '#f59e0b' : '#ef4444';
+      ctx.beginPath();
+      ctx.moveTo(-ship.radius * 0.5, -ship.radius * 0.3);
+      ctx.lineTo(-ship.radius * 1.3 - Math.random() * 6, 0);
+      ctx.lineTo(-ship.radius * 0.5, ship.radius * 0.3);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    ctx.fillStyle = '#0284c7';
     ctx.beginPath();
     ctx.moveTo(ship.radius, 0);
     ctx.lineTo(-ship.radius * 0.7, -ship.radius * 0.6);
