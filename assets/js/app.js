@@ -2073,6 +2073,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     checkOrientationLandscapePrompt(game);
 
+    // "Players Also Played" Intelligent Recommendation Strip in Modal Footer (#591)
+    renderModalRecommendations(game);
+
     if (!isDirectDeepLink) {
       modalPushedHistory = true;
       syncURLState(true);
@@ -4704,6 +4707,86 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (window.lucide) {
       try { lucide.createIcons(); } catch (_) {}
+    }
+  }
+
+  // ========================================================
+  // "PLAYERS ALSO PLAYED" MODAL RECOMMENDATIONS (#591)
+  // Recommends 3 relevant games based on Jaccard tag similarity
+  // ========================================================
+  function renderModalRecommendations(currentGame) {
+    if (!currentGame || !modalWindow) return;
+    let strip = document.getElementById("modal-recommendations-strip");
+    if (!strip) {
+      strip = document.createElement("div");
+      strip.id = "modal-recommendations-strip";
+      strip.className = "modal-recommendations-strip";
+      modalWindow.appendChild(strip);
+    }
+
+    if (typeof GAMES_REGISTRY === "undefined" || !Array.isArray(GAMES_REGISTRY)) {
+      strip.style.display = "none";
+      return;
+    }
+
+    const currentTags = new Set((currentGame.tags || []).map(t => t.toLowerCase()));
+    currentTags.add((currentGame.category || "").toLowerCase());
+
+    const candidates = GAMES_REGISTRY.filter(g => g.id !== currentGame.id).map(g => {
+      const gTags = new Set((g.tags || []).map(t => t.toLowerCase()));
+      gTags.add((g.category || "").toLowerCase());
+
+      // Jaccard similarity
+      let intersection = 0;
+      for (const t of currentTags) {
+        if (gTags.has(t)) intersection++;
+      }
+      const union = new Set([...currentTags, ...gTags]).size;
+      const score = union > 0 ? intersection / union : 0;
+      return { game: g, score };
+    });
+
+    candidates.sort((a, b) => b.score - a.score);
+    const top3 = candidates.slice(0, 3).map(c => c.game);
+
+    if (top3.length === 0) {
+      strip.style.display = "none";
+      return;
+    }
+
+    strip.style.display = "flex";
+    strip.innerHTML = `
+      <div class="rec-strip-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+        <span>Players Also Played:</span>
+      </div>
+      <div class="rec-chips-wrap">
+        ${top3.map(g => `
+          <button type="button" class="rec-game-chip" data-game-id="${g.id}">
+            <span>${escapeHTML(g.title)}</span>
+            <small>• ${escapeHTML(g.category || "Arcade")}</small>
+          </button>
+        `).join("")}
+      </div>
+    `;
+
+    strip.querySelectorAll(".rec-game-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        const gid = chip.getAttribute("data-game-id");
+        const nextGame = GAMES_REGISTRY.find(g => g.id === gid);
+        if (nextGame) {
+          openGameModal(nextGame);
+        }
+      });
+    });
+  }
+
+  // Universal Virtual Touch Controller Loader (#517)
+  if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
+    if (!document.querySelector('script[src*="virtual-controller.js"]')) {
+      const vcScript = document.createElement('script');
+      vcScript.src = 'assets/js/virtual-controller.js';
+      document.body.appendChild(vcScript);
     }
   }
 
