@@ -308,13 +308,13 @@
     }
   }
 
-  canvas.addEventListener('click', (e) => {
+  function handleTileRotate(clientX, clientY) {
     if (!isRunning || isPaused) return;
     sfx.init();
 
     const rect = canvas.getBoundingClientRect();
-    const clickX = ((e.clientX - rect.left) / rect.width) * canvas.width;
-    const clickY = ((e.clientY - rect.top) / rect.height) * canvas.height;
+    const clickX = ((clientX - rect.left) / rect.width) * canvas.width;
+    const clickY = ((clientY - rect.top) / rect.height) * canvas.height;
 
     const pad = 40;
     const tileSize = (canvas.width - pad * 2) / GRID_SIZE;
@@ -323,10 +323,56 @@
     const r = Math.floor((clickY - pad) / tileSize);
 
     if (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE) {
-      grid[r][c].rotation = (grid[r][c].rotation + 1) % 4;
+      // Discrete 90-degree mathematical quantization on rotation (#668)
+      grid[r][c].rotation = (Math.round(grid[r][c].rotation) + 1) % 4;
       sfx.rotate();
       evaluateCircuit();
     }
+  }
+
+  canvas.addEventListener('click', (e) => {
+    handleTileRotate(e.clientX, e.clientY);
+  });
+
+  // Touch event handlers with discrete snap & touchcancel support (#668)
+  let touchStartTile = null;
+
+  canvas.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 0) {
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      const clickX = ((touch.clientX - rect.left) / rect.width) * canvas.width;
+      const clickY = ((touch.clientY - rect.top) / rect.height) * canvas.height;
+      const pad = 40;
+      const tileSize = (canvas.width - pad * 2) / GRID_SIZE;
+      const c = Math.floor((clickX - pad) / tileSize);
+      const r = Math.floor((clickY - pad) / tileSize);
+      if (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE) {
+        touchStartTile = { r, c, clientX: touch.clientX, clientY: touch.clientY };
+      }
+    }
+  }, { passive: true });
+
+  const finishTouch = (e) => {
+    if (!touchStartTile) return;
+    // Quantize target rotation safely
+    const { r, c } = touchStartTile;
+    if (r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE) {
+      grid[r][c].rotation = (Math.round(grid[r][c].rotation) + 1) % 4;
+      sfx.rotate();
+      evaluateCircuit();
+    }
+    touchStartTile = null;
+  };
+
+  canvas.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    finishTouch(e);
+  });
+
+  canvas.addEventListener('touchcancel', (e) => {
+    e.preventDefault();
+    finishTouch(e);
   });
 
   function startNewGame() {
