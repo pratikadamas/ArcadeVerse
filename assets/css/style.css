@@ -11552,4 +11552,25 @@ html.a11y-reduced-motion .search-clear-btn {
   transform: scale(1.2);
 }
 
+/* ========================================================
+   PIXEL-ART CRISPNESS & IMAGE-RENDERING ENFORCER (#561)
+   Prevents bilinear blur across High-DPI and scaled retro canvases
+   ======================================================== */
+canvas.pixel-art,
+#game-canvas.pixel-art,
+.pixel-crisp canvas,
+.pixelated-render canvas,
+.pixelated-render #game-canvas {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Visual preference toggle support for modal iframe containers */
+.modal-frame-wrapper.pixel-art-mode iframe {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: pixelated;
+}
+
 
