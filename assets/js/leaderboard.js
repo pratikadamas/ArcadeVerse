@@ -31,6 +31,26 @@ document.addEventListener("DOMContentLoaded", () => {
   const nextBtn = document.getElementById("pagination-next-btn");
   const pagesContainer = document.getElementById("pagination-pages-container");
 
+  // Multi-Column Dynamic Sorting State (#683)
+  const SORT_STORAGE_KEY = "arcadeverse_leaderboard_sort";
+  let currentSortColumn = "score";
+  let currentSortOrder = "desc";
+
+  // Restore sort preferences from sessionStorage if present
+  try {
+    const savedSort = sessionStorage.getItem(SORT_STORAGE_KEY);
+    if (savedSort) {
+      const parsed = JSON.parse(savedSort);
+      if (parsed && typeof parsed.column === "string" && (parsed.order === "asc" || parsed.order === "desc")) {
+        const validCols = ["rank", "name", "games", "commits", "score"];
+        if (validCols.includes(parsed.column)) {
+          currentSortColumn = parsed.column;
+          currentSortOrder = parsed.order;
+        }
+      }
+    }
+  } catch (_) {}
+
   // Safeguard admin avatar with offline fallback handler
   const adminAvatarImg = document.querySelector(".admin-avatar-img");
   if (adminAvatarImg) {
@@ -687,6 +707,32 @@ document.addEventListener("DOMContentLoaded", () => {
       return nameMatch || loginMatch || roleMatch || badgeMatch;
     });
 
+    // Stable Multi-Column Dynamic Sorting (#683)
+    communityContributors.sort((a, b) => {
+      let comparison = 0;
+      if (currentSortColumn === "games") {
+        comparison = (a.gamesCount || 0) - (b.gamesCount || 0);
+      } else if (currentSortColumn === "commits") {
+        comparison = (a.commits || 0) - (b.commits || 0);
+      } else if (currentSortColumn === "name") {
+        const nameA = (a.name || a.login || "").toLowerCase();
+        const nameB = (b.name || b.login || "").toLowerCase();
+        comparison = nameA.localeCompare(nameB);
+      } else if (currentSortColumn === "rank") {
+        comparison = (a.rank || 0) - (b.rank || 0);
+      } else {
+        // default "score"
+        comparison = calculateScore(a) - calculateScore(b);
+      }
+
+      if (comparison !== 0) {
+        return currentSortOrder === "asc" ? comparison : -comparison;
+      }
+
+      // Stable secondary tie-breaker: fallback to original rank
+      return a.rank - b.rank;
+    });
+
     const totalItems = communityContributors.length;
 
     if (totalItems === 0) {
@@ -812,10 +858,77 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     renderPaginationUI(totalItems, totalPages, startIdx, endIdx);
+    updateSortHeadersUI();
 
     if (window.lucide) {
       lucide.createIcons();
     }
+  }
+
+  // --- Dynamic Multi-Column Sorting Engine (#683) ---
+  function updateSortHeadersUI() {
+    const sortHeaders = document.querySelectorAll("#leaderboard-table th.sortable-th");
+    sortHeaders.forEach(th => {
+      const col = th.dataset.sort;
+      const iconWrap = th.querySelector(".sort-icon-wrap");
+      if (col === currentSortColumn) {
+        th.classList.add("sort-active");
+        th.setAttribute("aria-sort", currentSortOrder === "asc" ? "ascending" : "descending");
+        const iconName = currentSortOrder === "asc" ? "chevron-up" : "chevron-down";
+        if (iconWrap) {
+          iconWrap.innerHTML = `<i data-lucide="${iconName}" class="sort-icon"></i>`;
+        }
+      } else {
+        th.classList.remove("sort-active");
+        th.setAttribute("aria-sort", "none");
+        if (iconWrap) {
+          iconWrap.innerHTML = `<i data-lucide="chevrons-up-down" class="sort-icon"></i>`;
+        }
+      }
+    });
+  }
+
+  function handleSortClick(column) {
+    if (currentSortColumn === column) {
+      currentSortOrder = currentSortOrder === "asc" ? "desc" : "asc";
+    } else {
+      currentSortColumn = column;
+      if (column === "name" || column === "rank") {
+        currentSortOrder = "asc";
+      } else {
+        currentSortOrder = "desc";
+      }
+    }
+
+    try {
+      sessionStorage.setItem(SORT_STORAGE_KEY, JSON.stringify({
+        column: currentSortColumn,
+        order: currentSortOrder
+      }));
+    } catch (_) {}
+
+    currentPage = 1;
+    renderTable();
+  }
+
+  function initSortHeaders() {
+    const sortHeaders = document.querySelectorAll("#leaderboard-table th.sortable-th");
+    sortHeaders.forEach(th => {
+      const col = th.dataset.sort;
+      if (!col) return;
+
+      th.addEventListener("click", () => {
+        handleSortClick(col);
+      });
+
+      th.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleSortClick(col);
+        }
+      });
+    });
+    updateSortHeadersUI();
   }
 
   function renderPaginationUI(totalItems, totalPages, startIdx, endIdx) {
@@ -1120,7 +1233,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // The rows both exports are built from, so the CSV and the JSON always list the same people
   // in the same order as the Community Contributors table.
   function getStandingsRows() {
-    return getCommunityContributors().map((item, idx) => ({
+    const rows = getCommunityContributors().map((item, idx) => ({
       rank: idx + 1,
       name: item.name || "",
       login: item.login || "",
@@ -1128,6 +1241,27 @@ document.addEventListener("DOMContentLoaded", () => {
       commits: item.commits || 0,
       score: calculateScore(item),
     }));
+
+    rows.sort((a, b) => {
+      let comparison = 0;
+      if (currentSortColumn === "games") {
+        comparison = a.games - b.games;
+      } else if (currentSortColumn === "commits") {
+        comparison = a.commits - b.commits;
+      } else if (currentSortColumn === "name") {
+        comparison = (a.name || a.login).toLowerCase().localeCompare((b.name || b.login).toLowerCase());
+      } else if (currentSortColumn === "rank") {
+        comparison = a.rank - b.rank;
+      } else {
+        comparison = a.score - b.score;
+      }
+      if (comparison !== 0) {
+        return currentSortOrder === "asc" ? comparison : -comparison;
+      }
+      return a.rank - b.rank;
+    });
+
+    return rows;
   }
 
   function downloadTextFile(content, mimeType, filename) {
@@ -1363,6 +1497,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const initialAdmin = contributorsData.find(c => c.login.toLowerCase() === "debasmitabose0");
   if (initialAdmin) updateAdminSpotlight(initialAdmin);
   renderPodium();
+  initSortHeaders();
   renderTable();
   fetchLiveGitHubContributions(activeRepo, false);
 });
