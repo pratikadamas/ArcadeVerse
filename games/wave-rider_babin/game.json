@@ -1,6 +1,6 @@
 {
   "title": "Wave Rider: Frequency Pulse Surfer",
-  "category": "Arcade / Endless",
+  "category": "Arcade",
   "description": "Surf across undulating sine-wave carrier frequencies, modulate pulse amplitudes, and weave through dampening glitch walls.",
   "author": "Babin Bid",
   "github": "Babin123456",
@@ -10,7 +10,8 @@
     "arcade",
     "retro",
     "html5-canvas",
-    "nsoc26"
+    "nsoc26",
+    "Endless"
   ],
   "difficulty": "Medium",
   "featured": true,
