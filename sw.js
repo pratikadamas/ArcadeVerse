@@ -1,6 +1,7 @@
 /**
  * ArcadeVerse - Service Worker Engine (PWA & Offline Shell)
  * Provides offline caching, stale-while-revalidate asset delivery,
+ * Background Sync API fallback for offline queues,
  * and graceful fallback for hub pages and previously played local games.
  *
  * NSOC Winter Edition 2026
@@ -37,6 +38,7 @@ const CORE_SHELL_ASSETS = [
   './assets/js/sound-engine.js',
   './assets/js/keyboard-shortcuts.js',
   './assets/js/network-detector.js',
+  './assets/js/arcadeverse-sdk.js',
   './assets/js/leaderboard.js',
   './assets/public/favicon.ico',
   './assets/public/favicon-32x32.png',
@@ -162,10 +164,27 @@ self.addEventListener('fetch', (event) => {
 });
 
 /**
+ * Background Sync API listener for offline score and favorite dispatch
+ */
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'av-sync-offline-queue') {
+    event.waitUntil(
+      self.clients.matchAll({ includeUncontrolled: true, type: 'window' }).then((clients) => {
+        if (clients && clients.length > 0) {
+          clients.forEach((client) => {
+            client.postMessage({ type: 'AV_TRIGGER_OFFLINE_SYNC' });
+          });
+        }
+      })
+    );
+  }
+});
+
+/**
  * Message listener for lifecycle commands (e.g. manual skipWaiting)
  */
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
+  if (event.data && (event.data.type === 'SKIP_WAITING' || event.data.action === 'skipWaiting')) {
     self.skipWaiting();
   }
 });
