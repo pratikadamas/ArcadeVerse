@@ -4584,27 +4584,48 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ========================================================
-  // STRICT CONTENT SECURITY POLICY (CSP) META TAG AUDIT (#664)
-  // Dynamic runtime CSP audit & iframe sandbox hardening
+  // SPECULATIVE GAME IFRAME PRE-WARMING & IDLE PREFETCH (#663)
+  // Debounced card hover prefetcher with link rel=prefetch
   // ========================================================
-  function initCspRuntimeAudit() {
-    // Audit active meta tags for Content-Security-Policy
-    const existingCsp = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
-    if (!existingCsp) {
-      const cspMeta = document.createElement("meta");
-      cspMeta.httpEquiv = "Content-Security-Policy";
-      cspMeta.content = "default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' data: blob:; connect-src 'self' blob:; frame-src 'self' blob:;";
-      document.head.appendChild(cspMeta);
+  function initSpeculativePrefetch() {
+    if (navigator.connection && (navigator.connection.saveData || /(2g)/.test(navigator.connection.effectiveType))) {
+      return; // Respect low-bandwidth / data-saver preferences
     }
 
-    // Harden iframe sandbox attributes
-    const gameIframe = document.getElementById("game-iframe");
-    if (gameIframe && !gameIframe.getAttribute("sandbox")) {
-      gameIframe.setAttribute("sandbox", "allow-scripts allow-same-origin allow-pointer-lock");
+    const prefetchedUrls = new Set();
+    let prefetchTimeout = null;
+
+    function prefetchGame(gameFolder) {
+      if (!gameFolder || prefetchedUrls.has(gameFolder)) return;
+      prefetchedUrls.add(gameFolder);
+
+      const link = document.createElement("link");
+      link.rel = "prefetch";
+      link.href = `games/${encodeURIComponent(gameFolder)}/index.html`;
+      link.as = "document";
+      document.head.appendChild(link);
     }
+
+    document.addEventListener("pointerover", (e) => {
+      const card = e.target.closest(".game-card");
+      if (!card) return;
+      const gameFolder = card.dataset.folder;
+      if (!gameFolder) return;
+
+      clearTimeout(prefetchTimeout);
+      prefetchTimeout = setTimeout(() => {
+        prefetchGame(gameFolder);
+      }, 120);
+    });
+
+    document.addEventListener("pointerout", (e) => {
+      if (e.target.closest(".game-card")) {
+        clearTimeout(prefetchTimeout);
+      }
+    });
   }
 
-  initCspRuntimeAudit();
+  initSpeculativePrefetch();
 
   // Universal Virtual Touch Controller Loader (#517)
   if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
