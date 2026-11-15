@@ -572,6 +572,40 @@
 
   window.addEventListener('resize', resizeCanvas);
 
+  // WebGL & Canvas Context Loss and Restoration Handler (#562)
+  canvas.addEventListener('webglcontextlost', (e) => {
+    e.preventDefault();
+    if (animFrameId) {
+      cancelAnimationFrame(animFrameId);
+      animFrameId = null;
+    }
+    console.warn('[Coolant Flow] WebGL/Canvas context lost. Freezing animation loop.');
+  }, false);
+
+  canvas.addEventListener('webglcontextrestored', () => {
+    console.log('[Coolant Flow] WebGL/Canvas context restored. Re-initializing rendering.');
+    resizeCanvas();
+    if (!animFrameId) {
+      lastRenderTime = performance.now();
+      animFrameId = requestAnimationFrame(render);
+    }
+  }, false);
+
+  canvas.addEventListener('contextlost', (e) => {
+    e.preventDefault();
+    if (animFrameId) {
+      cancelAnimationFrame(animFrameId);
+      animFrameId = null;
+    }
+  }, false);
+
+  canvas.addEventListener('contextrestored', () => {
+    resizeCanvas();
+    if (!animFrameId) {
+      animFrameId = requestAnimationFrame(render);
+    }
+  }, false);
+
   // Initialize
   initStage(0);
   resizeCanvas();
