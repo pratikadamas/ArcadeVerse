@@ -4200,6 +4200,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initURLDeepLinking();
   initControlsLegend();
   initMultiChannelAudioMixer();
+  initColorblindFilters();
 });
 
   // ========================================================
@@ -4708,6 +4709,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ========================================================
+<<<<<<< HEAD
   // IN-MODAL MULTI-CHANNEL AUDIO MIXER ENGINE (#565)
   // Master, SFX, and Music Sliders broadcasting via postMessage
   // ========================================================
@@ -4868,4 +4870,135 @@ document.addEventListener("DOMContentLoaded", () => {
         AvAudioMixer.broadcastConfig();
       }
     });
+  }
+
+  // ========================================================
+  // COLORBLIND SHADERS & PALETTE CORRECTION ENGINE (#563)
+  // Injects SVG Matrix Filters dynamically and provides modal toolbar selector
+  // ========================================================
+  const AvColorblind = (function () {
+    const STORAGE_KEY = 'arcadeverse_colorblind_mode';
+
+    function injectSvgFilters() {
+      if (document.getElementById('av-colorblind-svg-filters')) return;
+
+      const svgContainer = document.createElement('div');
+      svgContainer.id = 'av-colorblind-svg-filters';
+      svgContainer.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;pointer-events:none;';
+      svgContainer.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" version="1.1">
+          <defs>
+            <!-- Protanopia (red-weak) -->
+            <filter id="protanopia-filter">
+              <feColorMatrix type="matrix" values="
+                0.567, 0.433, 0,     0, 0
+                0.558, 0.442, 0,     0, 0
+                0,     0.242, 0.758, 0, 0
+                0,     0,     0,     1, 0" />
+            </filter>
+            <!-- Deuteranopia (green-weak) -->
+            <filter id="deuteranopia-filter">
+              <feColorMatrix type="matrix" values="
+                0.625, 0.375, 0,   0, 0
+                0.7,   0.3,   0,   0, 0
+                0,     0.3,   0.7, 0, 0
+                0,     0,     0,   1, 0" />
+            </filter>
+            <!-- Tritanopia (blue-weak) -->
+            <filter id="tritanopia-filter">
+              <feColorMatrix type="matrix" values="
+                0.95, 0.05,  0,     0, 0
+                0,    0.433, 0.567, 0, 0
+                0,    0.475, 0.525, 0, 0
+                0,    0,     0,     1, 0" />
+            </filter>
+            <!-- High Contrast Monochrome -->
+            <filter id="monochrome-filter">
+              <feColorMatrix type="matrix" values="
+                0.299, 0.587, 0.114, 0, 0
+                0.299, 0.587, 0.114, 0, 0
+                0.299, 0.587, 0.114, 0, 0
+                0,     0,     0,     1, 0" />
+            </filter>
+          </defs>
+        </svg>
+      `;
+      document.body.appendChild(svgContainer);
+    }
+
+    function applyFilter(mode) {
+      const frameWrapper = document.querySelector('.modal-frame-wrapper') || document.querySelector('.modal-window');
+      if (!frameWrapper) return;
+
+      frameWrapper.classList.remove('filter-protanopia', 'filter-deuteranopia', 'filter-tritanopia', 'filter-monochrome');
+      if (mode && mode !== 'normal') {
+        frameWrapper.classList.add(`filter-${mode}`);
+      }
+
+      try {
+        localStorage.setItem(STORAGE_KEY, mode || 'normal');
+      } catch (_) {}
+    }
+
+    function getSavedMode() {
+      try {
+        return localStorage.getItem(STORAGE_KEY) || 'normal';
+      } catch (_) {
+        return 'normal';
+      }
+    }
+
+    return {
+      injectSvgFilters,
+      applyFilter,
+      getSavedMode
+    };
+  })();
+
+  window.AvColorblind = AvColorblind;
+
+  function initColorblindFilters() {
+    AvColorblind.injectSvgFilters();
+
+    // Inject Colorblind Mode selector into modal toolbar
+    const modalControls = document.querySelector('.modal-controls');
+    const closeBtn = document.getElementById('close-modal-btn');
+    if (modalControls && !document.getElementById('modal-colorblind-select')) {
+      const select = document.createElement('select');
+      select.id = 'modal-colorblind-select';
+      select.className = 'modal-colorblind-select';
+      select.title = 'Select Colorblind Vision Filter';
+      select.setAttribute('aria-label', 'Colorblind Vision Filter Palette');
+      select.innerHTML = `
+        <option value="normal">Color: Normal</option>
+        <option value="protanopia">Protanopia (Red-Weak)</option>
+        <option value="deuteranopia">Deuteranopia (Green-Weak)</option>
+        <option value="tritanopia">Tritanopia (Blue-Weak)</option>
+        <option value="monochrome">High Contrast Mono</option>
+      `;
+
+      const saved = AvColorblind.getSavedMode();
+      select.value = saved;
+
+      select.addEventListener('change', (e) => {
+        AvColorblind.applyFilter(e.target.value);
+      });
+
+      if (closeBtn) {
+        modalControls.insertBefore(select, closeBtn);
+      } else {
+        modalControls.appendChild(select);
+      }
+    }
+
+    // Ensure filter applies when modal activates
+    const modalEl = document.getElementById('game-modal');
+    if (modalEl) {
+      const observer = new MutationObserver(() => {
+        if (modalEl.classList.contains('active')) {
+          AvColorblind.applyFilter(AvColorblind.getSavedMode());
+        }
+      });
+      observer.observe(modalEl, { attributes: true, attributeFilter: ['class'] });
+    }
   }
