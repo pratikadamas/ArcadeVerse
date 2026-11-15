@@ -176,6 +176,73 @@ function sanitizeIcon(val) {
   return LUCIDE_ICON_WHITELIST.has(clean) ? clean : "gamepad-2";
 }
 
+// Canonical categories allow-list for uniform indexing and frontend filtering (#923)
+const CANONICAL_CATEGORIES = new Set([
+  'Action',
+  'Adventure',
+  'Arcade',
+  'Card',
+  'Casual',
+  'Physics',
+  'Platformer',
+  'Puzzle',
+  'Racing',
+  'Retro',
+  'Rhythm',
+  'Simulation',
+  'Sports',
+  'Strategy'
+]);
+
+const CANONICAL_CATEGORIES_LOWER = new Map(
+  Array.from(CANONICAL_CATEGORIES).map(cat => [cat.toLowerCase(), cat])
+);
+
+// Explicit aliases/compound categories normalization map
+const CATEGORY_ALIASES = {
+  'runner': 'Arcade',
+  'defense': 'Strategy',
+  'horror / escape room': 'Adventure',
+  'survival / horror': 'Adventure'
+};
+
+// Grandfathered legacy collision pair (pre-existing historical duplicate)
+const GRANDFATHERED_TITLE_COLLISIONS = new Set([
+  'cyber-brick-breaker_babin|cyber-brick-breaker_hrshjswniii',
+  'cyber-brick-breaker_hrshjswniii|cyber-brick-breaker_babin'
+]);
+
+function normalizeCategory(rawCategory, folder = '') {
+  const sanitized = sanitizeMetadataString(rawCategory, 'Arcade');
+  const lower = sanitized.toLowerCase();
+
+  // 1. Direct exact canonical match (case-insensitive)
+  if (CANONICAL_CATEGORIES_LOWER.has(lower)) {
+    return CANONICAL_CATEGORIES_LOWER.get(lower);
+  }
+
+  // 2. Known alias / compound mapping
+  if (CATEGORY_ALIASES[lower]) {
+    const canonical = CATEGORY_ALIASES[lower];
+    console.warn(`[Category Normalization] ${folder}: Category alias "${sanitized}" mapped to canonical "${canonical}".`);
+    return canonical;
+  }
+
+  // 3. Slash-separated compound (e.g. "Arcade / Shooter" -> "Arcade", "Puzzle / Logic" -> "Puzzle")
+  if (sanitized.includes('/')) {
+    const primary = sanitized.split('/')[0].trim().toLowerCase();
+    if (CANONICAL_CATEGORIES_LOWER.has(primary)) {
+      const canonical = CANONICAL_CATEGORIES_LOWER.get(primary);
+      console.warn(`[Category Normalization] ${folder}: Compound category "${sanitized}" normalized to canonical "${canonical}".`);
+      return canonical;
+    }
+  }
+
+  // 4. Fallback for unrecognized category
+  console.warn(`[Category Warning] ${folder}: Category "${sanitized}" is not in canonical allow-list. Defaulting to "Arcade".`);
+  return 'Arcade';
+}
+
 function buildRegistry() {
   if (!fs.existsSync(GAMES_DIR)) {
     console.error(`Error: games directory not found at ${GAMES_DIR}`);
@@ -189,6 +256,11 @@ function buildRegistry() {
   const gamesRegistry = [];
   const contributorGames = new Map(); // key: ghLower -> Array of game titles
   const contributorMeta = new Map();  // key: ghLower -> { name, role, originalGithub }
+
+  // Collision tracking for duplicate IDs and normalized titles (#923)
+  const seenIds = new Map();     // key: normalizedId -> folder
+  const seenTitles = new Map();  // key: normalizedTitle -> folder
+  let hasCollisionErrors = false;
 
   for (const folder of gameFolders) {
     const metaFile = path.join(GAMES_DIR, folder, 'game.json');
@@ -207,10 +279,41 @@ function buildRegistry() {
       const ghKey = (meta.github || "").toLowerCase();
       const authorName = (KNOWN_PROFILES[ghKey] && KNOWN_PROFILES[ghKey].name) || meta.author || "Contributor";
 
+      const sanitizedId = sanitizeMetadataString(gameId, folder);
+      const sanitizedTitle = sanitizeMetadataString(meta.title, folder);
+      const normalizedId = sanitizedId.toLowerCase().trim();
+      const normalizedTitle = sanitizedTitle.toLowerCase().trim().replace(/\s+/g, ' ');
+
+      // Collision Check: Duplicate Normalized Game ID
+      if (seenIds.has(normalizedId)) {
+        const conflictingFolder = seenIds.get(normalizedId);
+        console.error(`[Collision Error] Duplicate game ID "${sanitizedId}" detected in folder "${folder}". Already registered by "${conflictingFolder}".`);
+        hasCollisionErrors = true;
+      } else {
+        seenIds.set(normalizedId, folder);
+      }
+
+      // Collision Check: Duplicate Normalized Game Title
+      if (seenTitles.has(normalizedTitle)) {
+        const conflictingFolder = seenTitles.get(normalizedTitle);
+        const pairKey = `${conflictingFolder}|${folder}`;
+        if (GRANDFATHERED_TITLE_COLLISIONS.has(pairKey)) {
+          console.warn(`[Legacy Collision Notice] Grandfathered duplicate title "${sanitizedTitle}" between "${conflictingFolder}" and "${folder}".`);
+        } else {
+          console.error(`[Collision Error] Duplicate game title "${sanitizedTitle}" detected in folder "${folder}". Already registered by "${conflictingFolder}".`);
+          hasCollisionErrors = true;
+        }
+      } else {
+        seenTitles.set(normalizedTitle, folder);
+      }
+
+      // Category Validation & Normalization against canonical allow-list
+      const normalizedCategory = normalizeCategory(meta.category, folder);
+
       const gameObj = {
-        id: sanitizeMetadataString(gameId, folder),
-        title: sanitizeMetadataString(meta.title, folder),
-        category: sanitizeMetadataString(meta.category, "Arcade"),
+        id: sanitizedId,
+        title: sanitizedTitle,
+        category: normalizedCategory,
         lucideIcon: sanitizeIcon(meta.lucideIcon),
         description: sanitizeMetadataString(meta.description, ""),
         author: sanitizeMetadataString(authorName, "Contributor"),
@@ -245,6 +348,11 @@ function buildRegistry() {
     } catch (err) {
       console.error(`[Error] Failed parsing ${metaFile}:`, err.message);
     }
+  }
+
+  if (hasCollisionErrors) {
+    console.error('\n[Fatal Error] Registry compilation aborted due to duplicate game ID or title collisions.');
+    process.exit(1);
   }
 
   // 2. Fetch Git commit counts dynamically
@@ -322,8 +430,14 @@ function buildRegistry() {
 
   const code = `const GAMES_REGISTRY = ${JSON.stringify(gamesRegistry, null, 2)};\n\nconst FEATURES_REGISTRY = ${JSON.stringify(featuresRegistry, null, 2)};\n\nconst CONTRIBUTORS_REGISTRY = ${JSON.stringify(cleanContributors, null, 2)};\n\nif (typeof window !== 'undefined') {\n  window.GAMES_REGISTRY = GAMES_REGISTRY;\n  window.FEATURES_REGISTRY = FEATURES_REGISTRY;\n  window.CONTRIBUTORS_REGISTRY = CONTRIBUTORS_REGISTRY;\n}\n`;
 
+  const isCheckOnly = process.argv.includes('--check');
+  if (isCheckOnly) {
+    console.log(`[Check OK] Registry compilation verified for ${gamesRegistry.length} games and ${cleanContributors.length} contributors.`);
+    return;
+  }
+
   fs.writeFileSync(REGISTRY_FILE, code, 'utf8');
-  console.log(`✅ Successfully compiled ${gamesRegistry.length} games and ${cleanContributors.length} contributors into ${path.relative(ROOT_DIR, REGISTRY_FILE)}`);
+  console.log(`[Success] Compiled ${gamesRegistry.length} games and ${cleanContributors.length} contributors into ${path.relative(ROOT_DIR, REGISTRY_FILE)}`);
 }
 
 buildRegistry();
