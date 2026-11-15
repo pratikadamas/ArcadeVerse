@@ -4584,95 +4584,27 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ========================================================
-  // REAL-TIME FPS, FRAME TIME & VRAM DIAGNOSTIC OVERLAY HUD (#666)
-  // Toggleable diagnostic HUD inside game modal (Shortcut: Shift+F)
+  // STRICT CONTENT SECURITY POLICY (CSP) META TAG AUDIT (#664)
+  // Dynamic runtime CSP audit & iframe sandbox hardening
   // ========================================================
-  function initDiagnosticHud() {
-    const modalHeader = document.querySelector(".modal-header");
-    const gameContainer = document.querySelector(".game-container");
-    if (!modalHeader || !gameContainer || document.getElementById("av-hud-overlay")) return;
-
-    const hudOverlay = document.createElement("div");
-    hudOverlay.id = "av-hud-overlay";
-    hudOverlay.className = "av-diagnostic-hud";
-    hudOverlay.style.display = "none";
-    hudOverlay.innerHTML = `
-      <div class="hud-item"><span class="hud-label">FPS:</span> <span id="hud-fps-val">60</span></div>
-      <div class="hud-item"><span class="hud-label">Frame:</span> <span id="hud-ft-val">16.6ms</span></div>
-      <div class="hud-item"><span class="hud-label">Mem:</span> <span id="hud-mem-val">--</span></div>
-    `;
-    gameContainer.appendChild(hudOverlay);
-
-    // Add HUD toggle button to modal header
-    const hudToggleBtn = document.createElement("button");
-    hudToggleBtn.id = "av-hud-toggle-btn";
-    hudToggleBtn.type = "button";
-    hudToggleBtn.className = "modal-btn hud-toggle-btn";
-    hudToggleBtn.title = "Toggle Performance Diagnostic HUD (Shift+F)";
-    hudToggleBtn.innerHTML = `
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M6 20V10M18 20V4"/></svg>
-    `;
-    modalHeader.appendChild(hudToggleBtn);
-
-    let hudActive = false;
-    let lastFrameTime = performance.now();
-    let frameCount = 0;
-    let fpsTimer = performance.now();
-    let rafHud = null;
-
-    function updateHudLoop() {
-      if (!hudActive) return;
-      const now = performance.now();
-      const delta = now - lastFrameTime;
-      lastFrameTime = now;
-      frameCount++;
-
-      if (now - fpsTimer >= 500) {
-        const fps = Math.round((frameCount * 1000) / (now - fpsTimer));
-        const fpsEl = document.getElementById("hud-fps-val");
-        const ftEl = document.getElementById("hud-ft-val");
-        const memEl = document.getElementById("hud-mem-val");
-
-        if (fpsEl) fpsEl.textContent = String(fps);
-        if (ftEl) ftEl.textContent = `${delta.toFixed(1)}ms`;
-        if (memEl && performance.memory) {
-          const usedMB = (performance.memory.usedJSHeapSize / (1024 * 1024)).toFixed(1);
-          memEl.textContent = `${usedMB}MB`;
-        }
-        frameCount = 0;
-        fpsTimer = now;
-      }
-      rafHud = requestAnimationFrame(updateHudLoop);
+  function initCspRuntimeAudit() {
+    // Audit active meta tags for Content-Security-Policy
+    const existingCsp = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+    if (!existingCsp) {
+      const cspMeta = document.createElement("meta");
+      cspMeta.httpEquiv = "Content-Security-Policy";
+      cspMeta.content = "default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' data: blob:; connect-src 'self' blob:; frame-src 'self' blob:;";
+      document.head.appendChild(cspMeta);
     }
 
-    function toggleHud() {
-      hudActive = !hudActive;
-      hudOverlay.style.display = hudActive ? "flex" : "none";
-      hudToggleBtn.classList.toggle("active", hudActive);
-      if (hudActive) {
-        lastFrameTime = performance.now();
-        fpsTimer = performance.now();
-        frameCount = 0;
-        rafHud = requestAnimationFrame(updateHudLoop);
-      } else if (rafHud) {
-        cancelAnimationFrame(rafHud);
-      }
+    // Harden iframe sandbox attributes
+    const gameIframe = document.getElementById("game-iframe");
+    if (gameIframe && !gameIframe.getAttribute("sandbox")) {
+      gameIframe.setAttribute("sandbox", "allow-scripts allow-same-origin allow-pointer-lock");
     }
-
-    hudToggleBtn.addEventListener("click", toggleHud);
-
-    window.addEventListener("keydown", (e) => {
-      if (e.shiftKey && (e.key === "f" || e.key === "F")) {
-        const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : "";
-        if (tag !== "input" && tag !== "textarea") {
-          e.preventDefault();
-          toggleHud();
-        }
-      }
-    });
   }
 
-  initDiagnosticHud();
+  initCspRuntimeAudit();
 
   // Universal Virtual Touch Controller Loader (#517)
   if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
