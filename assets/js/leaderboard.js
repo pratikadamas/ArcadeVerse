@@ -236,6 +236,31 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Cross-reference contributor usernames against assets/js/games-registry.js (#682)
+  function getAuthoredGamesForUser(githubHandle, authorName, itemGames = []) {
+    if (typeof GAMES_REGISTRY === "undefined" || !Array.isArray(GAMES_REGISTRY)) {
+      return [];
+    }
+    const handleLower = (githubHandle || "").toLowerCase().trim();
+    const nameLower = (authorName || "").toLowerCase().trim();
+
+    const matches = GAMES_REGISTRY.filter(g => {
+      const gHandle = (g.github || "").toLowerCase().trim();
+      const gAuthor = (g.author || "").toLowerCase().trim();
+      if (handleLower && gHandle === handleLower) return true;
+      if (nameLower && gAuthor === nameLower) return true;
+      if (Array.isArray(itemGames) && itemGames.some(t => t && t.toLowerCase() === (g.title || "").toLowerCase())) return true;
+      return false;
+    });
+
+    const seen = new Set();
+    return matches.filter(g => {
+      if (!g || !g.id || seen.has(g.id)) return false;
+      seen.add(g.id);
+      return true;
+    });
+  }
+
   // Universal In-App Arcade Point System:
   // Completely distinct from the official NSoC 3 / 5 / 10 evaluation labels.
   // - Verified Game: +100 pts per integrated game in 'games/' folder
@@ -646,7 +671,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <strong>${score}</strong> pts
         </div>
         <div class="podium-sub-stat-text" style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.6rem; display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
-          ${item.gamesCount > 0 ? `<span><i data-lucide="gamepad-2" style="width: 0.8rem; height: 0.8rem;"></i> ${item.gamesCount} Game${item.gamesCount === 1 ? '' : 's'}</span> • ` : ''}
+          ${item.gamesCount > 0 ? `<button type="button" class="authored-games-pill" data-action="open-author-drawer" data-handle="${escapeAttr(item.login)}" data-name="${escapeAttr(item.name || item.login)}" style="font-size: 0.72rem; padding: 0.12rem 0.5rem;"><i data-lucide="gamepad-2"></i> ${item.gamesCount} Game${item.gamesCount === 1 ? '' : 's'}</button> • ` : ''}
           <span><i data-lucide="git-commit" style="width: 0.8rem; height: 0.8rem;"></i> ${item.commits} Commit${item.commits === 1 ? '' : 's'}</span>
         </div>
 
@@ -762,6 +787,24 @@ document.addEventListener("DOMContentLoaded", () => {
         rankBadgeHtml = `<span class="rank-tag rank-3"><i data-lucide="medal"></i> #3</span>`;
       }
 
+      const authoredGames = getAuthoredGamesForUser(item.login, item.name, item.games);
+      const verifiedGamesCount = authoredGames.length || item.gamesCount || 0;
+
+      let authoredGamesBadgeHtml = "";
+      if (verifiedGamesCount > 0) {
+        authoredGamesBadgeHtml = `
+          <button type="button" class="authored-games-pill" data-action="open-author-drawer" data-handle="${escapeAttr(item.login)}" data-name="${escapeAttr(item.name || item.login)}" aria-label="View ${verifiedGamesCount} verified games authored by ${escapeAttr(item.name || item.login)}" title="Click to view all ${verifiedGamesCount} verified games built by ${escapeAttr(item.name || item.login)}">
+            <i data-lucide="gamepad-2"></i> ${verifiedGamesCount} Game${verifiedGamesCount === 1 ? '' : 's'}
+          </button>
+        `;
+      } else {
+        authoredGamesBadgeHtml = `
+          <span class="authored-games-pill authored-games-pill-zero" title="Platform & Quality Contributor">
+            <i data-lucide="gamepad-2"></i> 0 Games
+          </span>
+        `;
+      }
+
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${rankBadgeHtml}</td>
@@ -783,7 +826,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <a href="https://github.com/${item.login}" target="_blank" class="github-handle-link">@${highlightMatch(item.login, tableSearchQuery)}</a>
         </td>
         <td style="text-align: center;">
-          <span class="games-count-pill" title="${(item.games || []).join(', ')}"><i data-lucide="gamepad-2"></i> ${item.gamesCount}</span>
+          ${authoredGamesBadgeHtml}
         </td>
         <td style="text-align: center;">
           <span class="files-count-pill" title="Universal Score: ${(item.gamesCount || 0) * 100}p (Games) + ${(item.mechanicsBonus || 0) * 25}p (Mechanics) + ${(item.platformPRs || 0) * 50}p (Feat) + ${(item.qualityPRs || 0) * 25}p (Fix) + ${(item.commits || 0) * 5}p (Commits)"><i data-lucide="git-pull-request"></i> ${getWorkBreakdown(item)}</span>
@@ -1353,6 +1396,124 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && badgeLegendModal && badgeLegendModal.style.display !== "none") {
       closeBadgeLegend();
+    }
+  });
+
+  // --- Authored Games Mini Drawer Controller (#682) ---
+  const authorDrawer = document.getElementById("author-games-drawer");
+  const authorDrawerBackdrop = document.getElementById("author-games-backdrop");
+  const closeAuthorDrawerBtn = document.getElementById("close-author-drawer-btn");
+  const authorDrawerBody = document.getElementById("author-games-body");
+  const authorDrawerTitle = document.getElementById("author-drawer-title");
+  const authorDrawerSubtitle = document.getElementById("author-drawer-subtitle");
+  let lastFocusedElement = null;
+
+  function openAuthorGamesDrawer(handle, name) {
+    if (!authorDrawer || !authorDrawerBody) return;
+    lastFocusedElement = document.activeElement;
+
+    const games = getAuthoredGamesForUser(handle, name);
+    const displayName = name || handle || "Contributor";
+
+    if (authorDrawerTitle) {
+      authorDrawerTitle.textContent = `${displayName}'s Games Library`;
+    }
+    if (authorDrawerSubtitle) {
+      authorDrawerSubtitle.textContent = `${games.length} Verified Game${games.length === 1 ? '' : 's'} built for ArcadeVerse`;
+    }
+
+    if (games.length === 0) {
+      authorDrawerBody.innerHTML = `
+        <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+          <i data-lucide="gamepad-2" style="width: 36px; height: 36px; opacity: 0.4; margin-bottom: 0.75rem;"></i>
+          <p style="margin: 0; font-size: 0.95rem; color: var(--text-secondary);">No active games currently registered for @${escapeHTML(handle)}.</p>
+        </div>
+      `;
+    } else {
+      authorDrawerBody.innerHTML = games.map(g => {
+        const gameTitle = escapeHTML(g.title);
+        const gameCat = escapeHTML(g.category || "Arcade");
+        const gameDesc = escapeHTML(g.description || "Exciting community arcade game.");
+        const iconName = escapeHTML(g.lucideIcon || "gamepad-2");
+        const ratingScore = g.stars ? (g.stars / 10).toFixed(1) : "5.0";
+        const difficulty = escapeHTML(g.difficulty || "");
+        const tags = Array.isArray(g.tags) ? g.tags.slice(0, 3) : [];
+        const playUrl = `index.html?game=${encodeURIComponent(g.id)}`;
+
+        return `
+          <div class="author-game-card">
+            <div class="author-game-card-top">
+              <div class="author-game-card-thumb">
+                <i data-lucide="${iconName}"></i>
+              </div>
+              <div class="author-game-card-meta">
+                <h3 class="author-game-title">${gameTitle}</h3>
+                <div class="author-game-badges">
+                  <span class="author-game-cat-tag">${gameCat}</span>
+                  <span class="author-game-rating-tag"><i data-lucide="star"></i> ${ratingScore}</span>
+                  ${difficulty ? `<span class="author-game-cat-tag" style="background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.3); color: #c084fc;">${difficulty}</span>` : ""}
+                </div>
+              </div>
+            </div>
+            <p class="author-game-desc">${gameDesc}</p>
+            <div class="author-game-card-actions">
+              <div class="author-game-tags">
+                ${tags.map(t => `<span class="author-game-tag">#${escapeHTML(t)}</span>`).join("")}
+              </div>
+              <a href="${playUrl}" class="btn-play-game-drawer" title="Launch ${gameTitle} in ArcadeVerse">
+                <i data-lucide="play"></i> <span>Play Now</span>
+              </a>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    authorDrawer.style.display = "flex";
+    authorDrawer.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+
+    if (closeAuthorDrawerBtn) {
+      closeAuthorDrawerBtn.focus();
+    }
+  }
+
+  function closeAuthorGamesDrawer() {
+    if (!authorDrawer) return;
+    authorDrawer.style.display = "none";
+    authorDrawer.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+
+    if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
+      lastFocusedElement.focus();
+    }
+  }
+
+  if (closeAuthorDrawerBtn) {
+    closeAuthorDrawerBtn.addEventListener("click", closeAuthorGamesDrawer);
+  }
+
+  if (authorDrawerBackdrop) {
+    authorDrawerBackdrop.addEventListener("click", closeAuthorGamesDrawer);
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && authorDrawer && authorDrawer.style.display !== "none") {
+      closeAuthorGamesDrawer();
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    const trigger = e.target.closest("[data-action='open-author-drawer']");
+    if (trigger) {
+      e.preventDefault();
+      const handle = trigger.getAttribute("data-handle");
+      const name = trigger.getAttribute("data-name");
+      openAuthorGamesDrawer(handle, name);
     }
   });
 
