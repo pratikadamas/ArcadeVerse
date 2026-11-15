@@ -4580,6 +4580,93 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ========================================================
+  // PLAYER PROFILE BATCH EXPORT & IMPORT SUBSYSTEM (#584)
+  // Generates and validates .arcadeverse profile bundle
+  // ========================================================
+  function exportPlayerProfile() {
+    try {
+      const profile = {
+        app: "ArcadeVerse",
+        version: "2.0.0",
+        exportedAt: new Date().toISOString(),
+        favorites: Array.from(getFavorites()),
+        theme: localStorage.getItem("arcadeverse_theme") || "dark",
+        audioSettings: JSON.parse(localStorage.getItem("arcadeverse_audio_settings") || "{}"),
+        highScores: {},
+        playlists: JSON.parse(localStorage.getItem("arcadeverse_playlists_v1") || "[]")
+      };
+
+      // Collect all local scores
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && (k.startsWith("av_") || k.startsWith("arcadeverse_")) && k.includes("score")) {
+          profile.highScores[k] = localStorage.getItem(k);
+        }
+      }
+
+      const json = JSON.stringify(profile, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `player_profile_${Date.now()}.arcadeverse`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      announceToScreenReader("Player profile exported successfully.");
+    } catch (err) {
+      console.error("[ProfileExport] Failed:", err);
+    }
+  }
+
+  function importPlayerProfile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!data || data.app !== "ArcadeVerse") {
+          alert("Invalid .arcadeverse profile file format.");
+          return;
+        }
+
+        // Restore favorites
+        if (Array.isArray(data.favorites)) {
+          localStorage.setItem("av_favorites", JSON.stringify(data.favorites));
+        }
+        // Restore theme
+        if (typeof data.theme === "string") {
+          localStorage.setItem("arcadeverse_theme", data.theme);
+        }
+        // Restore audio settings
+        if (data.audioSettings && typeof data.audioSettings === "object") {
+          localStorage.setItem("arcadeverse_audio_settings", JSON.stringify(data.audioSettings));
+        }
+        // Restore playlists
+        if (Array.isArray(data.playlists)) {
+          localStorage.setItem("arcadeverse_playlists_v1", JSON.stringify(data.playlists));
+        }
+        // Restore scores
+        if (data.highScores && typeof data.highScores === "object") {
+          for (const [k, v] of Object.entries(data.highScores)) {
+            localStorage.setItem(k, String(v));
+          }
+        }
+
+        announceToScreenReader("Player profile imported successfully. Refreshing...");
+        setTimeout(() => window.location.reload(), 400);
+      } catch (err) {
+        alert("Failed to parse .arcadeverse file: " + err.message);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  window.exportPlayerProfile = exportPlayerProfile;
+  window.importPlayerProfile = importPlayerProfile;
+
   // Universal Virtual Touch Controller Loader (#517)
   if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
     if (!document.querySelector('script[src*="virtual-controller.js"]')) {
