@@ -13,105 +13,84 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const GAMES_DIR = path.join(ROOT_DIR, 'games');
 const REGISTRY_FILE = path.join(ROOT_DIR, 'assets', 'js', 'games-registry.js');
 
-// Known display name & email aliases to ensure 100% accurate attribution
-const KNOWN_PROFILES = {
-  debasmitabose0: {
-    name: "Debasmita Bose",
-    github: "DebasmitaBose0",
-    role: "Project Admin & Lead (NSOC '26)",
-    mechanicsBonus: 2,
-    platformPRs: 2,
-    qualityPRs: 0
-  },
-  babin123456: {
-    name: "Babin Bid",
-    github: "Babin123456",
-    role: "Arcade Developer (NSOC '26)",
-    mechanicsBonus: 2,
-    platformPRs: 29,
-    qualityPRs: 1
-  },
-  mistu7debnath: {
-    name: "Manisha Debnath",
-    github: "mistu7debnath",
-    role: "Contributor (NSOC '26)",
-    mechanicsBonus: 1,
-    platformPRs: 0,
-    qualityPRs: 0
-  },
-  joitapaul: {
-    name: "Joita Paul",
-    github: "joitapaul",
-    role: "Active Contributor (NSOC '26)",
-    mechanicsBonus: 0,
-    platformPRs: 0,
-    qualityPRs: 1
-  },
-  hrshjswniii: {
-    name: "Harsh Jaiswani",
-    github: "hrshjswniii",
-    role: "Active Contributor (NSOC '26)",
-    mechanicsBonus: 0,
-    platformPRs: 0,
-    qualityPRs: 1
-  },
-  pragna7: {
-    name: "Pragna Seetha",
-    github: "pragna7",
-    role: "Contributor (NSOC '26)",
-    mechanicsBonus: 0,
-    platformPRs: 0,
-    qualityPRs: 0
-  },
-  arshibansal: {
-    name: "Arshi Bansal",
-    github: "ArshiBansal",
-    role: "Puzzle Developer (NSOC '26)",
-    mechanicsBonus: 0,
-    platformPRs: 0,
-    qualityPRs: 0
-  },
-  anshuu2004: {
-    name: "Abhishek",
-    github: "Anshuu2004",
-    role: "Contributor (NSOC '26)",
-    mechanicsBonus: 0,
-    platformPRs: 0,
-    qualityPRs: 0
-  },
-  pratikadamas: {
-    name: "Pratik Giri",
-    github: "pratikadamas",
-    role: "Contributor (NSOC '26)",
-    commits: 17,
-    mechanicsBonus: 0,
-    platformPRs: 1,
-    qualityPRs: 0
-  },
-  "sarbajit-sengupta": {
-    name: "Sarbajit Sengupta",
-    github: "Sarbajit-Sengupta",
-    role: "Contributor (NSOC '26)",
-    mechanicsBonus: 0,
-    platformPRs: 0,
-    qualityPRs: 0
-  }
-};
+const OVERRIDES_FILE = path.join(__dirname, 'contributor-overrides.json');
 
-const EMAIL_MAP = {
-  "dbose272@gmail.com": "debasmitabose0",
-  "144198639+debasmitabose0@users.noreply.github.com": "debasmitabose0",
-  "265290994+babin123456@users.noreply.github.com": "babin123456",
-  "joitapaul61@gmail.com": "joitapaul",
-  "mistu7debnath2021@gmail.com": "mistu7debnath",
-  "harshjeswanitech95722@gmail.com": "hrshjswniii",
-  "seethapragna2005@gmail.com": "pragna7",
-  "arshi900389@gmail.com": "arshibansal",
-  "abhishekcse2004@gmail.com": "anshuu2004",
-  "pratikgiri585@gmail.com": "pratikadamas",
-  "sarbajitsengupta1712@gmail.com": "sarbajit-sengupta",
-  "73594751+sarbajit-sengupta@users.noreply.github.com": "sarbajit-sengupta"
-};
+/**
+ * Validates and loads contributor overrides from external JSON configuration
+ * Enforces strict schema sanity checks to prevent malformed profile injections
+ */
+function loadContributorOverrides(filePath = OVERRIDES_FILE) {
+  if (!fs.existsSync(filePath)) {
+    console.warn(`[Notice] Contributor overrides file not found at ${filePath}. Proceeding with defaults.`);
+    return { profiles: {}, emailMap: {} };
+  }
+
+  try {
+    const raw = fs.readFileSync(filePath, 'utf8');
+    const data = JSON.parse(raw);
+
+    if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+      throw new Error('Contributor overrides root payload must be an object.');
+    }
+
+    if (data.version && typeof data.version !== 'string') {
+      throw new Error('Schema version must be a valid string.');
+    }
+
+    const profiles = (data.profiles && typeof data.profiles === 'object' && !Array.isArray(data.profiles))
+      ? data.profiles
+      : (!data.version && !data.profiles)
+        ? data
+        : {};
+
+    for (const [key, profile] of Object.entries(profiles)) {
+      if (typeof profile !== 'object' || profile === null || Array.isArray(profile)) {
+        throw new Error(`Profile override for "${key}" must be an object.`);
+      }
+      if (profile.name !== undefined && typeof profile.name !== 'string') {
+        throw new Error(`Profile "${key}".name must be a string.`);
+      }
+      if (profile.github !== undefined && typeof profile.github !== 'string') {
+        throw new Error(`Profile "${key}".github must be a string.`);
+      }
+      if (profile.role !== undefined && typeof profile.role !== 'string') {
+        throw new Error(`Profile "${key}".role must be a string.`);
+      }
+      if (profile.commits !== undefined && typeof profile.commits !== 'number') {
+        throw new Error(`Profile "${key}".commits must be a number.`);
+      }
+      if (profile.mechanicsBonus !== undefined && typeof profile.mechanicsBonus !== 'number') {
+        throw new Error(`Profile "${key}".mechanicsBonus must be a number.`);
+      }
+      if (profile.platformPRs !== undefined && typeof profile.platformPRs !== 'number') {
+        throw new Error(`Profile "${key}".platformPRs must be a number.`);
+      }
+      if (profile.qualityPRs !== undefined && typeof profile.qualityPRs !== 'number') {
+        throw new Error(`Profile "${key}".qualityPRs must be a number.`);
+      }
+      if (profile.bonusPts !== undefined && typeof profile.bonusPts !== 'number') {
+        throw new Error(`Profile "${key}".bonusPts must be a number.`);
+      }
+    }
+
+    const emailMap = (data.emailMap && typeof data.emailMap === 'object' && !Array.isArray(data.emailMap))
+      ? data.emailMap
+      : {};
+
+    for (const [email, userKey] of Object.entries(emailMap)) {
+      if (typeof email !== 'string' || typeof userKey !== 'string') {
+        throw new Error(`Email mapping entry for "${email}" must map a string to a string.`);
+      }
+    }
+
+    return { profiles, emailMap };
+  } catch (err) {
+    console.error(`[Error] Failed loading/validating contributor overrides from ${filePath}:`, err.message);
+    process.exit(1);
+  }
+}
+
+const { profiles: KNOWN_PROFILES, emailMap: EMAIL_MAP } = loadContributorOverrides();
 
 function getGitCommitCounts() {
   const commitCounts = new Map();
@@ -176,6 +155,73 @@ function sanitizeIcon(val) {
   return LUCIDE_ICON_WHITELIST.has(clean) ? clean : "gamepad-2";
 }
 
+// Canonical categories allow-list for uniform indexing and frontend filtering (#923)
+const CANONICAL_CATEGORIES = new Set([
+  'Action',
+  'Adventure',
+  'Arcade',
+  'Card',
+  'Casual',
+  'Physics',
+  'Platformer',
+  'Puzzle',
+  'Racing',
+  'Retro',
+  'Rhythm',
+  'Simulation',
+  'Sports',
+  'Strategy'
+]);
+
+const CANONICAL_CATEGORIES_LOWER = new Map(
+  Array.from(CANONICAL_CATEGORIES).map(cat => [cat.toLowerCase(), cat])
+);
+
+// Explicit aliases/compound categories normalization map
+const CATEGORY_ALIASES = {
+  'runner': 'Arcade',
+  'defense': 'Strategy',
+  'horror / escape room': 'Adventure',
+  'survival / horror': 'Adventure'
+};
+
+// Grandfathered legacy collision pair (pre-existing historical duplicate)
+const GRANDFATHERED_TITLE_COLLISIONS = new Set([
+  'cyber-brick-breaker_babin|cyber-brick-breaker_hrshjswniii',
+  'cyber-brick-breaker_hrshjswniii|cyber-brick-breaker_babin'
+]);
+
+function normalizeCategory(rawCategory, folder = '') {
+  const sanitized = sanitizeMetadataString(rawCategory, 'Arcade');
+  const lower = sanitized.toLowerCase();
+
+  // 1. Direct exact canonical match (case-insensitive)
+  if (CANONICAL_CATEGORIES_LOWER.has(lower)) {
+    return CANONICAL_CATEGORIES_LOWER.get(lower);
+  }
+
+  // 2. Known alias / compound mapping
+  if (CATEGORY_ALIASES[lower]) {
+    const canonical = CATEGORY_ALIASES[lower];
+    console.warn(`[Category Normalization] ${folder}: Category alias "${sanitized}" mapped to canonical "${canonical}".`);
+    return canonical;
+  }
+
+  // 3. Slash-separated compound (e.g. "Arcade / Shooter" -> "Arcade", "Puzzle / Logic" -> "Puzzle")
+  if (sanitized.includes('/')) {
+    const primary = sanitized.split('/')[0].trim().toLowerCase();
+    if (CANONICAL_CATEGORIES_LOWER.has(primary)) {
+      const canonical = CANONICAL_CATEGORIES_LOWER.get(primary);
+      console.warn(`[Category Normalization] ${folder}: Compound category "${sanitized}" normalized to canonical "${canonical}".`);
+      return canonical;
+    }
+  }
+
+  // 4. Fallback for unrecognized category
+  console.warn(`[Category Warning] ${folder}: Category "${sanitized}" is not in canonical allow-list. Defaulting to "Arcade".`);
+  return 'Arcade';
+}
+
 function buildRegistry() {
   if (!fs.existsSync(GAMES_DIR)) {
     console.error(`Error: games directory not found at ${GAMES_DIR}`);
@@ -189,6 +235,11 @@ function buildRegistry() {
   const gamesRegistry = [];
   const contributorGames = new Map(); // key: ghLower -> Array of game titles
   const contributorMeta = new Map();  // key: ghLower -> { name, role, originalGithub }
+
+  // Collision tracking for duplicate IDs and normalized titles (#923)
+  const seenIds = new Map();     // key: normalizedId -> folder
+  const seenTitles = new Map();  // key: normalizedTitle -> folder
+  let hasCollisionErrors = false;
 
   for (const folder of gameFolders) {
     const metaFile = path.join(GAMES_DIR, folder, 'game.json');
@@ -207,10 +258,41 @@ function buildRegistry() {
       const ghKey = (meta.github || "").toLowerCase();
       const authorName = (KNOWN_PROFILES[ghKey] && KNOWN_PROFILES[ghKey].name) || meta.author || "Contributor";
 
+      const sanitizedId = sanitizeMetadataString(gameId, folder);
+      const sanitizedTitle = sanitizeMetadataString(meta.title, folder);
+      const normalizedId = sanitizedId.toLowerCase().trim();
+      const normalizedTitle = sanitizedTitle.toLowerCase().trim().replace(/\s+/g, ' ');
+
+      // Collision Check: Duplicate Normalized Game ID
+      if (seenIds.has(normalizedId)) {
+        const conflictingFolder = seenIds.get(normalizedId);
+        console.error(`[Collision Error] Duplicate game ID "${sanitizedId}" detected in folder "${folder}". Already registered by "${conflictingFolder}".`);
+        hasCollisionErrors = true;
+      } else {
+        seenIds.set(normalizedId, folder);
+      }
+
+      // Collision Check: Duplicate Normalized Game Title
+      if (seenTitles.has(normalizedTitle)) {
+        const conflictingFolder = seenTitles.get(normalizedTitle);
+        const pairKey = `${conflictingFolder}|${folder}`;
+        if (GRANDFATHERED_TITLE_COLLISIONS.has(pairKey)) {
+          console.warn(`[Legacy Collision Notice] Grandfathered duplicate title "${sanitizedTitle}" between "${conflictingFolder}" and "${folder}".`);
+        } else {
+          console.error(`[Collision Error] Duplicate game title "${sanitizedTitle}" detected in folder "${folder}". Already registered by "${conflictingFolder}".`);
+          hasCollisionErrors = true;
+        }
+      } else {
+        seenTitles.set(normalizedTitle, folder);
+      }
+
+      // Category Validation & Normalization against canonical allow-list
+      const normalizedCategory = normalizeCategory(meta.category, folder);
+
       const gameObj = {
-        id: sanitizeMetadataString(gameId, folder),
-        title: sanitizeMetadataString(meta.title, folder),
-        category: sanitizeMetadataString(meta.category, "Arcade"),
+        id: sanitizedId,
+        title: sanitizedTitle,
+        category: normalizedCategory,
         lucideIcon: sanitizeIcon(meta.lucideIcon),
         description: sanitizeMetadataString(meta.description, ""),
         author: sanitizeMetadataString(authorName, "Contributor"),
@@ -245,6 +327,11 @@ function buildRegistry() {
     } catch (err) {
       console.error(`[Error] Failed parsing ${metaFile}:`, err.message);
     }
+  }
+
+  if (hasCollisionErrors) {
+    console.error('\n[Fatal Error] Registry compilation aborted due to duplicate game ID or title collisions.');
+    process.exit(1);
   }
 
   // 2. Fetch Git commit counts dynamically
@@ -322,8 +409,23 @@ function buildRegistry() {
 
   const code = `const GAMES_REGISTRY = ${JSON.stringify(gamesRegistry, null, 2)};\n\nconst FEATURES_REGISTRY = ${JSON.stringify(featuresRegistry, null, 2)};\n\nconst CONTRIBUTORS_REGISTRY = ${JSON.stringify(cleanContributors, null, 2)};\n\nif (typeof window !== 'undefined') {\n  window.GAMES_REGISTRY = GAMES_REGISTRY;\n  window.FEATURES_REGISTRY = FEATURES_REGISTRY;\n  window.CONTRIBUTORS_REGISTRY = CONTRIBUTORS_REGISTRY;\n}\n`;
 
+  const isCheckOnly = process.argv.includes('--check');
+  if (isCheckOnly) {
+    console.log(`[Check OK] Registry compilation verified for ${gamesRegistry.length} games and ${cleanContributors.length} contributors.`);
+    return;
+  }
+
   fs.writeFileSync(REGISTRY_FILE, code, 'utf8');
-  console.log(`✅ Successfully compiled ${gamesRegistry.length} games and ${cleanContributors.length} contributors into ${path.relative(ROOT_DIR, REGISTRY_FILE)}`);
+  console.log(`[Success] Compiled ${gamesRegistry.length} games and ${cleanContributors.length} contributors into ${path.relative(ROOT_DIR, REGISTRY_FILE)}`);
 }
 
 buildRegistry();
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    loadContributorOverrides,
+    KNOWN_PROFILES,
+    EMAIL_MAP,
+    buildRegistry
+  };
+}

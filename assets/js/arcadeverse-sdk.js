@@ -465,6 +465,8 @@
       case "ARCADEVERSE_AUDIO_CONFIG":
         if (typeof data.muted === "boolean") currentAudioConfig.muted = data.muted;
         if (typeof data.volume === "number") currentAudioConfig.volume = data.volume;
+        if (typeof data.sfxVolume === "number") currentAudioConfig.sfxVolume = data.sfxVolume;
+        if (typeof data.musicVolume === "number") currentAudioConfig.musicVolume = data.musicVolume;
         applyMasterGainVolume();
         for (var a = 0; a < registeredAudioContexts.length; a++) {
           try {
@@ -1247,6 +1249,70 @@
         dpr: dpr,
         logicalWidth: w,
         logicalHeight: h
+      };
+    },
+
+    // ========================================================
+    // CANVAS MEDIA RECORDER API REPLAY EXPORTER (#658)
+    // 15-second rolling buffer replay recorder & webm clip generator
+    // ========================================================
+    initReplayRecorder: function (canvas, fps) {
+      if (!canvas || typeof canvas.captureStream !== 'function' || typeof MediaRecorder === 'undefined') {
+        return null;
+      }
+
+      var stream = canvas.captureStream(fps || 30);
+      var recordedChunks = [];
+      var recorder = null;
+
+      try {
+        var options = { mimeType: 'video/webm;codecs=vp9' };
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options = { mimeType: 'video/webm' };
+        }
+        recorder = new MediaRecorder(stream, options);
+      } catch (_) {
+        return null;
+      }
+
+      recorder.ondataavailable = function (e) {
+        if (e.data && e.data.size > 0) {
+          recordedChunks.push(e.data);
+          // Keep rolling buffer (~15 chunks at 1s intervals)
+          if (recordedChunks.length > 15) {
+            recordedChunks.shift();
+          }
+        }
+      };
+
+      try {
+        recorder.start(1000);
+      } catch (_) {}
+
+      return {
+        exportClip: function (filename) {
+          if (recordedChunks.length === 0) return null;
+          var blob = new Blob(recordedChunks, { type: 'video/webm' });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = (filename || 'arcadeverse_replay') + '.webm';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function () {
+            URL.revokeObjectURL(url);
+          }, 4000);
+          return url;
+        },
+        stop: function () {
+          try {
+            if (recorder && recorder.state !== 'inactive') {
+              recorder.stop();
+            }
+          } catch (_) {}
+          recordedChunks = [];
+        }
       };
     }
   };

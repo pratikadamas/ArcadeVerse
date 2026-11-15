@@ -205,6 +205,49 @@ document.addEventListener("DOMContentLoaded", () => {
   const CACHE_KEY = "arcadeverse_contributors_cache_v2";
   const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
+  // Strict Contributor JSON Schema Validation & Self-Healing Engine (#582)
+  function validateAndHealContributor(raw) {
+    if (!raw || typeof raw !== "object") return null;
+
+    // Required fields: login / github must be a non-empty string
+    const login = typeof raw.login === "string" && raw.login.trim()
+      ? raw.login.trim()
+      : (typeof raw.github === "string" && raw.github.trim() ? raw.github.trim() : null);
+
+    if (!login) {
+      console.warn("[LeaderboardSchema] Discarded invalid record missing login:", raw);
+      return null;
+    }
+
+    const name = typeof raw.name === "string" && raw.name.trim() ? raw.name.trim() : login;
+    const role = typeof raw.role === "string" && raw.role.trim() ? raw.role.trim() : "Community Contributor";
+    const avatar = typeof raw.avatar_url === "string" && raw.avatar_url.trim()
+      ? raw.avatar_url.trim()
+      : `https://github.com/${login}.png`;
+
+    const commits = Number.isFinite(Number(raw.commits)) && Number(raw.commits) >= 0 ? Math.floor(Number(raw.commits)) : 1;
+    const gamesCount = Number.isFinite(Number(raw.gamesCount)) && Number(raw.gamesCount) >= 0 ? Math.floor(Number(raw.gamesCount)) : 0;
+    const mechanicsBonus = Number.isFinite(Number(raw.mechanicsBonus)) && Number(raw.mechanicsBonus) >= 0 ? Math.floor(Number(raw.mechanicsBonus)) : 0;
+    const platformPRs = Number.isFinite(Number(raw.platformPRs)) && Number(raw.platformPRs) >= 0 ? Math.floor(Number(raw.platformPRs)) : 0;
+    const qualityPRs = Number.isFinite(Number(raw.qualityPRs)) && Number(raw.qualityPRs) >= 0 ? Math.floor(Number(raw.qualityPRs)) : 0;
+    const bonusPts = Number.isFinite(Number(raw.bonusPts)) ? Math.floor(Number(raw.bonusPts)) : 0;
+    const games = Array.isArray(raw.games) ? raw.games : (Array.isArray(raw.contributions) ? raw.contributions : []);
+
+    return {
+      login: login,
+      name: name,
+      role: role,
+      avatar_url: avatar,
+      commits: commits,
+      gamesCount: gamesCount,
+      mechanicsBonus: mechanicsBonus,
+      platformPRs: platformPRs,
+      qualityPRs: qualityPRs,
+      bonusPts: bonusPts,
+      games: games
+    };
+  }
+
   // Initial verified contributors from repository
   let contributorsData = [];
 
@@ -215,12 +258,12 @@ document.addEventListener("DOMContentLoaded", () => {
     contributorsData = CONTRIBUTORS_REGISTRY.map(regUser => {
       let userGames = [];
       if (typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) {
-        userGames = GAMES_REGISTRY.filter(g => g.github && g.github.toLowerCase() === regUser.github.toLowerCase());
+        userGames = GAMES_REGISTRY.filter(g => g && g.github && g.github.toLowerCase() === (regUser.github || "").toLowerCase());
       }
       const gamesCount = userGames.length > 0 ? userGames.length : (regUser.gamesCount || 0);
       const gamesList = userGames.length > 0 ? userGames.map(g => g.title) : (regUser.contributions || []);
 
-      return {
+      const candidate = {
         login: regUser.github,
         name: regUser.name,
         role: regUser.role || "Community Contributor",
@@ -233,7 +276,9 @@ document.addEventListener("DOMContentLoaded", () => {
         bonusPts: regUser.bonusPts || 0,
         games: gamesList
       };
-    });
+
+      return validateAndHealContributor(candidate);
+    }).filter(Boolean);
   }
 
   // Universal In-App Arcade Point System:
@@ -654,6 +699,9 @@ document.addEventListener("DOMContentLoaded", () => {
           <button type="button" class="podium-trophy-btn" data-action="open-trophy-card" data-player="${escapeAttr(item.name || item.login)}" data-handle="${escapeAttr(item.login)}" data-avatar="${escapeAttr(item.avatar_url || '')}" data-score="${score} PTS" data-game="NSOC 2026 Hall of Fame" data-rank="${escapeAttr(slot.badgeLabel)}" data-badge="NSOC 2026" title="Generate Verified Achievement Certificate">
             <i data-lucide="award"></i> Trophy Certificate
           </button>
+          <button type="button" class="podium-share-btn" data-action="share-standing" data-name="${escapeAttr(item.name)}" data-handle="${escapeAttr(item.login)}" data-rank="${slot.rank}" data-score="${score}" title="Share Contributor Standing">
+            <i data-lucide="share-2"></i> Share Rank
+          </button>
         </div>
       `;
 
@@ -789,7 +837,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <span class="files-count-pill" title="Universal Score: ${(item.gamesCount || 0) * 100}p (Games) + ${(item.mechanicsBonus || 0) * 25}p (Mechanics) + ${(item.platformPRs || 0) * 50}p (Feat) + ${(item.qualityPRs || 0) * 25}p (Fix) + ${(item.commits || 0) * 5}p (Commits)"><i data-lucide="git-pull-request"></i> ${getWorkBreakdown(item)}</span>
         </td>
         <td style="text-align: center;">
-          <span class="commits-count-pill"><i data-lucide="git-commit"></i> ${item.commits}</span>
+          <span class="commits-count-pill contributor-commits-heatmap-btn" data-action="open-heatmap-modal" data-player="${escapeAttr(item.name || item.login)}" data-handle="${escapeAttr(item.login)}" data-commits="${item.commits || 0}" style="cursor: pointer;" title="Click to view Git commit activity heatmap"><i data-lucide="git-commit"></i> ${item.commits}</span>
         </td>
         <td style="text-align: center;">
           <div class="activity-links-group">
@@ -1353,6 +1401,51 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && badgeLegendModal && badgeLegendModal.style.display !== "none") {
       closeBadgeLegend();
+    }
+  });
+
+  // Web Share API & Clipboard One-Click Standings Snippet Generator (#579)
+  function showLeaderboardToast(message) {
+    let toast = document.getElementById("leaderboard-share-toast");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "leaderboard-share-toast";
+      toast.className = "leaderboard-toast";
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add("visible");
+    setTimeout(() => {
+      toast.classList.remove("visible");
+    }, 2800);
+  }
+
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-action='share-standing']");
+    if (!btn) return;
+    const name = btn.getAttribute("data-name") || "Contributor";
+    const handle = btn.getAttribute("data-handle") || "contributor";
+    const rank = btn.getAttribute("data-rank") || "1";
+    const score = btn.getAttribute("data-score") || "0";
+
+    const shareTitle = `ArcadeVerse Hall of Fame - Rank #${rank}`;
+    const shareText = `Check out ${name} (@${handle}) ranked #${rank} on ArcadeVerse with ${score} Arcade Points!`;
+    const shareUrl = window.location.href;
+
+    if (navigator.share) {
+      navigator.share({
+        title: shareTitle,
+        text: shareText,
+        url: shareUrl
+      }).catch(() => {});
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(`${shareText}\n${shareUrl}`).then(() => {
+        showLeaderboardToast("Copied Standings to Clipboard!");
+      }).catch(() => {
+        showLeaderboardToast("Standing details ready to share!");
+      });
+    } else {
+      showLeaderboardToast("Standing details ready to share!");
     }
   });
 

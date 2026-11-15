@@ -99,10 +99,15 @@
 }
 
 .faq-search-input:focus {
-  outline: none;
   border-color: var(--accent-primary);
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
   background: var(--bg-surface-elevated);
+}
+
+.faq-search-input:focus-visible {
+  outline: 2px solid var(--accent-primary, #3b82f6);
+  outline-offset: 2px;
+  border-color: var(--accent-primary, #3b82f6);
 }
 
 .faq-search-icon {
@@ -150,6 +155,11 @@
   color: #ffffff;
   border-color: var(--accent-primary);
   box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+}
+
+.faq-pill:focus-visible {
+  outline: 2px solid var(--accent-primary, #3b82f6);
+  outline-offset: 2px;
 }
 
 .faq-accordion-container {
@@ -443,6 +453,11 @@
   border-left-color: rgba(59, 130, 246, 0.4);
 }
 
+.docs-nav-link:focus-visible {
+  outline: 2px solid var(--accent-primary, #3b82f6);
+  outline-offset: 2px;
+}
+
 .docs-nav-link.active {
   background: rgba(59, 130, 246, 0.12);
   color: var(--accent-primary);
@@ -610,6 +625,11 @@
   background: rgba(255, 255, 255, 0.06);
   color: var(--text-primary);
   border-color: var(--border-medium);
+}
+
+.btn-copy-code:focus-visible {
+  outline: 2px solid var(--accent-primary, #3b82f6);
+  outline-offset: 2px;
 }
 
 .code-pre {
@@ -1204,13 +1224,18 @@ h3:hover .docs-heading-anchor {
   border: 1px solid var(--border-medium);
   border-radius: 9999px;
   color: var(--text-primary);
-  outline: none;
   transition: all 0.2s ease;
 }
 
 .docs-sidebar-search input:focus {
   border-color: var(--accent-primary);
   box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
+}
+
+.docs-sidebar-search input:focus-visible {
+  outline: 2px solid var(--accent-primary, #3b82f6);
+  outline-offset: 2px;
+  border-color: var(--accent-primary, #3b82f6);
 }
 
 .docs-sidebar-search i,
@@ -1513,7 +1538,6 @@ body.docs-viewport-body {
   font-size: 0.82rem;
   font-weight: 600;
   padding: 0.35rem 0.65rem;
-  outline: none;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -1521,6 +1545,12 @@ body.docs-viewport-body {
 .page-size-select:focus {
   border-color: var(--accent-primary, #3b82f6);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+.page-size-select:focus-visible {
+  outline: 2px solid var(--accent-primary, #3b82f6);
+  outline-offset: 2px;
+  border-color: var(--accent-primary, #3b82f6);
 }
 
 .pagination-nav {
@@ -1559,6 +1589,11 @@ body.docs-viewport-body {
   color: #fff;
 }
 
+.pagination-btn:focus-visible {
+  outline: 2px solid var(--accent-primary, #3b82f6);
+  outline-offset: 2px;
+}
+
 .pagination-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -1592,6 +1627,11 @@ body.docs-viewport-body {
   background: rgba(59, 130, 246, 0.15);
   border-color: var(--accent-primary, #3b82f6);
   color: #fff;
+}
+
+.pagination-page-btn:focus-visible {
+  outline: 2px solid var(--accent-primary, #3b82f6);
+  outline-offset: 2px;
 }
 
 .pagination-page-btn.active {
@@ -1653,4 +1693,109 @@ body.docs-viewport-body {
     justify-content: center;
     width: 100%;
   }
+}
+
+/* ==========================================================================
+   ACCESSIBILITY: PREFERS-REDUCED-MOTION SUPPORT (WCAG 2.1)
+   Disables decorative transitions, transforms, keyframes, and smooth-scroll
+   across subpages (leaderboard.html, docs.html, faqs.html).
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  html,
+  body,
+  .docs-content-pane,
+  .docs-sidebar,
+  .faq-accordion-content,
+  .leaderboard-table-container {
+    scroll-behavior: auto !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .faq-search-input,
+  .faq-pill,
+  .faq-pill:hover,
+  .faq-accordion-item,
+  .faq-accordion-item:hover,
+  .faq-chevron,
+  .faq-accordion-item.open .faq-chevron,
+  .faq-accordion-content,
+  .faq-accordion-inner,
+  .podium-card,
+  .podium-card:hover,
+  .leaderboard-row,
+  .leaderboard-row:hover,
+  .docs-nav-link,
+  .docs-nav-link:hover,
+  .docs-heading-anchor,
+  .docs-section-title:hover .docs-heading-anchor,
+  .docs-feature-card,
+  .docs-feature-card:hover,
+  .docs-card-icon,
+  .docs-card-icon:hover,
+  .docs-sidebar-search input,
+  .btn-copy-code,
+  .btn-copy-code:hover,
+  .pagination-btn,
+  .pagination-btn:hover,
+  .pagination-page-btn,
+  .pagination-page-btn:hover,
+  .page-size-select,
+  .admin-spotlight-card,
+  .stat-card {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+html.a11y-reduced-motion {
+  scroll-behavior: auto !important;
+}
+
+html.a11y-reduced-motion .docs-content-pane,
+html.a11y-reduced-motion .docs-sidebar,
+html.a11y-reduced-motion .faq-accordion-content,
+html.a11y-reduced-motion .leaderboard-table-container {
+  scroll-behavior: auto !important;
+}
+
+html.a11y-reduced-motion .faq-search-input,
+html.a11y-reduced-motion .faq-pill,
+html.a11y-reduced-motion .faq-pill:hover,
+html.a11y-reduced-motion .faq-accordion-item,
+html.a11y-reduced-motion .faq-accordion-item:hover,
+html.a11y-reduced-motion .faq-chevron,
+html.a11y-reduced-motion .faq-accordion-item.open .faq-chevron,
+html.a11y-reduced-motion .faq-accordion-content,
+html.a11y-reduced-motion .faq-accordion-inner,
+html.a11y-reduced-motion .podium-card,
+html.a11y-reduced-motion .podium-card:hover,
+html.a11y-reduced-motion .leaderboard-row,
+html.a11y-reduced-motion .leaderboard-row:hover,
+html.a11y-reduced-motion .docs-nav-link,
+html.a11y-reduced-motion .docs-nav-link:hover,
+html.a11y-reduced-motion .docs-heading-anchor,
+html.a11y-reduced-motion .docs-section-title:hover .docs-heading-anchor,
+html.a11y-reduced-motion .docs-feature-card,
+html.a11y-reduced-motion .docs-feature-card:hover,
+html.a11y-reduced-motion .docs-card-icon,
+html.a11y-reduced-motion .docs-card-icon:hover,
+html.a11y-reduced-motion .docs-sidebar-search input,
+html.a11y-reduced-motion .btn-copy-code,
+html.a11y-reduced-motion .btn-copy-code:hover,
+html.a11y-reduced-motion .pagination-btn,
+html.a11y-reduced-motion .pagination-btn:hover,
+html.a11y-reduced-motion .pagination-page-btn,
+html.a11y-reduced-motion .pagination-page-btn:hover,
+html.a11y-reduced-motion .page-size-select,
+html.a11y-reduced-motion .admin-spotlight-card,
+html.a11y-reduced-motion .stat-card {
+  transition: none !important;
+  transform: none !important;
 }
