@@ -55,6 +55,30 @@
   --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Minimalist Monochrome 'Obsidian Synth' Theme (#665) */
+:root[data-theme="obsidian"],
+[data-theme="obsidian"] {
+  --bg-main: #000000;
+  --bg-surface: #09090b;
+  --bg-surface-elevated: #141417;
+  --bg-card: rgba(18, 18, 22, 0.85);
+  --bg-card-hover: rgba(28, 28, 34, 0.95);
+  --border-subtle: rgba(255, 255, 255, 0.12);
+  --border-medium: #27272a;
+  --border-focus: #fafafa;
+  --accent-primary: #ffffff;
+  --accent-primary-hover: #e4e4e7;
+  --accent-secondary: #a1a1aa;
+  --accent-warm: #d4d4d8;
+  --accent-emerald: #ffffff;
+  --accent-rose: #f43f5e;
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --bg-gradient: radial-gradient(circle at 50% -10%, #18181b 0%, #000000 70%);
+  --dot-pattern-color: rgba(255, 255, 255, 0.04);
+}
+
 /* ===================================================
    WARM CREAM LIGHT MODE (STUDIO QUALITY, ACCESSIBLE)
    =================================================== */
@@ -9499,6 +9523,72 @@ canvas.game-canvas {
   transform: scale(1.05);
 }
 
+.playlist-delete-confirm-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.45rem 0.65rem;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: var(--radius-sm, 6px);
+  margin-top: 0.4rem;
+}
+
+.playlist-delete-prompt {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #fca5a5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 170px;
+}
+
+.playlist-delete-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.playlist-delete-confirm-box .btn-confirm-delete {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.65rem;
+  background: #ef4444;
+  border: 1px solid #dc2626;
+  color: #ffffff;
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.playlist-delete-confirm-box .btn-confirm-delete:hover {
+  background: #dc2626;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+.playlist-delete-confirm-box .btn-cancel-delete {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.3rem 0.65rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text-primary, #ffffff);
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.playlist-delete-confirm-box .btn-cancel-delete:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
 .playlist-empty-state {
   text-align: center;
   padding: 3rem 1.5rem;
@@ -9601,6 +9691,25 @@ canvas.game-canvas {
 [data-theme="light"] .playlist-actions-row .btn-export-pl:hover {
   background: #2563eb;
   color: #fff;
+}
+
+[data-theme="light"] .playlist-delete-confirm-box {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+[data-theme="light"] .playlist-delete-prompt {
+  color: #b91c1c;
+}
+
+[data-theme="light"] .playlist-delete-confirm-box .btn-cancel-delete {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+[data-theme="light"] .playlist-delete-confirm-box .btn-cancel-delete:hover {
+  background: #e2e8f0;
 }
 
 .playlist-share-status {

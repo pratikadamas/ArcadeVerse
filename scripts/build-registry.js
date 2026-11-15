@@ -13,105 +13,84 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const GAMES_DIR = path.join(ROOT_DIR, 'games');
 const REGISTRY_FILE = path.join(ROOT_DIR, 'assets', 'js', 'games-registry.js');
 
-// Known display name & email aliases to ensure 100% accurate attribution
-const KNOWN_PROFILES = {
-  debasmitabose0: {
-    name: "Debasmita Bose",
-    github: "DebasmitaBose0",
-    role: "Project Admin & Lead (NSOC '26)",
-    mechanicsBonus: 2,
-    platformPRs: 2,
-    qualityPRs: 0
-  },
-  babin123456: {
-    name: "Babin Bid",
-    github: "Babin123456",
-    role: "Arcade Developer (NSOC '26)",
-    mechanicsBonus: 2,
-    platformPRs: 29,
-    qualityPRs: 1
-  },
-  mistu7debnath: {
-    name: "Manisha Debnath",
-    github: "mistu7debnath",
-    role: "Contributor (NSOC '26)",
-    mechanicsBonus: 1,
-    platformPRs: 0,
-    qualityPRs: 0
-  },
-  joitapaul: {
-    name: "Joita Paul",
-    github: "joitapaul",
-    role: "Active Contributor (NSOC '26)",
-    mechanicsBonus: 0,
-    platformPRs: 0,
-    qualityPRs: 1
-  },
-  hrshjswniii: {
-    name: "Harsh Jaiswani",
-    github: "hrshjswniii",
-    role: "Active Contributor (NSOC '26)",
-    mechanicsBonus: 0,
-    platformPRs: 0,
-    qualityPRs: 1
-  },
-  pragna7: {
-    name: "Pragna Seetha",
-    github: "pragna7",
-    role: "Contributor (NSOC '26)",
-    mechanicsBonus: 0,
-    platformPRs: 0,
-    qualityPRs: 0
-  },
-  arshibansal: {
-    name: "Arshi Bansal",
-    github: "ArshiBansal",
-    role: "Puzzle Developer (NSOC '26)",
-    mechanicsBonus: 0,
-    platformPRs: 0,
-    qualityPRs: 0
-  },
-  anshuu2004: {
-    name: "Abhishek",
-    github: "Anshuu2004",
-    role: "Contributor (NSOC '26)",
-    mechanicsBonus: 0,
-    platformPRs: 0,
-    qualityPRs: 0
-  },
-  pratikadamas: {
-    name: "Pratik Giri",
-    github: "pratikadamas",
-    role: "Contributor (NSOC '26)",
-    commits: 17,
-    mechanicsBonus: 0,
-    platformPRs: 1,
-    qualityPRs: 0
-  },
-  "sarbajit-sengupta": {
-    name: "Sarbajit Sengupta",
-    github: "Sarbajit-Sengupta",
-    role: "Contributor (NSOC '26)",
-    mechanicsBonus: 0,
-    platformPRs: 0,
-    qualityPRs: 0
-  }
-};
+const OVERRIDES_FILE = path.join(__dirname, 'contributor-overrides.json');
 
-const EMAIL_MAP = {
-  "dbose272@gmail.com": "debasmitabose0",
-  "144198639+debasmitabose0@users.noreply.github.com": "debasmitabose0",
-  "265290994+babin123456@users.noreply.github.com": "babin123456",
-  "joitapaul61@gmail.com": "joitapaul",
-  "mistu7debnath2021@gmail.com": "mistu7debnath",
-  "harshjeswanitech95722@gmail.com": "hrshjswniii",
-  "seethapragna2005@gmail.com": "pragna7",
-  "arshi900389@gmail.com": "arshibansal",
-  "abhishekcse2004@gmail.com": "anshuu2004",
-  "pratikgiri585@gmail.com": "pratikadamas",
-  "sarbajitsengupta1712@gmail.com": "sarbajit-sengupta",
-  "73594751+sarbajit-sengupta@users.noreply.github.com": "sarbajit-sengupta"
-};
+/**
+ * Validates and loads contributor overrides from external JSON configuration
+ * Enforces strict schema sanity checks to prevent malformed profile injections
+ */
+function loadContributorOverrides(filePath = OVERRIDES_FILE) {
+  if (!fs.existsSync(filePath)) {
+    console.warn(`[Notice] Contributor overrides file not found at ${filePath}. Proceeding with defaults.`);
+    return { profiles: {}, emailMap: {} };
+  }
+
+  try {
+    const raw = fs.readFileSync(filePath, 'utf8');
+    const data = JSON.parse(raw);
+
+    if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+      throw new Error('Contributor overrides root payload must be an object.');
+    }
+
+    if (data.version && typeof data.version !== 'string') {
+      throw new Error('Schema version must be a valid string.');
+    }
+
+    const profiles = (data.profiles && typeof data.profiles === 'object' && !Array.isArray(data.profiles))
+      ? data.profiles
+      : (!data.version && !data.profiles)
+        ? data
+        : {};
+
+    for (const [key, profile] of Object.entries(profiles)) {
+      if (typeof profile !== 'object' || profile === null || Array.isArray(profile)) {
+        throw new Error(`Profile override for "${key}" must be an object.`);
+      }
+      if (profile.name !== undefined && typeof profile.name !== 'string') {
+        throw new Error(`Profile "${key}".name must be a string.`);
+      }
+      if (profile.github !== undefined && typeof profile.github !== 'string') {
+        throw new Error(`Profile "${key}".github must be a string.`);
+      }
+      if (profile.role !== undefined && typeof profile.role !== 'string') {
+        throw new Error(`Profile "${key}".role must be a string.`);
+      }
+      if (profile.commits !== undefined && typeof profile.commits !== 'number') {
+        throw new Error(`Profile "${key}".commits must be a number.`);
+      }
+      if (profile.mechanicsBonus !== undefined && typeof profile.mechanicsBonus !== 'number') {
+        throw new Error(`Profile "${key}".mechanicsBonus must be a number.`);
+      }
+      if (profile.platformPRs !== undefined && typeof profile.platformPRs !== 'number') {
+        throw new Error(`Profile "${key}".platformPRs must be a number.`);
+      }
+      if (profile.qualityPRs !== undefined && typeof profile.qualityPRs !== 'number') {
+        throw new Error(`Profile "${key}".qualityPRs must be a number.`);
+      }
+      if (profile.bonusPts !== undefined && typeof profile.bonusPts !== 'number') {
+        throw new Error(`Profile "${key}".bonusPts must be a number.`);
+      }
+    }
+
+    const emailMap = (data.emailMap && typeof data.emailMap === 'object' && !Array.isArray(data.emailMap))
+      ? data.emailMap
+      : {};
+
+    for (const [email, userKey] of Object.entries(emailMap)) {
+      if (typeof email !== 'string' || typeof userKey !== 'string') {
+        throw new Error(`Email mapping entry for "${email}" must map a string to a string.`);
+      }
+    }
+
+    return { profiles, emailMap };
+  } catch (err) {
+    console.error(`[Error] Failed loading/validating contributor overrides from ${filePath}:`, err.message);
+    process.exit(1);
+  }
+}
+
+const { profiles: KNOWN_PROFILES, emailMap: EMAIL_MAP } = loadContributorOverrides();
 
 function getGitCommitCounts() {
   const commitCounts = new Map();
@@ -327,3 +306,12 @@ function buildRegistry() {
 }
 
 buildRegistry();
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    loadContributorOverrides,
+    KNOWN_PROFILES,
+    EMAIL_MAP,
+    buildRegistry
+  };
+}
