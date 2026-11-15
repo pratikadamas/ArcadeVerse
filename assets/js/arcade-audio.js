@@ -323,6 +323,69 @@
       // Hold then smooth release back to original level
       musicGainNode.gain.setValueAtTime(currentVal * factor, now + 0.025 + hold);
       musicGainNode.gain.linearRampToValueAtTime(currentVal, now + 0.025 + hold + ramp);
+    },
+
+    // ========================================================
+    // SOUND EFFECT PRIORITY QUEUING & VOICE STEALER (#571)
+    // Eliminates voice starvation: Critical (Damage, GameOver) > Medium > Low
+    // ========================================================
+    MAX_CONCURRENT_VOICES: 8,
+    _activeVoices: [],
+
+    /**
+     * Allocates a voice slot according to priority rank
+     * @param {string} priority - 'critical', 'medium', or 'low'
+     * @param {AudioNode} [sourceNode] - Optional audio source node for voice stealing
+     * @returns {boolean} Whether the sound is permitted to play
+     */
+    requestVoice: function (priority, sourceNode) {
+      priority = (priority || 'medium').toLowerCase();
+      var priorityRank = { critical: 3, medium: 2, low: 1 }[priority] || 2;
+      var now = Date.now();
+
+      // Clean finished voices
+      this._activeVoices = this._activeVoices.filter(function (v) {
+        return v.expiresAt > now;
+      });
+
+      if (this._activeVoices.length < this.MAX_CONCURRENT_VOICES) {
+        this._activeVoices.push({
+          rank: priorityRank,
+          node: sourceNode,
+          expiresAt: now + 1200
+        });
+        return true;
+      }
+
+      // Voice pool is full: search for lowest priority voice to steal
+      var lowestIndex = -1;
+      var lowestRank = priorityRank;
+
+      for (var i = 0; i < this._activeVoices.length; i++) {
+        if (this._activeVoices[i].rank < lowestRank) {
+          lowestRank = this._activeVoices[i].rank;
+          lowestIndex = i;
+        }
+      }
+
+      if (lowestIndex !== -1) {
+        // Voice stealer drops lowest priority ambient sound to guarantee critical cue
+        var stolen = this._activeVoices.splice(lowestIndex, 1)[0];
+        if (stolen.node && typeof stolen.node.stop === 'function') {
+          try {
+            stolen.node.stop();
+          } catch (_) {}
+        }
+        this._activeVoices.push({
+          rank: priorityRank,
+          node: sourceNode,
+          expiresAt: now + 1200
+        });
+        return true;
+      }
+
+      // If requested voice is lowest priority and no lower voices exist, drop it
+      return priorityRank >= 3;
     }
   };
 
