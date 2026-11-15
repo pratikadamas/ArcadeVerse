@@ -11465,112 +11465,91 @@ html.a11y-reduced-motion .search-clear-btn {
   width: 100%;
 }
 
-/* ===================================================
-   CURATED ARCADE MIXES CAROUSEL (#583)
-   =================================================== */
-
-.curated-mixes-container {
-  margin: 1.5rem 0 2rem 0;
-  width: 100%;
-}
-
-.curated-mixes-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 0.85rem;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.curated-title-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.curated-title {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--text-primary, #f8fafc);
-  letter-spacing: 0.5px;
-}
-
-.curated-subtitle {
-  font-size: 0.82rem;
-  color: var(--text-muted, #94a3b8);
-}
-
-.curated-mixes-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 1rem;
-}
-
-.curated-mix-card {
-  background: var(--bg-card, rgba(22, 27, 40, 0.72));
-  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
-  border-radius: var(--radius-md, 12px);
-  padding: 1.15rem 1.25rem;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.22s ease;
+/* ========================================================
+   IN-MODAL MULTI-CHANNEL AUDIO MIXER POPOVER (#565)
+   Master, SFX, and Background Music Sliders
+   ======================================================== */
+.modal-audio-mixer-wrapper {
   position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.curated-mix-card:hover {
-  background: var(--bg-card-hover, rgba(28, 35, 52, 0.88));
-  border-color: var(--mix-accent);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 16px var(--mix-accent);
-}
-
-.curated-mix-card.active {
-  border-color: var(--mix-accent);
-  background: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 0 0 2px var(--mix-accent), 0 0 20px var(--mix-accent);
-}
-
-.mix-card-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.mix-icon-badge {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  border: 1px solid;
 }
 
-.mix-count {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary, #94a3b8);
-  background: rgba(255, 255, 255, 0.05);
-  padding: 0.2rem 0.5rem;
+.modal-audio-mixer-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 260px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(6, 182, 212, 0.2);
   border-radius: 12px;
+  padding: 14px 16px;
+  z-index: 1000;
+  display: none;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.mix-name {
-  font-size: 1.05rem;
+.modal-audio-mixer-popover.visible {
+  display: flex;
+}
+
+.modal-audio-mixer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+}
+
+.modal-audio-mixer-title {
+  font-size: 0.85rem;
   font-weight: 700;
-  color: var(--text-primary, #f8fafc);
-  margin-bottom: 0.35rem;
+  letter-spacing: 0.04em;
+  color: #f8fafc;
+  text-transform: uppercase;
 }
 
-.mix-desc {
-  font-size: 0.82rem;
-  color: var(--text-muted, #94a3b8);
-  margin: 0;
-  line-height: 1.4;
+.modal-audio-mixer-channel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
+
+.modal-audio-mixer-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.modal-audio-mixer-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #334155;
+  outline: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.modal-audio-mixer-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #06b6d4;
+  box-shadow: 0 0 6px #06b6d4;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.modal-audio-mixer-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
 

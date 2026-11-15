@@ -465,6 +465,8 @@
       case "ARCADEVERSE_AUDIO_CONFIG":
         if (typeof data.muted === "boolean") currentAudioConfig.muted = data.muted;
         if (typeof data.volume === "number") currentAudioConfig.volume = data.volume;
+        if (typeof data.sfxVolume === "number") currentAudioConfig.sfxVolume = data.sfxVolume;
+        if (typeof data.musicVolume === "number") currentAudioConfig.musicVolume = data.musicVolume;
         applyMasterGainVolume();
         for (var a = 0; a < registeredAudioContexts.length; a++) {
           try {

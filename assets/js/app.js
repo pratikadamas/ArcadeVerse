@@ -4199,6 +4199,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initAZJumpBar();
   initURLDeepLinking();
   initControlsLegend();
+  initMultiChannelAudioMixer();
 });
 
   // ========================================================
@@ -4706,5 +4707,165 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  let currentMixFilter = null;
-  injectCuratedMixesCarousel();
+  // ========================================================
+  // IN-MODAL MULTI-CHANNEL AUDIO MIXER ENGINE (#565)
+  // Master, SFX, and Music Sliders broadcasting via postMessage
+  // ========================================================
+  const AvAudioMixer = (function () {
+    const STORAGE_KEY = 'arcadeverse_audio_settings';
+    let settings = { master: 1.0, sfx: 1.0, music: 0.8 };
+
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        settings = Object.assign(settings, JSON.parse(raw));
+      }
+    } catch (_) {}
+
+    function saveSettings() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+      } catch (_) {}
+    }
+
+    function broadcastConfig() {
+      const iframe = document.getElementById('game-iframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+          type: 'ARCADEVERSE_AUDIO_CONFIG',
+          volume: settings.master,
+          sfxVolume: settings.sfx,
+          musicVolume: settings.music
+        }, '*');
+      }
+    }
+
+    function setMaster(val) {
+      settings.master = Math.max(0, Math.min(1, Number(val)));
+      saveSettings();
+      broadcastConfig();
+    }
+
+    function setSfx(val) {
+      settings.sfx = Math.max(0, Math.min(1, Number(val)));
+      saveSettings();
+      broadcastConfig();
+    }
+
+    function setMusic(val) {
+      settings.music = Math.max(0, Math.min(1, Number(val)));
+      saveSettings();
+      broadcastConfig();
+    }
+
+    return {
+      getSettings: () => ({ ...settings }),
+      setMaster,
+      setSfx,
+      setMusic,
+      broadcastConfig
+    };
+  })();
+
+  window.AvAudioMixer = AvAudioMixer;
+
+  function initMultiChannelAudioMixer() {
+    const modalControls = document.querySelector('.modal-controls');
+    const modalSoundBtn = document.getElementById('modal-sound-btn');
+    if (!modalControls || !modalSoundBtn) return;
+
+    // Wrap sound button into mixer wrapper if not already wrapped
+    if (!document.getElementById('modal-audio-mixer-popover')) {
+      const popover = document.createElement('div');
+      popover.id = 'modal-audio-mixer-popover';
+      popover.className = 'modal-audio-mixer-popover';
+      popover.setAttribute('role', 'dialog');
+      popover.setAttribute('aria-label', 'Audio Channel Mixer');
+
+      const s = AvAudioMixer.getSettings();
+      popover.innerHTML = `
+        <div class="modal-audio-mixer-header">
+          <span class="modal-audio-mixer-title">Audio Mixer</span>
+        </div>
+        <div class="modal-audio-mixer-channel">
+          <div class="modal-audio-mixer-label">
+            <span>Master Volume</span>
+            <span id="mixer-master-val">${Math.round(s.master * 100)}%</span>
+          </div>
+          <input type="range" class="modal-audio-mixer-slider" id="mixer-master-slider" min="0" max="100" value="${Math.round(s.master * 100)}">
+        </div>
+        <div class="modal-audio-mixer-channel">
+          <div class="modal-audio-mixer-label">
+            <span>Sound FX</span>
+            <span id="mixer-sfx-val">${Math.round(s.sfx * 100)}%</span>
+          </div>
+          <input type="range" class="modal-audio-mixer-slider" id="mixer-sfx-slider" min="0" max="100" value="${Math.round(s.sfx * 100)}">
+        </div>
+        <div class="modal-audio-mixer-channel">
+          <div class="modal-audio-mixer-label">
+            <span>Music</span>
+            <span id="mixer-music-val">${Math.round(s.music * 100)}%</span>
+          </div>
+          <input type="range" class="modal-audio-mixer-slider" id="mixer-music-slider" min="0" max="100" value="${Math.round(s.music * 100)}">
+        </div>
+      `;
+
+      modalSoundBtn.parentElement.style.position = 'relative';
+      modalSoundBtn.parentElement.appendChild(popover);
+
+      // Context menu or alt-click/hover toggle for mixer popover
+      modalSoundBtn.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        popover.classList.toggle('visible');
+      });
+
+      // Long press or click toggle
+      let clickTimeout = null;
+      modalSoundBtn.addEventListener('mousedown', () => {
+        clickTimeout = setTimeout(() => {
+          popover.classList.toggle('visible');
+        }, 500);
+      });
+      modalSoundBtn.addEventListener('mouseup', () => {
+        if (clickTimeout) clearTimeout(clickTimeout);
+      });
+
+      // Slider event listeners
+      const masterSlider = popover.querySelector('#mixer-master-slider');
+      const masterVal = popover.querySelector('#mixer-master-val');
+      masterSlider.addEventListener('input', (e) => {
+        const v = e.target.value / 100;
+        masterVal.textContent = `${e.target.value}%`;
+        AvAudioMixer.setMaster(v);
+      });
+
+      const sfxSlider = popover.querySelector('#mixer-sfx-slider');
+      const sfxVal = popover.querySelector('#mixer-sfx-val');
+      sfxSlider.addEventListener('input', (e) => {
+        const v = e.target.value / 100;
+        sfxVal.textContent = `${e.target.value}%`;
+        AvAudioMixer.setSfx(v);
+      });
+
+      const musicSlider = popover.querySelector('#mixer-music-slider');
+      const musicVal = popover.querySelector('#mixer-music-val');
+      musicSlider.addEventListener('input', (e) => {
+        const v = e.target.value / 100;
+        musicVal.textContent = `${e.target.value}%`;
+        AvAudioMixer.setMusic(v);
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!popover.contains(e.target) && e.target !== modalSoundBtn && !modalSoundBtn.contains(e.target)) {
+          popover.classList.remove('visible');
+        }
+      });
+    }
+
+    // Broadcast on game ready
+    window.addEventListener('message', (e) => {
+      if (e.data && (e.data.type === 'ARCADEVERSE_READY' || e.data.type === 'ARCADEVERSE_REQUEST_AUDIO_CONFIG')) {
+        AvAudioMixer.broadcastConfig();
+      }
+    });
+  }
