@@ -4580,6 +4580,50 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ========================================================
+  // SPECULATIVE GAME IFRAME PRE-WARMING & IDLE PREFETCH (#663)
+  // Debounced card hover prefetcher with link rel=prefetch
+  // ========================================================
+  function initSpeculativePrefetch() {
+    if (navigator.connection && (navigator.connection.saveData || /(2g)/.test(navigator.connection.effectiveType))) {
+      return; // Respect low-bandwidth / data-saver preferences
+    }
+
+    const prefetchedUrls = new Set();
+    let prefetchTimeout = null;
+
+    function prefetchGame(gameFolder) {
+      if (!gameFolder || prefetchedUrls.has(gameFolder)) return;
+      prefetchedUrls.add(gameFolder);
+
+      const link = document.createElement("link");
+      link.rel = "prefetch";
+      link.href = `games/${encodeURIComponent(gameFolder)}/index.html`;
+      link.as = "document";
+      document.head.appendChild(link);
+    }
+
+    document.addEventListener("pointerover", (e) => {
+      const card = e.target.closest(".game-card");
+      if (!card) return;
+      const gameFolder = card.dataset.folder;
+      if (!gameFolder) return;
+
+      clearTimeout(prefetchTimeout);
+      prefetchTimeout = setTimeout(() => {
+        prefetchGame(gameFolder);
+      }, 120);
+    });
+
+    document.addEventListener("pointerout", (e) => {
+      if (e.target.closest(".game-card")) {
+        clearTimeout(prefetchTimeout);
+      }
+    });
+  }
+
+  initSpeculativePrefetch();
+
   // Universal Virtual Touch Controller Loader (#517)
   if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
     if (!document.querySelector('script[src*="virtual-controller.js"]')) {
