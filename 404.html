@@ -1,17 +1,25 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>404: Signal Lost in Cyberspace | ArcadeVerse</title>
   <meta name="description" content="404 Page Not Found - Looks like your arcade token warped into a corrupted sector.">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300f5ff'><path d='M21 2l-2 2m-1-1l-3 3m2 8A6 6 0 1 1 5 8a6 6 0 0 1 12 6z'/></svg>">
+  
+  <!-- Favicon and Brand Icons -->
+  <link rel="icon" type="image/x-icon" href="assets/public/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/public/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/public/favicon-192x192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/public/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,700&family=Inter:wght@400;500;600;700&family=Press+Start+2P&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/pages.css">
+  <link rel="stylesheet" href="assets/css/a11y-engine.css">
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <style>
@@ -169,22 +177,31 @@
 
     .easter-egg-btn:hover {
       background: rgba(0, 243, 255, 0.1);
-      color: var(--accent-cyan);
-      border-color: var(--accent-cyan);
+      color: var(--accent-cyan, #00f3ff);
+      border-color: var(--accent-cyan, #00f3ff);
+    }
+
+    .easter-egg-btn:focus-visible {
+      outline: 2px solid var(--accent-primary, #3b82f6);
+      outline-offset: 2px;
     }
 
     #easter-egg-canvas {
       display: none;
       margin: 1.5rem auto 0;
-      border: 2px solid var(--accent-cyan);
+      border: 2px solid var(--accent-cyan, #00f3ff);
       border-radius: 8px;
       box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
       background: #080a10;
+      touch-action: none;
+      user-select: none;
+      max-width: 100%;
+      cursor: ew-resize;
     }
 
     [data-theme="light"] .not-found-card {
-      background: rgba(255, 255, 255, 0.9);
-      border-color: rgba(0, 0, 0, 0.1);
+      background: rgba(255, 255, 255, 0.95);
+      border-color: rgba(0, 0, 0, 0.12);
       box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
     }
 
@@ -192,13 +209,31 @@
       color: #0c0e14;
     }
 
+    [data-theme="light"] .not-found-desc {
+      color: #475569;
+    }
+
     [data-theme="light"] .glitch-code {
       color: #0c0e14;
       text-shadow: 0 0 15px rgba(0, 180, 216, 0.4);
     }
+
+    [data-theme="light"] .easter-egg-btn {
+      background: rgba(0, 0, 0, 0.04);
+      border-color: rgba(0, 0, 0, 0.15);
+      color: #334155;
+    }
+
+    [data-theme="light"] .easter-egg-btn:hover {
+      background: rgba(2, 132, 199, 0.1);
+      color: #0284c7;
+      border-color: #0284c7;
+    }
   </style>
 </head>
 <body class="arcadeverse-body">
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
   <!-- Glowing Background Orbs -->
   <div class="glow-orb orb-1"></div>
   <div class="glow-orb orb-2"></div>
@@ -219,6 +254,54 @@
         <a href="faqs.html" class="nav-item"><i data-lucide="help-circle"></i> FAQs</a>
         <a href="https://github.com/DebasmitaBose0/ArcadeVerse/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer" class="nav-item"><i data-lucide="book-open"></i> Contributor Guide</a>
       </nav>
+
+      <div class="nav-actions">
+        <button class="theme-toggle-btn" id="theme-toggle-btn" type="button" aria-label="Toggle dark/light theme" title="Toggle dark/light theme">
+          <span class="theme-icon-wrap"><i data-lucide="sun"></i></span>
+        </button>
+        <a href="https://github.com/DebasmitaBose0/ArcadeVerse" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" title="View repository on GitHub">
+          <span><i data-lucide="star"></i> GitHub</span>
+        </a>
+        <button class="mobile-menu-btn" id="mobile-menu-btn" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="mobile-nav-drawer">
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation Drawer -->
+    <div class="mobile-nav-drawer" id="mobile-nav-drawer" aria-hidden="true">
+      <div class="mobile-nav-content">
+        <a href="index.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon"><i data-lucide="gamepad-2"></i></span>
+          <span>Explore Games</span>
+        </a>
+        <a href="leaderboard.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon"><i data-lucide="trophy"></i></span>
+          <span>Hall of Fame</span>
+        </a>
+        <a href="docs.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon"><i data-lucide="file-code-2"></i></span>
+          <span>Documentation</span>
+        </a>
+        <a href="faqs.html" class="mobile-nav-item">
+          <span class="mobile-nav-icon"><i data-lucide="help-circle"></i></span>
+          <span>FAQs & Answers</span>
+        </a>
+        <a href="https://github.com/DebasmitaBose0/ArcadeVerse/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer" class="mobile-nav-item">
+          <span class="mobile-nav-icon"><i data-lucide="book-open"></i></span>
+          <span>Contributor Guide</span>
+        </a>
+        <div class="mobile-nav-divider"></div>
+        <button class="mobile-nav-item theme-toggle-btn" style="width: 100%; border: none; background: transparent; cursor: pointer; text-align: left; padding: 0.75rem 1rem;">
+          <span class="mobile-nav-icon theme-icon-wrap"><i data-lucide="sun"></i></span>
+          <span>Toggle Dark / Light Theme</span>
+        </button>
+        <a href="https://github.com/DebasmitaBose0/ArcadeVerse" target="_blank" rel="noopener noreferrer" class="mobile-github-btn">
+          <span><i data-lucide="star"></i> Star on GitHub</span>
+        </a>
+      </div>
     </div>
   </header>
 
@@ -250,11 +333,11 @@
         </a>
       </div>
 
-      <button id="toggle-easter-egg" class="easter-egg-btn" type="button">
+      <button id="toggle-easter-egg" class="easter-egg-btn" type="button" aria-expanded="false" aria-controls="easter-egg-canvas">
         <i data-lucide="sparkles"></i> Play Mini Synth Deflector
       </button>
 
-      <canvas id="easter-egg-canvas" width="320" height="180"></canvas>
+      <canvas id="easter-egg-canvas" width="320" height="180" aria-label="Mini Synth Deflector Arcade Game"></canvas>
     </div>
   </main>
 
@@ -274,24 +357,28 @@
           <li><a href="index.html"><i data-lucide="gamepad-2"></i> Play All Games</a></li>
           <li><a href="leaderboard.html"><i data-lucide="trophy"></i> Hall of Fame</a></li>
           <li><a href="docs.html"><i data-lucide="file-code-2"></i> Developer Docs</a></li>
+          <li><a href="faqs.html"><i data-lucide="help-circle"></i> FAQs & Answers</a></li>
         </ul>
       </div>
     </div>
   </footer>
 
+  <!-- Scripts -->
+  <script src="assets/js/navbar.js"></script>
   <script>
     // Initialize Lucide Icons
     if (window.lucide) {
       lucide.createIcons();
     }
 
-    // Synthwave Perspective Grid Canvas Animation
+    // Synthwave Perspective Grid Canvas Animation (Paused on hidden tab)
     (function initSynthwaveGrid() {
       const canvas = document.getElementById("synthwave-grid");
       if (!canvas) return;
       const ctx = canvas.getContext("2d");
       let width, height;
       let offset = 0;
+      let gridRafId = null;
 
       function resize() {
         width = canvas.width = window.innerWidth;
@@ -342,12 +429,26 @@
           }
         }
 
-        requestAnimationFrame(draw);
+        if (!document.hidden) {
+          gridRafId = requestAnimationFrame(draw);
+        }
       }
-      draw();
+
+      gridRafId = requestAnimationFrame(draw);
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+          if (gridRafId) {
+            cancelAnimationFrame(gridRafId);
+            gridRafId = null;
+          }
+        } else if (!gridRafId) {
+          gridRafId = requestAnimationFrame(draw);
+        }
+      });
     })();
 
-    // Mini Easter Egg Canvas Game
+    // Mini Easter Egg Canvas Game (Framerate-independent with dt, touch/pointer controls & lifecycle cleanup)
     (function initMiniGame() {
       const toggleBtn = document.getElementById("toggle-easter-egg");
       const canvas = document.getElementById("easter-egg-canvas");
@@ -355,73 +456,175 @@
       const ctx = canvas.getContext("2d");
 
       let gameActive = false;
-      let paddleX = 130;
+      let animFrameId = null;
+      let lastTime = 0;
+
+      const paddleWidth = 50;
+      const paddleHeight = 8;
+      const paddleY = 165;
+      let paddleX = (320 - paddleWidth) / 2;
+
       let ballX = 160;
-      let ballY = 90;
-      let dx = 2.5;
-      let dy = -2.5;
+      let ballY = 80;
+      const ballRadius = 5;
+
+      const baseSpeed = 160; // Pixels per second
+      let vx = 120;
+      let vy = -120;
       let score = 0;
 
-      toggleBtn.addEventListener("click", () => {
-        gameActive = !gameActive;
-        canvas.style.display = gameActive ? "block" : "none";
-        toggleBtn.innerHTML = gameActive ? '<i data-lucide="x"></i> Close Mini Game' : '<i data-lucide="sparkles"></i> Play Mini Synth Deflector';
-        if (window.lucide) lucide.createIcons();
-        if (gameActive) loop();
-      });
+      function resetBall() {
+        ballX = 160;
+        ballY = 70;
+        const angle = (Math.random() * 0.6 + 0.2) * Math.PI; // Upward angle
+        vx = Math.cos(angle) * baseSpeed;
+        vy = -Math.abs(Math.sin(angle) * baseSpeed);
+      }
 
-      canvas.addEventListener("mousemove", (e) => {
+      function updatePaddle(clientX) {
         const rect = canvas.getBoundingClientRect();
-        paddleX = Math.max(0, Math.min(320 - 50, e.clientX - rect.left - 25));
+        const scaleX = 320 / rect.width;
+        const touchX = (clientX - rect.left) * scaleX;
+        paddleX = Math.max(0, Math.min(320 - paddleWidth, touchX - paddleWidth / 2));
+      }
+
+      // Pointer / Mouse / Touch events for responsive paddle control
+      canvas.addEventListener("pointerdown", (e) => {
+        try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+        updatePaddle(e.clientX);
       });
 
-      function loop() {
-        if (!gameActive) return;
+      canvas.addEventListener("pointermove", (e) => {
+        if (e.buttons > 0 || e.pointerType === "mouse") {
+          updatePaddle(e.clientX);
+        }
+      });
+
+      canvas.addEventListener("touchmove", (e) => {
+        if (e.touches && e.touches[0]) {
+          updatePaddle(e.touches[0].clientX);
+          e.preventDefault();
+        }
+      }, { passive: false });
+
+      function loop(currentTime) {
+        if (!gameActive) {
+          animFrameId = null;
+          return;
+        }
+
+        if (!lastTime) lastTime = currentTime;
+        // Delta time clamped between 1ms and 50ms to prevent tunneling across frame drops
+        const dt = Math.min(0.05, Math.max(0.001, (currentTime - lastTime) / 1000));
+        lastTime = currentTime;
+
+        // Clear canvas
         ctx.fillStyle = "#080a10";
         ctx.fillRect(0, 0, 320, 180);
 
-        // Paddle
+        // Draw Paddle
         ctx.fillStyle = "#00f3ff";
         ctx.shadowColor = "#00f3ff";
         ctx.shadowBlur = 10;
-        ctx.fillRect(paddleX, 165, 50, 8);
+        ctx.fillRect(paddleX, paddleY, paddleWidth, paddleHeight);
 
-        // Ball
+        // Draw Ball
         ctx.fillStyle = "#ff0055";
         ctx.shadowColor = "#ff0055";
         ctx.beginPath();
-        ctx.arc(ballX, ballY, 5, 0, Math.PI * 2);
+        ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
         ctx.fill();
         ctx.shadowBlur = 0;
 
-        // Score
+        // Draw HUD Score
         ctx.fillStyle = "#ffffff";
         ctx.font = "10px monospace";
         ctx.fillText(`Score: ${score}`, 10, 18);
 
-        // Bounce mechanics
-        ballX += dx;
-        ballY += dy;
+        // Update physics with delta-time
+        ballX += vx * dt;
+        ballY += vy * dt;
 
-        if (ballX + 5 > 320 || ballX - 5 < 0) dx = -dx;
-        if (ballY - 5 < 0) dy = -dy;
+        // Left / Right wall bounce
+        if (ballX + ballRadius >= 320) {
+          ballX = 320 - ballRadius;
+          vx = -Math.abs(vx);
+        } else if (ballX - ballRadius <= 0) {
+          ballX = ballRadius;
+          vx = Math.abs(vx);
+        }
+
+        // Top ceiling bounce
+        if (ballY - ballRadius <= 0) {
+          ballY = ballRadius;
+          vy = Math.abs(vy);
+        }
 
         // Paddle collision
-        if (ballY + 5 >= 165 && ballY - 5 <= 173 && ballX >= paddleX && ballX <= paddleX + 50) {
-          dy = -Math.abs(dy);
+        if (
+          ballY + ballRadius >= paddleY &&
+          ballY - ballRadius <= paddleY + paddleHeight &&
+          ballX >= paddleX - 2 &&
+          ballX <= paddleX + paddleWidth + 2 &&
+          vy > 0
+        ) {
+          ballY = paddleY - ballRadius;
+          // Deflection angle based on point of contact on paddle
+          const hitOffset = (ballX - (paddleX + paddleWidth / 2)) / (paddleWidth / 2);
+          const currentSpeed = Math.min(260, baseSpeed + score * 3);
+          vx = hitOffset * currentSpeed * 0.9;
+          vy = -Math.sqrt(Math.max(2500, currentSpeed * currentSpeed - vx * vx));
           score += 10;
         }
 
-        // Missed
-        if (ballY > 180) {
-          ballX = 160;
-          ballY = 80;
-          dy = -2.5;
+        // Bottom boundary missed
+        if (ballY - ballRadius > 180) {
           score = 0;
+          resetBall();
         }
 
-        requestAnimationFrame(loop);
+        animFrameId = requestAnimationFrame(loop);
       }
+
+      function startLoop() {
+        if (animFrameId) cancelAnimationFrame(animFrameId);
+        lastTime = performance.now();
+        animFrameId = requestAnimationFrame(loop);
+      }
+
+      function stopLoop() {
+        if (animFrameId) {
+          cancelAnimationFrame(animFrameId);
+          animFrameId = null;
+        }
+      }
+
+      toggleBtn.addEventListener("click", () => {
+        gameActive = !gameActive;
+        canvas.style.display = gameActive ? "block" : "none";
+        toggleBtn.setAttribute("aria-expanded", String(gameActive));
+        toggleBtn.innerHTML = gameActive
+          ? '<i data-lucide="x"></i> Close Mini Game'
+          : '<i data-lucide="sparkles"></i> Play Mini Synth Deflector';
+        if (window.lucide) lucide.createIcons();
+
+        if (gameActive) {
+          score = 0;
+          resetBall();
+          startLoop();
+        } else {
+          stopLoop();
+        }
+      });
+
+      // Pause when switching tabs / backgrounded to conserve CPU and avoid drift
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+          stopLoop();
+        } else if (gameActive) {
+          startLoop();
+        }
+      });
     })();
   </script>
 </body>
