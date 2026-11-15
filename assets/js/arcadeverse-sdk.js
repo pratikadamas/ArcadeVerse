@@ -1314,6 +1314,46 @@
           recordedChunks = [];
         }
       };
+    },
+
+    // ========================================================
+    // DYNAMIC PERFORMANCE PROFILER & PARTICLE THROTTLER (#559)
+    // Low-end hardware protection & battery-saver particle reducer
+    // ========================================================
+    _isLowPerfMode: false,
+    _perfListeners: [],
+
+    isLowPerfMode: function () {
+      return this._isLowPerfMode;
+    },
+
+    onPerformanceModeChange: function (callback) {
+      if (typeof callback === 'function') {
+        this._perfListeners.push(callback);
+      }
+    },
+
+    setLowPerfMode: function (enabled) {
+      this._isLowPerfMode = !!enabled;
+      for (var i = 0; i < this._perfListeners.length; i++) {
+        try {
+          this._perfListeners[i](this._isLowPerfMode);
+        } catch (_) {}
+      }
+    },
+
+    getParticleMultiplier: function () {
+      return this._isLowPerfMode ? 0.5 : 1.0;
     }
   };
+
+  // Listen for parent hub AV_LOW_PERF_MODE broadcasts
+  if (typeof window !== 'undefined') {
+    window.addEventListener('message', function (e) {
+      if (e.data && e.data.type === 'AV_LOW_PERF_MODE') {
+        var enabled = !!e.data.enabled;
+        ArcadeVerse.setLowPerfMode(enabled);
+      }
+    });
+  }
 });
