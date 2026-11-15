@@ -4200,6 +4200,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initURLDeepLinking();
   initControlsLegend();
   initMultiChannelAudioMixer();
+  initBackgroundTabAudioSilencer();
 });
 
   // ========================================================
@@ -4708,6 +4709,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ========================================================
+<<<<<<< HEAD
   // IN-MODAL MULTI-CHANNEL AUDIO MIXER ENGINE (#565)
   // Master, SFX, and Music Sliders broadcasting via postMessage
   // ========================================================
@@ -4866,6 +4868,51 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener('message', (e) => {
       if (e.data && (e.data.type === 'ARCADEVERSE_READY' || e.data.type === 'ARCADEVERSE_REQUEST_AUDIO_CONFIG')) {
         AvAudioMixer.broadcastConfig();
+      }
+    });
+  }
+
+  // ========================================================
+  // DOCUMENT VISIBILITYSTATE BACKGROUND TAB AUDIO SILENCER (#568)
+  // Automatically pauses active game audio when switching tabs & resumes smoothly
+  // ========================================================
+  function initBackgroundTabAudioSilencer() {
+    let wasMutedBeforeHidden = false;
+
+    document.addEventListener('visibilitychange', () => {
+      const gameIframe = document.getElementById('game-iframe');
+      if (!gameIframe || !gameIframe.contentWindow) return;
+
+      if (document.hidden) {
+        // Tab hidden: inform child game to pause AudioContext and suspend sound
+        try {
+          gameIframe.contentWindow.postMessage({ type: 'ARCADEVERSE_PAUSE' }, '*');
+          gameIframe.contentWindow.postMessage({
+            type: 'ARCADEVERSE_AUDIO_CONFIG',
+            muted: true,
+            isBackgroundSuspended: true
+          }, '*');
+        } catch (_) {}
+
+        // Suspend SoundEngine master audio if active in hub
+        if (window.SoundEngine && typeof window.SoundEngine.suspend === 'function') {
+          window.SoundEngine.suspend();
+        }
+      } else {
+        // Tab restored to foreground: resume sound
+        const storedMuted = localStorage.getItem('arcadeverse_muted') === 'true';
+        try {
+          gameIframe.contentWindow.postMessage({ type: 'ARCADEVERSE_RESUME' }, '*');
+          gameIframe.contentWindow.postMessage({
+            type: 'ARCADEVERSE_AUDIO_CONFIG',
+            muted: storedMuted,
+            isBackgroundSuspended: false
+          }, '*');
+        } catch (_) {}
+
+        if (window.SoundEngine && typeof window.SoundEngine.resume === 'function') {
+          window.SoundEngine.resume();
+        }
       }
     });
   }
