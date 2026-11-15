@@ -2022,6 +2022,9 @@ document.addEventListener("DOMContentLoaded", () => {
     lastAnnouncedScore = 0;
     lastScoreAnnouncementTime = Date.now();
     announceToScreenReader(`Launching ${game.title}. Category: ${game.category}. Built by ${game.author}.`);
+    if (window.ArcadeAnnouncer && typeof window.ArcadeAnnouncer.announce === "function") {
+      window.ArcadeAnnouncer.announce("Ready Player One");
+    }
     startIframeTimeout(game);
 
     // Storage Isolation Bridge: Pass gameId via URL parameter so SDK attaches namespaced proxy (#493, #824)
@@ -2584,6 +2587,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (typeof announceToScreenReader === "function") {
         announceToScreenReader(`Game over. Final score: ${finalScore}.`);
       }
+
+      // Retro Robotic Voice Announcer (#566)
+      if (window.ArcadeAnnouncer && typeof window.ArcadeAnnouncer.announce === "function") {
+        window.ArcadeAnnouncer.announce("Game Over. Final score: " + finalScore);
+      }
+
       window.dispatchEvent(
         new CustomEvent("arcadeverse:game-over", {
           detail: {
@@ -4707,6 +4716,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+<<<<<<< HEAD
   // ========================================================
   // IN-MODAL MULTI-CHANNEL AUDIO MIXER ENGINE (#565)
   // Master, SFX, and Music Sliders broadcasting via postMessage
@@ -4868,4 +4878,13 @@ document.addEventListener("DOMContentLoaded", () => {
         AvAudioMixer.broadcastConfig();
       }
     });
+  }
+
+  // Retro Robotic Voice Announcer Script Loader (#566)
+  if (typeof window !== 'undefined' && !window.ArcadeAnnouncer) {
+    if (!document.querySelector('script[src*="arcade-announcer.js"]')) {
+      const annScript = document.createElement('script');
+      annScript.src = 'assets/js/arcade-announcer.js';
+      document.body.appendChild(annScript);
+    }
   }
