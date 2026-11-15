@@ -11466,64 +11466,111 @@ html.a11y-reduced-motion .search-clear-btn {
 }
 
 /* ===================================================
-   ACHIEVEMENTS SYSTEM & UNLOCK TOAST (#657)
+   CURATED ARCADE MIXES CAROUSEL (#583)
    =================================================== */
 
-.achievement-toast {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid #f59e0b;
-  border-radius: 12px;
-  padding: 1rem 1.25rem;
+.curated-mixes-container {
+  margin: 1.5rem 0 2rem 0;
+  width: 100%;
+}
+
+.curated-mixes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.85rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.curated-title-wrap {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8), 0 0 20px rgba(245, 158, 11, 0.3);
-  z-index: 100000;
-  transform: translateX(120%);
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  color: #f8fafc;
-  max-width: 380px;
+  gap: 0.5rem;
 }
 
-.achievement-toast.visible {
-  transform: translateX(0);
+.curated-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary, #f8fafc);
+  letter-spacing: 0.5px;
 }
 
-.achievement-toast-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 42px;
-  height: 42px;
-  background: rgba(245, 158, 11, 0.15);
-  border-radius: 10px;
-  border: 1px solid rgba(245, 158, 11, 0.4);
+.curated-subtitle {
+  font-size: 0.82rem;
+  color: var(--text-muted, #94a3b8);
 }
 
-.achievement-toast-body {
+.curated-mixes-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.curated-mix-card {
+  background: var(--bg-card, rgba(22, 27, 40, 0.72));
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius-md, 12px);
+  padding: 1.15rem 1.25rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-.achievement-toast-badge {
-  font-size: 0.72rem;
+.curated-mix-card:hover {
+  background: var(--bg-card-hover, rgba(28, 35, 52, 0.88));
+  border-color: var(--mix-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 16px var(--mix-accent);
+}
+
+.curated-mix-card.active {
+  border-color: var(--mix-accent);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 0 2px var(--mix-accent), 0 0 20px var(--mix-accent);
+}
+
+.mix-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.mix-icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid;
+}
+
+.mix-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary, #94a3b8);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+}
+
+.mix-name {
+  font-size: 1.05rem;
   font-weight: 700;
-  color: #f59e0b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: var(--text-primary, #f8fafc);
+  margin-bottom: 0.35rem;
 }
 
-.achievement-toast-title {
-  font-size: 0.95rem;
-  color: #f8fafc;
-  margin: 0.1rem 0;
-}
-
-.achievement-toast-desc {
-  font-size: 0.78rem;
-  color: #94a3b8;
+.mix-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted, #94a3b8);
+  margin: 0;
+  line-height: 1.4;
 }
 
