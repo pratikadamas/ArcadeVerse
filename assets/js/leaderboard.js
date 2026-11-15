@@ -1458,4 +1458,14 @@ document.addEventListener("DOMContentLoaded", () => {
   renderPodium();
   renderTable();
   fetchLiveGitHubContributions(activeRepo, false);
+
+  // App Badging API clear on viewing leaderboard & trophy certificates (#557)
+  if (typeof navigator !== 'undefined' && 'clearAppBadge' in navigator) {
+    navigator.clearAppBadge().catch(() => {});
+  }
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    localStorage.setItem('av_daily_streak_date', today);
+    localStorage.setItem('av_unclaimed_streak_count', '0');
+  } catch (_) {}
 });

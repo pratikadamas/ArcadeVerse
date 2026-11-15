@@ -4200,6 +4200,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initURLDeepLinking();
   initControlsLegend();
   initMultiChannelAudioMixer();
+  initAppBadgingManager();
 });
 
   // ========================================================
@@ -4708,6 +4709,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ========================================================
+<<<<<<< HEAD
   // IN-MODAL MULTI-CHANNEL AUDIO MIXER ENGINE (#565)
   // Master, SFX, and Music Sliders broadcasting via postMessage
   // ========================================================
@@ -4867,5 +4869,83 @@ document.addEventListener("DOMContentLoaded", () => {
       if (e.data && (e.data.type === 'ARCADEVERSE_READY' || e.data.type === 'ARCADEVERSE_REQUEST_AUDIO_CONFIG')) {
         AvAudioMixer.broadcastConfig();
       }
+    });
+  }
+
+  // ========================================================
+  // APP BADGING API ENGINE (#557)
+  // Badges dock/taskbar icon for unclaimed daily streaks & trophies
+  // ========================================================
+  const AvAppBadging = (function () {
+    const STREAK_KEY = 'av_daily_streak_date';
+    const UNCLAIMED_KEY = 'av_unclaimed_streak_count';
+
+    function isSupported() {
+      return typeof navigator !== 'undefined' && 'setAppBadge' in navigator;
+    }
+
+    function calculateUnclaimedCount() {
+      let count = 0;
+      try {
+        const lastDate = localStorage.getItem(STREAK_KEY);
+        const today = new Date().toISOString().slice(0, 10);
+        if (lastDate !== today) {
+          count += 1; // Unclaimed daily streak for today
+        }
+        const storedUnclaimed = parseInt(localStorage.getItem(UNCLAIMED_KEY) || '0', 10);
+        count += storedUnclaimed;
+      } catch (_) {}
+      return count;
+    }
+
+    async function updateBadge() {
+      if (!isSupported()) return;
+      const count = calculateUnclaimedCount();
+      try {
+        if (count > 0) {
+          await navigator.setAppBadge(count);
+        } else {
+          await navigator.clearAppBadge();
+        }
+      } catch (err) {
+        console.warn('[ArcadeVerse:Badging] Failed to set badge:', err);
+      }
+    }
+
+    async function clearBadge() {
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        localStorage.setItem(STREAK_KEY, today);
+        localStorage.setItem(UNCLAIMED_KEY, '0');
+        if (isSupported()) {
+          await navigator.clearAppBadge();
+        }
+      } catch (err) {
+        console.warn('[ArcadeVerse:Badging] Failed to clear badge:', err);
+      }
+    }
+
+    return {
+      isSupported,
+      updateBadge,
+      clearBadge
+    };
+  })();
+
+  window.AvAppBadging = AvAppBadging;
+
+  function initAppBadgingManager() {
+    AvAppBadging.updateBadge();
+
+    // Clear badge when player interacts with rewards or navigates to leaderboard
+    const leaderboardLinks = document.querySelectorAll('a[href*="leaderboard.html"]');
+    leaderboardLinks.forEach((link) => {
+      link.addEventListener('click', () => {
+        AvAppBadging.clearBadge();
+      });
+    });
+
+    window.addEventListener('arcadeverse:claim-streak', () => {
+      AvAppBadging.clearBadge();
     });
   }
