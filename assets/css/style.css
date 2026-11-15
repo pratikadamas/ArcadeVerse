@@ -55,6 +55,30 @@
   --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Minimalist Monochrome 'Obsidian Synth' Theme (#665) */
+:root[data-theme="obsidian"],
+[data-theme="obsidian"] {
+  --bg-main: #000000;
+  --bg-surface: #09090b;
+  --bg-surface-elevated: #141417;
+  --bg-card: rgba(18, 18, 22, 0.85);
+  --bg-card-hover: rgba(28, 28, 34, 0.95);
+  --border-subtle: rgba(255, 255, 255, 0.12);
+  --border-medium: #27272a;
+  --border-focus: #fafafa;
+  --accent-primary: #ffffff;
+  --accent-primary-hover: #e4e4e7;
+  --accent-secondary: #a1a1aa;
+  --accent-warm: #d4d4d8;
+  --accent-emerald: #ffffff;
+  --accent-rose: #f43f5e;
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --bg-gradient: radial-gradient(circle at 50% -10%, #18181b 0%, #000000 70%);
+  --dot-pattern-color: rgba(255, 255, 255, 0.04);
+}
+
 /* ===================================================
    WARM CREAM LIGHT MODE (STUDIO QUALITY, ACCESSIBLE)
    =================================================== */
