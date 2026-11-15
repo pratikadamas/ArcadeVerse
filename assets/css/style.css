@@ -11552,4 +11552,151 @@ html.a11y-reduced-motion .search-clear-btn {
   transform: scale(1.2);
 }
 
+/* ===================================================
+   COMPARE TWO GAMES DRAWER (#589)
+   =================================================== */
 
+.card-options-top {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 5;
+}
+
+.game-compare-label {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.game-compare-checkbox {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.compare-custom-box {
+  width: 18px;
+  height: 18px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.game-compare-checkbox:checked ~ .compare-custom-box {
+  background: #3b82f6;
+  border-color: #60a5fa;
+  box-shadow: 0 0 8px #3b82f6;
+}
+
+.game-compare-drawer {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(100%);
+  width: 92%;
+  max-width: 720px;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid #3b82f6;
+  border-bottom: none;
+  border-radius: 16px 16px 0 0;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.85), 0 0 20px rgba(59, 130, 246, 0.3);
+  z-index: 99999;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #f8fafc;
+}
+
+.game-compare-drawer.visible {
+  transform: translateX(-50%) translateY(0);
+}
+
+.compare-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.compare-drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #38bdf8;
+}
+
+.compare-close-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.compare-close-btn:hover {
+  color: #f8fafc;
+}
+
+.compare-grid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.compare-col {
+  flex: 1;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.compare-game-title {
+  margin: 0 0 0.35rem 0;
+  font-size: 1rem;
+  color: #f8fafc;
+}
+
+.compare-pill {
+  display: inline-block;
+  font-size: 0.72rem;
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+}
+
+.compare-attr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+}
+
+.compare-attr-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.compare-attr-row strong {
+  color: #94a3b8;
+}
+
+.compare-vs {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #ec4899;
+  letter-spacing: 1px;
+}

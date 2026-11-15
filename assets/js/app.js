@@ -1545,11 +1545,17 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="game-card-preview">
           <span class="game-category-tag">${safeCategory}</span>
           ${halloweenBadgeHtml}
-          <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
-              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-            </svg>
-          </button>
+          <div class="card-options-top">
+            <label class="game-compare-label" title="Select to compare with another game">
+              <input type="checkbox" class="game-compare-checkbox" data-game-id="${safeGameId}">
+              <span class="compare-custom-box"></span>
+            </label>
+            <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+              </svg>
+            </button>
+          </div>
           <div class="game-icon">${iconHtml}</div>
         </div>
         <div class="game-card-body">
@@ -4704,6 +4710,106 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (window.lucide) {
       try { lucide.createIcons(); } catch (_) {}
+    }
+  }
+
+  // COMPARE TWO GAMES MULTI-SELECT INSPECTION DRAWER (#589)
+  // Side-by-side comparison of difficulty, duration, controls & ratings
+  // ========================================================
+  const selectedCompareGameIds = new Set();
+
+  function openCompareDrawer() {
+    let drawer = document.getElementById("game-compare-drawer");
+    if (!drawer) {
+      drawer = document.createElement("div");
+      drawer.id = "game-compare-drawer";
+      drawer.className = "game-compare-drawer";
+      document.body.appendChild(drawer);
+    }
+
+    const ids = Array.from(selectedCompareGameIds);
+    if (ids.length !== 2) {
+      drawer.classList.remove("visible");
+      return;
+    }
+
+    const gameA = (typeof GAMES_REGISTRY !== "undefined") ? GAMES_REGISTRY.find(g => g.id === ids[0]) : null;
+    const gameB = (typeof GAMES_REGISTRY !== "undefined") ? GAMES_REGISTRY.find(g => g.id === ids[1]) : null;
+    if (!gameA || !gameB) return;
+
+    drawer.innerHTML = `
+      <div class="compare-drawer-header">
+        <div class="compare-drawer-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>
+          <span>Game Comparison Analysis</span>
+        </div>
+        <button type="button" class="compare-close-btn" aria-label="Close comparison">&times;</button>
+      </div>
+      <div class="compare-grid">
+        <div class="compare-col">
+          <h4 class="compare-game-title">${escapeHTML(gameA.title)}</h4>
+          <span class="compare-pill">${escapeHTML(gameA.category || "Arcade")}</span>
+          <div class="compare-attr-list">
+            <div class="compare-attr-row"><strong>Author:</strong> <span>@${escapeHTML(gameA.github || gameA.author || "Babin")}</span></div>
+            <div class="compare-attr-row"><strong>Controls:</strong> <span>${gameA.responsive ? "Keyboard + Touch" : "Keyboard/Mouse"}</span></div>
+            <div class="compare-attr-row"><strong>Rating:</strong> <span>${gameA.stars ? (gameA.stars / 10).toFixed(1) : "5.0"} / 5.0</span></div>
+            <div class="compare-attr-row"><strong>Tags:</strong> <span>${(gameA.tags || []).slice(0, 3).join(", ") || "arcade, retro"}</span></div>
+          </div>
+        </div>
+        <div class="compare-vs">VS</div>
+        <div class="compare-col">
+          <h4 class="compare-game-title">${escapeHTML(gameB.title)}</h4>
+          <span class="compare-pill">${escapeHTML(gameB.category || "Arcade")}</span>
+          <div class="compare-attr-list">
+            <div class="compare-attr-row"><strong>Author:</strong> <span>@${escapeHTML(gameB.github || gameB.author || "Babin")}</span></div>
+            <div class="compare-attr-row"><strong>Controls:</strong> <span>${gameB.responsive ? "Keyboard + Touch" : "Keyboard/Mouse"}</span></div>
+            <div class="compare-attr-row"><strong>Rating:</strong> <span>${gameB.stars ? (gameB.stars / 10).toFixed(1) : "5.0"} / 5.0</span></div>
+            <div class="compare-attr-row"><strong>Tags:</strong> <span>${(gameB.tags || []).slice(0, 3).join(", ") || "arcade, retro"}</span></div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    drawer.classList.add("visible");
+    const closeBtn = drawer.querySelector(".compare-close-btn");
+    closeBtn.addEventListener("click", () => {
+      drawer.classList.remove("visible");
+      selectedCompareGameIds.clear();
+      document.querySelectorAll(".game-compare-checkbox").forEach(cb => cb.checked = false);
+    });
+  }
+
+  document.addEventListener("change", (e) => {
+    if (e.target && e.target.classList.contains("game-compare-checkbox")) {
+      const gid = e.target.getAttribute("data-game-id");
+      if (e.target.checked) {
+        if (selectedCompareGameIds.size >= 2) {
+          // Uncheck and alert
+          e.target.checked = false;
+          alert("You can compare up to two games at a time.");
+          return;
+        }
+        selectedCompareGameIds.add(gid);
+      } else {
+        selectedCompareGameIds.delete(gid);
+      }
+
+      if (selectedCompareGameIds.size === 2) {
+        openCompareDrawer();
+      } else {
+        const drawer = document.getElementById("game-compare-drawer");
+        if (drawer) drawer.classList.remove("visible");
+      }
+    }
+  });
+
+  // Universal Virtual Touch Controller Loader (#517)
+  if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
+    if (!document.querySelector('script[src*="virtual-controller.js"]')) {
+      const vcScript = document.createElement('script');
+      vcScript.src = 'assets/js/virtual-controller.js';
+      document.body.appendChild(vcScript);
+    }
     }
   }
 
