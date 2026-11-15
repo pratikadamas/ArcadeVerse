@@ -4603,57 +4603,91 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ========================================================
-  // VISUAL AUDIO WAVEFORM & SFX CAPTION FLASH OVERLAY (#662)
-  // Displays edge flashes and accessible sound caption chips
+  // PLAYER PROFILE BATCH EXPORT & IMPORT SUBSYSTEM (#584)
+  // Generates and validates .arcadeverse profile bundle
   // ========================================================
-  function initA11yAudioCaptions() {
-    let captionContainer = document.getElementById("av-a11y-caption-container");
-    if (!captionContainer) {
-      captionContainer = document.createElement("div");
-      captionContainer.id = "av-a11y-caption-container";
-      captionContainer.className = "av-a11y-caption-container";
-      document.body.appendChild(captionContainer);
-    }
+  function exportPlayerProfile() {
+    try {
+      const profile = {
+        app: "ArcadeVerse",
+        version: "2.0.0",
+        exportedAt: new Date().toISOString(),
+        favorites: Array.from(getFavorites()),
+        theme: localStorage.getItem("arcadeverse_theme") || "dark",
+        audioSettings: JSON.parse(localStorage.getItem("arcadeverse_audio_settings") || "{}"),
+        highScores: {},
+        playlists: JSON.parse(localStorage.getItem("arcadeverse_playlists_v1") || "[]")
+      };
 
-    function showSoundCaption(label, type = "info") {
-      const chip = document.createElement("div");
-      chip.className = `av-sound-caption-chip av-caption-${type}`;
-      chip.textContent = `[${label}]`;
-      captionContainer.appendChild(chip);
-
-      // Trigger visual edge flash on active game modal or body
-      const gameContainer = document.querySelector(".game-container") || document.body;
-      gameContainer.classList.add(`flash-${type}`);
-      setTimeout(() => {
-        gameContainer.classList.remove(`flash-${type}`);
-      }, 350);
-
-      setTimeout(() => {
-        chip.classList.add("fade-out");
-        setTimeout(() => chip.remove(), 400);
-      }, 1500);
-    }
-
-    window.addEventListener("message", (e) => {
-      if (!e.data || typeof e.data !== "object") return;
-      if (e.data.type === "AV_SFX_EVENT" && e.data.sound) {
-        const sfx = String(e.data.sound).toLowerCase();
-        if (sfx.includes("hit") || sfx.includes("damage") || sfx.includes("explosion")) {
-          showSoundCaption(e.data.sound, "danger");
-        } else if (sfx.includes("powerup") || sfx.includes("score") || sfx.includes("coin")) {
-          showSoundCaption(e.data.sound, "success");
-        } else {
-          showSoundCaption(e.data.sound, "info");
+      // Collect all local scores
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && (k.startsWith("av_") || k.startsWith("arcadeverse_")) && k.includes("score")) {
+          profile.highScores[k] = localStorage.getItem(k);
         }
       }
-    });
 
-    window.ArcadeA11y = {
-      showCaption: showSoundCaption
-    };
+      const json = JSON.stringify(profile, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `player_profile_${Date.now()}.arcadeverse`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      announceToScreenReader("Player profile exported successfully.");
+    } catch (err) {
+      console.error("[ProfileExport] Failed:", err);
+    }
   }
 
-  initA11yAudioCaptions();
+  function importPlayerProfile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (!data || data.app !== "ArcadeVerse") {
+          alert("Invalid .arcadeverse profile file format.");
+          return;
+        }
+
+        // Restore favorites
+        if (Array.isArray(data.favorites)) {
+          localStorage.setItem("av_favorites", JSON.stringify(data.favorites));
+        }
+        // Restore theme
+        if (typeof data.theme === "string") {
+          localStorage.setItem("arcadeverse_theme", data.theme);
+        }
+        // Restore audio settings
+        if (data.audioSettings && typeof data.audioSettings === "object") {
+          localStorage.setItem("arcadeverse_audio_settings", JSON.stringify(data.audioSettings));
+        }
+        // Restore playlists
+        if (Array.isArray(data.playlists)) {
+          localStorage.setItem("arcadeverse_playlists_v1", JSON.stringify(data.playlists));
+        }
+        // Restore scores
+        if (data.highScores && typeof data.highScores === "object") {
+          for (const [k, v] of Object.entries(data.highScores)) {
+            localStorage.setItem(k, String(v));
+          }
+        }
+
+        announceToScreenReader("Player profile imported successfully. Refreshing...");
+        setTimeout(() => window.location.reload(), 400);
+      } catch (err) {
+        alert("Failed to parse .arcadeverse file: " + err.message);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  window.exportPlayerProfile = exportPlayerProfile;
+  window.importPlayerProfile = importPlayerProfile;
 
   // Universal Virtual Touch Controller Loader (#517)
   if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
