@@ -4200,6 +4200,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initURLDeepLinking();
   initControlsLegend();
   initMultiChannelAudioMixer();
+  initAudioEqualizerIntegration();
 });
 
   // ========================================================
@@ -4708,6 +4709,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ========================================================
+<<<<<<< HEAD
   // IN-MODAL MULTI-CHANNEL AUDIO MIXER ENGINE (#565)
   // Master, SFX, and Music Sliders broadcasting via postMessage
   // ========================================================
@@ -4868,4 +4870,25 @@ document.addEventListener("DOMContentLoaded", () => {
         AvAudioMixer.broadcastConfig();
       }
     });
+  }
+
+  // ========================================================
+  // RETRO 5-BAND BIQUADFILTER AUDIO EQUALIZER INTEGRATION (#570)
+  // Initializes preset selector and connects to sound engine
+  // ========================================================
+  function initAudioEqualizerIntegration() {
+    if (typeof window !== 'undefined' && !window.ArcadeAudio) {
+      if (!document.querySelector('script[src*="arcade-audio.js"]')) {
+        const audioScript = document.createElement('script');
+        audioScript.src = 'assets/js/arcade-audio.js';
+        audioScript.onload = () => {
+          if (window.ArcadeAudio && typeof window.ArcadeAudio.initEqualizer === 'function') {
+            window.ArcadeAudio.initEqualizer();
+          }
+        };
+        document.body.appendChild(audioScript);
+      }
+    } else if (window.ArcadeAudio && typeof window.ArcadeAudio.initEqualizer === 'function') {
+      window.ArcadeAudio.initEqualizer();
+    }
   }
