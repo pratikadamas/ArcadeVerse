@@ -304,3 +304,9 @@ canvas {
 .modal-body strong {
   color: var(--green-neon);
 }
+
+/* Touch Rotation Snap Transition (#668) */
+#gameCanvas {
+  touch-action: none;
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}

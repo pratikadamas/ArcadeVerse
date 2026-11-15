@@ -15,6 +15,8 @@
     constructor() {
       this.playlists = this.loadPlaylists();
       this.activePlaylistId = null;
+      this.lastFocused = null;
+      this.keyboardTrapBound = false;
       this.initEvents();
     }
 
@@ -243,7 +245,7 @@
         drawer.setAttribute('aria-hidden', 'true');
         drawer.innerHTML = `
           <div class="playlist-drawer-backdrop" id="playlist-drawer-backdrop"></div>
-          <div class="playlist-drawer-panel" role="dialog" aria-label="Game Playlists & Collections">
+          <div class="playlist-drawer-panel" role="dialog" aria-label="Game Playlists & Collections" aria-modal="true">
             <div class="playlist-drawer-header">
               <div class="playlist-header-left">
                 <i data-lucide="library" class="playlist-header-icon"></i>
@@ -277,13 +279,8 @@
         const createBtn = drawer.querySelector('#create-playlist-btn');
         const input = drawer.querySelector('#new-playlist-name');
 
-        const close = () => {
-          drawer.classList.remove('open');
-          drawer.setAttribute('aria-hidden', 'true');
-        };
-
-        if (closeBtn) closeBtn.addEventListener('click', close);
-        if (backdrop) backdrop.addEventListener('click', close);
+        if (closeBtn) closeBtn.addEventListener('click', () => this.closeDrawer());
+        if (backdrop) backdrop.addEventListener('click', () => this.closeDrawer());
         drawer.querySelector('#import-playlist-btn').addEventListener('click', () => {
           const code = window.prompt('Paste a playlist code starting with AVPL:');
           if (code === null) return;
@@ -311,9 +308,68 @@
             }
           });
         }
+
+        this.bindKeyboardTrap(drawer);
       }
 
       this.updateDrawerList();
+    }
+
+    bindKeyboardTrap(drawer) {
+      if (this.keyboardTrapBound) return;
+      this.keyboardTrapBound = true;
+
+      document.addEventListener('keydown', (e) => {
+        if (!drawer || !drawer.classList.contains('open')) return;
+
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          const activeConfirm = drawer.querySelector('.playlist-delete-confirm-box');
+          if (activeConfirm) {
+            const cardItem = activeConfirm.closest('.playlist-card-item');
+            if (cardItem) {
+              const actions = cardItem.querySelector('.playlist-actions-row');
+              const delBtn = cardItem.querySelector('.btn-delete-pl');
+              activeConfirm.remove();
+              if (actions) actions.style.display = '';
+              if (delBtn) delBtn.focus();
+              return;
+            }
+          }
+          this.closeDrawer();
+          return;
+        }
+
+        if (e.key === 'Tab') {
+          const focusables = this.getFocusableElements(drawer);
+          if (focusables.length === 0) {
+            e.preventDefault();
+            return;
+          }
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+
+          if (e.shiftKey) {
+            if (document.activeElement === first || !drawer.contains(document.activeElement)) {
+              e.preventDefault();
+              last.focus();
+            }
+          } else {
+            if (document.activeElement === last || !drawer.contains(document.activeElement)) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        }
+      });
+    }
+
+    getFocusableElements(container) {
+      if (!container) return [];
+      const selector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+      return Array.from(container.querySelectorAll(selector)).filter((el) => {
+        return el.offsetWidth > 0 || el.offsetHeight > 0 || el.getClientRects().length > 0;
+      });
     }
 
     updateDrawerList() {
@@ -368,18 +424,59 @@
           viewBtn.addEventListener('click', () => {
             this.activePlaylistId = pl.id;
             window.dispatchEvent(new CustomEvent('arcadeverse:filter-playlist', { detail: pl }));
-            const drawer = document.getElementById('playlist-drawer');
-            if (drawer) drawer.classList.remove('open');
+            this.closeDrawer();
           });
         }
 
         const delBtn = item.querySelector('.btn-delete-pl');
-        if (delBtn) {
+        const actionsRow = item.querySelector('.playlist-actions-row');
+        if (delBtn && actionsRow) {
           delBtn.addEventListener('click', () => {
-            if (confirm(`Delete playlist "${pl.name}"?`)) {
+            if (item.querySelector('.playlist-delete-confirm-box')) return;
+
+            actionsRow.style.display = 'none';
+
+            const confirmBox = document.createElement('div');
+            confirmBox.className = 'playlist-delete-confirm-box';
+            confirmBox.setAttribute('role', 'alert');
+
+            const promptSpan = document.createElement('span');
+            promptSpan.className = 'playlist-delete-prompt';
+            promptSpan.textContent = `Delete "${pl.name}"?`;
+
+            const btnsWrapper = document.createElement('div');
+            btnsWrapper.className = 'playlist-delete-buttons';
+
+            const confirmBtn = document.createElement('button');
+            confirmBtn.type = 'button';
+            confirmBtn.className = 'btn btn-confirm-delete';
+            confirmBtn.textContent = 'Delete';
+            confirmBtn.setAttribute('aria-label', `Confirm delete playlist ${pl.name}`);
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.type = 'button';
+            cancelBtn.className = 'btn btn-cancel-delete';
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.setAttribute('aria-label', 'Cancel deletion');
+
+            confirmBtn.addEventListener('click', () => {
               this.deletePlaylist(pl.id);
               this.updateDrawerList();
-            }
+            });
+
+            cancelBtn.addEventListener('click', () => {
+              confirmBox.remove();
+              actionsRow.style.display = '';
+              delBtn.focus();
+            });
+
+            btnsWrapper.appendChild(confirmBtn);
+            btnsWrapper.appendChild(cancelBtn);
+            confirmBox.appendChild(promptSpan);
+            confirmBox.appendChild(btnsWrapper);
+            item.appendChild(confirmBox);
+
+            cancelBtn.focus();
           });
         }
 
@@ -389,13 +486,52 @@
       if (window.lucide) lucide.createIcons();
     }
 
-    openDrawer() {
+    openDrawer(triggerEl) {
       const drawer = document.getElementById('playlist-drawer');
       if (drawer) {
+        this.lastFocused = triggerEl || document.activeElement;
         this.updateDrawerList();
         drawer.classList.add('open');
         drawer.setAttribute('aria-hidden', 'false');
+
+        const trigger = document.getElementById('trigger-playlists-btn');
+        if (trigger) {
+          trigger.setAttribute('aria-expanded', 'true');
+        }
+
+        if (typeof requestAnimationFrame === 'function') {
+          requestAnimationFrame(() => {
+            const focusables = this.getFocusableElements(drawer);
+            if (focusables.length > 0) {
+              focusables[0].focus();
+            }
+          });
+        }
       }
+    }
+
+    closeDrawer() {
+      const drawer = document.getElementById('playlist-drawer');
+      if (drawer) {
+        drawer.classList.remove('open');
+        drawer.setAttribute('aria-hidden', 'true');
+      }
+
+      const trigger = document.getElementById('trigger-playlists-btn');
+      if (trigger) {
+        trigger.setAttribute('aria-expanded', 'false');
+      }
+
+      const targetFocus = (this.lastFocused && typeof this.lastFocused.focus === 'function' && typeof document !== 'undefined' && document.contains && document.contains(this.lastFocused))
+        ? this.lastFocused
+        : trigger;
+
+      if (targetFocus && typeof targetFocus.focus === 'function') {
+        try {
+          targetFocus.focus();
+        } catch (_) {}
+      }
+      this.lastFocused = null;
     }
   }
 

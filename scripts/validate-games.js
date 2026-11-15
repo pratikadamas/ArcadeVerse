@@ -48,9 +48,15 @@ function verifyCanvasResizeSafety(gameJsContent) {
 }
 
 const FORBIDDEN_ROOT_FILES = ['assets/js/games-registry.js', 'index.html', 'leaderboard.html'];
+const touchedFilesSet = new Set();
+let isPrBranch = false;
+
 try {
   const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8', cwd: ROOT_DIR }).trim();
-  if (currentBranch !== 'main' && currentBranch !== 'HEAD') {
+  const isCiPr = Boolean(process.env.GITHUB_BASE_REF);
+
+  if (isCiPr || (currentBranch !== 'main' && currentBranch !== 'HEAD')) {
+    isPrBranch = true;
     let baseRef = 'origin/main';
     try {
       execSync('git rev-parse --verify origin/main', { stdio: 'ignore' });
@@ -58,25 +64,38 @@ try {
       baseRef = 'main';
     }
 
-    const diffOutput = execSync(`git diff --name-only ${baseRef}...HEAD`, { encoding: 'utf8', cwd: ROOT_DIR });
-    const touchedFiles = diffOutput.split('\n').map(s => s.trim()).filter(Boolean);
-    const illegalFiles = touchedFiles.filter(f => FORBIDDEN_ROOT_FILES.includes(f));
+    try {
+      const diffOutput = execSync(`git diff --name-only ${baseRef}...HEAD`, { encoding: 'utf8', cwd: ROOT_DIR });
+      const touchedList = diffOutput.split('\n').map(s => s.trim().replace(/\\/g, '/')).filter(Boolean);
+      touchedList.forEach(f => touchedFilesSet.add(f));
 
-    if (illegalFiles.length > 0) {
-      console.log('🚨 ========================================================');
-      console.log('   Strict File Protection Check (CONTRIBUTING.md Compliance)');
-      console.log('========================================================\n');
-      illegalFiles.forEach(f => {
-        console.log(`❌ Unauthorized modification detected: "${f}"`);
-        if (f.includes('games-registry.js')) {
-          console.log(`   💡 NOTE: 'assets/js/games-registry.js' is auto-compiled upon merge by GitHub Actions.`);
-          console.log(`   Editing it in a PR causes MERGE CONFLICTS with the main branch.`);
-          console.log(`   To revert: git checkout ${baseRef} -- assets/js/games-registry.js\n`);
-        }
-        totalErrors++;
-      });
-    }
+      const illegalFiles = touchedList.filter(f => FORBIDDEN_ROOT_FILES.includes(f));
+
+      if (illegalFiles.length > 0) {
+        console.log('🚨 ========================================================');
+        console.log('   Strict File Protection Check (CONTRIBUTING.md Compliance)');
+        console.log('========================================================\n');
+        illegalFiles.forEach(f => {
+          console.log(`❌ Unauthorized modification detected: "${f}"`);
+          if (f.includes('games-registry.js')) {
+            console.log(`   💡 NOTE: 'assets/js/games-registry.js' is auto-compiled upon merge by GitHub Actions.`);
+            console.log(`   Editing it in a PR causes MERGE CONFLICTS with the main branch.`);
+            console.log(`   To revert: git checkout ${baseRef} -- assets/js/games-registry.js\n`);
+          }
+          totalErrors++;
+        });
+      }
+    } catch (_) {}
   }
+
+  // Also record working-tree changes (staged or unstaged)
+  try {
+    const statusOutput = execSync('git status --porcelain', { encoding: 'utf8', cwd: ROOT_DIR });
+    statusOutput.split('\n').forEach(line => {
+      const f = line.slice(3).trim().replace(/\\/g, '/');
+      if (f) touchedFilesSet.add(f);
+    });
+  } catch (_) {}
 } catch {
   // Graceful fallback if not running in a git context
 }
@@ -244,6 +263,137 @@ function scanScriptSecurityViolations(jsContent, issues) {
   }
 }
 
+// Disallowed External CDN and Third-Party Hostnames (#922)
+const DISALLOWED_CDN_HOSTS = [
+  'unpkg.com',
+  'cdn.jsdelivr.net',
+  'jsdelivr.net',
+  'cdnjs.cloudflare.com',
+  'cdnjs.com',
+  'fonts.googleapis.com',
+  'fonts.gstatic.com',
+  'cdn.skypack.dev',
+  'esm.sh',
+  'cdn.tailwindcss.com',
+  'cdn.bootcdn.net',
+  'raw.githubusercontent.com',
+  'cdn.jsdelivr.org',
+  'stackpath.bootstrapcdn.com',
+  'code.jquery.com',
+  'cdn.socket.io',
+  'ajax.googleapis.com'
+];
+
+/**
+ * External CDN & Third-Party Asset Scanner (#922)
+ * Detects external script bundles, Google Fonts CDNs, unpkg, cdnjs, jsdelivr,
+ * and remote stylesheet/font imports across HTML, CSS, and JS files.
+ * Enforces zero-CDN policy: gates PRs on new/changed files and reports audit findings.
+ */
+function scanExternalCdnAssets(gamePath, folder, fileName, content, issues, isTouched) {
+  function flagCdnViolation(url, reason) {
+    if (isTouched || IS_STRICT_CDN) {
+      issues.push(`❌ [CDN VIOLATION] External CDN / third-party asset in ${fileName}: "${url}" (${reason}). Community games must be 100% self-contained vanilla HTML5/CSS3/ES6+ with zero external CDNs or remote dependencies.`);
+      totalErrors++;
+    } else {
+      issues.push(`⚠️ [CDN AUDIT] Legacy external CDN detected in ${fileName}: "${url}" (${reason}). Scheduled for offline font/asset migration.`);
+      totalWarnings++;
+    }
+  }
+
+  function getCdnHostMatch(url) {
+    if (!url || typeof url !== 'string') return null;
+    const clean = url.trim().toLowerCase();
+    for (const host of DISALLOWED_CDN_HOSTS) {
+      if (clean.includes(host)) return host;
+    }
+    return null;
+  }
+
+  if (fileName === 'index.html') {
+    // External <script src="...">
+    const scriptRegex = /<script\s+[^>]*?src=["']([^"']+)["']/gi;
+    let match;
+    while ((match = scriptRegex.exec(content)) !== null) {
+      const src = match[1].trim();
+      const host = getCdnHostMatch(src);
+      if (host) {
+        flagCdnViolation(src, `Disallowed CDN host: ${host}`);
+      } else if (/^(https?:)?\/\//i.test(src)) {
+        flagCdnViolation(src, 'External script bundle forbidden');
+      }
+    }
+
+    // External <link href="..."> (stylesheets, preconnect, font links)
+    const linkRegex = /<link\s+[^>]*?href=["']([^"']+)["']/gi;
+    while ((match = linkRegex.exec(content)) !== null) {
+      const href = match[1].trim();
+      const host = getCdnHostMatch(href);
+      if (host) {
+        flagCdnViolation(href, `Disallowed CDN host: ${host}`);
+      } else if (/<link\s+[^>]*?rel=["']stylesheet["']/i.test(match[0]) && /^(https?:)?\/\//i.test(href)) {
+        flagCdnViolation(href, 'External remote stylesheet forbidden');
+      }
+    }
+
+    // Inline @import url(...) or @import "..." inside <style>
+    const inlineImportRegex = /@import\s+(?:url\(['"]?([^'"\)]+)['"]?\)|['"]([^'"]+)['"])/gi;
+    while ((match = inlineImportRegex.exec(content)) !== null) {
+      const importUrl = (match[1] || match[2] || '').trim();
+      const host = getCdnHostMatch(importUrl);
+      if (host) {
+        flagCdnViolation(importUrl, `Disallowed CDN host: ${host}`);
+      } else if (/^(https?:)?\/\//i.test(importUrl)) {
+        flagCdnViolation(importUrl, 'External remote CSS import forbidden');
+      }
+    }
+  }
+
+  if (fileName === 'style.css') {
+    // @import url(...) or @import "..."
+    const importRegex = /@import\s+(?:url\(['"]?([^'"\)]+)['"]?\)|['"]([^'"]+)['"])/gi;
+    let match;
+    while ((match = importRegex.exec(content)) !== null) {
+      const importUrl = (match[1] || match[2] || '').trim();
+      const host = getCdnHostMatch(importUrl);
+      if (host) {
+        flagCdnViolation(importUrl, `Disallowed CDN host: ${host}`);
+      } else if (/^(https?:)?\/\//i.test(importUrl)) {
+        flagCdnViolation(importUrl, 'External remote CSS import forbidden');
+      }
+    }
+
+    // url(...) referencing CDN hosts
+    const urlRegex = /url\(['"]?([^'"\)]+)['"]?\)/gi;
+    while ((match = urlRegex.exec(content)) !== null) {
+      const refUrl = (match[1] || '').trim();
+      const host = getCdnHostMatch(refUrl);
+      if (host) {
+        flagCdnViolation(refUrl, `Disallowed CDN host: ${host}`);
+      }
+    }
+  }
+
+  if (fileName === 'game.js') {
+    // Dynamic script src assignment
+    const dynamicScriptRegex = /\.src\s*=\s*['"]((?:https?:)?\/\/[^'"]+)['"]/gi;
+    let match;
+    while ((match = dynamicScriptRegex.exec(content)) !== null) {
+      const src = match[1].trim();
+      const host = getCdnHostMatch(src);
+      flagCdnViolation(src, host ? `Disallowed CDN host: ${host}` : 'Dynamic remote script injection forbidden');
+    }
+
+    // Remote ES module imports: import(...) or import ... from "http..."
+    const remoteImportRegex = /(?:import\s*\(|from\s+)['"]((?:https?:)?\/\/[^'"]+)['"]/gi;
+    while ((match = remoteImportRegex.exec(content)) !== null) {
+      const modUrl = match[1].trim();
+      const host = getCdnHostMatch(modUrl);
+      flagCdnViolation(modUrl, host ? `Disallowed CDN host: ${host}` : 'Remote module import forbidden');
+    }
+  }
+}
+
 const folders = fs.readdirSync(GAMES_DIR, { withFileTypes: true })
   .filter(d => d.isDirectory())
   .map(d => d.name);
@@ -263,6 +413,7 @@ console.log(`Found ${folders.length} community games to audit...\n`);
  */
 const CLI_ARGS = process.argv.slice(2);
 const IS_STRICT = CLI_ARGS.includes('--strict-assets');
+const IS_STRICT_CDN = CLI_ARGS.includes('--strict-cdn');
 const IS_AUDIT_HUB = CLI_ARGS.includes('--audit-hub');
 const SUMMARY_JSON_PATH = (() => {
   const idx = CLI_ARGS.indexOf('--summary-json');
@@ -303,6 +454,10 @@ if (IS_AUDIT_HUB) {
 folders.forEach(folder => {
   const gamePath = path.join(GAMES_DIR, folder);
   const issues = [];
+  const isGameTouched = isPrBranch && (
+    touchedFilesSet.has(`games/${folder}`) ||
+    Array.from(touchedFilesSet).some(f => f.startsWith(`games/${folder}/`))
+  );
 
   // 1. Folder Naming Convention: <game-name_username>
   if (!/^[a-z0-9-]+_[a-z0-9-]+$/i.test(folder)) {
@@ -370,6 +525,7 @@ folders.forEach(folder => {
       totalWarnings++;
     }
     auditHtmlAssetIntegrity(gamePath, htmlContent, issues);
+    scanExternalCdnAssets(gamePath, folder, 'index.html', htmlContent, issues, isGameTouched);
   }
 
   // 6. CSS Asset Integrity Verification
@@ -377,6 +533,7 @@ folders.forEach(folder => {
   if (fs.existsSync(cssPath)) {
     const cssContent = fs.readFileSync(cssPath, 'utf8');
     auditCssAssetIntegrity(gamePath, cssContent, issues);
+    scanExternalCdnAssets(gamePath, folder, 'style.css', cssContent, issues, isGameTouched);
   }
 
   // 7. JavaScript Static Asset Integrity Verification
@@ -385,6 +542,7 @@ folders.forEach(folder => {
     const jsContent = fs.readFileSync(jsPath, 'utf8');
     auditJsAssetIntegrity(gamePath, jsContent, issues);
     scanScriptSecurityViolations(jsContent, issues);
+    scanExternalCdnAssets(gamePath, folder, 'game.js', jsContent, issues, isGameTouched);
   }
 
   // 8. Game Resource Bounds & Sub-Directory Audit
@@ -415,6 +573,7 @@ function printTelemetryRecommendations(auditData) {
   console.log('----------------------------------------------------');
   console.log(`• Verified ${auditData.gamesAudited} games against 4-file structure (index.html, style.css, game.js, game.json).`);
   console.log('• Monitored relative asset URLs against disk targets for zero 404 network request drops.');
+  console.log('• Enforced zero-CDN policy against external script bundles and Google Fonts.');
   console.log('• Validated SVG icon standards across stylesheets and templates (zero unicode emojis).');
   console.log('• Inspected AudioContext instances and lifecycle hooks for graceful teardown compliance.');
   console.log('• Enforced isolation boundary against top-level window tampering in game runtimes.\n');

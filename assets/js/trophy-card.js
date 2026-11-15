@@ -20,6 +20,33 @@
     });
   }
 
+  function drawVectorStar(ctx, cx, cy, spikes = 5, outerRadius = 7.5, innerRadius = 3.5, fillStyle = '#fde047') {
+    let rot = (Math.PI / 2) * 3;
+    let x = cx;
+    let y = cy;
+    const step = Math.PI / spikes;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - outerRadius);
+    for (let i = 0; i < spikes; i++) {
+      x = cx + Math.cos(rot) * outerRadius;
+      y = cy + Math.sin(rot) * outerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
+
+      x = cx + Math.cos(rot) * innerRadius;
+      y = cy + Math.sin(rot) * innerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
+    }
+    ctx.lineTo(cx, cy - outerRadius);
+    ctx.closePath();
+    ctx.fillStyle = fillStyle;
+    ctx.fill();
+    ctx.restore();
+  }
+
   const TrophyCardEngine = {
     canvas: null,
     ctx: null,
@@ -201,7 +228,7 @@
       ctx.fillStyle = '#38bdf8';
       ctx.font = '700 13px "JetBrains Mono", monospace';
       ctx.letterSpacing = '3.5px';
-      ctx.fillText('NEXUS SPRING OF CODE 2026 • OFFICIAL OPEN SOURCE CREDENTIAL', W / 2, 150);
+      ctx.fillText('NEXUS SPRING OF CODE 2026 | OFFICIAL OPEN SOURCE CREDENTIAL', W / 2, 150);
 
       // Main Certificate Title
       const titleGrad = ctx.createLinearGradient((W / 2) - 340, 0, (W / 2) + 340, 0);
@@ -287,10 +314,27 @@
       ctx.fillText(userHandle, W / 2, 416);
 
       // Distinction / Rank Tier Pill with Luxury Gradient Glow
-      const pillW = 500;
+      const rankText = String(rank || 'Verified Contributor');
+      const scoreText = `Total Arcade Score: ${score}`;
+
+      ctx.save();
+      ctx.font = 'bold 15.5px "Space Grotesk", sans-serif';
+      const rankW = ctx.measureText(rankText).width;
+      const scoreW = ctx.measureText(scoreText).width;
+
+      const starOuterRadius = 7.5;
+      const starInnerRadius = 3.5;
+      const starDiameter = starOuterRadius * 2;
+      const starGap = 14;
+      const bulletRadius = 2.5;
+      const bulletGap = 12;
+
+      const totalContentW = starDiameter + starGap + rankW + bulletGap + (bulletRadius * 2) + bulletGap + scoreW + starGap + starDiameter;
+      const pillW = Math.max(500, Math.round(totalContentW + 48));
       const pillH = 40;
       const pillX = (W - pillW) / 2;
       const pillY = 438;
+      const pillCenterY = pillY + (pillH / 2);
 
       const badgeGrad = ctx.createLinearGradient(pillX, 0, pillX + pillW, 0);
       badgeGrad.addColorStop(0, 'rgba(0, 245, 255, 0.12)');
@@ -307,15 +351,40 @@
       ctx.stroke();
 
       ctx.shadowBlur = 0;
+
+      // Draw Left 5-Point Vector Star
+      const leftStarX = (W - totalContentW) / 2 + starOuterRadius;
+      drawVectorStar(ctx, leftStarX, pillCenterY, 5, starOuterRadius, starInnerRadius, '#fde047');
+
+      // Draw Rank Text
+      const rankX = leftStarX + starOuterRadius + starGap;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
       ctx.fillStyle = '#fde047';
-      ctx.font = 'bold 15.5px "Space Grotesk", sans-serif';
-      ctx.fillText(`★  ${rank}  •  Total Arcade Score: ${score}  ★`, W / 2, pillY + 25);
+      ctx.fillText(rankText, rankX, pillCenterY);
+
+      // Draw Vector Bullet Separator
+      const bulletX = rankX + rankW + bulletGap + bulletRadius;
+      ctx.beginPath();
+      ctx.arc(bulletX, pillCenterY, bulletRadius, 0, Math.PI * 2);
+      ctx.fillStyle = '#fde047';
+      ctx.fill();
+
+      // Draw Score Text
+      const scoreX = bulletX + bulletRadius + bulletGap;
+      ctx.fillText(scoreText, scoreX, pillCenterY);
+
+      // Draw Right 5-Point Vector Star
+      const rightStarX = scoreX + scoreW + starGap + starOuterRadius;
+      drawVectorStar(ctx, rightStarX, pillCenterY, 5, starOuterRadius, starInnerRadius, '#fde047');
+      ctx.restore();
 
       // Certificate Citation Statement
       ctx.fillStyle = '#94a3b8';
       ctx.font = '400 15px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'center';
       ctx.fillText('In recognition of verified code contributions, game architecture, and open-source craftsmanship', W / 2, 514);
-      ctx.fillText('for the ArcadeVerse platform during Nexus Spring of Code – Winter Edition 2026.', W / 2, 536);
+      ctx.fillText('for the ArcadeVerse platform during Nexus Spring of Code - Winter Edition 2026.', W / 2, 536);
       ctx.restore();
 
       // 6. Verification Seal & Signatures

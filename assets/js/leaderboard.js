@@ -205,6 +205,49 @@ document.addEventListener("DOMContentLoaded", () => {
   const CACHE_KEY = "arcadeverse_contributors_cache_v2";
   const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
+  // Strict Contributor JSON Schema Validation & Self-Healing Engine (#582)
+  function validateAndHealContributor(raw) {
+    if (!raw || typeof raw !== "object") return null;
+
+    // Required fields: login / github must be a non-empty string
+    const login = typeof raw.login === "string" && raw.login.trim()
+      ? raw.login.trim()
+      : (typeof raw.github === "string" && raw.github.trim() ? raw.github.trim() : null);
+
+    if (!login) {
+      console.warn("[LeaderboardSchema] Discarded invalid record missing login:", raw);
+      return null;
+    }
+
+    const name = typeof raw.name === "string" && raw.name.trim() ? raw.name.trim() : login;
+    const role = typeof raw.role === "string" && raw.role.trim() ? raw.role.trim() : "Community Contributor";
+    const avatar = typeof raw.avatar_url === "string" && raw.avatar_url.trim()
+      ? raw.avatar_url.trim()
+      : `https://github.com/${login}.png`;
+
+    const commits = Number.isFinite(Number(raw.commits)) && Number(raw.commits) >= 0 ? Math.floor(Number(raw.commits)) : 1;
+    const gamesCount = Number.isFinite(Number(raw.gamesCount)) && Number(raw.gamesCount) >= 0 ? Math.floor(Number(raw.gamesCount)) : 0;
+    const mechanicsBonus = Number.isFinite(Number(raw.mechanicsBonus)) && Number(raw.mechanicsBonus) >= 0 ? Math.floor(Number(raw.mechanicsBonus)) : 0;
+    const platformPRs = Number.isFinite(Number(raw.platformPRs)) && Number(raw.platformPRs) >= 0 ? Math.floor(Number(raw.platformPRs)) : 0;
+    const qualityPRs = Number.isFinite(Number(raw.qualityPRs)) && Number(raw.qualityPRs) >= 0 ? Math.floor(Number(raw.qualityPRs)) : 0;
+    const bonusPts = Number.isFinite(Number(raw.bonusPts)) ? Math.floor(Number(raw.bonusPts)) : 0;
+    const games = Array.isArray(raw.games) ? raw.games : (Array.isArray(raw.contributions) ? raw.contributions : []);
+
+    return {
+      login: login,
+      name: name,
+      role: role,
+      avatar_url: avatar,
+      commits: commits,
+      gamesCount: gamesCount,
+      mechanicsBonus: mechanicsBonus,
+      platformPRs: platformPRs,
+      qualityPRs: qualityPRs,
+      bonusPts: bonusPts,
+      games: games
+    };
+  }
+
   // Initial verified contributors from repository
   let contributorsData = [];
 
@@ -215,12 +258,12 @@ document.addEventListener("DOMContentLoaded", () => {
     contributorsData = CONTRIBUTORS_REGISTRY.map(regUser => {
       let userGames = [];
       if (typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) {
-        userGames = GAMES_REGISTRY.filter(g => g.github && g.github.toLowerCase() === regUser.github.toLowerCase());
+        userGames = GAMES_REGISTRY.filter(g => g && g.github && g.github.toLowerCase() === (regUser.github || "").toLowerCase());
       }
       const gamesCount = userGames.length > 0 ? userGames.length : (regUser.gamesCount || 0);
       const gamesList = userGames.length > 0 ? userGames.map(g => g.title) : (regUser.contributions || []);
 
-      return {
+      const candidate = {
         login: regUser.github,
         name: regUser.name,
         role: regUser.role || "Community Contributor",
@@ -233,7 +276,9 @@ document.addEventListener("DOMContentLoaded", () => {
         bonusPts: regUser.bonusPts || 0,
         games: gamesList
       };
-    });
+
+      return validateAndHealContributor(candidate);
+    }).filter(Boolean);
   }
 
   // Universal In-App Arcade Point System:
@@ -792,7 +837,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <span class="files-count-pill" title="Universal Score: ${(item.gamesCount || 0) * 100}p (Games) + ${(item.mechanicsBonus || 0) * 25}p (Mechanics) + ${(item.platformPRs || 0) * 50}p (Feat) + ${(item.qualityPRs || 0) * 25}p (Fix) + ${(item.commits || 0) * 5}p (Commits)"><i data-lucide="git-pull-request"></i> ${getWorkBreakdown(item)}</span>
         </td>
         <td style="text-align: center;">
-          <span class="commits-count-pill"><i data-lucide="git-commit"></i> ${item.commits}</span>
+          <span class="commits-count-pill contributor-commits-heatmap-btn" data-action="open-heatmap-modal" data-player="${escapeAttr(item.name || item.login)}" data-handle="${escapeAttr(item.login)}" data-commits="${item.commits || 0}" style="cursor: pointer;" title="Click to view Git commit activity heatmap"><i data-lucide="git-commit"></i> ${item.commits}</span>
         </td>
         <td style="text-align: center;">
           <div class="activity-links-group">

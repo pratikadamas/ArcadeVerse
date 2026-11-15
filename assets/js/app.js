@@ -1165,7 +1165,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
-      return matchesCategory && matchesTag && matchesDuration && matchesControls && matchesLetter;
+      // Curated Mix Playlist Filter (#583)
+      let matchesCuratedMix = true;
+      if (currentMixFilter && Array.isArray(currentMixFilter)) {
+        matchesCuratedMix = currentMixFilter.includes(item.id);
+      }
+
+      return matchesCategory && matchesTag && matchesDuration && matchesControls && matchesLetter && matchesCuratedMix;
     });
 
     const cleanSearch = searchQuery.replace(/^by\s+@?/, "").replace(/^@/, "").trim();
@@ -1653,6 +1659,25 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     updateFacetSummaryUI();
+
+    // Lightweight DOM Windowing / Virtualization for Catalog Cards (#590)
+    // Ensures silky 60 FPS scrolling on mobile devices by checking IntersectionObserver
+    if (window.IntersectionObserver) {
+      const cardObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          const el = entry.target;
+          if (entry.isIntersecting) {
+            el.classList.remove("card-virtual-hidden");
+          } else {
+            // Keep height spacer for off-screen cards
+            el.classList.add("card-virtual-hidden");
+          }
+        });
+      }, { rootMargin: "250px 0px" });
+
+      const allCards = gamesGrid.querySelectorAll(".game-card");
+      allCards.forEach((c) => cardObserver.observe(c));
+    }
 
     // Assistive Screen Reader Notification for Catalog Filter/Search Updates (#513)
     if (typeof announceToScreenReader === "function") {
@@ -3439,7 +3464,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (playlistTrigger) {
     playlistTrigger.addEventListener("click", () => {
       if (window.ArcadePlaylists) {
-        window.ArcadePlaylists.openDrawer();
+        window.ArcadePlaylists.openDrawer(playlistTrigger);
       }
     });
   }
@@ -3462,7 +3487,10 @@ document.addEventListener("DOMContentLoaded", () => {
         playlistDrawer.classList.remove("open");
         playlistDrawer.setAttribute("aria-hidden", "true");
       }
-      if (playlistTrigger) playlistTrigger.classList.remove("active");
+      if (playlistTrigger) {
+        playlistTrigger.classList.remove("active");
+        playlistTrigger.setAttribute("aria-expanded", "false");
+      }
 
       categoryPills.forEach((p) => {
         p.classList.remove("active");
@@ -4580,11 +4608,103 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Universal Virtual Touch Controller Loader (#517)
-  if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
-    if (!document.querySelector('script[src*="virtual-controller.js"]')) {
-      const vcScript = document.createElement('script');
-      vcScript.src = 'assets/js/virtual-controller.js';
-      document.body.appendChild(vcScript);
+  // ========================================================
+  // CURATED ARCADE MIXES SUBSYSTEM (#583)
+  // Themed pathways: Spooky Retro, Cyberpunk High-Speed, Brain Teasers
+  // ========================================================
+  const CURATED_MIXES = [
+    {
+      id: "spooky-retro",
+      name: "Spooky Retro",
+      description: "Eerie haunted labyrinths, midnight graveyards & pumpkin runs",
+      icon: "ghost",
+      games: ["haunted-house_debasmita", "midnight-graveyard_joitapaul", "pumpkin-express_joitapaul"],
+      color: "#ec4899"
+    },
+    {
+      id: "cyberpunk-high-speed",
+      name: "Cyberpunk High-Speed",
+      description: "Neon velocity, cyber gliders & hyperlight racers",
+      icon: "zap",
+      games: ["cyber-runner_mistu7debnath", "neon-drift-racer_joitapaul", "cyber-glider_babin"],
+      color: "#06b6d4"
+    },
+    {
+      id: "brain-teasers",
+      name: "Brain Teasers",
+      description: "Cryptic logic matrices, codebreaking & automated factories",
+      icon: "cpu",
+      games: ["quantum-minesweeper_babin", "code-breaker_babin", "robo-factory_mistu7debnath"],
+      color: "#a855f7"
+    }
+  ];
+
+  function injectCuratedMixesCarousel() {
+    if (document.getElementById("curated-mixes-carousel")) return;
+    const catalogSection = document.getElementById("catalog") || document.querySelector(".catalog-section");
+    if (!catalogSection) return;
+
+    const container = document.createElement("div");
+    container.id = "curated-mixes-carousel";
+    container.className = "curated-mixes-container";
+    container.innerHTML = `
+      <div class="curated-mixes-header">
+        <div class="curated-title-wrap">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          <span class="curated-title">Curated Arcade Mixes</span>
+        </div>
+        <span class="curated-subtitle">Guided theme mixes curated for quick launch</span>
+      </div>
+      <div class="curated-mixes-row">
+        ${CURATED_MIXES.map(mix => `
+          <button type="button" class="curated-mix-card" data-mix-id="${mix.id}" style="--mix-accent: ${mix.color};">
+            <div class="mix-card-top">
+              <span class="mix-icon-badge" style="background: ${mix.color}22; border-color: ${mix.color}; color: ${mix.color};">
+                <i data-lucide="${mix.icon}"></i>
+              </span>
+              <span class="mix-count">${mix.games.length} Games</span>
+            </div>
+            <strong class="mix-name">${mix.name}</strong>
+            <p class="mix-desc">${mix.description}</p>
+          </button>
+        `).join("")}
+      </div>
+    `;
+
+    // Insert right before the games grid
+    if (gamesGrid && gamesGrid.parentNode) {
+      gamesGrid.parentNode.insertBefore(container, gamesGrid);
+    } else {
+      catalogSection.appendChild(container);
+    }
+
+    container.addEventListener("click", (e) => {
+      const card = e.target.closest(".curated-mix-card");
+      if (!card) return;
+      const mixId = card.getAttribute("data-mix-id");
+      const mix = CURATED_MIXES.find(m => m.id === mixId);
+      if (!mix) return;
+
+      const isAlreadyActive = card.classList.contains("active");
+      document.querySelectorAll(".curated-mix-card").forEach(c => c.classList.remove("active"));
+
+      if (isAlreadyActive) {
+        // Reset filter
+        currentMixFilter = null;
+      } else {
+        card.classList.add("active");
+        currentMixFilter = mix.games;
+      }
+
+      if (typeof renderGames === "function") {
+        renderGames();
+      }
+    });
+
+    if (window.lucide) {
+      try { lucide.createIcons(); } catch (_) {}
     }
   }
+
+  let currentMixFilter = null;
+  injectCuratedMixesCarousel();
