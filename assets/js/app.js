@@ -4580,6 +4580,59 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ========================================================
+  // VISUAL AUDIO WAVEFORM & SFX CAPTION FLASH OVERLAY (#662)
+  // Displays edge flashes and accessible sound caption chips
+  // ========================================================
+  function initA11yAudioCaptions() {
+    let captionContainer = document.getElementById("av-a11y-caption-container");
+    if (!captionContainer) {
+      captionContainer = document.createElement("div");
+      captionContainer.id = "av-a11y-caption-container";
+      captionContainer.className = "av-a11y-caption-container";
+      document.body.appendChild(captionContainer);
+    }
+
+    function showSoundCaption(label, type = "info") {
+      const chip = document.createElement("div");
+      chip.className = `av-sound-caption-chip av-caption-${type}`;
+      chip.textContent = `[${label}]`;
+      captionContainer.appendChild(chip);
+
+      // Trigger visual edge flash on active game modal or body
+      const gameContainer = document.querySelector(".game-container") || document.body;
+      gameContainer.classList.add(`flash-${type}`);
+      setTimeout(() => {
+        gameContainer.classList.remove(`flash-${type}`);
+      }, 350);
+
+      setTimeout(() => {
+        chip.classList.add("fade-out");
+        setTimeout(() => chip.remove(), 400);
+      }, 1500);
+    }
+
+    window.addEventListener("message", (e) => {
+      if (!e.data || typeof e.data !== "object") return;
+      if (e.data.type === "AV_SFX_EVENT" && e.data.sound) {
+        const sfx = String(e.data.sound).toLowerCase();
+        if (sfx.includes("hit") || sfx.includes("damage") || sfx.includes("explosion")) {
+          showSoundCaption(e.data.sound, "danger");
+        } else if (sfx.includes("powerup") || sfx.includes("score") || sfx.includes("coin")) {
+          showSoundCaption(e.data.sound, "success");
+        } else {
+          showSoundCaption(e.data.sound, "info");
+        }
+      }
+    });
+
+    window.ArcadeA11y = {
+      showCaption: showSoundCaption
+    };
+  }
+
+  initA11yAudioCaptions();
+
   // Universal Virtual Touch Controller Loader (#517)
   if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
     if (!document.querySelector('script[src*="virtual-controller.js"]')) {
