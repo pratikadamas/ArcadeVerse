@@ -1314,6 +1314,49 @@
           recordedChunks = [];
         }
       };
+    },
+
+    // ========================================================
+    // HRTF 3D SPATIAL AUDIO PANNER SUBSYSTEM (#569)
+    // Head-Related Transfer Function binaural positioning for stereo gamers
+    // ========================================================
+    createSpatialPanner: function (audioCtx, options) {
+      if (!audioCtx) return null;
+      options = options || {};
+
+      var panner = audioCtx.createPanner();
+      if ('panningModel' in panner) {
+        panner.panningModel = 'HRTF';
+      }
+      if ('distanceModel' in panner) {
+        panner.distanceModel = 'inverse';
+      }
+      panner.refDistance = options.refDistance || 100;
+      panner.maxDistance = options.maxDistance || 1000;
+      panner.rolloffFactor = options.rolloffFactor || 1;
+      panner.coneInnerAngle = options.coneInnerAngle || 360;
+      panner.coneOuterAngle = options.coneOuterAngle || 360;
+
+      return {
+        node: panner,
+        /**
+         * Updates emitter position relative to screen center or player
+         * @param {number} x - Relative horizontal offset (-1.0 to 1.0 or pixel delta)
+         * @param {number} y - Relative vertical offset (-1.0 to 1.0 or pixel delta)
+         * @param {number} [z] - Relative depth (default -0.5)
+         */
+        setPosition: function (x, y, z) {
+          z = typeof z === 'number' ? z : -0.5;
+          if (panner.positionX) {
+            panner.positionX.setValueAtTime(x, audioCtx.currentTime);
+            panner.positionY.setValueAtTime(y, audioCtx.currentTime);
+            panner.positionZ.setValueAtTime(z, audioCtx.currentTime);
+          } else if (typeof panner.setPosition === 'function') {
+            panner.setPosition(x, y, z);
+          }
+        }
+      };
+    }
     }
   };
 });
