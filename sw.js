@@ -2,6 +2,7 @@
  * ArcadeVerse - Service Worker Engine (PWA & Offline Shell)
  * Provides offline caching, stale-while-revalidate asset delivery,
  * and graceful fallback for hub pages and previously played local games.
+ * Includes skipWaiting handling for PWA update available banner (#555).
  *
  * NSOC Winter Edition 2026
  */
@@ -69,7 +70,6 @@ self.addEventListener('install', (event) => {
           );
         }
       })
-      .then(() => self.skipWaiting())
   );
 });
 
@@ -165,7 +165,7 @@ self.addEventListener('fetch', (event) => {
  * Message listener for lifecycle commands (e.g. manual skipWaiting)
  */
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
+  if (event.data && (event.data.type === 'SKIP_WAITING' || event.data.action === 'skipWaiting')) {
     self.skipWaiting();
   }
 });

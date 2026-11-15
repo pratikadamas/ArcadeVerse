@@ -4200,6 +4200,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initURLDeepLinking();
   initControlsLegend();
   initMultiChannelAudioMixer();
+  initPwaUpdateNotifier();
 });
 
   // ========================================================
@@ -4868,4 +4869,109 @@ document.addEventListener("DOMContentLoaded", () => {
         AvAudioMixer.broadcastConfig();
       }
     });
+  }
+
+  // ========================================================
+  // NON-INTRUSIVE PWA UPDATE AVAILABLE NOTIFIER & SKIPWAITING (#555)
+  // Detects waiting service worker and triggers smooth reload
+  // ========================================================
+  function initPwaUpdateNotifier() {
+    if (!('serviceWorker' in navigator)) return;
+
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').then((registration) => {
+        // If a worker is already waiting, prompt immediately
+        if (registration.waiting) {
+          showUpdateAvailableBanner(registration.waiting);
+          return;
+        }
+
+        // Listen for new worker installs
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (!newWorker) return;
+
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              showUpdateAvailableBanner(newWorker);
+            }
+          });
+        });
+      }).catch((err) => {
+        console.warn('[ArcadeVerse:PWA] Service Worker registration failed:', err);
+      });
+    });
+  }
+
+  function showUpdateAvailableBanner(worker) {
+    if (document.getElementById('av-update-toast-banner')) return;
+
+    let container = document.getElementById('av-update-toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'av-update-toast-container';
+      container.className = 'av-update-toast-container';
+      container.setAttribute('aria-live', 'polite');
+      container.setAttribute('role', 'status');
+      document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.id = 'av-update-toast-banner';
+    toast.className = 'av-update-toast';
+    toast.innerHTML = `
+      <div class="av-update-toast-content">
+        <div class="av-update-icon-glow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+        </div>
+        <div class="av-update-text-group">
+          <span class="av-update-title">New Arcade Update Available!</span>
+          <span class="av-update-subtitle">A new release is ready with fresh games and features.</span>
+        </div>
+      </div>
+      <div class="av-update-actions">
+        <button type="button" class="btn-update-now" id="btn-pwa-update-now">Update Now</button>
+        <button type="button" class="btn-update-dismiss" id="btn-pwa-update-dismiss" aria-label="Dismiss update notice">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    `;
+
+    container.appendChild(toast);
+
+    // Trigger animation
+    requestAnimationFrame(() => {
+      toast.classList.add('visible');
+    });
+
+    const updateBtn = toast.querySelector('#btn-pwa-update-now');
+    if (updateBtn) {
+      updateBtn.addEventListener('click', () => {
+        updateBtn.disabled = true;
+        updateBtn.textContent = 'Updating...';
+        if (worker) {
+          worker.postMessage({ action: 'skipWaiting' });
+        }
+      });
+    }
+
+    const dismissBtn = toast.querySelector('#btn-pwa-update-dismiss');
+    if (dismissBtn) {
+      dismissBtn.addEventListener('click', () => {
+        toast.classList.remove('visible');
+        setTimeout(() => toast.remove(), 400);
+      });
+    }
   }
