@@ -129,11 +129,12 @@ body {
 .canvas-viewport {
   position: relative;
   width: 100%;
-  aspect-ratio: 640 / 420;
+  aspect-ratio: 1 / 1;
   background: #020617;
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow: hidden;
 }
 
 #flightCanvas {
