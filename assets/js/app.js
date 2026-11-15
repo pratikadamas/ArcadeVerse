@@ -4580,6 +4580,29 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ========================================================
+  // STRICT CONTENT SECURITY POLICY (CSP) META TAG AUDIT (#664)
+  // Dynamic runtime CSP audit & iframe sandbox hardening
+  // ========================================================
+  function initCspRuntimeAudit() {
+    // Audit active meta tags for Content-Security-Policy
+    const existingCsp = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+    if (!existingCsp) {
+      const cspMeta = document.createElement("meta");
+      cspMeta.httpEquiv = "Content-Security-Policy";
+      cspMeta.content = "default-src 'self' blob: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' data: blob:; connect-src 'self' blob:; frame-src 'self' blob:;";
+      document.head.appendChild(cspMeta);
+    }
+
+    // Harden iframe sandbox attributes
+    const gameIframe = document.getElementById("game-iframe");
+    if (gameIframe && !gameIframe.getAttribute("sandbox")) {
+      gameIframe.setAttribute("sandbox", "allow-scripts allow-same-origin allow-pointer-lock");
+    }
+  }
+
+  initCspRuntimeAudit();
+
   // Universal Virtual Touch Controller Loader (#517)
   if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
     if (!document.querySelector('script[src*="virtual-controller.js"]')) {
