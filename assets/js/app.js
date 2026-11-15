@@ -1543,6 +1543,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       card.innerHTML = `
         <div class="game-card-preview">
+          <canvas class="card-micro-preview-canvas" width="280" height="140"></canvas>
           <span class="game-category-tag">${safeCategory}</span>
           ${halloweenBadgeHtml}
           <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
@@ -1653,6 +1654,70 @@ document.addEventListener("DOMContentLoaded", () => {
           e.stopPropagation();
         });
       }
+
+      // Interactive Micro-Preview Particle Animation on Hover (#588)
+      const previewCanvas = card.querySelector(".card-micro-preview-canvas");
+      let microAnimId = null;
+      let microParticles = [];
+
+      card.addEventListener("pointerenter", () => {
+        if (!previewCanvas) return;
+        const pctx = previewCanvas.getContext("2d");
+        if (!pctx) return;
+        previewCanvas.style.opacity = "1";
+
+        microParticles = [];
+        const color = (game.category || "").toLowerCase().includes("action") ? "#ef4444" :
+                      (game.category || "").toLowerCase().includes("puzzle") ? "#a855f7" :
+                      (game.category || "").toLowerCase().includes("strategy") ? "#10b981" : "#38bdf8";
+
+        for (let i = 0; i < 22; i++) {
+          microParticles.push({
+            x: Math.random() * previewCanvas.width,
+            y: Math.random() * previewCanvas.height,
+            vx: (Math.random() - 0.5) * 1.8,
+            vy: (Math.random() - 0.5) * 1.8,
+            size: Math.random() * 3 + 1,
+            color: color
+          });
+        }
+
+        const startTime = Date.now();
+        function loopPreview() {
+          if (Date.now() - startTime > 3000) {
+            cancelAnimationFrame(microAnimId);
+            return;
+          }
+          pctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+          pctx.fillStyle = color;
+          for (const pt of microParticles) {
+            pt.x += pt.vx;
+            pt.y += pt.vy;
+            if (pt.x < 0) pt.x = previewCanvas.width;
+            if (pt.x > previewCanvas.width) pt.x = 0;
+            if (pt.y < 0) pt.y = previewCanvas.height;
+            if (pt.y > previewCanvas.height) pt.y = 0;
+
+            pctx.beginPath();
+            pctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+            pctx.fill();
+          }
+          microAnimId = requestAnimationFrame(loopPreview);
+        }
+        loopPreview();
+      });
+
+      card.addEventListener("pointerleave", () => {
+        if (microAnimId) {
+          cancelAnimationFrame(microAnimId);
+          microAnimId = null;
+        }
+        if (previewCanvas) {
+          const pctx = previewCanvas.getContext("2d");
+          if (pctx) pctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+          previewCanvas.style.opacity = "0";
+        }
+      });
 
       // Only clicking the dedicated Play Now button launches the game modal
       gamesGrid.appendChild(card);
