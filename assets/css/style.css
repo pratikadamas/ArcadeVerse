@@ -11356,3 +11356,65 @@ html.a11y-reduced-motion .search-clear-btn {
   width: 100%;
 }
 
+/* ===================================================
+   ACHIEVEMENTS SYSTEM & UNLOCK TOAST (#657)
+   =================================================== */
+
+.achievement-toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid #f59e0b;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8), 0 0 20px rgba(245, 158, 11, 0.3);
+  z-index: 100000;
+  transform: translateX(120%);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #f8fafc;
+  max-width: 380px;
+}
+
+.achievement-toast.visible {
+  transform: translateX(0);
+}
+
+.achievement-toast-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  background: rgba(245, 158, 11, 0.15);
+  border-radius: 10px;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.achievement-toast-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.achievement-toast-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #f59e0b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.achievement-toast-title {
+  font-size: 0.95rem;
+  color: #f8fafc;
+  margin: 0.1rem 0;
+}
+
+.achievement-toast-desc {
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
