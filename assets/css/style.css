@@ -11552,4 +11552,57 @@ html.a11y-reduced-motion .search-clear-btn {
   transform: scale(1.2);
 }
 
+/* ===================================================
+   MODAL RECOMMENDATION STRIP (#591)
+   =================================================== */
 
+.modal-recommendations-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.5rem 1rem;
+  background: rgba(15, 23, 42, 0.95);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.82rem;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.rec-strip-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+  color: var(--text-muted, #94a3b8);
+}
+
+.rec-chips-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rec-game-chip {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 6px;
+  color: #f8fafc;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.rec-game-chip:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: #3b82f6;
+  color: #38bdf8;
+}
+
+.rec-game-chip small {
+  color: #94a3b8;
+  font-size: 0.72rem;
+}
