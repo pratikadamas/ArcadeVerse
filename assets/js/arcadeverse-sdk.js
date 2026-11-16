@@ -126,6 +126,73 @@
       }
     },
 
+    // ========================================================
+    // CLIENT-SIDE ANTI-TAMPER CHECKSUM SIGNATURES (#576)
+    // HMAC/SHA-256 Checksum generation and verification for game scores
+    // ========================================================
+    /**
+     * Computes anti-tamper signature for a submitted score
+     * @param {string} gameId
+     * @param {number} score
+     * @param {number} timestamp
+     * @returns {Promise<string>} Hex signature
+     */
+    generateScoreSignature: function (gameId, score, timestamp) {
+      var payload = "av_salt_2026_" + String(gameId) + ":" + String(score) + ":" + String(timestamp);
+      if (typeof crypto !== 'undefined' && crypto.subtle && typeof TextEncoder !== 'undefined') {
+        var encoder = new TextEncoder();
+        var data = encoder.encode(payload);
+        return crypto.subtle.digest("SHA-256", data).then(function (buffer) {
+          var hashArray = Array.from(new Uint8Array(buffer));
+          return hashArray.map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+        }).catch(function () {
+          return "fallback_" + Math.abs(payload.split("").reduce(function (a, b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0)).toString(16);
+        });
+      }
+      var simpleHash = Math.abs(payload.split("").reduce(function (a, b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0)).toString(16);
+      return Promise.resolve("fallback_" + simpleHash);
+    },
+
+    /**
+     * Stores a validated high score with its tamper signature
+     */
+    saveSignedScore: function (gameId, score) {
+      var self = this;
+      var ts = Date.now();
+      return this.generateScoreSignature(gameId, score, ts).then(function (sig) {
+        var record = {
+          gameId: gameId,
+          score: Number(score),
+          timestamp: ts,
+          signature: sig
+        };
+        self.setJSON("signed_score", record);
+        self.setItem("highScore", String(score));
+        return record;
+      });
+    },
+
+    /**
+     * Verifies stored score against signature. Resets score to 0 if tampered.
+     */
+    verifySignedScore: function (gameId) {
+      var self = this;
+      var record = this.getJSON("signed_score", null);
+      if (!record || typeof record.score !== 'number' || !record.signature) {
+        return Promise.resolve({ valid: true, score: Number(self.getItem("highScore") || 0) });
+      }
+      return this.generateScoreSignature(gameId, record.score, record.timestamp).then(function (expectedSig) {
+        if (record.signature === expectedSig) {
+          return { valid: true, score: record.score };
+        } else {
+          console.warn("[AntiCheat] Tampering detected in score storage for " + gameId + "! Resetting score.");
+          self.setItem("highScore", "0");
+          self.removeItem("signed_score");
+          return { valid: false, score: 0 };
+        }
+      });
+    },
+
     /**
      * Transparent Storage Interceptor
      * Automatically traps raw localStorage calls for legacy game scripts
@@ -1379,6 +1446,86 @@
           recordedChunks = [];
         }
       };
+    },
+
+    // ========================================================
+    // POINTER LOCK API INTEGRATION SUBSYSTEM (#573)
+    // First-person & precision crosshair aiming with ESC release HUD
+    // ========================================================
+    /**
+     * Binds HTML5 Pointer Lock API to a game canvas.
+     * @param {HTMLCanvasElement} canvas - Target game canvas
+     * @param {Object} options - Configuration options
+     * @param {Function} options.onMove - Callback with (movementX, movementY, e)
+     * @param {Function} [options.onLockChange] - Callback with (isLocked)
+     * @param {number} [options.sensitivity=1.0] - Mouse sensitivity multiplier
+     * @returns {{ requestLock: Function, exitLock: Function, isLocked: Function }}
+     */
+    initPointerLock: function (canvas, options) {
+      if (!canvas) return null;
+      var opts = options || {};
+      var sensitivity = typeof opts.sensitivity === 'number' ? opts.sensitivity : 1.0;
+      var onMove = typeof opts.onMove === 'function' ? opts.onMove : function () {};
+      var onLockChange = typeof opts.onLockChange === 'function' ? opts.onLockChange : function () {};
+
+      // Create HUD pill if not already present
+      var hud = document.getElementById('av-pointer-lock-hud');
+      if (!hud) {
+        hud = document.createElement('div');
+        hud.id = 'av-pointer-lock-hud';
+        hud.setAttribute('role', 'status');
+        hud.setAttribute('aria-live', 'polite');
+        hud.innerHTML = '<span class="hud-dot"></span><span>Pointer Locked &mdash; Press <kbd>ESC</kbd> to Release</span>';
+        hud.style.cssText = 'position:fixed;top:1rem;left:50%;transform:translateX(-50%);background:rgba(15,23,42,0.92);border:1px solid #38bdf8;box-shadow:0 0 15px rgba(56,189,248,0.3);color:#f8fafc;padding:0.4rem 0.9rem;border-radius:20px;font-size:0.8rem;font-weight:600;display:none;align-items:center;gap:0.5rem;z-index:99999;pointer-events:none;transition:opacity 0.25s ease;';
+        document.body.appendChild(hud);
+      }
+
+      function handleMouseMove(e) {
+        if (document.pointerLockElement === canvas) {
+          var mx = (e.movementX || 0) * sensitivity;
+          var my = (e.movementY || 0) * sensitivity;
+          onMove(mx, my, e);
+        }
+      }
+
+      function handleLockChange() {
+        var locked = document.pointerLockElement === canvas;
+        if (hud) {
+          hud.style.display = locked ? 'flex' : 'none';
+        }
+        onLockChange(locked);
+      }
+
+      document.addEventListener('pointerlockchange', handleLockChange);
+      document.addEventListener('mousemove', handleMouseMove);
+
+      return {
+        requestLock: function () {
+          try {
+            if (canvas.requestPointerLock) {
+              canvas.requestPointerLock();
+            }
+          } catch (_) {}
+        },
+        exitLock: function () {
+          try {
+            if (document.exitPointerLock) {
+              document.exitPointerLock();
+            }
+          } catch (_) {}
+        },
+        isLocked: function () {
+          return document.pointerLockElement === canvas;
+        },
+        destroy: function () {
+          document.removeEventListener('pointerlockchange', handleLockChange);
+          document.removeEventListener('mousemove', handleMouseMove);
+          if (hud && hud.parentElement) {
+            hud.remove();
+          }
+        }
+      };
+    }
     }
   };
 });

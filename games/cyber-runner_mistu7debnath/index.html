@@ -6,7 +6,6 @@
   <title>Cyber Runner: Neon Rush | ArcadeVerse</title>
   <meta name="description" content="Dash through a futuristic neon metropolis across three lanes. Jump obstacles, slide under laser barriers, collect energy cores, and beat your best score.">
   <link rel="stylesheet" href="style.css">
-  <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Favicon and Brand Icons -->
   <link rel="icon" type="image/x-icon" href="../../assets/public/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="../../assets/public/favicon-32x32.png">
@@ -21,10 +20,10 @@
       <header class="crnr-hud" id="crnr-hud" aria-label="Game Heads Up Display">
         <div class="crnr-hud-left">
           <button id="crnr-btn-sound" class="crnr-hud-btn" type="button" aria-label="Toggle sound (M)" title="Toggle Sound (M)">
-            <span class="crnr-icon-wrapper" id="crnr-sound-icon"><i data-lucide="volume-2"></i></span>
+            <span class="crnr-icon-wrapper" id="crnr-sound-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg></span>
           </button>
           <button id="crnr-btn-pause" class="crnr-hud-btn" type="button" aria-label="Pause game (P / ESC)" title="Pause Game (P / ESC)">
-            <span class="crnr-icon-wrapper" id="crnr-pause-icon"><i data-lucide="pause"></i></span>
+            <span class="crnr-icon-wrapper" id="crnr-pause-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg></span>
           </button>
         </div>
 
@@ -128,18 +127,18 @@
           </div>
 
           <div class="crnr-best-record-banner">
-            <span class="crnr-record-icon"><i data-lucide="trophy"></i></span>
+            <span class="crnr-record-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg></span>
             <span>PERSONAL BEST: <strong id="crnr-start-best">0</strong> PTS</span>
           </div>
 
           <!-- Action Buttons -->
           <div class="crnr-btn-group">
             <button id="crnr-btn-play" class="crnr-btn crnr-btn-primary" type="button">
-              <span class="crnr-btn-icon"><i data-lucide="play"></i></span>
+              <span class="crnr-btn-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></span>
               <span>INITIATE RUN</span>
             </button>
             <button id="crnr-btn-how-to-play" class="crnr-btn crnr-btn-secondary" type="button">
-              <span class="crnr-btn-icon"><i data-lucide="help-circle"></i></span>
+              <span class="crnr-btn-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></span>
               <span>HOW TO PLAY</span>
             </button>
           </div>
@@ -176,19 +175,19 @@
 
           <div class="crnr-btn-group">
             <button id="crnr-btn-resume" class="crnr-btn crnr-btn-primary" type="button">
-              <span class="crnr-btn-icon"><i data-lucide="play"></i></span>
+              <span class="crnr-btn-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></span>
               <span>RESUME RUN</span>
             </button>
             <button id="crnr-btn-restart-pause" class="crnr-btn crnr-btn-secondary" type="button">
-              <span class="crnr-btn-icon"><i data-lucide="rotate-ccw"></i></span>
+              <span class="crnr-btn-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 .49-3.68"></path></svg></span>
               <span>RESTART RUN</span>
             </button>
             <button id="crnr-btn-instructions-pause" class="crnr-btn crnr-btn-tertiary" type="button">
-              <span class="crnr-btn-icon"><i data-lucide="help-circle"></i></span>
+              <span class="crnr-btn-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></span>
               <span>CONTROLS & RULES</span>
             </button>
             <button id="crnr-btn-menu-pause" class="crnr-btn crnr-btn-ghost" type="button">
-              <span class="crnr-btn-icon"><i data-lucide="home"></i></span>
+              <span class="crnr-btn-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></span>
               <span>MAIN MENU</span>
             </button>
           </div>
@@ -206,9 +205,9 @@
 
           <!-- New Record Badge (Hidden by default, shown when record broken) -->
           <div class="crnr-new-record-badge" id="crnr-new-record-badge" style="display: none;">
-            <span class="crnr-badge-sparkle"><i data-lucide="sparkles"></i></span>
+            <span class="crnr-badge-sparkle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path><path d="M5 3v4"></path><path d="M19 17v4"></path><path d="M3 5h4"></path><path d="M17 19h4"></path></svg></span>
             <span>NEW ALL-TIME RECORD!</span>
-            <span class="crnr-badge-sparkle"><i data-lucide="sparkles"></i></span>
+            <span class="crnr-badge-sparkle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path><path d="M5 3v4"></path><path d="M19 17v4"></path><path d="M3 5h4"></path><path d="M17 19h4"></path></svg></span>
           </div>
 
           <div class="crnr-stats-grid">
@@ -232,15 +231,15 @@
 
           <div class="crnr-btn-group">
             <button id="crnr-btn-restart" class="crnr-btn crnr-btn-primary" type="button">
-              <span class="crnr-btn-icon"><i data-lucide="rotate-ccw"></i></span>
+              <span class="crnr-btn-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 .49-3.68"></path></svg></span>
               <span>RUN AGAIN (ENTER)</span>
             </button>
             <button id="crnr-btn-how-to-play-gameover" class="crnr-btn crnr-btn-secondary" type="button">
-              <span class="crnr-btn-icon"><i data-lucide="help-circle"></i></span>
+              <span class="crnr-btn-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></span>
               <span>HOW TO PLAY</span>
             </button>
             <button id="crnr-btn-menu-gameover" class="crnr-btn crnr-btn-ghost" type="button">
-              <span class="crnr-btn-icon"><i data-lucide="home"></i></span>
+              <span class="crnr-btn-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></span>
               <span>MAIN MENU</span>
             </button>
           </div>
@@ -252,18 +251,18 @@
         <div class="crnr-modal-content">
           <header class="crnr-modal-header">
             <div class="crnr-modal-title-wrap">
-              <span class="crnr-modal-icon"><i data-lucide="shield-alert"></i></span>
+              <span class="crnr-modal-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg></span>
               <h2 class="crnr-modal-title" id="crnr-modal-title">MISSION PROTOCOL: HOW TO PLAY</h2>
             </div>
             <button id="crnr-btn-close-modal" class="crnr-modal-close" type="button" aria-label="Close instructions modal">
-              <i data-lucide="x"></i>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
           </header>
 
           <div class="crnr-modal-body">
             <!-- Objective -->
             <section class="crnr-modal-section">
-              <h3 class="crnr-section-title"><i data-lucide="target"></i> MISSION OBJECTIVE</h3>
+              <h3 class="crnr-section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg> MISSION OBJECTIVE</h3>
               <p class="crnr-section-text">
                 Pilot the cyber runner forward along the <strong>three-lane neon highway</strong>. 
                 React with split-second timing to steer between lanes, leap over ground barriers, and slide under overhead laser grids. 
@@ -273,7 +272,7 @@
 
             <!-- Controls Table -->
             <section class="crnr-modal-section">
-              <h3 class="crnr-section-title"><i data-lucide="gamepad-2"></i> NEURAL CONTROLS</h3>
+              <h3 class="crnr-section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="11" x2="10" y2="11"></line><line x1="8" y1="9" x2="8" y2="13"></line><line x1="15" y1="12" x2="15.01" y2="12"></line><line x1="18" y1="10" x2="18.01" y2="10"></line><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"></path></svg> NEURAL CONTROLS</h3>
               <div class="crnr-controls-table">
                 <div class="crnr-control-row">
                   <div class="crnr-control-key"><kbd>A</kbd> / <kbd>←</kbd></div>
@@ -304,7 +303,7 @@
                   <div class="crnr-control-desc">Start or Quick Restart</div>
                 </div>
                 <div class="crnr-control-row">
-                  <div class="crnr-control-key"><i data-lucide="smartphone"></i> Touchscreen</div>
+                  <div class="crnr-control-key"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect><path d="M12 18h.01"></path></svg> Touchscreen</div>
                   <div class="crnr-control-desc">Swipe Gestures or On-Screen Virtual Buttons</div>
                 </div>
               </div>
@@ -312,11 +311,11 @@
 
             <!-- Threat Analysis / Obstacles Guide -->
             <section class="crnr-modal-section">
-              <h3 class="crnr-section-title"><i data-lucide="alert-triangle"></i> THREAT IDENTIFICATION</h3>
+              <h3 class="crnr-section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> THREAT IDENTIFICATION</h3>
               <div class="crnr-threats-grid">
                 <div class="crnr-threat-card">
                   <div class="crnr-threat-icon crnr-threat-jump">
-                    <i data-lucide="arrow-up"></i>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
                   </div>
                   <div class="crnr-threat-info">
                     <strong>Ground Barrier</strong>
@@ -327,7 +326,7 @@
 
                 <div class="crnr-threat-card">
                   <div class="crnr-threat-icon crnr-threat-slide">
-                    <i data-lucide="arrow-down"></i>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
                   </div>
                   <div class="crnr-threat-info">
                     <strong>Overhead Laser</strong>
@@ -338,7 +337,7 @@
 
                 <div class="crnr-threat-card">
                   <div class="crnr-threat-icon crnr-threat-steer">
-                    <i data-lucide="arrow-left-right"></i>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="17 8 21 12 17 16"></polyline><line x1="3" y1="12" x2="21" y2="12"></line><polyline points="7 16 3 12 7 8"></polyline></svg>
                   </div>
                   <div class="crnr-threat-info">
                     <strong>Firewall Blocker</strong>
@@ -349,7 +348,7 @@
 
                 <div class="crnr-threat-card">
                   <div class="crnr-threat-icon crnr-threat-coin">
-                    <i data-lucide="zap"></i>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                   </div>
                   <div class="crnr-threat-info">
                     <strong>Energy Core</strong>
@@ -362,7 +361,7 @@
 
             <!-- Scoring breakdown -->
             <section class="crnr-modal-section">
-              <h3 class="crnr-section-title"><i data-lucide="award"></i> SCORING FORMULA</h3>
+              <h3 class="crnr-section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="6"></circle><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path></svg> SCORING FORMULA</h3>
               <p class="crnr-section-text">
                 Score increases with distance traveled (1 point per meter) plus <strong>50 bonus points</strong> for every energy core harvested. 
                 Speed ramps up smoothly over time—test your reflexes!
@@ -372,7 +371,7 @@
 
           <footer class="crnr-modal-footer">
             <button id="crnr-btn-confirm-modal" class="crnr-btn crnr-btn-primary" type="button">
-              <span class="crnr-btn-icon"><i data-lucide="check"></i></span>
+              <span class="crnr-btn-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 12 4 16"></polyline></svg></span>
               <span>READY TO RUN</span>
             </button>
           </footer>
@@ -383,19 +382,19 @@
       <div class="crnr-touch-controls" id="crnr-touch-controls" aria-label="Mobile Touch Controls">
         <div class="crnr-touch-steer">
           <button id="crnr-touch-left" class="crnr-touch-btn" type="button" aria-label="Steer Left">
-            <i data-lucide="chevron-left"></i>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </button>
           <button id="crnr-touch-right" class="crnr-touch-btn" type="button" aria-label="Steer Right">
-            <i data-lucide="chevron-right"></i>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </button>
         </div>
         <div class="crnr-touch-actions">
           <button id="crnr-touch-jump" class="crnr-touch-btn crnr-touch-btn-action" type="button" aria-label="Jump">
-            <i data-lucide="arrow-up"></i>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
             <span class="crnr-touch-label">JUMP</span>
           </button>
           <button id="crnr-touch-slide" class="crnr-touch-btn crnr-touch-btn-action" type="button" aria-label="Slide">
-            <i data-lucide="arrow-down"></i>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
             <span class="crnr-touch-label">SLIDE</span>
           </button>
         </div>
