@@ -491,8 +491,24 @@ const IS_STRICT = CLI_ARGS.includes('--strict-assets');
 const IS_STRICT_CDN = CLI_ARGS.includes('--strict-cdn');
 const IS_AUDIT_HUB = CLI_ARGS.includes('--audit-hub');
 const SUMMARY_JSON_PATH = (() => {
+  // Support --summary-json=<path>
+  const eqArg = CLI_ARGS.find(arg => arg.startsWith('--summary-json='));
+  if (eqArg) {
+    const val = eqArg.slice('--summary-json='.length).trim();
+    return val || 'summary.json';
+  }
+
+  // Support --summary-json [path]
   const idx = CLI_ARGS.indexOf('--summary-json');
-  return idx !== -1 && CLI_ARGS[idx + 1] ? CLI_ARGS[idx + 1] : null;
+  if (idx !== -1) {
+    const nextArg = CLI_ARGS[idx + 1];
+    if (nextArg && !nextArg.startsWith('--')) {
+      return nextArg.trim();
+    }
+    return 'summary.json';
+  }
+
+  return null;
 })();
 
 const auditTelemetry = {
@@ -527,6 +543,8 @@ if (IS_AUDIT_HUB) {
 }
 
 folders.forEach(folder => {
+  const prevErrors = totalErrors;
+  const prevWarnings = totalWarnings;
   const gamePath = path.join(GAMES_DIR, folder);
   const issues = [];
   const isGameTouched = isPrBranch && (
@@ -637,11 +655,50 @@ folders.forEach(folder => {
     console.log(`  ⚠️ [AUDIT] ${folder}`);
     issues.forEach(msg => console.log(`      ${msg}`));
   }
+
+  const gameErrors = totalErrors - prevErrors;
+  const gameWarnings = totalWarnings - prevWarnings;
+  const status = gameErrors > 0 ? 'FAIL' : (gameWarnings > 0 ? 'WARN' : 'PASS');
+
+  auditTelemetry.gameReports.push({
+    game: folder,
+    status: status,
+    errors: gameErrors,
+    warnings: gameWarnings,
+    issues: [...issues]
+  });
 });
 
 console.log('\n========================================================');
 console.log(`Audited ${folders.length} games: ${totalErrors} Errors, ${totalWarnings} Warnings`);
 console.log('========================================================\n');
+
+function writeSummaryJsonReport() {
+  if (!SUMMARY_JSON_PATH) return;
+
+  auditTelemetry.totalErrors = totalErrors;
+  auditTelemetry.totalWarnings = totalWarnings;
+  auditTelemetry.passed = auditTelemetry.gameReports.filter(r => r.status === 'PASS').length;
+  auditTelemetry.warned = auditTelemetry.gameReports.filter(r => r.status === 'WARN').length;
+  auditTelemetry.failed = auditTelemetry.gameReports.filter(r => r.status === 'FAIL').length;
+
+  const targetPath = path.isAbsolute(SUMMARY_JSON_PATH)
+    ? SUMMARY_JSON_PATH
+    : path.resolve(ROOT_DIR, SUMMARY_JSON_PATH);
+
+  try {
+    const parentDir = path.dirname(targetPath);
+    if (!fs.existsSync(parentDir)) {
+      fs.mkdirSync(parentDir, { recursive: true });
+    }
+    fs.writeFileSync(targetPath, JSON.stringify(auditTelemetry, null, 2), 'utf8');
+    console.log(`Summary report written to: ${path.relative(ROOT_DIR, targetPath) || targetPath}`);
+  } catch (err) {
+    console.error(`Failed to write summary JSON report to "${targetPath}": ${err.message}`);
+  }
+}
+
+writeSummaryJsonReport();
 
 if (totalErrors > 0) {
   console.error('❌ Validation failed! Please fix the errors listed above before submitting your PR.\n');
