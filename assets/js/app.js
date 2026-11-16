@@ -10,6 +10,64 @@ document.addEventListener("DOMContentLoaded", () => {
     metaViewport.content += ", viewport-fit=cover";
   }
 
+  // ========================================================
+  // ACCESSIBILITY (A11Y) LIVE REGION ANNOUNCER ENGINE (#725)
+  // Dynamic aria-live status announcer for NVDA, VoiceOver, and JAWS
+  // WCAG 4.1.3 (Status Messages) compliant
+  // ========================================================
+  function getOrCreateA11yAnnouncer() {
+    let announcer = document.getElementById("a11y-announcer");
+    if (!announcer) {
+      announcer = document.createElement("div");
+      announcer.id = "a11y-announcer";
+      announcer.className = "sr-only";
+      announcer.setAttribute("aria-live", "polite");
+      announcer.setAttribute("aria-atomic", "true");
+      announcer.style.position = "absolute";
+      announcer.style.width = "1px";
+      announcer.style.height = "1px";
+      announcer.style.padding = "0";
+      announcer.style.margin = "-1px";
+      announcer.style.overflow = "hidden";
+      announcer.style.clip = "rect(0, 0, 0, 0)";
+      announcer.style.whiteSpace = "nowrap";
+      announcer.style.border = "0";
+      if (document.body) {
+        document.body.appendChild(announcer);
+      } else {
+        document.addEventListener("DOMContentLoaded", () => {
+          if (!document.getElementById("a11y-announcer")) {
+            document.body.appendChild(announcer);
+          }
+        });
+      }
+    }
+    return announcer;
+  }
+
+  function announceToScreenReader(message, priority = "polite") {
+    if (!message || typeof message !== "string") return;
+    const announcer = getOrCreateA11yAnnouncer();
+    if (!announcer) return;
+
+    if (priority === "assertive") {
+      announcer.setAttribute("aria-live", "assertive");
+    } else {
+      announcer.setAttribute("aria-live", "polite");
+    }
+
+    // Clear prior content to guarantee mutation trigger across VoiceOver & NVDA
+    announcer.textContent = "";
+    setTimeout(() => {
+      announcer.textContent = message;
+    }, 50);
+  }
+
+  // Mount persistent announcer element immediately
+  getOrCreateA11yAnnouncer();
+  window.announceToScreenReader = announceToScreenReader;
+
+
   const gamesGrid = document.getElementById("games-grid");
   const totalGamesCount = document.getElementById("total-games-count");
   const totalContributorsCount = document.getElementById("total-contributors-count");
@@ -2099,7 +2157,7 @@ document.addEventListener("DOMContentLoaded", () => {
     modalGameAuthor.textContent = `Built by @${game.author}`;
     lastAnnouncedScore = 0;
     lastScoreAnnouncementTime = Date.now();
-    announceToScreenReader(`Launching ${game.title}. Category: ${game.category}. Built by ${game.author}.`);
+    announceToScreenReader(`Now playing ${game.title} by ${game.author}. Press Escape to pause or exit.`);
     startIframeTimeout(game);
 
     // Storage Isolation Bridge: Pass gameId via URL parameter so SDK attaches namespaced proxy (#493, #824)
@@ -2255,6 +2313,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       quitDialog.querySelector("#btn-quit-keep-playing").addEventListener("click", () => {
         hideQuitConfirmationModal();
+        announceToScreenReader("Game resumed.");
         if (gameIframe && gameIframe.contentWindow) {
           try {
             gameIframe.contentWindow.focus();
@@ -2276,6 +2335,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Pause game runtime while confirmation prompt is open
+    announceToScreenReader("Game paused.");
     if (gameIframe && gameIframe.contentWindow) {
       try {
         gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
@@ -2293,6 +2353,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeGameModal(isFromPopState = false) {
     if (!gameModal || (!gameModal.classList.contains("active") && !activeGame)) return;
+    announceToScreenReader("Game closed. Returned to game catalog.");
     if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.closeMenu === "function") {
       window.GameSpeedRegulator.closeMenu();
     }
@@ -2628,6 +2689,24 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // Handle game pause/resume events from child games (#725)
+    if (type === "ARCADEVERSE_PAUSE") {
+      announceToScreenReader("Game paused.");
+      return;
+    }
+
+    if (type === "ARCADEVERSE_RESUME") {
+      announceToScreenReader("Game resumed.");
+      return;
+    }
+
+    if (type === "ARCADEVERSE_HIGH_SCORE") {
+      const hsScore = Number(e.data.score || e.data.highScore) || 0;
+      const hsTitle = activeGame ? activeGame.title : "Game";
+      announceToScreenReader(`New high score: ${hsScore} in ${hsTitle}!`, "assertive");
+      return;
+    }
+
     // Handle mobile haptic vibration forwarding from iframe games (#521)
     if (type === "ARCADEVERSE_HAPTIC") {
       try {
@@ -2646,6 +2725,22 @@ document.addEventListener("DOMContentLoaded", () => {
     if (type === "ARCADEVERSE_GAME_SCORE") {
       const score = Number(e.data.score) || 0;
       const now = Date.now();
+
+      // High score tracking & screen reader announcement (#725)
+      if (activeGame && score > 0) {
+        const hsKey = `av_highscore_${activeGame.id}`;
+        let prevHigh = 0;
+        try {
+          prevHigh = Number(localStorage.getItem(hsKey)) || 0;
+        } catch (_) {}
+
+        if (score > prevHigh) {
+          try { localStorage.setItem(hsKey, score); } catch (_) {}
+          if (prevHigh > 0) {
+            announceToScreenReader(`New high score: ${score} in ${activeGame.title}!`, "assertive");
+          }
+        }
+      }
       // Announce milestone scores or periodically (every 5 seconds or on major point jumps) without flooding every frame
       if (typeof announceToScreenReader === "function" && (score >= lastAnnouncedScore + 100 || (now - lastScoreAnnouncementTime > 5000 && score !== lastAnnouncedScore))) {
         announceToScreenReader(`Score: ${score}`);
@@ -2669,7 +2764,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const details = e.data.details || {};
       const finalScore = details.score != null ? details.score : lastAnnouncedScore;
       if (typeof announceToScreenReader === "function") {
-        announceToScreenReader(`Game over. Final score: ${finalScore}.`);
+        if (details.isHighScore) {
+          announceToScreenReader(`New high score: ${finalScore}! Game over. Final score: ${finalScore}.`, "assertive");
+        } else {
+          announceToScreenReader(`Game over. Final score: ${finalScore}.`);
+        }
       }
       window.dispatchEvent(
         new CustomEvent("arcadeverse:game-over", {
@@ -4695,7 +4794,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
     });
-  }
 
     if (window.lucide) {
       try { lucide.createIcons(); } catch (_) {}
@@ -4935,7 +5033,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const vcScript = document.createElement('script');
       vcScript.src = 'assets/js/virtual-controller.js';
       document.body.appendChild(vcScript);
-    }
     }
   }
 
