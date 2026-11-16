@@ -395,9 +395,31 @@
     addRadioLog('CODE RED: Collision reported at Skyway 4 junction. Traffic halted.');
   }
 
+  // Trackpad Pan & Pinch-Zoom Navigation (#575)
+  let viewport = { panX: 0, panY: 0, zoom: 1.0 };
+  if (window.ArcadeVerse && typeof window.ArcadeVerse.initTrackpadPanZoom === 'function') {
+    window.ArcadeVerse.initTrackpadPanZoom(canvas, {
+      minZoom: 0.6,
+      maxZoom: 2.2,
+      onTransform: (t) => {
+        // Clamp panning so map stays in reasonable bounds
+        const maxPan = 150 * t.zoom;
+        viewport.panX = Math.max(-maxPan, Math.min(maxPan, t.panX));
+        viewport.panY = Math.max(-maxPan, Math.min(maxPan, t.panY));
+        viewport.zoom = t.zoom;
+      }
+    });
+  }
+
   // Draw Arena
   function render() {
     ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+    ctx.save();
+    // Center-origin transformation for zoom and pan
+    ctx.translate(CENTER + viewport.panX, CENTER + viewport.panY);
+    ctx.scale(viewport.zoom, viewport.zoom);
+    ctx.translate(-CENTER, -CENTER);
 
     // Dark cyberpunk asphalt
     ctx.fillStyle = '#06090e';
@@ -483,6 +505,9 @@
       ctx.restore();
     });
 
+    // Restore viewport transformation
+    ctx.restore();
+
     animFrameId = requestAnimationFrame(render);
   }
 
@@ -507,8 +532,12 @@
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    const clickX = (e.clientX - rect.left) * scaleX;
-    const clickY = (e.clientY - rect.top) * scaleY;
+    const rawX = (e.clientX - rect.left) * scaleX;
+    const rawY = (e.clientY - rect.top) * scaleY;
+
+    // Invert zoom and pan transformation to locate world coordinates
+    const clickX = (rawX - CENTER - viewport.panX) / viewport.zoom + CENTER;
+    const clickY = (rawY - CENTER - viewport.panY) / viewport.zoom + CENTER;
 
     // Check if clicked any stopped vehicle to give boost
     let vehicleBoosted = false;
