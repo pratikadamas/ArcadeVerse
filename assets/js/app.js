@@ -4759,11 +4759,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-    if (window.lucide) {
-      try { lucide.createIcons(); } catch (_) {}
-    }
-  }
-
   // ========================================================
   // DAILY GAME LOGIN STREAK CALENDAR & XP MULTIPLIER (#659)
   // Calculates consecutive day UTC streak, tracks av_current_streak_days
@@ -4997,7 +4992,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const vcScript = document.createElement('script');
       vcScript.src = 'assets/js/virtual-controller.js';
       document.body.appendChild(vcScript);
-    }
     }
   }
 
