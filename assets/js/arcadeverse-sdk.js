@@ -1446,6 +1446,74 @@
           recordedChunks = [];
         }
       };
+    },
+
+    // ========================================================
+    // PRECISION TRACKPAD TWO-FINGER PAN & PINCH-ZOOM (#575)
+    // Seamless pan & zoom navigation for wide canvas maps
+    // ========================================================
+    /**
+     * Binds trackpad two-finger pan & pinch-zoom to a target canvas/container.
+     * @param {HTMLCanvasElement} canvas
+     * @param {Object} options
+     * @param {number} [options.minZoom=0.5]
+     * @param {number} [options.maxZoom=2.5]
+     * @param {Function} options.onTransform - Callback with ({ panX, panY, zoom })
+     * @returns {{ getState: Function, reset: Function, destroy: Function }}
+     */
+    initTrackpadPanZoom: function (canvas, options) {
+      if (!canvas) return null;
+      var opts = options || {};
+      var minZoom = typeof opts.minZoom === 'number' ? opts.minZoom : 0.5;
+      var maxZoom = typeof opts.maxZoom === 'number' ? opts.maxZoom : 2.5;
+      var onTransform = typeof opts.onTransform === 'function' ? opts.onTransform : function () {};
+
+      var state = {
+        panX: 0,
+        panY: 0,
+        zoom: 1.0
+      };
+
+      function handleWheel(e) {
+        e.preventDefault();
+
+        // Pinch-zoom gesture (trackpad sends wheel event with ctrlKey = true)
+        if (e.ctrlKey) {
+          var zoomFactor = Math.exp(-e.deltaY * 0.01);
+          var nextZoom = Math.max(minZoom, Math.min(maxZoom, state.zoom * zoomFactor));
+          state.zoom = Math.round(nextZoom * 1000) / 1000;
+        } else {
+          // Two-finger trackpad panning (or standard scroll wheel)
+          state.panX -= e.deltaX;
+          state.panY -= e.deltaY;
+        }
+
+        onTransform({
+          panX: state.panX,
+          panY: state.panY,
+          zoom: state.zoom
+        });
+      }
+
+      canvas.addEventListener('wheel', handleWheel, { passive: false });
+
+      return {
+        getState: function () {
+          return { panX: state.panX, panY: state.panY, zoom: state.zoom };
+        },
+        reset: function () {
+          state.panX = 0;
+          state.panY = 0;
+          state.zoom = 1.0;
+          onTransform(state);
+        },
+        destroy: function () {
+          canvas.removeEventListener('wheel', handleWheel);
+        }
+      };
+    }
+        }
+      };
     }
   };
 });
