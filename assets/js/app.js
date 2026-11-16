@@ -4628,92 +4628,52 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ========================================================
-  // MULTI-TAG DYNAMIC FILTER MATRIX (#661)
-  // Dynamic tag intersection filtering with badges & clear button
+  // DAILY GAME LOGIN STREAK CALENDAR & XP MULTIPLIER (#659)
+  // Calculates consecutive day UTC streak, tracks av_current_streak_days
   // ========================================================
-  function initMultiTagMatrix() {
-    const controlsContainer = document.querySelector(".controls");
-    if (!controlsContainer || document.getElementById("av-tag-filter-matrix")) return;
+  function initDailyStreakTracker() {
+    const todayUTC = new Date().toISOString().slice(0, 10);
+    const lastPlayed = localStorage.getItem("av_last_played_date");
+    let streakDays = parseInt(localStorage.getItem("av_current_streak_days") || "0", 10);
 
-    const matrixContainer = document.createElement("div");
-    matrixContainer.id = "av-tag-filter-matrix";
-    matrixContainer.className = "av-tag-filter-matrix";
-    matrixContainer.innerHTML = `
-      <div class="tag-matrix-header">
-        <span class="tag-matrix-title">Filter by Tags:</span>
-        <button type="button" id="av-clear-tags-btn" class="tag-clear-btn" style="display: none;">Clear Tags</button>
-      </div>
-      <div class="tag-matrix-chips" id="av-tag-chips-container"></div>
-    `;
+    if (lastPlayed) {
+      const lastDate = new Date(lastPlayed);
+      const currDate = new Date(todayUTC);
+      const diffDays = Math.round((currDate - lastDate) / (1000 * 60 * 60 * 24));
 
-    const categoryChips = document.querySelector(".category-chips");
-    if (categoryChips && categoryChips.parentNode) {
-      categoryChips.parentNode.insertBefore(matrixContainer, categoryChips.nextSibling);
-    } else {
-      controlsContainer.appendChild(matrixContainer);
-    }
-
-    const availableTags = ["retro", "space", "cyberpunk", "puzzle", "action", "physics", "rhythm", "arcade"];
-    const activeTags = new Set();
-    const chipsWrapper = document.getElementById("av-tag-chips-container");
-    const clearBtn = document.getElementById("av-clear-tags-btn");
-
-    function applyTagFilters() {
-      const cards = document.querySelectorAll(".game-card");
-      cards.forEach((card) => {
-        if (activeTags.size === 0) {
-          card.classList.remove("tag-filtered-out");
-          return;
-        }
-        const cardTags = (card.dataset.tags || "").toLowerCase();
-        let matchesAll = true;
-        for (const tag of activeTags) {
-          if (!cardTags.includes(tag.toLowerCase())) {
-            matchesAll = false;
-            break;
-          }
-        }
-        if (matchesAll) {
-          card.classList.remove("tag-filtered-out");
-        } else {
-          card.classList.add("tag-filtered-out");
-        }
-      });
-
-      if (clearBtn) {
-        clearBtn.style.display = activeTags.size > 0 ? "inline-block" : "none";
+      if (diffDays === 1) {
+        streakDays += 1;
+        localStorage.setItem("av_current_streak_days", String(streakDays));
+        localStorage.setItem("av_last_played_date", todayUTC);
+      } else if (diffDays > 1) {
+        // Skipped > 48h -> Reset streak cleanly to 1
+        streakDays = 1;
+        localStorage.setItem("av_current_streak_days", "1");
+        localStorage.setItem("av_last_played_date", todayUTC);
       }
+    } else {
+      streakDays = 1;
+      localStorage.setItem("av_current_streak_days", "1");
+      localStorage.setItem("av_last_played_date", todayUTC);
     }
 
-    availableTags.forEach((tag) => {
-      const chip = document.createElement("button");
-      chip.type = "button";
-      chip.className = "av-tag-chip";
-      chip.dataset.tag = tag;
-      chip.textContent = `#${tag}`;
-      chip.addEventListener("click", () => {
-        if (activeTags.has(tag)) {
-          activeTags.delete(tag);
-          chip.classList.remove("active");
-        } else {
-          activeTags.add(tag);
-          chip.classList.add("active");
-        }
-        applyTagFilters();
-      });
-      chipsWrapper.appendChild(chip);
-    });
-
-    if (clearBtn) {
-      clearBtn.addEventListener("click", () => {
-        activeTags.clear();
-        chipsWrapper.querySelectorAll(".av-tag-chip").forEach((c) => c.classList.remove("active"));
-        applyTagFilters();
-      });
+    // Render streak widget in navigation header
+    const navActions = document.querySelector(".nav-actions");
+    if (navActions && !document.getElementById("av-daily-streak-btn")) {
+      const streakBtn = document.createElement("button");
+      streakBtn.id = "av-daily-streak-btn";
+      streakBtn.type = "button";
+      streakBtn.className = "nav-streak-pill";
+      streakBtn.title = "Daily Game Streak & XP Multiplier";
+      streakBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2.5"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+        <span>${streakDays} Day${streakDays === 1 ? '' : 's'}</span>
+      `;
+      navActions.insertBefore(streakBtn, navActions.firstChild);
     }
   }
 
-  initMultiTagMatrix();
+  initDailyStreakTracker();
 
   // Universal Virtual Touch Controller Loader (#517)
   if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
