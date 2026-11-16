@@ -386,6 +386,104 @@
 
       // If requested voice is lowest priority and no lower voices exist, drop it
       return priorityRank >= 3;
+    },
+
+    // ========================================================
+    // RETRO 5-BAND BIQUADFILTER AUDIO EQUALIZER (#570)
+    // 60Hz, 250Hz, 1kHz, 4kHz, 12kHz Equalizer Chain with Presets
+    // ========================================================
+    _eqNodes: null,
+    _currentPreset: 'arcade',
+
+    initEqualizer: function () {
+      var ctx = getContext();
+      if (!ctx || this._eqNodes) return this._eqNodes;
+
+      var freqs = [60, 250, 1000, 4000, 12000];
+      var types = ['lowshelf', 'peaking', 'peaking', 'peaking', 'highshelf'];
+      var nodes = [];
+
+      for (var i = 0; i < freqs.length; i++) {
+        var filter = ctx.createBiquadFilter();
+        filter.type = types[i];
+        filter.frequency.value = freqs[i];
+        filter.gain.value = 0;
+        if (types[i] === 'peaking') filter.Q.value = 1.0;
+        nodes.push(filter);
+      }
+
+      // Chain filters
+      for (var j = 0; j < nodes.length - 1; j++) {
+        nodes[j].connect(nodes[j + 1]);
+      }
+
+      this._eqNodes = nodes;
+
+      // Re-route masterGain through EQ chain before destination
+      try {
+        if (masterGain) {
+          masterGain.disconnect();
+          masterGain.connect(nodes[0]);
+          nodes[nodes.length - 1].connect(ctx.destination);
+        }
+      } catch (_) {}
+
+      // Load saved preset
+      try {
+        var saved = localStorage.getItem('arcadeverse_eq_preset') || 'arcade';
+        this.setPreset(saved);
+      } catch (_) {
+        this.setPreset('arcade');
+      }
+
+      return nodes;
+    },
+
+    setPreset: function (presetName) {
+      this._currentPreset = presetName || 'arcade';
+      try {
+        localStorage.setItem('arcadeverse_eq_preset', this._currentPreset);
+      } catch (_) {}
+
+      if (!this._eqNodes) {
+        this.initEqualizer();
+      }
+      if (!this._eqNodes) return;
+
+      // Gains: [60Hz, 250Hz, 1kHz, 4kHz, 12kHz]
+      var gains = [0, 0, 0, 0, 0];
+      switch (this._currentPreset) {
+        case 'warm':
+          // Warm Cabinet (Boosted Mids, trimmed high piercing hiss)
+          gains = [3, 5, 4, 1, -4];
+          break;
+        case 'lofi':
+          // 8-Bit Lo-Fi (Low-pass filtered, rolled-off crisp top)
+          gains = [2, 3, 2, -6, -12];
+          break;
+        case 'bass':
+          // Bass Boost
+          gains = [8, 5, 1, 0, 1];
+          break;
+        case 'arcade':
+        default:
+          // Default Arcade Flat
+          gains = [0, 0, 0, 0, 0];
+          break;
+      }
+
+      var ctx = getContext();
+      var now = ctx ? ctx.currentTime : 0;
+      for (var k = 0; k < this._eqNodes.length; k++) {
+        if (this._eqNodes[k] && this._eqNodes[k].gain) {
+          this._eqNodes[k].gain.setValueAtTime(gains[k], now);
+        }
+      }
+    },
+
+    getPreset: function () {
+      return this._currentPreset;
+    }
     }
   };
 

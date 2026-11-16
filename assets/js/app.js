@@ -4287,6 +4287,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initURLDeepLinking();
   initControlsLegend();
   initMultiChannelAudioMixer();
+  initAudioEqualizerIntegration();
 });
 
   // ========================================================
@@ -5102,17 +5103,22 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ========================================================
-  // GAME SPEED & FRAME-PACING REGULATOR INITIALIZER
+  // RETRO 5-BAND BIQUADFILTER AUDIO EQUALIZER INTEGRATION (#570)
+  // Initializes preset selector and connects to sound engine
   // ========================================================
-  if (!window.GameSpeedRegulator) {
-    const speedScript = document.createElement('script');
-    speedScript.src = 'assets/js/game-speed-regulator.js';
-    speedScript.onload = () => {
-      if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.init === 'function') {
-        window.GameSpeedRegulator.init();
+  function initAudioEqualizerIntegration() {
+    if (typeof window !== 'undefined' && !window.ArcadeAudio) {
+      if (!document.querySelector('script[src*="arcade-audio.js"]')) {
+        const audioScript = document.createElement('script');
+        audioScript.src = 'assets/js/arcade-audio.js';
+        audioScript.onload = () => {
+          if (window.ArcadeAudio && typeof window.ArcadeAudio.initEqualizer === 'function') {
+            window.ArcadeAudio.initEqualizer();
+          }
+        };
+        document.body.appendChild(audioScript);
       }
-    };
-    document.body.appendChild(speedScript);
-  } else if (typeof window.GameSpeedRegulator.init === 'function') {
-    window.GameSpeedRegulator.init();
+    } else if (window.ArcadeAudio && typeof window.ArcadeAudio.initEqualizer === 'function') {
+      window.ArcadeAudio.initEqualizer();
+    }
   }
