@@ -44,6 +44,29 @@ document.addEventListener("DOMContentLoaded", () => {
   let pageSize = 10;
   let currentTotalPages = 1;
 
+  // Multi-Column Standings Table Sorting State (#714)
+  const SORT_STORAGE_KEY = "arcadeverse_leaderboard_sort";
+  const DEFAULT_SORT_COL = "score";
+  const DEFAULT_SORT_DIR = "desc";
+
+  let currentSortCol = DEFAULT_SORT_COL;
+  let currentSortDir = DEFAULT_SORT_DIR;
+
+  // Restore sort state from sessionStorage if available
+  try {
+    const savedSort = sessionStorage.getItem(SORT_STORAGE_KEY);
+    if (savedSort) {
+      const parsed = JSON.parse(savedSort);
+      const validCols = ["rank", "name", "handle", "games", "commits", "score"];
+      const validDirs = ["asc", "desc"];
+      if (parsed && validCols.includes(parsed.column) && validDirs.includes(parsed.direction)) {
+        currentSortCol = parsed.column;
+        currentSortDir = parsed.direction;
+      }
+    }
+  } catch (_) {}
+
+
   // Escape regex special characters safely
   function escapeRegex(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -763,6 +786,166 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Dynamic Stable Multi-Column Sorter (#714)
+  function sortCommunityContributors(list, col, dir) {
+    const isAsc = dir === "asc";
+    const mult = isAsc ? 1 : -1;
+
+    return [...list].sort((a, b) => {
+      let diff = 0;
+      if (col === "games") {
+        diff = ((a.gamesCount || 0) - (b.gamesCount || 0)) * mult;
+      } else if (col === "commits") {
+        diff = ((a.commits || 0) - (b.commits || 0)) * mult;
+      } else if (col === "name") {
+        const nameA = (a.name || a.login || "").toLowerCase();
+        const nameB = (b.name || b.login || "").toLowerCase();
+        diff = nameA.localeCompare(nameB) * mult;
+      } else if (col === "handle") {
+        const handleA = (a.login || "").toLowerCase();
+        const handleB = (b.login || "").toLowerCase();
+        diff = handleA.localeCompare(handleB) * mult;
+      } else if (col === "rank") {
+        diff = ((a.rank || 0) - (b.rank || 0)) * mult;
+      } else {
+        // default "score"
+        const scoreA = calculateScore(a);
+        const scoreB = calculateScore(b);
+        diff = (scoreA - scoreB) * mult;
+      }
+
+      if (diff !== 0) return diff;
+
+      // Stable deterministic 4-tier tiebreaker: Score desc -> Games desc -> Commits desc -> Login asc
+      const scoreDiff = calculateScore(b) - calculateScore(a);
+      if (scoreDiff !== 0) return scoreDiff;
+
+      const gamesDiff = (b.gamesCount || 0) - (a.gamesCount || 0);
+      if (gamesDiff !== 0) return gamesDiff;
+
+      const commitsDiff = (b.commits || 0) - (a.commits || 0);
+      if (commitsDiff !== 0) return commitsDiff;
+
+      const loginA = (a.login || "").toLowerCase();
+      const loginB = (b.login || "").toLowerCase();
+      return loginA.localeCompare(loginB);
+    });
+  }
+
+  const COLUMN_SORT_CONFIG = {
+    0: "rank",
+    1: "name",
+    3: "handle",
+    4: "games",
+    6: "commits",
+    8: "score"
+  };
+
+  let isTableSortingInitialized = false;
+
+  function initTableSorting() {
+    const table = document.getElementById("leaderboard-table");
+    if (!table) return;
+
+    const headers = table.querySelectorAll("thead tr th");
+    headers.forEach((th, idx) => {
+      const sortKey = th.getAttribute("data-sort") || COLUMN_SORT_CONFIG[idx];
+      if (!sortKey) return;
+
+      th.setAttribute("data-sort", sortKey);
+      th.setAttribute("role", "columnheader");
+      th.setAttribute("tabindex", "0");
+      th.classList.add("sortable-th");
+
+      // Wrap existing text in sort-header-inner if not already wrapped
+      if (!th.querySelector(".sort-header-inner")) {
+        const text = th.textContent.trim();
+        th.innerHTML = `
+          <span class="sort-header-inner">
+            <span class="sort-header-text">${text}</span>
+            <span class="sort-icon-wrap" aria-hidden="true">
+              <i data-lucide="chevrons-up-down"></i>
+            </span>
+          </span>
+        `;
+      }
+
+      if (!isTableSortingInitialized) {
+        th.addEventListener("click", () => {
+          handleHeaderSortClick(sortKey);
+        });
+
+        th.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleHeaderSortClick(sortKey);
+          }
+        });
+      }
+    });
+
+    isTableSortingInitialized = true;
+    updateSortHeaderUI();
+  }
+
+  function handleHeaderSortClick(colKey) {
+    if (currentSortCol === colKey) {
+      currentSortDir = currentSortDir === "asc" ? "desc" : "asc";
+    } else {
+      currentSortCol = colKey;
+      if (colKey === "name" || colKey === "handle" || colKey === "rank") {
+        currentSortDir = "asc";
+      } else {
+        currentSortDir = "desc";
+      }
+    }
+
+    try {
+      sessionStorage.setItem(SORT_STORAGE_KEY, JSON.stringify({
+        column: currentSortCol,
+        direction: currentSortDir
+      }));
+    } catch (_) {}
+
+    currentPage = 1;
+    updateSortHeaderUI();
+    renderTable();
+  }
+
+  function updateSortHeaderUI() {
+    const table = document.getElementById("leaderboard-table");
+    if (!table) return;
+
+    const headers = table.querySelectorAll("thead tr th[data-sort]");
+    headers.forEach((th) => {
+      const key = th.getAttribute("data-sort");
+      const isActive = key === currentSortCol;
+      const textEl = th.querySelector(".sort-header-text");
+      const label = textEl ? textEl.textContent.trim() : key;
+      const iconWrap = th.querySelector(".sort-icon-wrap");
+
+      if (isActive) {
+        const ariaVal = currentSortDir === "asc" ? "ascending" : "descending";
+        const iconName = currentSortDir === "asc" ? "chevron-up" : "chevron-down";
+        th.setAttribute("aria-sort", ariaVal);
+        th.setAttribute("aria-label", `${label}, sorted ${ariaVal}. Activate to reverse order.`);
+        if (iconWrap) {
+          iconWrap.innerHTML = `<i data-lucide="${iconName}"></i>`;
+        }
+      } else {
+        th.setAttribute("aria-sort", "none");
+        th.setAttribute("aria-label", `${label}. Activate to sort.`);
+        if (iconWrap) {
+          iconWrap.innerHTML = `<i data-lucide="chevrons-up-down"></i>`;
+        }
+      }
+    });
+
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+  }
+
   // Render Full Contributor Standings Table (Exclusively Community Contributors)
   function renderTable() {
     if (!tableBody) return;
@@ -785,7 +968,8 @@ document.addEventListener("DOMContentLoaded", () => {
       return nameMatch || loginMatch || roleMatch || badgeMatch;
     });
 
-    const totalItems = communityContributors.length;
+    const sortedContributors = sortCommunityContributors(communityContributors, currentSortCol, currentSortDir);
+    const totalItems = sortedContributors.length;
 
     if (totalItems === 0) {
       if (paginationBar) paginationBar.style.display = "none";
@@ -825,7 +1009,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Pagination computation
-    let itemsToRender = communityContributors;
+    let itemsToRender = sortedContributors;
     let totalPages = 1;
     let startIdx = 0;
     let endIdx = totalItems;
@@ -838,7 +1022,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       startIdx = (currentPage - 1) * limit;
       endIdx = Math.min(startIdx + limit, totalItems);
-      itemsToRender = communityContributors.slice(startIdx, endIdx);
+      itemsToRender = sortedContributors.slice(startIdx, endIdx);
     } else {
       currentPage = 1;
       totalPages = 1;
@@ -1218,8 +1402,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // The rows both exports are built from, so the CSV and the JSON always list the same people
   // in the same order as the Community Contributors table.
   function getStandingsRows() {
-    return getCommunityContributors().map((item, idx) => ({
-      rank: idx + 1,
+    const list = getCommunityContributors().map((item, idx) => ({
+      ...item,
+      rank: idx + 1
+    }));
+    return sortCommunityContributors(list, currentSortCol, currentSortDir).map((item) => ({
+      rank: item.rank,
       name: item.name || "",
       login: item.login || "",
       games: item.gamesCount || 0,
@@ -1522,6 +1710,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const initialAdmin = contributorsData.find(c => c.login.toLowerCase() === "debasmitabose0");
   if (initialAdmin) updateAdminSpotlight(initialAdmin);
   renderPodium();
+  initTableSorting();
   renderTable();
   fetchLiveGitHubContributions(activeRepo, false);
 });
