@@ -1543,13 +1543,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
       card.innerHTML = `
         <div class="game-card-preview">
+          <canvas class="card-micro-preview-canvas" width="280" height="140"></canvas>
           <span class="game-category-tag">${safeCategory}</span>
           ${halloweenBadgeHtml}
-          <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
-              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-            </svg>
-          </button>
+          <div class="card-options-top">
+            <label class="game-compare-label" title="Select to compare with another game">
+              <input type="checkbox" class="game-compare-checkbox" data-game-id="${safeGameId}">
+              <span class="compare-custom-box"></span>
+            </label>
+            <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+              </svg>
+            </button>
+          </div>
           <div class="game-icon">${iconHtml}</div>
         </div>
         <div class="game-card-body">
@@ -1653,6 +1660,70 @@ document.addEventListener("DOMContentLoaded", () => {
           e.stopPropagation();
         });
       }
+
+      // Interactive Micro-Preview Particle Animation on Hover (#588)
+      const previewCanvas = card.querySelector(".card-micro-preview-canvas");
+      let microAnimId = null;
+      let microParticles = [];
+
+      card.addEventListener("pointerenter", () => {
+        if (!previewCanvas) return;
+        const pctx = previewCanvas.getContext("2d");
+        if (!pctx) return;
+        previewCanvas.style.opacity = "1";
+
+        microParticles = [];
+        const color = (game.category || "").toLowerCase().includes("action") ? "#ef4444" :
+                      (game.category || "").toLowerCase().includes("puzzle") ? "#a855f7" :
+                      (game.category || "").toLowerCase().includes("strategy") ? "#10b981" : "#38bdf8";
+
+        for (let i = 0; i < 22; i++) {
+          microParticles.push({
+            x: Math.random() * previewCanvas.width,
+            y: Math.random() * previewCanvas.height,
+            vx: (Math.random() - 0.5) * 1.8,
+            vy: (Math.random() - 0.5) * 1.8,
+            size: Math.random() * 3 + 1,
+            color: color
+          });
+        }
+
+        const startTime = Date.now();
+        function loopPreview() {
+          if (Date.now() - startTime > 3000) {
+            cancelAnimationFrame(microAnimId);
+            return;
+          }
+          pctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+          pctx.fillStyle = color;
+          for (const pt of microParticles) {
+            pt.x += pt.vx;
+            pt.y += pt.vy;
+            if (pt.x < 0) pt.x = previewCanvas.width;
+            if (pt.x > previewCanvas.width) pt.x = 0;
+            if (pt.y < 0) pt.y = previewCanvas.height;
+            if (pt.y > previewCanvas.height) pt.y = 0;
+
+            pctx.beginPath();
+            pctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+            pctx.fill();
+          }
+          microAnimId = requestAnimationFrame(loopPreview);
+        }
+        loopPreview();
+      });
+
+      card.addEventListener("pointerleave", () => {
+        if (microAnimId) {
+          cancelAnimationFrame(microAnimId);
+          microAnimId = null;
+        }
+        if (previewCanvas) {
+          const pctx = previewCanvas.getContext("2d");
+          if (pctx) pctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+          previewCanvas.style.opacity = "0";
+        }
+      });
 
       // Only clicking the dedicated Play Now button launches the game modal
       gamesGrid.appendChild(card);
@@ -1940,6 +2011,13 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
       } catch (_) {}
+
+      // Synchronize game simulation speed multiplier (#656)
+      try {
+        if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.broadcastSpeedConfig === "function") {
+          window.GameSpeedRegulator.broadcastSpeedConfig();
+        }
+      } catch (_) {}
     });
 
     gameIframe.addEventListener("error", () => {
@@ -2038,6 +2116,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (window.SoundEngine && typeof window.SoundEngine.updateUI === "function") {
       window.SoundEngine.updateUI();
     }
+    if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.mountControls === "function") {
+      window.GameSpeedRegulator.mountControls();
+    }
 
     // Monitor game frame lifecycle and attach watchdog
     try {
@@ -2075,6 +2156,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     checkOrientationLandscapePrompt(game);
+
+    // "Players Also Played" Intelligent Recommendation Strip in Modal Footer (#591)
+    renderModalRecommendations(game);
 
     if (!isDirectDeepLink) {
       modalPushedHistory = true;
@@ -2212,6 +2296,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeGameModal(isFromPopState = false) {
     if (!gameModal || (!gameModal.classList.contains("active") && !activeGame)) return;
+    if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.closeMenu === "function") {
+      window.GameSpeedRegulator.closeMenu();
+    }
     hideLandscapePrompt();
     activeGame = null;
     isGameSessionActive = false;
@@ -4209,6 +4296,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initURLDeepLinking();
   initControlsLegend();
   initMultiChannelAudioMixer();
+  initAudioEqualizerIntegration();
 });
 
   // ========================================================
@@ -4618,105 +4706,248 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ========================================================
-  // CURATED ARCADE MIXES SUBSYSTEM (#583)
-  // Themed pathways: Spooky Retro, Cyberpunk High-Speed, Brain Teasers
-  // ========================================================
-  const CURATED_MIXES = [
-    {
-      id: "spooky-retro",
-      name: "Spooky Retro",
-      description: "Eerie haunted labyrinths, midnight graveyards & pumpkin runs",
-      icon: "ghost",
-      games: ["haunted-house_debasmita", "midnight-graveyard_joitapaul", "pumpkin-express_joitapaul"],
-      color: "#ec4899"
-    },
-    {
-      id: "cyberpunk-high-speed",
-      name: "Cyberpunk High-Speed",
-      description: "Neon velocity, cyber gliders & hyperlight racers",
-      icon: "zap",
-      games: ["cyber-runner_mistu7debnath", "neon-drift-racer_joitapaul", "cyber-glider_babin"],
-      color: "#06b6d4"
-    },
-    {
-      id: "brain-teasers",
-      name: "Brain Teasers",
-      description: "Cryptic logic matrices, codebreaking & automated factories",
-      icon: "cpu",
-      games: ["quantum-minesweeper_babin", "code-breaker_babin", "robo-factory_mistu7debnath"],
-      color: "#a855f7"
-    }
-  ];
-
-  function injectCuratedMixesCarousel() {
-    if (document.getElementById("curated-mixes-carousel")) return;
-    const catalogSection = document.getElementById("catalog") || document.querySelector(".catalog-section");
-    if (!catalogSection) return;
-
-    const container = document.createElement("div");
-    container.id = "curated-mixes-carousel";
-    container.className = "curated-mixes-container";
-    container.innerHTML = `
-      <div class="curated-mixes-header">
-        <div class="curated-title-wrap">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-          <span class="curated-title">Curated Arcade Mixes</span>
-        </div>
-        <span class="curated-subtitle">Guided theme mixes curated for quick launch</span>
-      </div>
-      <div class="curated-mixes-row">
-        ${CURATED_MIXES.map(mix => `
-          <button type="button" class="curated-mix-card" data-mix-id="${mix.id}" style="--mix-accent: ${mix.color};">
-            <div class="mix-card-top">
-              <span class="mix-icon-badge" style="background: ${mix.color}22; border-color: ${mix.color}; color: ${mix.color};">
-                <i data-lucide="${mix.icon}"></i>
-              </span>
-              <span class="mix-count">${mix.games.length} Games</span>
-            </div>
-            <strong class="mix-name">${mix.name}</strong>
-            <p class="mix-desc">${mix.description}</p>
-          </button>
-        `).join("")}
-      </div>
-    `;
-
-    // Insert right before the games grid
-    if (gamesGrid && gamesGrid.parentNode) {
-      gamesGrid.parentNode.insertBefore(container, gamesGrid);
-    } else {
-      catalogSection.appendChild(container);
-    }
-
-    container.addEventListener("click", (e) => {
-      const card = e.target.closest(".curated-mix-card");
-      if (!card) return;
-      const mixId = card.getAttribute("data-mix-id");
-      const mix = CURATED_MIXES.find(m => m.id === mixId);
-      if (!mix) return;
-
-      const isAlreadyActive = card.classList.contains("active");
-      document.querySelectorAll(".curated-mix-card").forEach(c => c.classList.remove("active"));
-
-      if (isAlreadyActive) {
-        // Reset filter
-        currentMixFilter = null;
-      } else {
-        card.classList.add("active");
-        currentMixFilter = mix.games;
-      }
-
-      if (typeof renderGames === "function") {
-        renderGames();
-      }
-    });
-
     if (window.lucide) {
       try { lucide.createIcons(); } catch (_) {}
     }
   }
 
-<<<<<<< HEAD
+  // ========================================================
+  // DAILY GAME LOGIN STREAK CALENDAR & XP MULTIPLIER (#659)
+  // Calculates consecutive day UTC streak, tracks av_current_streak_days
+  // ========================================================
+  function initDailyStreakTracker() {
+    const todayUTC = new Date().toISOString().slice(0, 10);
+    const lastPlayed = localStorage.getItem("av_last_played_date");
+    let streakDays = parseInt(localStorage.getItem("av_current_streak_days") || "0", 10);
+
+    if (lastPlayed) {
+      const lastDate = new Date(lastPlayed);
+      const currDate = new Date(todayUTC);
+      const diffDays = Math.round((currDate - lastDate) / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        streakDays += 1;
+        localStorage.setItem("av_current_streak_days", String(streakDays));
+        localStorage.setItem("av_last_played_date", todayUTC);
+      } else if (diffDays > 1) {
+        // Skipped > 48h -> Reset streak cleanly to 1
+        streakDays = 1;
+        localStorage.setItem("av_current_streak_days", "1");
+        localStorage.setItem("av_last_played_date", todayUTC);
+      }
+    } else {
+      streakDays = 1;
+      localStorage.setItem("av_current_streak_days", "1");
+      localStorage.setItem("av_last_played_date", todayUTC);
+    }
+
+    // Render streak widget in navigation header
+    const navActions = document.querySelector(".nav-actions");
+    if (navActions && !document.getElementById("av-daily-streak-btn")) {
+      const streakBtn = document.createElement("button");
+      streakBtn.id = "av-daily-streak-btn";
+      streakBtn.type = "button";
+      streakBtn.className = "nav-streak-pill";
+      streakBtn.title = "Daily Game Streak & XP Multiplier";
+      streakBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2.5"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+        <span>${streakDays} Day${streakDays === 1 ? '' : 's'}</span>
+      `;
+      navActions.insertBefore(streakBtn, navActions.firstChild);
+    }
+  }
+
+  initDailyStreakTracker();
+
+  // Universal Virtual Touch Controller Loader (#517)
+  if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
+    if (!document.querySelector('script[src*="virtual-controller.js"]')) {
+      const vcScript = document.createElement('script');
+      vcScript.src = 'assets/js/virtual-controller.js';
+      document.body.appendChild(vcScript);
+    }
+  }
+
+  // ========================================================
+  // "PLAYERS ALSO PLAYED" MODAL RECOMMENDATIONS (#591)
+  // Recommends 3 relevant games based on Jaccard tag similarity
+  // ========================================================
+  function renderModalRecommendations(currentGame) {
+    if (!currentGame || !modalWindow) return;
+    let strip = document.getElementById("modal-recommendations-strip");
+    if (!strip) {
+      strip = document.createElement("div");
+      strip.id = "modal-recommendations-strip";
+      strip.className = "modal-recommendations-strip";
+      modalWindow.appendChild(strip);
+    }
+
+    if (typeof GAMES_REGISTRY === "undefined" || !Array.isArray(GAMES_REGISTRY)) {
+      strip.style.display = "none";
+      return;
+    }
+
+    const currentTags = new Set((currentGame.tags || []).map(t => t.toLowerCase()));
+    currentTags.add((currentGame.category || "").toLowerCase());
+
+    const candidates = GAMES_REGISTRY.filter(g => g.id !== currentGame.id).map(g => {
+      const gTags = new Set((g.tags || []).map(t => t.toLowerCase()));
+      gTags.add((g.category || "").toLowerCase());
+
+      // Jaccard similarity
+      let intersection = 0;
+      for (const t of currentTags) {
+        if (gTags.has(t)) intersection++;
+      }
+      const union = new Set([...currentTags, ...gTags]).size;
+      const score = union > 0 ? intersection / union : 0;
+      return { game: g, score };
+    });
+
+    candidates.sort((a, b) => b.score - a.score);
+    const top3 = candidates.slice(0, 3).map(c => c.game);
+
+    if (top3.length === 0) {
+      strip.style.display = "none";
+      return;
+    }
+
+    strip.style.display = "flex";
+    strip.innerHTML = `
+      <div class="rec-strip-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+        <span>Players Also Played:</span>
+      </div>
+      <div class="rec-chips-wrap">
+        ${top3.map(g => `
+          <button type="button" class="rec-game-chip" data-game-id="${g.id}">
+            <span>${escapeHTML(g.title)}</span>
+            <small>• ${escapeHTML(g.category || "Arcade")}</small>
+          </button>
+        `).join("")}
+      </div>
+    `;
+
+    strip.querySelectorAll(".rec-game-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        const gid = chip.getAttribute("data-game-id");
+        const nextGame = GAMES_REGISTRY.find(g => g.id === gid);
+        if (nextGame) {
+          openGameModal(nextGame);
+        }
+      });
+    });
+  }
+
+  // Universal Virtual Touch Controller Loader (#517)
+  if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
+    if (!document.querySelector('script[src*="virtual-controller.js"]')) {
+      const vcScript = document.createElement('script');
+      vcScript.src = 'assets/js/virtual-controller.js';
+      document.body.appendChild(vcScript);
+    }
+  }
+
+  // COMPARE TWO GAMES MULTI-SELECT INSPECTION DRAWER (#589)
+  // Side-by-side comparison of difficulty, duration, controls & ratings
+  // ========================================================
+  const selectedCompareGameIds = new Set();
+
+  function openCompareDrawer() {
+    let drawer = document.getElementById("game-compare-drawer");
+    if (!drawer) {
+      drawer = document.createElement("div");
+      drawer.id = "game-compare-drawer";
+      drawer.className = "game-compare-drawer";
+      document.body.appendChild(drawer);
+    }
+
+    const ids = Array.from(selectedCompareGameIds);
+    if (ids.length !== 2) {
+      drawer.classList.remove("visible");
+      return;
+    }
+
+    const gameA = (typeof GAMES_REGISTRY !== "undefined") ? GAMES_REGISTRY.find(g => g.id === ids[0]) : null;
+    const gameB = (typeof GAMES_REGISTRY !== "undefined") ? GAMES_REGISTRY.find(g => g.id === ids[1]) : null;
+    if (!gameA || !gameB) return;
+
+    drawer.innerHTML = `
+      <div class="compare-drawer-header">
+        <div class="compare-drawer-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>
+          <span>Game Comparison Analysis</span>
+        </div>
+        <button type="button" class="compare-close-btn" aria-label="Close comparison">&times;</button>
+      </div>
+      <div class="compare-grid">
+        <div class="compare-col">
+          <h4 class="compare-game-title">${escapeHTML(gameA.title)}</h4>
+          <span class="compare-pill">${escapeHTML(gameA.category || "Arcade")}</span>
+          <div class="compare-attr-list">
+            <div class="compare-attr-row"><strong>Author:</strong> <span>@${escapeHTML(gameA.github || gameA.author || "Babin")}</span></div>
+            <div class="compare-attr-row"><strong>Controls:</strong> <span>${gameA.responsive ? "Keyboard + Touch" : "Keyboard/Mouse"}</span></div>
+            <div class="compare-attr-row"><strong>Rating:</strong> <span>${gameA.stars ? (gameA.stars / 10).toFixed(1) : "5.0"} / 5.0</span></div>
+            <div class="compare-attr-row"><strong>Tags:</strong> <span>${(gameA.tags || []).slice(0, 3).join(", ") || "arcade, retro"}</span></div>
+          </div>
+        </div>
+        <div class="compare-vs">VS</div>
+        <div class="compare-col">
+          <h4 class="compare-game-title">${escapeHTML(gameB.title)}</h4>
+          <span class="compare-pill">${escapeHTML(gameB.category || "Arcade")}</span>
+          <div class="compare-attr-list">
+            <div class="compare-attr-row"><strong>Author:</strong> <span>@${escapeHTML(gameB.github || gameB.author || "Babin")}</span></div>
+            <div class="compare-attr-row"><strong>Controls:</strong> <span>${gameB.responsive ? "Keyboard + Touch" : "Keyboard/Mouse"}</span></div>
+            <div class="compare-attr-row"><strong>Rating:</strong> <span>${gameB.stars ? (gameB.stars / 10).toFixed(1) : "5.0"} / 5.0</span></div>
+            <div class="compare-attr-row"><strong>Tags:</strong> <span>${(gameB.tags || []).slice(0, 3).join(", ") || "arcade, retro"}</span></div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    drawer.classList.add("visible");
+    const closeBtn = drawer.querySelector(".compare-close-btn");
+    closeBtn.addEventListener("click", () => {
+      drawer.classList.remove("visible");
+      selectedCompareGameIds.clear();
+      document.querySelectorAll(".game-compare-checkbox").forEach(cb => cb.checked = false);
+    });
+  }
+
+  document.addEventListener("change", (e) => {
+    if (e.target && e.target.classList.contains("game-compare-checkbox")) {
+      const gid = e.target.getAttribute("data-game-id");
+      if (e.target.checked) {
+        if (selectedCompareGameIds.size >= 2) {
+          // Uncheck and alert
+          e.target.checked = false;
+          alert("You can compare up to two games at a time.");
+          return;
+        }
+        selectedCompareGameIds.add(gid);
+      } else {
+        selectedCompareGameIds.delete(gid);
+      }
+
+      if (selectedCompareGameIds.size === 2) {
+        openCompareDrawer();
+      } else {
+        const drawer = document.getElementById("game-compare-drawer");
+        if (drawer) drawer.classList.remove("visible");
+      }
+    }
+  });
+
+  // Universal Virtual Touch Controller Loader (#517)
+  if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
+    if (!document.querySelector('script[src*="virtual-controller.js"]')) {
+      const vcScript = document.createElement('script');
+      vcScript.src = 'assets/js/virtual-controller.js';
+      document.body.appendChild(vcScript);
+    }
+    }
+  }
+
   // ========================================================
   // IN-MODAL MULTI-CHANNEL AUDIO MIXER ENGINE (#565)
   // Master, SFX, and Music Sliders broadcasting via postMessage

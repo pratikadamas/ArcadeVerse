@@ -514,18 +514,42 @@
     }
   }
 
+  // Pointer Lock API precision aiming (#573)
+  let isPointerLocked = false;
+  let virtualCrosshair = { x: hub.x + 80, y: hub.y };
+
+  if (window.ArcadeVerse && typeof window.ArcadeVerse.initPointerLock === 'function') {
+    window.ArcadeVerse.initPointerLock(canvas, {
+      sensitivity: 1.2,
+      onMove: (movementX, movementY) => {
+        if (!isRunning || isPaused) return;
+        virtualCrosshair.x = Math.max(20, Math.min(canvas.width - 20, virtualCrosshair.x + movementX));
+        virtualCrosshair.y = Math.max(20, Math.min(canvas.height - 20, virtualCrosshair.y + movementY));
+        hub.angle = Math.atan2(virtualCrosshair.y - hub.y, virtualCrosshair.x - hub.x);
+      },
+      onLockChange: (locked) => {
+        isPointerLocked = locked;
+      }
+    });
+  }
+
   // Mouse & Touch aiming on canvas
   canvas.addEventListener('mousemove', (e) => {
-    if (!isRunning || isPaused) return;
+    if (!isRunning || isPaused || isPointerLocked) return;
     const rect = canvas.getBoundingClientRect();
     const mouseX = ((e.clientX - rect.left) / rect.width) * canvas.width;
     const mouseY = ((e.clientY - rect.top) / rect.height) * canvas.height;
+    virtualCrosshair.x = mouseX;
+    virtualCrosshair.y = mouseY;
     hub.angle = Math.atan2(mouseY - hub.y, mouseX - hub.x);
   });
 
   canvas.addEventListener('mousedown', () => {
     sfx.init();
     if (isRunning && !isPaused) {
+      if (window.ArcadeVerse && typeof window.ArcadeVerse.initPointerLock === 'function' && !isPointerLocked) {
+        try { canvas.requestPointerLock(); } catch (_) {}
+      }
       shootLaser();
     }
   });
