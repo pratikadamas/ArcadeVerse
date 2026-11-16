@@ -2034,14 +2034,18 @@ document.addEventListener("DOMContentLoaded", () => {
   // Bind the load / error listeners on the current game iframe. closeGameModal swaps in a fresh
   // iframe node, so this runs again for each new one.
   function bindGameIframeListeners() {
-  if (gameIframe) {
-    gameIframe.addEventListener("load", () => {
+    const frame = gameIframe;
+    if (!frame) return;
+
+    frame.addEventListener("load", () => {
+      // A replaced iframe can still deliver a late event, only the live one counts
+      if (frame !== gameIframe) return;
       // Ignore blanking resets
-      if (!gameIframe.src || gameIframe.src.includes("about:blank")) return;
+      if (!frame.src || frame.src.includes("about:blank")) return;
 
       iframeLoadSucceeded = true;
       resetIframeBoundary();
-      gameIframe.classList.add("loaded");
+      frame.classList.add("loaded");
       guardIframeTouchInteractions();
 
       // Establish cryptographic session handshake with child game frame
@@ -2053,8 +2057,8 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
           const isMuted = localStorage.getItem("arcadeverse_muted") === "true";
           const masterVol = parseFloat(localStorage.getItem("arcadeverse_master_volume")) || 0.28;
-          if (gameIframe.contentWindow) {
-            gameIframe.contentWindow.postMessage({
+          if (frame.contentWindow) {
+            frame.contentWindow.postMessage({
               type: "ARCADEVERSE_AUDIO_CONFIG",
               sessionToken: activeGameSession.token,
               muted: isMuted,
@@ -2072,13 +2076,13 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (_) {}
     });
 
-    gameIframe.addEventListener("error", () => {
+    frame.addEventListener("error", () => {
+      if (frame !== gameIframe) return;
       iframeLoadSucceeded = false;
       if (activeGame) {
         triggerModalErrorBoundary(activeGame);
       }
     });
-  }
   }
   bindGameIframeListeners();
 
