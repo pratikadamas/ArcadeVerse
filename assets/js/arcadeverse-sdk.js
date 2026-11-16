@@ -1449,71 +1449,83 @@
     },
 
     // ========================================================
-    // PRECISION TRACKPAD TWO-FINGER PAN & PINCH-ZOOM (#575)
-    // Seamless pan & zoom navigation for wide canvas maps
+    // POINTER LOCK API INTEGRATION SUBSYSTEM (#573)
+    // First-person & precision crosshair aiming with ESC release HUD
     // ========================================================
     /**
-     * Binds trackpad two-finger pan & pinch-zoom to a target canvas/container.
-     * @param {HTMLCanvasElement} canvas
-     * @param {Object} options
-     * @param {number} [options.minZoom=0.5]
-     * @param {number} [options.maxZoom=2.5]
-     * @param {Function} options.onTransform - Callback with ({ panX, panY, zoom })
-     * @returns {{ getState: Function, reset: Function, destroy: Function }}
+     * Binds HTML5 Pointer Lock API to a game canvas.
+     * @param {HTMLCanvasElement} canvas - Target game canvas
+     * @param {Object} options - Configuration options
+     * @param {Function} options.onMove - Callback with (movementX, movementY, e)
+     * @param {Function} [options.onLockChange] - Callback with (isLocked)
+     * @param {number} [options.sensitivity=1.0] - Mouse sensitivity multiplier
+     * @returns {{ requestLock: Function, exitLock: Function, isLocked: Function }}
      */
-    initTrackpadPanZoom: function (canvas, options) {
+    initPointerLock: function (canvas, options) {
       if (!canvas) return null;
       var opts = options || {};
-      var minZoom = typeof opts.minZoom === 'number' ? opts.minZoom : 0.5;
-      var maxZoom = typeof opts.maxZoom === 'number' ? opts.maxZoom : 2.5;
-      var onTransform = typeof opts.onTransform === 'function' ? opts.onTransform : function () {};
+      var sensitivity = typeof opts.sensitivity === 'number' ? opts.sensitivity : 1.0;
+      var onMove = typeof opts.onMove === 'function' ? opts.onMove : function () {};
+      var onLockChange = typeof opts.onLockChange === 'function' ? opts.onLockChange : function () {};
 
-      var state = {
-        panX: 0,
-        panY: 0,
-        zoom: 1.0
-      };
-
-      function handleWheel(e) {
-        e.preventDefault();
-
-        // Pinch-zoom gesture (trackpad sends wheel event with ctrlKey = true)
-        if (e.ctrlKey) {
-          var zoomFactor = Math.exp(-e.deltaY * 0.01);
-          var nextZoom = Math.max(minZoom, Math.min(maxZoom, state.zoom * zoomFactor));
-          state.zoom = Math.round(nextZoom * 1000) / 1000;
-        } else {
-          // Two-finger trackpad panning (or standard scroll wheel)
-          state.panX -= e.deltaX;
-          state.panY -= e.deltaY;
-        }
-
-        onTransform({
-          panX: state.panX,
-          panY: state.panY,
-          zoom: state.zoom
-        });
+      // Create HUD pill if not already present
+      var hud = document.getElementById('av-pointer-lock-hud');
+      if (!hud) {
+        hud = document.createElement('div');
+        hud.id = 'av-pointer-lock-hud';
+        hud.setAttribute('role', 'status');
+        hud.setAttribute('aria-live', 'polite');
+        hud.innerHTML = '<span class="hud-dot"></span><span>Pointer Locked &mdash; Press <kbd>ESC</kbd> to Release</span>';
+        hud.style.cssText = 'position:fixed;top:1rem;left:50%;transform:translateX(-50%);background:rgba(15,23,42,0.92);border:1px solid #38bdf8;box-shadow:0 0 15px rgba(56,189,248,0.3);color:#f8fafc;padding:0.4rem 0.9rem;border-radius:20px;font-size:0.8rem;font-weight:600;display:none;align-items:center;gap:0.5rem;z-index:99999;pointer-events:none;transition:opacity 0.25s ease;';
+        document.body.appendChild(hud);
       }
 
-      canvas.addEventListener('wheel', handleWheel, { passive: false });
+      function handleMouseMove(e) {
+        if (document.pointerLockElement === canvas) {
+          var mx = (e.movementX || 0) * sensitivity;
+          var my = (e.movementY || 0) * sensitivity;
+          onMove(mx, my, e);
+        }
+      }
+
+      function handleLockChange() {
+        var locked = document.pointerLockElement === canvas;
+        if (hud) {
+          hud.style.display = locked ? 'flex' : 'none';
+        }
+        onLockChange(locked);
+      }
+
+      document.addEventListener('pointerlockchange', handleLockChange);
+      document.addEventListener('mousemove', handleMouseMove);
 
       return {
-        getState: function () {
-          return { panX: state.panX, panY: state.panY, zoom: state.zoom };
+        requestLock: function () {
+          try {
+            if (canvas.requestPointerLock) {
+              canvas.requestPointerLock();
+            }
+          } catch (_) {}
         },
-        reset: function () {
-          state.panX = 0;
-          state.panY = 0;
-          state.zoom = 1.0;
-          onTransform(state);
+        exitLock: function () {
+          try {
+            if (document.exitPointerLock) {
+              document.exitPointerLock();
+            }
+          } catch (_) {}
+        },
+        isLocked: function () {
+          return document.pointerLockElement === canvas;
         },
         destroy: function () {
-          canvas.removeEventListener('wheel', handleWheel);
+          document.removeEventListener('pointerlockchange', handleLockChange);
+          document.removeEventListener('mousemove', handleMouseMove);
+          if (hud && hud.parentElement) {
+            hud.remove();
+          }
         }
       };
     }
-        }
-      };
     }
   };
 });
