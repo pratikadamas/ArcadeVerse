@@ -16,7 +16,9 @@
   } else if (typeof module === "object" && module.exports) {
     module.exports = factory();
   } else {
-    root.ArcadeVerse = factory();
+    var inst = factory();
+    root.ArcadeVerse = inst;
+    root.arcadeverse = inst; // Case-insensitive alias (#720)
   }
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
@@ -662,6 +664,46 @@
   /**
    * Initializes message bridging with parent window
    */
+
+  function applyReducedMotionClass(reduce) {
+    try {
+      if (typeof document !== 'undefined' && document.documentElement) {
+        if (reduce) {
+          document.documentElement.classList.add('av-reduced-motion');
+          if (document.body) document.body.classList.add('av-reduced-motion');
+        } else {
+          document.documentElement.classList.remove('av-reduced-motion');
+          if (document.body) document.body.classList.remove('av-reduced-motion');
+        }
+      }
+    } catch (_) {}
+  }
+
+  // Auto-detect and tag documentElement with reduced motion class on initialization (#720)
+  try {
+    if (typeof window !== 'undefined') {
+      var isInitialReduced = (function () {
+        if (window.location && window.location.search && /[?&]reducedMotion=(1|true)/i.test(window.location.search)) return true;
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true;
+        if (localStorage.getItem('arcadeverse_reduced_motion') === 'true') return true;
+        return false;
+      })();
+      applyReducedMotionClass(isInitialReduced);
+
+      if (window.matchMedia) {
+        var motionMq = window.matchMedia('(prefers-reduced-motion: reduce)');
+        var handleMotionMqChange = function (e) {
+          applyReducedMotionClass(e.matches);
+        };
+        if (motionMq.addEventListener) {
+          motionMq.addEventListener('change', handleMotionMqChange);
+        } else if (motionMq.addListener) {
+          motionMq.addListener(handleMotionMqChange);
+        }
+      }
+    }
+  } catch (_) {}
+
   function init() {
     if (isInitialized) return;
     if (typeof window !== "undefined") {
@@ -1525,7 +1567,74 @@
           }
         }
       };
-    }
+    },
+
+    // ========================================================
+    // ACCESSIBILITY & REDUCED MOTION SUBSYSTEM (#720)
+    // WCAG 2.3.3 (Animation from Interactions) Compliance
+    // ========================================================
+    a11y: {
+      /**
+       * Queries whether the user prefers reduced motion.
+       * Inspects OS media query, iframe query parameters, and persisted preferences.
+       * @returns {boolean}
+       */
+      prefersReducedMotion: function () {
+        try {
+          if (typeof window !== 'undefined') {
+            // 1. URL parameter override (passed by hub modal during launch)
+            if (window.location && window.location.search) {
+              if (/[?&]reducedMotion=(1|true)/i.test(window.location.search)) {
+                return true;
+              }
+            }
+            // 2. Native OS prefers-reduced-motion media query
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+              return true;
+            }
+            // 3. Persisted user preference in localStorage
+            if (localStorage.getItem('arcadeverse_reduced_motion') === 'true') {
+              return true;
+            }
+          }
+        } catch (_) {}
+        return false;
+      },
+
+      /**
+       * Subscribes to live OS / browser reduced-motion setting changes.
+       * @param {Function} callback - Receives boolean (prefersReduced)
+       */
+      onReducedMotionChange: function (callback) {
+        if (typeof callback !== 'function') return;
+        try {
+          if (typeof window !== 'undefined' && window.matchMedia) {
+            var mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+            if (mq.addEventListener) {
+              mq.addEventListener('change', function (e) { callback(e.matches); });
+            } else if (mq.addListener) {
+              mq.addListener(function (e) { callback(e.matches); });
+            }
+          }
+        } catch (_) {}
+      },
+
+      /**
+       * Filter helper for canvas games: suppresses camera/screen shake deltas
+       * when reduced motion is enabled to prevent vestibular distress.
+       * @param {number} shakeIntensity - Requested shake pixel magnitude
+       * @returns {number} 0 if reduced motion active, otherwise shakeIntensity
+       */
+      filterShake: function (shakeIntensity) {
+        return this.prefersReducedMotion() ? 0 : (Number(shakeIntensity) || 0);
+      }
+    },
+
+    /**
+     * Top-level alias for arcadeverse.a11y.prefersReducedMotion (#720)
+     */
+    prefersReducedMotion: function () {
+      return this.a11y.prefersReducedMotion();
     }
   };
 });

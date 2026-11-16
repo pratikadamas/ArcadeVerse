@@ -11572,3 +11572,55 @@ html.a11y-reduced-motion .search-clear-btn {
   position: relative;
   overflow: hidden;
 }
+
+/* ========================================================
+   GLOBAL REDUCED MOTION ACCESSIBILITY ENGINE (#720)
+   WCAG 2.3.3 (Animation from Interactions) Compliance
+   Suppresses camera shake, strobe flashing, and intense particles
+   ======================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Disable screen-shake, strobe overlays, and glitch filters */
+  .screen-shake,
+  .shake,
+  .canvas-shake,
+  .strobe-overlay,
+  .flash-strobe,
+  .glitch-anim,
+  .particle-strobe {
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* Runtime In-Iframe Reduced Motion Class */
+.av-reduced-motion *,
+.av-reduced-motion *::before,
+.av-reduced-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+.av-reduced-motion .screen-shake,
+.av-reduced-motion .shake,
+.av-reduced-motion .canvas-shake,
+.av-reduced-motion .strobe-overlay,
+.av-reduced-motion .flash-strobe,
+.av-reduced-motion .glitch-anim,
+.av-reduced-motion .particle-strobe {
+  animation: none !important;
+  transform: none !important;
+  filter: none !important;
+}
