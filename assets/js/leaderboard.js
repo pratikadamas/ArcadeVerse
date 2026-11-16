@@ -623,6 +623,43 @@ document.addEventListener("DOMContentLoaded", () => {
     return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
   }
 
+  // Calculate contributor next-tier progress & multiplier (#578)
+  function getTierProgress(score) {
+    const milestones = [
+      { name: "Apprentice", min: 1, next: 25, multiplier: "1.0x" },
+      { name: "Active", min: 25, next: 100, multiplier: "1.1x" },
+      { name: "Rising", min: 100, next: 250, multiplier: "1.2x" },
+      { name: "Platform", min: 250, next: 500, multiplier: "1.35x" },
+      { name: "Distinguished", min: 500, next: 1000, multiplier: "1.5x" },
+      { name: "Elite", min: 1000, next: 1800, multiplier: "1.75x" },
+      { name: "Senior", min: 1800, next: 3000, multiplier: "2.0x" },
+      { name: "Principal", min: 3000, next: 5000, multiplier: "2.5x" },
+      { name: "Distinguished Fellow", min: 5000, next: 5000, multiplier: "3.0x" }
+    ];
+
+    for (let i = 0; i < milestones.length; i++) {
+      const m = milestones[i];
+      if (score < m.next) {
+        const range = m.next - m.min;
+        const progress = Math.max(0, Math.min(100, Math.round(((score - m.min) / range) * 100)));
+        return {
+          currentTier: m.name,
+          nextTier: milestones[i + 1] ? milestones[i + 1].name : "Max Tier",
+          progressPct: progress,
+          needed: m.next - score,
+          multiplier: m.multiplier
+        };
+      }
+    }
+    return {
+      currentTier: "Distinguished Fellow",
+      nextTier: "Max Rank",
+      progressPct: 100,
+      needed: 0,
+      multiplier: "3.0x"
+    };
+  }
+
   // Render Top Community Contributors Podium
   // Only displays real verified contributors who have contributed to the repository.
   // Never renders dummy "Claim Rank" cards.
@@ -672,9 +709,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const badges = getContributorBadges(item);
       const fallbackAvatar = getFallbackAvatarSvg(item.name, item.login);
 
+      const tierInfo = getTierProgress(score);
+
       const card = document.createElement("div");
       card.className = `podium-card ${slot.cardClass}`;
-      // Clean, uncluttered card: Rank badge, avatar, name, handle, primary badges, score, and profile link.
+      // Clean, uncluttered card: Rank badge, avatar, name, handle, primary badges, score, milestone progress bar, and profile link.
       card.innerHTML = `
         <div class="podium-badge podium-badge-${slot.badgeType}">
           <i data-lucide="${slot.badgeIcon}"></i> ${slot.badgeLabel}
@@ -688,8 +727,19 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
 
         <div class="podium-score-pill">
-          <strong>${score}</strong> pts
+          <strong>${score}</strong> pts <span class="podium-multiplier-tag" title="Tier Multiplier">${tierInfo.multiplier}</span>
         </div>
+
+        <div class="podium-milestone-wrap" title="${tierInfo.needed > 0 ? tierInfo.needed + ' pts to ' + tierInfo.nextTier : 'Max Tier Reached'}">
+          <div class="podium-milestone-labels">
+            <span>${tierInfo.currentTier}</span>
+            <span>${tierInfo.progressPct}%</span>
+          </div>
+          <div class="podium-milestone-track">
+            <div class="podium-milestone-fill" style="width: ${tierInfo.progressPct}%;"></div>
+          </div>
+        </div>
+
         <div class="podium-sub-stat-text" style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.6rem; display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
           ${item.gamesCount > 0 ? `<span><i data-lucide="gamepad-2" style="width: 0.8rem; height: 0.8rem;"></i> ${item.gamesCount} Game${item.gamesCount === 1 ? '' : 's'}</span> • ` : ''}
           <span><i data-lucide="git-commit" style="width: 0.8rem; height: 0.8rem;"></i> ${item.commits} Commit${item.commits === 1 ? '' : 's'}</span>
