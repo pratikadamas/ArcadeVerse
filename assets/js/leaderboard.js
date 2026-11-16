@@ -1499,7 +1499,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // Anti-Cheat Checksum Score Validation (#576)
+  function verifyLocalScoresIntegrity() {
+    if (window.ArcadeVerse && window.ArcadeVerse.storage && typeof window.ArcadeVerse.storage.verifySignedScore === 'function') {
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('av_') && key.endsWith('_signed_score')) {
+            const gameId = key.replace(/^av_/, '').replace(/_signed_score$/, '');
+            window.ArcadeVerse.storage.verifySignedScore(gameId);
+          }
+        }
+      } catch (_) {}
+    }
+  }
+
   // Initial Run: Sync verified registry data first and render podium/table
+  verifyLocalScoresIntegrity();
   loadRegistryContributors();
   const activeRepo = detectRepo();
   if (repoInput) repoInput.value = activeRepo;
