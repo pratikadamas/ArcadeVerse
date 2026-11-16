@@ -1,6 +1,7 @@
 {
   "title": "Asteroid Miner: Deep Space Extraction",
   "category": "Arcade",
+  "lucideIcon": "crosshair",
   "description": "Navigate hazardous asteroid fields, blast mineral ores with precision mining lasers, and extract raw cosmic crystals.",
   "author": "Babin Bid",
   "github": "Babin123456",
