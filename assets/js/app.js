@@ -4695,7 +4695,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
     });
-  }
 
     if (window.lucide) {
       try { lucide.createIcons(); } catch (_) {}
@@ -4748,6 +4747,250 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+
+  // ========================================================
+  // KONAMI CODE EASTER EGG & RETRO CONFETTI ENGINE (#718)
+  // Up Up Down Down Left Right Left Right B A
+  // Unlocks 'Retro Enthusiast' achievement and canvas particle shower
+  // ========================================================
+  function initKonamiCodeRecognizer() {
+    const KONAMI_CODE = [
+      "arrowup", "arrowup", "arrowdown", "arrowdown",
+      "arrowleft", "arrowright", "arrowleft", "arrowright",
+      "b", "a"
+    ];
+    let keyBuffer = [];
+    let isPartyModeActive = false;
+
+    window.addEventListener("keydown", (e) => {
+      // Guard: Do not intercept when typing in inputs or textareas
+      const tag = (e.target && e.target.tagName ? e.target.tagName.toLowerCase() : "");
+      if (tag === "input" || tag === "textarea" || (e.target && e.target.isContentEditable)) {
+        return;
+      }
+
+      // Guard: Do not intercept when active inside an iframe game
+      if (gameModal && gameModal.classList.contains("active")) {
+        return;
+      }
+
+      const key = (e.key || "").toLowerCase();
+      keyBuffer.push(key);
+      if (keyBuffer.length > KONAMI_CODE.length) {
+        keyBuffer.shift();
+      }
+
+      if (keyBuffer.length === KONAMI_CODE.length) {
+        const isMatch = KONAMI_CODE.every((k, i) => k === keyBuffer[i]);
+        if (isMatch) {
+          keyBuffer = [];
+          triggerKonamiParty();
+        }
+      }
+    });
+
+    function triggerKonamiParty() {
+      if (isPartyModeActive) return;
+      isPartyModeActive = true;
+
+      // 1. Play 8-bit fanfare synthesizer
+      play8BitFanfare();
+
+      // 2. Launch pure-canvas retro pixel confetti shower
+      launchRetroPixelConfetti(() => {
+        isPartyModeActive = false;
+      });
+
+      // 3. Unlock and award 'Retro Enthusiast' achievement badge
+      awardRetroEnthusiastBadge();
+    }
+
+    function play8BitFanfare() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        if (window.ArcadeAudio && typeof window.ArcadeAudio.isMuted === "function" && window.ArcadeAudio.isMuted()) return;
+        const ctx = new AudioCtx();
+        if (ctx.state === "suspended") ctx.resume();
+
+        const notes = [
+          { freq: 261.63, dur: 0.1, delay: 0 },    // C4
+          { freq: 329.63, dur: 0.1, delay: 0.1 },  // E4
+          { freq: 392.00, dur: 0.1, delay: 0.2 },  // G4
+          { freq: 523.25, dur: 0.22, delay: 0.3 }, // C5
+          { freq: 392.00, dur: 0.12, delay: 0.52 }, // G4
+          { freq: 523.25, dur: 0.45, delay: 0.65 } // C5
+        ];
+
+        const now = ctx.currentTime;
+        notes.forEach((n) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "square";
+          osc.frequency.setValueAtTime(n.freq, now + n.delay);
+          gain.gain.setValueAtTime(0.18, now + n.delay);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + n.delay + n.dur);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + n.delay);
+          osc.stop(now + n.delay + n.dur + 0.05);
+        });
+
+        setTimeout(() => {
+          if (ctx.state !== "closed") ctx.close();
+        }, 1500);
+      } catch (_) {}
+    }
+
+    function launchRetroPixelConfetti(onComplete) {
+      const canvas = document.createElement("canvas");
+      canvas.id = "konami-confetti-canvas";
+      canvas.className = "konami-confetti-canvas";
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      document.body.appendChild(canvas);
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        canvas.remove();
+        if (onComplete) onComplete();
+        return;
+      }
+
+      const colors = ["#38bdf8", "#ec4899", "#eab308", "#10b981", "#a855f7", "#f97316", "#06b6d4", "#f43f5e"];
+      const particleCount = 130;
+      const particles = [];
+
+      for (let i = 0; i < particleCount; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: -20 - Math.random() * (canvas.height * 0.4),
+          w: Math.floor(Math.random() * 6 + 6),
+          h: Math.floor(Math.random() * 5 + 5),
+          color: colors[Math.floor(Math.random() * colors.length)],
+          vx: (Math.random() - 0.5) * 4,
+          vy: Math.random() * 3 + 2.5,
+          rot: Math.random() * 360,
+          vRot: (Math.random() - 0.5) * 8,
+          wobble: Math.random() * 10,
+          wobbleSpeed: Math.random() * 0.1 + 0.05,
+          alpha: 1.0
+        });
+      }
+
+      let animationId = null;
+      const startTime = Date.now();
+      const maxDuration = 4500;
+
+      function render() {
+        const elapsed = Date.now() - startTime;
+        if (elapsed > maxDuration) {
+          cancelAnimationFrame(animationId);
+          canvas.remove();
+          if (onComplete) onComplete();
+          return;
+        }
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        let activeCount = 0;
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          p.x += p.vx + Math.sin(p.wobble) * 1.5;
+          p.y += p.vy;
+          p.wobble += p.wobbleSpeed;
+          p.rot += p.vRot;
+
+          if (elapsed > 3200) {
+            p.alpha = Math.max(0, 1 - (elapsed - 3200) / 1300);
+          }
+
+          if (p.y < canvas.height + 30 && p.alpha > 0) {
+            activeCount++;
+            ctx.save();
+            ctx.globalAlpha = p.alpha;
+            ctx.translate(p.x, p.y);
+            ctx.rotate((p.rot * Math.PI) / 180);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+            ctx.restore();
+          }
+        }
+
+        if (activeCount === 0) {
+          cancelAnimationFrame(animationId);
+          canvas.remove();
+          if (onComplete) onComplete();
+          return;
+        }
+
+        animationId = requestAnimationFrame(render);
+      }
+
+      animationId = requestAnimationFrame(render);
+
+      const resizeHandler = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      };
+      window.addEventListener("resize", resizeHandler, { once: true });
+    }
+
+    function awardRetroEnthusiastBadge() {
+      try {
+        localStorage.setItem("av_achievement_retro_enthusiast", "true");
+        localStorage.setItem("arcadeverse_easter_egg_unlocked", "true");
+      } catch (_) {}
+
+      if (typeof announceToScreenReader === "function") {
+        announceToScreenReader("Secret Easter Egg Unlocked: Retro Enthusiast! Konami party mode activated.", "assertive");
+      }
+
+      const existingToast = document.getElementById("konami-achievement-toast");
+      if (existingToast) existingToast.remove();
+
+      const toast = document.createElement("div");
+      toast.id = "konami-achievement-toast";
+      toast.className = "konami-achievement-toast";
+      toast.setAttribute("role", "alert");
+      toast.innerHTML = `
+        <div class="achievement-toast-inner">
+          <div class="achievement-icon-wrap">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="8" r="6"></circle>
+              <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"></path>
+            </svg>
+          </div>
+          <div class="achievement-text">
+            <span class="achievement-kicker">SECRET ACHIEVEMENT UNLOCKED</span>
+            <strong class="achievement-title">Retro Enthusiast</strong>
+            <p class="achievement-desc">You entered the legendary Konami Code! Retro party mode active.</p>
+          </div>
+          <button type="button" class="achievement-close-btn" aria-label="Close notification">&times;</button>
+        </div>
+      `;
+
+      document.body.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.add("visible"));
+
+      const closeBtn = toast.querySelector(".achievement-close-btn");
+      if (closeBtn) {
+        closeBtn.addEventListener("click", () => {
+          toast.classList.remove("visible");
+          setTimeout(() => toast.remove(), 300);
+        });
+      }
+
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.classList.remove("visible");
+          setTimeout(() => toast.remove(), 300);
+        }
+      }, 5000);
+    }
+  }
+
+  initKonamiCodeRecognizer();
   initDailyStreakTracker();
 
   // Universal Virtual Touch Controller Loader (#517)
@@ -4935,7 +5178,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const vcScript = document.createElement('script');
       vcScript.src = 'assets/js/virtual-controller.js';
       document.body.appendChild(vcScript);
-    }
     }
   }
 

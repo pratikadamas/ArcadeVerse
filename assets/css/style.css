@@ -11572,3 +11572,100 @@ html.a11y-reduced-motion .search-clear-btn {
   position: relative;
   overflow: hidden;
 }
+
+/* ========================================================
+   KONAMI CODE SECRET EASTER EGG & RETRO CONFETTI (#718)
+   Canvas particle layer and achievement unlock toast
+   ======================================================== */
+.konami-confetti-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 999999;
+}
+
+.konami-achievement-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(234, 179, 8, 0.6);
+  box-shadow: 0 0 24px rgba(234, 179, 8, 0.25), 0 8px 24px rgba(0, 0, 0, 0.6);
+  border-radius: 12px;
+  padding: 14px 18px;
+  z-index: 1000000;
+  max-width: 360px;
+  transform: translateY(120%);
+  opacity: 0;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+}
+
+.konami-achievement-toast.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.achievement-toast-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.achievement-icon-wrap {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: rgba(234, 179, 8, 0.15);
+  border: 1px solid rgba(234, 179, 8, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.achievement-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.achievement-kicker {
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: #eab308;
+  text-transform: uppercase;
+}
+
+.achievement-title {
+  font-size: 0.95rem;
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.achievement-desc {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.achievement-close-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 4px;
+}
+
+.achievement-close-btn:hover {
+  color: #f8fafc;
+}
