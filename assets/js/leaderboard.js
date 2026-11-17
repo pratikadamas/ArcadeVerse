@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const exportJsonBtn = document.getElementById("export-json-btn");
   let tableSearchQuery = "";
   let searchDebounceTimer = null;
+  let currentTierFilter = "all";
 
   // Standings Table Pagination & Page Size State
   const paginationBar = document.getElementById("leaderboard-pagination-bar");
@@ -139,6 +140,75 @@ document.addEventListener("DOMContentLoaded", () => {
     if (tableCard) {
       tableCard.scrollIntoView({ behavior: "smooth", block: "start" });
     }
+  }
+
+  // Contributor Milestone Tier Filter Pills Engine (#691)
+  function matchesTier(item, tier) {
+    const games = item.gamesCount || 0;
+    switch (tier) {
+      case "explorers":
+        return games >= 1 && games <= 3;
+      case "developers":
+        return games >= 4 && games <= 7;
+      case "hyper":
+        return games >= 8 && games <= 14;
+      case "architects":
+        return games >= 15;
+      case "all":
+      default:
+        return true;
+    }
+  }
+
+  function updateTierPillCounts() {
+    const allContribs = getCommunityContributors();
+    const counts = {
+      all: allContribs.length,
+      explorers: 0,
+      developers: 0,
+      hyper: 0,
+      architects: 0
+    };
+
+    allContribs.forEach(item => {
+      const games = item.gamesCount || 0;
+      if (games >= 15) {
+        counts.architects++;
+      } else if (games >= 8) {
+        counts.hyper++;
+      } else if (games >= 4) {
+        counts.developers++;
+      } else if (games >= 1) {
+        counts.explorers++;
+      }
+    });
+
+    for (const [tier, count] of Object.entries(counts)) {
+      const el = document.getElementById(`tier-count-${tier}`);
+      if (el) {
+        el.textContent = String(count);
+      }
+    }
+  }
+
+  const tierPillButtons = document.querySelectorAll(".tier-pill-btn");
+  if (tierPillButtons.length > 0) {
+    tierPillButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const selectedTier = btn.dataset.tier || "all";
+        if (currentTierFilter === selectedTier) return;
+        currentTierFilter = selectedTier;
+        currentPage = 1;
+
+        tierPillButtons.forEach(b => {
+          const isActive = (b.dataset.tier || "all") === selectedTier;
+          b.classList.toggle("active", isActive);
+          b.setAttribute("aria-selected", isActive ? "true" : "false");
+        });
+
+        renderTable();
+      });
+    });
   }
 
   function getPageNumbers(current, total) {
@@ -623,6 +693,43 @@ document.addEventListener("DOMContentLoaded", () => {
     return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
   }
 
+  // Calculate contributor next-tier progress & multiplier (#578)
+  function getTierProgress(score) {
+    const milestones = [
+      { name: "Apprentice", min: 1, next: 25, multiplier: "1.0x" },
+      { name: "Active", min: 25, next: 100, multiplier: "1.1x" },
+      { name: "Rising", min: 100, next: 250, multiplier: "1.2x" },
+      { name: "Platform", min: 250, next: 500, multiplier: "1.35x" },
+      { name: "Distinguished", min: 500, next: 1000, multiplier: "1.5x" },
+      { name: "Elite", min: 1000, next: 1800, multiplier: "1.75x" },
+      { name: "Senior", min: 1800, next: 3000, multiplier: "2.0x" },
+      { name: "Principal", min: 3000, next: 5000, multiplier: "2.5x" },
+      { name: "Distinguished Fellow", min: 5000, next: 5000, multiplier: "3.0x" }
+    ];
+
+    for (let i = 0; i < milestones.length; i++) {
+      const m = milestones[i];
+      if (score < m.next) {
+        const range = m.next - m.min;
+        const progress = Math.max(0, Math.min(100, Math.round(((score - m.min) / range) * 100)));
+        return {
+          currentTier: m.name,
+          nextTier: milestones[i + 1] ? milestones[i + 1].name : "Max Tier",
+          progressPct: progress,
+          needed: m.next - score,
+          multiplier: m.multiplier
+        };
+      }
+    }
+    return {
+      currentTier: "Distinguished Fellow",
+      nextTier: "Max Rank",
+      progressPct: 100,
+      needed: 0,
+      multiplier: "3.0x"
+    };
+  }
+
   // Render Top Community Contributors Podium
   // Only displays real verified contributors who have contributed to the repository.
   // Never renders dummy "Claim Rank" cards.
@@ -672,9 +779,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const badges = getContributorBadges(item);
       const fallbackAvatar = getFallbackAvatarSvg(item.name, item.login);
 
+      const tierInfo = getTierProgress(score);
+
       const card = document.createElement("div");
       card.className = `podium-card ${slot.cardClass}`;
-      // Clean, uncluttered card: Rank badge, avatar, name, handle, primary badges, score, and profile link.
+      // Clean, uncluttered card: Rank badge, avatar, name, handle, primary badges, score, milestone progress bar, and profile link.
       card.innerHTML = `
         <div class="podium-badge podium-badge-${slot.badgeType}">
           <i data-lucide="${slot.badgeIcon}"></i> ${slot.badgeLabel}
@@ -688,10 +797,21 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
 
         <div class="podium-score-pill">
-          <strong>${score}</strong> pts
+          <strong>${score}</strong> pts <span class="podium-multiplier-tag" title="Tier Multiplier">${tierInfo.multiplier}</span>
         </div>
+
+        <div class="podium-milestone-wrap" title="${tierInfo.needed > 0 ? tierInfo.needed + ' pts to ' + tierInfo.nextTier : 'Max Tier Reached'}">
+          <div class="podium-milestone-labels">
+            <span>${tierInfo.currentTier}</span>
+            <span>${tierInfo.progressPct}%</span>
+          </div>
+          <div class="podium-milestone-track">
+            <div class="podium-milestone-fill" style="width: ${tierInfo.progressPct}%;"></div>
+          </div>
+        </div>
+
         <div class="podium-sub-stat-text" style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.6rem; display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
-          ${item.gamesCount > 0 ? `<span><i data-lucide="gamepad-2" style="width: 0.8rem; height: 0.8rem;"></i> ${item.gamesCount} Game${item.gamesCount === 1 ? '' : 's'}</span> • ` : ''}
+          ${item.gamesCount > 0 ? `<button type="button" class="podium-author-games-btn" data-action="open-author-drawer" data-handle="${escapeAttr(item.login)}" data-author="${escapeAttr(item.name || item.login)}" title="View ${item.gamesCount} verified game${item.gamesCount === 1 ? '' : 's'}"><i data-lucide="gamepad-2" style="width: 0.8rem; height: 0.8rem;"></i> ${item.gamesCount} Game${item.gamesCount === 1 ? '' : 's'}</button> • ` : ''}
           <span><i data-lucide="git-commit" style="width: 0.8rem; height: 0.8rem;"></i> ${item.commits} Commit${item.commits === 1 ? '' : 's'}</span>
         </div>
 
@@ -717,6 +837,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderTable() {
     if (!tableBody) return;
     tableBody.innerHTML = "";
+    updateTierPillCounts();
+
     const allCommunityContributors = getCommunityContributors().map((item, idx) => {
       return {
         ...item,
@@ -725,6 +847,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const communityContributors = allCommunityContributors.filter(item => {
+      if (!matchesTier(item, currentTierFilter)) return false;
       if (!tableSearchQuery) return true;
       const q = tableSearchQuery;
       const nameMatch = (item.name || "").toLowerCase().includes(q);
@@ -740,14 +863,22 @@ document.addEventListener("DOMContentLoaded", () => {
     if (totalItems === 0) {
       if (paginationBar) paginationBar.style.display = "none";
       const emptyTr = document.createElement("tr");
-      if (tableSearchQuery && allCommunityContributors.length > 0) {
+      if ((tableSearchQuery || currentTierFilter !== "all") && allCommunityContributors.length > 0) {
+        let emptyMsg = `No contributors found`;
+        if (currentTierFilter !== "all" && tableSearchQuery) {
+          emptyMsg = `No contributors in the selected tier matching "<strong>${escapeHTML(tableSearchQuery)}</strong>"`;
+        } else if (currentTierFilter !== "all") {
+          emptyMsg = `No contributors currently in this milestone tier`;
+        } else {
+          emptyMsg = `No contributors found matching "<strong>${escapeHTML(tableSearchQuery)}</strong>"`;
+        }
         emptyTr.innerHTML = `
           <td colspan="9" style="text-align: center; padding: 2.2rem; color: var(--text-muted);">
             <div style="font-size: 1.05rem; margin-bottom: 0.5rem; color: var(--text-secondary);">
-              No contributors found matching "<strong>${tableSearchQuery}</strong>"
+              ${emptyMsg}
             </div>
             <button type="button" class="btn btn-secondary btn-sm" id="reset-table-search-btn">
-              <span><i data-lucide="rotate-ccw"></i> Clear Filter</span>
+              <span><i data-lucide="rotate-ccw"></i> Clear Filters</span>
             </button>
           </td>
         `;
@@ -756,8 +887,14 @@ document.addEventListener("DOMContentLoaded", () => {
         if (resetBtn) {
           resetBtn.addEventListener("click", () => {
             tableSearchQuery = "";
+            currentTierFilter = "all";
             currentPage = 1;
             if (searchInput) searchInput.value = "";
+            tierPillButtons.forEach(b => {
+              const isAll = (b.dataset.tier || "all") === "all";
+              b.classList.toggle("active", isAll);
+              b.setAttribute("aria-selected", isAll ? "true" : "false");
+            });
             renderTable();
           });
         }
@@ -831,7 +968,15 @@ document.addEventListener("DOMContentLoaded", () => {
           <a href="https://github.com/${item.login}" target="_blank" class="github-handle-link">@${highlightMatch(item.login, tableSearchQuery)}</a>
         </td>
         <td style="text-align: center;">
-          <span class="games-count-pill" title="${(item.games || []).join(', ')}"><i data-lucide="gamepad-2"></i> ${item.gamesCount}</span>
+          ${(item.gamesCount || 0) > 0 ? `
+            <button type="button" class="authored-games-pill games-count-pill" data-action="open-author-drawer" data-handle="${escapeAttr(item.login)}" data-author="${escapeAttr(item.name || item.login)}" aria-label="View ${item.gamesCount} verified game${item.gamesCount === 1 ? '' : 's'} authored by ${escapeAttr(item.name || item.login)}" title="Click to view and launch authored games">
+              <i data-lucide="gamepad-2"></i> ${item.gamesCount} ${item.gamesCount === 1 ? 'Game' : 'Games'}
+            </button>
+          ` : `
+            <span class="authored-games-pill games-count-pill zero" title="No verified games submitted yet">
+              <i data-lucide="gamepad-2"></i> 0 Games
+            </span>
+          `}
         </td>
         <td style="text-align: center;">
           <span class="files-count-pill" title="Universal Score: ${(item.gamesCount || 0) * 100}p (Games) + ${(item.mechanicsBonus || 0) * 25}p (Mechanics) + ${(item.platformPRs || 0) * 50}p (Feat) + ${(item.qualityPRs || 0) * 25}p (Fix) + ${(item.commits || 0) * 5}p (Commits)"><i data-lucide="git-pull-request"></i> ${getWorkBreakdown(item)}</span>
@@ -1404,6 +1549,282 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // --- Verified Game Author Drawer Controller (#713) ---
+  let authorDrawerEl = null;
+  let authorDrawerOverlayEl = null;
+  let lastFocusedElementBeforeDrawer = null;
+  let currentAuthorGames = [];
+
+  function getAuthoredGamesForContributor(handle) {
+    if (!handle || typeof GAMES_REGISTRY === "undefined" || !Array.isArray(GAMES_REGISTRY)) return [];
+    const lower = String(handle).toLowerCase().trim();
+    return GAMES_REGISTRY.filter(g => g && g.github && String(g.github).toLowerCase().trim() === lower);
+  }
+
+  function ensureAuthorDrawerElements() {
+    if (authorDrawerOverlayEl && authorDrawerEl) return;
+
+    let overlay = document.getElementById("author-drawer-overlay");
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = "author-drawer-overlay";
+      overlay.className = "author-drawer-overlay";
+      overlay.setAttribute("aria-hidden", "true");
+      overlay.innerHTML = `
+        <aside class="author-drawer" id="author-drawer" role="dialog" aria-modal="true" aria-labelledby="author-drawer-title">
+          <div class="author-drawer-header">
+            <div class="author-drawer-user-info">
+              <img class="author-drawer-avatar" id="author-drawer-avatar" src="" alt="" onerror="this.style.display='none';">
+              <div>
+                <h3 class="author-drawer-title" id="author-drawer-title">Authored Games</h3>
+                <span class="author-drawer-subtitle" id="author-drawer-subtitle">@contributor</span>
+              </div>
+            </div>
+            <button type="button" class="author-drawer-close" id="author-drawer-close" aria-label="Close author games drawer">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+          <div class="author-drawer-search-wrap" id="author-drawer-search-wrap">
+            <i data-lucide="search" class="author-drawer-search-icon"></i>
+            <input type="text" id="author-drawer-search" class="author-drawer-search-input" placeholder="Search author's games..." aria-label="Search authored games">
+          </div>
+          <div class="author-drawer-content" id="author-drawer-content" tabindex="0">
+            <!-- Game cards injected dynamically -->
+          </div>
+          <div class="author-drawer-footer">
+            <span class="author-drawer-counter" id="author-drawer-counter">0 Verified Games</span>
+            <a href="index.html" class="author-drawer-catalog-link">
+              <i data-lucide="gamepad-2"></i> All Games
+            </a>
+          </div>
+        </aside>
+      `;
+      document.body.appendChild(overlay);
+    }
+
+    authorDrawerOverlayEl = overlay;
+    authorDrawerEl = overlay.querySelector("#author-drawer");
+
+    const closeBtn = overlay.querySelector("#author-drawer-close");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", closeAuthorGamesDrawer);
+    }
+
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) {
+        closeAuthorGamesDrawer();
+      }
+    });
+
+    const searchInput = overlay.querySelector("#author-drawer-search");
+    if (searchInput) {
+      searchInput.addEventListener("input", (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        renderDrawerGamesList(query);
+      });
+    }
+
+    const contentEl = overlay.querySelector("#author-drawer-content");
+    if (contentEl) {
+      contentEl.addEventListener("click", (e) => {
+        const playBtn = e.target.closest(".author-game-play-btn");
+        if (playBtn) return; // Native link navigation handles it
+        const card = e.target.closest(".author-game-card");
+        if (card) {
+          const gameId = card.getAttribute("data-game-id");
+          if (gameId) {
+            window.location.href = `index.html?game=${encodeURIComponent(gameId)}`;
+          }
+        }
+      });
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && authorDrawerOverlayEl && authorDrawerOverlayEl.classList.contains("open")) {
+        closeAuthorGamesDrawer();
+      }
+    });
+
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+  }
+
+  function openAuthorGamesDrawer(handle, authorName, triggerEl) {
+    ensureAuthorDrawerElements();
+    lastFocusedElementBeforeDrawer = triggerEl || document.activeElement;
+
+    const games = getAuthoredGamesForContributor(handle);
+    currentAuthorGames = games;
+
+    const titleEl = authorDrawerEl.querySelector("#author-drawer-title");
+    const subtitleEl = authorDrawerEl.querySelector("#author-drawer-subtitle");
+    const avatarEl = authorDrawerEl.querySelector("#author-drawer-avatar");
+    const searchInput = authorDrawerEl.querySelector("#author-drawer-search");
+
+    if (titleEl) titleEl.textContent = authorName ? `${authorName}'s Games` : "Authored Games";
+    if (subtitleEl) subtitleEl.textContent = `@${handle}`;
+    if (avatarEl) {
+      avatarEl.style.display = "block";
+      avatarEl.src = `https://github.com/${handle}.png`;
+      avatarEl.alt = authorName || handle;
+    }
+    if (searchInput) {
+      searchInput.value = "";
+    }
+
+    renderDrawerGamesList("");
+
+    authorDrawerOverlayEl.style.display = "flex";
+    requestAnimationFrame(() => {
+      authorDrawerOverlayEl.classList.add("open");
+      authorDrawerEl.classList.add("open");
+      authorDrawerOverlayEl.setAttribute("aria-hidden", "false");
+      document.body.classList.add("author-drawer-open");
+      const closeBtn = authorDrawerEl.querySelector("#author-drawer-close");
+      if (closeBtn) closeBtn.focus();
+    });
+
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+  }
+
+  function closeAuthorGamesDrawer() {
+    if (!authorDrawerOverlayEl || !authorDrawerEl) return;
+
+    authorDrawerOverlayEl.classList.remove("open");
+    authorDrawerEl.classList.remove("open");
+    authorDrawerOverlayEl.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("author-drawer-open");
+
+    setTimeout(() => {
+      if (!authorDrawerOverlayEl.classList.contains("open")) {
+        authorDrawerOverlayEl.style.display = "none";
+      }
+    }, 300);
+
+    if (lastFocusedElementBeforeDrawer && typeof lastFocusedElementBeforeDrawer.focus === "function") {
+      lastFocusedElementBeforeDrawer.focus();
+    }
+  }
+
+  function renderDrawerGamesList(filterQuery = "") {
+    const contentEl = authorDrawerEl.querySelector("#author-drawer-content");
+    const counterEl = authorDrawerEl.querySelector("#author-drawer-counter");
+    if (!contentEl) return;
+
+    contentEl.innerHTML = "";
+
+    const filtered = currentAuthorGames.filter(g => {
+      if (!filterQuery) return true;
+      const q = filterQuery.toLowerCase();
+      const titleMatch = (g.title || "").toLowerCase().includes(q);
+      const catMatch = (g.category || "").toLowerCase().includes(q);
+      const descMatch = (g.description || "").toLowerCase().includes(q);
+      const tagsMatch = Array.isArray(g.tags) && g.tags.some(t => String(t).toLowerCase().includes(q));
+      return titleMatch || catMatch || descMatch || tagsMatch;
+    });
+
+    if (counterEl) {
+      counterEl.textContent = `${filtered.length} of ${currentAuthorGames.length} Game${currentAuthorGames.length === 1 ? '' : 's'}`;
+    }
+
+    if (filtered.length === 0) {
+      contentEl.innerHTML = `
+        <div class="author-drawer-empty">
+          <i data-lucide="gamepad-2"></i>
+          <p>No games found matching your search.</p>
+        </div>
+      `;
+      if (window.lucide) lucide.createIcons();
+      return;
+    }
+
+    filtered.forEach(game => {
+      const card = document.createElement("div");
+      card.className = "author-game-card";
+      card.setAttribute("data-game-id", game.id);
+
+      const safeId = escapeAttr(game.id);
+      const safeTitle = escapeHTML(game.title);
+      const safeCat = escapeHTML(game.category || "Arcade");
+      const safeDesc = escapeHTML(game.description || "Verified community arcade game.");
+      const icon = escapeAttr(game.lucideIcon || "gamepad-2");
+      const stars = Number.isFinite(Number(game.stars)) ? Number(game.stars) : 5;
+      const difficulty = escapeHTML(game.difficulty || "Medium");
+
+      card.innerHTML = `
+        <div class="author-game-card-top">
+          <div class="author-game-icon-box">
+            <i data-lucide="${icon}"></i>
+          </div>
+          <div class="author-game-info">
+            <div class="author-game-badge-row">
+              <span class="author-game-cat-tag">${safeCat}</span>
+              <span class="author-game-diff-tag diff-${escapeAttr(difficulty.toLowerCase())}">${difficulty}</span>
+            </div>
+            <h4 class="author-game-title">${safeTitle}</h4>
+          </div>
+        </div>
+        <p class="author-game-desc">${safeDesc}</p>
+        <div class="author-game-actions">
+          <div class="author-game-rating" title="${stars} Stars">
+            <i data-lucide="star"></i>
+            <span class="rating-value">${stars}</span>
+          </div>
+          <a href="index.html?game=${safeId}" class="author-game-play-btn" data-game-id="${safeId}" aria-label="Play ${safeTitle} now">
+            <i data-lucide="gamepad-2"></i> Play Now
+          </a>
+        </div>
+      `;
+
+      contentEl.appendChild(card);
+    });
+
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+  }
+
+  // Delegated click handlers for author drawer
+  if (tableBody) {
+    tableBody.addEventListener("click", (e) => {
+      const btn = e.target.closest('[data-action="open-author-drawer"]');
+      if (btn) {
+        e.preventDefault();
+        const handle = btn.getAttribute("data-handle");
+        const author = btn.getAttribute("data-author");
+        openAuthorGamesDrawer(handle, author, btn);
+      }
+    });
+  }
+
+  if (podiumContainer) {
+    podiumContainer.addEventListener("click", (e) => {
+      const btn = e.target.closest('[data-action="open-author-drawer"]');
+      if (btn) {
+        e.preventDefault();
+        const handle = btn.getAttribute("data-handle");
+        const author = btn.getAttribute("data-author");
+        openAuthorGamesDrawer(handle, author, btn);
+      }
+    });
+  }
+
+  if (adminMetaInfo) {
+    adminMetaInfo.addEventListener("click", (e) => {
+      const btn = e.target.closest('[data-action="open-author-drawer"]');
+      if (btn) {
+        e.preventDefault();
+        const handle = btn.getAttribute("data-handle");
+        const author = btn.getAttribute("data-author");
+        openAuthorGamesDrawer(handle, author, btn);
+      }
+    });
+  }
+
+
   // Web Share API & Clipboard One-Click Standings Snippet Generator (#579)
   function showLeaderboardToast(message) {
     let toast = document.getElementById("leaderboard-share-toast");
@@ -1449,7 +1870,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // Anti-Cheat Checksum Score Validation (#576)
+  function verifyLocalScoresIntegrity() {
+    if (window.ArcadeVerse && window.ArcadeVerse.storage && typeof window.ArcadeVerse.storage.verifySignedScore === 'function') {
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('av_') && key.endsWith('_signed_score')) {
+            const gameId = key.replace(/^av_/, '').replace(/_signed_score$/, '');
+            window.ArcadeVerse.storage.verifySignedScore(gameId);
+          }
+        }
+      } catch (_) {}
+    }
+  }
+
   // Initial Run: Sync verified registry data first and render podium/table
+  verifyLocalScoresIntegrity();
   loadRegistryContributors();
   const activeRepo = detectRepo();
   if (repoInput) repoInput.value = activeRepo;
@@ -1458,4 +1895,14 @@ document.addEventListener("DOMContentLoaded", () => {
   renderPodium();
   renderTable();
   fetchLiveGitHubContributions(activeRepo, false);
+
+  // App Badging API clear on viewing leaderboard & trophy certificates (#557)
+  if (typeof navigator !== 'undefined' && 'clearAppBadge' in navigator) {
+    navigator.clearAppBadge().catch(() => {});
+  }
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    localStorage.setItem('av_daily_streak_date', today);
+    localStorage.setItem('av_unclaimed_streak_count', '0');
+  } catch (_) {}
 });
