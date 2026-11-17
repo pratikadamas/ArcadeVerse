@@ -1799,3 +1799,46 @@ html.a11y-reduced-motion .stat-card {
   transition: none !important;
   transform: none !important;
 }
+
+/* ===================================================
+   EXPORT MARKDOWN STANDINGS BUTTON (#692)
+   =================================================== */
+
+.btn-export-markdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  white-space: nowrap;
+  border-color: rgba(56, 189, 248, 0.4);
+  color: var(--text-secondary, #cbd5e1);
+  transition: all 0.2s ease;
+}
+
+.btn-export-markdown:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38bdf8;
+  color: #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-export-markdown:active {
+  transform: translateY(0);
+}
+
+.btn-export-markdown:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+}
+
+html.a11y-reduced-motion .btn-export-markdown,
+html.a11y-reduced-motion .btn-export-markdown:hover {
+  transition: none !important;
+  transform: none !important;
+}
+
