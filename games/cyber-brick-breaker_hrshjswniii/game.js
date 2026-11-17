@@ -355,6 +355,27 @@
       this.updateHUD();
       this.syncSoundUI();
 
+      // Integration with ArcadeVerse Speed Regulator (#656)
+      this.speedMultiplier = 1.0;
+      if (typeof window !== "undefined" && window.ArcadeVerse && typeof window.ArcadeVerse.getGameSpeed === "function") {
+        this.speedMultiplier = window.ArcadeVerse.getGameSpeed();
+      }
+      if (typeof window !== "undefined") {
+        window.addEventListener("message", (e) => {
+          if (e.data && (e.data.type === "AV_SET_GAME_SPEED" || e.data.type === "ARCADEVERSE_SET_SPEED")) {
+            const mult = typeof e.data.speedMultiplier === "number" ? e.data.speedMultiplier : (typeof e.data.speed === "number" ? e.data.speed : 1.0);
+            this.speedMultiplier = Math.max(0.25, Math.min(3.0, mult));
+          }
+        });
+        if (window.ArcadeVerse && typeof window.ArcadeVerse.onSpeedChange === "function") {
+          window.ArcadeVerse.onSpeedChange((data) => {
+            if (data && typeof data.speedMultiplier === "number") {
+              this.speedMultiplier = data.speedMultiplier;
+            }
+          });
+        }
+      }
+
       // Initial ball attached to paddle
       this.resetBall();
 
@@ -738,8 +759,9 @@
     // 5. PHYSICS & LOGIC LOOP
     // ========================================================
     gameLoop(timestamp) {
-      const dt = Math.min((timestamp - this.lastTime) / 1000, 0.05);
+      const rawDt = Math.min((timestamp - this.lastTime) / 1000, 0.05);
       this.lastTime = timestamp;
+      const dt = rawDt * (this.speedMultiplier || 1.0);
 
       if (this.state === "PLAYING") {
         this.update(dt);

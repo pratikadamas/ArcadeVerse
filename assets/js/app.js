@@ -36,15 +36,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const favoritesCountBadge = document.getElementById("favorites-count-badge");
   const modalFavBtn = document.getElementById("modal-fav-btn");
   const modalSoundBtn = document.getElementById("modal-sound-btn");
+  const scratchpadBtn = document.getElementById("modal-scratchpad-btn");
+  const scratchpadPanel = document.getElementById("game-scratchpad");
+  const scratchpadCloseBtn = document.getElementById("scratchpad-close-btn");
+  const scratchpadNotes = document.getElementById("scratchpad-notes");
+  const scratchpadTitle = document.getElementById("scratchpad-game-title");
+  const scratchpadStatus = document.getElementById("scratchpad-status");
+  const scratchpadClearConfirm = document.getElementById("scratchpad-clear-confirm");
 
   let currentCategory = "all";
   let currentDurationFacet = "all";
   let currentControlsFacet = "all";
   let currentLetterFilter = "all";
   let currentTagFilter = "";
+  let currentMixFilter = null; // curated mix filter (#583), read by the catalog filter below
   let searchQuery = "";
   let currentSort = "featured";
   let searchDebounceTimer = null;
+  const CATALOG_SORT_STORAGE_KEY = "arcadeverse_catalog_sort";
   const CATALOG_VIEW_STORAGE_KEY = "arcadeverse_catalog_view";
   let currentCatalogView = "grid";
   try {
@@ -53,7 +62,34 @@ document.addEventListener("DOMContentLoaded", () => {
       currentCatalogView = savedView;
     }
   } catch (_) {}
+  try {
+    const savedSort = localStorage.getItem(CATALOG_SORT_STORAGE_KEY);
+    if (savedSort && sortSelect && Array.from(sortSelect.options).some((o) => o.value === savedSort)) {
+      currentSort = savedSort;
+    }
+  } catch (_) {}
   let lastFocusedElement = null;
+
+  // Screen reader live region, used by the launch / catalog / pause announcements below
+  function announceToScreenReader(message) {
+    if (!message) return;
+    let liveRegion = document.getElementById("a11y-live-region");
+    if (!liveRegion) {
+      liveRegion = document.createElement("div");
+      liveRegion.id = "a11y-live-region";
+      liveRegion.className = "sr-only";
+      liveRegion.setAttribute("role", "status");
+      liveRegion.setAttribute("aria-live", "polite");
+      liveRegion.setAttribute("aria-atomic", "true");
+      document.body.appendChild(liveRegion);
+    }
+    // Clear first so a repeated message is announced again
+    liveRegion.textContent = "";
+    setTimeout(() => {
+      liveRegion.textContent = message;
+    }, 50);
+  }
+  window.announceToScreenReader = announceToScreenReader;
 
   // ========================================================
   // REBINDABLE KEYBOARD CONTROLS SUBSYSTEM (#516)
@@ -1204,6 +1240,28 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    function getDifficultyRank(game) {
+      if (!game) return 2;
+      const raw = String(game.difficulty || "").toLowerCase().trim();
+      if (raw.includes("easy") || raw.includes("beginner") || raw.includes("all skill") || raw.includes("casual")) return 1;
+      if (raw.includes("hard") || raw.includes("advanced") || raw.includes("expert") || raw.includes("survival")) return 3;
+      if (raw.includes("medium") || raw.includes("intermediate")) return 2;
+
+      const text = (String(game.title || "") + " " + String(game.category || "") + " " + (Array.isArray(game.tags) ? game.tags.join(" ") : "") + " " + String(game.description || "")).toLowerCase();
+      if (text.includes("easy") || text.includes("casual") || text.includes("relaxing") || text.includes("simple") || text.includes("calm") || text.includes("clicker")) return 1;
+      if (text.includes("expert") || text.includes("hardcore") || text.includes("insane") || text.includes("complex") || text.includes("rpg") || text.includes("hard") || text.includes("survival") || text.includes("roguelike")) return 3;
+      return 2;
+    }
+
+    function getGameReleaseTime(game) {
+      if (!game) return 0;
+      if (game.releaseDate) {
+        const t = new Date(game.releaseDate).getTime();
+        if (!isNaN(t)) return t;
+      }
+      return 0;
+    }
+
     // Apply Sorting
     filtered.sort((a, b) => {
       if (currentSort === "az") {
@@ -1548,13 +1606,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
       card.innerHTML = `
         <div class="game-card-preview">
+          <canvas class="card-micro-preview-canvas" width="280" height="140"></canvas>
           <span class="game-category-tag">${safeCategory}</span>
           ${halloweenBadgeHtml}
-          <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
-              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-            </svg>
-          </button>
+          <div class="card-options-top">
+            <label class="game-compare-label" title="Select to compare with another game">
+              <input type="checkbox" class="game-compare-checkbox" data-game-id="${safeGameId}">
+              <span class="compare-custom-box"></span>
+            </label>
+            <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+              </svg>
+            </button>
+          </div>
           <div class="game-icon">${iconHtml}</div>
         </div>
         <div class="game-card-body">
@@ -1659,6 +1724,70 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
 
+      // Interactive Micro-Preview Particle Animation on Hover (#588)
+      const previewCanvas = card.querySelector(".card-micro-preview-canvas");
+      let microAnimId = null;
+      let microParticles = [];
+
+      card.addEventListener("pointerenter", () => {
+        if (!previewCanvas) return;
+        const pctx = previewCanvas.getContext("2d");
+        if (!pctx) return;
+        previewCanvas.style.opacity = "1";
+
+        microParticles = [];
+        const color = (game.category || "").toLowerCase().includes("action") ? "#ef4444" :
+                      (game.category || "").toLowerCase().includes("puzzle") ? "#a855f7" :
+                      (game.category || "").toLowerCase().includes("strategy") ? "#10b981" : "#38bdf8";
+
+        for (let i = 0; i < 22; i++) {
+          microParticles.push({
+            x: Math.random() * previewCanvas.width,
+            y: Math.random() * previewCanvas.height,
+            vx: (Math.random() - 0.5) * 1.8,
+            vy: (Math.random() - 0.5) * 1.8,
+            size: Math.random() * 3 + 1,
+            color: color
+          });
+        }
+
+        const startTime = Date.now();
+        function loopPreview() {
+          if (Date.now() - startTime > 3000) {
+            cancelAnimationFrame(microAnimId);
+            return;
+          }
+          pctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+          pctx.fillStyle = color;
+          for (const pt of microParticles) {
+            pt.x += pt.vx;
+            pt.y += pt.vy;
+            if (pt.x < 0) pt.x = previewCanvas.width;
+            if (pt.x > previewCanvas.width) pt.x = 0;
+            if (pt.y < 0) pt.y = previewCanvas.height;
+            if (pt.y > previewCanvas.height) pt.y = 0;
+
+            pctx.beginPath();
+            pctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+            pctx.fill();
+          }
+          microAnimId = requestAnimationFrame(loopPreview);
+        }
+        loopPreview();
+      });
+
+      card.addEventListener("pointerleave", () => {
+        if (microAnimId) {
+          cancelAnimationFrame(microAnimId);
+          microAnimId = null;
+        }
+        if (previewCanvas) {
+          const pctx = previewCanvas.getContext("2d");
+          if (pctx) pctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+          previewCanvas.style.opacity = "0";
+        }
+      });
+
       // Only clicking the dedicated Play Now button launches the game modal
       gamesGrid.appendChild(card);
     });
@@ -1686,7 +1815,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Assistive Screen Reader Notification for Catalog Filter/Search Updates (#513)
     if (typeof announceToScreenReader === "function") {
-      const count = finalResults.length;
+      const count = filtered.length;
       let filterDesc = [];
       if (currentCategory && currentCategory !== "all") filterDesc.push(`category "${currentCategory}"`);
       if (searchQuery) filterDesc.push(`matching "${searchQuery}"`);
@@ -1915,15 +2044,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 3500);
   }
 
-  // Bind iframe load listener once at root level to ensure 100% reliable load detection
-  if (gameIframe) {
-    gameIframe.addEventListener("load", () => {
+  // Bind the load / error listeners on the current game iframe. closeGameModal swaps in a fresh
+  // iframe node, so this runs again for each new one.
+  function bindGameIframeListeners() {
+    const frame = gameIframe;
+    if (!frame) return;
+
+    frame.addEventListener("load", () => {
+      // A replaced iframe can still deliver a late event, only the live one counts
+      if (frame !== gameIframe) return;
       // Ignore blanking resets
-      if (!gameIframe.src || gameIframe.src.includes("about:blank")) return;
+      if (!frame.src || frame.src.includes("about:blank")) return;
 
       iframeLoadSucceeded = true;
       resetIframeBoundary();
-      gameIframe.classList.add("loaded");
+      frame.classList.add("loaded");
       guardIframeTouchInteractions();
 
       // Establish cryptographic session handshake with child game frame
@@ -1935,8 +2070,8 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
           const isMuted = localStorage.getItem("arcadeverse_muted") === "true";
           const masterVol = parseFloat(localStorage.getItem("arcadeverse_master_volume")) || 0.28;
-          if (gameIframe.contentWindow) {
-            gameIframe.contentWindow.postMessage({
+          if (frame.contentWindow) {
+            frame.contentWindow.postMessage({
               type: "ARCADEVERSE_AUDIO_CONFIG",
               sessionToken: activeGameSession.token,
               muted: isMuted,
@@ -1945,15 +2080,24 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
       } catch (_) {}
+
+      // Synchronize game simulation speed multiplier (#656)
+      try {
+        if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.broadcastSpeedConfig === "function") {
+          window.GameSpeedRegulator.broadcastSpeedConfig();
+        }
+      } catch (_) {}
     });
 
-    gameIframe.addEventListener("error", () => {
+    frame.addEventListener("error", () => {
+      if (frame !== gameIframe) return;
       iframeLoadSucceeded = false;
       if (activeGame) {
         triggerModalErrorBoundary(activeGame);
       }
     });
   }
+  bindGameIframeListeners();
 
   // =========================================================================
   // TOP-LEVEL NAVIGATION GUARD & ROGUE SCRIPT PROTECTION (#492)
@@ -2009,10 +2153,17 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.classList.remove("modal-launching-in-progress");
     }, 450);
 
+    flushScratchpadSave();
     activeGame = game;
+    loadScratchpadGame(game);
     isGameSessionActive = true;
     gameSessionStartTime = Date.now();
     isConfirmingQuit = false;
+
+    // LRU Game Cache Manager record play touch (#556)
+    if (window.AvGameLruCacheManager) {
+      window.AvGameLruCacheManager.recordGamePlay(game.id);
+    }
     hideQuitConfirmationModal();
     lastFocusedElement = triggerElement || document.activeElement;
 
@@ -2027,6 +2178,9 @@ document.addEventListener("DOMContentLoaded", () => {
     lastAnnouncedScore = 0;
     lastScoreAnnouncementTime = Date.now();
     announceToScreenReader(`Launching ${game.title}. Category: ${game.category}. Built by ${game.author}.`);
+    if (window.ArcadeAnnouncer && typeof window.ArcadeAnnouncer.announce === "function") {
+      window.ArcadeAnnouncer.announce("Ready Player One");
+    }
     startIframeTimeout(game);
 
     // Storage Isolation Bridge: Pass gameId via URL parameter so SDK attaches namespaced proxy (#493, #824)
@@ -2039,6 +2193,9 @@ document.addEventListener("DOMContentLoaded", () => {
     updateModalFavoriteButton(isFavorite(game.id));
     if (window.SoundEngine && typeof window.SoundEngine.updateUI === "function") {
       window.SoundEngine.updateUI();
+    }
+    if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.mountControls === "function") {
+      window.GameSpeedRegulator.mountControls();
     }
 
     // Monitor game frame lifecycle and attach watchdog
@@ -2077,6 +2234,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     checkOrientationLandscapePrompt(game);
+
+    // "Players Also Played" Intelligent Recommendation Strip in Modal Footer (#591)
+    renderModalRecommendations(game);
 
     if (!isDirectDeepLink) {
       modalPushedHistory = true;
@@ -2214,9 +2374,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeGameModal(isFromPopState = false) {
     if (!gameModal || (!gameModal.classList.contains("active") && !activeGame)) return;
+    if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.closeMenu === "function") {
+      window.GameSpeedRegulator.closeMenu();
+    }
     hideLandscapePrompt();
+    closeScratchpad(false);
     activeGame = null;
     isGameSessionActive = false;
+    // Stop the 15s load timer so a game closed mid load does not raise the error screen later
+    resetIframeBoundary();
     gameModal.classList.remove("active");
     gameModal.setAttribute("aria-hidden", "true");
     if (newTabBtn) {
@@ -2318,11 +2484,13 @@ document.addEventListener("DOMContentLoaded", () => {
           newIframe.setAttribute("title", currentFrame.getAttribute("title") || "Arcade Game Screen");
           newIframe.setAttribute("loading", "lazy");
           newIframe.setAttribute("allow", "gamepad; autoplay; fullscreen");
+          if (currentFrame.hasAttribute("sandbox")) newIframe.setAttribute("sandbox", currentFrame.getAttribute("sandbox"));
           newIframe.src = "about:blank";
           parent.replaceChild(newIframe, currentFrame);
-          // Re-bind global reference so openGameModal can find the new live iframe node
-          gameIframe = document.getElementById("game-iframe");
-          if (!gameIframe) gameIframe = newIframe;
+          // The reference and listeners must follow the new node, otherwise the next game
+          // is loaded into a detached iframe and never shows
+          gameIframe = newIframe;
+          bindGameIframeListeners();
         }
       } catch (_) {}
     }, 100);
@@ -2361,6 +2529,260 @@ document.addEventListener("DOMContentLoaded", () => {
 
   closeModalBtn.addEventListener("click", () => requestModalClose(false));
   modalOverlay.addEventListener("click", () => requestModalClose(false));
+
+  let scratchpadSaveTimer = null;
+  let scratchpadHideTimer = null;
+  let scratchpadTrigger = scratchpadBtn;
+  let scratchpadGameStartTime = 0;
+
+  function getScratchpadStorageKey(gameId) {
+    return `arcadeverse_notes_${gameId}`;
+  }
+
+  function setScratchpadStatus(message) {
+    if (scratchpadStatus) scratchpadStatus.textContent = message;
+  }
+
+  function updateScratchpadIndicator(notes) {
+    if (!scratchpadBtn) return;
+    const hasNotes = Boolean(notes && notes.trim());
+    scratchpadBtn.dataset.hasNotes = hasNotes ? "true" : "false";
+    scratchpadBtn.setAttribute("aria-label", hasNotes ? "Open Strategy Scratchpad, notes saved" : "Open Strategy Scratchpad");
+  }
+
+  function flushScratchpadSave() {
+    if (scratchpadSaveTimer) {
+      clearTimeout(scratchpadSaveTimer);
+      scratchpadSaveTimer = null;
+    }
+    if (!activeGame || !scratchpadNotes) return;
+
+    const notes = scratchpadNotes.value;
+    const key = getScratchpadStorageKey(activeGame.id);
+    if (!window.ArcadeStorageResilience || !window.ArcadeStorageResilience.safeSetItem(key, notes)) {
+      setScratchpadStatus("Unable to save notes locally");
+      return;
+    }
+    updateScratchpadIndicator(notes);
+    setScratchpadStatus("Saved locally per game");
+  }
+
+  function scheduleScratchpadSave() {
+    if (scratchpadSaveTimer) clearTimeout(scratchpadSaveTimer);
+    if (!activeGame || !scratchpadNotes) return;
+
+    const key = getScratchpadStorageKey(activeGame.id);
+    const gameId = activeGame.id;
+    const notes = scratchpadNotes.value;
+    setScratchpadStatus("Saving...");
+    scratchpadSaveTimer = setTimeout(() => {
+      scratchpadSaveTimer = null;
+      if (!window.ArcadeStorageResilience || !window.ArcadeStorageResilience.safeSetItem(key, notes)) {
+        setScratchpadStatus("Unable to save notes locally");
+        return;
+      }
+      if (activeGame && activeGame.id === gameId) {
+        updateScratchpadIndicator(notes);
+        setScratchpadStatus("Saved locally per game");
+      }
+    }, 300);
+  }
+
+  function loadScratchpadGame(game) {
+    if (!game || !scratchpadNotes) return;
+    scratchpadGameStartTime = Date.now();
+    if (scratchpadTitle) scratchpadTitle.textContent = game.title;
+    try {
+      scratchpadNotes.value = localStorage.getItem(getScratchpadStorageKey(game.id)) || "";
+      updateScratchpadIndicator(scratchpadNotes.value);
+      setScratchpadStatus("Saved locally per game");
+    } catch (error) {
+      scratchpadNotes.value = "";
+      updateScratchpadIndicator("");
+      setScratchpadStatus("Local storage is unavailable");
+      console.warn("[ArcadeVerse Scratchpad] Unable to load game notes:", error);
+    }
+    const clearConfirm = document.getElementById("scratchpad-clear-confirm");
+    if (clearConfirm) clearConfirm.hidden = true;
+  }
+
+  function openScratchpad() {
+    if (!activeGame || !scratchpadPanel || !scratchpadBtn) return;
+    if (scratchpadHideTimer) {
+      clearTimeout(scratchpadHideTimer);
+      scratchpadHideTimer = null;
+    }
+    scratchpadTrigger = scratchpadBtn;
+    scratchpadPanel.hidden = false;
+    scratchpadPanel.inert = false;
+    scratchpadPanel.setAttribute("aria-hidden", "false");
+    scratchpadBtn.setAttribute("aria-expanded", "true");
+    modalWindow.classList.add("scratchpad-open");
+    requestAnimationFrame(() => {
+      scratchpadPanel.classList.add("is-open");
+      scratchpadNotes.focus();
+    });
+  }
+
+  function closeScratchpad(restoreFocus = true) {
+    if (!scratchpadPanel || scratchpadPanel.hidden) return;
+    flushScratchpadSave();
+    scratchpadPanel.inert = true;
+    scratchpadPanel.setAttribute("aria-hidden", "true");
+    scratchpadPanel.classList.remove("is-open");
+    scratchpadBtn.setAttribute("aria-expanded", "false");
+    modalWindow.classList.remove("scratchpad-open");
+    if (scratchpadHideTimer) clearTimeout(scratchpadHideTimer);
+    scratchpadHideTimer = setTimeout(() => {
+      scratchpadPanel.hidden = true;
+      scratchpadHideTimer = null;
+    }, 250);
+    if (restoreFocus && scratchpadTrigger && scratchpadTrigger.isConnected) scratchpadTrigger.focus();
+  }
+
+  function toggleScratchpad() {
+    if (!activeGame) return;
+    if (scratchpadPanel.hidden || !scratchpadPanel.classList.contains("is-open")) {
+      openScratchpad();
+    } else {
+      closeScratchpad();
+    }
+  }
+
+  function formatPlaytime(seconds) {
+    const total = Math.max(0, Math.floor(seconds));
+    const hours = String(Math.floor(total / 3600)).padStart(2, "0");
+    const minutes = String(Math.floor((total % 3600) / 60)).padStart(2, "0");
+    const remainingSeconds = String(total % 60).padStart(2, "0");
+    return `${hours}:${minutes}:${remainingSeconds}`;
+  }
+
+  if (scratchpadBtn) scratchpadBtn.addEventListener("click", toggleScratchpad);
+  if (scratchpadCloseBtn) scratchpadCloseBtn.addEventListener("click", () => closeScratchpad());
+  if (scratchpadNotes) scratchpadNotes.addEventListener("input", scheduleScratchpadSave);
+
+  const scratchpadStampBtn = document.getElementById("scratchpad-stamp-btn");
+  if (scratchpadStampBtn) {
+    scratchpadStampBtn.addEventListener("click", () => {
+      if (!activeGame || !scratchpadNotes) return;
+      const start = scratchpadNotes.selectionStart;
+      const end = scratchpadNotes.selectionEnd;
+      const value = scratchpadNotes.value;
+      const prefix = start > 0 && value[start - 1] !== "\n" ? "\n" : "";
+      const suffix = end < value.length && value[end] !== "\n" ? "\n" : "";
+      const stamp = `[${formatPlaytime((Date.now() - scratchpadGameStartTime) / 1000)}] Clue: `;
+      const insertion = `${prefix}${stamp}${suffix}`;
+      scratchpadNotes.setRangeText(insertion, start, end, "end");
+      scratchpadNotes.focus();
+      scheduleScratchpadSave();
+    });
+  }
+
+  const scratchpadCopyBtn = document.getElementById("scratchpad-copy-btn");
+  if (scratchpadCopyBtn) {
+    scratchpadCopyBtn.addEventListener("click", async () => {
+      const text = scratchpadNotes ? scratchpadNotes.value : "";
+      try {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const copyTarget = document.createElement("textarea");
+          copyTarget.value = text;
+          copyTarget.setAttribute("readonly", "");
+          copyTarget.style.position = "fixed";
+          copyTarget.style.opacity = "0";
+          document.body.appendChild(copyTarget);
+          try {
+            copyTarget.select();
+            if (!document.execCommand("copy")) throw new Error("Clipboard copy command was rejected");
+          } finally {
+            copyTarget.remove();
+          }
+        }
+        setScratchpadStatus("Notes copied to clipboard");
+      } catch (error) {
+        setScratchpadStatus("Clipboard access failed");
+        console.warn("[ArcadeVerse Scratchpad] Unable to copy notes:", error);
+      }
+    });
+  }
+
+  const scratchpadExportBtn = document.getElementById("scratchpad-export-btn");
+  if (scratchpadExportBtn) {
+    scratchpadExportBtn.addEventListener("click", () => {
+      if (!activeGame || !scratchpadNotes) return;
+      const safeTitle = activeGame.title.replace(/[<>:"/\\|?*\x00-\x1F]/g, "").trim().replace(/\s+/g, "_") || "Game";
+      const file = new Blob([scratchpadNotes.value], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(file);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `ArcadeVerse_${safeTitle}_Notes.txt`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setScratchpadStatus("Notes exported");
+    });
+  }
+
+  const scratchpadClearBtn = document.getElementById("scratchpad-clear-btn");
+  const scratchpadClearConfirmBtn = document.getElementById("scratchpad-clear-confirm-btn");
+  const scratchpadClearCancelBtn = document.getElementById("scratchpad-clear-cancel-btn");
+  if (scratchpadClearBtn && scratchpadClearConfirm) {
+    scratchpadClearBtn.addEventListener("click", () => {
+      scratchpadClearConfirm.hidden = false;
+      scratchpadClearConfirmBtn.focus();
+    });
+  }
+  if (scratchpadClearConfirmBtn) {
+    scratchpadClearConfirmBtn.addEventListener("click", () => {
+      if (!scratchpadNotes) return;
+      scratchpadNotes.value = "";
+      scratchpadClearConfirm.hidden = true;
+      scheduleScratchpadSave();
+      scratchpadNotes.focus();
+    });
+  }
+  if (scratchpadClearCancelBtn) {
+    scratchpadClearCancelBtn.addEventListener("click", () => {
+      if (scratchpadClearConfirm) scratchpadClearConfirm.hidden = true;
+      if (scratchpadClearBtn) scratchpadClearBtn.focus();
+    });
+  }
+
+  window.addEventListener("keydown", (event) => {
+    if (!gameModal || !gameModal.classList.contains("active")) return;
+    if (event.altKey && !event.ctrlKey && !event.metaKey && event.key.toLowerCase() === "n") {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      toggleScratchpad();
+      return;
+    }
+    if (!scratchpadPanel || scratchpadPanel.hidden || !scratchpadPanel.classList.contains("is-open")) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      closeScratchpad();
+      return;
+    }
+    if (event.key !== "Tab") return;
+    const focusable = Array.from(scratchpadPanel.querySelectorAll("button:not([disabled]), textarea:not([disabled])"))
+      .filter((element) => !element.closest("[hidden]"));
+    if (!focusable.length) {
+      event.preventDefault();
+      scratchpadPanel.focus();
+      return;
+    }
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && (document.activeElement === first || !scratchpadPanel.contains(document.activeElement))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (document.activeElement === last || !scratchpadPanel.contains(document.activeElement))) {
+      event.preventDefault();
+      first.focus();
+    }
+  }, true);
 
   if (modalFavBtn) {
     modalFavBtn.addEventListener("click", () => {
@@ -4626,263 +5048,429 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ========================================================
-  // CURATED ARCADE MIXES SUBSYSTEM (#583)
-  // Themed pathways: Spooky Retro, Cyberpunk High-Speed, Brain Teasers
+  // DAILY GAME LOGIN STREAK CALENDAR & XP MULTIPLIER (#659)
+  // Calculates consecutive day UTC streak, tracks av_current_streak_days
   // ========================================================
-  const CURATED_MIXES = [
-    {
-      id: "spooky-retro",
-      name: "Spooky Retro",
-      description: "Eerie haunted labyrinths, midnight graveyards & pumpkin runs",
-      icon: "ghost",
-      games: ["haunted-house_debasmita", "midnight-graveyard_joitapaul", "pumpkin-express_joitapaul"],
-      color: "#ec4899"
-    },
-    {
-      id: "cyberpunk-high-speed",
-      name: "Cyberpunk High-Speed",
-      description: "Neon velocity, cyber gliders & hyperlight racers",
-      icon: "zap",
-      games: ["cyber-runner_mistu7debnath", "neon-drift-racer_joitapaul", "cyber-glider_babin"],
-      color: "#06b6d4"
-    },
-    {
-      id: "brain-teasers",
-      name: "Brain Teasers",
-      description: "Cryptic logic matrices, codebreaking & automated factories",
-      icon: "cpu",
-      games: ["quantum-minesweeper_babin", "code-breaker_babin", "robo-factory_mistu7debnath"],
-      color: "#a855f7"
+  function initDailyStreakTracker() {
+    const todayUTC = new Date().toISOString().slice(0, 10);
+    const lastPlayed = localStorage.getItem("av_last_played_date");
+    let streakDays = parseInt(localStorage.getItem("av_current_streak_days") || "0", 10);
+
+    if (lastPlayed) {
+      const lastDate = new Date(lastPlayed);
+      const currDate = new Date(todayUTC);
+      const diffDays = Math.round((currDate - lastDate) / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        streakDays += 1;
+        localStorage.setItem("av_current_streak_days", String(streakDays));
+        localStorage.setItem("av_last_played_date", todayUTC);
+      } else if (diffDays > 1) {
+        // Skipped > 48h -> Reset streak cleanly to 1
+        streakDays = 1;
+        localStorage.setItem("av_current_streak_days", "1");
+        localStorage.setItem("av_last_played_date", todayUTC);
+      }
+    } else {
+      streakDays = 1;
+      localStorage.setItem("av_current_streak_days", "1");
+      localStorage.setItem("av_last_played_date", todayUTC);
     }
-  ];
 
-  function injectCuratedMixesCarousel() {
-    if (document.getElementById("curated-mixes-carousel")) return;
-    const catalogSection = document.getElementById("catalog") || document.querySelector(".catalog-section");
-    if (!catalogSection) return;
+    // Render streak widget in navigation header
+    const navActions = document.querySelector(".nav-actions");
+    if (navActions && !document.getElementById("av-daily-streak-btn")) {
+      const streakBtn = document.createElement("button");
+      streakBtn.id = "av-daily-streak-btn";
+      streakBtn.type = "button";
+      streakBtn.className = "nav-streak-pill";
+      streakBtn.title = "Daily Game Streak & XP Multiplier";
+      streakBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2.5"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+        <span>${streakDays} Day${streakDays === 1 ? '' : 's'}</span>
+      `;
+      navActions.insertBefore(streakBtn, navActions.firstChild);
+    }
+  }
 
-    const container = document.createElement("div");
-    container.id = "curated-mixes-carousel";
-    container.className = "curated-mixes-container";
-    container.innerHTML = `
-      <div class="curated-mixes-header">
-        <div class="curated-title-wrap">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-          <span class="curated-title">Curated Arcade Mixes</span>
-        </div>
-        <span class="curated-subtitle">Guided theme mixes curated for quick launch</span>
+  initDailyStreakTracker();
+
+  // Universal Virtual Touch Controller Loader (#517)
+  if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
+    if (!document.querySelector('script[src*="virtual-controller.js"]')) {
+      const vcScript = document.createElement('script');
+      vcScript.src = 'assets/js/virtual-controller.js';
+      document.body.appendChild(vcScript);
+    }
+  }
+
+  // ========================================================
+  // "PLAYERS ALSO PLAYED" MODAL RECOMMENDATIONS (#591)
+  // Recommends 3 relevant games based on Jaccard tag similarity
+  // ========================================================
+  function renderModalRecommendations(currentGame) {
+    if (!currentGame || !modalWindow) return;
+    let strip = document.getElementById("modal-recommendations-strip");
+    if (!strip) {
+      strip = document.createElement("div");
+      strip.id = "modal-recommendations-strip";
+      strip.className = "modal-recommendations-strip";
+      modalWindow.appendChild(strip);
+    }
+
+    if (typeof GAMES_REGISTRY === "undefined" || !Array.isArray(GAMES_REGISTRY)) {
+      strip.style.display = "none";
+      return;
+    }
+
+    const currentTags = new Set((currentGame.tags || []).map(t => t.toLowerCase()));
+    currentTags.add((currentGame.category || "").toLowerCase());
+
+    const candidates = GAMES_REGISTRY.filter(g => g.id !== currentGame.id).map(g => {
+      const gTags = new Set((g.tags || []).map(t => t.toLowerCase()));
+      gTags.add((g.category || "").toLowerCase());
+
+      // Jaccard similarity
+      let intersection = 0;
+      for (const t of currentTags) {
+        if (gTags.has(t)) intersection++;
+      }
+      const union = new Set([...currentTags, ...gTags]).size;
+      const score = union > 0 ? intersection / union : 0;
+      return { game: g, score };
+    });
+
+    candidates.sort((a, b) => b.score - a.score);
+    const top3 = candidates.slice(0, 3).map(c => c.game);
+
+    if (top3.length === 0) {
+      strip.style.display = "none";
+      return;
+    }
+
+    strip.style.display = "flex";
+    strip.innerHTML = `
+      <div class="rec-strip-title">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+        <span>Players Also Played:</span>
       </div>
-      <div class="curated-mixes-row">
-        ${CURATED_MIXES.map(mix => `
-          <button type="button" class="curated-mix-card" data-mix-id="${mix.id}" style="--mix-accent: ${mix.color};">
-            <div class="mix-card-top">
-              <span class="mix-icon-badge" style="background: ${mix.color}22; border-color: ${mix.color}; color: ${mix.color};">
-                <i data-lucide="${mix.icon}"></i>
-              </span>
-              <span class="mix-count">${mix.games.length} Games</span>
-            </div>
-            <strong class="mix-name">${mix.name}</strong>
-            <p class="mix-desc">${mix.description}</p>
+      <div class="rec-chips-wrap">
+        ${top3.map(g => `
+          <button type="button" class="rec-game-chip" data-game-id="${g.id}">
+            <span>${escapeHTML(g.title)}</span>
+            <small>• ${escapeHTML(g.category || "Arcade")}</small>
           </button>
         `).join("")}
       </div>
     `;
 
-    // Insert right before the games grid
-    if (gamesGrid && gamesGrid.parentNode) {
-      gamesGrid.parentNode.insertBefore(container, gamesGrid);
-    } else {
-      catalogSection.appendChild(container);
+    strip.querySelectorAll(".rec-game-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        const gid = chip.getAttribute("data-game-id");
+        const nextGame = GAMES_REGISTRY.find(g => g.id === gid);
+        if (nextGame) {
+          openGameModal(nextGame);
+        }
+      });
+    });
+  }
+
+  // Universal Virtual Touch Controller Loader (#517)
+  if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
+    if (!document.querySelector('script[src*="virtual-controller.js"]')) {
+      const vcScript = document.createElement('script');
+      vcScript.src = 'assets/js/virtual-controller.js';
+      document.body.appendChild(vcScript);
+    }
+  }
+
+  // COMPARE TWO GAMES MULTI-SELECT INSPECTION DRAWER (#589)
+  // Side-by-side comparison of difficulty, duration, controls & ratings
+  // ========================================================
+  const selectedCompareGameIds = new Set();
+
+  function openCompareDrawer() {
+    let drawer = document.getElementById("game-compare-drawer");
+    if (!drawer) {
+      drawer = document.createElement("div");
+      drawer.id = "game-compare-drawer";
+      drawer.className = "game-compare-drawer";
+      document.body.appendChild(drawer);
     }
 
-    container.addEventListener("click", (e) => {
-      const card = e.target.closest(".curated-mix-card");
-      if (!card) return;
-      const mixId = card.getAttribute("data-mix-id");
-      const mix = CURATED_MIXES.find(m => m.id === mixId);
-      if (!mix) return;
+    const ids = Array.from(selectedCompareGameIds);
+    if (ids.length !== 2) {
+      drawer.classList.remove("visible");
+      return;
+    }
 
-      const isAlreadyActive = card.classList.contains("active");
-      document.querySelectorAll(".curated-mix-card").forEach(c => c.classList.remove("active"));
+    const gameA = (typeof GAMES_REGISTRY !== "undefined") ? GAMES_REGISTRY.find(g => g.id === ids[0]) : null;
+    const gameB = (typeof GAMES_REGISTRY !== "undefined") ? GAMES_REGISTRY.find(g => g.id === ids[1]) : null;
+    if (!gameA || !gameB) return;
 
-      if (isAlreadyActive) {
-        // Reset filter
-        currentMixFilter = null;
-      } else {
-        card.classList.add("active");
-        currentMixFilter = mix.games;
-      }
+    drawer.innerHTML = `
+      <div class="compare-drawer-header">
+        <div class="compare-drawer-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>
+          <span>Game Comparison Analysis</span>
+        </div>
+        <button type="button" class="compare-close-btn" aria-label="Close comparison">&times;</button>
+      </div>
+      <div class="compare-grid">
+        <div class="compare-col">
+          <h4 class="compare-game-title">${escapeHTML(gameA.title)}</h4>
+          <span class="compare-pill">${escapeHTML(gameA.category || "Arcade")}</span>
+          <div class="compare-attr-list">
+            <div class="compare-attr-row"><strong>Author:</strong> <span>@${escapeHTML(gameA.github || gameA.author || "Babin")}</span></div>
+            <div class="compare-attr-row"><strong>Controls:</strong> <span>${gameA.responsive ? "Keyboard + Touch" : "Keyboard/Mouse"}</span></div>
+            <div class="compare-attr-row"><strong>Rating:</strong> <span>${gameA.stars ? (gameA.stars / 10).toFixed(1) : "5.0"} / 5.0</span></div>
+            <div class="compare-attr-row"><strong>Tags:</strong> <span>${(gameA.tags || []).slice(0, 3).join(", ") || "arcade, retro"}</span></div>
+          </div>
+        </div>
+        <div class="compare-vs">VS</div>
+        <div class="compare-col">
+          <h4 class="compare-game-title">${escapeHTML(gameB.title)}</h4>
+          <span class="compare-pill">${escapeHTML(gameB.category || "Arcade")}</span>
+          <div class="compare-attr-list">
+            <div class="compare-attr-row"><strong>Author:</strong> <span>@${escapeHTML(gameB.github || gameB.author || "Babin")}</span></div>
+            <div class="compare-attr-row"><strong>Controls:</strong> <span>${gameB.responsive ? "Keyboard + Touch" : "Keyboard/Mouse"}</span></div>
+            <div class="compare-attr-row"><strong>Rating:</strong> <span>${gameB.stars ? (gameB.stars / 10).toFixed(1) : "5.0"} / 5.0</span></div>
+            <div class="compare-attr-row"><strong>Tags:</strong> <span>${(gameB.tags || []).slice(0, 3).join(", ") || "arcade, retro"}</span></div>
+          </div>
+        </div>
+      </div>
+    `;
 
-      if (typeof renderGames === "function") {
-        renderGames();
-      }
+    drawer.classList.add("visible");
+    const closeBtn = drawer.querySelector(".compare-close-btn");
+    closeBtn.addEventListener("click", () => {
+      drawer.classList.remove("visible");
+      selectedCompareGameIds.clear();
+      document.querySelectorAll(".game-compare-checkbox").forEach(cb => cb.checked = false);
     });
+  }
 
-    if (window.lucide) {
-      try { lucide.createIcons(); } catch (_) {}
+  document.addEventListener("change", (e) => {
+    if (e.target && e.target.classList.contains("game-compare-checkbox")) {
+      const gid = e.target.getAttribute("data-game-id");
+      if (e.target.checked) {
+        if (selectedCompareGameIds.size >= 2) {
+          // Uncheck and alert
+          e.target.checked = false;
+          alert("You can compare up to two games at a time.");
+          return;
+        }
+        selectedCompareGameIds.add(gid);
+      } else {
+        selectedCompareGameIds.delete(gid);
+      }
+
+      if (selectedCompareGameIds.size === 2) {
+        openCompareDrawer();
+      } else {
+        const drawer = document.getElementById("game-compare-drawer");
+        if (drawer) drawer.classList.remove("visible");
+      }
+    }
+  });
+
+  // Universal Virtual Touch Controller Loader (#517)
+  if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
+    if (!document.querySelector('script[src*="virtual-controller.js"]')) {
+      const vcScript = document.createElement('script');
+      vcScript.src = 'assets/js/virtual-controller.js';
+      document.body.appendChild(vcScript);
     }
   }
 
   // ========================================================
-  // IN-MODAL MULTI-CHANNEL AUDIO MIXER ENGINE (#565)
-  // Master, SFX, and Music Sliders broadcasting via postMessage
+  // LRU GAME ASSETS CACHE MANAGER WITH 50MB BUDGET GUARD (#556)
+  // Auto-evicts oldest unplayed games while protecting favorites
   // ========================================================
-  const AvAudioMixer = (function () {
-    const STORAGE_KEY = 'arcadeverse_audio_settings';
-    let settings = { master: 1.0, sfx: 1.0, music: 0.8 };
+  const AvGameLruCacheManager = (function () {
+    const LRU_TRACKER_KEY = 'av_lru_game_access';
+    const MAX_BUDGET_BYTES = 50 * 1024 * 1024; // 50MB Threshold
+    const GAME_CACHE_PREFIX = 'av-game-';
 
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        settings = Object.assign(settings, JSON.parse(raw));
-      }
-    } catch (_) {}
-
-    function saveSettings() {
+    function getAccessMap() {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+        const raw = localStorage.getItem(LRU_TRACKER_KEY);
+        return raw ? JSON.parse(raw) : {};
+      } catch (_) {
+        return {};
+      }
+    }
+
+    function saveAccessMap(map) {
+      try {
+        localStorage.setItem(LRU_TRACKER_KEY, JSON.stringify(map));
       } catch (_) {}
     }
 
-    function broadcastConfig() {
-      const iframe = document.getElementById('game-iframe');
-      if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage({
-          type: 'ARCADEVERSE_AUDIO_CONFIG',
-          volume: settings.master,
-          sfxVolume: settings.sfx,
-          musicVolume: settings.music
-        }, '*');
+    function recordGamePlay(gameId) {
+      if (!gameId) return;
+      const map = getAccessMap();
+      map[gameId] = Date.now();
+      saveAccessMap(map);
+      checkStorageBudget();
+    }
+
+    async function checkStorageBudget() {
+      if (!('storage' in navigator && 'estimate' in navigator.storage)) return;
+      if (!('caches' in window)) return;
+
+      try {
+        const estimate = await navigator.storage.estimate();
+        const usage = estimate.usage || 0;
+
+        // If usage approaches or exceeds 50MB, perform LRU eviction
+        if (usage > MAX_BUDGET_BYTES) {
+          await performLruEviction();
+        }
+      } catch (err) {
+        console.warn('[ArcadeVerse:LRU] Storage estimate failed:', err);
       }
     }
 
-    function setMaster(val) {
-      settings.master = Math.max(0, Math.min(1, Number(val)));
-      saveSettings();
-      broadcastConfig();
-    }
+    async function performLruEviction() {
+      const favSet = getFavorites();
+      const accessMap = getAccessMap();
+      const allCacheKeys = await caches.keys();
+      const gameCaches = allCacheKeys.filter((k) => k.startsWith(GAME_CACHE_PREFIX));
 
-    function setSfx(val) {
-      settings.sfx = Math.max(0, Math.min(1, Number(val)));
-      saveSettings();
-      broadcastConfig();
-    }
+      if (gameCaches.length === 0) return;
 
-    function setMusic(val) {
-      settings.music = Math.max(0, Math.min(1, Number(val)));
-      saveSettings();
-      broadcastConfig();
+      // Map cache to gameId and last accessed timestamp
+      const candidates = gameCaches.map((cacheKey) => {
+        const gameId = cacheKey.replace(GAME_CACHE_PREFIX, '');
+        return {
+          cacheKey,
+          gameId,
+          isFavorite: favSet.has(gameId),
+          lastAccess: accessMap[gameId] || 0
+        };
+      });
+
+      // Filter out favorites (locked and exempt from eviction)
+      const evictable = candidates.filter((c) => !c.isFavorite);
+
+      // Sort ascending by lastAccess (oldest unplayed first)
+      evictable.sort((a, b) => a.lastAccess - b.lastAccess);
+
+      // Evict oldest unplayed caches until under threshold or top 30% cleared
+      const toEvict = evictable.slice(0, Math.max(1, Math.ceil(evictable.length * 0.35)));
+      for (const item of toEvict) {
+        await caches.delete(item.cacheKey);
+        delete accessMap[item.gameId];
+        console.log(`[ArcadeVerse:LRU] Evicted game cache under 50MB budget: ${item.gameId}`);
+      }
+      saveAccessMap(accessMap);
+
+      // Signal Service Worker
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'AV_EVICT_GAME_CACHES',
+          evictList: toEvict.map((i) => i.gameId)
+        });
+      }
     }
 
     return {
-      getSettings: () => ({ ...settings }),
-      setMaster,
-      setSfx,
-      setMusic,
-      broadcastConfig
+      recordGamePlay,
+      checkStorageBudget,
+      performLruEviction
     };
   })();
 
-  window.AvAudioMixer = AvAudioMixer;
+  window.AvGameLruCacheManager = AvGameLruCacheManager;
 
-  function initMultiChannelAudioMixer() {
-    const modalControls = document.querySelector('.modal-controls');
-    const modalSoundBtn = document.getElementById('modal-sound-btn');
-    if (!modalControls || !modalSoundBtn) return;
-
-    // Wrap sound button into mixer wrapper if not already wrapped
-    if (!document.getElementById('modal-audio-mixer-popover')) {
-      const popover = document.createElement('div');
-      popover.id = 'modal-audio-mixer-popover';
-      popover.className = 'modal-audio-mixer-popover';
-      popover.setAttribute('role', 'dialog');
-      popover.setAttribute('aria-label', 'Audio Channel Mixer');
-
-      const s = AvAudioMixer.getSettings();
-      popover.innerHTML = `
-        <div class="modal-audio-mixer-header">
-          <span class="modal-audio-mixer-title">Audio Mixer</span>
-        </div>
-        <div class="modal-audio-mixer-channel">
-          <div class="modal-audio-mixer-label">
-            <span>Master Volume</span>
-            <span id="mixer-master-val">${Math.round(s.master * 100)}%</span>
-          </div>
-          <input type="range" class="modal-audio-mixer-slider" id="mixer-master-slider" min="0" max="100" value="${Math.round(s.master * 100)}">
-        </div>
-        <div class="modal-audio-mixer-channel">
-          <div class="modal-audio-mixer-label">
-            <span>Sound FX</span>
-            <span id="mixer-sfx-val">${Math.round(s.sfx * 100)}%</span>
-          </div>
-          <input type="range" class="modal-audio-mixer-slider" id="mixer-sfx-slider" min="0" max="100" value="${Math.round(s.sfx * 100)}">
-        </div>
-        <div class="modal-audio-mixer-channel">
-          <div class="modal-audio-mixer-label">
-            <span>Music</span>
-            <span id="mixer-music-val">${Math.round(s.music * 100)}%</span>
-          </div>
-          <input type="range" class="modal-audio-mixer-slider" id="mixer-music-slider" min="0" max="100" value="${Math.round(s.music * 100)}">
-        </div>
-      `;
-
-      modalSoundBtn.parentElement.style.position = 'relative';
-      modalSoundBtn.parentElement.appendChild(popover);
-
-      // Context menu or alt-click/hover toggle for mixer popover
-      modalSoundBtn.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        popover.classList.toggle('visible');
-      });
-
-      // Long press or click toggle
-      let clickTimeout = null;
-      modalSoundBtn.addEventListener('mousedown', () => {
-        clickTimeout = setTimeout(() => {
-          popover.classList.toggle('visible');
-        }, 500);
-      });
-      modalSoundBtn.addEventListener('mouseup', () => {
-        if (clickTimeout) clearTimeout(clickTimeout);
-      });
-
-      // Slider event listeners
-      const masterSlider = popover.querySelector('#mixer-master-slider');
-      const masterVal = popover.querySelector('#mixer-master-val');
-      masterSlider.addEventListener('input', (e) => {
-        const v = e.target.value / 100;
-        masterVal.textContent = `${e.target.value}%`;
-        AvAudioMixer.setMaster(v);
-      });
-
-      const sfxSlider = popover.querySelector('#mixer-sfx-slider');
-      const sfxVal = popover.querySelector('#mixer-sfx-val');
-      sfxSlider.addEventListener('input', (e) => {
-        const v = e.target.value / 100;
-        sfxVal.textContent = `${e.target.value}%`;
-        AvAudioMixer.setSfx(v);
-      });
-
-      const musicSlider = popover.querySelector('#mixer-music-slider');
-      const musicVal = popover.querySelector('#mixer-music-val');
-      musicSlider.addEventListener('input', (e) => {
-        const v = e.target.value / 100;
-        musicVal.textContent = `${e.target.value}%`;
-        AvAudioMixer.setMusic(v);
-      });
-
-      document.addEventListener('click', (e) => {
-        if (!popover.contains(e.target) && e.target !== modalSoundBtn && !modalSoundBtn.contains(e.target)) {
-          popover.classList.remove('visible');
-        }
+  function initGameLruCacheManager() {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
       });
     }
+    // Check initial storage budget on launch
+    setTimeout(() => {
+      AvGameLruCacheManager.checkStorageBudget();
+    }, 2000);
+  }
 
-    // Broadcast on game ready
-    window.addEventListener('message', (e) => {
-      if (e.data && (e.data.type === 'ARCADEVERSE_READY' || e.data.type === 'ARCADEVERSE_REQUEST_AUDIO_CONFIG')) {
-        AvAudioMixer.broadcastConfig();
+  // ========================================================
+  // APP BADGING API ENGINE (#557)
+  // Badges dock/taskbar icon for unclaimed daily streaks & trophies
+  // ========================================================
+  const AvAppBadging = (function () {
+    const STREAK_KEY = 'av_daily_streak_date';
+    const UNCLAIMED_KEY = 'av_unclaimed_streak_count';
+
+    function isSupported() {
+      return typeof navigator !== 'undefined' && 'setAppBadge' in navigator;
+    }
+
+    function calculateUnclaimedCount() {
+      let count = 0;
+      try {
+        const lastDate = localStorage.getItem(STREAK_KEY);
+        const today = new Date().toISOString().slice(0, 10);
+        if (lastDate !== today) {
+          count += 1; // Unclaimed daily streak for today
+        }
+        const storedUnclaimed = parseInt(localStorage.getItem(UNCLAIMED_KEY) || '0', 10);
+        count += storedUnclaimed;
+      } catch (_) {}
+      return count;
+    }
+
+    async function updateBadge() {
+      if (!isSupported()) return;
+      const count = calculateUnclaimedCount();
+      try {
+        if (count > 0) {
+          await navigator.setAppBadge(count);
+        } else {
+          await navigator.clearAppBadge();
+        }
+      } catch (err) {
+        console.warn('[ArcadeVerse:Badging] Failed to set badge:', err);
       }
+    }
+
+    async function clearBadge() {
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        localStorage.setItem(STREAK_KEY, today);
+        localStorage.setItem(UNCLAIMED_KEY, '0');
+        if (isSupported()) {
+          await navigator.clearAppBadge();
+        }
+      } catch (err) {
+        console.warn('[ArcadeVerse:Badging] Failed to clear badge:', err);
+      }
+    }
+
+    return {
+      isSupported,
+      updateBadge,
+      clearBadge
+    };
+  })();
+
+  window.AvAppBadging = AvAppBadging;
+
+  function initAppBadgingManager() {
+    AvAppBadging.updateBadge();
+
+    // Clear badge when player interacts with rewards or navigates to leaderboard
+    const leaderboardLinks = document.querySelectorAll('a[href*="leaderboard.html"]');
+    leaderboardLinks.forEach((link) => {
+      link.addEventListener('click', () => {
+        AvAppBadging.clearBadge();
+      });
+    });
+
+    window.addEventListener('arcadeverse:claim-streak', () => {
+      AvAppBadging.clearBadge();
     });
   }
 
