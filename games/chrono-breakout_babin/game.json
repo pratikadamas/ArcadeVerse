@@ -1,6 +1,7 @@
 {
   "title": "Chrono Breakout: Quantum Time Shatter",
-  "category": "Arcade / Breakout",
+  "category": "Arcade",
+  "lucideIcon": "timer",
   "description": "Shatter quantum crystal brick matrixes with a time-bending cyber ball; hold spacebar to reverse local time buffers and recover missed drops.",
   "author": "Babin Bid",
   "github": "Babin123456",
@@ -10,7 +11,8 @@
     "arcade",
     "retro",
     "html5-canvas",
-    "nsoc26"
+    "nsoc26",
+    "Breakout"
   ],
   "difficulty": "Medium",
   "featured": true,
