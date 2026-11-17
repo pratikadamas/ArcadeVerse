@@ -681,6 +681,11 @@ document.addEventListener("DOMContentLoaded", () => {
     ArcadeStorageResilience.safeSetItem(FAVORITES_STORAGE_KEY, serialized);
     ArcadeStorageResilience.safeSetItem(LEGACY_FAVORITES_STORAGE_KEY, serialized);
     updateFavoritesBadge();
+
+    // Offline dispatch queue integration (#554)
+    if (typeof navigator !== 'undefined' && !navigator.onLine && window.AvOfflineQueue) {
+      window.AvOfflineQueue.enqueue('FAVORITES_SYNC', { favorites: list });
+    }
   }
 
   function isFavorite(gameId) {
@@ -3007,9 +3012,13 @@ document.addEventListener("DOMContentLoaded", () => {
         announceToScreenReader(`Game over. Final score: ${finalScore}.`);
       }
 
-      // Retro Robotic Voice Announcer (#566)
-      if (window.ArcadeAnnouncer && typeof window.ArcadeAnnouncer.announce === "function") {
-        window.ArcadeAnnouncer.announce("Game Over. Final score: " + finalScore);
+      // Offline dispatch queue integration (#554)
+      if (typeof navigator !== 'undefined' && !navigator.onLine && window.AvOfflineQueue) {
+        window.AvOfflineQueue.enqueue('HIGH_SCORE_SYNC', {
+          gameId: activeGame ? activeGame.id : null,
+          score: finalScore,
+          timestamp: Date.now()
+        });
       }
 
       window.dispatchEvent(
@@ -4627,7 +4636,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initAZJumpBar();
   initURLDeepLinking();
   initControlsLegend();
-  initGameLruCacheManager();
+  initMultiChannelAudioMixer();
+  initOfflineDispatchQueue();
 });
 
   // ========================================================
@@ -5462,4 +5472,207 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener('arcadeverse:claim-streak', () => {
       AvAppBadging.clearBadge();
     });
+  }
+
+  // ========================================================
+  // BACKGROUND SYNC API & INDEXEDDB OFFLINE DISPATCH QUEUE (#554)
+  // Preserves high scores and favorites across offline sessions
+  // ========================================================
+  const AvOfflineQueue = (function () {
+    const DB_NAME = 'av_offline_queue';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'dispatch_queue';
+    let dbPromise = null;
+
+    function getDB() {
+      if (!dbPromise) {
+        dbPromise = new Promise((resolve, reject) => {
+          if (typeof indexedDB === 'undefined') {
+            resolve(null);
+            return;
+          }
+          const request = indexedDB.open(DB_NAME, DB_VERSION);
+          request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+              db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+            }
+          };
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => {
+            console.warn('[ArcadeVerse:OfflineQueue] IndexedDB open error:', request.error);
+            resolve(null);
+          };
+        });
+      }
+      return dbPromise;
+    }
+
+    async function enqueue(type, payload) {
+      try {
+        const db = await getDB();
+        if (!db) {
+          // Fallback to local storage buffer if IndexedDB is unavailable
+          const raw = localStorage.getItem('av_offline_fallback_queue') || '[]';
+          const arr = JSON.parse(raw);
+          arr.push({ type, payload, queuedAt: Date.now() });
+          localStorage.setItem('av_offline_fallback_queue', JSON.stringify(arr));
+          return;
+        }
+        return new Promise((resolve) => {
+          const tx = db.transaction(STORE_NAME, 'readwrite');
+          const store = tx.objectStore(STORE_NAME);
+          store.add({ type, payload, queuedAt: Date.now() });
+          tx.oncomplete = () => {
+            requestBackgroundSync();
+            resolve();
+          };
+          tx.onerror = () => resolve();
+        });
+      } catch (err) {
+        console.warn('[ArcadeVerse:OfflineQueue] Failed to enqueue:', err);
+      }
+    }
+
+    function requestBackgroundSync() {
+      if ('serviceWorker' in navigator && 'SyncManager' in window) {
+        navigator.serviceWorker.ready.then((reg) => {
+          return reg.sync.register('av-sync-offline-queue');
+        }).catch(() => {});
+      }
+    }
+
+    async function flushQueue() {
+      let flushedCount = 0;
+      try {
+        const db = await getDB();
+        if (db) {
+          const items = await new Promise((resolve) => {
+            const tx = db.transaction(STORE_NAME, 'readonly');
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => resolve([]);
+          });
+
+          if (items && items.length > 0) {
+            for (const item of items) {
+              if (item.type === 'FAVORITES_SYNC' && item.payload && Array.isArray(item.payload.favorites)) {
+                try {
+                  const existing = JSON.parse(localStorage.getItem('av_favorites') || '[]');
+                  const merged = Array.from(new Set([...existing, ...item.payload.favorites]));
+                  localStorage.setItem('av_favorites', JSON.stringify(merged));
+                  localStorage.setItem('arcadeverse_favorite_games', JSON.stringify(merged));
+                } catch (_) {}
+              } else if (item.type === 'HIGH_SCORE_SYNC' && item.payload && item.payload.gameId) {
+                try {
+                  const scoreKey = `av_score_${item.payload.gameId}`;
+                  const currentScore = parseInt(localStorage.getItem(scoreKey) || '0', 10);
+                  if (item.payload.score > currentScore) {
+                    localStorage.setItem(scoreKey, item.payload.score.toString());
+                  }
+                } catch (_) {}
+              }
+              flushedCount++;
+            }
+
+            // Clear flushed items from DB
+            await new Promise((resolve) => {
+              const tx = db.transaction(STORE_NAME, 'readwrite');
+              const store = tx.objectStore(STORE_NAME);
+              const clearReq = store.clear();
+              clearReq.onsuccess = () => resolve();
+              clearReq.onerror = () => resolve();
+            });
+          }
+        }
+
+        // Flush any localStorage fallback queue items
+        const rawFallback = localStorage.getItem('av_offline_fallback_queue');
+        if (rawFallback) {
+          try {
+            const fallbackItems = JSON.parse(rawFallback);
+            if (Array.isArray(fallbackItems) && fallbackItems.length > 0) {
+              flushedCount += fallbackItems.length;
+              localStorage.removeItem('av_offline_fallback_queue');
+            }
+          } catch (_) {}
+        }
+
+        if (flushedCount > 0) {
+          showSyncToast(`Synced ${flushedCount} offline score${flushedCount > 1 ? 's' : ''} and favorite${flushedCount > 1 ? 's' : ''}!`);
+        }
+      } catch (err) {
+        console.warn('[ArcadeVerse:OfflineQueue] Flush error:', err);
+      }
+    }
+
+    function showSyncToast(message) {
+      if (typeof announceToScreenReader === 'function') {
+        announceToScreenReader(message);
+      }
+      let toast = document.getElementById('av-offline-sync-toast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'av-offline-sync-toast';
+        toast.className = 'av-storage-quota-toast network-toast toast-online';
+        toast.setAttribute('role', 'status');
+        toast.setAttribute('aria-live', 'polite');
+        document.body.appendChild(toast);
+      }
+      toast.innerHTML = `
+        <div class="av-quota-toast-content network-toast-body" style="display:flex;align-items:center;gap:10px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span class="av-quota-toast-text" style="font-weight:600;font-size:0.9rem;">${message}</span>
+        </div>
+      `;
+      toast.classList.add('visible');
+      toast.classList.add('toast-visible');
+      setTimeout(() => {
+        toast.classList.remove('visible');
+        toast.classList.remove('toast-visible');
+      }, 4500);
+    }
+
+    return {
+      enqueue,
+      flushQueue,
+      showSyncToast
+    };
+  })();
+
+  window.AvOfflineQueue = AvOfflineQueue;
+
+  function initOfflineDispatchQueue() {
+    // Register Service Worker if supported
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then((reg) => {
+          // Listen for updates or background sync triggers
+          navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'AV_TRIGGER_OFFLINE_SYNC') {
+              AvOfflineQueue.flushQueue();
+            }
+          });
+        }).catch((err) => {
+          console.warn('[ArcadeVerse:PWA] Service Worker registration failed:', err);
+        });
+      });
+    }
+
+    // Flush automatically upon internet reconnect
+    window.addEventListener('online', () => {
+      setTimeout(() => {
+        AvOfflineQueue.flushQueue();
+      }, 500);
+    });
+
+    // Check on startup if online and pending items exist
+    if (navigator.onLine) {
+      setTimeout(() => {
+        AvOfflineQueue.flushQueue();
+      }, 1500);
+    }
   }
