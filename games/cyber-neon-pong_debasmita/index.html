@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cyber Neon Pong | ArcadeVerse</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Favicon and Brand Icons -->
   <link rel="icon" type="image/x-icon" href="../../assets/public/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="../../assets/public/favicon-32x32.png">
@@ -14,7 +13,7 @@
 <body>
   <div class="game-header">
     <div class="game-title">
-      <i data-lucide="gamepad-2"></i> Cyber Neon Pong
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="11" x2="10" y2="11"></line><line x1="8" y1="9" x2="8" y2="13"></line><line x1="15" y1="12" x2="15.01" y2="12"></line><line x1="18" y1="10" x2="18.01" y2="10"></line><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"></path></svg> Cyber Neon Pong
     </div>
     <div class="author-badge">Created by @DebasmitaBose0 • Match Rules Edition</div>
   </div>
@@ -22,8 +21,8 @@
   <!-- Match Setup: game mode and score limit -->
   <div class="pong-modebar">
     <div class="difficulty-group" role="group" aria-label="Game Mode">
-      <button type="button" class="mode-btn active" data-mode="ai" aria-pressed="true"><i data-lucide="cpu"></i> 1P vs AI</button>
-      <button type="button" class="mode-btn" data-mode="versus" aria-pressed="false"><i data-lucide="users"></i> 2P Local</button>
+      <button type="button" class="mode-btn active" data-mode="ai" aria-pressed="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg> 1P vs AI</button>
+      <button type="button" class="mode-btn" data-mode="versus" aria-pressed="false"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> 2P Local</button>
     </div>
     <div class="difficulty-group" role="group" aria-label="Score Limit">
       <button type="button" class="target-btn" data-target="5" aria-pressed="false">First to 5</button>
@@ -42,13 +41,13 @@
 
     <div class="toolbar-actions">
       <button type="button" class="icon-btn" id="pause-btn" title="Pause Game (P or Space)" aria-label="Pause Game">
-        <i data-lucide="pause" id="pause-icon"></i>
+        <span id="pause-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg></span>
       </button>
       <button type="button" class="icon-btn" id="sound-btn" title="Toggle Sound" aria-label="Toggle Sound">
-        <i data-lucide="volume-2" id="sound-icon"></i>
+        <span id="sound-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg></span>
       </button>
       <button type="button" class="icon-btn" id="restart-btn" title="Reset Match" aria-label="Reset Match">
-        <i data-lucide="rotate-ccw"></i>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 .49-3.68"></path></svg>
       </button>
     </div>
   </div>
@@ -87,10 +86,5 @@
   </p>
 
   <script src="game.js"></script>
-  <script>
-    if (window.lucide) {
-      lucide.createIcons();
-    }
-  </script>
 </body>
 </html>
