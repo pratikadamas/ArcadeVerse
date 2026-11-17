@@ -121,11 +121,13 @@ try {
 
   if (isCiPr || (currentBranch !== 'main' && currentBranch !== 'HEAD')) {
     isPrBranch = true;
-    let baseRef = 'origin/main';
-    try {
-      execSync('git rev-parse --verify origin/main', { stdio: 'ignore' });
-    } catch {
-      baseRef = 'main';
+    let baseRef = 'main';
+    for (const ref of ['upstream/main', 'origin/main', 'main']) {
+      try {
+        execSync(`git rev-parse --verify ${ref}`, { stdio: 'ignore' });
+        baseRef = ref;
+        break;
+      } catch (_) {}
     }
 
     try {
