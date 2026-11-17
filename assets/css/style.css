@@ -11553,37 +11553,26 @@ html.a11y-reduced-motion .search-clear-btn {
 }
 
 /* ========================================================
-   ACCESSIBILITY COLORBLIND SHADERS & PALETTE CORRECTION (#563)
-   Applies Protanopia, Deuteranopia, Tritanopia, or Monochrome SVG filters
+   PIXEL-ART CRISPNESS & IMAGE-RENDERING ENFORCER (#561)
+   Prevents bilinear blur across High-DPI and scaled retro canvases
    ======================================================== */
-.modal-frame-wrapper.filter-protanopia {
-  filter: url('#protanopia-filter');
+canvas.pixel-art,
+#game-canvas.pixel-art,
+.pixel-crisp canvas,
+.pixelated-render canvas,
+.pixelated-render #game-canvas {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
-.modal-frame-wrapper.filter-deuteranopia {
-  filter: url('#deuteranopia-filter');
+/* Visual preference toggle support for modal iframe containers */
+.modal-frame-wrapper.pixel-art-mode iframe {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: pixelated;
 }
 
-.modal-frame-wrapper.filter-tritanopia {
-  filter: url('#tritanopia-filter');
-}
-
-.modal-frame-wrapper.filter-monochrome {
-  filter: url('#monochrome-filter');
-}
-
-.modal-colorblind-select {
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: var(--text-primary, #f9fafb);
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 0.75rem;
-  font-family: inherit;
-  cursor: pointer;
-  outline: none;
-  transition: border-color 0.2s ease;
-}
 
 .modal-colorblind-select:focus {
   border-color: #06b6d4;
