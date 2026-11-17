@@ -16,7 +16,9 @@
   } else if (typeof module === "object" && module.exports) {
     module.exports = factory();
   } else {
-    root.ArcadeVerse = factory();
+    var inst = factory();
+    root.ArcadeVerse = inst;
+    root.arcadeverse = inst; // Alias lowercase for developer convenience (#722)
   }
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
@@ -1657,6 +1659,36 @@
     },
 
     // ========================================================
+    // DYNAMIC PERFORMANCE PROFILER & PARTICLE THROTTLER (#559)
+    // Low-end hardware protection & battery-saver particle reducer
+    // ========================================================
+    _isLowPerfMode: false,
+    _perfListeners: [],
+
+    isLowPerfMode: function () {
+      return this._isLowPerfMode;
+    },
+
+    onPerformanceModeChange: function (callback) {
+      if (typeof callback === 'function') {
+        this._perfListeners.push(callback);
+      }
+    },
+
+    setLowPerfMode: function (enabled) {
+      this._isLowPerfMode = !!enabled;
+      for (var i = 0; i < this._perfListeners.length; i++) {
+        try {
+          this._perfListeners[i](this._isLowPerfMode);
+        } catch (_) {}
+      }
+    },
+
+    getParticleMultiplier: function () {
+      return this._isLowPerfMode ? 0.5 : 1.0;
+    },
+
+    // ========================================================
     // POINTER LOCK API INTEGRATION SUBSYSTEM (#573)
     // First-person & precision crosshair aiming with ESC release HUD
     // ========================================================
@@ -1747,4 +1779,14 @@
       }
     }
   };
+
+  // Listen for parent hub AV_LOW_PERF_MODE broadcasts
+  if (typeof window !== 'undefined') {
+    window.addEventListener('message', function (e) {
+      if (e.data && e.data.type === 'AV_LOW_PERF_MODE') {
+        var enabled = !!e.data.enabled;
+        ArcadeVerse.setLowPerfMode(enabled);
+      }
+    });
+  }
 });

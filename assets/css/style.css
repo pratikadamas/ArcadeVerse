@@ -11552,25 +11552,92 @@ html.a11y-reduced-motion .search-clear-btn {
   transform: scale(1.2);
 }
 
-/* ===================================================
-   CARD MICRO-PREVIEW ANIMATED CANVAS BANNER (#588)
-   =================================================== */
-
-.card-micro-preview-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: 1;
+/* ========================================================
+   PIXEL-ART CRISPNESS & IMAGE-RENDERING ENFORCER (#561)
+   Prevents bilinear blur across High-DPI and scaled retro canvases
+   ======================================================== */
+canvas.pixel-art,
+#game-canvas.pixel-art,
+.pixel-crisp canvas,
+.pixelated-render canvas,
+.pixelated-render #game-canvas {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
-.game-card-preview {
-  position: relative;
+/* Visual preference toggle support for modal iframe containers */
+.modal-frame-wrapper.pixel-art-mode iframe {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: pixelated;
+}
+
+
+.modal-colorblind-select:focus {
+  border-color: #06b6d4;
+  box-shadow: 0 0 6px rgba(6, 182, 212, 0.4);
+}
+
+
+.crt-screen-overlay.active {
+  display: block;
+}
+
+/* Fine horizontal scanlines */
+.crt-screen-overlay::before {
+  content: " ";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.35) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.04),
+    rgba(0, 255, 0, 0.02),
+    rgba(0, 0, 255, 0.04)
+  );
+  background-size: 100% 3px, 6px 100%;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.85;
+}
+
+/* Subtle radial vignette & curved bezel glow */
+.crt-screen-overlay::after {
+  content: " ";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    transparent 55%,
+    rgba(0, 0, 0, 0.45) 85%,
+    rgba(0, 0, 0, 0.85) 100%
+  );
+  box-shadow: inset 0 0 40px rgba(0, 240, 255, 0.15);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.btn-crt-toggle.active {
+  color: #00f0ff !important;
+  background: rgba(0, 240, 255, 0.15) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}
+
+
+/* Screen reader only utility, used by the #a11y-live-region announcer */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
   overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
 /* ===================================================
