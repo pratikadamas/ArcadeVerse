@@ -16,7 +16,9 @@
   } else if (typeof module === "object" && module.exports) {
     module.exports = factory();
   } else {
-    root.ArcadeVerse = factory();
+    var inst = factory();
+    root.ArcadeVerse = inst;
+    root.arcadeverse = inst; // Alias lowercase for developer convenience (#722)
   }
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
@@ -1449,79 +1451,42 @@
     },
 
     // ========================================================
-    // POINTER LOCK API INTEGRATION SUBSYSTEM (#573)
-    // First-person & precision crosshair aiming with ESC release HUD
+    // HRTF 3D SPATIAL AUDIO PANNER SUBSYSTEM (#569)
+    // Head-Related Transfer Function binaural positioning for stereo gamers
     // ========================================================
-    /**
-     * Binds HTML5 Pointer Lock API to a game canvas.
-     * @param {HTMLCanvasElement} canvas - Target game canvas
-     * @param {Object} options - Configuration options
-     * @param {Function} options.onMove - Callback with (movementX, movementY, e)
-     * @param {Function} [options.onLockChange] - Callback with (isLocked)
-     * @param {number} [options.sensitivity=1.0] - Mouse sensitivity multiplier
-     * @returns {{ requestLock: Function, exitLock: Function, isLocked: Function }}
-     */
-    initPointerLock: function (canvas, options) {
-      if (!canvas) return null;
-      var opts = options || {};
-      var sensitivity = typeof opts.sensitivity === 'number' ? opts.sensitivity : 1.0;
-      var onMove = typeof opts.onMove === 'function' ? opts.onMove : function () {};
-      var onLockChange = typeof opts.onLockChange === 'function' ? opts.onLockChange : function () {};
+    createSpatialPanner: function (audioCtx, options) {
+      if (!audioCtx) return null;
+      options = options || {};
 
-      // Create HUD pill if not already present
-      var hud = document.getElementById('av-pointer-lock-hud');
-      if (!hud) {
-        hud = document.createElement('div');
-        hud.id = 'av-pointer-lock-hud';
-        hud.setAttribute('role', 'status');
-        hud.setAttribute('aria-live', 'polite');
-        hud.innerHTML = '<span class="hud-dot"></span><span>Pointer Locked &mdash; Press <kbd>ESC</kbd> to Release</span>';
-        hud.style.cssText = 'position:fixed;top:1rem;left:50%;transform:translateX(-50%);background:rgba(15,23,42,0.92);border:1px solid #38bdf8;box-shadow:0 0 15px rgba(56,189,248,0.3);color:#f8fafc;padding:0.4rem 0.9rem;border-radius:20px;font-size:0.8rem;font-weight:600;display:none;align-items:center;gap:0.5rem;z-index:99999;pointer-events:none;transition:opacity 0.25s ease;';
-        document.body.appendChild(hud);
+      var panner = audioCtx.createPanner();
+      if ('panningModel' in panner) {
+        panner.panningModel = 'HRTF';
       }
-
-      function handleMouseMove(e) {
-        if (document.pointerLockElement === canvas) {
-          var mx = (e.movementX || 0) * sensitivity;
-          var my = (e.movementY || 0) * sensitivity;
-          onMove(mx, my, e);
-        }
+      if ('distanceModel' in panner) {
+        panner.distanceModel = 'inverse';
       }
-
-      function handleLockChange() {
-        var locked = document.pointerLockElement === canvas;
-        if (hud) {
-          hud.style.display = locked ? 'flex' : 'none';
-        }
-        onLockChange(locked);
-      }
-
-      document.addEventListener('pointerlockchange', handleLockChange);
-      document.addEventListener('mousemove', handleMouseMove);
+      panner.refDistance = options.refDistance || 100;
+      panner.maxDistance = options.maxDistance || 1000;
+      panner.rolloffFactor = options.rolloffFactor || 1;
+      panner.coneInnerAngle = options.coneInnerAngle || 360;
+      panner.coneOuterAngle = options.coneOuterAngle || 360;
 
       return {
-        requestLock: function () {
-          try {
-            if (canvas.requestPointerLock) {
-              canvas.requestPointerLock();
-            }
-          } catch (_) {}
-        },
-        exitLock: function () {
-          try {
-            if (document.exitPointerLock) {
-              document.exitPointerLock();
-            }
-          } catch (_) {}
-        },
-        isLocked: function () {
-          return document.pointerLockElement === canvas;
-        },
-        destroy: function () {
-          document.removeEventListener('pointerlockchange', handleLockChange);
-          document.removeEventListener('mousemove', handleMouseMove);
-          if (hud && hud.parentElement) {
-            hud.remove();
+        node: panner,
+        /**
+         * Updates emitter position relative to screen center or player
+         * @param {number} x - Relative horizontal offset (-1.0 to 1.0 or pixel delta)
+         * @param {number} y - Relative vertical offset (-1.0 to 1.0 or pixel delta)
+         * @param {number} [z] - Relative depth (default -0.5)
+         */
+        setPosition: function (x, y, z) {
+          z = typeof z === 'number' ? z : -0.5;
+          if (panner.positionX) {
+            panner.positionX.setValueAtTime(x, audioCtx.currentTime);
+            panner.positionY.setValueAtTime(y, audioCtx.currentTime);
+            panner.positionZ.setValueAtTime(z, audioCtx.currentTime);
+          } else if (typeof panner.setPosition === 'function') {
+            panner.setPosition(x, y, z);
           }
         }
       };
