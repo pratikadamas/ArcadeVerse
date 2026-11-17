@@ -1451,368 +1451,46 @@
     },
 
     // ========================================================
-    // POINTER LOCK API INTEGRATION SUBSYSTEM (#573)
-    // First-person & precision crosshair aiming with ESC release HUD
+    // HRTF 3D SPATIAL AUDIO PANNER SUBSYSTEM (#569)
+    // Head-Related Transfer Function binaural positioning for stereo gamers
     // ========================================================
-    /**
-     * Binds HTML5 Pointer Lock API to a game canvas.
-     * @param {HTMLCanvasElement} canvas - Target game canvas
-     * @param {Object} options - Configuration options
-     * @param {Function} options.onMove - Callback with (movementX, movementY, e)
-     * @param {Function} [options.onLockChange] - Callback with (isLocked)
-     * @param {number} [options.sensitivity=1.0] - Mouse sensitivity multiplier
-     * @returns {{ requestLock: Function, exitLock: Function, isLocked: Function }}
-     */
-    initPointerLock: function (canvas, options) {
-      if (!canvas) return null;
-      var opts = options || {};
-      var sensitivity = typeof opts.sensitivity === 'number' ? opts.sensitivity : 1.0;
-      var onMove = typeof opts.onMove === 'function' ? opts.onMove : function () {};
-      var onLockChange = typeof opts.onLockChange === 'function' ? opts.onLockChange : function () {};
+    createSpatialPanner: function (audioCtx, options) {
+      if (!audioCtx) return null;
+      options = options || {};
 
-      // Create HUD pill if not already present
-      var hud = document.getElementById('av-pointer-lock-hud');
-      if (!hud) {
-        hud = document.createElement('div');
-        hud.id = 'av-pointer-lock-hud';
-        hud.setAttribute('role', 'status');
-        hud.setAttribute('aria-live', 'polite');
-        hud.innerHTML = '<span class="hud-dot"></span><span>Pointer Locked &mdash; Press <kbd>ESC</kbd> to Release</span>';
-        hud.style.cssText = 'position:fixed;top:1rem;left:50%;transform:translateX(-50%);background:rgba(15,23,42,0.92);border:1px solid #38bdf8;box-shadow:0 0 15px rgba(56,189,248,0.3);color:#f8fafc;padding:0.4rem 0.9rem;border-radius:20px;font-size:0.8rem;font-weight:600;display:none;align-items:center;gap:0.5rem;z-index:99999;pointer-events:none;transition:opacity 0.25s ease;';
-        document.body.appendChild(hud);
+      var panner = audioCtx.createPanner();
+      if ('panningModel' in panner) {
+        panner.panningModel = 'HRTF';
       }
-
-      function handleMouseMove(e) {
-        if (document.pointerLockElement === canvas) {
-          var mx = (e.movementX || 0) * sensitivity;
-          var my = (e.movementY || 0) * sensitivity;
-          onMove(mx, my, e);
-        }
+      if ('distanceModel' in panner) {
+        panner.distanceModel = 'inverse';
       }
-
-      function handleLockChange() {
-        var locked = document.pointerLockElement === canvas;
-        if (hud) {
-          hud.style.display = locked ? 'flex' : 'none';
-        }
-        onLockChange(locked);
-      }
-
-      document.addEventListener('pointerlockchange', handleLockChange);
-      document.addEventListener('mousemove', handleMouseMove);
+      panner.refDistance = options.refDistance || 100;
+      panner.maxDistance = options.maxDistance || 1000;
+      panner.rolloffFactor = options.rolloffFactor || 1;
+      panner.coneInnerAngle = options.coneInnerAngle || 360;
+      panner.coneOuterAngle = options.coneOuterAngle || 360;
 
       return {
-        requestLock: function () {
-          try {
-            if (canvas.requestPointerLock) {
-              canvas.requestPointerLock();
-            }
-          } catch (_) {}
-        },
-        exitLock: function () {
-          try {
-            if (document.exitPointerLock) {
-              document.exitPointerLock();
-            }
-          } catch (_) {}
-        },
-        isLocked: function () {
-          return document.pointerLockElement === canvas;
-        },
-        destroy: function () {
-          document.removeEventListener('pointerlockchange', handleLockChange);
-          document.removeEventListener('mousemove', handleMouseMove);
-          if (hud && hud.parentElement) {
-            hud.remove();
+        node: panner,
+        /**
+         * Updates emitter position relative to screen center or player
+         * @param {number} x - Relative horizontal offset (-1.0 to 1.0 or pixel delta)
+         * @param {number} y - Relative vertical offset (-1.0 to 1.0 or pixel delta)
+         * @param {number} [z] - Relative depth (default -0.5)
+         */
+        setPosition: function (x, y, z) {
+          z = typeof z === 'number' ? z : -0.5;
+          if (panner.positionX) {
+            panner.positionX.setValueAtTime(x, audioCtx.currentTime);
+            panner.positionY.setValueAtTime(y, audioCtx.currentTime);
+            panner.positionZ.setValueAtTime(z, audioCtx.currentTime);
+          } else if (typeof panner.setPosition === 'function') {
+            panner.setPosition(x, y, z);
           }
         }
       };
-    },
-
-    // ========================================================
-    // PROCEDURAL 2D CAMERA ZOOM & PAN CONTROLLER (#722)
-    // Smooth mouse-wheel scaling (0.5x - 2.0x), drag-to-pan,
-    // and accurate world-space coordinate projection.
-    // ========================================================
-    camera: {
-      /**
-       * Attaches smooth mouse-wheel zoom and drag-to-pan controller to a target canvas
-       * @param {HTMLCanvasElement} canvas - Target game canvas
-       * @param {Object} [options] - Configuration options
-       * @param {number} [options.minZoom=0.5] - Minimum zoom scale
-       * @param {number} [options.maxZoom=2.0] - Maximum zoom scale
-       * @param {number} [options.initialZoom=1.0] - Starting zoom scale
-       * @param {number} [options.zoomSpeed=0.1] - Mouse wheel zoom rate
-       * @param {boolean} [options.enablePan=true] - Enable drag/middle-click panning
-       * @param {number} [options.panButton=1] - Mouse button for panning (default 1 = middle mouse)
-       * @param {boolean} [options.allowDragPan=true] - Allow drag-to-pan via middle click or Alt/Shift+click
-       * @param {boolean} [options.showResetButton=true] - Display on-screen reset HUD
-       * @param {Function} [options.onChange] - Callback fired on camera state change
-       * @returns {Object|null} Camera controller instance
-       */
-      enableZoomPan: function (canvas, options) {
-        if (!canvas || typeof canvas.getContext !== 'function') return null;
-
-        options = options || {};
-        var minZoom = typeof options.minZoom === 'number' ? options.minZoom : 0.5;
-        var maxZoom = typeof options.maxZoom === 'number' ? options.maxZoom : 2.0;
-        var initialZoom = typeof options.initialZoom === 'number' ? options.initialZoom : 1.0;
-        var zoomSpeed = typeof options.zoomSpeed === 'number' ? options.zoomSpeed : 0.1;
-        var enablePan = options.enablePan !== false;
-        var panButton = typeof options.panButton === 'number' ? options.panButton : 1;
-        var allowDragPan = options.allowDragPan !== false;
-        var showResetButton = options.showResetButton !== false;
-        var onChange = typeof options.onChange === 'function' ? options.onChange : null;
-
-        var zoom = Math.min(maxZoom, Math.max(minZoom, initialZoom));
-        var panX = 0;
-        var panY = 0;
-        var isPanning = false;
-        var startMouseX = 0;
-        var startMouseY = 0;
-        var startPanX = 0;
-        var startPanY = 0;
-
-        function getCanvasScale() {
-          var rect = canvas.getBoundingClientRect();
-          var scaleX = rect.width ? canvas.width / rect.width : 1;
-          var scaleY = rect.height ? canvas.height / rect.height : 1;
-          return { rect: rect, scaleX: scaleX, scaleY: scaleY };
-        }
-
-        function screenToWorld(screenX, screenY) {
-          var x, y;
-          if (typeof screenX === 'object' && screenX !== null && 'clientX' in screenX) {
-            var s = getCanvasScale();
-            x = (screenX.clientX - s.rect.left) * s.scaleX;
-            y = (screenX.clientY - s.rect.top) * s.scaleY;
-          } else {
-            x = Number(screenX) || 0;
-            y = Number(screenY) || 0;
-          }
-          return {
-            x: (x - panX) / zoom,
-            y: (y - panY) / zoom
-          };
-        }
-
-        function worldToScreen(worldX, worldY) {
-          return {
-            x: (Number(worldX) || 0) * zoom + panX,
-            y: (Number(worldY) || 0) * zoom + panY
-          };
-        }
-
-        function notifyChange() {
-          updateHud();
-          if (onChange) {
-            try {
-              onChange({ zoom: zoom, panX: panX, panY: panY });
-            } catch (_) {}
-          }
-        }
-
-        function setZoom(newZoom, centerX, centerY) {
-          var clamped = Math.min(maxZoom, Math.max(minZoom, newZoom));
-          if (clamped === zoom && centerX === undefined) return;
-
-          var cx = centerX !== undefined ? centerX : canvas.width / 2;
-          var cy = centerY !== undefined ? centerY : canvas.height / 2;
-
-          var world = screenToWorld(cx, cy);
-          panX = cx - world.x * clamped;
-          panY = cy - world.y * clamped;
-          zoom = clamped;
-          notifyChange();
-        }
-
-        function setPan(x, y) {
-          panX = Number(x) || 0;
-          panY = Number(y) || 0;
-          notifyChange();
-        }
-
-        function reset() {
-          zoom = initialZoom;
-          panX = 0;
-          panY = 0;
-          notifyChange();
-        }
-
-        // Wheel handler for smooth zoom towards pointer (0.5x - 2.0x)
-        function handleWheel(e) {
-          e.preventDefault();
-          var s = getCanvasScale();
-          var mouseX = (e.clientX - s.rect.left) * s.scaleX;
-          var mouseY = (e.clientY - s.rect.top) * s.scaleY;
-
-          var delta = -Math.sign(e.deltaY) * zoomSpeed;
-          var targetZoom = zoom * (1 + delta);
-          setZoom(targetZoom, mouseX, mouseY);
-        }
-
-        // Pointer/Mouse pan handlers
-        function handleMouseDown(e) {
-          if (!enablePan) return;
-          var isMiddle = e.button === panButton;
-          var isAltDrag = allowDragPan && (e.button === 0 && (e.altKey || e.shiftKey));
-          if (isMiddle || isAltDrag) {
-            isPanning = true;
-            startMouseX = e.clientX;
-            startMouseY = e.clientY;
-            startPanX = panX;
-            startPanY = panY;
-            canvas.style.cursor = 'grabbing';
-            e.preventDefault();
-          }
-        }
-
-        function handleMouseMove(e) {
-          // Decorate event with world coordinates for accurate click projection
-          var coords = screenToWorld(e);
-          e.worldX = coords.x;
-          e.worldY = coords.y;
-
-          if (isPanning) {
-            var s = getCanvasScale();
-            var dx = (e.clientX - startMouseX) * s.scaleX;
-            var dy = (e.clientY - startMouseY) * s.scaleY;
-            panX = startPanX + dx;
-            panY = startPanY + dy;
-            notifyChange();
-            e.preventDefault();
-          }
-        }
-
-        function handleMouseUp(e) {
-          if (isPanning) {
-            isPanning = false;
-            canvas.style.cursor = '';
-          }
-        }
-
-        canvas.addEventListener('wheel', handleWheel, { passive: false });
-        canvas.addEventListener('mousedown', handleMouseDown);
-        window.addEventListener('mousemove', handleMouseMove);
-        window.addEventListener('mouseup', handleMouseUp);
-
-        // On-screen Zoom Reset HUD
-        var hud = null;
-        var zoomValText = null;
-        var resetBtn = null;
-
-        if (showResetButton) {
-          hud = document.createElement('div');
-          hud.className = 'av-camera-zoom-hud';
-          hud.setAttribute('role', 'toolbar');
-          hud.setAttribute('aria-label', 'Camera Zoom Controls');
-          hud.style.cssText = 'position:absolute;top:10px;right:10px;display:flex;align-items:center;gap:4px;background:rgba(15,23,42,0.85);backdrop-filter:blur(6px);border:1px solid rgba(56,189,248,0.35);border-radius:6px;padding:3px 6px;font-family:monospace,sans-serif;font-size:12px;color:#f8fafc;z-index:9999;user-select:none;box-shadow:0 2px 8px rgba(0,0,0,0.4);';
-
-          var zoomOutBtn = document.createElement('button');
-          zoomOutBtn.type = 'button';
-          zoomOutBtn.textContent = '-';
-          zoomOutBtn.setAttribute('aria-label', 'Zoom Out');
-          zoomOutBtn.style.cssText = 'background:#1e293b;border:1px solid #334155;color:#e2e8f0;width:20px;height:20px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;padding:0;line-height:1;';
-          zoomOutBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            setZoom(zoom - 0.1);
-          });
-
-          zoomValText = document.createElement('span');
-          zoomValText.style.cssText = 'min-width:38px;text-align:center;font-weight:600;color:#38bdf8;';
-          zoomValText.textContent = '100%';
-
-          var zoomInBtn = document.createElement('button');
-          zoomInBtn.type = 'button';
-          zoomInBtn.textContent = '+';
-          zoomInBtn.setAttribute('aria-label', 'Zoom In');
-          zoomInBtn.style.cssText = 'background:#1e293b;border:1px solid #334155;color:#e2e8f0;width:20px;height:20px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;padding:0;line-height:1;';
-          zoomInBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            setZoom(zoom + 0.1);
-          });
-
-          resetBtn = document.createElement('button');
-          resetBtn.type = 'button';
-          resetBtn.textContent = 'Reset';
-          resetBtn.setAttribute('aria-label', 'Reset Zoom and Pan (1:1)');
-          resetBtn.style.cssText = 'background:#0f172a;border:1px solid #38bdf8;color:#38bdf8;height:20px;padding:0 6px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:bold;margin-left:2px;';
-          resetBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            reset();
-          });
-
-          hud.appendChild(zoomOutBtn);
-          hud.appendChild(zoomValText);
-          hud.appendChild(zoomInBtn);
-          hud.appendChild(resetBtn);
-
-          if (canvas.parentElement) {
-            var parentPos = window.getComputedStyle ? window.getComputedStyle(canvas.parentElement).position : '';
-            if (parentPos === 'static') {
-              canvas.parentElement.style.position = 'relative';
-            }
-            canvas.parentElement.appendChild(hud);
-          } else {
-            document.body.appendChild(hud);
-          }
-        }
-
-        function updateHud() {
-          if (!hud) return;
-          if (zoomValText) {
-            zoomValText.textContent = Math.round(zoom * 100) + '%';
-          }
-          if (resetBtn) {
-            var isDefault = Math.abs(zoom - initialZoom) < 0.001 && Math.abs(panX) < 0.001 && Math.abs(panY) < 0.001;
-            resetBtn.style.opacity = isDefault ? '0.6' : '1.0';
-          }
-        }
-
-        updateHud();
-
-        return {
-          screenToWorld: screenToWorld,
-          worldToScreen: worldToScreen,
-          getPointer: screenToWorld,
-          apply: function (ctx) {
-            if (!ctx) return;
-            ctx.save();
-            ctx.translate(panX, panY);
-            ctx.scale(zoom, zoom);
-          },
-          restore: function (ctx) {
-            if (!ctx) return;
-            ctx.restore();
-          },
-          reset: reset,
-          getZoom: function () { return zoom; },
-          setZoom: setZoom,
-          getPan: function () { return { x: panX, y: panY }; },
-          setPan: setPan,
-          panBy: function (dx, dy) {
-            panX += Number(dx) || 0;
-            panY += Number(dy) || 0;
-            notifyChange();
-          },
-          destroy: function () {
-            canvas.removeEventListener('wheel', handleWheel);
-            canvas.removeEventListener('mousedown', handleMouseDown);
-            window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('mouseup', handleMouseUp);
-            if (hud && hud.parentElement) {
-              hud.remove();
-            }
-          }
-        };
-      }
-    },
-
-    /**
-     * Top-level alias for camera.enableZoomPan (#722)
-     */
-    enableZoomPan: function (canvas, options) {
-      return this.camera.enableZoomPan(canvas, options);
+    }
     }
   };
 });
