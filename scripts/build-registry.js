@@ -37,13 +37,14 @@ function loadContributorOverrides(filePath = OVERRIDES_FILE) {
       throw new Error('Schema version must be a valid string.');
     }
 
-    const profiles = (data.profiles && typeof data.profiles === 'object' && !Array.isArray(data.profiles))
+    const rawProfiles = (data.profiles && typeof data.profiles === 'object' && !Array.isArray(data.profiles))
       ? data.profiles
       : (!data.version && !data.profiles)
         ? data
         : {};
 
-    for (const [key, profile] of Object.entries(profiles)) {
+    const profiles = {};
+    for (const [key, profile] of Object.entries(rawProfiles)) {
       if (typeof profile !== 'object' || profile === null || Array.isArray(profile)) {
         throw new Error(`Profile override for "${key}" must be an object.`);
       }
@@ -71,16 +72,23 @@ function loadContributorOverrides(filePath = OVERRIDES_FILE) {
       if (profile.bonusPts !== undefined && typeof profile.bonusPts !== 'number') {
         throw new Error(`Profile "${key}".bonusPts must be a number.`);
       }
+
+      // Enforce lowercased canonical lookup key (#715)
+      const canonicalKey = key.trim().toLowerCase();
+      profiles[canonicalKey] = profile;
     }
 
-    const emailMap = (data.emailMap && typeof data.emailMap === 'object' && !Array.isArray(data.emailMap))
+    const rawEmailMap = (data.emailMap && typeof data.emailMap === 'object' && !Array.isArray(data.emailMap))
       ? data.emailMap
       : {};
 
-    for (const [email, userKey] of Object.entries(emailMap)) {
+    const emailMap = {};
+    for (const [email, userKey] of Object.entries(rawEmailMap)) {
       if (typeof email !== 'string' || typeof userKey !== 'string') {
         throw new Error(`Email mapping entry for "${email}" must map a string to a string.`);
       }
+      // Enforce lowercased canonical email and username lookup keys (#715)
+      emailMap[email.trim().toLowerCase()] = userKey.trim().toLowerCase();
     }
 
     return { profiles, emailMap };
@@ -91,6 +99,85 @@ function loadContributorOverrides(filePath = OVERRIDES_FILE) {
 }
 
 const { profiles: KNOWN_PROFILES, emailMap: EMAIL_MAP } = loadContributorOverrides();
+
+// Bidirectional alias & canonical lookup indices (#715)
+const ALIAS_TO_CANONICAL = new Map();
+const ALPHANUMERIC_TO_CANONICAL = new Map();
+
+function initCanonicalIndices() {
+  ALIAS_TO_CANONICAL.clear();
+  ALPHANUMERIC_TO_CANONICAL.clear();
+
+  // Index known profile canonical keys and aliases
+  for (const [canonicalKey, profile] of Object.entries(KNOWN_PROFILES)) {
+    ALIAS_TO_CANONICAL.set(canonicalKey, canonicalKey);
+
+    const stripped = canonicalKey.replace(/[^a-z0-9]/g, '');
+    if (stripped) {
+      ALPHANUMERIC_TO_CANONICAL.set(stripped, canonicalKey);
+      ALIAS_TO_CANONICAL.set(stripped, canonicalKey);
+    }
+
+    if (profile.github) {
+      const ghLower = profile.github.trim().toLowerCase();
+      ALIAS_TO_CANONICAL.set(ghLower, canonicalKey);
+      const ghStripped = ghLower.replace(/[^a-z0-9]/g, '');
+      if (ghStripped) {
+        ALPHANUMERIC_TO_CANONICAL.set(ghStripped, canonicalKey);
+        ALIAS_TO_CANONICAL.set(ghStripped, canonicalKey);
+      }
+    }
+
+    if (profile.name) {
+      const nameLower = profile.name.trim().toLowerCase();
+      ALIAS_TO_CANONICAL.set(nameLower, canonicalKey);
+      const nameHyphen = nameLower.replace(/\s+/g, '-');
+      ALIAS_TO_CANONICAL.set(nameHyphen, canonicalKey);
+      const nameStripped = nameLower.replace(/[^a-z0-9]/g, '');
+      if (nameStripped) {
+        ALPHANUMERIC_TO_CANONICAL.set(nameStripped, canonicalKey);
+        ALIAS_TO_CANONICAL.set(nameStripped, canonicalKey);
+      }
+    }
+  }
+
+  // Index email map target aliases
+  for (const [email, targetUser] of Object.entries(EMAIL_MAP)) {
+    const normTarget = targetUser.trim().toLowerCase();
+    const canonical = resolveCanonicalUser(normTarget);
+    EMAIL_MAP[email] = canonical;
+    ALIAS_TO_CANONICAL.set(normTarget, canonical);
+  }
+}
+
+/**
+ * Resolves any raw username, alias, git author, or handle into its canonical verified profile key (#715)
+ * Case-insensitive and normalizes delimiters (e.g. "Sarbajit-Sengupta" vs "sarbajitsengupta" -> "sarbajit-sengupta")
+ * @param {string} rawIdentifier
+ * @returns {string}
+ */
+function resolveCanonicalUser(rawIdentifier) {
+  if (!rawIdentifier || typeof rawIdentifier !== 'string') return '';
+  const clean = rawIdentifier.trim().toLowerCase();
+  if (!clean) return '';
+
+  if (ALIAS_TO_CANONICAL.has(clean)) {
+    return ALIAS_TO_CANONICAL.get(clean);
+  }
+
+  if (KNOWN_PROFILES[clean]) {
+    return clean;
+  }
+
+  const alphaNum = clean.replace(/[^a-z0-9]/g, '');
+  if (alphaNum && ALPHANUMERIC_TO_CANONICAL.has(alphaNum)) {
+    return ALPHANUMERIC_TO_CANONICAL.get(alphaNum);
+  }
+
+  return clean;
+}
+
+initCanonicalIndices();
 
 function getGitCommitCounts() {
   const commitCounts = new Map();
@@ -108,17 +195,23 @@ function getGitCommitCounts() {
         continue;
       }
 
-      let ghKey = EMAIL_MAP[email];
-      if (!ghKey) {
+      let rawKey = EMAIL_MAP[email];
+      if (!rawKey) {
         const ghMatch = email.match(/(?:\d+\+)?([a-z0-9-]+)@users\.noreply\.github\.com/i);
-        if (ghMatch) ghKey = ghMatch[1].toLowerCase();
+        if (ghMatch) rawKey = ghMatch[1].toLowerCase();
       }
-      if (!ghKey) {
-        ghKey = name.toLowerCase().replace(/[^a-z0-9-]/g, '');
+      if (!rawKey) {
+        rawKey = name.toLowerCase().replace(/[^a-z0-9-]/g, '');
       }
 
-      const existing = commitCounts.get(ghKey) || 0;
-      commitCounts.set(ghKey, existing + count);
+      const canonicalKey = resolveCanonicalUser(rawKey);
+
+      if (rawKey && canonicalKey && rawKey.toLowerCase() !== canonicalKey.toLowerCase()) {
+        console.log(`[Deduplication Notice] Resolved git commit author "${rawKey}" (<${email}>) -> primary profile "${canonicalKey}".`);
+      }
+
+      const existing = commitCounts.get(canonicalKey) || 0;
+      commitCounts.set(canonicalKey, existing + count);
     }
   } catch (err) {
     console.warn(`[Notice] Could not read git commit log: ${err.message}. Using baseline commits.`);
@@ -255,8 +348,13 @@ function buildRegistry() {
       const gameId = meta.id || folder;
       const htmlPath = `games/${folder}/index.html`;
 
-      const ghKey = (meta.github || "").toLowerCase();
-      const authorName = (KNOWN_PROFILES[ghKey] && KNOWN_PROFILES[ghKey].name) || meta.author || "Contributor";
+      const rawGh = (meta.github || "").trim();
+      const canonicalGh = resolveCanonicalUser(rawGh);
+      if (rawGh && canonicalGh && rawGh.toLowerCase() !== canonicalGh) {
+        console.log(`[Deduplication Notice] Game "${folder}": Mapped author GitHub "${rawGh}" -> primary profile "${canonicalGh}".`);
+      }
+      const profile = (canonicalGh && KNOWN_PROFILES[canonicalGh]) || {};
+      const authorName = profile.name || meta.author || "Contributor";
 
       const sanitizedId = sanitizeMetadataString(gameId, folder);
       const sanitizedTitle = sanitizeMetadataString(meta.title, folder);
@@ -311,18 +409,17 @@ function buildRegistry() {
 
       gamesRegistry.push(gameObj);
 
-      // Track contributors from games
-      if (meta.github) {
-        const ghKey = meta.github.toLowerCase();
-        if (!contributorGames.has(ghKey)) {
-          contributorGames.set(ghKey, []);
-          contributorMeta.set(ghKey, {
-            name: meta.author || meta.github,
-            role: meta.role || "Arcade Developer",
-            originalGithub: meta.github
+      // Track contributors from games with canonical resolution (#715)
+      if (canonicalGh) {
+        if (!contributorGames.has(canonicalGh)) {
+          contributorGames.set(canonicalGh, []);
+          contributorMeta.set(canonicalGh, {
+            name: profile.name || meta.author || rawGh,
+            role: profile.role || meta.role || "Arcade Developer",
+            originalGithub: profile.github || rawGh
           });
         }
-        contributorGames.get(ghKey).push(gameObj.title);
+        contributorGames.get(canonicalGh).push(gameObj.title);
       }
     } catch (err) {
       console.error(`[Error] Failed parsing ${metaFile}:`, err.message);
@@ -337,16 +434,28 @@ function buildRegistry() {
   // 2. Fetch Git commit counts dynamically
   const gitCommits = getGitCommitCounts();
 
-  // 3. Collect all unique contributors across games, git, and known profiles
-  const allUserKeys = new Set([
+  // 3. Collect all unique contributors across games, git, and known profiles (#715)
+  const rawUserKeys = new Set([
     ...contributorGames.keys(),
     ...gitCommits.keys(),
     ...Object.keys(KNOWN_PROFILES)
   ]);
 
+  const unifiedUserKeys = new Set();
+  for (const rawKey of rawUserKeys) {
+    if (!rawKey || rawKey.includes('bot')) continue;
+    const canonical = resolveCanonicalUser(rawKey);
+    if (!canonical || canonical.includes('bot')) continue;
+
+    if (rawKey.toLowerCase() !== canonical.toLowerCase()) {
+      console.log(`[Deduplication Notice] Merged contributor key "${rawKey}" into primary profile "${canonical}".`);
+    }
+    unifiedUserKeys.add(canonical);
+  }
+
   const contributorsRegistry = [];
 
-  for (const key of allUserKeys) {
+  for (const key of unifiedUserKeys) {
     if (!key || key.includes('bot')) continue;
 
     const profile = KNOWN_PROFILES[key] || {};
@@ -419,13 +528,16 @@ function buildRegistry() {
   console.log(`[Success] Compiled ${gamesRegistry.length} games and ${cleanContributors.length} contributors into ${path.relative(ROOT_DIR, REGISTRY_FILE)}`);
 }
 
-buildRegistry();
-
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     loadContributorOverrides,
     KNOWN_PROFILES,
     EMAIL_MAP,
+    resolveCanonicalUser,
     buildRegistry
   };
+}
+
+if (require.main === module) {
+  buildRegistry();
 }
