@@ -106,6 +106,10 @@
                   <span>Toggle Dark / Light Theme</span>
                   <div class="shortcut-keys"><kbd>T</kbd></div>
                 </div>
+                <div class="shortcut-row">
+                  <span>Cycle Game Velocity (Slow-Mo / Turbo)</span>
+                  <div class="shortcut-keys"><kbd>[</kbd> / <kbd>]</kbd></div>
+                </div>
               </div>
             </div>
           </div>
@@ -336,6 +340,18 @@
             navigateWithLoader('faqs.html');
           }
           return;
+        }
+
+        // [ and ]: Cycle Game Speed (when game modal is active)
+        if (e.key === '[' || e.key === ']') {
+          const gameModal = document.getElementById('game-modal');
+          if (gameModal && gameModal.classList.contains('active')) {
+            if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.cycleSpeed === 'function') {
+              e.preventDefault();
+              window.GameSpeedRegulator.cycleSpeed(e.key === ']' ? 1 : -1);
+              return;
+            }
+          }
         }
 
         // B: Bookmark / Jump to favorites tab
