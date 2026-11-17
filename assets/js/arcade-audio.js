@@ -37,13 +37,77 @@
     return audioCtx;
   }
 
-  function createNoiseBuffer(ctx, durationSec) {
-    var bufferSize = Math.floor(ctx.sampleRate * (durationSec || 0.25));
-    var buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    var output = buffer.getChannelData(0);
-    for (var i = 0; i < bufferSize; i++) {
-      output[i] = Math.random() * 2 - 1;
+  /**
+   * Procedural Multi-Curve Noise Buffer Synthesizer (#724)
+   * Produces White, Pink (1/f), and Brownian (1/f^2) noise buffers without external audio assets.
+   * Supports polymorphic signatures: (type, duration, customCtx) or (ctx, duration, type).
+   * @param {string|AudioContext} type - Noise curve name ('white', 'pink', 'brownian') or AudioContext
+   * @param {number|string} [duration=0.25] - Duration in seconds or noise type
+   * @param {AudioContext|string} [customCtx] - AudioContext or noise type
+   * @returns {AudioBuffer|null}
+   */
+  function createNoiseBuffer(type, duration, customCtx) {
+    var ctx;
+    var noiseType = 'white';
+    var dur = 0.25;
+
+    // Polymorphic signature handling:
+    // Signature A: createNoiseBuffer(ctx, duration, type)
+    if (type && typeof type === 'object' && typeof type.createBuffer === 'function') {
+      ctx = type;
+      if (typeof duration === 'string') {
+        noiseType = duration.toLowerCase();
+        dur = Number(customCtx) || 0.25;
+      } else {
+        dur = Number(duration) || 0.25;
+        noiseType = typeof customCtx === 'string' ? customCtx.toLowerCase() : 'white';
+      }
+    } else {
+      // Signature B: createNoiseBuffer(type, duration, customCtx)
+      if (typeof type === 'string') {
+        noiseType = type.toLowerCase();
+      }
+      dur = Number(duration) || 0.25;
+      ctx = customCtx || getContext();
     }
+
+    if (!ctx) return null;
+
+    var sampleRate = ctx.sampleRate || 44100;
+    var bufferSize = Math.max(1, Math.floor(sampleRate * dur));
+    var buffer = ctx.createBuffer(1, bufferSize, sampleRate);
+    var output = buffer.getChannelData(0);
+
+    if (noiseType === 'pink') {
+      // Paul Kellet's refined 7-pole 1/f Pink Noise algorithm
+      var b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+      for (var i = 0; i < bufferSize; i++) {
+        var white = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.96900 * b2 + white * 0.1538520;
+        b3 = 0.86650 * b3 + white * 0.3104856;
+        b4 = 0.55000 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.0168980;
+        output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
+        b6 = white * 0.115926;
+      }
+    } else if (noiseType === 'brown' || noiseType === 'brownian' || noiseType === 'red') {
+      // Brownian / Red Noise (1/f^2) algorithm with leaky integrator
+      var lastOut = 0.0;
+      for (var j = 0; j < bufferSize; j++) {
+        var w = Math.random() * 2 - 1;
+        output[j] = (lastOut + (0.02 * w)) / 1.02;
+        lastOut = output[j];
+        output[j] *= 3.5; // Compensate for integration roll-off
+      }
+    } else {
+      // White Noise (uniform flat distribution)
+      for (var k = 0; k < bufferSize; k++) {
+        output[k] = Math.random() * 2 - 1;
+      }
+    }
+
     return buffer;
   }
 
@@ -179,33 +243,270 @@
     },
 
     /**
-     * Deep arcade explosion: Noise buffer with lowpass resonant sweep
+     * Deep arcade explosion: Filtered brownian/pink noise buffer with resonant lowpass sweep
+     * @param {Object} [options] - Configuration { type, duration, volume, startFreq, endFreq, Q }
+     * @returns {AudioBufferSourceNode|undefined}
      */
-    playExplosion: function () {
+    playExplosion: function (options) {
       var ctx = getContext();
       if (!ctx || isMuted) return;
 
+      options = options || {};
       var now = ctx.currentTime;
-      var duration = 0.45;
-      var noiseBuffer = createNoiseBuffer(ctx, duration);
+      var duration = options.duration || 0.5;
+      var noiseType = options.type || 'brownian';
+      var noiseBuffer = createNoiseBuffer(noiseType, duration, ctx);
+      if (!noiseBuffer) return;
+
       var noiseSource = ctx.createBufferSource();
       noiseSource.buffer = noiseBuffer;
 
+      if (typeof this.requestVoice === 'function' && !this.requestVoice('critical', noiseSource)) {
+        return;
+      }
+
       var filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(800, now);
-      filter.frequency.linearRampToValueAtTime(40, now + duration);
+      var startFreq = options.startFreq || 850;
+      var endFreq = options.endFreq || 35;
+      filter.frequency.setValueAtTime(startFreq, now);
+      filter.frequency.exponentialRampToValueAtTime(endFreq, now + duration);
+      filter.Q.setValueAtTime(options.Q !== undefined ? options.Q : 3.5, now);
 
       var gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.35, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+      var vol = options.volume !== undefined ? options.volume : 0.35;
+      gain.gain.setValueAtTime(vol, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
       noiseSource.connect(filter);
       filter.connect(gain);
       gain.connect(masterGain || ctx.destination);
 
+      // Memory cleanup on sound node termination (#724)
+      noiseSource.onended = function () {
+        try {
+          noiseSource.disconnect();
+          filter.disconnect();
+          gain.disconnect();
+        } catch (_) {}
+      };
+
       noiseSource.start(now);
       noiseSource.stop(now + duration);
+      return noiseSource;
+    },
+
+    /**
+     * Punchy retro blast / energy shockwave impact using pink noise
+     * @param {Object} [options] - Configuration { type, duration, volume }
+     * @returns {AudioBufferSourceNode|undefined}
+     */
+    playBlast: function (options) {
+      var ctx = getContext();
+      if (!ctx || isMuted) return;
+
+      options = options || {};
+      var now = ctx.currentTime;
+      var duration = options.duration || 0.35;
+      var noiseType = options.type || 'pink';
+      var noiseBuffer = createNoiseBuffer(noiseType, duration, ctx);
+      if (!noiseBuffer) return;
+
+      var noiseSource = ctx.createBufferSource();
+      noiseSource.buffer = noiseBuffer;
+
+      if (typeof this.requestVoice === 'function' && !this.requestVoice('medium', noiseSource)) {
+        return;
+      }
+
+      var filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1400, now);
+      filter.frequency.exponentialRampToValueAtTime(70, now + duration);
+      filter.Q.setValueAtTime(2.5, now);
+
+      var gain = ctx.createGain();
+      var vol = options.volume !== undefined ? options.volume : 0.3;
+      gain.gain.setValueAtTime(vol, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+      noiseSource.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain || ctx.destination);
+
+      // Memory cleanup on sound node termination (#724)
+      noiseSource.onended = function () {
+        try {
+          noiseSource.disconnect();
+          filter.disconnect();
+          gain.disconnect();
+        } catch (_) {}
+      };
+
+      noiseSource.start(now);
+      noiseSource.stop(now + duration);
+      return noiseSource;
+    },
+
+    /**
+     * Procedural retro engine drone / thruster hum using filtered brownian noise
+     * @param {number} [duration=1.0] - Duration in seconds, or 0 / Infinity for sustained loop
+     * @param {Object} [options] - Configuration { type, cutoff, volume, loop, Q }
+     * @returns {Object|null} Sound controller with stop() method
+     */
+    playEngineHum: function (duration, options) {
+      var ctx = getContext();
+      if (!ctx || isMuted) return null;
+
+      if (typeof duration === 'object') {
+        options = duration;
+        duration = 1.0;
+      }
+      options = options || {};
+      var dur = duration !== undefined ? duration : 1.0;
+      var isLoop = dur === 0 || dur === Infinity || options.loop === true;
+      var bufferDur = isLoop ? 2.0 : Math.max(0.2, dur);
+      var now = ctx.currentTime;
+
+      var noiseType = options.type || 'brownian';
+      var noiseBuffer = createNoiseBuffer(noiseType, bufferDur, ctx);
+      if (!noiseBuffer) return null;
+
+      var noiseSource = ctx.createBufferSource();
+      noiseSource.buffer = noiseBuffer;
+      noiseSource.loop = isLoop;
+
+      if (typeof this.requestVoice === 'function' && !this.requestVoice('low', noiseSource)) {
+        return null;
+      }
+
+      // Resonant Lowpass filter to sculpt deep engine rumble
+      var filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      var cutoff = options.cutoff || 150;
+      filter.frequency.setValueAtTime(cutoff, now);
+      filter.Q.setValueAtTime(options.Q !== undefined ? options.Q : 3.0, now);
+
+      var gain = ctx.createGain();
+      var targetVol = options.volume !== undefined ? options.volume : 0.25;
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(targetVol, now + 0.08);
+
+      if (!isLoop) {
+        gain.gain.setValueAtTime(targetVol, now + dur - 0.1);
+        gain.gain.linearRampToValueAtTime(0.001, now + dur);
+      }
+
+      noiseSource.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain || ctx.destination);
+
+      function cleanup() {
+        try {
+          noiseSource.disconnect();
+          filter.disconnect();
+          gain.disconnect();
+        } catch (_) {}
+      }
+
+      noiseSource.onended = cleanup;
+
+      noiseSource.start(now);
+      if (!isLoop) {
+        noiseSource.stop(now + dur);
+      }
+
+      return {
+        source: noiseSource,
+        filter: filter,
+        gain: gain,
+        stop: function (fadeMs) {
+          var fadeTime = (fadeMs || 80) / 1000;
+          var stopNow = ctx.currentTime;
+          try {
+            gain.gain.cancelScheduledValues(stopNow);
+            gain.gain.setValueAtTime(gain.gain.value, stopNow);
+            gain.gain.linearRampToValueAtTime(0.001, stopNow + fadeTime);
+            setTimeout(function () {
+              try { noiseSource.stop(); } catch (_) {}
+              cleanup();
+            }, (fadeTime * 1000) + 20);
+          } catch (_) {
+            cleanup();
+          }
+        }
+      };
+    },
+
+    /**
+     * Atmospheric ambient wind / thruster airflow using swept bandpass pink noise
+     * @param {number} [duration=1.2] - Duration in seconds
+     * @param {Object} [options] - Configuration { type, volume, minFreq, maxFreq }
+     * @returns {Object|null} Sound controller with stop() method
+     */
+    playWind: function (duration, options) {
+      var ctx = getContext();
+      if (!ctx || isMuted) return null;
+
+      if (typeof duration === 'object') {
+        options = duration;
+        duration = 1.2;
+      }
+      options = options || {};
+      var dur = duration || 1.2;
+      var now = ctx.currentTime;
+      var noiseType = options.type || 'pink';
+      var noiseBuffer = createNoiseBuffer(noiseType, dur, ctx);
+      if (!noiseBuffer) return null;
+
+      var noiseSource = ctx.createBufferSource();
+      noiseSource.buffer = noiseBuffer;
+
+      if (typeof this.requestVoice === 'function' && !this.requestVoice('low', noiseSource)) {
+        return null;
+      }
+
+      var filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      var minFreq = options.minFreq || 350;
+      var maxFreq = options.maxFreq || 750;
+      filter.frequency.setValueAtTime(minFreq, now);
+      filter.frequency.exponentialRampToValueAtTime(maxFreq, now + dur * 0.5);
+      filter.frequency.exponentialRampToValueAtTime(minFreq, now + dur);
+      filter.Q.setValueAtTime(1.8, now);
+
+      var gain = ctx.createGain();
+      var targetVol = options.volume !== undefined ? options.volume : 0.2;
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(targetVol, now + dur * 0.3);
+      gain.gain.linearRampToValueAtTime(0.001, now + dur);
+
+      noiseSource.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain || ctx.destination);
+
+      function cleanup() {
+        try {
+          noiseSource.disconnect();
+          filter.disconnect();
+          gain.disconnect();
+        } catch (_) {}
+      }
+
+      noiseSource.onended = cleanup;
+
+      noiseSource.start(now);
+      noiseSource.stop(now + dur);
+
+      return {
+        source: noiseSource,
+        filter: filter,
+        gain: gain,
+        stop: function () {
+          try { noiseSource.stop(); } catch (_) {}
+          cleanup();
+        }
+      };
     },
 
     /**
@@ -483,7 +784,18 @@
 
     getPreset: function () {
       return this._currentPreset;
-    }
+    },
+
+    /**
+     * Procedural Noise Buffer Factory (#724)
+     * Generates native AudioBuffer containing white, pink (1/f), or brownian (1/f^2) noise.
+     * @param {string} [type='white'] - Noise spectral curve: 'white', 'pink', 'brownian' (or 'brown' / 'red')
+     * @param {number} [duration=0.25] - Buffer duration in seconds
+     * @param {AudioContext} [customCtx] - Optional AudioContext instance
+     * @returns {AudioBuffer|null}
+     */
+    createNoiseBuffer: function (type, duration, customCtx) {
+      return createNoiseBuffer(type, duration, customCtx);
     }
   };
 
