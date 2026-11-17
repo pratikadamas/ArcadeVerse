@@ -4616,7 +4616,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initURLDeepLinking();
   initControlsLegend();
   initMultiChannelAudioMixer();
-  initCrtOverlayEngine();
+  initBackgroundTabAudioSilencer();
 });
 
   // ========================================================
@@ -5426,106 +5426,46 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ========================================================
-  // AUTHENTIC RETRO SCANLINE & CRT SCREEN OVERLAY ENGINE (#564)
-  // Toggleable GPU-accelerated scanline and vignette overlay layer
+  // DOCUMENT VISIBILITYSTATE BACKGROUND TAB AUDIO SILENCER (#568)
+  // Automatically pauses active game audio when switching tabs & resumes smoothly
   // ========================================================
-  const AvCrtOverlay = (function () {
-    const STORAGE_KEY = 'arcadeverse_crt_mode';
-    let isCrtActive = localStorage.getItem(STORAGE_KEY) === 'true';
+  function initBackgroundTabAudioSilencer() {
+    let wasMutedBeforeHidden = false;
 
-    function injectOverlayLayer() {
-      const frameWrapper = document.querySelector('.modal-frame-wrapper') || document.querySelector('.modal-window');
-      if (!frameWrapper) return;
+    document.addEventListener('visibilitychange', () => {
+      const gameIframe = document.getElementById('game-iframe');
+      if (!gameIframe || !gameIframe.contentWindow) return;
 
-      if (!document.getElementById('av-crt-overlay-layer')) {
-        const overlay = document.createElement('div');
-        overlay.id = 'av-crt-overlay-layer';
-        overlay.className = 'crt-screen-overlay';
-        frameWrapper.appendChild(overlay);
-      }
+      if (document.hidden) {
+        // Tab hidden: inform child game to pause AudioContext and suspend sound
+        try {
+          gameIframe.contentWindow.postMessage({ type: 'ARCADEVERSE_PAUSE' }, '*');
+          gameIframe.contentWindow.postMessage({
+            type: 'ARCADEVERSE_AUDIO_CONFIG',
+            muted: true,
+            isBackgroundSuspended: true
+          }, '*');
+        } catch (_) {}
 
-      updateOverlay();
-    }
-
-    function updateOverlay() {
-      const overlay = document.getElementById('av-crt-overlay-layer');
-      if (overlay) {
-        overlay.classList.toggle('active', isCrtActive);
-      }
-      const btn = document.getElementById('modal-crt-toggle-btn');
-      if (btn) {
-        btn.classList.toggle('active', isCrtActive);
-        btn.title = isCrtActive ? 'Disable Retro CRT Scanlines' : 'Enable Retro CRT Scanlines';
-        btn.setAttribute('aria-pressed', isCrtActive ? 'true' : 'false');
-      }
-    }
-
-    function toggleCrt() {
-      isCrtActive = !isCrtActive;
-      try {
-        localStorage.setItem(STORAGE_KEY, isCrtActive ? 'true' : 'false');
-      } catch (_) {}
-      updateOverlay();
-
-      if (typeof announceToScreenReader === 'function') {
-        announceToScreenReader(isCrtActive ? 'Retro CRT Scanlines enabled.' : 'Retro CRT Scanlines disabled.');
-      }
-    }
-
-    return {
-      isCrtActive: () => isCrtActive,
-      injectOverlayLayer,
-      toggleCrt
-    };
-  })();
-
-  window.AvCrtOverlay = AvCrtOverlay;
-
-  function initCrtOverlayEngine() {
-    AvCrtOverlay.injectOverlayLayer();
-
-    // Inject CRT toggle button into modal toolbar
-    const modalControls = document.querySelector('.modal-controls');
-    const closeBtn = document.getElementById('close-modal-btn');
-    if (modalControls && !document.getElementById('modal-crt-toggle-btn')) {
-      const crtBtn = document.createElement('button');
-      crtBtn.type = 'button';
-      crtBtn.id = 'modal-crt-toggle-btn';
-      crtBtn.className = 'btn btn-sm btn-icon btn-crt-toggle';
-      crtBtn.title = AvCrtOverlay.isCrtActive() ? 'Disable Retro CRT Scanlines' : 'Enable Retro CRT Scanlines';
-      crtBtn.setAttribute('aria-label', 'Toggle Retro CRT Scanlines and Curved Monitor Filter');
-      crtBtn.setAttribute('aria-pressed', AvCrtOverlay.isCrtActive() ? 'true' : 'false');
-      crtBtn.innerHTML = `
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect width="20" height="15" x="2" y="3" rx="2"/>
-          <line x1="8" x2="16" y1="21" y2="21"/>
-          <line x1="12" x2="12" y1="18" y2="21"/>
-        </svg>
-      `;
-
-      if (AvCrtOverlay.isCrtActive()) {
-        crtBtn.classList.add('active');
-      }
-
-      crtBtn.addEventListener('click', () => {
-        AvCrtOverlay.toggleCrt();
-      });
-
-      if (closeBtn) {
-        modalControls.insertBefore(crtBtn, closeBtn);
-      } else {
-        modalControls.appendChild(crtBtn);
-      }
-    }
-
-    // Ensure overlay is attached and synced when modal is activated
-    const modalEl = document.getElementById('game-modal');
-    if (modalEl) {
-      const observer = new MutationObserver(() => {
-        if (modalEl.classList.contains('active')) {
-          AvCrtOverlay.injectOverlayLayer();
+        // Suspend SoundEngine master audio if active in hub
+        if (window.SoundEngine && typeof window.SoundEngine.suspend === 'function') {
+          window.SoundEngine.suspend();
         }
-      });
-      observer.observe(modalEl, { attributes: true, attributeFilter: ['class'] });
-    }
+      } else {
+        // Tab restored to foreground: resume sound
+        const storedMuted = localStorage.getItem('arcadeverse_muted') === 'true';
+        try {
+          gameIframe.contentWindow.postMessage({ type: 'ARCADEVERSE_RESUME' }, '*');
+          gameIframe.contentWindow.postMessage({
+            type: 'ARCADEVERSE_AUDIO_CONFIG',
+            muted: storedMuted,
+            isBackgroundSuspended: false
+          }, '*');
+        } catch (_) {}
+
+        if (window.SoundEngine && typeof window.SoundEngine.resume === 'function') {
+          window.SoundEngine.resume();
+        }
+      }
+    });
   }
