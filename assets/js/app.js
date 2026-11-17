@@ -4623,7 +4623,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initURLDeepLinking();
   initControlsLegend();
   initMultiChannelAudioMixer();
-  initPerformanceProfiler();
+  initAppBadgingManager();
 });
 
   // ========================================================
@@ -5433,159 +5433,79 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ========================================================
-  // DYNAMIC PERFORMANCE PROFILER & AUTOMATIC PARTICLE THROTTLER (#559)
-  // 60-frame rolling FPS measurer, low-perf event broadcaster & toolbar toggle
+  // APP BADGING API ENGINE (#557)
+  // Badges dock/taskbar icon for unclaimed daily streaks & trophies
   // ========================================================
-  const AvPerfProfiler = (function () {
-    const PERF_STORAGE_KEY = 'av_perf_saver_mode';
-    let isLowPerfActive = localStorage.getItem(PERF_STORAGE_KEY) === 'true';
-    let frameTimes = [];
-    let lastTimestamp = performance.now();
-    let lowFpsStreakSeconds = 0;
-    let profilerRafId = null;
+  const AvAppBadging = (function () {
+    const STREAK_KEY = 'av_daily_streak_date';
+    const UNCLAIMED_KEY = 'av_unclaimed_streak_count';
 
-    function broadcastMode(enabled) {
-      isLowPerfActive = !!enabled;
+    function isSupported() {
+      return typeof navigator !== 'undefined' && 'setAppBadge' in navigator;
+    }
+
+    function calculateUnclaimedCount() {
+      let count = 0;
       try {
-        localStorage.setItem(PERF_STORAGE_KEY, isLowPerfActive ? 'true' : 'false');
-      } catch (_) {}
-
-      // Broadcast to iframe
-      const iframe = document.getElementById('game-iframe');
-      if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage({
-          type: 'AV_LOW_PERF_MODE',
-          enabled: isLowPerfActive
-        }, '*');
-      }
-
-      // Update button state if present
-      const toggleBtn = document.getElementById('modal-perf-toggle-btn');
-      if (toggleBtn) {
-        toggleBtn.classList.toggle('active', isLowPerfActive);
-        toggleBtn.title = isLowPerfActive ? 'Battery Saver Active (Reduced Particles)' : 'High Performance Mode';
-        toggleBtn.setAttribute('aria-pressed', isLowPerfActive ? 'true' : 'false');
-      }
-    }
-
-    function toggleMode() {
-      broadcastMode(!isLowPerfActive);
-      if (typeof announceToScreenReader === 'function') {
-        announceToScreenReader(isLowPerfActive ? 'Battery Saver Mode enabled.' : 'High Performance Mode enabled.');
-      }
-    }
-
-    function startProfiling() {
-      frameTimes = [];
-      lastTimestamp = performance.now();
-      lowFpsStreakSeconds = 0;
-
-      function measure(now) {
-        const delta = now - lastTimestamp;
-        lastTimestamp = now;
-
-        if (delta > 0) {
-          const fps = 1000 / delta;
-          frameTimes.push(fps);
-          if (frameTimes.length > 60) frameTimes.shift();
-
-          if (frameTimes.length >= 30) {
-            const sum = frameTimes.reduce((a, b) => a + b, 0);
-            const avgFps = sum / frameTimes.length;
-
-            if (avgFps < 40) {
-              lowFpsStreakSeconds += delta / 1000;
-              // If under 40 FPS for more than 3 consecutive seconds, auto-enable low perf mode
-              if (lowFpsStreakSeconds >= 3 && !isLowPerfActive) {
-                console.warn('[ArcadeVerse:Perf] Frame rate degraded below 40 FPS. Engaging automatic particle throttling.');
-                broadcastMode(true);
-              }
-            } else {
-              lowFpsStreakSeconds = 0;
-            }
-          }
+        const lastDate = localStorage.getItem(STREAK_KEY);
+        const today = new Date().toISOString().slice(0, 10);
+        if (lastDate !== today) {
+          count += 1; // Unclaimed daily streak for today
         }
-
-        profilerRafId = requestAnimationFrame(measure);
-      }
-
-      if (profilerRafId) cancelAnimationFrame(profilerRafId);
-      profilerRafId = requestAnimationFrame(measure);
+        const storedUnclaimed = parseInt(localStorage.getItem(UNCLAIMED_KEY) || '0', 10);
+        count += storedUnclaimed;
+      } catch (_) {}
+      return count;
     }
 
-    function stopProfiling() {
-      if (profilerRafId) {
-        cancelAnimationFrame(profilerRafId);
-        profilerRafId = null;
+    async function updateBadge() {
+      if (!isSupported()) return;
+      const count = calculateUnclaimedCount();
+      try {
+        if (count > 0) {
+          await navigator.setAppBadge(count);
+        } else {
+          await navigator.clearAppBadge();
+        }
+      } catch (err) {
+        console.warn('[ArcadeVerse:Badging] Failed to set badge:', err);
+      }
+    }
+
+    async function clearBadge() {
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        localStorage.setItem(STREAK_KEY, today);
+        localStorage.setItem(UNCLAIMED_KEY, '0');
+        if (isSupported()) {
+          await navigator.clearAppBadge();
+        }
+      } catch (err) {
+        console.warn('[ArcadeVerse:Badging] Failed to clear badge:', err);
       }
     }
 
     return {
-      isLowPerfActive: () => isLowPerfActive,
-      broadcastMode,
-      toggleMode,
-      startProfiling,
-      stopProfiling
+      isSupported,
+      updateBadge,
+      clearBadge
     };
   })();
 
-  window.AvPerfProfiler = AvPerfProfiler;
+  window.AvAppBadging = AvAppBadging;
 
-  function initPerformanceProfiler() {
-    // Inject Performance / Battery Saver toggle in modal toolbar
-    const modalControls = document.querySelector('.modal-controls');
-    const closeBtn = document.getElementById('close-modal-btn');
-    if (modalControls && !document.getElementById('modal-perf-toggle-btn')) {
-      const toggleBtn = document.createElement('button');
-      toggleBtn.type = 'button';
-      toggleBtn.id = 'modal-perf-toggle-btn';
-      toggleBtn.className = 'btn btn-sm btn-icon btn-perf-toggle';
-      toggleBtn.title = AvPerfProfiler.isLowPerfActive() ? 'Battery Saver Active (Reduced Particles)' : 'High Performance Mode';
-      toggleBtn.setAttribute('aria-label', 'Toggle High Performance or Battery Saver Mode');
-      toggleBtn.setAttribute('aria-pressed', AvPerfProfiler.isLowPerfActive() ? 'true' : 'false');
-      toggleBtn.innerHTML = `
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-        </svg>
-      `;
-      if (AvPerfProfiler.isLowPerfActive()) {
-        toggleBtn.classList.add('active');
-      }
+  function initAppBadgingManager() {
+    AvAppBadging.updateBadge();
 
-      toggleBtn.addEventListener('click', () => {
-        AvPerfProfiler.toggleMode();
+    // Clear badge when player interacts with rewards or navigates to leaderboard
+    const leaderboardLinks = document.querySelectorAll('a[href*="leaderboard.html"]');
+    leaderboardLinks.forEach((link) => {
+      link.addEventListener('click', () => {
+        AvAppBadging.clearBadge();
       });
-
-      if (closeBtn) {
-        modalControls.insertBefore(toggleBtn, closeBtn);
-      } else {
-        modalControls.appendChild(toggleBtn);
-      }
-    }
-
-    // Attach profiler lifecycle to modal events
-    const origOpen = window.openGameModal;
-    window.addEventListener('message', (e) => {
-      if (e.data && e.data.type === 'ARCADEVERSE_READY') {
-        AvPerfProfiler.broadcastMode(AvPerfProfiler.isLowPerfActive());
-      }
     });
 
-    // Start profiling while modal is open, stop on close
-    const observer = new MutationObserver(() => {
-      const gameModal = document.getElementById('game-modal');
-      if (gameModal && gameModal.classList.contains('active')) {
-        AvPerfProfiler.startProfiling();
-        setTimeout(() => {
-          AvPerfProfiler.broadcastMode(AvPerfProfiler.isLowPerfActive());
-        }, 500);
-      } else {
-        AvPerfProfiler.stopProfiling();
-      }
+    window.addEventListener('arcadeverse:claim-streak', () => {
+      AvAppBadging.clearBadge();
     });
-
-    const modalEl = document.getElementById('game-modal');
-    if (modalEl) {
-      observer.observe(modalEl, { attributes: true, attributeFilter: ['class'] });
-    }
   }
