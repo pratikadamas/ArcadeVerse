@@ -4623,7 +4623,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initURLDeepLinking();
   initControlsLegend();
   initMultiChannelAudioMixer();
-  initColorblindFilters();
+  initPerformanceProfiler();
 });
 
   // ========================================================
@@ -5433,132 +5433,159 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ========================================================
-  // COLORBLIND SHADERS & PALETTE CORRECTION ENGINE (#563)
-  // Injects SVG Matrix Filters dynamically and provides modal toolbar selector
+  // DYNAMIC PERFORMANCE PROFILER & AUTOMATIC PARTICLE THROTTLER (#559)
+  // 60-frame rolling FPS measurer, low-perf event broadcaster & toolbar toggle
   // ========================================================
-  const AvColorblind = (function () {
-    const STORAGE_KEY = 'arcadeverse_colorblind_mode';
+  const AvPerfProfiler = (function () {
+    const PERF_STORAGE_KEY = 'av_perf_saver_mode';
+    let isLowPerfActive = localStorage.getItem(PERF_STORAGE_KEY) === 'true';
+    let frameTimes = [];
+    let lastTimestamp = performance.now();
+    let lowFpsStreakSeconds = 0;
+    let profilerRafId = null;
 
-    function injectSvgFilters() {
-      if (document.getElementById('av-colorblind-svg-filters')) return;
+    function broadcastMode(enabled) {
+      isLowPerfActive = !!enabled;
+      try {
+        localStorage.setItem(PERF_STORAGE_KEY, isLowPerfActive ? 'true' : 'false');
+      } catch (_) {}
 
-      const svgContainer = document.createElement('div');
-      svgContainer.id = 'av-colorblind-svg-filters';
-      svgContainer.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;pointer-events:none;';
-      svgContainer.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" version="1.1">
-          <defs>
-            <!-- Protanopia (red-weak) -->
-            <filter id="protanopia-filter">
-              <feColorMatrix type="matrix" values="
-                0.567, 0.433, 0,     0, 0
-                0.558, 0.442, 0,     0, 0
-                0,     0.242, 0.758, 0, 0
-                0,     0,     0,     1, 0" />
-            </filter>
-            <!-- Deuteranopia (green-weak) -->
-            <filter id="deuteranopia-filter">
-              <feColorMatrix type="matrix" values="
-                0.625, 0.375, 0,   0, 0
-                0.7,   0.3,   0,   0, 0
-                0,     0.3,   0.7, 0, 0
-                0,     0,     0,   1, 0" />
-            </filter>
-            <!-- Tritanopia (blue-weak) -->
-            <filter id="tritanopia-filter">
-              <feColorMatrix type="matrix" values="
-                0.95, 0.05,  0,     0, 0
-                0,    0.433, 0.567, 0, 0
-                0,    0.475, 0.525, 0, 0
-                0,    0,     0,     1, 0" />
-            </filter>
-            <!-- High Contrast Monochrome -->
-            <filter id="monochrome-filter">
-              <feColorMatrix type="matrix" values="
-                0.299, 0.587, 0.114, 0, 0
-                0.299, 0.587, 0.114, 0, 0
-                0.299, 0.587, 0.114, 0, 0
-                0,     0,     0,     1, 0" />
-            </filter>
-          </defs>
-        </svg>
-      `;
-      document.body.appendChild(svgContainer);
-    }
-
-    function applyFilter(mode) {
-      const frameWrapper = document.querySelector('.modal-frame-wrapper') || document.querySelector('.modal-window');
-      if (!frameWrapper) return;
-
-      frameWrapper.classList.remove('filter-protanopia', 'filter-deuteranopia', 'filter-tritanopia', 'filter-monochrome');
-      if (mode && mode !== 'normal') {
-        frameWrapper.classList.add(`filter-${mode}`);
+      // Broadcast to iframe
+      const iframe = document.getElementById('game-iframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+          type: 'AV_LOW_PERF_MODE',
+          enabled: isLowPerfActive
+        }, '*');
       }
 
-      try {
-        localStorage.setItem(STORAGE_KEY, mode || 'normal');
-      } catch (_) {}
+      // Update button state if present
+      const toggleBtn = document.getElementById('modal-perf-toggle-btn');
+      if (toggleBtn) {
+        toggleBtn.classList.toggle('active', isLowPerfActive);
+        toggleBtn.title = isLowPerfActive ? 'Battery Saver Active (Reduced Particles)' : 'High Performance Mode';
+        toggleBtn.setAttribute('aria-pressed', isLowPerfActive ? 'true' : 'false');
+      }
     }
 
-    function getSavedMode() {
-      try {
-        return localStorage.getItem(STORAGE_KEY) || 'normal';
-      } catch (_) {
-        return 'normal';
+    function toggleMode() {
+      broadcastMode(!isLowPerfActive);
+      if (typeof announceToScreenReader === 'function') {
+        announceToScreenReader(isLowPerfActive ? 'Battery Saver Mode enabled.' : 'High Performance Mode enabled.');
+      }
+    }
+
+    function startProfiling() {
+      frameTimes = [];
+      lastTimestamp = performance.now();
+      lowFpsStreakSeconds = 0;
+
+      function measure(now) {
+        const delta = now - lastTimestamp;
+        lastTimestamp = now;
+
+        if (delta > 0) {
+          const fps = 1000 / delta;
+          frameTimes.push(fps);
+          if (frameTimes.length > 60) frameTimes.shift();
+
+          if (frameTimes.length >= 30) {
+            const sum = frameTimes.reduce((a, b) => a + b, 0);
+            const avgFps = sum / frameTimes.length;
+
+            if (avgFps < 40) {
+              lowFpsStreakSeconds += delta / 1000;
+              // If under 40 FPS for more than 3 consecutive seconds, auto-enable low perf mode
+              if (lowFpsStreakSeconds >= 3 && !isLowPerfActive) {
+                console.warn('[ArcadeVerse:Perf] Frame rate degraded below 40 FPS. Engaging automatic particle throttling.');
+                broadcastMode(true);
+              }
+            } else {
+              lowFpsStreakSeconds = 0;
+            }
+          }
+        }
+
+        profilerRafId = requestAnimationFrame(measure);
+      }
+
+      if (profilerRafId) cancelAnimationFrame(profilerRafId);
+      profilerRafId = requestAnimationFrame(measure);
+    }
+
+    function stopProfiling() {
+      if (profilerRafId) {
+        cancelAnimationFrame(profilerRafId);
+        profilerRafId = null;
       }
     }
 
     return {
-      injectSvgFilters,
-      applyFilter,
-      getSavedMode
+      isLowPerfActive: () => isLowPerfActive,
+      broadcastMode,
+      toggleMode,
+      startProfiling,
+      stopProfiling
     };
   })();
 
-  window.AvColorblind = AvColorblind;
+  window.AvPerfProfiler = AvPerfProfiler;
 
-  function initColorblindFilters() {
-    AvColorblind.injectSvgFilters();
-
-    // Inject Colorblind Mode selector into modal toolbar
+  function initPerformanceProfiler() {
+    // Inject Performance / Battery Saver toggle in modal toolbar
     const modalControls = document.querySelector('.modal-controls');
     const closeBtn = document.getElementById('close-modal-btn');
-    if (modalControls && !document.getElementById('modal-colorblind-select')) {
-      const select = document.createElement('select');
-      select.id = 'modal-colorblind-select';
-      select.className = 'modal-colorblind-select';
-      select.title = 'Select Colorblind Vision Filter';
-      select.setAttribute('aria-label', 'Colorblind Vision Filter Palette');
-      select.innerHTML = `
-        <option value="normal">Color: Normal</option>
-        <option value="protanopia">Protanopia (Red-Weak)</option>
-        <option value="deuteranopia">Deuteranopia (Green-Weak)</option>
-        <option value="tritanopia">Tritanopia (Blue-Weak)</option>
-        <option value="monochrome">High Contrast Mono</option>
+    if (modalControls && !document.getElementById('modal-perf-toggle-btn')) {
+      const toggleBtn = document.createElement('button');
+      toggleBtn.type = 'button';
+      toggleBtn.id = 'modal-perf-toggle-btn';
+      toggleBtn.className = 'btn btn-sm btn-icon btn-perf-toggle';
+      toggleBtn.title = AvPerfProfiler.isLowPerfActive() ? 'Battery Saver Active (Reduced Particles)' : 'High Performance Mode';
+      toggleBtn.setAttribute('aria-label', 'Toggle High Performance or Battery Saver Mode');
+      toggleBtn.setAttribute('aria-pressed', AvPerfProfiler.isLowPerfActive() ? 'true' : 'false');
+      toggleBtn.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
       `;
+      if (AvPerfProfiler.isLowPerfActive()) {
+        toggleBtn.classList.add('active');
+      }
 
-      const saved = AvColorblind.getSavedMode();
-      select.value = saved;
-
-      select.addEventListener('change', (e) => {
-        AvColorblind.applyFilter(e.target.value);
+      toggleBtn.addEventListener('click', () => {
+        AvPerfProfiler.toggleMode();
       });
 
       if (closeBtn) {
-        modalControls.insertBefore(select, closeBtn);
+        modalControls.insertBefore(toggleBtn, closeBtn);
       } else {
-        modalControls.appendChild(select);
+        modalControls.appendChild(toggleBtn);
       }
     }
 
-    // Ensure filter applies when modal activates
+    // Attach profiler lifecycle to modal events
+    const origOpen = window.openGameModal;
+    window.addEventListener('message', (e) => {
+      if (e.data && e.data.type === 'ARCADEVERSE_READY') {
+        AvPerfProfiler.broadcastMode(AvPerfProfiler.isLowPerfActive());
+      }
+    });
+
+    // Start profiling while modal is open, stop on close
+    const observer = new MutationObserver(() => {
+      const gameModal = document.getElementById('game-modal');
+      if (gameModal && gameModal.classList.contains('active')) {
+        AvPerfProfiler.startProfiling();
+        setTimeout(() => {
+          AvPerfProfiler.broadcastMode(AvPerfProfiler.isLowPerfActive());
+        }, 500);
+      } else {
+        AvPerfProfiler.stopProfiling();
+      }
+    });
+
     const modalEl = document.getElementById('game-modal');
     if (modalEl) {
-      const observer = new MutationObserver(() => {
-        if (modalEl.classList.contains('active')) {
-          AvColorblind.applyFilter(AvColorblind.getSavedMode());
-        }
-      });
       observer.observe(modalEl, { attributes: true, attributeFilter: ['class'] });
     }
   }

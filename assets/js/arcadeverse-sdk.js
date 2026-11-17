@@ -1451,46 +1451,43 @@
     },
 
     // ========================================================
-    // HRTF 3D SPATIAL AUDIO PANNER SUBSYSTEM (#569)
-    // Head-Related Transfer Function binaural positioning for stereo gamers
+    // DYNAMIC PERFORMANCE PROFILER & PARTICLE THROTTLER (#559)
+    // Low-end hardware protection & battery-saver particle reducer
     // ========================================================
-    createSpatialPanner: function (audioCtx, options) {
-      if (!audioCtx) return null;
-      options = options || {};
+    _isLowPerfMode: false,
+    _perfListeners: [],
 
-      var panner = audioCtx.createPanner();
-      if ('panningModel' in panner) {
-        panner.panningModel = 'HRTF';
-      }
-      if ('distanceModel' in panner) {
-        panner.distanceModel = 'inverse';
-      }
-      panner.refDistance = options.refDistance || 100;
-      panner.maxDistance = options.maxDistance || 1000;
-      panner.rolloffFactor = options.rolloffFactor || 1;
-      panner.coneInnerAngle = options.coneInnerAngle || 360;
-      panner.coneOuterAngle = options.coneOuterAngle || 360;
+    isLowPerfMode: function () {
+      return this._isLowPerfMode;
+    },
 
-      return {
-        node: panner,
-        /**
-         * Updates emitter position relative to screen center or player
-         * @param {number} x - Relative horizontal offset (-1.0 to 1.0 or pixel delta)
-         * @param {number} y - Relative vertical offset (-1.0 to 1.0 or pixel delta)
-         * @param {number} [z] - Relative depth (default -0.5)
-         */
-        setPosition: function (x, y, z) {
-          z = typeof z === 'number' ? z : -0.5;
-          if (panner.positionX) {
-            panner.positionX.setValueAtTime(x, audioCtx.currentTime);
-            panner.positionY.setValueAtTime(y, audioCtx.currentTime);
-            panner.positionZ.setValueAtTime(z, audioCtx.currentTime);
-          } else if (typeof panner.setPosition === 'function') {
-            panner.setPosition(x, y, z);
-          }
-        }
-      };
-    }
+    onPerformanceModeChange: function (callback) {
+      if (typeof callback === 'function') {
+        this._perfListeners.push(callback);
+      }
+    },
+
+    setLowPerfMode: function (enabled) {
+      this._isLowPerfMode = !!enabled;
+      for (var i = 0; i < this._perfListeners.length; i++) {
+        try {
+          this._perfListeners[i](this._isLowPerfMode);
+        } catch (_) {}
+      }
+    },
+
+    getParticleMultiplier: function () {
+      return this._isLowPerfMode ? 0.5 : 1.0;
     }
   };
+
+  // Listen for parent hub AV_LOW_PERF_MODE broadcasts
+  if (typeof window !== 'undefined') {
+    window.addEventListener('message', function (e) {
+      if (e.data && e.data.type === 'AV_LOW_PERF_MODE') {
+        var enabled = !!e.data.enabled;
+        ArcadeVerse.setLowPerfMode(enabled);
+      }
+    });
+  }
 });
