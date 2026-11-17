@@ -220,16 +220,68 @@ class CyberGliderGame {
   }
 
   setupEvents() {
-    // Pitch Controls
+    // Pitch Controls with continuous hold & touch support
     const pitchUp = () => { if (this.glider.alive) this.glider.pitch = Math.max(-0.55, this.glider.pitch - 0.08); };
     const dive = () => { if (this.glider.alive) this.glider.pitch = Math.min(0.55, this.glider.pitch + 0.08); };
 
-    this.pitchUpBtn.addEventListener('mousedown', pitchUp);
-    this.diveBtn.addEventListener('mousedown', dive);
-    this.pitchUpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); pitchUp(); }, { passive: false });
-    this.diveBtn.addEventListener('touchstart', (e) => { e.preventDefault(); dive(); }, { passive: false });
+    let pitchInterval = null;
+    let diveInterval = null;
+
+    const startPitchUp = () => {
+      pitchUp();
+      clearInterval(pitchInterval);
+      pitchInterval = setInterval(pitchUp, 100);
+    };
+    const stopPitchUp = () => clearInterval(pitchInterval);
+
+    const startDive = () => {
+      dive();
+      clearInterval(diveInterval);
+      diveInterval = setInterval(dive, 100);
+    };
+    const stopDive = () => clearInterval(diveInterval);
+
+    this.pitchUpBtn.addEventListener('mousedown', startPitchUp);
+    this.pitchUpBtn.addEventListener('mouseup', stopPitchUp);
+    this.pitchUpBtn.addEventListener('mouseleave', stopPitchUp);
+    this.pitchUpBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startPitchUp(); }, { passive: false });
+    this.pitchUpBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopPitchUp(); }, { passive: false });
+    this.pitchUpBtn.addEventListener('touchcancel', stopPitchUp);
+
+    this.diveBtn.addEventListener('mousedown', startDive);
+    this.diveBtn.addEventListener('mouseup', stopDive);
+    this.diveBtn.addEventListener('mouseleave', stopDive);
+    this.diveBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startDive(); }, { passive: false });
+    this.diveBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopDive(); }, { passive: false });
+    this.diveBtn.addEventListener('touchcancel', stopDive);
+
+    // Direct canvas tap/touch steering on mobile
+    this.canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const rect = this.canvas.getBoundingClientRect();
+      const touch = e.touches[0];
+      if (touch) {
+        const touchY = touch.clientY - rect.top;
+        if (touchY < rect.height / 2) {
+          startPitchUp();
+        } else {
+          startDive();
+        }
+      }
+    }, { passive: false });
+    this.canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      stopPitchUp();
+      stopDive();
+    }, { passive: false });
+    this.canvas.addEventListener('touchcancel', () => {
+      stopPitchUp();
+      stopDive();
+    });
 
     this.restartFlightBtn.addEventListener('click', () => {
+      stopPitchUp();
+      stopDive();
       this.audio.stopAll();
       this.initWorld();
       this.showToast('NEW FLIGHT LAUNCHED');
@@ -262,9 +314,14 @@ class CyberGliderGame {
     this.closeModalBtn.addEventListener('click', () => this.rulesModal.classList.add('hidden'));
     this.modalGotItBtn.addEventListener('click', () => this.rulesModal.classList.add('hidden'));
 
-    // Viewport resize & screen orientation listeners
-    window.addEventListener('resize', () => this.handleResize(), { passive: true });
-    window.addEventListener('orientationchange', () => this.handleResize(), { passive: true });
+    // Debounced viewport resize & screen orientation listeners (AV_RESIZE ArcadeVerse responsive handling)
+    let resizeTimer = null;
+    const debouncedResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => this.handleResize(), 80);
+    };
+    window.addEventListener('resize', debouncedResize, { passive: true });
+    window.addEventListener('orientationchange', debouncedResize, { passive: true });
   }
 
   showToast(text) {
@@ -387,6 +444,7 @@ class CyberGliderGame {
       const lastTh = this.thermals[this.thermals.length - 1];
       const popped = this.thermals.shift();
       popped.x = lastTh.x + 480 + Math.random() * 200;
+      popped.h = this.virtualHeight;
       popped.lift = 3.5 + Math.random() * 1.0;
       this.thermals.push(popped);
     }

@@ -1,6 +1,7 @@
 {
   "title": "Cyber Tower Defense: Grid Bastion",
   "category": "Strategy",
+  "lucideIcon": "shield",
   "description": "Deploy cybernetic laser turrets along the circuit pathways to halt rogue bot swarms before they breach the mainframe core.",
   "author": "Babin Bid",
   "github": "Babin123456",

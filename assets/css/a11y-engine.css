@@ -161,6 +161,27 @@
   flex-shrink: 0;
 }
 
+.a11y-select {
+  background: #0f172a;
+  color: #00f0ff;
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.a11y-select:hover,
+.a11y-select:focus-visible {
+  border-color: #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+}
+
 .a11y-reset-btn {
   margin-top: auto;
   background: transparent;
