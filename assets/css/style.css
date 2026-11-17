@@ -11553,18 +11553,43 @@ html.a11y-reduced-motion .search-clear-btn {
 }
 
 /* ========================================================
-   AUTHENTIC RETRO SCANLINE & CRT SCREEN OVERLAY (#564)
-   Pure CSS/SVG toggleable curved scanline overlay layer
+   ACCESSIBILITY COLORBLIND SHADERS & PALETTE CORRECTION (#563)
+   Applies Protanopia, Deuteranopia, Tritanopia, or Monochrome SVG filters
    ======================================================== */
-.crt-screen-overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 10;
-  border-radius: inherit;
-  display: none;
-  overflow: hidden;
+.modal-frame-wrapper.filter-protanopia {
+  filter: url('#protanopia-filter');
 }
+
+.modal-frame-wrapper.filter-deuteranopia {
+  filter: url('#deuteranopia-filter');
+}
+
+.modal-frame-wrapper.filter-tritanopia {
+  filter: url('#tritanopia-filter');
+}
+
+.modal-frame-wrapper.filter-monochrome {
+  filter: url('#monochrome-filter');
+}
+
+.modal-colorblind-select {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text-primary, #f9fafb);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.modal-colorblind-select:focus {
+  border-color: #06b6d4;
+  box-shadow: 0 0 6px rgba(6, 182, 212, 0.4);
+}
+
 
 .crt-screen-overlay.active {
   display: block;
