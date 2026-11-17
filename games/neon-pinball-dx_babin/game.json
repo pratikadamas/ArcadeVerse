@@ -1,6 +1,7 @@
 {
   "title": "Neon Pinball DX: Cybernetic Table",
   "category": "Arcade",
+  "lucideIcon": "dices",
   "description": "Launch high-voltage chrome pinballs across neon bumpers, dynamic flipper traps, and multi-colored score multipliers.",
   "author": "Babin Bid",
   "github": "Babin123456",
