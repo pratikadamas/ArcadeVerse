@@ -5045,6 +5045,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
     });
+  }
 
   // ========================================================
   // DAILY GAME LOGIN STREAK CALENDAR & XP MULTIPLIER (#659)
