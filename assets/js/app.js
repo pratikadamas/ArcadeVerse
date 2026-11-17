@@ -36,6 +36,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const favoritesCountBadge = document.getElementById("favorites-count-badge");
   const modalFavBtn = document.getElementById("modal-fav-btn");
   const modalSoundBtn = document.getElementById("modal-sound-btn");
+  const scratchpadBtn = document.getElementById("modal-scratchpad-btn");
+  const scratchpadPanel = document.getElementById("game-scratchpad");
+  const scratchpadCloseBtn = document.getElementById("scratchpad-close-btn");
+  const scratchpadNotes = document.getElementById("scratchpad-notes");
+  const scratchpadTitle = document.getElementById("scratchpad-game-title");
+  const scratchpadStatus = document.getElementById("scratchpad-status");
+  const scratchpadClearConfirm = document.getElementById("scratchpad-clear-confirm");
 
   let currentCategory = "all";
   let currentDurationFacet = "all";
@@ -2141,7 +2148,9 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.classList.remove("modal-launching-in-progress");
     }, 450);
 
+    flushScratchpadSave();
     activeGame = game;
+    loadScratchpadGame(game);
     isGameSessionActive = true;
     gameSessionStartTime = Date.now();
     isConfirmingQuit = false;
@@ -2158,7 +2167,9 @@ document.addEventListener("DOMContentLoaded", () => {
     modalGameAuthor.textContent = `Built by @${game.author}`;
     lastAnnouncedScore = 0;
     lastScoreAnnouncementTime = Date.now();
-    announceToScreenReader(`Launching ${game.title}. Category: ${game.category}. Built by ${game.author}.`);
+    if (typeof announceToScreenReader === "function") {
+      announceToScreenReader(`Launching ${game.title}. Category: ${game.category}. Built by ${game.author}.`);
+    }
     startIframeTimeout(game);
 
     // Storage Isolation Bridge: Pass gameId via URL parameter so SDK attaches namespaced proxy (#493, #824)
@@ -2356,6 +2367,7 @@ document.addEventListener("DOMContentLoaded", () => {
       window.GameSpeedRegulator.closeMenu();
     }
     hideLandscapePrompt();
+    closeScratchpad(false);
     activeGame = null;
     isGameSessionActive = false;
     // Stop the 15s load timer so a game closed mid load does not raise the error screen later
@@ -2506,6 +2518,260 @@ document.addEventListener("DOMContentLoaded", () => {
 
   closeModalBtn.addEventListener("click", () => requestModalClose(false));
   modalOverlay.addEventListener("click", () => requestModalClose(false));
+
+  let scratchpadSaveTimer = null;
+  let scratchpadHideTimer = null;
+  let scratchpadTrigger = scratchpadBtn;
+  let scratchpadGameStartTime = 0;
+
+  function getScratchpadStorageKey(gameId) {
+    return `arcadeverse_notes_${gameId}`;
+  }
+
+  function setScratchpadStatus(message) {
+    if (scratchpadStatus) scratchpadStatus.textContent = message;
+  }
+
+  function updateScratchpadIndicator(notes) {
+    if (!scratchpadBtn) return;
+    const hasNotes = Boolean(notes && notes.trim());
+    scratchpadBtn.dataset.hasNotes = hasNotes ? "true" : "false";
+    scratchpadBtn.setAttribute("aria-label", hasNotes ? "Open Strategy Scratchpad, notes saved" : "Open Strategy Scratchpad");
+  }
+
+  function flushScratchpadSave() {
+    if (scratchpadSaveTimer) {
+      clearTimeout(scratchpadSaveTimer);
+      scratchpadSaveTimer = null;
+    }
+    if (!activeGame || !scratchpadNotes) return;
+
+    const notes = scratchpadNotes.value;
+    const key = getScratchpadStorageKey(activeGame.id);
+    if (!window.ArcadeStorageResilience || !window.ArcadeStorageResilience.safeSetItem(key, notes)) {
+      setScratchpadStatus("Unable to save notes locally");
+      return;
+    }
+    updateScratchpadIndicator(notes);
+    setScratchpadStatus("Saved locally per game");
+  }
+
+  function scheduleScratchpadSave() {
+    if (scratchpadSaveTimer) clearTimeout(scratchpadSaveTimer);
+    if (!activeGame || !scratchpadNotes) return;
+
+    const key = getScratchpadStorageKey(activeGame.id);
+    const gameId = activeGame.id;
+    const notes = scratchpadNotes.value;
+    setScratchpadStatus("Saving...");
+    scratchpadSaveTimer = setTimeout(() => {
+      scratchpadSaveTimer = null;
+      if (!window.ArcadeStorageResilience || !window.ArcadeStorageResilience.safeSetItem(key, notes)) {
+        setScratchpadStatus("Unable to save notes locally");
+        return;
+      }
+      if (activeGame && activeGame.id === gameId) {
+        updateScratchpadIndicator(notes);
+        setScratchpadStatus("Saved locally per game");
+      }
+    }, 300);
+  }
+
+  function loadScratchpadGame(game) {
+    if (!game || !scratchpadNotes) return;
+    scratchpadGameStartTime = Date.now();
+    if (scratchpadTitle) scratchpadTitle.textContent = game.title;
+    try {
+      scratchpadNotes.value = localStorage.getItem(getScratchpadStorageKey(game.id)) || "";
+      updateScratchpadIndicator(scratchpadNotes.value);
+      setScratchpadStatus("Saved locally per game");
+    } catch (error) {
+      scratchpadNotes.value = "";
+      updateScratchpadIndicator("");
+      setScratchpadStatus("Local storage is unavailable");
+      console.warn("[ArcadeVerse Scratchpad] Unable to load game notes:", error);
+    }
+    const clearConfirm = document.getElementById("scratchpad-clear-confirm");
+    if (clearConfirm) clearConfirm.hidden = true;
+  }
+
+  function openScratchpad() {
+    if (!activeGame || !scratchpadPanel || !scratchpadBtn) return;
+    if (scratchpadHideTimer) {
+      clearTimeout(scratchpadHideTimer);
+      scratchpadHideTimer = null;
+    }
+    scratchpadTrigger = scratchpadBtn;
+    scratchpadPanel.hidden = false;
+    scratchpadPanel.inert = false;
+    scratchpadPanel.setAttribute("aria-hidden", "false");
+    scratchpadBtn.setAttribute("aria-expanded", "true");
+    modalWindow.classList.add("scratchpad-open");
+    requestAnimationFrame(() => {
+      scratchpadPanel.classList.add("is-open");
+      scratchpadNotes.focus();
+    });
+  }
+
+  function closeScratchpad(restoreFocus = true) {
+    if (!scratchpadPanel || scratchpadPanel.hidden) return;
+    flushScratchpadSave();
+    scratchpadPanel.inert = true;
+    scratchpadPanel.setAttribute("aria-hidden", "true");
+    scratchpadPanel.classList.remove("is-open");
+    scratchpadBtn.setAttribute("aria-expanded", "false");
+    modalWindow.classList.remove("scratchpad-open");
+    if (scratchpadHideTimer) clearTimeout(scratchpadHideTimer);
+    scratchpadHideTimer = setTimeout(() => {
+      scratchpadPanel.hidden = true;
+      scratchpadHideTimer = null;
+    }, 250);
+    if (restoreFocus && scratchpadTrigger && scratchpadTrigger.isConnected) scratchpadTrigger.focus();
+  }
+
+  function toggleScratchpad() {
+    if (!activeGame) return;
+    if (scratchpadPanel.hidden || !scratchpadPanel.classList.contains("is-open")) {
+      openScratchpad();
+    } else {
+      closeScratchpad();
+    }
+  }
+
+  function formatPlaytime(seconds) {
+    const total = Math.max(0, Math.floor(seconds));
+    const hours = String(Math.floor(total / 3600)).padStart(2, "0");
+    const minutes = String(Math.floor((total % 3600) / 60)).padStart(2, "0");
+    const remainingSeconds = String(total % 60).padStart(2, "0");
+    return `${hours}:${minutes}:${remainingSeconds}`;
+  }
+
+  if (scratchpadBtn) scratchpadBtn.addEventListener("click", toggleScratchpad);
+  if (scratchpadCloseBtn) scratchpadCloseBtn.addEventListener("click", () => closeScratchpad());
+  if (scratchpadNotes) scratchpadNotes.addEventListener("input", scheduleScratchpadSave);
+
+  const scratchpadStampBtn = document.getElementById("scratchpad-stamp-btn");
+  if (scratchpadStampBtn) {
+    scratchpadStampBtn.addEventListener("click", () => {
+      if (!activeGame || !scratchpadNotes) return;
+      const start = scratchpadNotes.selectionStart;
+      const end = scratchpadNotes.selectionEnd;
+      const value = scratchpadNotes.value;
+      const prefix = start > 0 && value[start - 1] !== "\n" ? "\n" : "";
+      const suffix = end < value.length && value[end] !== "\n" ? "\n" : "";
+      const stamp = `[${formatPlaytime((Date.now() - scratchpadGameStartTime) / 1000)}] Clue: `;
+      const insertion = `${prefix}${stamp}${suffix}`;
+      scratchpadNotes.setRangeText(insertion, start, end, "end");
+      scratchpadNotes.focus();
+      scheduleScratchpadSave();
+    });
+  }
+
+  const scratchpadCopyBtn = document.getElementById("scratchpad-copy-btn");
+  if (scratchpadCopyBtn) {
+    scratchpadCopyBtn.addEventListener("click", async () => {
+      const text = scratchpadNotes ? scratchpadNotes.value : "";
+      try {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const copyTarget = document.createElement("textarea");
+          copyTarget.value = text;
+          copyTarget.setAttribute("readonly", "");
+          copyTarget.style.position = "fixed";
+          copyTarget.style.opacity = "0";
+          document.body.appendChild(copyTarget);
+          try {
+            copyTarget.select();
+            if (!document.execCommand("copy")) throw new Error("Clipboard copy command was rejected");
+          } finally {
+            copyTarget.remove();
+          }
+        }
+        setScratchpadStatus("Notes copied to clipboard");
+      } catch (error) {
+        setScratchpadStatus("Clipboard access failed");
+        console.warn("[ArcadeVerse Scratchpad] Unable to copy notes:", error);
+      }
+    });
+  }
+
+  const scratchpadExportBtn = document.getElementById("scratchpad-export-btn");
+  if (scratchpadExportBtn) {
+    scratchpadExportBtn.addEventListener("click", () => {
+      if (!activeGame || !scratchpadNotes) return;
+      const safeTitle = activeGame.title.replace(/[<>:"/\\|?*\x00-\x1F]/g, "").trim().replace(/\s+/g, "_") || "Game";
+      const file = new Blob([scratchpadNotes.value], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(file);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `ArcadeVerse_${safeTitle}_Notes.txt`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setScratchpadStatus("Notes exported");
+    });
+  }
+
+  const scratchpadClearBtn = document.getElementById("scratchpad-clear-btn");
+  const scratchpadClearConfirmBtn = document.getElementById("scratchpad-clear-confirm-btn");
+  const scratchpadClearCancelBtn = document.getElementById("scratchpad-clear-cancel-btn");
+  if (scratchpadClearBtn && scratchpadClearConfirm) {
+    scratchpadClearBtn.addEventListener("click", () => {
+      scratchpadClearConfirm.hidden = false;
+      scratchpadClearConfirmBtn.focus();
+    });
+  }
+  if (scratchpadClearConfirmBtn) {
+    scratchpadClearConfirmBtn.addEventListener("click", () => {
+      if (!scratchpadNotes) return;
+      scratchpadNotes.value = "";
+      scratchpadClearConfirm.hidden = true;
+      scheduleScratchpadSave();
+      scratchpadNotes.focus();
+    });
+  }
+  if (scratchpadClearCancelBtn) {
+    scratchpadClearCancelBtn.addEventListener("click", () => {
+      if (scratchpadClearConfirm) scratchpadClearConfirm.hidden = true;
+      if (scratchpadClearBtn) scratchpadClearBtn.focus();
+    });
+  }
+
+  window.addEventListener("keydown", (event) => {
+    if (!gameModal || !gameModal.classList.contains("active")) return;
+    if (event.altKey && !event.ctrlKey && !event.metaKey && event.key.toLowerCase() === "n") {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      toggleScratchpad();
+      return;
+    }
+    if (!scratchpadPanel || scratchpadPanel.hidden || !scratchpadPanel.classList.contains("is-open")) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      closeScratchpad();
+      return;
+    }
+    if (event.key !== "Tab") return;
+    const focusable = Array.from(scratchpadPanel.querySelectorAll("button:not([disabled]), textarea:not([disabled])"))
+      .filter((element) => !element.closest("[hidden]"));
+    if (!focusable.length) {
+      event.preventDefault();
+      scratchpadPanel.focus();
+      return;
+    }
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && (document.activeElement === first || !scratchpadPanel.contains(document.activeElement))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (document.activeElement === last || !scratchpadPanel.contains(document.activeElement))) {
+      event.preventDefault();
+      first.focus();
+    }
+  }, true);
 
   if (modalFavBtn) {
     modalFavBtn.addEventListener("click", () => {
