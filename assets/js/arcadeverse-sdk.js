@@ -16,7 +16,9 @@
   } else if (typeof module === "object" && module.exports) {
     module.exports = factory();
   } else {
-    root.ArcadeVerse = factory();
+    var inst = factory();
+    root.ArcadeVerse = inst;
+    root.arcadeverse = inst; // Alias lowercase for developer convenience (#722)
   }
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
@@ -124,6 +126,73 @@
       } catch (_) {
         return false;
       }
+    },
+
+    // ========================================================
+    // CLIENT-SIDE ANTI-TAMPER CHECKSUM SIGNATURES (#576)
+    // HMAC/SHA-256 Checksum generation and verification for game scores
+    // ========================================================
+    /**
+     * Computes anti-tamper signature for a submitted score
+     * @param {string} gameId
+     * @param {number} score
+     * @param {number} timestamp
+     * @returns {Promise<string>} Hex signature
+     */
+    generateScoreSignature: function (gameId, score, timestamp) {
+      var payload = "av_salt_2026_" + String(gameId) + ":" + String(score) + ":" + String(timestamp);
+      if (typeof crypto !== 'undefined' && crypto.subtle && typeof TextEncoder !== 'undefined') {
+        var encoder = new TextEncoder();
+        var data = encoder.encode(payload);
+        return crypto.subtle.digest("SHA-256", data).then(function (buffer) {
+          var hashArray = Array.from(new Uint8Array(buffer));
+          return hashArray.map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+        }).catch(function () {
+          return "fallback_" + Math.abs(payload.split("").reduce(function (a, b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0)).toString(16);
+        });
+      }
+      var simpleHash = Math.abs(payload.split("").reduce(function (a, b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0)).toString(16);
+      return Promise.resolve("fallback_" + simpleHash);
+    },
+
+    /**
+     * Stores a validated high score with its tamper signature
+     */
+    saveSignedScore: function (gameId, score) {
+      var self = this;
+      var ts = Date.now();
+      return this.generateScoreSignature(gameId, score, ts).then(function (sig) {
+        var record = {
+          gameId: gameId,
+          score: Number(score),
+          timestamp: ts,
+          signature: sig
+        };
+        self.setJSON("signed_score", record);
+        self.setItem("highScore", String(score));
+        return record;
+      });
+    },
+
+    /**
+     * Verifies stored score against signature. Resets score to 0 if tampered.
+     */
+    verifySignedScore: function (gameId) {
+      var self = this;
+      var record = this.getJSON("signed_score", null);
+      if (!record || typeof record.score !== 'number' || !record.signature) {
+        return Promise.resolve({ valid: true, score: Number(self.getItem("highScore") || 0) });
+      }
+      return this.generateScoreSignature(gameId, record.score, record.timestamp).then(function (expectedSig) {
+        if (record.signature === expectedSig) {
+          return { valid: true, score: record.score };
+        } else {
+          console.warn("[AntiCheat] Tampering detected in score storage for " + gameId + "! Resetting score.");
+          self.setItem("highScore", "0");
+          self.removeItem("signed_score");
+          return { valid: false, score: 0 };
+        }
+      });
     },
 
     /**
@@ -245,6 +314,8 @@
   var resumeHandlers = [];
   var teardownHandlers = [];
   var audioConfigHandlers = [];
+  var speedChangeHandlers = [];
+  var currentGameSpeed = 1.0;
 
   // Cryptographic Session Handshake Subsystem (Issue #489)
   var sessionToken = null;
@@ -483,6 +554,26 @@
         executeHandlers(audioConfigHandlers, currentAudioConfig);
         break;
 
+      case "ARCADEVERSE_SET_SPEED":
+      case "AV_SET_GAME_SPEED":
+        var targetSpeed = 1.0;
+        if (data && typeof data.speedMultiplier === "number") {
+          targetSpeed = data.speedMultiplier;
+        } else if (data && typeof data.speed === "number") {
+          targetSpeed = data.speed;
+        }
+        targetSpeed = Math.max(0.25, Math.min(3.0, targetSpeed));
+        currentGameSpeed = targetSpeed;
+        executeHandlers(speedChangeHandlers, { speed: targetSpeed, speedMultiplier: targetSpeed });
+        try {
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("arcadeverse:speed-changed", {
+              detail: { speed: targetSpeed, speedMultiplier: targetSpeed }
+            }));
+          }
+        } catch (_) {}
+        break;
+
       default:
         break;
     }
@@ -586,15 +677,16 @@
         currentAudioConfig.muted = isMuted;
       } catch (_) {}
 
-      // Ping parent window for initial audio configuration
+      // Ping parent window for initial audio and speed configuration
       if (window.parent && window.parent !== window) {
         securePostToParent("ARCADEVERSE_REQUEST_AUDIO_CONFIG", {});
+        securePostToParent("ARCADEVERSE_REQUEST_SPEED_CONFIG", {});
 
         // Forward global keyboard shortcuts from inside game iframe to parent shell
         window.addEventListener("keydown", function (e) {
           var key = (e.key || "").toLowerCase();
-          // Escape (close modal), f (fullscreen), r (restart), m (mute), t (theme)
-          if (e.key === "Escape" || key === "f" || key === "r" || key === "m" || key === "t") {
+          // Escape (close modal), f (fullscreen), r (restart), m (mute), t (theme), [ / ] (speed)
+          if (e.key === "Escape" || key === "f" || key === "r" || key === "m" || key === "t" || e.key === "[" || e.key === "]") {
             // If typing in input/textarea inside game, skip
             var tag = (e.target && e.target.tagName ? e.target.tagName.toLowerCase() : "");
             if (tag === "input" || tag === "textarea" || (e.target && e.target.isContentEditable)) return;
@@ -658,6 +750,48 @@
         } catch (e) {}
       }
       return this;
+    },
+
+    /**
+     * Retrieves current simulation speed multiplier (e.g. 0.5, 1.0, 1.5)
+     * @returns {number}
+     */
+    getGameSpeed: function () {
+      return currentGameSpeed;
+    },
+
+    /**
+     * Registers a callback triggered when speed multiplier changes
+     * @param {Function} callback receives { speed: number, speedMultiplier: number }
+     */
+    onSpeedChange: function (callback) {
+      if (typeof callback === "function") {
+        speedChangeHandlers.push(callback);
+        try {
+          callback({ speed: currentGameSpeed, speedMultiplier: currentGameSpeed });
+        } catch (_) {}
+      }
+      return this;
+    },
+
+    /**
+     * Dedicated Time Dilation & Frame-Pacing Subsystem
+     */
+    time: {
+      getSpeed: function () {
+        return currentGameSpeed;
+      },
+      scaleDeltaTime: function (rawDt) {
+        return (typeof rawDt === "number" ? rawDt : 0.016) * currentGameSpeed;
+      },
+      onSpeedChange: function (callback) {
+        if (typeof callback === "function") {
+          speedChangeHandlers.push(callback);
+          try {
+            callback({ speed: currentGameSpeed, speedMultiplier: currentGameSpeed });
+          } catch (_) {}
+        }
+      }
     },
 
     /**
@@ -1314,6 +1448,49 @@
           recordedChunks = [];
         }
       };
+    },
+
+    // ========================================================
+    // HRTF 3D SPATIAL AUDIO PANNER SUBSYSTEM (#569)
+    // Head-Related Transfer Function binaural positioning for stereo gamers
+    // ========================================================
+    createSpatialPanner: function (audioCtx, options) {
+      if (!audioCtx) return null;
+      options = options || {};
+
+      var panner = audioCtx.createPanner();
+      if ('panningModel' in panner) {
+        panner.panningModel = 'HRTF';
+      }
+      if ('distanceModel' in panner) {
+        panner.distanceModel = 'inverse';
+      }
+      panner.refDistance = options.refDistance || 100;
+      panner.maxDistance = options.maxDistance || 1000;
+      panner.rolloffFactor = options.rolloffFactor || 1;
+      panner.coneInnerAngle = options.coneInnerAngle || 360;
+      panner.coneOuterAngle = options.coneOuterAngle || 360;
+
+      return {
+        node: panner,
+        /**
+         * Updates emitter position relative to screen center or player
+         * @param {number} x - Relative horizontal offset (-1.0 to 1.0 or pixel delta)
+         * @param {number} y - Relative vertical offset (-1.0 to 1.0 or pixel delta)
+         * @param {number} [z] - Relative depth (default -0.5)
+         */
+        setPosition: function (x, y, z) {
+          z = typeof z === 'number' ? z : -0.5;
+          if (panner.positionX) {
+            panner.positionX.setValueAtTime(x, audioCtx.currentTime);
+            panner.positionY.setValueAtTime(y, audioCtx.currentTime);
+            panner.positionZ.setValueAtTime(z, audioCtx.currentTime);
+          } else if (typeof panner.setPosition === 'function') {
+            panner.setPosition(x, y, z);
+          }
+        }
+      };
+    }
     }
   };
 });
