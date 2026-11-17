@@ -4616,7 +4616,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initURLDeepLinking();
   initControlsLegend();
   initMultiChannelAudioMixer();
-  initAudioEqualizerIntegration();
+  initCrtOverlayEngine();
 });
 
   // ========================================================
@@ -5426,22 +5426,106 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ========================================================
-  // RETRO 5-BAND BIQUADFILTER AUDIO EQUALIZER INTEGRATION (#570)
-  // Initializes preset selector and connects to sound engine
+  // AUTHENTIC RETRO SCANLINE & CRT SCREEN OVERLAY ENGINE (#564)
+  // Toggleable GPU-accelerated scanline and vignette overlay layer
   // ========================================================
-  function initAudioEqualizerIntegration() {
-    if (typeof window !== 'undefined' && !window.ArcadeAudio) {
-      if (!document.querySelector('script[src*="arcade-audio.js"]')) {
-        const audioScript = document.createElement('script');
-        audioScript.src = 'assets/js/arcade-audio.js';
-        audioScript.onload = () => {
-          if (window.ArcadeAudio && typeof window.ArcadeAudio.initEqualizer === 'function') {
-            window.ArcadeAudio.initEqualizer();
-          }
-        };
-        document.body.appendChild(audioScript);
+  const AvCrtOverlay = (function () {
+    const STORAGE_KEY = 'arcadeverse_crt_mode';
+    let isCrtActive = localStorage.getItem(STORAGE_KEY) === 'true';
+
+    function injectOverlayLayer() {
+      const frameWrapper = document.querySelector('.modal-frame-wrapper') || document.querySelector('.modal-window');
+      if (!frameWrapper) return;
+
+      if (!document.getElementById('av-crt-overlay-layer')) {
+        const overlay = document.createElement('div');
+        overlay.id = 'av-crt-overlay-layer';
+        overlay.className = 'crt-screen-overlay';
+        frameWrapper.appendChild(overlay);
       }
-    } else if (window.ArcadeAudio && typeof window.ArcadeAudio.initEqualizer === 'function') {
-      window.ArcadeAudio.initEqualizer();
+
+      updateOverlay();
+    }
+
+    function updateOverlay() {
+      const overlay = document.getElementById('av-crt-overlay-layer');
+      if (overlay) {
+        overlay.classList.toggle('active', isCrtActive);
+      }
+      const btn = document.getElementById('modal-crt-toggle-btn');
+      if (btn) {
+        btn.classList.toggle('active', isCrtActive);
+        btn.title = isCrtActive ? 'Disable Retro CRT Scanlines' : 'Enable Retro CRT Scanlines';
+        btn.setAttribute('aria-pressed', isCrtActive ? 'true' : 'false');
+      }
+    }
+
+    function toggleCrt() {
+      isCrtActive = !isCrtActive;
+      try {
+        localStorage.setItem(STORAGE_KEY, isCrtActive ? 'true' : 'false');
+      } catch (_) {}
+      updateOverlay();
+
+      if (typeof announceToScreenReader === 'function') {
+        announceToScreenReader(isCrtActive ? 'Retro CRT Scanlines enabled.' : 'Retro CRT Scanlines disabled.');
+      }
+    }
+
+    return {
+      isCrtActive: () => isCrtActive,
+      injectOverlayLayer,
+      toggleCrt
+    };
+  })();
+
+  window.AvCrtOverlay = AvCrtOverlay;
+
+  function initCrtOverlayEngine() {
+    AvCrtOverlay.injectOverlayLayer();
+
+    // Inject CRT toggle button into modal toolbar
+    const modalControls = document.querySelector('.modal-controls');
+    const closeBtn = document.getElementById('close-modal-btn');
+    if (modalControls && !document.getElementById('modal-crt-toggle-btn')) {
+      const crtBtn = document.createElement('button');
+      crtBtn.type = 'button';
+      crtBtn.id = 'modal-crt-toggle-btn';
+      crtBtn.className = 'btn btn-sm btn-icon btn-crt-toggle';
+      crtBtn.title = AvCrtOverlay.isCrtActive() ? 'Disable Retro CRT Scanlines' : 'Enable Retro CRT Scanlines';
+      crtBtn.setAttribute('aria-label', 'Toggle Retro CRT Scanlines and Curved Monitor Filter');
+      crtBtn.setAttribute('aria-pressed', AvCrtOverlay.isCrtActive() ? 'true' : 'false');
+      crtBtn.innerHTML = `
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect width="20" height="15" x="2" y="3" rx="2"/>
+          <line x1="8" x2="16" y1="21" y2="21"/>
+          <line x1="12" x2="12" y1="18" y2="21"/>
+        </svg>
+      `;
+
+      if (AvCrtOverlay.isCrtActive()) {
+        crtBtn.classList.add('active');
+      }
+
+      crtBtn.addEventListener('click', () => {
+        AvCrtOverlay.toggleCrt();
+      });
+
+      if (closeBtn) {
+        modalControls.insertBefore(crtBtn, closeBtn);
+      } else {
+        modalControls.appendChild(crtBtn);
+      }
+    }
+
+    // Ensure overlay is attached and synced when modal is activated
+    const modalEl = document.getElementById('game-modal');
+    if (modalEl) {
+      const observer = new MutationObserver(() => {
+        if (modalEl.classList.contains('active')) {
+          AvCrtOverlay.injectOverlayLayer();
+        }
+      });
+      observer.observe(modalEl, { attributes: true, attributeFilter: ['class'] });
     }
   }
