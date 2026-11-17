@@ -42,9 +42,11 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentControlsFacet = "all";
   let currentLetterFilter = "all";
   let currentTagFilter = "";
+  let currentMixFilter = null; // curated mix filter (#583), read by the catalog filter below
   let searchQuery = "";
   let currentSort = "featured";
   let searchDebounceTimer = null;
+  const CATALOG_SORT_STORAGE_KEY = "arcadeverse_catalog_sort";
   const CATALOG_VIEW_STORAGE_KEY = "arcadeverse_catalog_view";
   let currentCatalogView = "grid";
   try {
@@ -53,7 +55,34 @@ document.addEventListener("DOMContentLoaded", () => {
       currentCatalogView = savedView;
     }
   } catch (_) {}
+  try {
+    const savedSort = localStorage.getItem(CATALOG_SORT_STORAGE_KEY);
+    if (savedSort && sortSelect && Array.from(sortSelect.options).some((o) => o.value === savedSort)) {
+      currentSort = savedSort;
+    }
+  } catch (_) {}
   let lastFocusedElement = null;
+
+  // Screen reader live region, used by the launch / catalog / pause announcements below
+  function announceToScreenReader(message) {
+    if (!message) return;
+    let liveRegion = document.getElementById("a11y-live-region");
+    if (!liveRegion) {
+      liveRegion = document.createElement("div");
+      liveRegion.id = "a11y-live-region";
+      liveRegion.className = "sr-only";
+      liveRegion.setAttribute("role", "status");
+      liveRegion.setAttribute("aria-live", "polite");
+      liveRegion.setAttribute("aria-atomic", "true");
+      document.body.appendChild(liveRegion);
+    }
+    // Clear first so a repeated message is announced again
+    liveRegion.textContent = "";
+    setTimeout(() => {
+      liveRegion.textContent = message;
+    }, 50);
+  }
+  window.announceToScreenReader = announceToScreenReader;
 
   // ========================================================
   // REBINDABLE KEYBOARD CONTROLS SUBSYSTEM (#516)
@@ -1199,6 +1228,28 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    function getDifficultyRank(game) {
+      if (!game) return 2;
+      const raw = String(game.difficulty || "").toLowerCase().trim();
+      if (raw.includes("easy") || raw.includes("beginner") || raw.includes("all skill") || raw.includes("casual")) return 1;
+      if (raw.includes("hard") || raw.includes("advanced") || raw.includes("expert") || raw.includes("survival")) return 3;
+      if (raw.includes("medium") || raw.includes("intermediate")) return 2;
+
+      const text = (String(game.title || "") + " " + String(game.category || "") + " " + (Array.isArray(game.tags) ? game.tags.join(" ") : "") + " " + String(game.description || "")).toLowerCase();
+      if (text.includes("easy") || text.includes("casual") || text.includes("relaxing") || text.includes("simple") || text.includes("calm") || text.includes("clicker")) return 1;
+      if (text.includes("expert") || text.includes("hardcore") || text.includes("insane") || text.includes("complex") || text.includes("rpg") || text.includes("hard") || text.includes("survival") || text.includes("roguelike")) return 3;
+      return 2;
+    }
+
+    function getGameReleaseTime(game) {
+      if (!game) return 0;
+      if (game.releaseDate) {
+        const t = new Date(game.releaseDate).getTime();
+        if (!isNaN(t)) return t;
+      }
+      return 0;
+    }
+
     // Apply Sorting
     filtered.sort((a, b) => {
       if (currentSort === "az") {
@@ -1752,7 +1803,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Assistive Screen Reader Notification for Catalog Filter/Search Updates (#513)
     if (typeof announceToScreenReader === "function") {
-      const count = finalResults.length;
+      const count = filtered.length;
       let filterDesc = [];
       if (currentCategory && currentCategory !== "all") filterDesc.push(`category "${currentCategory}"`);
       if (searchQuery) filterDesc.push(`matching "${searchQuery}"`);
@@ -1981,15 +2032,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 3500);
   }
 
-  // Bind iframe load listener once at root level to ensure 100% reliable load detection
-  if (gameIframe) {
-    gameIframe.addEventListener("load", () => {
+  // Bind the load / error listeners on the current game iframe. closeGameModal swaps in a fresh
+  // iframe node, so this runs again for each new one.
+  function bindGameIframeListeners() {
+    const frame = gameIframe;
+    if (!frame) return;
+
+    frame.addEventListener("load", () => {
+      // A replaced iframe can still deliver a late event, only the live one counts
+      if (frame !== gameIframe) return;
       // Ignore blanking resets
-      if (!gameIframe.src || gameIframe.src.includes("about:blank")) return;
+      if (!frame.src || frame.src.includes("about:blank")) return;
 
       iframeLoadSucceeded = true;
       resetIframeBoundary();
-      gameIframe.classList.add("loaded");
+      frame.classList.add("loaded");
       guardIframeTouchInteractions();
 
       // Establish cryptographic session handshake with child game frame
@@ -2001,8 +2058,8 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
           const isMuted = localStorage.getItem("arcadeverse_muted") === "true";
           const masterVol = parseFloat(localStorage.getItem("arcadeverse_master_volume")) || 0.28;
-          if (gameIframe.contentWindow) {
-            gameIframe.contentWindow.postMessage({
+          if (frame.contentWindow) {
+            frame.contentWindow.postMessage({
               type: "ARCADEVERSE_AUDIO_CONFIG",
               sessionToken: activeGameSession.token,
               muted: isMuted,
@@ -2020,13 +2077,15 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (_) {}
     });
 
-    gameIframe.addEventListener("error", () => {
+    frame.addEventListener("error", () => {
+      if (frame !== gameIframe) return;
       iframeLoadSucceeded = false;
       if (activeGame) {
         triggerModalErrorBoundary(activeGame);
       }
     });
   }
+  bindGameIframeListeners();
 
   // =========================================================================
   // TOP-LEVEL NAVIGATION GUARD & ROGUE SCRIPT PROTECTION (#492)
@@ -2299,6 +2358,8 @@ document.addEventListener("DOMContentLoaded", () => {
     hideLandscapePrompt();
     activeGame = null;
     isGameSessionActive = false;
+    // Stop the 15s load timer so a game closed mid load does not raise the error screen later
+    resetIframeBoundary();
     gameModal.classList.remove("active");
     gameModal.setAttribute("aria-hidden", "true");
     if (newTabBtn) {
@@ -2400,11 +2461,13 @@ document.addEventListener("DOMContentLoaded", () => {
           newIframe.setAttribute("title", currentFrame.getAttribute("title") || "Arcade Game Screen");
           newIframe.setAttribute("loading", "lazy");
           newIframe.setAttribute("allow", "gamepad; autoplay; fullscreen");
+          if (currentFrame.hasAttribute("sandbox")) newIframe.setAttribute("sandbox", currentFrame.getAttribute("sandbox"));
           newIframe.src = "about:blank";
           parent.replaceChild(newIframe, currentFrame);
-          // Re-bind global reference so openGameModal can find the new live iframe node
-          gameIframe = document.getElementById("game-iframe");
-          if (!gameIframe) gameIframe = newIframe;
+          // The reference and listeners must follow the new node, otherwise the next game
+          // is loaded into a detached iframe and never shows
+          gameIframe = newIframe;
+          bindGameIframeListeners();
         }
       } catch (_) {}
     }, 100);
@@ -4697,11 +4760,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-    if (window.lucide) {
-      try { lucide.createIcons(); } catch (_) {}
-    }
-  }
-
   // ========================================================
   // DAILY GAME LOGIN STREAK CALENDAR & XP MULTIPLIER (#659)
   // Calculates consecutive day UTC streak, tracks av_current_streak_days
@@ -4935,7 +4993,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const vcScript = document.createElement('script');
       vcScript.src = 'assets/js/virtual-controller.js';
       document.body.appendChild(vcScript);
-    }
     }
   }
 
