@@ -33,17 +33,81 @@ if (!fs.existsSync(GAMES_DIR)) {
 }
 
 // 0. Strict File Protection Audit (CONTRIBUTING.md Compliance for PRs / feature branches)
-// Backup & Storage Key Schema Auditor (#495)
-function verifyStorageSerializationHealth(gameJsContent) {
-  if (gameJsContent.includes('localStorage.setItem') && gameJsContent.includes('JSON.stringify')) {
-    // Ensures games use safe primitive serialization
+// Backup & Storage Key Schema Auditor (#495, #919)
+function verifyStorageSerializationHealth(gameJsContent, issues) {
+  if (!gameJsContent) return;
+
+  // 1. Detect raw object or array literal passed directly to localStorage.setItem without JSON.stringify
+  if (/localStorage\.setItem\s*\([^,]+,\s*(?:\{|\[)/.test(gameJsContent)) {
+    issues.push('❌ Invalid storage serialization: Direct object or array literal passed to localStorage.setItem without JSON.stringify.');
+    totalErrors++;
+  }
+
+  // 2. Detect attempting to store literal [object Object] sentinel
+  if (/localStorage\.setItem\s*\([^,]+,\s*['"]\[object Object\]['"]\)/i.test(gameJsContent)) {
+    issues.push('❌ Invalid storage serialization: Attempting to store "[object Object]" string in localStorage.');
+    totalErrors++;
+  }
+
+  // 3. Detect unhandled JSON.parse on localStorage without try/catch recovery (#495)
+  if (/JSON\.parse\s*\(\s*localStorage\.getItem/i.test(gameJsContent) && !gameJsContent.includes('try') && !gameJsContent.includes('catch')) {
+    issues.push('⚠️ Unprotected JSON.parse(localStorage.getItem(...)): Missing try/catch block for corrupted storage recovery (#495).');
+    totalWarnings++;
   }
 }
 
-// Aspect Ratio & Viewport Scaling Auditor (#501)
-function verifyCanvasResizeSafety(gameJsContent) {
-  if (gameJsContent.includes('window.addEventListener("resize"') && !gameJsContent.includes('debounce') && !gameJsContent.includes('ArcadeVerse')) {
-    // Audit for responsive resizing safety
+// Aspect Ratio & Viewport Scaling Auditor (#501, #919)
+function verifyCanvasResizeSafety(gameJsContent, issues) {
+  if (!gameJsContent) return;
+
+  if (
+    (gameJsContent.includes('addEventListener("resize"') || gameJsContent.includes("addEventListener('resize'")) &&
+    !gameJsContent.includes('debounce') &&
+    !gameJsContent.includes('ArcadeVerse') &&
+    !gameJsContent.includes('AV_RESIZE')
+  ) {
+    if (IS_STRICT) {
+      issues.push('⚠️ Window resize listener without debouncing or ArcadeVerse responsive aspect-ratio handling (#501).');
+      totalWarnings++;
+    }
+  }
+}
+
+// Strict 4-File Bundle Conformance Auditor (#919)
+function verifyStrictBundleConformance(gamePath, folder, issues) {
+  const ALLOWED_ENTRIES = new Set([
+    'index.html', 'style.css', 'game.js', 'game.json',
+    'assets', 'audio', 'images', 'sprites', 'sfx', 'sound', 'textures'
+  ]);
+
+  try {
+    const entries = fs.readdirSync(gamePath);
+    entries.forEach(entry => {
+      if (!ALLOWED_ENTRIES.has(entry) && !entry.startsWith('.')) {
+        issues.push(`❌ Strict 4-file bundle violation: Unauthorized file or directory "${entry}" found in games/${folder}. Games must contain only standard bundle files.`);
+        totalErrors++;
+      }
+    });
+  } catch (_) {}
+}
+
+// Lucide Icon Format & Injection Sanitizer (#491, #919)
+function verifyLucideIconIntegrity(iconName, issues) {
+  if (iconName === undefined || iconName === null) return;
+  if (typeof iconName !== 'string' || !iconName.trim()) {
+    issues.push('❌ Invalid lucideIcon: Field must be a non-empty string.');
+    totalErrors++;
+    return;
+  }
+  const trimmed = iconName.trim();
+  if (trimmed.includes('"') || trimmed.includes('<') || trimmed.includes('>') || trimmed.includes("'")) {
+    issues.push(`❌ Invalid lucideIcon: "${trimmed}" contains illegal quote or markup characters.`);
+    totalErrors++;
+    return;
+  }
+  if (!/^[a-z0-9-]+$/.test(trimmed)) {
+    issues.push(`❌ Invalid lucideIcon format: "${trimmed}". Expected kebab-case Lucide icon identifier (e.g. "gamepad-2").`);
+    totalErrors++;
   }
 }
 
@@ -266,7 +330,10 @@ function scanScriptSecurityViolations(jsContent, issues) {
   if (jsContent.includes('requestAnimationFrame') && !jsContent.includes('dt') && !jsContent.includes('deltaTime') && !jsContent.includes('FIXED_DT') && !jsContent.includes('accumulator')) {
     // Non-blocking advisory warning for linear per-frame increments
     if (/(x|y|pos|progress)\s*\+=\s*[0-9]+/i.test(jsContent)) {
-      // Advisory note in diagnostic audit
+      if (IS_STRICT) {
+        issues.push('⚠️ Advisory: Game loop may use framerate-dependent movement without delta time scaling (#560).');
+        totalWarnings++;
+      }
     }
   }
 }
@@ -424,8 +491,24 @@ const IS_STRICT = CLI_ARGS.includes('--strict-assets');
 const IS_STRICT_CDN = CLI_ARGS.includes('--strict-cdn');
 const IS_AUDIT_HUB = CLI_ARGS.includes('--audit-hub');
 const SUMMARY_JSON_PATH = (() => {
+  // Support --summary-json=<path>
+  const eqArg = CLI_ARGS.find(arg => arg.startsWith('--summary-json='));
+  if (eqArg) {
+    const val = eqArg.slice('--summary-json='.length).trim();
+    return val || 'summary.json';
+  }
+
+  // Support --summary-json [path]
   const idx = CLI_ARGS.indexOf('--summary-json');
-  return idx !== -1 && CLI_ARGS[idx + 1] ? CLI_ARGS[idx + 1] : null;
+  if (idx !== -1) {
+    const nextArg = CLI_ARGS[idx + 1];
+    if (nextArg && !nextArg.startsWith('--')) {
+      return nextArg.trim();
+    }
+    return 'summary.json';
+  }
+
+  return null;
 })();
 
 const auditTelemetry = {
@@ -460,6 +543,8 @@ if (IS_AUDIT_HUB) {
 }
 
 folders.forEach(folder => {
+  const prevErrors = totalErrors;
+  const prevWarnings = totalWarnings;
   const gamePath = path.join(GAMES_DIR, folder);
   const issues = [];
   const isGameTouched = isPrBranch && (
@@ -473,7 +558,7 @@ folders.forEach(folder => {
     totalWarnings++;
   }
 
-  // 2. Required Files Check
+  // 2. Required Files Check & Strict Bundle Conformance (#919)
   REQUIRED_FILES.forEach(file => {
     const filePath = path.join(gamePath, file);
     if (!fs.existsSync(filePath)) {
@@ -481,6 +566,7 @@ folders.forEach(folder => {
       totalErrors++;
     }
   });
+  verifyStrictBundleConformance(gamePath, folder, issues);
 
   // 3. game.json Schema & Field Verification
   const metaPath = path.join(gamePath, 'game.json');
@@ -502,6 +588,9 @@ folders.forEach(folder => {
           totalErrors++;
         }
       });
+
+      // Lucide Icon Format & Injection Sanitizer (#491, #919)
+      verifyLucideIconIntegrity(meta.lucideIcon, issues);
     } catch (err) {
       issues.push(`❌ game.json contains invalid JSON: ${err.message}`);
       totalErrors++;
@@ -532,6 +621,7 @@ folders.forEach(folder => {
       issues.push(`⚠️ index.html is missing a responsive viewport <meta> tag.`);
       totalWarnings++;
     }
+    auditHtmlEncodingStandards(htmlContent, issues);
     auditHtmlAssetIntegrity(gamePath, htmlContent, issues);
     scanExternalCdnAssets(gamePath, folder, 'index.html', htmlContent, issues, isGameTouched);
   }
@@ -550,6 +640,8 @@ folders.forEach(folder => {
     const jsContent = fs.readFileSync(jsPath, 'utf8');
     auditJsAssetIntegrity(gamePath, jsContent, issues);
     scanScriptSecurityViolations(jsContent, issues);
+    verifyStorageSerializationHealth(jsContent, issues);
+    verifyCanvasResizeSafety(jsContent, issues);
     scanExternalCdnAssets(gamePath, folder, 'game.js', jsContent, issues, isGameTouched);
   }
 
@@ -563,11 +655,50 @@ folders.forEach(folder => {
     console.log(`  ⚠️ [AUDIT] ${folder}`);
     issues.forEach(msg => console.log(`      ${msg}`));
   }
+
+  const gameErrors = totalErrors - prevErrors;
+  const gameWarnings = totalWarnings - prevWarnings;
+  const status = gameErrors > 0 ? 'FAIL' : (gameWarnings > 0 ? 'WARN' : 'PASS');
+
+  auditTelemetry.gameReports.push({
+    game: folder,
+    status: status,
+    errors: gameErrors,
+    warnings: gameWarnings,
+    issues: [...issues]
+  });
 });
 
 console.log('\n========================================================');
 console.log(`Audited ${folders.length} games: ${totalErrors} Errors, ${totalWarnings} Warnings`);
 console.log('========================================================\n');
+
+function writeSummaryJsonReport() {
+  if (!SUMMARY_JSON_PATH) return;
+
+  auditTelemetry.totalErrors = totalErrors;
+  auditTelemetry.totalWarnings = totalWarnings;
+  auditTelemetry.passed = auditTelemetry.gameReports.filter(r => r.status === 'PASS').length;
+  auditTelemetry.warned = auditTelemetry.gameReports.filter(r => r.status === 'WARN').length;
+  auditTelemetry.failed = auditTelemetry.gameReports.filter(r => r.status === 'FAIL').length;
+
+  const targetPath = path.isAbsolute(SUMMARY_JSON_PATH)
+    ? SUMMARY_JSON_PATH
+    : path.resolve(ROOT_DIR, SUMMARY_JSON_PATH);
+
+  try {
+    const parentDir = path.dirname(targetPath);
+    if (!fs.existsSync(parentDir)) {
+      fs.mkdirSync(parentDir, { recursive: true });
+    }
+    fs.writeFileSync(targetPath, JSON.stringify(auditTelemetry, null, 2), 'utf8');
+    console.log(`Summary report written to: ${path.relative(ROOT_DIR, targetPath) || targetPath}`);
+  } catch (err) {
+    console.error(`Failed to write summary JSON report to "${targetPath}": ${err.message}`);
+  }
+}
+
+writeSummaryJsonReport();
 
 if (totalErrors > 0) {
   console.error('❌ Validation failed! Please fix the errors listed above before submitting your PR.\n');
