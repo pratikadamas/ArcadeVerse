@@ -16,7 +16,9 @@
   } else if (typeof module === "object" && module.exports) {
     module.exports = factory();
   } else {
-    root.ArcadeVerse = factory();
+    var inst = factory();
+    root.ArcadeVerse = inst;
+    root.arcadeverse = inst; // Alias lowercase for developer convenience (#722)
   }
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
@@ -124,6 +126,73 @@
       } catch (_) {
         return false;
       }
+    },
+
+    // ========================================================
+    // CLIENT-SIDE ANTI-TAMPER CHECKSUM SIGNATURES (#576)
+    // HMAC/SHA-256 Checksum generation and verification for game scores
+    // ========================================================
+    /**
+     * Computes anti-tamper signature for a submitted score
+     * @param {string} gameId
+     * @param {number} score
+     * @param {number} timestamp
+     * @returns {Promise<string>} Hex signature
+     */
+    generateScoreSignature: function (gameId, score, timestamp) {
+      var payload = "av_salt_2026_" + String(gameId) + ":" + String(score) + ":" + String(timestamp);
+      if (typeof crypto !== 'undefined' && crypto.subtle && typeof TextEncoder !== 'undefined') {
+        var encoder = new TextEncoder();
+        var data = encoder.encode(payload);
+        return crypto.subtle.digest("SHA-256", data).then(function (buffer) {
+          var hashArray = Array.from(new Uint8Array(buffer));
+          return hashArray.map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+        }).catch(function () {
+          return "fallback_" + Math.abs(payload.split("").reduce(function (a, b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0)).toString(16);
+        });
+      }
+      var simpleHash = Math.abs(payload.split("").reduce(function (a, b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0)).toString(16);
+      return Promise.resolve("fallback_" + simpleHash);
+    },
+
+    /**
+     * Stores a validated high score with its tamper signature
+     */
+    saveSignedScore: function (gameId, score) {
+      var self = this;
+      var ts = Date.now();
+      return this.generateScoreSignature(gameId, score, ts).then(function (sig) {
+        var record = {
+          gameId: gameId,
+          score: Number(score),
+          timestamp: ts,
+          signature: sig
+        };
+        self.setJSON("signed_score", record);
+        self.setItem("highScore", String(score));
+        return record;
+      });
+    },
+
+    /**
+     * Verifies stored score against signature. Resets score to 0 if tampered.
+     */
+    verifySignedScore: function (gameId) {
+      var self = this;
+      var record = this.getJSON("signed_score", null);
+      if (!record || typeof record.score !== 'number' || !record.signature) {
+        return Promise.resolve({ valid: true, score: Number(self.getItem("highScore") || 0) });
+      }
+      return this.generateScoreSignature(gameId, record.score, record.timestamp).then(function (expectedSig) {
+        if (record.signature === expectedSig) {
+          return { valid: true, score: record.score };
+        } else {
+          console.warn("[AntiCheat] Tampering detected in score storage for " + gameId + "! Resetting score.");
+          self.setItem("highScore", "0");
+          self.removeItem("signed_score");
+          return { valid: false, score: 0 };
+        }
+      });
     },
 
     /**
@@ -245,6 +314,8 @@
   var resumeHandlers = [];
   var teardownHandlers = [];
   var audioConfigHandlers = [];
+  var speedChangeHandlers = [];
+  var currentGameSpeed = 1.0;
 
   // Cryptographic Session Handshake Subsystem (Issue #489)
   var sessionToken = null;
@@ -483,6 +554,26 @@
         executeHandlers(audioConfigHandlers, currentAudioConfig);
         break;
 
+      case "ARCADEVERSE_SET_SPEED":
+      case "AV_SET_GAME_SPEED":
+        var targetSpeed = 1.0;
+        if (data && typeof data.speedMultiplier === "number") {
+          targetSpeed = data.speedMultiplier;
+        } else if (data && typeof data.speed === "number") {
+          targetSpeed = data.speed;
+        }
+        targetSpeed = Math.max(0.25, Math.min(3.0, targetSpeed));
+        currentGameSpeed = targetSpeed;
+        executeHandlers(speedChangeHandlers, { speed: targetSpeed, speedMultiplier: targetSpeed });
+        try {
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("arcadeverse:speed-changed", {
+              detail: { speed: targetSpeed, speedMultiplier: targetSpeed }
+            }));
+          }
+        } catch (_) {}
+        break;
+
       default:
         break;
     }
@@ -586,15 +677,16 @@
         currentAudioConfig.muted = isMuted;
       } catch (_) {}
 
-      // Ping parent window for initial audio configuration
+      // Ping parent window for initial audio and speed configuration
       if (window.parent && window.parent !== window) {
         securePostToParent("ARCADEVERSE_REQUEST_AUDIO_CONFIG", {});
+        securePostToParent("ARCADEVERSE_REQUEST_SPEED_CONFIG", {});
 
         // Forward global keyboard shortcuts from inside game iframe to parent shell
         window.addEventListener("keydown", function (e) {
           var key = (e.key || "").toLowerCase();
-          // Escape (close modal), f (fullscreen), r (restart), m (mute), t (theme)
-          if (e.key === "Escape" || key === "f" || key === "r" || key === "m" || key === "t") {
+          // Escape (close modal), f (fullscreen), r (restart), m (mute), t (theme), [ / ] (speed)
+          if (e.key === "Escape" || key === "f" || key === "r" || key === "m" || key === "t" || e.key === "[" || e.key === "]") {
             // If typing in input/textarea inside game, skip
             var tag = (e.target && e.target.tagName ? e.target.tagName.toLowerCase() : "");
             if (tag === "input" || tag === "textarea" || (e.target && e.target.isContentEditable)) return;
@@ -658,6 +750,48 @@
         } catch (e) {}
       }
       return this;
+    },
+
+    /**
+     * Retrieves current simulation speed multiplier (e.g. 0.5, 1.0, 1.5)
+     * @returns {number}
+     */
+    getGameSpeed: function () {
+      return currentGameSpeed;
+    },
+
+    /**
+     * Registers a callback triggered when speed multiplier changes
+     * @param {Function} callback receives { speed: number, speedMultiplier: number }
+     */
+    onSpeedChange: function (callback) {
+      if (typeof callback === "function") {
+        speedChangeHandlers.push(callback);
+        try {
+          callback({ speed: currentGameSpeed, speedMultiplier: currentGameSpeed });
+        } catch (_) {}
+      }
+      return this;
+    },
+
+    /**
+     * Dedicated Time Dilation & Frame-Pacing Subsystem
+     */
+    time: {
+      getSpeed: function () {
+        return currentGameSpeed;
+      },
+      scaleDeltaTime: function (rawDt) {
+        return (typeof rawDt === "number" ? rawDt : 0.016) * currentGameSpeed;
+      },
+      onSpeedChange: function (callback) {
+        if (typeof callback === "function") {
+          speedChangeHandlers.push(callback);
+          try {
+            callback({ speed: currentGameSpeed, speedMultiplier: currentGameSpeed });
+          } catch (_) {}
+        }
+      }
     },
 
     /**
@@ -1314,6 +1448,371 @@
           recordedChunks = [];
         }
       };
+    },
+
+    // ========================================================
+    // POINTER LOCK API INTEGRATION SUBSYSTEM (#573)
+    // First-person & precision crosshair aiming with ESC release HUD
+    // ========================================================
+    /**
+     * Binds HTML5 Pointer Lock API to a game canvas.
+     * @param {HTMLCanvasElement} canvas - Target game canvas
+     * @param {Object} options - Configuration options
+     * @param {Function} options.onMove - Callback with (movementX, movementY, e)
+     * @param {Function} [options.onLockChange] - Callback with (isLocked)
+     * @param {number} [options.sensitivity=1.0] - Mouse sensitivity multiplier
+     * @returns {{ requestLock: Function, exitLock: Function, isLocked: Function }}
+     */
+    initPointerLock: function (canvas, options) {
+      if (!canvas) return null;
+      var opts = options || {};
+      var sensitivity = typeof opts.sensitivity === 'number' ? opts.sensitivity : 1.0;
+      var onMove = typeof opts.onMove === 'function' ? opts.onMove : function () {};
+      var onLockChange = typeof opts.onLockChange === 'function' ? opts.onLockChange : function () {};
+
+      // Create HUD pill if not already present
+      var hud = document.getElementById('av-pointer-lock-hud');
+      if (!hud) {
+        hud = document.createElement('div');
+        hud.id = 'av-pointer-lock-hud';
+        hud.setAttribute('role', 'status');
+        hud.setAttribute('aria-live', 'polite');
+        hud.innerHTML = '<span class="hud-dot"></span><span>Pointer Locked &mdash; Press <kbd>ESC</kbd> to Release</span>';
+        hud.style.cssText = 'position:fixed;top:1rem;left:50%;transform:translateX(-50%);background:rgba(15,23,42,0.92);border:1px solid #38bdf8;box-shadow:0 0 15px rgba(56,189,248,0.3);color:#f8fafc;padding:0.4rem 0.9rem;border-radius:20px;font-size:0.8rem;font-weight:600;display:none;align-items:center;gap:0.5rem;z-index:99999;pointer-events:none;transition:opacity 0.25s ease;';
+        document.body.appendChild(hud);
+      }
+
+      function handleMouseMove(e) {
+        if (document.pointerLockElement === canvas) {
+          var mx = (e.movementX || 0) * sensitivity;
+          var my = (e.movementY || 0) * sensitivity;
+          onMove(mx, my, e);
+        }
+      }
+
+      function handleLockChange() {
+        var locked = document.pointerLockElement === canvas;
+        if (hud) {
+          hud.style.display = locked ? 'flex' : 'none';
+        }
+        onLockChange(locked);
+      }
+
+      document.addEventListener('pointerlockchange', handleLockChange);
+      document.addEventListener('mousemove', handleMouseMove);
+
+      return {
+        requestLock: function () {
+          try {
+            if (canvas.requestPointerLock) {
+              canvas.requestPointerLock();
+            }
+          } catch (_) {}
+        },
+        exitLock: function () {
+          try {
+            if (document.exitPointerLock) {
+              document.exitPointerLock();
+            }
+          } catch (_) {}
+        },
+        isLocked: function () {
+          return document.pointerLockElement === canvas;
+        },
+        destroy: function () {
+          document.removeEventListener('pointerlockchange', handleLockChange);
+          document.removeEventListener('mousemove', handleMouseMove);
+          if (hud && hud.parentElement) {
+            hud.remove();
+          }
+        }
+      };
+    },
+
+    // ========================================================
+    // PROCEDURAL 2D CAMERA ZOOM & PAN CONTROLLER (#722)
+    // Smooth mouse-wheel scaling (0.5x - 2.0x), drag-to-pan,
+    // and accurate world-space coordinate projection.
+    // ========================================================
+    camera: {
+      /**
+       * Attaches smooth mouse-wheel zoom and drag-to-pan controller to a target canvas
+       * @param {HTMLCanvasElement} canvas - Target game canvas
+       * @param {Object} [options] - Configuration options
+       * @param {number} [options.minZoom=0.5] - Minimum zoom scale
+       * @param {number} [options.maxZoom=2.0] - Maximum zoom scale
+       * @param {number} [options.initialZoom=1.0] - Starting zoom scale
+       * @param {number} [options.zoomSpeed=0.1] - Mouse wheel zoom rate
+       * @param {boolean} [options.enablePan=true] - Enable drag/middle-click panning
+       * @param {number} [options.panButton=1] - Mouse button for panning (default 1 = middle mouse)
+       * @param {boolean} [options.allowDragPan=true] - Allow drag-to-pan via middle click or Alt/Shift+click
+       * @param {boolean} [options.showResetButton=true] - Display on-screen reset HUD
+       * @param {Function} [options.onChange] - Callback fired on camera state change
+       * @returns {Object|null} Camera controller instance
+       */
+      enableZoomPan: function (canvas, options) {
+        if (!canvas || typeof canvas.getContext !== 'function') return null;
+
+        options = options || {};
+        var minZoom = typeof options.minZoom === 'number' ? options.minZoom : 0.5;
+        var maxZoom = typeof options.maxZoom === 'number' ? options.maxZoom : 2.0;
+        var initialZoom = typeof options.initialZoom === 'number' ? options.initialZoom : 1.0;
+        var zoomSpeed = typeof options.zoomSpeed === 'number' ? options.zoomSpeed : 0.1;
+        var enablePan = options.enablePan !== false;
+        var panButton = typeof options.panButton === 'number' ? options.panButton : 1;
+        var allowDragPan = options.allowDragPan !== false;
+        var showResetButton = options.showResetButton !== false;
+        var onChange = typeof options.onChange === 'function' ? options.onChange : null;
+
+        var zoom = Math.min(maxZoom, Math.max(minZoom, initialZoom));
+        var panX = 0;
+        var panY = 0;
+        var isPanning = false;
+        var startMouseX = 0;
+        var startMouseY = 0;
+        var startPanX = 0;
+        var startPanY = 0;
+
+        function getCanvasScale() {
+          var rect = canvas.getBoundingClientRect();
+          var scaleX = rect.width ? canvas.width / rect.width : 1;
+          var scaleY = rect.height ? canvas.height / rect.height : 1;
+          return { rect: rect, scaleX: scaleX, scaleY: scaleY };
+        }
+
+        function screenToWorld(screenX, screenY) {
+          var x, y;
+          if (typeof screenX === 'object' && screenX !== null && 'clientX' in screenX) {
+            var s = getCanvasScale();
+            x = (screenX.clientX - s.rect.left) * s.scaleX;
+            y = (screenX.clientY - s.rect.top) * s.scaleY;
+          } else {
+            x = Number(screenX) || 0;
+            y = Number(screenY) || 0;
+          }
+          return {
+            x: (x - panX) / zoom,
+            y: (y - panY) / zoom
+          };
+        }
+
+        function worldToScreen(worldX, worldY) {
+          return {
+            x: (Number(worldX) || 0) * zoom + panX,
+            y: (Number(worldY) || 0) * zoom + panY
+          };
+        }
+
+        function notifyChange() {
+          updateHud();
+          if (onChange) {
+            try {
+              onChange({ zoom: zoom, panX: panX, panY: panY });
+            } catch (_) {}
+          }
+        }
+
+        function setZoom(newZoom, centerX, centerY) {
+          var clamped = Math.min(maxZoom, Math.max(minZoom, newZoom));
+          if (clamped === zoom && centerX === undefined) return;
+
+          var cx = centerX !== undefined ? centerX : canvas.width / 2;
+          var cy = centerY !== undefined ? centerY : canvas.height / 2;
+
+          var world = screenToWorld(cx, cy);
+          panX = cx - world.x * clamped;
+          panY = cy - world.y * clamped;
+          zoom = clamped;
+          notifyChange();
+        }
+
+        function setPan(x, y) {
+          panX = Number(x) || 0;
+          panY = Number(y) || 0;
+          notifyChange();
+        }
+
+        function reset() {
+          zoom = initialZoom;
+          panX = 0;
+          panY = 0;
+          notifyChange();
+        }
+
+        // Wheel handler for smooth zoom towards pointer (0.5x - 2.0x)
+        function handleWheel(e) {
+          e.preventDefault();
+          var s = getCanvasScale();
+          var mouseX = (e.clientX - s.rect.left) * s.scaleX;
+          var mouseY = (e.clientY - s.rect.top) * s.scaleY;
+
+          var delta = -Math.sign(e.deltaY) * zoomSpeed;
+          var targetZoom = zoom * (1 + delta);
+          setZoom(targetZoom, mouseX, mouseY);
+        }
+
+        // Pointer/Mouse pan handlers
+        function handleMouseDown(e) {
+          if (!enablePan) return;
+          var isMiddle = e.button === panButton;
+          var isAltDrag = allowDragPan && (e.button === 0 && (e.altKey || e.shiftKey));
+          if (isMiddle || isAltDrag) {
+            isPanning = true;
+            startMouseX = e.clientX;
+            startMouseY = e.clientY;
+            startPanX = panX;
+            startPanY = panY;
+            canvas.style.cursor = 'grabbing';
+            e.preventDefault();
+          }
+        }
+
+        function handleMouseMove(e) {
+          // Decorate event with world coordinates for accurate click projection
+          var coords = screenToWorld(e);
+          e.worldX = coords.x;
+          e.worldY = coords.y;
+
+          if (isPanning) {
+            var s = getCanvasScale();
+            var dx = (e.clientX - startMouseX) * s.scaleX;
+            var dy = (e.clientY - startMouseY) * s.scaleY;
+            panX = startPanX + dx;
+            panY = startPanY + dy;
+            notifyChange();
+            e.preventDefault();
+          }
+        }
+
+        function handleMouseUp(e) {
+          if (isPanning) {
+            isPanning = false;
+            canvas.style.cursor = '';
+          }
+        }
+
+        canvas.addEventListener('wheel', handleWheel, { passive: false });
+        canvas.addEventListener('mousedown', handleMouseDown);
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+
+        // On-screen Zoom Reset HUD
+        var hud = null;
+        var zoomValText = null;
+        var resetBtn = null;
+
+        if (showResetButton) {
+          hud = document.createElement('div');
+          hud.className = 'av-camera-zoom-hud';
+          hud.setAttribute('role', 'toolbar');
+          hud.setAttribute('aria-label', 'Camera Zoom Controls');
+          hud.style.cssText = 'position:absolute;top:10px;right:10px;display:flex;align-items:center;gap:4px;background:rgba(15,23,42,0.85);backdrop-filter:blur(6px);border:1px solid rgba(56,189,248,0.35);border-radius:6px;padding:3px 6px;font-family:monospace,sans-serif;font-size:12px;color:#f8fafc;z-index:9999;user-select:none;box-shadow:0 2px 8px rgba(0,0,0,0.4);';
+
+          var zoomOutBtn = document.createElement('button');
+          zoomOutBtn.type = 'button';
+          zoomOutBtn.textContent = '-';
+          zoomOutBtn.setAttribute('aria-label', 'Zoom Out');
+          zoomOutBtn.style.cssText = 'background:#1e293b;border:1px solid #334155;color:#e2e8f0;width:20px;height:20px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;padding:0;line-height:1;';
+          zoomOutBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            setZoom(zoom - 0.1);
+          });
+
+          zoomValText = document.createElement('span');
+          zoomValText.style.cssText = 'min-width:38px;text-align:center;font-weight:600;color:#38bdf8;';
+          zoomValText.textContent = '100%';
+
+          var zoomInBtn = document.createElement('button');
+          zoomInBtn.type = 'button';
+          zoomInBtn.textContent = '+';
+          zoomInBtn.setAttribute('aria-label', 'Zoom In');
+          zoomInBtn.style.cssText = 'background:#1e293b;border:1px solid #334155;color:#e2e8f0;width:20px;height:20px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;padding:0;line-height:1;';
+          zoomInBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            setZoom(zoom + 0.1);
+          });
+
+          resetBtn = document.createElement('button');
+          resetBtn.type = 'button';
+          resetBtn.textContent = 'Reset';
+          resetBtn.setAttribute('aria-label', 'Reset Zoom and Pan (1:1)');
+          resetBtn.style.cssText = 'background:#0f172a;border:1px solid #38bdf8;color:#38bdf8;height:20px;padding:0 6px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:bold;margin-left:2px;';
+          resetBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            reset();
+          });
+
+          hud.appendChild(zoomOutBtn);
+          hud.appendChild(zoomValText);
+          hud.appendChild(zoomInBtn);
+          hud.appendChild(resetBtn);
+
+          if (canvas.parentElement) {
+            var parentPos = window.getComputedStyle ? window.getComputedStyle(canvas.parentElement).position : '';
+            if (parentPos === 'static') {
+              canvas.parentElement.style.position = 'relative';
+            }
+            canvas.parentElement.appendChild(hud);
+          } else {
+            document.body.appendChild(hud);
+          }
+        }
+
+        function updateHud() {
+          if (!hud) return;
+          if (zoomValText) {
+            zoomValText.textContent = Math.round(zoom * 100) + '%';
+          }
+          if (resetBtn) {
+            var isDefault = Math.abs(zoom - initialZoom) < 0.001 && Math.abs(panX) < 0.001 && Math.abs(panY) < 0.001;
+            resetBtn.style.opacity = isDefault ? '0.6' : '1.0';
+          }
+        }
+
+        updateHud();
+
+        return {
+          screenToWorld: screenToWorld,
+          worldToScreen: worldToScreen,
+          getPointer: screenToWorld,
+          apply: function (ctx) {
+            if (!ctx) return;
+            ctx.save();
+            ctx.translate(panX, panY);
+            ctx.scale(zoom, zoom);
+          },
+          restore: function (ctx) {
+            if (!ctx) return;
+            ctx.restore();
+          },
+          reset: reset,
+          getZoom: function () { return zoom; },
+          setZoom: setZoom,
+          getPan: function () { return { x: panX, y: panY }; },
+          setPan: setPan,
+          panBy: function (dx, dy) {
+            panX += Number(dx) || 0;
+            panY += Number(dy) || 0;
+            notifyChange();
+          },
+          destroy: function () {
+            canvas.removeEventListener('wheel', handleWheel);
+            canvas.removeEventListener('mousedown', handleMouseDown);
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+            if (hud && hud.parentElement) {
+              hud.remove();
+            }
+          }
+        };
+      }
+    },
+
+    /**
+     * Top-level alias for camera.enableZoomPan (#722)
+     */
+    enableZoomPan: function (canvas, options) {
+      return this.camera.enableZoomPan(canvas, options);
     }
   };
 });
