@@ -1,7 +1,15 @@
 {
   "title": "Chrono-Shift: Temporal Paradox",
-  "category": "Puzzle / Platformer",
+  "category": "Puzzle",
+  "lucideIcon": "clock",
   "description": "Manipulate time buffers and cooperate with holographic past-self echoes to solve paradoxical chamber puzzles.",
   "author": "Babin Bid",
-  "github": "Babin123456"
+  "github": "Babin123456",
+  "tags": [
+    "Puzzle",
+    "Platformer",
+    "TimeManipulation",
+    "Retro",
+    "NSOC26"
+  ]
 }
