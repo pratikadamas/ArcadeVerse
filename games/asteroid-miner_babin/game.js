@@ -27,7 +27,7 @@
 
   // Web Audio Synth
   let audioCtx = null;
-  function playSound(type) {
+  function playSound(type, emitterX) {
     try {
       if (!audioCtx) {
         const AudioClass = window.AudioContext || window.webkitAudioContext;
@@ -38,8 +38,33 @@
 
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
+
+      // HRTF 3D Spatial Audio Panning (#569)
+      let panner = null;
+      if (typeof emitterX === 'number' && audioCtx.createPanner) {
+        try {
+          panner = audioCtx.createPanner();
+          panner.panningModel = 'HRTF';
+          panner.distanceModel = 'inverse';
+          const relX = (emitterX - (canvas.width / 2)) / (canvas.width / 2);
+          if (panner.positionX) {
+            panner.positionX.setValueAtTime(relX, audioCtx.currentTime);
+            panner.positionY.setValueAtTime(0, audioCtx.currentTime);
+            panner.positionZ.setValueAtTime(-0.5, audioCtx.currentTime);
+          } else if (typeof panner.setPosition === 'function') {
+            panner.setPosition(relX, 0, -0.5);
+          }
+          osc.connect(gain);
+          gain.connect(panner);
+          panner.connect(audioCtx.destination);
+        } catch (_) {
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+        }
+      } else {
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+      }
 
       if (type === 'laser') {
         osc.type = 'sawtooth';
@@ -240,7 +265,7 @@
         if (Math.hypot(laser.x - ast.x, laser.y - ast.y) < ast.radius) {
           ast.ore -= 5;
           score += 15;
-          playSound('mine');
+          playSound('mine', ast.x);
           lasers.splice(l, 1);
 
           for (let p = 0; p < 5; p++) {

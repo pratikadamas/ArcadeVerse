@@ -20,8 +20,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchInput = document.getElementById("leaderboard-search-input");
   const exportCsvBtn = document.getElementById("export-csv-btn");
   const exportJsonBtn = document.getElementById("export-json-btn");
+  let exportMarkdownBtn = document.getElementById("export-markdown-btn");
   let tableSearchQuery = "";
   let searchDebounceTimer = null;
+  let currentTierFilter = "all";
 
   // Standings Table Pagination & Page Size State
   const paginationBar = document.getElementById("leaderboard-pagination-bar");
@@ -141,6 +143,75 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Contributor Milestone Tier Filter Pills Engine (#691)
+  function matchesTier(item, tier) {
+    const games = item.gamesCount || 0;
+    switch (tier) {
+      case "explorers":
+        return games >= 1 && games <= 3;
+      case "developers":
+        return games >= 4 && games <= 7;
+      case "hyper":
+        return games >= 8 && games <= 14;
+      case "architects":
+        return games >= 15;
+      case "all":
+      default:
+        return true;
+    }
+  }
+
+  function updateTierPillCounts() {
+    const allContribs = getCommunityContributors();
+    const counts = {
+      all: allContribs.length,
+      explorers: 0,
+      developers: 0,
+      hyper: 0,
+      architects: 0
+    };
+
+    allContribs.forEach(item => {
+      const games = item.gamesCount || 0;
+      if (games >= 15) {
+        counts.architects++;
+      } else if (games >= 8) {
+        counts.hyper++;
+      } else if (games >= 4) {
+        counts.developers++;
+      } else if (games >= 1) {
+        counts.explorers++;
+      }
+    });
+
+    for (const [tier, count] of Object.entries(counts)) {
+      const el = document.getElementById(`tier-count-${tier}`);
+      if (el) {
+        el.textContent = String(count);
+      }
+    }
+  }
+
+  const tierPillButtons = document.querySelectorAll(".tier-pill-btn");
+  if (tierPillButtons.length > 0) {
+    tierPillButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const selectedTier = btn.dataset.tier || "all";
+        if (currentTierFilter === selectedTier) return;
+        currentTierFilter = selectedTier;
+        currentPage = 1;
+
+        tierPillButtons.forEach(b => {
+          const isActive = (b.dataset.tier || "all") === selectedTier;
+          b.classList.toggle("active", isActive);
+          b.setAttribute("aria-selected", isActive ? "true" : "false");
+        });
+
+        renderTable();
+      });
+    });
+  }
+
   function getPageNumbers(current, total) {
     if (total <= 7) {
       return Array.from({ length: total }, (_, i) => i + 1);
@@ -175,6 +246,34 @@ document.addEventListener("DOMContentLoaded", () => {
   if (exportJsonBtn) {
     exportJsonBtn.addEventListener("click", () => {
       exportStandingsJson();
+    });
+  }
+
+  // Dynamic Mount for Export Markdown Button (#692)
+  if (!exportMarkdownBtn) {
+    const toolsContainer = document.querySelector(".table-header-tools");
+    if (toolsContainer) {
+      exportMarkdownBtn = document.createElement("button");
+      exportMarkdownBtn.type = "button";
+      exportMarkdownBtn.className = "btn btn-secondary btn-sm btn-export-csv btn-export-markdown";
+      exportMarkdownBtn.id = "export-markdown-btn";
+      exportMarkdownBtn.title = "Export filtered leaderboard standings as GitHub Flavored Markdown table";
+      exportMarkdownBtn.innerHTML = `<i data-lucide="file-text"></i> <span>Export Markdown</span>`;
+
+      if (exportJsonBtn && exportJsonBtn.nextSibling) {
+        toolsContainer.insertBefore(exportMarkdownBtn, exportJsonBtn.nextSibling);
+      } else {
+        toolsContainer.appendChild(exportMarkdownBtn);
+      }
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+    }
+  }
+
+  if (exportMarkdownBtn) {
+    exportMarkdownBtn.addEventListener("click", () => {
+      exportStandingsMarkdown();
     });
   }
 
@@ -767,6 +866,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderTable() {
     if (!tableBody) return;
     tableBody.innerHTML = "";
+    updateTierPillCounts();
+
     const allCommunityContributors = getCommunityContributors().map((item, idx) => {
       return {
         ...item,
@@ -775,6 +876,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const communityContributors = allCommunityContributors.filter(item => {
+      if (!matchesTier(item, currentTierFilter)) return false;
       if (!tableSearchQuery) return true;
       const q = tableSearchQuery;
       const nameMatch = (item.name || "").toLowerCase().includes(q);
@@ -790,14 +892,22 @@ document.addEventListener("DOMContentLoaded", () => {
     if (totalItems === 0) {
       if (paginationBar) paginationBar.style.display = "none";
       const emptyTr = document.createElement("tr");
-      if (tableSearchQuery && allCommunityContributors.length > 0) {
+      if ((tableSearchQuery || currentTierFilter !== "all") && allCommunityContributors.length > 0) {
+        let emptyMsg = `No contributors found`;
+        if (currentTierFilter !== "all" && tableSearchQuery) {
+          emptyMsg = `No contributors in the selected tier matching "<strong>${escapeHTML(tableSearchQuery)}</strong>"`;
+        } else if (currentTierFilter !== "all") {
+          emptyMsg = `No contributors currently in this milestone tier`;
+        } else {
+          emptyMsg = `No contributors found matching "<strong>${escapeHTML(tableSearchQuery)}</strong>"`;
+        }
         emptyTr.innerHTML = `
           <td colspan="9" style="text-align: center; padding: 2.2rem; color: var(--text-muted);">
             <div style="font-size: 1.05rem; margin-bottom: 0.5rem; color: var(--text-secondary);">
-              No contributors found matching "<strong>${tableSearchQuery}</strong>"
+              ${emptyMsg}
             </div>
             <button type="button" class="btn btn-secondary btn-sm" id="reset-table-search-btn">
-              <span><i data-lucide="rotate-ccw"></i> Clear Filter</span>
+              <span><i data-lucide="rotate-ccw"></i> Clear Filters</span>
             </button>
           </td>
         `;
@@ -806,8 +916,14 @@ document.addEventListener("DOMContentLoaded", () => {
         if (resetBtn) {
           resetBtn.addEventListener("click", () => {
             tableSearchQuery = "";
+            currentTierFilter = "all";
             currentPage = 1;
             if (searchInput) searchInput.value = "";
+            tierPillButtons.forEach(b => {
+              const isAll = (b.dataset.tier || "all") === "all";
+              b.classList.toggle("active", isAll);
+              b.setAttribute("aria-selected", isAll ? "true" : "false");
+            });
             renderTable();
           });
         }
@@ -1223,17 +1339,32 @@ document.addEventListener("DOMContentLoaded", () => {
     return repoInput ? repoInput.value.trim() : "DebasmitaBose0/ArcadeVerse";
   }
 
-  // The rows both exports are built from, so the CSV and the JSON always list the same people
-  // in the same order as the Community Contributors table.
-  function getStandingsRows() {
-    return getCommunityContributors().map((item, idx) => ({
+  // The rows exports are built from, respecting current search/filter state when requested
+  function getStandingsRows(onlyFiltered = false) {
+    const all = getCommunityContributors().map((item, idx) => ({
+      ...item,
       rank: idx + 1,
       name: item.name || "",
       login: item.login || "",
+      role: item.role || "",
       games: item.gamesCount || 0,
       commits: item.commits || 0,
       score: calculateScore(item),
     }));
+
+    if (!onlyFiltered || !tableSearchQuery) {
+      return all;
+    }
+
+    const q = tableSearchQuery.toLowerCase().trim();
+    return all.filter(item => {
+      const nameMatch = (item.name || "").toLowerCase().includes(q);
+      const loginMatch = (item.login || "").toLowerCase().includes(q);
+      const roleMatch = (item.role || "").toLowerCase().includes(q);
+      const badges = getContributorBadges(item);
+      const badgeMatch = badges.some(b => (b.label || "").toLowerCase().includes(q));
+      return nameMatch || loginMatch || roleMatch || badgeMatch;
+    });
   }
 
   function downloadTextFile(content, mimeType, filename) {
@@ -1260,7 +1391,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function exportStandingsCsv() {
-    const list = getStandingsRows();
+    const list = getStandingsRows(true);
     if (list.length === 0) return;
 
     const headers = ["Rank", "Contributor", "GitHub Handle", "Verified Games", "Commits", "Arcade Score"].map(escapeCsvCell);
@@ -1280,7 +1411,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function exportStandingsJson() {
-    const list = getStandingsRows();
+    const list = getStandingsRows(true);
     if (list.length === 0) return;
 
     const standings = list.map((row) => ({
@@ -1293,6 +1424,90 @@ document.addEventListener("DOMContentLoaded", () => {
     }));
 
     downloadTextFile(JSON.stringify(standings, null, 2), "application/json;charset=utf-8;", "ArcadeVerse_Leaderboard_NSOC2026.json");
+  }
+
+  // Escape special markdown characters inside table cells
+  function escapeMarkdownCell(val) {
+    if (val === null || val === undefined) return "";
+    return String(val)
+      .replace(/\|/g, "\\|")
+      .replace(/\[/g, "\\[")
+      .replace(/\]/g, "\\]")
+      .replace(/\r?\n|\r/g, " ")
+      .trim();
+  }
+
+  // Cross-browser clipboard copy with fallback
+  function copyTextToClipboard(text, onSuccess, onError) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(onSuccess).catch(() => {
+        fallbackCopyText(text, onSuccess, onError);
+      });
+    } else {
+      fallbackCopyText(text, onSuccess, onError);
+    }
+  }
+
+  function fallbackCopyText(text, onSuccess, onError) {
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.top = "-9999px";
+      textarea.style.left = "-9999px";
+      textarea.setAttribute("readonly", "");
+      document.body.appendChild(textarea);
+      textarea.select();
+      textarea.setSelectionRange(0, 99999);
+      const successful = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      if (successful) {
+        if (onSuccess) onSuccess();
+      } else {
+        if (onError) onError(new Error("execCommand copy returned false"));
+      }
+    } catch (err) {
+      if (onError) onError(err);
+    }
+  }
+
+  // Export Filtered Contributor Standings as Formatted GitHub Markdown Table (#692)
+  function exportStandingsMarkdown() {
+    const list = getStandingsRows(true);
+    if (!list || list.length === 0) {
+      showLeaderboardToast("No contributors to export!");
+      return;
+    }
+
+    const header = "| Rank | Contributor | Games | Commits | Points |";
+    const separator = "| :---: | :--- | :---: | :---: | :---: |";
+
+    const rows = list.map((row) => {
+      let contributorStr;
+      const cleanName = escapeMarkdownCell(row.name);
+      const cleanLogin = escapeMarkdownCell(row.login);
+
+      if (cleanLogin) {
+        if (cleanName && cleanName.toLowerCase() !== cleanLogin.toLowerCase()) {
+          contributorStr = `[${cleanName}](https://github.com/${cleanLogin}) (@${cleanLogin})`;
+        } else {
+          contributorStr = `[@${cleanLogin}](https://github.com/${cleanLogin})`;
+        }
+      } else {
+        contributorStr = cleanName || "Anonymous";
+      }
+
+      return `| ${row.rank} | ${contributorStr} | ${row.games} | ${row.commits} | ${row.score} |`;
+    });
+
+    const markdownTable = [header, separator, ...rows].join("\n");
+
+    copyTextToClipboard(markdownTable, () => {
+      showLeaderboardToast("Standings table copied to clipboard!");
+    }, () => {
+      downloadTextFile(markdownTable, "text/markdown;charset=utf-8;", "ArcadeVerse_Leaderboard_NSOC2026.md");
+      showLeaderboardToast("Standings table copied to clipboard!");
+    });
   }
 
   if (fetchBtn) {
@@ -1808,4 +2023,14 @@ document.addEventListener("DOMContentLoaded", () => {
   renderPodium();
   renderTable();
   fetchLiveGitHubContributions(activeRepo, false);
+
+  // App Badging API clear on viewing leaderboard & trophy certificates (#557)
+  if (typeof navigator !== 'undefined' && 'clearAppBadge' in navigator) {
+    navigator.clearAppBadge().catch(() => {});
+  }
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    localStorage.setItem('av_daily_streak_date', today);
+    localStorage.setItem('av_unclaimed_streak_count', '0');
+  } catch (_) {}
 });

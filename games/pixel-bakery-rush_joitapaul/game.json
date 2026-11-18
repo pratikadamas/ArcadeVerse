@@ -1,0 +1,11 @@
+{
+  "title": "Pixel Bakery Rush",
+  "category": "Arcade",
+  "lucideIcon": "gamepad-2",
+  "description": "Fill increasingly complex bakery orders before customer patience and the shift timer run out.",
+  "author": "Joita Paul",
+  "github": "joitapaul",
+  "role": "Arcade Developer",
+  "tags": ["Arcade", "Time Management", "NSOC26"],
+  "featured": false
+}
