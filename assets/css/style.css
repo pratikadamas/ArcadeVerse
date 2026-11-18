@@ -3157,6 +3157,14 @@ body.modal-pseudo-fullscreen-active #game-frame {
   transform: translateY(-1px);
 }
 
+.modal-controls .btn-icon:focus-visible,
+.modal-controls .btn-close:focus-visible,
+.modal-controls a.btn-icon:focus-visible {
+  outline: 2px solid var(--accent-primary, #00f0ff);
+  outline-offset: 2px;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.45);
+}
+
 #modal-fav-btn.favorited {
   color: #f43f5e;
   border-color: rgba(244, 63, 94, 0.5);
@@ -9026,9 +9034,16 @@ html.light-mode .trophy-modal-title {
 
 /* Keyboard Accessibility Focus Indicators */
 .modal-controls .btn-icon:focus-visible,
-.modal-controls .btn-close:focus-visible {
-  outline: 2px solid var(--accent-primary) !important;
+.modal-controls .btn-close:focus-visible,
+.modal-controls a.btn-icon:focus-visible {
+  outline: 2px solid var(--accent-primary, #00f0ff) !important;
   outline-offset: 2px;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.45);
+}
+
+.modal-frame-wrapper iframe:focus-visible {
+  outline: 2px solid var(--accent-primary, #00f0ff) !important;
+  outline-offset: -2px;
 }
 
 /* Screen Orientation Transitions for Modal Frame */
@@ -11552,23 +11567,201 @@ html.a11y-reduced-motion .search-clear-btn {
   transform: scale(1.2);
 }
 
+/* ========================================================
+   PIXEL-ART CRISPNESS & IMAGE-RENDERING ENFORCER (#561)
+   Prevents bilinear blur across High-DPI and scaled retro canvases
+   ======================================================== */
+canvas.pixel-art,
+#game-canvas.pixel-art,
+.pixel-crisp canvas,
+.pixelated-render canvas,
+.pixelated-render #game-canvas {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Visual preference toggle support for modal iframe containers */
+.modal-frame-wrapper.pixel-art-mode iframe {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: pixelated;
+}
+
+
+.modal-colorblind-select:focus {
+  border-color: #06b6d4;
+  box-shadow: 0 0 6px rgba(6, 182, 212, 0.4);
+}
+
+
+.crt-screen-overlay.active {
+  display: block;
+}
+
+/* Fine horizontal scanlines */
+.crt-screen-overlay::before {
+  content: " ";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.35) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.04),
+    rgba(0, 255, 0, 0.02),
+    rgba(0, 0, 255, 0.04)
+  );
+  background-size: 100% 3px, 6px 100%;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.85;
+}
+
+/* Subtle radial vignette & curved bezel glow */
+.crt-screen-overlay::after {
+  content: " ";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    transparent 55%,
+    rgba(0, 0, 0, 0.45) 85%,
+    rgba(0, 0, 0, 0.85) 100%
+  );
+  box-shadow: inset 0 0 40px rgba(0, 240, 255, 0.15);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.btn-crt-toggle.active {
+  color: #00f0ff !important;
+  background: rgba(0, 240, 255, 0.15) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}
+
+
+/* Screen reader only utility, used by the #a11y-live-region announcer */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
 /* ===================================================
-   CARD MICRO-PREVIEW ANIMATED CANVAS BANNER (#588)
+   IN-BROWSER DEV MANIFEST VALIDATOR WIDGET (#704)
    =================================================== */
 
-.card-micro-preview-canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: 1;
+#dev-validator-badge {
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  z-index: 999999;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  color: #f8fafc;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 10px rgba(56, 189, 248, 0.2);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.25s ease;
+  max-width: 320px;
 }
 
-.game-card-preview {
-  position: relative;
-  overflow: hidden;
+#dev-validator-badge.pass {
+  border-color: rgba(34, 197, 94, 0.5);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 10px rgba(34, 197, 94, 0.25);
 }
+
+#dev-validator-badge.fail {
+  border-color: rgba(239, 68, 68, 0.6);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 12px rgba(239, 68, 68, 0.35);
+  animation: devBadgePulse 2s infinite ease-in-out;
+}
+
+#dev-validator-badge.warn {
+  border-color: rgba(245, 158, 11, 0.6);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 10px rgba(245, 158, 11, 0.3);
+}
+
+@keyframes devBadgePulse {
+  0%, 100% {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 8px rgba(239, 68, 68, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 16px rgba(239, 68, 68, 0.6);
+  }
+}
+
+.dev-validator-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+}
+
+.dev-validator-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #38bdf8;
+}
+
+#dev-validator-badge.pass .dev-validator-dot {
+  background: #22c55e;
+  box-shadow: 0 0 6px #22c55e;
+}
+
+#dev-validator-badge.fail .dev-validator-dot {
+  background: #ef4444;
+  box-shadow: 0 0 6px #ef4444;
+}
+
+#dev-validator-badge.warn .dev-validator-dot {
+  background: #f59e0b;
+  box-shadow: 0 0 6px #f59e0b;
+}
+
+.dev-validator-details {
+  display: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 10px;
+  font-size: 10px;
+  max-height: 180px;
+  overflow-y: auto;
+  line-height: 1.4;
+}
+
+#dev-validator-badge.expanded .dev-validator-details {
+  display: block;
+}
+
+.dev-validator-item {
+  margin-bottom: 4px;
+}
+
+.dev-validator-item.error {
+  color: #f87171;
+}
+
+.dev-validator-item.warn {
+  color: #fbbf24;
+}
+
+.dev-validator-item.pass {
+  color: #4ade80;
+}
+

@@ -1,0 +1,12 @@
+{
+  "title": "Tidal Tunnels",
+  "category": "Arcade",
+  "lucideIcon": "waves",
+  "difficulty": "Intermediate",
+  "description": "Guide a diver through a scrolling reef, collect air bubbles, and avoid moving mines before oxygen runs out.",
+  "author": "Joita Paul",
+  "github": "joitapaul",
+  "role": "Arcade Developer",
+  "tags": ["Arcade", "Action", "Underwater", "NSOC26"],
+  "featured": false
+}

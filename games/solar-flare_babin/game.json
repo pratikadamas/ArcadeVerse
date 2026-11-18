@@ -1,6 +1,7 @@
 {
   "title": "Solar Flare: Stellar Shield Defense",
   "category": "Arcade",
+  "lucideIcon": "sun",
   "description": "Rotate a high-energy magnetic arc shield around a pulsating stellar core to deflect hyper-velocity coronal mass ejections.",
   "author": "Babin Bid",
   "github": "Babin123456",
