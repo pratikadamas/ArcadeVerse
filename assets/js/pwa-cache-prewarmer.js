@@ -420,6 +420,9 @@
       return;
     }
     if (gameQueue.length) scheduleIdle(() => runNext());
+    else if (totalGames > 0 && completedGames >= totalGames) {
+      setStatus('All prioritized games are ready for offline play.');
+    }
   }
 
   window.addEventListener('arcadeverse:game-launched', () => {
