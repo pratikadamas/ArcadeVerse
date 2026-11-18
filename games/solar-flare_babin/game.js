@@ -149,15 +149,24 @@
       spawnFlare();
     }
 
-    // Move flares toward core
+    // Move flares toward core with terminal velocity cap and boundary safeguards (#669)
+    const MAX_VELOCITY = 18.0;
+
     for (let i = flares.length - 1; i >= 0; i--) {
       const fl = flares[i];
       const dx = core.x - fl.x;
       const dy = core.y - fl.y;
-      const dist = Math.hypot(dx, dy);
+      // Safeguard against zero-distance division in gravitational inverse-square math
+      const dist = Math.max(Math.hypot(dx, dy), 10);
 
-      fl.x += (dx / dist) * fl.speed;
-      fl.y += (dy / dist) * fl.speed;
+      // Capped velocity application
+      const currentSpeed = Math.min(fl.speed, MAX_VELOCITY);
+      fl.x += (dx / dist) * currentSpeed;
+      fl.y += (dy / dist) * currentSpeed;
+
+      // Rebound / boundary clamping to prevent warp out of bounds
+      fl.x = Math.max(0, Math.min(800, fl.x));
+      fl.y = Math.max(0, Math.min(600, fl.y));
 
       // Check Shield Collision
       if (Math.abs(dist - shield.radius) < fl.radius + 6) {
