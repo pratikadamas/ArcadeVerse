@@ -2878,3 +2878,90 @@ body.author-drawer-open {
   }
 }
 
+html.a11y-reduced-motion {
+  scroll-behavior: auto !important;
+}
+
+html.a11y-reduced-motion .docs-content-pane,
+html.a11y-reduced-motion .docs-sidebar,
+html.a11y-reduced-motion .faq-accordion-content,
+html.a11y-reduced-motion .leaderboard-table-container {
+  scroll-behavior: auto !important;
+}
+
+html.a11y-reduced-motion .faq-search-input,
+html.a11y-reduced-motion .faq-pill,
+html.a11y-reduced-motion .faq-pill:hover,
+html.a11y-reduced-motion .faq-accordion-item,
+html.a11y-reduced-motion .faq-accordion-item:hover,
+html.a11y-reduced-motion .faq-chevron,
+html.a11y-reduced-motion .faq-accordion-item.open .faq-chevron,
+html.a11y-reduced-motion .faq-accordion-content,
+html.a11y-reduced-motion .faq-accordion-inner,
+html.a11y-reduced-motion .podium-card,
+html.a11y-reduced-motion .podium-card:hover,
+html.a11y-reduced-motion .leaderboard-row,
+html.a11y-reduced-motion .leaderboard-row:hover,
+html.a11y-reduced-motion .docs-nav-link,
+html.a11y-reduced-motion .docs-nav-link:hover,
+html.a11y-reduced-motion .docs-heading-anchor,
+html.a11y-reduced-motion .docs-section-title:hover .docs-heading-anchor,
+html.a11y-reduced-motion .docs-feature-card,
+html.a11y-reduced-motion .docs-feature-card:hover,
+html.a11y-reduced-motion .docs-card-icon,
+html.a11y-reduced-motion .docs-card-icon:hover,
+html.a11y-reduced-motion .docs-sidebar-search input,
+html.a11y-reduced-motion .btn-copy-code,
+html.a11y-reduced-motion .btn-copy-code:hover,
+html.a11y-reduced-motion .pagination-btn,
+html.a11y-reduced-motion .pagination-btn:hover,
+html.a11y-reduced-motion .pagination-page-btn,
+html.a11y-reduced-motion .pagination-page-btn:hover,
+html.a11y-reduced-motion .page-size-select,
+html.a11y-reduced-motion .admin-spotlight-card,
+html.a11y-reduced-motion .stat-card {
+  transition: none !important;
+  transform: none !important;
+}
+
+/* ===================================================
+   EXPORT MARKDOWN STANDINGS BUTTON (#692)
+   =================================================== */
+
+.btn-export-markdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  white-space: nowrap;
+  border-color: rgba(56, 189, 248, 0.4);
+  color: var(--text-secondary, #cbd5e1);
+  transition: all 0.2s ease;
+}
+
+.btn-export-markdown:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38bdf8;
+  color: #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-export-markdown:active {
+  transform: translateY(0);
+}
+
+.btn-export-markdown:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: 2px;
+}
+
+html.a11y-reduced-motion .btn-export-markdown,
+html.a11y-reduced-motion .btn-export-markdown:hover {
+  transition: none !important;
+  transform: none !important;
+}
