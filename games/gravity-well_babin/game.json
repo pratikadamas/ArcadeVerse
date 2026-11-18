@@ -1,6 +1,7 @@
 {
   "title": "Gravity Well: Singularity Slingshot",
-  "category": "Puzzle / Physics",
+  "category": "Puzzle",
+  "lucideIcon": "compass",
   "description": "Slingshot cosmic research probes through multi-body gravitational fields, sling around black hole accretion disks, and collect quantum beacons.",
   "author": "Babin Bid",
   "github": "Babin123456",
@@ -10,7 +11,8 @@
     "arcade",
     "retro",
     "html5-canvas",
-    "nsoc26"
+    "nsoc26",
+    "Physics"
   ],
   "difficulty": "Medium",
   "featured": true,

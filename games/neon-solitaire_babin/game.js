@@ -99,6 +99,7 @@ class NeonSolitaireGame {
 
     this.initDOM();
     this.setupEvents();
+    this.initDragAndDrop();
     this.startNewGame();
   }
 
@@ -226,6 +227,7 @@ class NeonSolitaireGame {
     });
 
     this.wastePile.addEventListener('click', () => {
+      if (this.isJustDragged && this.isJustDragged()) return;
       if (this.waste.length === 0) return;
       this.selectedCard = { source: 'waste' };
       this.render();
@@ -234,6 +236,7 @@ class NeonSolitaireGame {
     // Foundations click
     this.foundationSlots.forEach(slot => {
       slot.addEventListener('click', () => {
+        if (this.isJustDragged && this.isJustDragged()) return;
         const suit = slot.dataset.suit;
         this.tryMoveToFoundation(suit);
       });
@@ -242,6 +245,7 @@ class NeonSolitaireGame {
     // Tableau column click
     this.tableauCols.forEach((col, colIdx) => {
       col.addEventListener('click', (e) => {
+        if (this.isJustDragged && this.isJustDragged()) return;
         const cardElem = e.target.closest('.card-item');
         if (!cardElem && this.selectedCard) {
           // Empty column move (King only)
@@ -285,8 +289,161 @@ class NeonSolitaireGame {
     this.modalGotItBtn.addEventListener('click', () => this.rulesModal.classList.add('hidden'));
   }
 
+  initDragAndDrop() {
+    let activeDrag = null;
+    let justDragged = false;
+
+    const cleanupDrag = () => {
+      if (!activeDrag) return;
+      document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+      activeDrag.cards.forEach((c) => {
+        const origIdx = parseInt(c.dataset.cardIdx, 10);
+        c.style.zIndex = isNaN(origIdx) ? '1' : `${origIdx + 1}`;
+        c.style.transform = '';
+        c.style.pointerEvents = '';
+        c.classList.remove('dragging');
+      });
+      if (activeDrag.container) {
+        activeDrag.container.style.zIndex = '';
+      }
+      if (activeDrag.tierContainer) {
+        activeDrag.tierContainer.style.zIndex = '';
+      }
+      if (activeDrag.targetCard && activeDrag.pointerId !== undefined) {
+        try {
+          activeDrag.targetCard.releasePointerCapture(activeDrag.pointerId);
+        } catch (_) {}
+      }
+      activeDrag = null;
+    };
+
+    document.addEventListener('pointerdown', (e) => {
+      if (activeDrag) cleanupDrag();
+
+      const cardElem = e.target.closest('.card-item');
+      if (!cardElem || cardElem.classList.contains('face-down')) return;
+
+      const wasteSlot = cardElem.closest('#wastePile');
+      const tableauCol = cardElem.closest('.tableau-col');
+      if (!wasteSlot && !tableauCol) return;
+
+      let cards = [];
+      let sourceInfo = null;
+
+      if (wasteSlot) {
+        if (this.waste.length === 0) return;
+        cards = [cardElem];
+        sourceInfo = { source: 'waste' };
+      } else if (tableauCol) {
+        const colIdx = parseInt(tableauCol.dataset.col, 10);
+        const cardIdx = parseInt(cardElem.dataset.cardIdx, 10);
+        const colCards = Array.from(tableauCol.querySelectorAll('.card-item'));
+        cards = colCards.filter(c => parseInt(c.dataset.cardIdx, 10) >= cardIdx);
+        sourceInfo = { source: 'tableau', colIdx, cardIdx };
+      }
+
+      if (cards.length === 0) return;
+
+      const container = wasteSlot || tableauCol;
+      const tierContainer = container.closest('.upper-tier, .tableau-tier');
+      if (tierContainer) tierContainer.style.zIndex = '1000';
+      if (container) container.style.zIndex = '1000';
+
+      // Elevate active drag card elements to z-index: 1000 during pointerdown
+      cards.forEach((c, idx) => {
+        c.style.zIndex = `${1000 + idx}`;
+        c.classList.add('dragging');
+      });
+
+      try {
+        cardElem.setPointerCapture(e.pointerId);
+      } catch (_) {}
+
+      activeDrag = {
+        cards,
+        container,
+        tierContainer,
+        targetCard: cardElem,
+        sourceInfo,
+        startX: e.clientX,
+        startY: e.clientY,
+        isDragging: false,
+        pointerId: e.pointerId
+      };
+    });
+
+    document.addEventListener('pointermove', (e) => {
+      if (!activeDrag) return;
+
+      const dx = e.clientX - activeDrag.startX;
+      const dy = e.clientY - activeDrag.startY;
+
+      if (!activeDrag.isDragging && Math.hypot(dx, dy) > 4) {
+        activeDrag.isDragging = true;
+        activeDrag.cards.forEach(c => {
+          c.style.pointerEvents = 'none';
+        });
+      }
+
+      if (activeDrag.isDragging) {
+        activeDrag.cards.forEach(c => {
+          c.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
+        });
+
+        // Highlight hovered drop targets
+        document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+        const hitEl = document.elementFromPoint(e.clientX, e.clientY);
+        const target = hitEl?.closest('.tableau-col, .foundation-slot');
+        if (target) {
+          target.classList.add('drag-over');
+        }
+      }
+    });
+
+    const onPointerUp = (e) => {
+      if (!activeDrag) return;
+
+      if (activeDrag.isDragging) {
+        justDragged = true;
+        setTimeout(() => { justDragged = false; }, 120);
+
+        // Find target under pointer
+        const hitEl = document.elementFromPoint(e.clientX, e.clientY);
+        const targetCol = hitEl?.closest('.tableau-col');
+        const targetFoundation = hitEl?.closest('.foundation-slot');
+
+        let moved = false;
+        this.selectedCard = activeDrag.sourceInfo;
+
+        if (targetCol) {
+          const destColIdx = parseInt(targetCol.dataset.col, 10);
+          if (activeDrag.sourceInfo.source !== 'tableau' || activeDrag.sourceInfo.colIdx !== destColIdx) {
+            moved = this.tryMoveToTableau(destColIdx);
+          }
+        } else if (targetFoundation) {
+          const suit = targetFoundation.dataset.suit;
+          moved = this.tryMoveToFoundation(suit);
+        }
+
+        cleanupDrag();
+
+        if (!moved) {
+          this.audio.playCardSlide();
+          this.selectedCard = null;
+        }
+      } else {
+        cleanupDrag();
+      }
+    };
+
+    document.addEventListener('pointerup', onPointerUp);
+    document.addEventListener('pointercancel', cleanupDrag);
+
+    this.isJustDragged = () => justDragged;
+  }
+
   tryMoveToFoundation(suit) {
-    if (!this.selectedCard) return;
+    if (!this.selectedCard) return false;
     let cardToMove = null;
 
     if (this.selectedCard.source === 'waste') {
@@ -298,7 +455,7 @@ class NeonSolitaireGame {
       }
     }
 
-    if (!cardToMove || cardToMove.suit !== suit) return;
+    if (!cardToMove || cardToMove.suit !== suit) return false;
 
     const targetPile = this.foundations[suit];
     const targetValue = targetPile.length === 0 ? 1 : targetPile[targetPile.length - 1].value + 1;
@@ -325,11 +482,13 @@ class NeonSolitaireGame {
         this.audio.playVictory();
         alert('CYBER DECK CLEARED! PERFECT GAME!');
       }
+      return true;
     }
+    return false;
   }
 
   tryMoveToTableau(destColIdx) {
-    if (!this.selectedCard) return;
+    if (!this.selectedCard) return false;
     const destCol = this.tableau[destColIdx];
     let cardsToMove = [];
 
@@ -340,7 +499,7 @@ class NeonSolitaireGame {
       cardsToMove = srcCol.slice(this.selectedCard.cardIdx);
     }
 
-    if (cardsToMove.length === 0) return;
+    if (cardsToMove.length === 0) return false;
     const bottomCard = cardsToMove[0];
 
     let valid = false;
@@ -369,7 +528,9 @@ class NeonSolitaireGame {
       this.selectedCard = null;
       this.render();
       this.updateHUD();
+      return true;
     }
+    return false;
   }
 
   autoCompleteStep() {
@@ -414,10 +575,12 @@ class NeonSolitaireGame {
     this.stockPile.style.opacity = this.stock.length > 0 ? '1' : '0.4';
 
     // Waste pile
+    this.wastePile.style.zIndex = '';
     this.wastePile.innerHTML = '';
     if (this.waste.length > 0) {
       const card = this.waste[this.waste.length - 1];
       const el = this.createCardElement(card);
+      el.style.zIndex = '1';
       if (this.selectedCard && this.selectedCard.source === 'waste') {
         el.classList.add('selected');
       }
@@ -439,6 +602,7 @@ class NeonSolitaireGame {
 
     // Tableau
     this.tableauCols.forEach((colElem, cIdx) => {
+      colElem.style.zIndex = '';
       colElem.innerHTML = '';
       const colData = this.tableau[cIdx];
 
@@ -446,6 +610,7 @@ class NeonSolitaireGame {
         const cardElem = this.createCardElement(card);
         cardElem.dataset.cardIdx = cardIdx;
         cardElem.style.top = `${cardIdx * 24}px`;
+        cardElem.style.zIndex = `${cardIdx + 1}`;
 
         if (this.selectedCard && this.selectedCard.source === 'tableau' &&
             this.selectedCard.colIdx === cIdx && cardIdx >= this.selectedCard.cardIdx) {
@@ -484,5 +649,14 @@ class NeonSolitaireGame {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  new NeonSolitaireGame();
+  const game = new NeonSolitaireGame();
+
+  window.addEventListener('message', (e) => {
+    if (!e || !e.data) return;
+    if (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE') {
+      if (game.audio && game.audio.ctx && typeof game.audio.ctx.suspend === 'function') {
+        game.audio.ctx.suspend().catch(() => {});
+      }
+    }
+  });
 });

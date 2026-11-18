@@ -138,6 +138,7 @@
 
     randomSlot.element.appendChild(bugEl);
     randomSlot.activeBug = bugType;
+    randomSlot.isHit = false; // Flag to prevent multi-touch double count (#670)
 
     const duration = Math.max(550, bugType.duration - Math.min(400, score * 3));
     randomSlot.timer = setTimeout(() => {
@@ -149,6 +150,7 @@
     if (slot.activeBug) {
       slot.element.innerHTML = "";
       slot.activeBug = null;
+      slot.isHit = false;
       if (slot.timer) {
         clearTimeout(slot.timer);
         slot.timer = null;
@@ -169,8 +171,24 @@
     if (!isPlaying) return;
     const slot = slots[index];
 
-    if (slot.activeBug) {
+    // Debounce guard: prevent simultaneous multi-touch pointers double-counting hits (#670)
+    const now = Date.now();
+    if (slot.lastWhackTime && now - slot.lastWhackTime < 300) {
+      return;
+    }
+
+    if (slot.activeBug && !slot.isHit) {
+      slot.isHit = true;
+      slot.lastWhackTime = now;
       const bug = slot.activeBug;
+
+      // Visual squish animation feedback immediately on first registered hit (#670)
+      const bugEntity = slot.element.querySelector('.bug-entity');
+      if (bugEntity) {
+        bugEntity.style.transform = 'scale(0.7) rotate(15deg)';
+        bugEntity.style.transition = 'transform 0.1s ease';
+      }
+
       clearSlot(slot);
 
       if (bug.type === "firewall") {
