@@ -278,6 +278,7 @@
               <option value="rating">Highest Rated (Stars)</option>
               <option value="newest">Newest Added</option>
               <option value="difficulty">Difficulty (Beginner to Expert)</option>
+              <option value="popularity">Most Played</option>
             </select>
           </div>
 
@@ -501,12 +502,6 @@
               </path>
             </svg>
           </button>
-          <button class="btn btn-sm btn-icon" id="modal-scratchpad-btn" type="button" title="Strategy Scratchpad (Alt+N)" aria-label="Open Strategy Scratchpad" aria-expanded="false" aria-controls="game-scratchpad">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"></path>
-              <path d="M8 7H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"></path>
-            </svg>
-          </button>
           <a href="#" target="_blank" class="btn btn-sm btn-icon" id="new-tab-btn" title="Open in New Tab">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
@@ -532,44 +527,11 @@
       </div>
       <div class="modal-frame-wrapper">
         <iframe id="game-iframe" src="" title="Game Frame" frameborder="0" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+        <div id="game-loader-skeleton" class="game-loader-skeleton" role="status" aria-live="polite">
+          <span class="game-loader-spinner" aria-hidden="true"></span>
+          <span class="game-loader-text">BOOTING ARCADE MATRIX...</span>
+        </div>
       </div>
-      <aside class="game-scratchpad" id="game-scratchpad" role="dialog" aria-label="Strategy Scratchpad" aria-modal="true" aria-hidden="true" tabindex="-1" hidden>
-        <div class="scratchpad-header">
-          <div>
-            <p class="scratchpad-eyebrow">CYBERDECK / FIELD NOTES</p>
-            <h2>Strategy Scratchpad</h2>
-            <p class="scratchpad-game-title" id="scratchpad-game-title"></p>
-          </div>
-          <button class="scratchpad-icon-btn" id="scratchpad-close-btn" type="button" aria-label="Close Strategy Scratchpad" title="Close scratchpad">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m18 6-12 12M6 6l12 12"></path></svg>
-          </button>
-        </div>
-        <div class="scratchpad-toolbar" aria-label="Scratchpad actions">
-          <button class="scratchpad-action" id="scratchpad-stamp-btn" type="button" title="Insert a timestamped clue at the cursor">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
-            <span>Stamp clue</span>
-          </button>
-          <button class="scratchpad-action" id="scratchpad-copy-btn" type="button" title="Copy all notes">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="13" height="13" rx="2"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg>
-            <span>Copy</span>
-          </button>
-          <button class="scratchpad-action" id="scratchpad-export-btn" type="button" title="Download notes as a text file">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5M12 15V3"></path></svg>
-            <span>Export</span>
-          </button>
-        </div>
-        <label class="scratchpad-label" for="scratchpad-notes">Notes for this game</label>
-        <textarea id="scratchpad-notes" class="scratchpad-notes" placeholder="Record clues, codes, deductions, and your next moves..." spellcheck="true"></textarea>
-        <div class="scratchpad-footer">
-          <span class="scratchpad-status" id="scratchpad-status" role="status" aria-live="polite">Saved locally per game</span>
-          <button class="scratchpad-clear-btn" id="scratchpad-clear-btn" type="button">Clear notes</button>
-        </div>
-        <div class="scratchpad-clear-confirm" id="scratchpad-clear-confirm" hidden>
-          <span>Clear all notes for this game?</span>
-          <button type="button" id="scratchpad-clear-confirm-btn">Clear</button>
-          <button type="button" id="scratchpad-clear-cancel-btn">Cancel</button>
-        </div>
-      </aside>
     </div>
   </div>
 
