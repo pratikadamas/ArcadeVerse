@@ -278,6 +278,7 @@
               <option value="rating">Highest Rated (Stars)</option>
               <option value="newest">Newest Added</option>
               <option value="difficulty">Difficulty (Beginner to Expert)</option>
+              <option value="popularity">Most Played</option>
             </select>
           </div>
 
@@ -532,6 +533,10 @@
       </div>
       <div class="modal-frame-wrapper">
         <iframe id="game-iframe" src="" title="Game Frame" frameborder="0" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+        <div id="game-loader-skeleton" class="game-loader-skeleton" role="status" aria-live="polite">
+          <span class="game-loader-spinner" aria-hidden="true"></span>
+          <span class="game-loader-text">BOOTING ARCADE MATRIX...</span>
+        </div>
       </div>
       <aside class="game-scratchpad" id="game-scratchpad" role="dialog" aria-label="Strategy Scratchpad" aria-modal="true" aria-hidden="true" tabindex="-1" hidden>
         <div class="scratchpad-header">

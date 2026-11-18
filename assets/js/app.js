@@ -29,6 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const reloadBtn = document.getElementById("reload-btn");
   const modalWindow = document.querySelector(".modal-window");
   const modalFrameWrapper = document.querySelector(".modal-frame-wrapper");
+  const gameLoaderSkeleton = document.getElementById("game-loader-skeleton");
   if (modalFrameWrapper) {
     modalFrameWrapper.classList.add("game-modal-body");
   }
@@ -61,7 +62,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (savedView === "list" || savedView === "grid") {
       currentCatalogView = savedView;
     }
-  } catch (_) { }
+  } catch (_) {}
+  try {
+    const savedSort = localStorage.getItem(CATALOG_SORT_STORAGE_KEY);
+    if (savedSort && sortSelect && Array.from(sortSelect.options).some((o) => o.value === savedSort)) {
+      currentSort = savedSort;
+    }
+  } catch (_) {}
   let lastFocusedElement = null;
 
   // Screen reader live region, used by the launch / catalog / pause announcements below
@@ -478,7 +485,8 @@ document.addEventListener("DOMContentLoaded", () => {
         /^arcadeverse_recently_played/,
         /^av_play_log/,
         /^av_session_/,
-        /^arcadeverse_telemetry/
+        /^arcadeverse_telemetry/,
+        /^arcadeverse_play_counts/
       ],
       // Priority 3: Non-critical UI state toggles & filters
       [
@@ -687,6 +695,86 @@ document.addEventListener("DOMContentLoaded", () => {
   function isFavorite(gameId) {
     return getFavorites().has(gameId);
   }
+
+  // ==========================================================================
+  // MOST PLAYED LEDGER (#434)
+  // A game counts as played once it has been open in the player for 10 seconds.
+  // Counts live only in this browser: { "<gameId>": <plays> } in localStorage.
+  // ==========================================================================
+  const PLAY_COUNTS_STORAGE_KEY = "arcadeverse_play_counts";
+  const PLAY_COUNT_AFTER_MS = 10000;
+  let playCountsStale = false;
+
+  function getPlayCounts() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(PLAY_COUNTS_STORAGE_KEY) || "{}");
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+      const counts = {};
+      Object.keys(parsed).forEach((id) => {
+        const n = Number(parsed[id]);
+        if (Number.isFinite(n) && n > 0) counts[id] = Math.floor(n);
+      });
+      return counts;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function countPlay(gameId) {
+    if (!gameId) return;
+    const counts = getPlayCounts();
+    counts[gameId] = (counts[gameId] || 0) + 1;
+    ArcadeStorageResilience.safeSetItem(PLAY_COUNTS_STORAGE_KEY, JSON.stringify(counts));
+    // Re-sort Most Played. While a game is open the grid waits for the modal to close,
+    // so it is not rebuilt behind a running game.
+    if (currentSort === "popularity") {
+      if (gameModal.classList.contains("active")) playCountsStale = true;
+      else renderGames();
+    }
+  }
+
+  // One timer for the game that is open. Closing the modal or opening another game cancels it,
+  // and it pauses while the tab is hidden so background time does not count as playing.
+  let playTimer = null;
+  let playTimerGameId = null;
+  let playTimerLeft = 0;
+  let playTimerStartedAt = 0;
+
+  function runPlayTimer() {
+    playTimerStartedAt = Date.now();
+    playTimer = setTimeout(() => {
+      const id = playTimerGameId;
+      playTimer = null;
+      playTimerGameId = null;
+      countPlay(id);
+    }, playTimerLeft);
+  }
+
+  function cancelPlayTimer() {
+    clearTimeout(playTimer);
+    playTimer = null;
+    playTimerGameId = null;
+  }
+
+  function armPlayTimer(gameId) {
+    cancelPlayTimer();
+    playTimerGameId = gameId;
+    playTimerLeft = PLAY_COUNT_AFTER_MS;
+    if (!document.hidden) runPlayTimer();
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (!playTimerGameId) return;
+    if (document.hidden) {
+      if (playTimer) {
+        clearTimeout(playTimer);
+        playTimer = null;
+        playTimerLeft = Math.max(0, playTimerLeft - (Date.now() - playTimerStartedAt));
+      }
+    } else if (!playTimer) {
+      runPlayTimer();
+    }
+  });
 
   function updateFavoritesBadge() {
     const favCount = getFavorites().size;
@@ -1132,6 +1220,7 @@ document.addEventListener("DOMContentLoaded", () => {
     gamesGrid.innerHTML = "";
     gamesGrid.classList.toggle("view-list", currentCatalogView === "list");
     const favs = getFavorites();
+    const playCounts = currentSort === "popularity" ? getPlayCounts() : null;
 
     const currentDataSet = GAMES_REGISTRY;
 
@@ -1283,6 +1372,16 @@ document.addEventListener("DOMContentLoaded", () => {
         const diffA = getDifficultyRank(a);
         const diffB = getDifficultyRank(b);
         if (diffB !== diffA) return diffB - diffA;
+        return a.title.localeCompare(b.title);
+      } else if (currentSort === "popularity") {
+        const playsDiff = (playCounts[b.id] || 0) - (playCounts[a.id] || 0);
+        if (playsDiff !== 0) return playsDiff;
+        // same count (or none yet): fall back to the Featured order
+        if (a.featured && !b.featured) return -1;
+        if (!a.featured && b.featured) return 1;
+        const rA = (window.GameRatings && window.GameRatings.ratings[a.id]) || (a.stars ? (a.stars / 10) : 5.0);
+        const rB = (window.GameRatings && window.GameRatings.ratings[b.id]) || (b.stars ? (b.stars / 10) : 5.0);
+        if (rB !== rA) return rB - rA;
         return a.title.localeCompare(b.title);
       } else {
         // "featured": featured items first, then by rating / title
@@ -1589,6 +1688,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const displayScore = userRating ? Number(userRating).toFixed(1) : (game.stars ? (game.stars / 10).toFixed(1) : "5.0");
       const currentStar = userRating || Math.min(5, Math.max(1, Math.round((game.stars || 25) / 10)));
 
+      const plays = playCounts ? playCounts[game.id] || 0 : 0;
+      const playsBadgeHtml = plays > 0 ? `
+        <span class="game-plays-badge">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+          ${plays} Play${plays === 1 ? "" : "s"}
+        </span>` : "";
+
       const isHalloween = isHalloweenGame(game);
       const halloweenBadgeHtml = isHalloween ? `
         <span class="badge-halloween-special" title="Halloween Special Games">
@@ -1605,18 +1711,12 @@ document.addEventListener("DOMContentLoaded", () => {
           <canvas class="card-micro-preview-canvas" width="280" height="140"></canvas>
           <span class="game-category-tag">${safeCategory}</span>
           ${halloweenBadgeHtml}
-          <div class="card-options-top">
-            <label class="game-compare-label" title="Select to compare with another game">
-              <input type="checkbox" class="game-compare-checkbox" data-game-id="${safeGameId}">
-              <span class="compare-custom-box"></span>
-            </label>
-            <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
-                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-              </svg>
-            </button>
-          </div>
-          <div class="game-icon">${iconHtml}</div>
+          <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
+              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+            </svg>
+          </button>
+          <div class="game-icon">${iconHtml}</div>${playsBadgeHtml}
         </div>
         <div class="game-card-body">
           <h3 class="game-card-title">${safeTitle}${halloweenTitleBadge}</h3>
@@ -1833,21 +1933,12 @@ document.addEventListener("DOMContentLoaded", () => {
   let iframeLoadTimeout = null;
   let iframeLoadSucceeded = false;
 
-  /**
-   * Constructs an isolated game iframe URL with ?gameId= query parameter
-   * for namespaced storage isolation (#493, #824).
-   * @param {Object|string} gameObj - Game object from registry or path string
-   * @returns {string} Fully qualified isolated URL
-   */
-  function buildIsolatedGameUrl(gameObj) {
-    if (!gameObj) return "";
-    const rawPath = typeof gameObj === "string" ? gameObj : (gameObj.path || "");
-    const gameId = typeof gameObj === "object" && gameObj !== null ? gameObj.id : "";
-    if (!rawPath) return "";
-    if (gameId && !rawPath.includes("gameId=")) {
-      return rawPath + (rawPath.includes("?") ? "&" : "?") + "gameId=" + encodeURIComponent(gameId);
-    }
-    return rawPath;
+  function showGameLoader() {
+    if (gameLoaderSkeleton) gameLoaderSkeleton.classList.add("active");
+  }
+
+  function hideGameLoader() {
+    if (gameLoaderSkeleton) gameLoaderSkeleton.classList.remove("active");
   }
 
   function resetIframeBoundary() {
@@ -1862,6 +1953,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function triggerModalErrorBoundary(gameObj) {
     if (iframeLoadSucceeded) return;
+    hideGameLoader();
     if (gameIframe) gameIframe.style.display = "none";
     let errorBoundary = document.getElementById("modal-error-boundary");
     if (!errorBoundary) {
@@ -1902,7 +1994,8 @@ document.addEventListener("DOMContentLoaded", () => {
         resetIframeBoundary();
         iframeLoadSucceeded = false;
         if (gameIframe && gameObj) {
-          gameIframe.src = buildIsolatedGameUrl(gameObj);
+          showGameLoader();
+          gameIframe.src = gameObj.path;
           startIframeTimeout(gameObj);
         }
       });
@@ -2040,93 +2133,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 3500);
   }
 
-  // =========================================================================
-  // ARCADEVERSE MASTER VOLUME & AUDIO SYNC BUS
-  // Synchronizes av_master_volume & av_sound_muted with embedded iframe games
-  // =========================================================================
-  function syncAudioPreferences(muted, volume) {
-    try {
-      let isMuted;
-      if (typeof muted === "boolean") {
-        isMuted = muted;
-      } else if (window.SoundEngine && typeof window.SoundEngine.enabled === "boolean") {
-        isMuted = !window.SoundEngine.enabled;
-      } else if (localStorage.getItem("av_sound_muted") !== null) {
-        isMuted = localStorage.getItem("av_sound_muted") === "true";
-      } else {
-        isMuted = localStorage.getItem("arcadeverse_muted") === "true";
-      }
-
-      let masterVol;
-      if (typeof volume === "number") {
-        masterVol = volume;
-      } else if (window.SoundEngine && typeof window.SoundEngine.volume === "number") {
-        masterVol = window.SoundEngine.volume;
-      } else if (localStorage.getItem("av_master_volume") !== null) {
-        masterVol = parseFloat(localStorage.getItem("av_master_volume"));
-      } else {
-        masterVol = parseFloat(localStorage.getItem("arcadeverse_master_volume"));
-      }
-      if (isNaN(masterVol) || masterVol === null || masterVol === undefined) {
-        masterVol = 0.28;
-      }
-
-      localStorage.setItem("av_sound_muted", isMuted ? "true" : "false");
-      localStorage.setItem("av_master_volume", String(masterVol));
-      localStorage.setItem("arcadeverse_muted", isMuted ? "true" : "false");
-      localStorage.setItem("arcadeverse_master_volume", String(masterVol));
-
-      return { muted: isMuted, volume: masterVol };
-    } catch (_) {
-      return { muted: false, volume: 0.28 };
-    }
-  }
-
-  function broadcastVolumeSyncToGame(muted, volume) {
-    try {
-      if (!gameIframe || !gameIframe.contentWindow) return;
-      const state = (typeof muted === "boolean" && typeof volume === "number")
-        ? { muted, volume }
-        : syncAudioPreferences();
-
-      const payload = {
-        type: "ARCADEVERSE_VOLUME_SYNC",
-        sessionToken: (activeGameSession && activeGameSession.token) || null,
-        muted: state.muted,
-        volume: state.volume,
-        gain: state.muted ? 0 : state.volume,
-        timestamp: Date.now()
-      };
-
-      gameIframe.contentWindow.postMessage(payload, "*");
-    } catch (_) { }
-  }
-
-  function hookSoundEngineAudioSync() {
-    if (!window.SoundEngine) return;
-    const origBroadcast = window.SoundEngine.broadcastAudioConfig;
-    window.SoundEngine.broadcastAudioConfig = function () {
-      if (typeof origBroadcast === "function") {
-        try { origBroadcast.apply(this, arguments); } catch (_) { }
-      }
-      const audioState = syncAudioPreferences(!window.SoundEngine.enabled, window.SoundEngine.volume);
-      broadcastVolumeSyncToGame(audioState.muted, audioState.volume);
-    };
-
-    const origSaveSettings = window.SoundEngine.saveSettings;
-    window.SoundEngine.saveSettings = function () {
-      if (typeof origSaveSettings === "function") {
-        try { origSaveSettings.apply(this, arguments); } catch (_) { }
-      }
-      syncAudioPreferences(!window.SoundEngine.enabled, window.SoundEngine.volume);
-    };
-  }
-
-  hookSoundEngineAudioSync();
-  setTimeout(hookSoundEngineAudioSync, 50);
-  setTimeout(hookSoundEngineAudioSync, 200);
-
-  // Bind iframe load listener once at root level to ensure 100% reliable load detection
+  // Bind the load / error listeners on the current game iframe. closeGameModal swaps in a fresh
+  // iframe node, so this runs again for each new one.
+  function bindGameIframeListeners() {
   if (gameIframe) {
     gameIframe.addEventListener("load", () => {
       // Ignore blanking resets
@@ -2134,7 +2143,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       iframeLoadSucceeded = true;
       resetIframeBoundary();
-      frame.classList.add("loaded");
+      gameIframe.classList.add("loaded");
+      hideGameLoader();
       guardIframeTouchInteractions();
 
       // Establish cryptographic session handshake with child game frame
@@ -2165,6 +2175,7 @@ document.addEventListener("DOMContentLoaded", () => {
         triggerModalErrorBoundary(activeGame);
       }
     });
+  }
   }
   bindGameIframeListeners();
 
@@ -2290,9 +2301,7 @@ document.addEventListener("DOMContentLoaded", () => {
     lastAnnouncedScore = 0;
     lastScoreAnnouncementTime = Date.now();
     announceToScreenReader(`Launching ${game.title}. Category: ${game.category}. Built by ${game.author}.`);
-    if (window.ArcadeAnnouncer && typeof window.ArcadeAnnouncer.announce === "function") {
-      window.ArcadeAnnouncer.announce("Ready Player One");
-    }
+    showGameLoader();
     startIframeTimeout(game);
 
     const audioState = syncAudioPreferences();
@@ -2335,6 +2344,7 @@ document.addEventListener("DOMContentLoaded", () => {
       window.ArcadeRecent.recordPlayed(game.id, game.title, game.category);
     }
     window.dispatchEvent(new CustomEvent("arcadeverse:game-launched", { detail: game }));
+    armPlayTimer(game.id);
 
     // Mount animation class to prevent visual tearing
     modalFrameWrapper.classList.add("is-mounting");
@@ -2502,10 +2512,7 @@ document.addEventListener("DOMContentLoaded", () => {
     resetIframeBoundary();
     gameModal.classList.remove("active");
     gameModal.setAttribute("aria-hidden", "true");
-    if (newTabBtn) {
-      newTabBtn.href = "#";
-    }
-    releaseScreenWakeLock();
+    hideGameLoader();
 
     // Standardized Game Lifecycle Bridge: Dispatch teardown & pause events before unmounting iframe
     try {
@@ -2580,8 +2587,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Safely blank out iframe after a 100ms grace period to allow games to close AudioContexts and stop RAF loops
     const currentFrame = gameIframe;
-    closeModalCleanupTimer = setTimeout(() => {
-      closeModalCleanupTimer = null;
+    setTimeout(() => {
+      // Another game was opened during the grace period, leave its frame alone
+      if (activeGame) return;
       try {
         if (currentFrame && currentFrame.contentWindow) {
           currentFrame.contentWindow.location.replace("about:blank");
@@ -2613,6 +2621,7 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (_) { }
     }, 100);
 
+    cancelPlayTimer();
     document.body.style.overflow = "";
     document.body.style.overscrollBehavior = "";
     if (gameIframe) gameIframe.style.touchAction = "";
@@ -2623,7 +2632,18 @@ document.addEventListener("DOMContentLoaded", () => {
     modalWindow.classList.remove("fullscreen");
     if (gameModal) gameModal.classList.remove("fullscreen-mode");
     if (document.fullscreenElement || document.webkitFullscreenElement) {
-      if (document.exitFullscreen) document.exitFullscreen().catch(() => { });
+      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+    }
+    if (playCountsStale) {
+      playCountsStale = false;
+      renderGames();
+      // renderGames rebuilt the cards, so the Play button the game was opened from is gone
+      if (lastFocusedElement && !lastFocusedElement.isConnected && lastFocusedElement.dataset.id) {
+        lastFocusedElement = gamesGrid.querySelector(`.btn-play-trigger[data-id="${lastFocusedElement.dataset.id}"]`);
+      }
+    }
+    if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
+      lastFocusedElement.focus();
     }
     // Restore focus to triggering card or cached activeElement upon closing (#736)
     const restoreFocus = () => {
