@@ -133,6 +133,10 @@
 
   Sim.prototype.placeMallet = function (side, x, y) {
     var m = this.mallets[side];
+    var minY = side === 0 ? CFG.H / 2 + CFG.malletR + 2 : CFG.cornerR + CFG.malletR;
+    var maxY = side === 0 ? CFG.H - CFG.cornerR - CFG.malletR : CFG.H / 2 - CFG.malletR - 2;
+    x = clamp(x, CFG.malletR, CFG.W - CFG.malletR);
+    y = clamp(y, minY, maxY);
     m.x = m.x0 = m.px = m.tx = x;
     m.y = m.y0 = m.py = m.ty = y;
     m.vx = 0; m.vy = 0;
@@ -165,9 +169,12 @@
 
   Sim.prototype.clampMallet = function (m, x, y, out) {
     var c = this.cfg, r = m.r;
-    var minY = m.side === 0 ? c.H / 2 + r : r;
-    var maxY = m.side === 0 ? c.H - r : c.H / 2 - r;
-    return this.clampInset(clamp(x, r, c.W - r), clamp(y, minY, maxY), r, out);
+    var minY = m.side === 0 ? CFG.H / 2 + CFG.malletR + 2 : CFG.cornerR + CFG.malletR;
+    var maxY = m.side === 0 ? CFG.H - CFG.cornerR - CFG.malletR : CFG.H / 2 - CFG.malletR - 2;
+    this.clampInset(clamp(x, r, c.W - r), clamp(y, minY, maxY), r, out);
+    out.x = clamp(out.x, r, c.W - r);
+    out.y = clamp(out.y, minY, maxY);
+    return out;
   };
 
   Sim.prototype.moveMallet = function (m, dt) {
@@ -188,12 +195,65 @@
     m.vy = (m.y - m.y0) / dt;
   };
 
+  Sim.prototype.stepMallets = function (dt) {
+    var c = this.cfg;
+    for (var i = 0; i < 2; i++) {
+      var mallet = this.mallets[i];
+      var prevX = mallet.x, prevY = mallet.y;
+      this.moveMallet(mallet, dt);
+
+      if (mallet.side === 0) {
+        var minY = CFG.H / 2 + CFG.malletR + 2;
+        var maxY = CFG.H - CFG.cornerR - CFG.malletR;
+        // Sweep collision segments between previous and current mallet position
+        if (prevY >= minY && mallet.y < minY) {
+          var dy = mallet.y - prevY;
+          var t = dy !== 0 ? (minY - prevY) / dy : 0;
+          mallet.x = prevX + t * (mallet.x - prevX);
+          mallet.y = minY;
+          if (mallet.vy < 0) mallet.vy = 0;
+        } else if (prevY <= maxY && mallet.y > maxY) {
+          var dy2 = mallet.y - prevY;
+          var t2 = dy2 !== 0 ? (maxY - prevY) / dy2 : 0;
+          mallet.x = prevX + t2 * (mallet.x - prevX);
+          mallet.y = maxY;
+          if (mallet.vy > 0) mallet.vy = 0;
+        }
+        // Player mallet must strictly remain in bottom half
+        mallet.y = clamp(mallet.y, CFG.H / 2 + CFG.malletR + 2, CFG.H - CFG.cornerR - CFG.malletR);
+        mallet.x = clamp(mallet.x, CFG.malletR, CFG.W - CFG.malletR);
+      } else {
+        var minY1 = CFG.cornerR + CFG.malletR;
+        var maxY1 = CFG.H / 2 - CFG.malletR - 2;
+        // Sweep collision segments between previous and current mallet position
+        if (prevY <= maxY1 && mallet.y > maxY1) {
+          var dyOpp = mallet.y - prevY;
+          var tOpp = dyOpp !== 0 ? (maxY1 - prevY) / dyOpp : 0;
+          mallet.x = prevX + tOpp * (mallet.x - prevX);
+          mallet.y = maxY1;
+          if (mallet.vy > 0) mallet.vy = 0;
+        } else if (prevY >= minY1 && mallet.y < minY1) {
+          var dyOpp2 = mallet.y - prevY;
+          var tOpp2 = dyOpp2 !== 0 ? (minY1 - prevY) / dyOpp2 : 0;
+          mallet.x = prevX + tOpp2 * (mallet.x - prevX);
+          mallet.y = minY1;
+          if (mallet.vy < 0) mallet.vy = 0;
+        }
+        mallet.y = clamp(mallet.y, CFG.cornerR + CFG.malletR, CFG.H / 2 - CFG.malletR - 2);
+        mallet.x = clamp(mallet.x, CFG.malletR, CFG.W - CFG.malletR);
+      }
+      if (dt > 0) {
+        mallet.vx = (mallet.x - mallet.x0) / dt;
+        mallet.vy = (mallet.y - mallet.y0) / dt;
+      }
+    }
+  };
+
   Sim.prototype.step = function (dt) {
     var c = this.cfg, p = this.puck;
     this.events.length = 0;
     this.time += dt;
-    this.moveMallet(this.mallets[0], dt);
-    this.moveMallet(this.mallets[1], dt);
+    this.stepMallets(dt);
     var i;
     for (i = 0; i < 2; i++) { this.mallets[i].px = this.mallets[i].x0; this.mallets[i].py = this.mallets[i].y0; }
     p.px = p.x; p.py = p.y;
@@ -431,6 +491,13 @@
           this.clampMallet(m, m.x - nx * (R - d), m.y - ny * (R - d), this._tmp);
           m.x = this._tmp.x; m.y = this._tmp.y;
           this.squeezed = true;
+        }
+        if (m.side === 0) {
+          m.y = clamp(m.y, CFG.H / 2 + CFG.malletR + 2, CFG.H - CFG.cornerR - CFG.malletR);
+          m.x = clamp(m.x, CFG.malletR, CFG.W - CFG.malletR);
+        } else {
+          m.y = clamp(m.y, CFG.cornerR + CFG.malletR, CFG.H / 2 - CFG.malletR - 2);
+          m.x = clamp(m.x, CFG.malletR, CFG.W - CFG.malletR);
         }
       }
     }
@@ -1329,7 +1396,8 @@
     var x = (e.clientX - rect.left) * c.W / rect.width;
     var y = (e.clientY - rect.top) * c.H / rect.height;
     if (isTouch) y -= 26;                           // keep the mallet visible above the fingertip
-    this.tx = x; this.ty = y;
+    this.tx = clamp(x, CFG.malletR, CFG.W - CFG.malletR);
+    this.ty = clamp(y, CFG.H / 2 + CFG.malletR + 2, CFG.H - CFG.cornerR - CFG.malletR);
   };
 
   var MOVE_KEYS = {
@@ -1382,7 +1450,8 @@
     // move the target from where the mallet actually is, so keys never run away from the mallet
     var bx = Math.abs(this.tx - m.x) + Math.abs(this.ty - m.y) > 80 ? m.x : this.tx;
     var by = Math.abs(this.tx - m.x) + Math.abs(this.ty - m.y) > 80 ? m.y : this.ty;
-    this.tx = bx + dx * sp; this.ty = by + dy * sp;
+    this.tx = clamp(bx + dx * sp, CFG.malletR, CFG.W - CFG.malletR);
+    this.ty = clamp(by + dy * sp, CFG.H / 2 + CFG.malletR + 2, CFG.H - CFG.cornerR - CFG.malletR);
   };
 
   // ----- fixed step ----------------------------------------------------

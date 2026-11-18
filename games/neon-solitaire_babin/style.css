@@ -139,6 +139,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
 }
 
 .stock-waste-group, .foundations-group {
@@ -182,6 +183,7 @@ body {
   grid-template-columns: repeat(7, 1fr);
   gap: 10px;
   min-height: 340px;
+  position: relative;
 }
 
 .tableau-col {
@@ -190,6 +192,14 @@ body {
   border-radius: 8px;
   background: rgba(18, 28, 69, 0.2);
   border: 1px dashed rgba(35, 52, 112, 0.3);
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.tableau-col.drag-over,
+.card-slot.drag-over {
+  border-color: #facc15;
+  background: rgba(250, 204, 21, 0.12);
+  box-shadow: 0 0 15px rgba(250, 204, 21, 0.3);
 }
 
 /* Neon Cards */
@@ -209,6 +219,24 @@ body {
   justify-content: space-between;
   padding: 6px;
   transition: transform 0.15s, box-shadow 0.15s;
+  touch-action: none;
+}
+
+.card-item.dragging {
+  z-index: 1000 !important;
+  box-shadow: 0 22px 42px rgba(0, 0, 0, 0.85), 0 10px 20px rgba(0, 0, 0, 0.6), 0 0 25px rgba(56, 189, 248, 0.7);
+  cursor: grabbing;
+  transition: none !important;
+  will-change: transform;
+  filter: brightness(1.12);
+}
+
+.card-item.dragging.red-suit {
+  box-shadow: 0 22px 42px rgba(0, 0, 0, 0.85), 0 10px 20px rgba(0, 0, 0, 0.6), 0 0 25px rgba(236, 72, 153, 0.75);
+}
+
+.card-item.dragging.cyan-suit {
+  box-shadow: 0 22px 42px rgba(0, 0, 0, 0.85), 0 10px 20px rgba(0, 0, 0, 0.6), 0 0 25px rgba(56, 189, 248, 0.75);
 }
 
 .card-item.face-down {
