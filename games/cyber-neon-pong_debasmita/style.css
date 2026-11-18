@@ -131,6 +131,15 @@ body {
   transition: all 0.2s ease;
 }
 
+.icon-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.game-title svg {
+  vertical-align: middle;
+}
+
 .icon-btn:hover {
   background: rgba(56, 189, 248, 0.15);
   color: #38bdf8;
