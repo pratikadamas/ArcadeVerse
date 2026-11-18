@@ -2024,6 +2024,136 @@ document.addEventListener("DOMContentLoaded", () => {
   renderTable();
   fetchLiveGitHubContributions(activeRepo, false);
 
+  // Contributor Hover Card popover logic (#688)
+  let hoverCardTimer = null;
+  let activeHoverCard = null;
+
+  function createHoverCard(user, anchorEl) {
+    removeHoverCard();
+    const score = calculateScore(user);
+    const badges = getContributorBadges(user);
+    const fallbackAvatar = getFallbackAvatarSvg(user.name, user.login);
+    const primaryBadge = badges.length > 0 ? badges[0] : { label: user.role || "Contributor", tagClass: "role-contributor" };
+
+    let userGames = user.games || [];
+    if (userGames.length === 0 && typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) {
+      const found = GAMES_REGISTRY.filter(g => g.github && g.github.toLowerCase() === (user.login || "").toLowerCase());
+      userGames = found.map(g => g.title);
+    }
+
+    const card = document.createElement("div");
+    card.className = "contributor-hover-card";
+    card.setAttribute("role", "tooltip");
+    card.innerHTML = `
+      <div class="hover-card-header">
+        <img src="${user.avatar_url || fallbackAvatar}" alt="${user.name || user.login}" class="hover-card-avatar" onerror="this.onerror=null; this.src='${fallbackAvatar}';">
+        <div class="hover-card-meta">
+          <strong class="hover-card-name">${escapeHTML(user.name || user.login)}</strong>
+          <span class="hover-card-handle">@${escapeHTML(user.login)}</span>
+          <span class="hover-card-tier-badge ${primaryBadge.tagClass || ''}">${escapeHTML(primaryBadge.label || '')}</span>
+        </div>
+      </div>
+      <div class="hover-card-stats">
+        <div class="hover-stat">
+          <span class="stat-num">${user.commits || 0}</span>
+          <span class="stat-lbl">Commits</span>
+        </div>
+        <div class="hover-stat">
+          <span class="stat-num">${userGames.length}</span>
+          <span class="stat-lbl">Games</span>
+        </div>
+        <div class="hover-stat">
+          <span class="stat-num">${score}</span>
+          <span class="stat-lbl">Points</span>
+        </div>
+      </div>
+      ${userGames.length > 0 ? `
+        <div class="hover-card-games">
+          <span class="hover-games-title">Top Authored Games</span>
+          <div class="hover-games-carousel">
+            ${userGames.slice(0, 4).map(title => `<span class="hover-game-chip">${escapeHTML(title)}</span>`).join("")}
+          </div>
+        </div>
+      ` : ''}
+      <div class="hover-card-footer">
+        <a href="https://github.com/${user.login}" target="_blank" rel="noopener noreferrer" class="hover-github-link">
+          <i data-lucide="external-link"></i> Verified GitHub Profile
+        </a>
+      </div>
+    `;
+
+    document.body.appendChild(card);
+    activeHoverCard = card;
+
+    // Viewport-aware positioning
+    const rect = anchorEl.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+    let top = rect.bottom + window.scrollY + 8;
+    let left = rect.left + window.scrollX;
+
+    if (left + cardRect.width > window.innerWidth - 16) {
+      left = window.innerWidth - cardRect.width - 16;
+    }
+    if (top + cardRect.height > window.innerHeight + window.scrollY - 16) {
+      top = rect.top + window.scrollY - cardRect.height - 8;
+    }
+
+    card.style.top = `${Math.max(8, top)}px`;
+    card.style.left = `${Math.max(8, left)}px`;
+
+    card.addEventListener("mouseenter", () => {
+      clearTimeout(hoverCardTimer);
+    });
+    card.addEventListener("mouseleave", () => {
+      removeHoverCard();
+    });
+
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+  }
+
+  function removeHoverCard() {
+    clearTimeout(hoverCardTimer);
+    if (activeHoverCard) {
+      activeHoverCard.remove();
+      activeHoverCard = null;
+    }
+  }
+
+  document.addEventListener("mouseover", (e) => {
+    const trigger = e.target.closest(".table-user-cell, .podium-name, .user-display-name, .github-handle-link");
+    if (!trigger) return;
+    const tr = trigger.closest("tr");
+    let login = null;
+    if (tr) {
+      const link = tr.querySelector(".github-handle-link");
+      if (link) login = link.textContent.replace("@", "").trim();
+    } else {
+      const handleEl = trigger.closest(".podium-card") ? trigger.closest(".podium-card").querySelector(".podium-handle") : null;
+      if (handleEl) login = handleEl.textContent.replace("@", "").trim();
+    }
+
+    if (!login) return;
+    const user = contributorsData.find(c => c.login && c.login.toLowerCase() === login.toLowerCase());
+    if (!user) return;
+
+    clearTimeout(hoverCardTimer);
+    hoverCardTimer = setTimeout(() => {
+      createHoverCard(user, trigger);
+    }, 150);
+  });
+
+  document.addEventListener("mouseout", (e) => {
+    const trigger = e.target.closest(".table-user-cell, .podium-name, .user-display-name, .github-handle-link");
+    if (!trigger) return;
+    hoverCardTimer = setTimeout(() => {
+      if (activeHoverCard && !activeHoverCard.matches(":hover")) {
+        removeHoverCard();
+      }
+    }, 150);
+  });
+
   // App Badging API clear on viewing leaderboard & trophy certificates (#557)
   if (typeof navigator !== 'undefined' && 'clearAppBadge' in navigator) {
     navigator.clearAppBadge().catch(() => {});
