@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071b2a">
+  <title>Tidal Tunnels | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Tidal Tunnels home">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M3 11c4-5 8 5 13 0s9 5 13 0M3 19c4-5 8 5 13 0s9 5 13 0M3 27c4-5 8 5 13 0s9 5 13 0"/>
+        </svg>
+        <span>ARCADEVERSE <i>/</i> TIDAL TUNNELS</span>
+      </a>
+      <div class="top-actions">
+        <button id="restart-button" class="button button-quiet" type="button">Restart dive</button>
+        <button id="pause-button" class="button button-quiet" type="button" disabled>Pause</button>
+      </div>
+    </header>
+
+    <section class="intro">
+      <div>
+        <p class="eyebrow">UNDERWATER EXPEDITION</p>
+        <h1>Find your way through <span>the deep.</span></h1>
+        <p class="subtitle">Ride the currents, dodge the reef, and collect air before your oxygen runs out.</p>
+      </div>
+      <div class="route-stamp" aria-hidden="true">
+        <span>DIVE</span>
+        <strong>07</strong>
+        <span>REEF SECTOR</span>
+      </div>
+    </section>
+
+    <section class="game-layout" aria-label="Tidal Tunnels game">
+      <div class="play-column">
+        <section class="hud" aria-label="Dive status">
+          <div class="hud-card oxygen-card">
+            <div class="hud-line"><span class="hud-label">OXYGEN</span><strong id="oxygen-value">100%</strong></div>
+            <div id="oxygen-meter" class="meter" role="progressbar" aria-label="Oxygen" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+              <span id="oxygen-fill"></span>
+            </div>
+          </div>
+          <div class="hud-card">
+            <span class="hud-label">SCORE</span>
+            <strong id="score-value">0000</strong>
+          </div>
+          <div class="hud-card">
+            <span class="hud-label">DISTANCE</span>
+            <strong id="distance-value">0%</strong>
+          </div>
+        </section>
+
+        <div class="game-frame">
+          <canvas id="game-canvas" width="960" height="540" tabindex="0" role="img"
+            aria-label="Tidal Tunnels underwater game. Guide the diver through the reef and collect air bubbles.">
+            Your browser does not support the canvas game.
+          </canvas>
+
+          <section id="start-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="start-title">
+            <div class="dialog-card">
+              <p class="eyebrow">DIVE BRIEFING</p>
+              <h2 id="start-title">A current is pulling you in</h2>
+              <p>Swim east through the reef. Air bubbles refill your tank; touching a moving reef mine costs oxygen.</p>
+              <ul class="brief-list">
+                <li><strong>Swim:</strong> W / A / S / D or the arrow keys.</li>
+                <li><strong>Collect:</strong> Swim close to an air bubble to refill oxygen and earn points.</li>
+                <li><strong>Survive:</strong> Reach the exit before your oxygen reaches zero.</li>
+                <li><strong>Pause / restart:</strong> P or Escape pauses; R restarts the dive.</li>
+              </ul>
+              <button id="start-button" class="button button-primary" type="button">Start dive</button>
+            </div>
+          </section>
+
+          <section id="pause-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
+            <div class="dialog-card dialog-compact">
+              <p class="eyebrow">DIVE ON HOLD</p>
+              <h2 id="pause-title">Catch your breath</h2>
+              <p>Your oxygen is safe while the dive is paused.</p>
+              <button id="resume-button" class="button button-primary" type="button">Resume dive</button>
+            </div>
+          </section>
+
+          <section id="gameover-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="gameover-title" hidden>
+            <div class="dialog-card dialog-compact">
+              <p class="eyebrow">DIVE ENDED</p>
+              <h2 id="gameover-title">Out of air</h2>
+              <p id="gameover-summary"></p>
+              <button id="retry-button" class="button button-primary" type="button">Dive again</button>
+            </div>
+          </section>
+
+          <section id="complete-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="complete-title" hidden>
+            <div class="dialog-card dialog-compact">
+              <p class="eyebrow">REEF SECTOR CLEARED</p>
+              <h2 id="complete-title">You made it to the surface</h2>
+              <p id="complete-summary"></p>
+              <button id="play-again-button" class="button button-primary" type="button">Dive again</button>
+            </div>
+          </section>
+        </div>
+
+        <div class="status-row">
+          <p id="status-message" role="status" aria-live="polite">Start the dive when you are ready.</p>
+          <span class="depth-label"><span class="depth-dot" aria-hidden="true"></span> REEF SECTOR 07</span>
+        </div>
+
+        <div class="touch-controls" aria-label="Touch swim controls">
+          <div class="direction-pad">
+            <button class="touch-button direction-up" type="button" data-direction="up" aria-label="Swim up">UP</button>
+            <button class="touch-button direction-left" type="button" data-direction="left" aria-label="Swim left">LEFT</button>
+            <button class="touch-button direction-down" type="button" data-direction="down" aria-label="Swim down">DOWN</button>
+            <button class="touch-button direction-right" type="button" data-direction="right" aria-label="Swim right">RIGHT</button>
+          </div>
+          <span class="touch-hint">Hold a direction to swim</span>
+        </div>
+      </div>
+
+      <aside class="guide-panel">
+        <div class="guide-heading">
+          <div>
+            <p class="eyebrow">FIELD GUIDE</p>
+            <h2>Read the current</h2>
+          </div>
+          <svg viewBox="0 0 48 48" aria-hidden="true">
+            <path d="M5 17c6-7 12 7 19 0s13 7 19 0M5 27c6-7 12 7 19 0s13 7 19 0M5 37c6-7 12 7 19 0s13 7 19 0"/>
+          </svg>
+        </div>
+        <p class="guide-copy">The tunnel scrolls as you swim. Keep moving, steer around the moving reef mines, and collect the glowing air bubbles along the way.</p>
+
+        <div class="guide-section">
+          <h3>Dive essentials</h3>
+          <div class="guide-item"><span class="swatch swatch-diver"></span><span><strong>Your diver</strong><small>Steer in four directions through the water.</small></span></div>
+          <div class="guide-item"><span class="swatch swatch-air"></span><span><strong>Air bubbles</strong><small>Each bubble adds oxygen and 100 points.</small></span></div>
+          <div class="guide-item"><span class="swatch swatch-hazard"></span><span><strong>Reef mines</strong><small>A collision costs oxygen. Watch their patrols.</small></span></div>
+          <div class="guide-item"><span class="swatch swatch-exit"></span><span><strong>Surface gate</strong><small>Reach the exit before your tank runs dry.</small></span></div>
+        </div>
+
+        <div class="guide-section control-guide">
+          <h3>Controls</h3>
+          <p><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> swim</p>
+          <p><kbd>Arrow keys</kbd> swim in any direction</p>
+          <p><kbd>P</kbd> / <kbd>Esc</kbd> pause; <kbd>R</kbd> restart</p>
+        </div>
+
+        <div class="field-note">
+          <svg viewBox="0 0 32 32" aria-hidden="true">
+            <circle cx="16" cy="16" r="11"/>
+            <path d="M16 9v8l5 3"/>
+          </svg>
+          <div><span class="hud-label">DIVE TIP</span><strong>Oxygen drains over time</strong><small>Plan a route to the next bubble.</small></div>
+        </div>
+      </aside>
+    </section>
+
+    <footer class="footer-note">
+      <span>ONE DIVER / ONE WAY UP</span>
+      <span>VANILLA HTML / CSS / JAVASCRIPT</span>
+    </footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>

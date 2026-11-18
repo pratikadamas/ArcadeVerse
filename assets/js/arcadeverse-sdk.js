@@ -450,10 +450,31 @@
   }
 
 
-  var currentAudioConfig = {
-    muted: false,
-    volume: 1.0
-  };
+  var currentAudioConfig = (function () {
+    var muted = false;
+    var volume = 1.0;
+    try {
+      if (typeof localStorage !== "undefined") {
+        var rawMuted = localStorage.getItem("av_sound_muted");
+        if (rawMuted === null) rawMuted = localStorage.getItem("arcadeverse_muted");
+        if (rawMuted !== null) muted = rawMuted === "true";
+        var rawVol = parseFloat(localStorage.getItem("av_master_volume") || localStorage.getItem("arcadeverse_master_volume"));
+        if (!isNaN(rawVol)) volume = Math.max(0, Math.min(1, rawVol));
+      }
+      if (typeof window !== "undefined" && window.location && window.location.search) {
+        var p = new URLSearchParams(window.location.search);
+        if (p.has("av_muted")) {
+          var pm = p.get("av_muted");
+          muted = pm === "1" || pm === "true";
+        }
+        if (p.has("av_vol")) {
+          var pv = parseFloat(p.get("av_vol"));
+          if (!isNaN(pv)) volume = Math.max(0, Math.min(1, pv));
+        }
+      }
+    } catch (_) {}
+    return { muted: muted, volume: volume };
+  })();
 
   /**
    * Internal message listener for parent hub commands
@@ -533,11 +554,17 @@
         }
         break;
 
+      case "ARCADEVERSE_VOLUME_SYNC":
       case "ARCADEVERSE_AUDIO_CONFIG":
         if (typeof data.muted === "boolean") currentAudioConfig.muted = data.muted;
         if (typeof data.volume === "number") currentAudioConfig.volume = data.volume;
-        if (typeof data.sfxVolume === "number") currentAudioConfig.sfxVolume = data.sfxVolume;
-        if (typeof data.musicVolume === "number") currentAudioConfig.musicVolume = data.musicVolume;
+        if (typeof data.gain === "number" && data.muted === undefined) currentAudioConfig.volume = data.gain;
+        try {
+          localStorage.setItem("av_sound_muted", currentAudioConfig.muted ? "true" : "false");
+          localStorage.setItem("av_master_volume", String(currentAudioConfig.volume));
+          localStorage.setItem("arcadeverse_muted", currentAudioConfig.muted ? "true" : "false");
+          localStorage.setItem("arcadeverse_master_volume", String(currentAudioConfig.volume));
+        } catch (_) {}
         applyMasterGainVolume();
         for (var a = 0; a < registeredAudioContexts.length; a++) {
           try {
@@ -589,6 +616,31 @@
     }
   }
 
+  function setGainImmediately(gainAudioParam, targetValue, ctx) {
+    if (!gainAudioParam) return;
+    try {
+      var now = ctx && typeof ctx.currentTime === "number" ? ctx.currentTime : 0;
+      if (typeof gainAudioParam.cancelScheduledValues === "function") {
+        gainAudioParam.cancelScheduledValues(now);
+      }
+      if (typeof gainAudioParam.setValueAtTime === "function") {
+        gainAudioParam.setValueAtTime(targetValue, now);
+      }
+      gainAudioParam.value = targetValue;
+    } catch (_) {
+      try {
+        gainAudioParam.value = targetValue;
+      } catch (_) {}
+    }
+  }
+
+  function scaleMasterGainNode(gainNode) {
+    if (!gainNode || !gainNode.gain) return gainNode;
+    var targetGain = currentAudioConfig.muted ? 0 : currentAudioConfig.volume;
+    setGainImmediately(gainNode.gain, targetGain, gainNode.context);
+    return gainNode;
+  }
+
   /**
    * Applies hub volume and mute setting to all registered master GainNodes
    */
@@ -598,7 +650,7 @@
       try {
         var gainNode = registeredGainNodes[i];
         if (gainNode && gainNode.gain) {
-          gainNode.gain.setValueAtTime(targetGain, 0);
+          setGainImmediately(gainNode.gain, targetGain, gainNode.context);
         }
       } catch (_) {}
     }
@@ -661,6 +713,210 @@
     registeredWebGLContexts.length = 0;
   }
 
+  // ========================================================
+  // IN-BROWSER DEV MANIFEST VALIDATOR WIDGET (#704)
+  // Visible exclusively when window.location.hostname === 'localhost' or '127.0.0.1'
+  // Zero production overhead: bypassed completely on live/production domains
+  // ========================================================
+  var isDevHost = (function () {
+    try {
+      if (typeof window === "undefined" || !window.location) return false;
+      var h = window.location.hostname;
+      return h === "localhost" || h === "127.0.0.1" || h === "[::1]";
+    } catch (_) {
+      return false;
+    }
+  })();
+
+  function initDevValidator() {
+    if (!isDevHost) return;
+    if (typeof document === "undefined" || typeof window === "undefined") return;
+
+    var EMOJI_REGEX = /[\uD83C-\uDBFF\uDC00-\uDFFF]|[\u2600-\u27BF]/;
+    var REQUIRED_JSON_FIELDS = ["title", "category", "description", "author", "github"];
+
+    function runAudit() {
+      var errors = [];
+      var warnings = [];
+      var passed = [];
+
+      var jsonUrl = "game.json";
+      var cssUrl = "style.css";
+      var jsUrl = "game.js";
+
+      Promise.all([
+        // 1. Fetch game.json
+        fetch(jsonUrl).then(function (res) {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return res.text();
+        }).catch(function (err) {
+          return { error: "Missing or unreachable file: game.json (" + err.message + ")" };
+        }),
+        // 2. Head check style.css
+        fetch(cssUrl, { method: "HEAD" }).then(function (res) {
+          return res.ok;
+        }).catch(function () { return false; }),
+        // 3. Head check game.js
+        fetch(jsUrl, { method: "HEAD" }).then(function (res) {
+          return res.ok;
+        }).catch(function () { return false; })
+      ]).then(function (results) {
+        var jsonRaw = results[0];
+        var cssOk = results[1];
+        var jsOk = results[2];
+
+        // 4-file compliance check: index.html, style.css, game.js, game.json
+        if (!cssOk) {
+          errors.push("Missing required bundle file: style.css");
+        } else {
+          passed.push("style.css present");
+        }
+
+        if (!jsOk) {
+          errors.push("Missing required bundle file: game.js");
+        } else {
+          passed.push("game.js present");
+        }
+
+        if (!document.title || !document.title.trim()) {
+          errors.push("index.html is missing a <title> tag");
+        } else {
+          passed.push("index.html <title> present");
+        }
+
+        // game.json structure & field validation
+        if (typeof jsonRaw === "object" && jsonRaw.error) {
+          errors.push(jsonRaw.error);
+        } else if (typeof jsonRaw === "string") {
+          // Emoji check in game.json
+          if (EMOJI_REGEX.test(jsonRaw)) {
+            warnings.push("Unicode emoji detected in game.json (use Lucide icons or SVG)");
+          }
+
+          try {
+            var meta = JSON.parse(jsonRaw);
+            REQUIRED_JSON_FIELDS.forEach(function (field) {
+              if (!meta[field] || (typeof meta[field] === "string" && !meta[field].trim())) {
+                errors.push("game.json missing required field: \"" + field + "\"");
+              }
+            });
+
+            ["title", "category", "author", "description"].forEach(function (field) {
+              var val = meta[field];
+              if (typeof val === "string" && (val.indexOf('"') !== -1 || val.indexOf("<") !== -1 || val.indexOf(">") !== -1)) {
+                errors.push("Attribute breakout risk: \"" + field + "\" contains unescaped quotes or angle brackets");
+              }
+            });
+
+            if (errors.filter(function (e) { return e.indexOf("game.json") !== -1; }).length === 0) {
+              passed.push("game.json manifest schema valid");
+            }
+          } catch (jsonErr) {
+            errors.push("game.json contains invalid JSON: " + jsonErr.message);
+          }
+        }
+
+        // Unicode emoji scan in DOM body
+        var bodyHtml = document.body ? document.body.innerHTML : "";
+        if (EMOJI_REGEX.test(bodyHtml)) {
+          warnings.push("Unicode emoji detected in index.html DOM (replace with SVG/Lucide)");
+        } else {
+          passed.push("Zero unicode emojis in HTML");
+        }
+
+        renderBadge(errors, warnings, passed);
+        logConsole(errors, warnings, passed);
+      }).catch(function (fatal) {
+        console.warn("[ArcadeVerse DevValidator] Unexpected audit error:", fatal);
+      });
+    }
+
+    function logConsole(errors, warnings, passed) {
+      if (errors.length === 0 && warnings.length === 0) {
+        console.group("%c[ArcadeVerse DevValidator] %cPASS", "color:#38bdf8;font-weight:bold;", "color:#22c55e;font-weight:bold;");
+        passed.forEach(function (p) { console.log("%c✓ " + p, "color:#22c55e;"); });
+        console.log("%cPre-flight validation passed for local development.", "color:#94a3b8;font-style:italic;");
+        console.groupEnd();
+      } else {
+        var statusLabel = errors.length > 0 ? "FAIL (" + errors.length + " errors)" : "WARN (" + warnings.length + " warnings)";
+        var statusColor = errors.length > 0 ? "color:#ef4444;font-weight:bold;" : "color:#f59e0b;font-weight:bold;";
+        console.group("%c[ArcadeVerse DevValidator] %c" + statusLabel, "color:#38bdf8;font-weight:bold;", statusColor);
+        errors.forEach(function (e) { console.error("❌ " + e); });
+        warnings.forEach(function (w) { console.warn("⚠️ " + w); });
+        passed.forEach(function (p) { console.log("%c✓ " + p, "color:#94a3b8;"); });
+        console.groupEnd();
+      }
+    }
+
+    function renderBadge(errors, warnings, passed) {
+      var existing = document.getElementById("dev-validator-badge");
+      if (existing) existing.remove();
+
+      var badge = document.createElement("div");
+      badge.id = "dev-validator-badge";
+      badge.setAttribute("role", "status");
+      badge.setAttribute("aria-live", "polite");
+
+      var statusClass = errors.length > 0 ? "fail" : (warnings.length > 0 ? "warn" : "pass");
+      badge.className = "dev-validator-badge " + statusClass;
+
+      var statusText = errors.length > 0
+        ? "DEV: FAIL (" + errors.length + ")"
+        : (warnings.length > 0 ? "DEV: " + warnings.length + " WARN" : "DEV: PASS");
+
+      var titleAttr = errors.length > 0
+        ? "ArcadeVerse DevTools: Validation errors detected (Click to expand / check console)"
+        : "ArcadeVerse DevTools: All pre-flight checks passed";
+
+      var html = '<div class="dev-validator-pill" title="' + titleAttr + '">' +
+        '<span class="dev-validator-dot"></span>' +
+        '<span class="dev-validator-text">' + statusText + '</span>' +
+        '</div>';
+
+      html += '<div class="dev-validator-details">';
+      errors.forEach(function (e) {
+        html += '<div class="dev-validator-item error">❌ ' + escapeHtml(e) + '</div>';
+      });
+      warnings.forEach(function (w) {
+        html += '<div class="dev-validator-item warn">⚠️ ' + escapeHtml(w) + '</div>';
+      });
+      passed.forEach(function (p) {
+        html += '<div class="dev-validator-item pass">✓ ' + escapeHtml(p) + '</div>';
+      });
+      html += '</div>';
+
+      badge.innerHTML = html;
+
+      // Inline fallback styling in case game doesn't link style.css
+      badge.style.position = "fixed";
+      badge.style.bottom = "12px";
+      badge.style.right = "12px";
+      badge.style.zIndex = "999999";
+      badge.style.fontSize = "11px";
+      badge.style.fontWeight = "600";
+      badge.style.borderRadius = "20px";
+      badge.style.cursor = "pointer";
+      badge.style.userSelect = "none";
+      badge.style.fontFamily = "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif";
+
+      badge.addEventListener("click", function () {
+        badge.classList.toggle("expanded");
+      });
+
+      document.body.appendChild(badge);
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", runAudit);
+    } else {
+      setTimeout(runAudit, 120);
+    }
+  }
+
   /**
    * Initializes message bridging with parent window
    */
@@ -709,11 +965,28 @@
     if (typeof window !== "undefined") {
       window.addEventListener("message", handleParentMessage, false);
 
-      // Check localStorage for persisted volume on startup
+      // Check localStorage and URL params for persisted volume on startup
       try {
-        var isMuted = localStorage.getItem("arcadeverse_muted") === "true";
-        var masterVol = parseFloat(localStorage.getItem("arcadeverse_master_volume"));
-        if (!isNaN(masterVol)) currentAudioConfig.volume = masterVol;
+        var params = (typeof window !== "undefined" && window.location && window.location.search)
+          ? new URLSearchParams(window.location.search)
+          : null;
+
+        var isMuted = false;
+        var rawMuted = localStorage.getItem("av_sound_muted");
+        if (rawMuted === null) rawMuted = localStorage.getItem("arcadeverse_muted");
+        if (rawMuted !== null) isMuted = rawMuted === "true";
+        if (params && params.has("av_muted")) {
+          var pm = params.get("av_muted");
+          isMuted = pm === "1" || pm === "true";
+        }
+
+        var masterVol = parseFloat(localStorage.getItem("av_master_volume") || localStorage.getItem("arcadeverse_master_volume"));
+        if (params && params.has("av_vol")) {
+          var pv = parseFloat(params.get("av_vol"));
+          if (!isNaN(pv)) masterVol = pv;
+        }
+
+        if (!isNaN(masterVol)) currentAudioConfig.volume = Math.max(0, Math.min(1, masterVol));
         currentAudioConfig.muted = isMuted;
       } catch (_) {}
 
@@ -742,13 +1015,76 @@
         }, true);
       }
 
+      // Universal AudioContext & Master Gain Shield
+      // Ensures games initializing local AudioContext start muted if hub is muted
+      installAudioShield();
+
       isInitialized = true;
+    }
+  }
+
+  function installAudioShield() {
+    if (typeof window === "undefined") return;
+
+    var NativeAudioContext = window.AudioContext || window.webkitAudioContext;
+    if (NativeAudioContext && !NativeAudioContext._avPatched) {
+      function PatchedAudioContext() {
+        var args = Array.prototype.slice.call(arguments);
+        var ctx;
+        if (args.length > 0) {
+          ctx = new (Function.prototype.bind.apply(NativeAudioContext, [null].concat(args)))();
+        } else {
+          ctx = new NativeAudioContext();
+        }
+
+        if (registeredAudioContexts.indexOf(ctx) === -1) {
+          registeredAudioContexts.push(ctx);
+        }
+
+        if (currentAudioConfig.muted && ctx.state === "running") {
+          ctx.suspend().catch(function () {});
+        }
+
+        var origResume = ctx.resume;
+        ctx.resume = function () {
+          if (currentAudioConfig.muted) {
+            return Promise.resolve();
+          }
+          return origResume.apply(ctx, arguments);
+        };
+
+        return ctx;
+      }
+
+      PatchedAudioContext.prototype = NativeAudioContext.prototype;
+      PatchedAudioContext._avPatched = true;
+
+      try {
+        if (window.AudioContext) window.AudioContext = PatchedAudioContext;
+        if (window.webkitAudioContext) window.webkitAudioContext = PatchedAudioContext;
+      } catch (_) {}
+    }
+
+    if (typeof window.AudioNode !== "undefined" && window.AudioNode.prototype && !window.AudioNode.prototype._avConnectPatched) {
+      var origConnect = window.AudioNode.prototype.connect;
+      window.AudioNode.prototype.connect = function (target) {
+        var isGain = (typeof window.GainNode !== "undefined" && this instanceof window.GainNode) ||
+                     (this && this.gain && typeof this.gain.setValueAtTime === "function");
+        if (isGain && target && this.context && (target === this.context.destination)) {
+          if (registeredGainNodes.indexOf(this) === -1) {
+            registeredGainNodes.push(this);
+          }
+          scaleMasterGainNode(this);
+        }
+        return origConnect.apply(this, arguments);
+      };
+      window.AudioNode.prototype._avConnectPatched = true;
     }
   }
 
   init();
 
-  return {
+  var sdkInstance = {
     version: "1.1.0",
 
     /**
@@ -793,56 +1129,55 @@
     },
 
     /**
-     * Retrieves current simulation speed multiplier (e.g. 0.5, 1.0, 1.5)
-     * @returns {number}
-     */
-    getGameSpeed: function () {
-      return currentGameSpeed;
-    },
-
-    /**
-     * Registers a callback triggered when speed multiplier changes
-     * @param {Function} callback receives { speed: number, speedMultiplier: number }
-     */
-    onSpeedChange: function (callback) {
-      if (typeof callback === "function") {
-        speedChangeHandlers.push(callback);
-        try {
-          callback({ speed: currentGameSpeed, speedMultiplier: currentGameSpeed });
-        } catch (_) {}
-      }
-      return this;
-    },
-
-    /**
-     * Dedicated Time Dilation & Frame-Pacing Subsystem
-     */
-    time: {
-      getSpeed: function () {
-        return currentGameSpeed;
-      },
-      scaleDeltaTime: function (rawDt) {
-        return (typeof rawDt === "number" ? rawDt : 0.016) * currentGameSpeed;
-      },
-      onSpeedChange: function (callback) {
-        if (typeof callback === "function") {
-          speedChangeHandlers.push(callback);
-          try {
-            callback({ speed: currentGameSpeed, speedMultiplier: currentGameSpeed });
-          } catch (_) {}
-        }
-      }
-    },
-
-    /**
-     * Track an AudioContext for automatic suspension/closure on teardown
+     * Track an AudioContext for automatic suspension/closure on teardown and mute synchronization
      * @param {AudioContext} ctx
      */
     trackAudioContext: function (ctx) {
-      if (ctx && registeredAudioContexts.indexOf(ctx) === -1) {
-        registeredAudioContexts.push(ctx);
+      if (ctx) {
+        if (registeredAudioContexts.indexOf(ctx) === -1) {
+          registeredAudioContexts.push(ctx);
+        }
+        if (!this._trackedAudioContexts) this._trackedAudioContexts = [];
+        if (this._trackedAudioContexts.indexOf(ctx) === -1) {
+          this._trackedAudioContexts.push(ctx);
+        }
+        if (currentAudioConfig.muted && ctx.state === "running") {
+          ctx.suspend().catch(function () {});
+        }
       }
       return ctx;
+    },
+
+    /**
+     * Alias for trackAudioContext
+     */
+    registerAudioContext: function (ctx) {
+      return this.trackAudioContext(ctx);
+    },
+
+    /**
+     * Registers and scales any master GainNode to match the hub volume and mute state
+     * @param {GainNode} gainNode
+     * @returns {GainNode}
+     */
+    registerMasterGainNode: function (gainNode) {
+      if (gainNode && registeredGainNodes.indexOf(gainNode) === -1) {
+        registeredGainNodes.push(gainNode);
+      }
+      if (gainNode) {
+        scaleMasterGainNode(gainNode);
+        if (gainNode.context) {
+          this.trackAudioContext(gainNode.context);
+        }
+      }
+      return gainNode;
+    },
+
+    /**
+     * Alias for registerMasterGainNode
+     */
+    registerGainNode: function (gainNode) {
+      return this.registerMasterGainNode(gainNode);
     },
 
     /**
@@ -854,7 +1189,7 @@
     createMasterGain: function (ctx) {
       if (!ctx) return null;
       var gainNode = ctx.createGain();
-      gainNode.gain.setValueAtTime(currentAudioConfig.muted ? 0 : currentAudioConfig.volume, 0);
+      scaleMasterGainNode(gainNode);
       gainNode.connect(ctx.destination);
       if (registeredGainNodes.indexOf(gainNode) === -1) {
         registeredGainNodes.push(gainNode);
@@ -1203,26 +1538,38 @@
       var masterGain = ctx.createGain();
       masterGain.connect(ctx.destination);
 
-      var currentVolume = 0.5;
-      var isMuted = false;
+      var currentVolume = currentAudioConfig.volume;
+      var isMuted = currentAudioConfig.muted;
+
+      if (registeredGainNodes.indexOf(masterGain) === -1) {
+        registeredGainNodes.push(masterGain);
+      }
+      this.trackAudioContext(ctx);
+      scaleMasterGainNode(masterGain);
 
       var applyGain = function () {
         var targetGain = isMuted ? 0 : currentVolume;
         if (ctx.state === 'running') {
-          masterGain.gain.setValueAtTime(masterGain.gain.value, ctx.currentTime);
-          masterGain.gain.linearRampToValueAtTime(targetGain, ctx.currentTime + 0.05);
+          try {
+            masterGain.gain.setValueAtTime(masterGain.gain.value, ctx.currentTime);
+            masterGain.gain.linearRampToValueAtTime(targetGain, ctx.currentTime + 0.05);
+          } catch (_) {
+            setGainImmediately(masterGain.gain, targetGain, ctx);
+          }
         } else {
-          masterGain.gain.value = targetGain;
+          setGainImmediately(masterGain.gain, targetGain, ctx);
         }
         if (typeof onVolumeChange === 'function') {
           onVolumeChange(currentVolume, isMuted);
         }
       };
 
+      applyGain();
+
       // Listen for parent hub audio broadcasts
       var handleMessage = function (e) {
         if (!e || !e.data) return;
-        if (e.data.type === 'ARCADEVERSE_AUDIO_CONFIG') {
+        if (e.data.type === 'ARCADEVERSE_VOLUME_SYNC' || e.data.type === 'ARCADEVERSE_AUDIO_CONFIG') {
           if (typeof e.data.muted === 'boolean') isMuted = e.data.muted;
           if (typeof e.data.volume === 'number') currentVolume = Math.max(0, Math.min(1, e.data.volume));
           applyGain();
@@ -1259,6 +1606,8 @@
         },
         dispose: function () {
           window.removeEventListener('message', handleMessage);
+          var idx = registeredGainNodes.indexOf(masterGain);
+          if (idx !== -1) registeredGainNodes.splice(idx, 1);
           try {
             masterGain.disconnect();
           } catch (_e) {}
@@ -1427,81 +1776,590 @@
     },
 
     // ========================================================
-    // CANVAS MEDIA RECORDER API REPLAY EXPORTER (#658)
-    // 15-second rolling buffer replay recorder & webm clip generator
+    // ARCADEVERSE CAMERA & VIEWPORT SUBSYSTEM
+    // Handles 0.5x to 2.0x zoom, middle-click/drag-to-pan,
+    // smooth matrix transformations, zero coordinate drift,
+    // on-screen reset HUD, and screen-to-world projection
     // ========================================================
-    initReplayRecorder: function (canvas, fps) {
-      if (!canvas || typeof canvas.captureStream !== 'function' || typeof MediaRecorder === 'undefined') {
-        return null;
-      }
-
-      var stream = canvas.captureStream(fps || 30);
-      var recordedChunks = [];
-      var recorder = null;
-
-      try {
-        var options = { mimeType: 'video/webm;codecs=vp9' };
-        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-          options = { mimeType: 'video/webm' };
+    camera: {
+      /**
+       * Enables interactive zoom & pan on an HTML5 Canvas with smooth matrix transformations.
+       * @param {HTMLCanvasElement|string} canvas - Canvas element or selector
+       * @param {Object} [options]
+       * @param {number} [options.minZoom=0.5] Minimum scale factor
+       * @param {number} [options.maxZoom=2.0] Maximum scale factor
+       * @param {number} [options.zoomStep=0.1] Zoom step increment per mouse wheel tick
+       * @param {boolean} [options.showResetButton=true] Whether to show floating reset HUD
+       * @param {boolean} [options.dragToPan=false] Whether left-click dragging also pans without modifier
+       * @param {HTMLElement} [options.container] Parent container for the reset HUD
+       * @returns {Object} Camera controller instance
+       */
+      enableZoomPan: function (canvas, options) {
+        if (typeof canvas === 'string' && typeof document !== 'undefined') {
+          canvas = document.getElementById(canvas) || document.querySelector(canvas);
         }
-        recorder = new MediaRecorder(stream, options);
-      } catch (_) {
-        return null;
-      }
+        if (!canvas) {
+          console.warn('[ArcadeVerse.camera] enableZoomPan called with invalid canvas');
+          return null;
+        }
 
-      recorder.ondataavailable = function (e) {
-        if (e.data && e.data.size > 0) {
-          recordedChunks.push(e.data);
-          // Keep rolling buffer (~15 chunks at 1s intervals)
-          if (recordedChunks.length > 15) {
-            recordedChunks.shift();
+        options = options || {};
+        var minZoom = typeof options.minZoom === 'number' ? Math.max(0.1, options.minZoom) : 0.5;
+        var maxZoom = typeof options.maxZoom === 'number' ? Math.min(10.0, options.maxZoom) : 2.0;
+        var zoomStep = typeof options.zoomStep === 'number' ? options.zoomStep : 0.1;
+        var showResetButton = options.showResetButton !== false;
+        var dragToPan = !!options.dragToPan;
+
+        var zoom = 1.0;
+        var panX = 0;
+        var panY = 0;
+
+        var isDragging = false;
+        var dragStartX = 0;
+        var dragStartY = 0;
+        var initialPanX = 0;
+        var initialPanY = 0;
+        var hasMovedBeyondThreshold = false;
+        var DRAG_THRESHOLD = 4; // px threshold to avoid accidental pan drift on normal clicks
+        var isSpacePressed = false;
+        var changeListeners = [];
+
+        // Save original styles
+        var origTransform = canvas.style.transform || '';
+        var origTransformOrigin = canvas.style.transformOrigin || '';
+        var origTransition = canvas.style.transition || '';
+
+        canvas.style.transformOrigin = '0 0';
+
+        function updateTransform(withAnimation) {
+          if (zoom < minZoom) zoom = minZoom;
+          if (zoom > maxZoom) zoom = maxZoom;
+
+          zoom = Math.round(zoom * 10000) / 10000;
+          panX = Math.round(panX * 100) / 100;
+          panY = Math.round(panY * 100) / 100;
+
+          if (withAnimation) {
+            canvas.style.transition = 'transform 0.22s cubic-bezier(0.2, 0, 0, 1)';
+            setTimeout(function () {
+              if (canvas) canvas.style.transition = origTransition || 'none';
+            }, 220);
+          } else {
+            canvas.style.transition = 'none';
+          }
+
+          canvas.style.transform = 'matrix(' + zoom + ', 0, 0, ' + zoom + ', ' + panX + ', ' + panY + ')';
+
+          updateHud();
+
+          for (var i = 0; i < changeListeners.length; i++) {
+            try {
+              changeListeners[i]({
+                zoom: zoom,
+                panX: panX,
+                panY: panY,
+                matrix: [zoom, 0, 0, zoom, panX, panY]
+              });
+            } catch (_) {}
           }
         }
-      };
 
-      try {
-        recorder.start(1000);
-      } catch (_) {}
+        /**
+         * Projects screen or client coordinates to in-game canvas/world coordinates
+         * Accurate at any zoom level with zero drift
+         * @param {number|MouseEvent|TouchEvent} clientX - Client X coordinate or event
+         * @param {number} [clientY] - Client Y coordinate
+         * @returns {{ x: number, y: number, bufferX: number, bufferY: number }}
+         */
+        function screenToWorld(clientX, clientY) {
+          if (clientX && typeof clientX === 'object') {
+            var evt = clientX;
+            clientX = typeof evt.clientX === 'number' ? evt.clientX : (evt.touches && evt.touches[0] ? evt.touches[0].clientX : 0);
+            clientY = typeof evt.clientY === 'number' ? evt.clientY : (evt.touches && evt.touches[0] ? evt.touches[0].clientY : 0);
+          }
 
-      return {
-        exportClip: function (filename) {
-          if (recordedChunks.length === 0) return null;
-          var blob = new Blob(recordedChunks, { type: 'video/webm' });
-          var url = URL.createObjectURL(blob);
-          var a = document.createElement('a');
-          a.href = url;
-          a.download = (filename || 'arcadeverse_replay') + '.webm';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          setTimeout(function () {
-            URL.revokeObjectURL(url);
-          }, 4000);
-          return url;
-        },
-        stop: function () {
-          try {
-            if (recorder && recorder.state !== 'inactive') {
-              recorder.stop();
-            }
-          } catch (_) {}
-          recordedChunks = [];
+          var rect = canvas.getBoundingClientRect();
+          var cssWidth = canvas.clientWidth || (rect.width > 0 ? rect.width / (zoom || 1) : canvas.width || 800);
+          var cssHeight = canvas.clientHeight || (rect.height > 0 ? rect.height / (zoom || 1) : canvas.height || 600);
+
+          var scaleX = rect.width > 0 ? (cssWidth / (rect.width / zoom)) : 1;
+          var scaleY = rect.height > 0 ? (cssHeight / (rect.height / zoom)) : 1;
+
+          var worldX = ((clientX - rect.left) / zoom) * scaleX;
+          var worldY = ((clientY - rect.top) / zoom) * scaleY;
+
+          var bufScaleX = canvas.width && cssWidth > 0 ? (canvas.width / cssWidth) : 1;
+          var bufScaleY = canvas.height && cssHeight > 0 ? (canvas.height / cssHeight) : 1;
+
+          return {
+            x: Math.round(worldX * 100) / 100,
+            y: Math.round(worldY * 100) / 100,
+            bufferX: Math.round(worldX * bufScaleX * 100) / 100,
+            bufferY: Math.round(worldY * bufScaleY * 100) / 100
+          };
         }
-      };
+
+        /**
+         * Projects in-game world coordinates to screen/client coordinates
+         * @param {number} worldX
+         * @param {number} worldY
+         * @returns {{ x: number, y: number }}
+         */
+        function worldToScreen(worldX, worldY) {
+          var rect = canvas.getBoundingClientRect();
+          var cssWidth = canvas.clientWidth || (rect.width > 0 ? rect.width / (zoom || 1) : canvas.width || 800);
+          var cssHeight = canvas.clientHeight || (rect.height > 0 ? rect.height / (zoom || 1) : canvas.height || 600);
+
+          var scaleX = rect.width > 0 ? (cssWidth / (rect.width / zoom)) : 1;
+          var scaleY = rect.height > 0 ? (cssHeight / (rect.height / zoom)) : 1;
+
+          var screenX = rect.left + (worldX / scaleX) * zoom;
+          var screenY = rect.top + (worldY / scaleY) * zoom;
+
+          return {
+            x: Math.round(screenX * 100) / 100,
+            y: Math.round(screenY * 100) / 100
+          };
+        }
+
+        // Attach coordinate helpers to canvas directly for convenient access
+        canvas.screenToWorld = screenToWorld;
+        canvas.worldToScreen = worldToScreen;
+
+        // Augment pointer events with accurate worldX and worldY coordinates
+        function augmentPointerEvent(e) {
+          if (!e) return;
+          try {
+            var coords = screenToWorld(e.clientX, e.clientY);
+            e.worldX = coords.x;
+            e.worldY = coords.y;
+            e.bufferWorldX = coords.bufferX;
+            e.bufferWorldY = coords.bufferY;
+          } catch (_) {}
+        }
+
+        // Mouse Wheel Scaling (0.5x to 2.0x) around cursor focal point
+        function handleWheel(e) {
+          e.preventDefault();
+
+          var delta = -e.deltaY;
+          var factor = delta > 0 ? (1 + zoomStep) : (1 - zoomStep);
+          var newZoom = zoom * factor;
+          if (newZoom < minZoom) newZoom = minZoom;
+          if (newZoom > maxZoom) newZoom = maxZoom;
+
+          if (Math.abs(newZoom - zoom) < 0.001) return;
+
+          var rect = canvas.getBoundingClientRect();
+          var cursorX = e.clientX - rect.left;
+          var cursorY = e.clientY - rect.top;
+
+          var worldX = cursorX / zoom;
+          var worldY = cursorY / zoom;
+
+          panX = panX + cursorX - (worldX * newZoom);
+          panY = panY + cursorY - (worldY * newZoom);
+          zoom = newZoom;
+
+          updateTransform(false);
+        }
+
+        // Middle-click or Drag-to-Pan Handling
+        function handlePointerDown(e) {
+          augmentPointerEvent(e);
+
+          var isMiddleClick = (e.button === 1);
+          var isModifierDrag = (e.button === 0 && (e.altKey || e.shiftKey || isSpacePressed || dragToPan));
+
+          if (isMiddleClick || isModifierDrag) {
+            isDragging = true;
+            hasMovedBeyondThreshold = false;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            initialPanX = panX;
+            initialPanY = panY;
+
+            if (isMiddleClick) {
+              e.preventDefault();
+            }
+
+            if (typeof canvas.setPointerCapture === 'function' && e.pointerId) {
+              try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+            }
+          }
+        }
+
+        function handlePointerMove(e) {
+          augmentPointerEvent(e);
+
+          if (!isDragging) return;
+
+          var dx = e.clientX - dragStartX;
+          var dy = e.clientY - dragStartY;
+
+          if (!hasMovedBeyondThreshold) {
+            if (Math.sqrt(dx * dx + dy * dy) >= DRAG_THRESHOLD) {
+              hasMovedBeyondThreshold = true;
+            }
+          }
+
+          if (hasMovedBeyondThreshold) {
+            panX = initialPanX + dx;
+            panY = initialPanY + dy;
+            updateTransform(false);
+          }
+        }
+
+        function handlePointerUp(e) {
+          augmentPointerEvent(e);
+
+          if (isDragging) {
+            if (hasMovedBeyondThreshold) {
+              var preventClick = function (ev) {
+                ev.stopPropagation();
+                ev.preventDefault();
+                window.removeEventListener('click', preventClick, true);
+              };
+              window.addEventListener('click', preventClick, true);
+              setTimeout(function () {
+                window.removeEventListener('click', preventClick, true);
+              }, 50);
+            }
+            isDragging = false;
+            hasMovedBeyondThreshold = false;
+          }
+        }
+
+        function handleKeyDown(e) {
+          if (e.code === 'Space' || e.key === ' ') {
+            isSpacePressed = true;
+          }
+        }
+
+        function handleKeyUp(e) {
+          if (e.code === 'Space' || e.key === ' ') {
+            isSpacePressed = false;
+          }
+        }
+
+        function handleAuxClick(e) {
+          if (e.button === 1) {
+            e.preventDefault();
+          }
+        }
+
+        // Bind canvas listeners
+        canvas.addEventListener('wheel', handleWheel, { passive: false });
+        canvas.addEventListener('pointerdown', handlePointerDown);
+        canvas.addEventListener('pointermove', handlePointerMove);
+        canvas.addEventListener('pointerup', handlePointerUp);
+        canvas.addEventListener('auxclick', handleAuxClick);
+        canvas.addEventListener('click', augmentPointerEvent, true);
+        if (typeof window !== 'undefined') {
+          window.addEventListener('keydown', handleKeyDown);
+          window.addEventListener('keyup', handleKeyUp);
+          window.addEventListener('pointerup', handlePointerUp);
+        }
+
+        // ========================================================
+        // ON-SCREEN ZOOM RESET & CONTROLS HUD
+        // ========================================================
+        var hudElement = null;
+        var zoomLabelElement = null;
+
+        function createHud() {
+          if (!showResetButton || typeof document === 'undefined') return;
+
+          var targetParent = options.container || canvas.parentElement || document.body;
+          if (targetParent && targetParent !== document.body) {
+            var computedStyle = window.getComputedStyle ? window.getComputedStyle(targetParent) : targetParent.style;
+            if (computedStyle && computedStyle.position === 'static') {
+              targetParent.style.position = 'relative';
+            }
+          }
+
+          var hud = document.createElement('div');
+          hud.className = 'av-camera-zoom-hud';
+          hud.setAttribute('role', 'region');
+          hud.setAttribute('aria-label', 'Camera Zoom Controls');
+          hud.style.cssText = [
+            'position: absolute',
+            'top: 14px',
+            'right: 14px',
+            'z-index: 9999',
+            'display: inline-flex',
+            'align-items: center',
+            'gap: 4px',
+            'padding: 4px 6px',
+            'background: rgba(15, 23, 42, 0.85)',
+            'backdrop-filter: blur(8px)',
+            '-webkit-backdrop-filter: blur(8px)',
+            'border: 1px solid rgba(255, 255, 255, 0.15)',
+            'border-radius: 8px',
+            'box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35)',
+            'user-select: none',
+            'pointer-events: auto',
+            'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+          ].join(';');
+
+          var btnStyle = [
+            'background: rgba(255, 255, 255, 0.08)',
+            'color: #f1f5f9',
+            'border: 1px solid rgba(255, 255, 255, 0.12)',
+            'border-radius: 6px',
+            'padding: 3px 8px',
+            'font-size: 13px',
+            'font-weight: 600',
+            'line-height: 1.2',
+            'cursor: pointer',
+            'transition: background 0.15s, border-color 0.15s, transform 0.1s',
+            'outline: none'
+          ].join(';');
+
+          // Zoom Out Button (-)
+          var btnZoomOut = document.createElement('button');
+          btnZoomOut.type = 'button';
+          btnZoomOut.textContent = '−';
+          btnZoomOut.title = 'Zoom Out';
+          btnZoomOut.setAttribute('aria-label', 'Zoom Out');
+          btnZoomOut.style.cssText = btnStyle;
+          btnZoomOut.addEventListener('click', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            controller.zoomOut();
+          });
+
+          // Zoom Label / Percentage Indicator
+          var zoomLabel = document.createElement('span');
+          zoomLabel.className = 'av-camera-zoom-label';
+          zoomLabel.textContent = '100%';
+          zoomLabel.style.cssText = [
+            'min-width: 44px',
+            'text-align: center',
+            'font-size: 12px',
+            'font-weight: 600',
+            'color: #38bdf8',
+            'padding: 0 4px',
+            'letter-spacing: 0.02em'
+          ].join(';');
+
+          // Zoom In Button (+)
+          var btnZoomIn = document.createElement('button');
+          btnZoomIn.type = 'button';
+          btnZoomIn.textContent = '+';
+          btnZoomIn.title = 'Zoom In';
+          btnZoomIn.setAttribute('aria-label', 'Zoom In');
+          btnZoomIn.style.cssText = btnStyle;
+          btnZoomIn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            controller.zoomIn();
+          });
+
+          // Zoom Reset Button (Reset)
+          var btnReset = document.createElement('button');
+          btnReset.type = 'button';
+          btnReset.className = 'av-camera-reset-btn';
+          btnReset.textContent = 'Reset';
+          btnReset.title = 'Reset Zoom & Pan (1.0x)';
+          btnReset.setAttribute('aria-label', 'Reset Zoom and Pan');
+          btnReset.style.cssText = btnStyle + '; background: rgba(56, 189, 248, 0.18); border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;';
+          btnReset.addEventListener('click', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            controller.reset(true);
+          });
+
+          hud.appendChild(btnZoomOut);
+          hud.appendChild(zoomLabel);
+          hud.appendChild(btnZoomIn);
+          hud.appendChild(btnReset);
+
+          targetParent.appendChild(hud);
+
+          hudElement = hud;
+          zoomLabelElement = zoomLabel;
+        }
+
+        function updateHud() {
+          if (zoomLabelElement) {
+            zoomLabelElement.textContent = Math.round(zoom * 100) + '%';
+          }
+        }
+
+        createHud();
+
+        // Initial transform
+        updateTransform(false);
+
+        var controller = {
+          get zoom() { return zoom; },
+          get panX() { return panX; },
+          get panY() { return panY; },
+          get minZoom() { return minZoom; },
+          get maxZoom() { return maxZoom; },
+
+          /**
+           * Resets zoom to 1.0x and pan to (0, 0)
+           * @param {boolean} [animate=true]
+           */
+          reset: function (animate) {
+            zoom = 1.0;
+            panX = 0;
+            panY = 0;
+            updateTransform(animate !== false);
+            return this;
+          },
+
+          /**
+           * Zooms in by one zoomStep
+           */
+          zoomIn: function () {
+            var rect = canvas.getBoundingClientRect();
+            var focalX = rect.left + rect.width / 2;
+            var focalY = rect.top + rect.height / 2;
+            return this.setZoom(zoom + zoomStep, focalX, focalY);
+          },
+
+          /**
+           * Zooms out by one zoomStep
+           */
+          zoomOut: function () {
+            var rect = canvas.getBoundingClientRect();
+            var focalX = rect.left + rect.width / 2;
+            var focalY = rect.top + rect.height / 2;
+            return this.setZoom(zoom - zoomStep, focalX, focalY);
+          },
+
+          /**
+           * Sets zoom factor (clamped between minZoom and maxZoom)
+           * @param {number} newZoom
+           * @param {number} [focalX] Screen clientX to zoom towards
+           * @param {number} [focalY] Screen clientY to zoom towards
+           */
+          setZoom: function (newZoom, focalX, focalY) {
+            if (typeof newZoom !== 'number' || isNaN(newZoom)) return this;
+            var targetZoom = Math.max(minZoom, Math.min(maxZoom, newZoom));
+            if (Math.abs(targetZoom - zoom) < 0.001) return this;
+
+            var rect = canvas.getBoundingClientRect();
+            var fx = typeof focalX === 'number' ? focalX - rect.left : rect.width / 2;
+            var fy = typeof focalY === 'number' ? focalY - rect.top : rect.height / 2;
+
+            var worldX = fx / zoom;
+            var worldY = fy / zoom;
+
+            panX = panX + fx - (worldX * targetZoom);
+            panY = panY + fy - (worldY * targetZoom);
+            zoom = targetZoom;
+
+            updateTransform(false);
+            return this;
+          },
+
+          /**
+           * Sets pan coordinates
+           * @param {number} x
+           * @param {number} y
+           */
+          setPan: function (x, y) {
+            if (typeof x === 'number') panX = x;
+            if (typeof y === 'number') panY = y;
+            updateTransform(false);
+            return this;
+          },
+
+          /**
+           * Projects screen/client coordinates to world coordinates
+           */
+          screenToWorld: screenToWorld,
+
+          /**
+           * Projects world coordinates to screen/client coordinates
+           */
+          worldToScreen: worldToScreen,
+
+          /**
+           * Gets affine transformation matrix array [a, b, c, d, e, f]
+           */
+          getMatrix: function () {
+            return [zoom, 0, 0, zoom, panX, panY];
+          },
+
+          /**
+           * Gets transform description object
+           */
+          getTransform: function () {
+            return {
+              zoom: zoom,
+              panX: panX,
+              panY: panY,
+              matrix: [zoom, 0, 0, zoom, panX, panY]
+            };
+          },
+
+          /**
+           * Applies current camera matrix to a 2D rendering context
+           * @param {CanvasRenderingContext2D} ctx
+           */
+          applyTransform: function (ctx) {
+            if (ctx && typeof ctx.setTransform === 'function') {
+              ctx.setTransform(zoom, 0, 0, zoom, panX, panY);
+            }
+            return this;
+          },
+
+          /**
+           * Subscribe to camera transformation change events
+           * @param {Function} callback
+           */
+          onChange: function (callback) {
+            if (typeof callback === 'function') {
+              changeListeners.push(callback);
+            }
+            return this;
+          },
+
+          /**
+           * Destroys camera controller, removes listeners and reset HUD
+           */
+          destroy: function () {
+            canvas.removeEventListener('wheel', handleWheel);
+            canvas.removeEventListener('pointerdown', handlePointerDown);
+            canvas.removeEventListener('pointermove', handlePointerMove);
+            canvas.removeEventListener('pointerup', handlePointerUp);
+            canvas.removeEventListener('auxclick', handleAuxClick);
+            canvas.removeEventListener('click', augmentPointerEvent, true);
+            if (typeof window !== 'undefined') {
+              window.removeEventListener('keydown', handleKeyDown);
+              window.removeEventListener('keyup', handleKeyUp);
+              window.removeEventListener('pointerup', handlePointerUp);
+            }
+
+            if (hudElement && hudElement.parentNode) {
+              hudElement.parentNode.removeChild(hudElement);
+            }
+
+            canvas.style.transform = origTransform;
+            canvas.style.transformOrigin = origTransformOrigin;
+            canvas.style.transition = origTransition;
+
+            if (canvas.screenToWorld === screenToWorld) {
+              delete canvas.screenToWorld;
+            }
+            if (canvas.worldToScreen === worldToScreen) {
+              delete canvas.worldToScreen;
+            }
+          }
+        };
+
+        canvas.arcadeverseCamera = controller;
+        return controller;
+      }
     },
 
-    // ========================================================
-    // POINTER LOCK API INTEGRATION SUBSYSTEM (#573)
-    // First-person & precision crosshair aiming with ESC release HUD
-    // ========================================================
     /**
-     * Binds HTML5 Pointer Lock API to a game canvas.
-     * @param {HTMLCanvasElement} canvas - Target game canvas
-     * @param {Object} options - Configuration options
-     * @param {Function} options.onMove - Callback with (movementX, movementY, e)
-     * @param {Function} [options.onLockChange] - Callback with (isLocked)
-     * @param {number} [options.sensitivity=1.0] - Mouse sensitivity multiplier
-     * @returns {{ requestLock: Function, exitLock: Function, isLocked: Function }}
+     * Pointer lock controller for first-person canvas games.
      */
     initPointerLock: function (canvas, options) {
       if (!canvas) return null;
@@ -1635,6 +2493,22 @@
      */
     prefersReducedMotion: function () {
       return this.a11y.prefersReducedMotion();
+    },
+
+    /**
+     * Alias for camera.enableZoomPan
+     */
+    enableZoomPan: function (canvas, options) {
+      return this.camera.enableZoomPan(canvas, options);
     }
   };
+
+  if (typeof window !== "undefined") {
+    try {
+      window.ArcadeVerse = sdkInstance;
+      window.arcadeverse = sdkInstance;
+    } catch (_) {}
+  }
+
+  return sdkInstance;
 });

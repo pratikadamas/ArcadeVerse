@@ -2248,6 +2248,35 @@ html.a11y-reduced-motion .game-card.removing-favorite {
   transform: scale(1.1);
 }
 
+/* Play count, only rendered while the Most Played sort is active */
+.game-plays-badge {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(12, 14, 20, 0.8);
+  border: 1px solid var(--border-subtle);
+  color: #fbbf24;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+}
+
+#games-grid.view-list .game-card-preview .game-plays-badge {
+  position: static !important;
+  flex-shrink: 0 !important;
+  white-space: nowrap;
+}
+
+[data-theme="light"] .game-plays-badge {
+  background: rgba(255, 255, 255, 0.95);
+  color: #b45309;
+  border: 1px solid var(--border-medium);
+}
+
 .game-category-tag {
   position: absolute;
   top: 1rem;
@@ -3155,6 +3184,14 @@ body.modal-pseudo-fullscreen-active #game-frame {
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.25);
   transform: translateY(-1px);
+}
+
+.modal-controls .btn-icon:focus-visible,
+.modal-controls .btn-close:focus-visible,
+.modal-controls a.btn-icon:focus-visible {
+  outline: 2px solid var(--accent-primary, #00f0ff);
+  outline-offset: 2px;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.45);
 }
 
 #modal-fav-btn.favorited {
@@ -9026,9 +9063,16 @@ html.light-mode .trophy-modal-title {
 
 /* Keyboard Accessibility Focus Indicators */
 .modal-controls .btn-icon:focus-visible,
-.modal-controls .btn-close:focus-visible {
-  outline: 2px solid var(--accent-primary) !important;
+.modal-controls .btn-close:focus-visible,
+.modal-controls a.btn-icon:focus-visible {
+  outline: 2px solid var(--accent-primary, #00f0ff) !important;
   outline-offset: 2px;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.45);
+}
+
+.modal-frame-wrapper iframe:focus-visible {
+  outline: 2px solid var(--accent-primary, #00f0ff) !important;
+  outline-offset: -2px;
 }
 
 /* Screen Orientation Transitions for Modal Frame */
@@ -9265,6 +9309,139 @@ canvas.game-canvas {
   padding: 2rem;
   text-align: center;
   backdrop-filter: blur(8px);
+}
+
+/* Retro CRT skeleton shown over the game frame while the iframe loads.
+   Out of flow and hidden with opacity + visibility, so it never moves the layout
+   and needs no JS timer to finish the fade. Sits under the error boundary (z-index 10). */
+.game-loader-skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 1rem;
+  overflow: hidden;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s ease, visibility 0s linear 0.4s;
+  background:
+    repeating-linear-gradient(to bottom, rgba(0, 245, 255, 0.06) 0, rgba(0, 245, 255, 0.06) 1px, transparent 1px, transparent 4px),
+    radial-gradient(ellipse at 50% 115%, rgba(255, 0, 170, 0.28), transparent 60%),
+    radial-gradient(ellipse at 50% 45%, rgba(0, 245, 255, 0.10), transparent 55%),
+    #07060f;
+}
+
+.game-loader-skeleton.active {
+  opacity: 1;
+  visibility: visible;
+  transition: none;
+}
+
+/* CRT pulsing glow */
+.game-loader-skeleton::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(0, 245, 255, 0.16), transparent 70%);
+  box-shadow: inset 0 0 90px rgba(0, 0, 0, 0.75);
+  animation: game-loader-crt-pulse 1.8s ease-in-out infinite;
+}
+
+/* Shimmer band rolling down the screen */
+.game-loader-skeleton::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 30%;
+  background: linear-gradient(to bottom, transparent, rgba(0, 245, 255, 0.12), transparent);
+  transform: translateY(-100%);
+  animation: game-loader-shimmer 2.6s linear infinite;
+}
+
+.game-loader-spinner {
+  position: relative;
+  z-index: 1;
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(255, 0, 170, 0.28);
+  border-top-color: #00f5ff;
+  border-radius: 50%;
+  box-shadow: 0 0 18px rgba(0, 245, 255, 0.55), inset 0 0 12px rgba(255, 0, 170, 0.45);
+  animation: game-loader-spin 1s linear infinite, game-loader-neon-pulse 1.8s ease-in-out infinite;
+}
+
+.game-loader-text {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-code);
+  font-size: clamp(0.72rem, 2.4vw, 1rem);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #7df9ff;
+  text-shadow: 0 0 8px rgba(0, 245, 255, 0.8), 0 0 18px rgba(255, 0, 170, 0.5);
+}
+
+/* Do not keep animating behind a running game */
+.game-loader-skeleton::before,
+.game-loader-skeleton::after,
+.game-loader-spinner {
+  animation-play-state: paused;
+}
+
+.game-loader-skeleton.active::before,
+.game-loader-skeleton.active::after,
+.game-loader-skeleton.active .game-loader-spinner {
+  animation-play-state: running;
+}
+
+@keyframes game-loader-crt-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+@keyframes game-loader-shimmer {
+  to { transform: translateY(334%); }
+}
+
+@keyframes game-loader-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes game-loader-neon-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-loader-skeleton,
+  .game-loader-skeleton::before,
+  .game-loader-spinner {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .game-loader-skeleton::after {
+    display: none;
+  }
+}
+
+html.a11y-reduced-motion .game-loader-skeleton,
+html.a11y-reduced-motion .game-loader-skeleton::before,
+html.a11y-reduced-motion .game-loader-spinner {
+  animation: none !important;
+  transition: none !important;
+}
+
+html.a11y-reduced-motion .game-loader-skeleton::after {
+  display: none;
 }
 
 /* Custom Playlists & Collections Drawer Styling */
@@ -11552,9 +11729,171 @@ html.a11y-reduced-motion .search-clear-btn {
   transform: scale(1.2);
 }
 
-/* ===================================================
-   CARD MICRO-PREVIEW ANIMATED CANVAS BANNER (#588)
-   =================================================== */
+/* ========================================================
+   CYBERNETIC PWA UPDATE AVAILABLE BANNER (#555)
+   ======================================================== */
+.av-update-toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+.av-update-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 20px rgba(6, 182, 212, 0.25);
+  border-radius: 12px;
+  padding: 14px 18px;
+  color: #f8fafc;
+  font-family: inherit;
+  transform: translateY(120%);
+  opacity: 0;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+  max-width: 440px;
+}
+
+.av-update-toast.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.av-update-toast-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.av-update-icon-glow {
+  color: #06b6d4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  animation: av-update-pulse 2s infinite ease-in-out;
+}
+
+@keyframes av-update-pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px #06b6d4);
+  }
+  50% {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 8px #06b6d4);
+  }
+}
+
+.av-update-text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.av-update-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+}
+
+.av-update-subtitle {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.av-update-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-update-now {
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
+  transition: all 0.2s ease;
+}
+
+.btn-update-now:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 18px rgba(6, 182, 212, 0.6);
+}
+
+.btn-update-now:active {
+  transform: translateY(0);
+}
+
+.btn-update-dismiss {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.btn-update-dismiss:hover {
+  color: #cbd5e1;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+@media (max-width: 640px) {
+  .av-update-toast-container {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+  }
+  .av-update-toast {
+    max-width: 100%;
+  }
+}
+
+
+.crt-screen-overlay.active {
+  display: block;
+}
+
+/* Fine horizontal scanlines */
+.crt-screen-overlay::before {
+  content: " ";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.35) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.04),
+    rgba(0, 255, 0, 0.02),
+    rgba(0, 0, 255, 0.04)
+  );
+  background-size: 100% 3px, 6px 100%;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.85;
+}
 
 .card-micro-preview-canvas {
   position: absolute;
@@ -11623,4 +11962,17 @@ html.a11y-reduced-motion .search-clear-btn {
   animation: none !important;
   transform: none !important;
   filter: none !important;
+}
+
+/* Screen reader only utility, used by the #a11y-live-region announcer */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
