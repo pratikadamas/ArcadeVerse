@@ -16,7 +16,9 @@
   } else if (typeof module === "object" && module.exports) {
     module.exports = factory();
   } else {
-    root.ArcadeVerse = factory();
+    var inst = factory();
+    root.ArcadeVerse = inst;
+    root.arcadeverse = inst; // Alias lowercase for developer convenience (#722)
   }
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
@@ -124,6 +126,73 @@
       } catch (_) {
         return false;
       }
+    },
+
+    // ========================================================
+    // CLIENT-SIDE ANTI-TAMPER CHECKSUM SIGNATURES (#576)
+    // HMAC/SHA-256 Checksum generation and verification for game scores
+    // ========================================================
+    /**
+     * Computes anti-tamper signature for a submitted score
+     * @param {string} gameId
+     * @param {number} score
+     * @param {number} timestamp
+     * @returns {Promise<string>} Hex signature
+     */
+    generateScoreSignature: function (gameId, score, timestamp) {
+      var payload = "av_salt_2026_" + String(gameId) + ":" + String(score) + ":" + String(timestamp);
+      if (typeof crypto !== 'undefined' && crypto.subtle && typeof TextEncoder !== 'undefined') {
+        var encoder = new TextEncoder();
+        var data = encoder.encode(payload);
+        return crypto.subtle.digest("SHA-256", data).then(function (buffer) {
+          var hashArray = Array.from(new Uint8Array(buffer));
+          return hashArray.map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+        }).catch(function () {
+          return "fallback_" + Math.abs(payload.split("").reduce(function (a, b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0)).toString(16);
+        });
+      }
+      var simpleHash = Math.abs(payload.split("").reduce(function (a, b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0)).toString(16);
+      return Promise.resolve("fallback_" + simpleHash);
+    },
+
+    /**
+     * Stores a validated high score with its tamper signature
+     */
+    saveSignedScore: function (gameId, score) {
+      var self = this;
+      var ts = Date.now();
+      return this.generateScoreSignature(gameId, score, ts).then(function (sig) {
+        var record = {
+          gameId: gameId,
+          score: Number(score),
+          timestamp: ts,
+          signature: sig
+        };
+        self.setJSON("signed_score", record);
+        self.setItem("highScore", String(score));
+        return record;
+      });
+    },
+
+    /**
+     * Verifies stored score against signature. Resets score to 0 if tampered.
+     */
+    verifySignedScore: function (gameId) {
+      var self = this;
+      var record = this.getJSON("signed_score", null);
+      if (!record || typeof record.score !== 'number' || !record.signature) {
+        return Promise.resolve({ valid: true, score: Number(self.getItem("highScore") || 0) });
+      }
+      return this.generateScoreSignature(gameId, record.score, record.timestamp).then(function (expectedSig) {
+        if (record.signature === expectedSig) {
+          return { valid: true, score: record.score };
+        } else {
+          console.warn("[AntiCheat] Tampering detected in score storage for " + gameId + "! Resetting score.");
+          self.setItem("highScore", "0");
+          self.removeItem("signed_score");
+          return { valid: false, score: 0 };
+        }
+      });
     },
 
     /**
@@ -245,6 +314,8 @@
   var resumeHandlers = [];
   var teardownHandlers = [];
   var audioConfigHandlers = [];
+  var speedChangeHandlers = [];
+  var currentGameSpeed = 1.0;
 
   // Cryptographic Session Handshake Subsystem (Issue #489)
   var sessionToken = null;
@@ -465,6 +536,8 @@
       case "ARCADEVERSE_AUDIO_CONFIG":
         if (typeof data.muted === "boolean") currentAudioConfig.muted = data.muted;
         if (typeof data.volume === "number") currentAudioConfig.volume = data.volume;
+        if (typeof data.sfxVolume === "number") currentAudioConfig.sfxVolume = data.sfxVolume;
+        if (typeof data.musicVolume === "number") currentAudioConfig.musicVolume = data.musicVolume;
         applyMasterGainVolume();
         for (var a = 0; a < registeredAudioContexts.length; a++) {
           try {
@@ -479,6 +552,26 @@
           } catch (_) {}
         }
         executeHandlers(audioConfigHandlers, currentAudioConfig);
+        break;
+
+      case "ARCADEVERSE_SET_SPEED":
+      case "AV_SET_GAME_SPEED":
+        var targetSpeed = 1.0;
+        if (data && typeof data.speedMultiplier === "number") {
+          targetSpeed = data.speedMultiplier;
+        } else if (data && typeof data.speed === "number") {
+          targetSpeed = data.speed;
+        }
+        targetSpeed = Math.max(0.25, Math.min(3.0, targetSpeed));
+        currentGameSpeed = targetSpeed;
+        executeHandlers(speedChangeHandlers, { speed: targetSpeed, speedMultiplier: targetSpeed });
+        try {
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("arcadeverse:speed-changed", {
+              detail: { speed: targetSpeed, speedMultiplier: targetSpeed }
+            }));
+          }
+        } catch (_) {}
         break;
 
       default:
@@ -584,15 +677,16 @@
         currentAudioConfig.muted = isMuted;
       } catch (_) {}
 
-      // Ping parent window for initial audio configuration
+      // Ping parent window for initial audio and speed configuration
       if (window.parent && window.parent !== window) {
         securePostToParent("ARCADEVERSE_REQUEST_AUDIO_CONFIG", {});
+        securePostToParent("ARCADEVERSE_REQUEST_SPEED_CONFIG", {});
 
         // Forward global keyboard shortcuts from inside game iframe to parent shell
         window.addEventListener("keydown", function (e) {
           var key = (e.key || "").toLowerCase();
-          // Escape (close modal), f (fullscreen), r (restart), m (mute), t (theme)
-          if (e.key === "Escape" || key === "f" || key === "r" || key === "m" || key === "t") {
+          // Escape (close modal), f (fullscreen), r (restart), m (mute), t (theme), [ / ] (speed)
+          if (e.key === "Escape" || key === "f" || key === "r" || key === "m" || key === "t" || e.key === "[" || e.key === "]") {
             // If typing in input/textarea inside game, skip
             var tag = (e.target && e.target.tagName ? e.target.tagName.toLowerCase() : "");
             if (tag === "input" || tag === "textarea" || (e.target && e.target.isContentEditable)) return;
@@ -656,6 +750,48 @@
         } catch (e) {}
       }
       return this;
+    },
+
+    /**
+     * Retrieves current simulation speed multiplier (e.g. 0.5, 1.0, 1.5)
+     * @returns {number}
+     */
+    getGameSpeed: function () {
+      return currentGameSpeed;
+    },
+
+    /**
+     * Registers a callback triggered when speed multiplier changes
+     * @param {Function} callback receives { speed: number, speedMultiplier: number }
+     */
+    onSpeedChange: function (callback) {
+      if (typeof callback === "function") {
+        speedChangeHandlers.push(callback);
+        try {
+          callback({ speed: currentGameSpeed, speedMultiplier: currentGameSpeed });
+        } catch (_) {}
+      }
+      return this;
+    },
+
+    /**
+     * Dedicated Time Dilation & Frame-Pacing Subsystem
+     */
+    time: {
+      getSpeed: function () {
+        return currentGameSpeed;
+      },
+      scaleDeltaTime: function (rawDt) {
+        return (typeof rawDt === "number" ? rawDt : 0.016) * currentGameSpeed;
+      },
+      onSpeedChange: function (callback) {
+        if (typeof callback === "function") {
+          speedChangeHandlers.push(callback);
+          try {
+            callback({ speed: currentGameSpeed, speedMultiplier: currentGameSpeed });
+          } catch (_) {}
+        }
+      }
     },
 
     /**
@@ -1248,6 +1384,110 @@
         logicalWidth: w,
         logicalHeight: h
       };
+    },
+
+    // ========================================================
+    // CANVAS MEDIA RECORDER API REPLAY EXPORTER (#658)
+    // 15-second rolling buffer replay recorder & webm clip generator
+    // ========================================================
+    initReplayRecorder: function (canvas, fps) {
+      if (!canvas || typeof canvas.captureStream !== 'function' || typeof MediaRecorder === 'undefined') {
+        return null;
+      }
+
+      var stream = canvas.captureStream(fps || 30);
+      var recordedChunks = [];
+      var recorder = null;
+
+      try {
+        var options = { mimeType: 'video/webm;codecs=vp9' };
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options = { mimeType: 'video/webm' };
+        }
+        recorder = new MediaRecorder(stream, options);
+      } catch (_) {
+        return null;
+      }
+
+      recorder.ondataavailable = function (e) {
+        if (e.data && e.data.size > 0) {
+          recordedChunks.push(e.data);
+          // Keep rolling buffer (~15 chunks at 1s intervals)
+          if (recordedChunks.length > 15) {
+            recordedChunks.shift();
+          }
+        }
+      };
+
+      try {
+        recorder.start(1000);
+      } catch (_) {}
+
+      return {
+        exportClip: function (filename) {
+          if (recordedChunks.length === 0) return null;
+          var blob = new Blob(recordedChunks, { type: 'video/webm' });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = (filename || 'arcadeverse_replay') + '.webm';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function () {
+            URL.revokeObjectURL(url);
+          }, 4000);
+          return url;
+        },
+        stop: function () {
+          try {
+            if (recorder && recorder.state !== 'inactive') {
+              recorder.stop();
+            }
+          } catch (_) {}
+          recordedChunks = [];
+        }
+      };
+    },
+
+    // ========================================================
+    // DYNAMIC PERFORMANCE PROFILER & PARTICLE THROTTLER (#559)
+    // Low-end hardware protection & battery-saver particle reducer
+    // ========================================================
+    _isLowPerfMode: false,
+    _perfListeners: [],
+
+    isLowPerfMode: function () {
+      return this._isLowPerfMode;
+    },
+
+    onPerformanceModeChange: function (callback) {
+      if (typeof callback === 'function') {
+        this._perfListeners.push(callback);
+      }
+    },
+
+    setLowPerfMode: function (enabled) {
+      this._isLowPerfMode = !!enabled;
+      for (var i = 0; i < this._perfListeners.length; i++) {
+        try {
+          this._perfListeners[i](this._isLowPerfMode);
+        } catch (_) {}
+      }
+    },
+
+    getParticleMultiplier: function () {
+      return this._isLowPerfMode ? 0.5 : 1.0;
     }
   };
+
+  // Listen for parent hub AV_LOW_PERF_MODE broadcasts
+  if (typeof window !== 'undefined') {
+    window.addEventListener('message', function (e) {
+      if (e.data && e.data.type === 'AV_LOW_PERF_MODE') {
+        var enabled = !!e.data.enabled;
+        ArcadeVerse.setLowPerfMode(enabled);
+      }
+    });
+  }
 });

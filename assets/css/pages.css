@@ -99,10 +99,15 @@
 }
 
 .faq-search-input:focus {
-  outline: none;
   border-color: var(--accent-primary);
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
   background: var(--bg-surface-elevated);
+}
+
+.faq-search-input:focus-visible {
+  outline: 2px solid var(--accent-primary, #3b82f6);
+  outline-offset: 2px;
+  border-color: var(--accent-primary, #3b82f6);
 }
 
 .faq-search-icon {
@@ -150,6 +155,11 @@
   color: #ffffff;
   border-color: var(--accent-primary);
   box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+}
+
+.faq-pill:focus-visible {
+  outline: 2px solid var(--accent-primary, #3b82f6);
+  outline-offset: 2px;
 }
 
 .faq-accordion-container {
@@ -443,6 +453,11 @@
   border-left-color: rgba(59, 130, 246, 0.4);
 }
 
+.docs-nav-link:focus-visible {
+  outline: 2px solid var(--accent-primary, #3b82f6);
+  outline-offset: 2px;
+}
+
 .docs-nav-link.active {
   background: rgba(59, 130, 246, 0.12);
   color: var(--accent-primary);
@@ -610,6 +625,11 @@
   background: rgba(255, 255, 255, 0.06);
   color: var(--text-primary);
   border-color: var(--border-medium);
+}
+
+.btn-copy-code:focus-visible {
+  outline: 2px solid var(--accent-primary, #3b82f6);
+  outline-offset: 2px;
 }
 
 .code-pre {
@@ -1204,13 +1224,18 @@ h3:hover .docs-heading-anchor {
   border: 1px solid var(--border-medium);
   border-radius: 9999px;
   color: var(--text-primary);
-  outline: none;
   transition: all 0.2s ease;
 }
 
 .docs-sidebar-search input:focus {
   border-color: var(--accent-primary);
   box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
+}
+
+.docs-sidebar-search input:focus-visible {
+  outline: 2px solid var(--accent-primary, #3b82f6);
+  outline-offset: 2px;
+  border-color: var(--accent-primary, #3b82f6);
 }
 
 .docs-sidebar-search i,
@@ -1513,7 +1538,6 @@ body.docs-viewport-body {
   font-size: 0.82rem;
   font-weight: 600;
   padding: 0.35rem 0.65rem;
-  outline: none;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -1521,6 +1545,12 @@ body.docs-viewport-body {
 .page-size-select:focus {
   border-color: var(--accent-primary, #3b82f6);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+.page-size-select:focus-visible {
+  outline: 2px solid var(--accent-primary, #3b82f6);
+  outline-offset: 2px;
+  border-color: var(--accent-primary, #3b82f6);
 }
 
 .pagination-nav {
@@ -1559,6 +1589,11 @@ body.docs-viewport-body {
   color: #fff;
 }
 
+.pagination-btn:focus-visible {
+  outline: 2px solid var(--accent-primary, #3b82f6);
+  outline-offset: 2px;
+}
+
 .pagination-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -1592,6 +1627,11 @@ body.docs-viewport-body {
   background: rgba(59, 130, 246, 0.15);
   border-color: var(--accent-primary, #3b82f6);
   color: #fff;
+}
+
+.pagination-page-btn:focus-visible {
+  outline: 2px solid var(--accent-primary, #3b82f6);
+  outline-offset: 2px;
 }
 
 .pagination-page-btn.active {
@@ -2201,5 +2241,155 @@ body.docs-viewport-body {
 
 [data-theme="light"] .sdk-console-body {
   background: #0f172a;
+}
+/* ===================================================
+   LEADERBOARD CONTRIBUTOR MILESTONE TIER FILTER PILLS (#691)
+============================================ */
+
+.leaderboard-tier-filters-wrap {
+  padding: 0.85rem 1.8rem;
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  background: rgba(255, 255, 255, 0.015);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.leaderboard-tier-filters-wrap::-webkit-scrollbar {
+  height: 5px;
+}
+
+.leaderboard-tier-filters-wrap::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
+
+.leaderboard-tier-filters-wrap::-webkit-scrollbar-thumb {
+  background: var(--border-medium, rgba(255, 255, 255, 0.15));
+  border-radius: 4px;
+}
+
+.leaderboard-tier-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: max-content;
+  flex-wrap: nowrap;
+}
+
+.tier-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.42rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary, #94a3b8);
+  background: var(--bg-surface-elevated, #161b2a);
+  border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.1));
+  border-radius: 9999px;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tier-pill-btn .lucide,
+.tier-pill-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.2px;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.tier-pill-btn:hover {
+  color: var(--text-primary, #ffffff);
+  background: rgba(59, 130, 246, 0.12);
+  border-color: var(--accent-primary, #3b82f6);
+  transform: translateY(-1px);
+}
+
+.tier-pill-btn:hover .lucide,
+.tier-pill-btn:hover svg {
+  transform: scale(1.1);
+}
+
+.tier-pill-btn.active {
+  background: linear-gradient(135deg, var(--accent-primary, #3b82f6), #6366f1);
+  border-color: transparent;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 0 14px rgba(59, 130, 246, 0.4);
+}
+
+.tier-pill-btn.active .lucide,
+.tier-pill-btn.active svg {
+  stroke: #ffffff;
+}
+
+.tier-pill-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.15rem 0.45rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: inherit;
+  min-width: 18px;
+}
+
+.tier-pill-btn.active .tier-pill-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* Light Theme Support */
+[data-theme="light"] .leaderboard-tier-filters-wrap {
+  background: rgba(0, 0, 0, 0.02);
+  border-bottom-color: var(--border-subtle, rgba(0, 0, 0, 0.08));
+}
+
+[data-theme="light"] .tier-pill-btn {
+  background: #ffffff;
+  border-color: var(--border-medium, #cbd5e1);
+  color: var(--text-secondary, #475569);
+}
+
+[data-theme="light"] .tier-pill-btn:hover {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: var(--accent-primary, #3b82f6);
+  color: var(--text-primary, #0f172a);
+}
+
+[data-theme="light"] .tier-pill-btn.active {
+  background: linear-gradient(135deg, var(--accent-primary, #3b82f6), #6366f1);
+  border-color: transparent;
+  color: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.35);
+}
+
+[data-theme="light"] .tier-pill-count {
+  background: rgba(0, 0, 0, 0.07);
+}
+
+[data-theme="light"] .tier-pill-btn.active .tier-pill-count {
+  background: rgba(255, 255, 255, 0.28);
+  color: #ffffff;
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+  .leaderboard-tier-filters-wrap {
+    padding: 0.75rem 1rem;
+  }
+
+  .tier-pill-btn {
+    padding: 0.38rem 0.75rem;
+    font-size: 0.78rem;
+  }
 }
 
