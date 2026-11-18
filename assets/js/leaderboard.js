@@ -715,10 +715,43 @@ document.addEventListener("DOMContentLoaded", () => {
     return `Games: ${games} • Feat: ${feat} • Fix: ${fix}`;
   }
 
-  // Generate reliable inline SVG letter avatar (prevents 404 network errors & recursion)
+  // Generate procedural generative monogram SVG avatar with deterministic hash-based gradient (#689)
   function getFallbackAvatarSvg(name, login) {
-    const char = ((name || login || "?").trim().charAt(0) || "?").toUpperCase();
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%236366f1"/><stop offset="100%" stop-color="%2306b6d4"/></linearGradient></defs><rect width="64" height="64" rx="32" fill="url(%23g)"/><text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" fill="%23ffffff" font-family="system-ui,-apple-system,sans-serif" font-size="26" font-weight="700">${char}</text></svg>`;
+    const raw = (name || login || "?").trim();
+    const parts = raw.split(/\s+/).filter(Boolean);
+    let monogram = "?";
+    if (parts.length >= 2) {
+      monogram = (parts[0][0] + parts[1][0]).toUpperCase();
+    } else if (raw.length >= 2) {
+      monogram = raw.slice(0, 2).toUpperCase();
+    } else if (raw.length === 1) {
+      monogram = raw.toUpperCase();
+    }
+
+    // Deterministic hash based on username/login
+    const seed = (login || name || "arcadeverse").toLowerCase();
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = (hash << 5) - hash + seed.charCodeAt(i);
+      hash |= 0;
+    }
+
+    const PALETTES = [
+      ["#6366f1", "#06b6d4"],
+      ["#ec4899", "#8b5cf6"],
+      ["#3b82f6", "#10b981"],
+      ["#f59e0b", "#ef4444"],
+      ["#8b5cf6", "#3b82f6"],
+      ["#14b8a6", "#06b6d4"],
+      ["#f43f5e", "#fb923c"],
+      ["#a855f7", "#ec4899"]
+    ];
+
+    const paletteIdx = Math.abs(hash) % PALETTES.length;
+    const [c1, c2] = PALETTES[paletteIdx];
+    const gradId = `av-grad-${Math.abs(hash)}`;
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${c1}"/><stop offset="100%" stop-color="${c2}"/></linearGradient></defs><rect width="64" height="64" rx="32" fill="url(#${gradId})"/><text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" fill="#ffffff" font-family="system-ui,-apple-system,sans-serif" font-size="${monogram.length > 1 ? 22 : 26}" font-weight="700" letter-spacing="-0.5px">${monogram}</text></svg>`;
     return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
   }
 
