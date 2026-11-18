@@ -1885,6 +1885,24 @@ const GAMES_REGISTRY = [
     "featured": false
   },
   {
+    "id": "pixel-bakery-rush_joitapaul",
+    "title": "Pixel Bakery Rush",
+    "category": "Arcade",
+    "lucideIcon": "gamepad-2",
+    "description": "Fill increasingly complex bakery orders before customer patience and the shift timer run out.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/pixel-bakery-rush_joitapaul/index.html",
+    "tags": [
+      "Arcade",
+      "Time Management",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "potion-maker_mistu7debnath",
     "title": "Potion Maker",
     "category": "Puzzle",
@@ -2485,7 +2503,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 644,
+    "commits": 645,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2595,8 +2613,8 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "joitapaul",
     "avatarInitial": "J",
     "role": "Active Contributor (NSOC '26)",
-    "commits": 27,
-    "gamesCount": 16,
+    "commits": 28,
+    "gamesCount": 17,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 1,
@@ -2613,6 +2631,7 @@ const CONTRIBUTORS_REGISTRY = [
       "Neon Asteroid Escape",
       "Neon Drift Racer",
       "Parcel Panic: Conveyor Shift",
+      "Pixel Bakery Rush",
       "Potion Panic",
       "Prism Pulse: Laser Labyrinth",
       "Pumpkin Express: Haunted Rails",
