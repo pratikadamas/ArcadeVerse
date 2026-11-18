@@ -22,6 +22,26 @@ const GAMES_REGISTRY = [
     "difficulty": "Medium"
   },
   {
+    "id": "astro-courier_joitapaul",
+    "title": "Astro Courier",
+    "category": "Arcade",
+    "lucideIcon": "gamepad-2",
+    "description": "Deliver every parcel across three increasingly challenging floating-platform routes while avoiding patrol drones.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/astro-courier_joitapaul/index.html",
+    "tags": [
+      "Arcade",
+      "Platformer",
+      "Action",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false,
+    "difficulty": "Intermediate"
+  },
+  {
     "id": "astro-defense-turret_babin",
     "title": "Astro Defense Turret",
     "category": "Strategy",
@@ -2447,7 +2467,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 638,
+    "commits": 639,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2557,13 +2577,14 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "joitapaul",
     "avatarInitial": "J",
     "role": "Active Contributor (NSOC '26)",
-    "commits": 25,
-    "gamesCount": 14,
+    "commits": 26,
+    "gamesCount": 15,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 1,
     "bonusPts": 0,
     "contributions": [
+      "Astro Courier",
       "Deep Signal: Subsea Rescue",
       "Fossil Frontiers: Dig Site Puzzle",
       "Gridlock Escape",
