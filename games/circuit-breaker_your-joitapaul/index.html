@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#08121f">
+  <title>Circuit Breaker | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <svg class="icon-library" aria-hidden="true" focusable="false">
+    <symbol id="icon-source" viewBox="0 0 64 64">
+      <path d="M36 8L20 34h11l-3 22 17-28H34z" fill="currentColor"/>
+    </symbol>
+    <symbol id="icon-target" viewBox="0 0 64 64">
+      <circle cx="32" cy="32" r="20" fill="none" stroke="currentColor" stroke-width="5"/>
+      <circle cx="32" cy="32" r="9" fill="none" stroke="currentColor" stroke-width="5"/>
+      <path d="M32 4v13m0 30v13M4 32h13m30 0h13" fill="none" stroke="currentColor" stroke-width="4"/>
+    </symbol>
+  </svg>
+
+  <main class="game-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">CB</span>
+        <span>ARCADEVERSE <span class="brand-divider">/</span> LOGIC LAB</span>
+      </div>
+      <div class="top-actions">
+        <button id="help-button" class="quiet-button" type="button">How to play</button>
+        <button id="pause-button" class="quiet-button" type="button" disabled>Pause</button>
+      </div>
+    </header>
+
+    <section class="intro">
+      <div>
+        <p class="eyebrow">SIGNAL ROUTING / PUZZLE SERIES</p>
+        <h1>Circuit <span>Breaker</span></h1>
+        <p class="subtitle">Turn the tiles. Complete the path. Bring the grid online.</p>
+      </div>
+      <div class="intro-actions">
+        <button id="restart-button" class="outline-button" type="button">Restart puzzle</button>
+        <button id="next-button" class="primary-button" type="button" disabled>Next puzzle</button>
+      </div>
+    </section>
+
+    <section class="stats" aria-label="Puzzle status">
+      <div class="stat-card">
+        <span class="stat-label">PUZZLE</span>
+        <strong id="level-number">01 / 04</strong>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">MOVES</span>
+        <strong id="move-count">0</strong>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">TOTAL SCORE</span>
+        <strong id="score">0000</strong>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">LIVE TILES</span>
+        <strong id="powered-count">1</strong>
+      </div>
+    </section>
+
+    <div class="game-layout">
+      <section class="board-panel panel" aria-labelledby="board-title">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow" id="level-name">WARM-UP LOOP</p>
+            <h2 id="board-title">Circuit board</h2>
+          </div>
+          <span id="board-state" class="state-pill">SIGNAL LOST</span>
+        </div>
+
+        <div class="board-frame">
+          <div id="board" class="board" role="grid" aria-label="Circuit puzzle board"></div>
+        </div>
+
+        <div class="board-legend" aria-label="Board legend">
+          <span><svg aria-hidden="true"><use href="#icon-source"></use></svg> POWER SOURCE</span>
+          <span><svg aria-hidden="true"><use href="#icon-target"></use></svg> TARGET</span>
+          <span><i class="legend-wire" aria-hidden="true"></i> LIVE CIRCUIT</span>
+        </div>
+
+        <p id="feedback" class="feedback" role="status" aria-live="polite">Start the series to energize the first board.</p>
+      </section>
+
+      <aside class="guide-panel panel" aria-labelledby="guide-title">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">FIELD NOTES</p>
+            <h2 id="guide-title">Routing guide</h2>
+          </div>
+          <span class="guide-index">01</span>
+        </div>
+
+        <p class="guide-copy">Every connector turns clockwise. Align open ends so the source can reach the target without a break.</p>
+
+        <div class="control-list">
+          <div><span class="control-key">CLICK / TAP</span><span>Rotate a tile clockwise</span></div>
+          <div><span class="control-key">ENTER / SPACE</span><span>Rotate the focused tile</span></div>
+          <div><span class="control-key">ARROWS</span><span>Move focus across tiles</span></div>
+          <div><span class="control-key">R</span><span>Restart this puzzle</span></div>
+          <div><span class="control-key">P / ESC</span><span>Pause or resume</span></div>
+          <div><span class="control-key">N</span><span>Next puzzle when solved</span></div>
+        </div>
+
+        <div class="score-note">
+          <span class="small-label">EFFICIENCY BONUS</span>
+          <p>Each solved board earns 500 points minus 10 points per move, with a 100-point minimum.</p>
+        </div>
+
+        <button id="panel-restart-button" class="secondary-button" type="button">Reset current board</button>
+      </aside>
+    </div>
+
+    <footer class="footer-note">
+      <span>FOUR BOARDS / ONE COMPLETE SIGNAL</span>
+      <span>NO TIMER - PLAN YOUR ROUTE</span>
+    </footer>
+  </main>
+
+  <section id="start-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="start-title">
+    <div class="dialog-card">
+      <p class="eyebrow">HOW TO PLAY</p>
+      <h2 id="start-title">Restore the signal</h2>
+      <p>Rotate the circuit tiles until one continuous connection runs from the power source to the target. Each board grows larger and adds more turns.</p>
+      <ul class="instruction-list">
+        <li><strong>Rotate:</strong> Click or tap a tile, or focus it and press Enter or Space. Every turn rotates it clockwise by 90 degrees.</li>
+        <li><strong>Navigate:</strong> Use the arrow keys to move between rotatable tiles. Energized wires show your current connection.</li>
+        <li><strong>Score:</strong> Complete a board for 500 points minus 10 per move, with a 100-point minimum.</li>
+        <li><strong>Progress:</strong> Finish each board to unlock the next. Restart with R or the reset button.</li>
+        <li><strong>Pause:</strong> Press P or Escape to pause, then resume when you are ready.</li>
+      </ul>
+      <button id="start-button" class="primary-button dialog-action" type="button">Power on</button>
+    </div>
+  </section>
+
+  <section id="help-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="help-title" hidden>
+    <div class="dialog-card">
+      <p class="eyebrow">FIELD MANUAL</p>
+      <h2 id="help-title">How to play</h2>
+      <ul class="instruction-list">
+        <li><strong>Rotate:</strong> Click or tap a tile, or focus it and press Enter or Space. Every turn rotates it clockwise by 90 degrees.</li>
+        <li><strong>Navigate:</strong> Use the arrow keys to move between rotatable tiles. Energized wires show your current connection.</li>
+        <li><strong>Score:</strong> Complete a board for 500 points minus 10 per move, with a 100-point minimum.</li>
+        <li><strong>Progress:</strong> Finish each board to unlock the next. Restart with R or the reset button.</li>
+        <li><strong>Pause:</strong> Press P or Escape to pause, then resume when you are ready.</li>
+      </ul>
+      <button id="close-help-button" class="primary-button dialog-action" type="button">Return to board</button>
+    </div>
+  </section>
+
+  <section id="pause-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
+    <div class="dialog-card compact-dialog">
+      <p class="eyebrow">SYSTEM PAUSED</p>
+      <h2 id="pause-title">Signal on hold</h2>
+      <p>Your current board is safe. Resume when you are ready to route the circuit.</p>
+      <button id="resume-button" class="primary-button dialog-action" type="button">Resume puzzle</button>
+    </div>
+  </section>
+
+  <section id="complete-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="complete-title" hidden>
+    <div class="dialog-card compact-dialog">
+      <p class="eyebrow">CONNECTION VERIFIED</p>
+      <h2 id="complete-title">Circuit restored</h2>
+      <p id="complete-summary">The power source is connected to the target.</p>
+      <button id="advance-button" class="primary-button dialog-action" type="button">Next puzzle</button>
+    </div>
+  </section>
+
+  <script src="game.js"></script>
+</body>
+</html>
