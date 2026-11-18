@@ -2379,7 +2379,7 @@ document.addEventListener("DOMContentLoaded", () => {
     checkOrientationLandscapePrompt(game);
 
     // "Players Also Played" Intelligent Recommendation Strip in Modal Footer (#591)
-    renderModalRecommendations(game);
+    if (typeof renderModalRecommendations === "function") renderModalRecommendations(game);
 
     if (!isDirectDeepLink) {
       modalPushedHistory = true;
