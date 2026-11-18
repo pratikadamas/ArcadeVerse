@@ -9,6 +9,7 @@
 const CACHE_VERSION = 'arcadeverse-v1';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
+const GAME_VAULT_CACHE = 'arcadeverse-game-vault-v1';
 
 // Core static hub shell assets required for offline rendering
 const CORE_SHELL_ASSETS = [
@@ -30,6 +31,7 @@ const CORE_SHELL_ASSETS = [
   './assets/css/trophy-card.css',
   './assets/css/sound-engine.css',
   './assets/css/game-ratings.css',
+  './assets/css/pwa-cache-prewarmer.css',
   './assets/js/navbar.js',
   './assets/js/app.js',
   './assets/js/games-registry.js',
@@ -37,6 +39,7 @@ const CORE_SHELL_ASSETS = [
   './assets/js/sound-engine.js',
   './assets/js/keyboard-shortcuts.js',
   './assets/js/network-detector.js',
+  './assets/js/pwa-cache-prewarmer.js',
   './assets/js/leaderboard.js',
   './assets/public/favicon.ico',
   './assets/public/favicon-32x32.png',
@@ -77,7 +80,7 @@ self.addEventListener('install', (event) => {
  * Activation event: cleans up outdated cache versions and claims clients immediately.
  */
 self.addEventListener('activate', (event) => {
-  const allowedCaches = [SHELL_CACHE, RUNTIME_CACHE];
+  const allowedCaches = [SHELL_CACHE, RUNTIME_CACHE, GAME_VAULT_CACHE];
 
   event.waitUntil(
     caches.keys()
@@ -114,50 +117,54 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      // Revalidation fetch in background
-      const fetchPromise = fetch(request)
-        .then((networkResponse) => {
-          // Cache successful responses into runtime cache for offline re-use
-          if (networkResponse && networkResponse.status === 200) {
-            const clonedResponse = networkResponse.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(request, clonedResponse);
-            }).catch(() => {});
-          }
-          return networkResponse;
-        })
-        .catch(async () => {
-          // If offline and request is already in cache, serve cached version
+    caches.open(GAME_VAULT_CACHE).then((gameCache) => gameCache.match(request, { ignoreSearch: true }))
+      .then((vaultResponse) => {
+        if (vaultResponse) return vaultResponse;
+        return caches.match(request).then((cachedResponse) => {
+          // Revalidation fetch in background
+          const fetchPromise = fetch(request)
+            .then((networkResponse) => {
+              // Cache successful responses into runtime cache for offline re-use
+              if (networkResponse && networkResponse.status === 200) {
+                const clonedResponse = networkResponse.clone();
+                caches.open(RUNTIME_CACHE).then((cache) => {
+                  cache.put(request, clonedResponse);
+                }).catch(() => {});
+              }
+              return networkResponse;
+            })
+            .catch(async () => {
+              // If offline and request is already in cache, serve cached version
+              if (cachedResponse) {
+                return cachedResponse;
+              }
+
+              // Navigation fallback for offline browsing
+              if (request.mode === 'navigate') {
+                const offlineIndex = await caches.match('./index.html');
+                if (offlineIndex) return offlineIndex;
+                const offline404 = await caches.match('./404.html');
+                if (offline404) return offline404;
+              }
+
+              return new Response('Network unavailable (Offline)', {
+                status: 503,
+                statusText: 'Service Unavailable (Offline)',
+                headers: { 'Content-Type': 'text/plain' }
+              });
+            });
+
+          // Stale-While-Revalidate: return cached response immediately if present,
+          // while dispatching network revalidation in the background.
           if (cachedResponse) {
+            event.waitUntil(fetchPromise.catch(() => {}));
             return cachedResponse;
           }
 
-          // Navigation fallback for offline browsing
-          if (request.mode === 'navigate') {
-            const offlineIndex = await caches.match('./index.html');
-            if (offlineIndex) return offlineIndex;
-            const offline404 = await caches.match('./404.html');
-            if (offline404) return offline404;
-          }
-
-          return new Response('Network unavailable (Offline)', {
-            status: 503,
-            statusText: 'Service Unavailable (Offline)',
-            headers: { 'Content-Type': 'text/plain' }
+          // If cache miss, await network response
+          return fetchPromise;
           });
-        });
-
-      // Stale-While-Revalidate: return cached response immediately if present,
-      // while dispatching network revalidation in the background.
-      if (cachedResponse) {
-        event.waitUntil(fetchPromise.catch(() => {}));
-        return cachedResponse;
-      }
-
-      // If cache miss, await network response
-      return fetchPromise;
-    })
+      })
   );
 });
 
