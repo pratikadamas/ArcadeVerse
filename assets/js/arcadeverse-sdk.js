@@ -661,6 +661,210 @@
     registeredWebGLContexts.length = 0;
   }
 
+  // ========================================================
+  // IN-BROWSER DEV MANIFEST VALIDATOR WIDGET (#704)
+  // Visible exclusively when window.location.hostname === 'localhost' or '127.0.0.1'
+  // Zero production overhead: bypassed completely on live/production domains
+  // ========================================================
+  var isDevHost = (function () {
+    try {
+      if (typeof window === "undefined" || !window.location) return false;
+      var h = window.location.hostname;
+      return h === "localhost" || h === "127.0.0.1" || h === "[::1]";
+    } catch (_) {
+      return false;
+    }
+  })();
+
+  function initDevValidator() {
+    if (!isDevHost) return;
+    if (typeof document === "undefined" || typeof window === "undefined") return;
+
+    var EMOJI_REGEX = /[\uD83C-\uDBFF\uDC00-\uDFFF]|[\u2600-\u27BF]/;
+    var REQUIRED_JSON_FIELDS = ["title", "category", "description", "author", "github"];
+
+    function runAudit() {
+      var errors = [];
+      var warnings = [];
+      var passed = [];
+
+      var jsonUrl = "game.json";
+      var cssUrl = "style.css";
+      var jsUrl = "game.js";
+
+      Promise.all([
+        // 1. Fetch game.json
+        fetch(jsonUrl).then(function (res) {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return res.text();
+        }).catch(function (err) {
+          return { error: "Missing or unreachable file: game.json (" + err.message + ")" };
+        }),
+        // 2. Head check style.css
+        fetch(cssUrl, { method: "HEAD" }).then(function (res) {
+          return res.ok;
+        }).catch(function () { return false; }),
+        // 3. Head check game.js
+        fetch(jsUrl, { method: "HEAD" }).then(function (res) {
+          return res.ok;
+        }).catch(function () { return false; })
+      ]).then(function (results) {
+        var jsonRaw = results[0];
+        var cssOk = results[1];
+        var jsOk = results[2];
+
+        // 4-file compliance check: index.html, style.css, game.js, game.json
+        if (!cssOk) {
+          errors.push("Missing required bundle file: style.css");
+        } else {
+          passed.push("style.css present");
+        }
+
+        if (!jsOk) {
+          errors.push("Missing required bundle file: game.js");
+        } else {
+          passed.push("game.js present");
+        }
+
+        if (!document.title || !document.title.trim()) {
+          errors.push("index.html is missing a <title> tag");
+        } else {
+          passed.push("index.html <title> present");
+        }
+
+        // game.json structure & field validation
+        if (typeof jsonRaw === "object" && jsonRaw.error) {
+          errors.push(jsonRaw.error);
+        } else if (typeof jsonRaw === "string") {
+          // Emoji check in game.json
+          if (EMOJI_REGEX.test(jsonRaw)) {
+            warnings.push("Unicode emoji detected in game.json (use Lucide icons or SVG)");
+          }
+
+          try {
+            var meta = JSON.parse(jsonRaw);
+            REQUIRED_JSON_FIELDS.forEach(function (field) {
+              if (!meta[field] || (typeof meta[field] === "string" && !meta[field].trim())) {
+                errors.push("game.json missing required field: \"" + field + "\"");
+              }
+            });
+
+            ["title", "category", "author", "description"].forEach(function (field) {
+              var val = meta[field];
+              if (typeof val === "string" && (val.indexOf('"') !== -1 || val.indexOf("<") !== -1 || val.indexOf(">") !== -1)) {
+                errors.push("Attribute breakout risk: \"" + field + "\" contains unescaped quotes or angle brackets");
+              }
+            });
+
+            if (errors.filter(function (e) { return e.indexOf("game.json") !== -1; }).length === 0) {
+              passed.push("game.json manifest schema valid");
+            }
+          } catch (jsonErr) {
+            errors.push("game.json contains invalid JSON: " + jsonErr.message);
+          }
+        }
+
+        // Unicode emoji scan in DOM body
+        var bodyHtml = document.body ? document.body.innerHTML : "";
+        if (EMOJI_REGEX.test(bodyHtml)) {
+          warnings.push("Unicode emoji detected in index.html DOM (replace with SVG/Lucide)");
+        } else {
+          passed.push("Zero unicode emojis in HTML");
+        }
+
+        renderBadge(errors, warnings, passed);
+        logConsole(errors, warnings, passed);
+      }).catch(function (fatal) {
+        console.warn("[ArcadeVerse DevValidator] Unexpected audit error:", fatal);
+      });
+    }
+
+    function logConsole(errors, warnings, passed) {
+      if (errors.length === 0 && warnings.length === 0) {
+        console.group("%c[ArcadeVerse DevValidator] %cPASS", "color:#38bdf8;font-weight:bold;", "color:#22c55e;font-weight:bold;");
+        passed.forEach(function (p) { console.log("%c✓ " + p, "color:#22c55e;"); });
+        console.log("%cPre-flight validation passed for local development.", "color:#94a3b8;font-style:italic;");
+        console.groupEnd();
+      } else {
+        var statusLabel = errors.length > 0 ? "FAIL (" + errors.length + " errors)" : "WARN (" + warnings.length + " warnings)";
+        var statusColor = errors.length > 0 ? "color:#ef4444;font-weight:bold;" : "color:#f59e0b;font-weight:bold;";
+        console.group("%c[ArcadeVerse DevValidator] %c" + statusLabel, "color:#38bdf8;font-weight:bold;", statusColor);
+        errors.forEach(function (e) { console.error("❌ " + e); });
+        warnings.forEach(function (w) { console.warn("⚠️ " + w); });
+        passed.forEach(function (p) { console.log("%c✓ " + p, "color:#94a3b8;"); });
+        console.groupEnd();
+      }
+    }
+
+    function renderBadge(errors, warnings, passed) {
+      var existing = document.getElementById("dev-validator-badge");
+      if (existing) existing.remove();
+
+      var badge = document.createElement("div");
+      badge.id = "dev-validator-badge";
+      badge.setAttribute("role", "status");
+      badge.setAttribute("aria-live", "polite");
+
+      var statusClass = errors.length > 0 ? "fail" : (warnings.length > 0 ? "warn" : "pass");
+      badge.className = "dev-validator-badge " + statusClass;
+
+      var statusText = errors.length > 0
+        ? "DEV: FAIL (" + errors.length + ")"
+        : (warnings.length > 0 ? "DEV: " + warnings.length + " WARN" : "DEV: PASS");
+
+      var titleAttr = errors.length > 0
+        ? "ArcadeVerse DevTools: Validation errors detected (Click to expand / check console)"
+        : "ArcadeVerse DevTools: All pre-flight checks passed";
+
+      var html = '<div class="dev-validator-pill" title="' + titleAttr + '">' +
+        '<span class="dev-validator-dot"></span>' +
+        '<span class="dev-validator-text">' + statusText + '</span>' +
+        '</div>';
+
+      html += '<div class="dev-validator-details">';
+      errors.forEach(function (e) {
+        html += '<div class="dev-validator-item error">❌ ' + escapeHtml(e) + '</div>';
+      });
+      warnings.forEach(function (w) {
+        html += '<div class="dev-validator-item warn">⚠️ ' + escapeHtml(w) + '</div>';
+      });
+      passed.forEach(function (p) {
+        html += '<div class="dev-validator-item pass">✓ ' + escapeHtml(p) + '</div>';
+      });
+      html += '</div>';
+
+      badge.innerHTML = html;
+
+      // Inline fallback styling in case game doesn't link style.css
+      badge.style.position = "fixed";
+      badge.style.bottom = "12px";
+      badge.style.right = "12px";
+      badge.style.zIndex = "999999";
+      badge.style.fontSize = "11px";
+      badge.style.fontWeight = "600";
+      badge.style.borderRadius = "20px";
+      badge.style.cursor = "pointer";
+      badge.style.userSelect = "none";
+      badge.style.fontFamily = "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif";
+
+      badge.addEventListener("click", function () {
+        badge.classList.toggle("expanded");
+      });
+
+      document.body.appendChild(badge);
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", runAudit);
+    } else {
+      setTimeout(runAudit, 120);
+    }
+  }
+
   /**
    * Initializes message bridging with parent window
    */
@@ -668,6 +872,10 @@
     if (isInitialized) return;
     if (typeof window !== "undefined") {
       window.addEventListener("message", handleParentMessage, false);
+
+      if (isDevHost) {
+        initDevValidator();
+      }
 
       // Check localStorage for persisted volume on startup
       try {
@@ -1478,6 +1686,97 @@
 
     getParticleMultiplier: function () {
       return this._isLowPerfMode ? 0.5 : 1.0;
+    },
+
+    // ========================================================
+    // POINTER LOCK API INTEGRATION SUBSYSTEM (#573)
+    // First-person & precision crosshair aiming with ESC release HUD
+    // ========================================================
+    /**
+     * Binds HTML5 Pointer Lock API to a game canvas.
+     * @param {HTMLCanvasElement} canvas - Target game canvas
+     * @param {Object} options - Configuration options
+     * @param {Function} options.onMove - Callback with (movementX, movementY, e)
+     * @param {Function} [options.onLockChange] - Callback with (isLocked)
+     * @param {number} [options.sensitivity=1.0] - Mouse sensitivity multiplier
+     * @returns {{ requestLock: Function, exitLock: Function, isLocked: Function }}
+     */
+    initPointerLock: function (canvas, options) {
+      if (!canvas) return null;
+      var opts = options || {};
+      var sensitivity = typeof opts.sensitivity === 'number' ? opts.sensitivity : 1.0;
+      var onMove = typeof opts.onMove === 'function' ? opts.onMove : function () {};
+      var onLockChange = typeof opts.onLockChange === 'function' ? opts.onLockChange : function () {};
+
+      // Create HUD pill if not already present
+      var hud = document.getElementById('av-pointer-lock-hud');
+      if (!hud) {
+        hud = document.createElement('div');
+        hud.id = 'av-pointer-lock-hud';
+        hud.setAttribute('role', 'status');
+        hud.setAttribute('aria-live', 'polite');
+        hud.innerHTML = '<span class="hud-dot"></span><span>Pointer Locked &mdash; Press <kbd>ESC</kbd> to Release</span>';
+        hud.style.cssText = 'position:fixed;top:1rem;left:50%;transform:translateX(-50%);background:rgba(15,23,42,0.92);border:1px solid #38bdf8;box-shadow:0 0 15px rgba(56,189,248,0.3);color:#f8fafc;padding:0.4rem 0.9rem;border-radius:20px;font-size:0.8rem;font-weight:600;display:none;align-items:center;gap:0.5rem;z-index:99999;pointer-events:none;transition:opacity 0.25s ease;';
+        document.body.appendChild(hud);
+      }
+
+      function handleMouseMove(e) {
+        if (document.pointerLockElement === canvas) {
+          var mx = (e.movementX || 0) * sensitivity;
+          var my = (e.movementY || 0) * sensitivity;
+          onMove(mx, my, e);
+        }
+      }
+
+      function handleLockChange() {
+        var locked = document.pointerLockElement === canvas;
+        if (hud) {
+          hud.style.display = locked ? 'flex' : 'none';
+        }
+        onLockChange(locked);
+      }
+
+      document.addEventListener('pointerlockchange', handleLockChange);
+      document.addEventListener('mousemove', handleMouseMove);
+
+      return {
+        requestLock: function () {
+          try {
+            if (canvas.requestPointerLock) {
+              canvas.requestPointerLock();
+            }
+          } catch (_) {}
+        },
+        exitLock: function () {
+          try {
+            if (document.exitPointerLock) {
+              document.exitPointerLock();
+            }
+          } catch (_) {}
+        },
+        isLocked: function () {
+          return document.pointerLockElement === canvas;
+        },
+        destroy: function () {
+          document.removeEventListener('pointerlockchange', handleLockChange);
+          document.removeEventListener('mousemove', handleMouseMove);
+          if (hud && hud.parentElement) {
+            hud.remove();
+          }
+        }
+      };
+    },
+
+    // ========================================================
+    // IN-BROWSER DEV MANIFEST VALIDATOR WIDGET (#704)
+    // ========================================================
+    devValidator: {
+      isDevMode: function () {
+        return isDevHost;
+      },
+      audit: function () {
+        if (isDevHost) initDevValidator();
+      }
     }
   };
 
