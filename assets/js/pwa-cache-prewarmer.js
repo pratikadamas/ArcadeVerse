@@ -9,6 +9,7 @@
   const MAX_ASSETS_PER_GAME = 160;
   const STORAGE_RECENT_KEY = 'arcadeverse_recently_played_v2';
   const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const gameModal = document.getElementById('game-modal');
 
   function ensureVaultUi() {
     const stylesheet = document.createElement('link');
@@ -61,7 +62,7 @@
   let gameQueue = [];
   let activeController = null;
   let currentGame = null;
-  let pausedForGameplay = false;
+  let pausedForGameplay = Boolean(gameModal && gameModal.classList.contains('active'));
   let running = false;
   let automaticStartScheduled = false;
   let totalGames = 0;
@@ -435,6 +436,19 @@
   window.addEventListener('offline', handleNetworkChange);
   if (connection && typeof connection.addEventListener === 'function') {
     connection.addEventListener('change', handleNetworkChange);
+  }
+  if (gameModal && typeof MutationObserver === 'function') {
+    new MutationObserver(() => {
+      const isActive = gameModal.classList.contains('active');
+      if (isActive && !pausedForGameplay) {
+        pausedForGameplay = true;
+        if (activeController) activeController.abort();
+        setStatus('Downloads paused while a game is open.');
+      } else if (!isActive && pausedForGameplay) {
+        pausedForGameplay = false;
+        handleNetworkChange();
+      }
+    }).observe(gameModal, { attributes: true, attributeFilter: ['class'] });
   }
 
   window.PWACachePrewarmer = {

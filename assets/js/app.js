@@ -51,6 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentTagFilter = "";
   let searchQuery = "";
   let currentSort = "featured";
+  let currentMixFilter = null;
   let searchDebounceTimer = null;
   const CATALOG_VIEW_STORAGE_KEY = "arcadeverse_catalog_view";
   let currentCatalogView = "grid";
@@ -2031,7 +2032,9 @@ document.addEventListener("DOMContentLoaded", () => {
     modalGameAuthor.textContent = `Built by @${game.author}`;
     lastAnnouncedScore = 0;
     lastScoreAnnouncementTime = Date.now();
-    announceToScreenReader(`Launching ${game.title}. Category: ${game.category}. Built by ${game.author}.`);
+    if (typeof announceToScreenReader === "function") {
+      announceToScreenReader(`Launching ${game.title}. Category: ${game.category}. Built by ${game.author}.`);
+    }
     startIframeTimeout(game);
 
     // Storage Isolation Bridge: Pass gameId via URL parameter so SDK attaches namespaced proxy (#493, #824)
