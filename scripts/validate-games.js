@@ -121,11 +121,13 @@ try {
 
   if (isCiPr || (currentBranch !== 'main' && currentBranch !== 'HEAD')) {
     isPrBranch = true;
-    let baseRef = 'origin/main';
-    try {
-      execSync('git rev-parse --verify origin/main', { stdio: 'ignore' });
-    } catch {
-      baseRef = 'main';
+    let baseRef = 'main';
+    for (const ref of ['upstream/main', 'origin/main', 'main']) {
+      try {
+        execSync(`git rev-parse --verify ${ref}`, { stdio: 'ignore' });
+        baseRef = ref;
+        break;
+      } catch (_) {}
     }
 
     try {
@@ -644,6 +646,7 @@ console.log(`Found ${folders.length} community games to audit...\n`);
 const CLI_ARGS = process.argv.slice(2);
 const IS_STRICT = CLI_ARGS.includes('--strict-assets');
 const IS_STRICT_MODE = CLI_ARGS.includes('--strict') || CLI_ARGS.includes('--strict-lint');
+const IS_STRICT_CDN = CLI_ARGS.includes('--strict-cdn');
 const IS_AUDIT_HUB = CLI_ARGS.includes('--audit-hub');
 const SUMMARY_JSON_PATH = (() => {
   // Support --summary-json=<path>
