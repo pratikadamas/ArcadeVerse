@@ -22,6 +22,26 @@ const GAMES_REGISTRY = [
     "difficulty": "Medium"
   },
   {
+    "id": "astro-courier_joitapaul",
+    "title": "Astro Courier",
+    "category": "Arcade",
+    "lucideIcon": "gamepad-2",
+    "description": "Deliver every parcel across three increasingly challenging floating-platform routes while avoiding patrol drones.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/astro-courier_joitapaul/index.html",
+    "tags": [
+      "Arcade",
+      "Platformer",
+      "Action",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false,
+    "difficulty": "Intermediate"
+  },
+  {
     "id": "astro-defense-turret_babin",
     "title": "Astro Defense Turret",
     "category": "Strategy",
@@ -203,6 +223,24 @@ const GAMES_REGISTRY = [
       "Platformer",
       "TimeManipulation",
       "Retro",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
+    "id": "circuit-breaker_your-joitapaul",
+    "title": "Circuit Breaker",
+    "category": "Puzzle",
+    "lucideIcon": "cpu",
+    "description": "Rotate circuit tiles to connect the power source to the target across four increasingly complex grids.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/circuit-breaker_your-joitapaul/index.html",
+    "tags": [
+      "Puzzle",
+      "Logic",
       "NSOC26"
     ],
     "stars": 25,
@@ -1847,6 +1885,24 @@ const GAMES_REGISTRY = [
     "featured": false
   },
   {
+    "id": "pixel-bakery-rush_joitapaul",
+    "title": "Pixel Bakery Rush",
+    "category": "Arcade",
+    "lucideIcon": "gamepad-2",
+    "description": "Fill increasingly complex bakery orders before customer patience and the shift timer run out.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/pixel-bakery-rush_joitapaul/index.html",
+    "tags": [
+      "Arcade",
+      "Time Management",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "potion-maker_mistu7debnath",
     "title": "Potion Maker",
     "category": "Puzzle",
@@ -2356,6 +2412,26 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "tidal-tunnels_joitapaul",
+    "title": "Tidal Tunnels",
+    "category": "Arcade",
+    "lucideIcon": "gamepad-2",
+    "description": "Guide a diver through a scrolling reef, collect air bubbles, and avoid moving mines before oxygen runs out.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/tidal-tunnels_joitapaul/index.html",
+    "tags": [
+      "Arcade",
+      "Action",
+      "Underwater",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false,
+    "difficulty": "Intermediate"
+  },
+  {
     "id": "time-warp_mistu7debnath",
     "title": "Time Warp: Chrono Shift",
     "category": "Puzzle",
@@ -2427,7 +2503,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 616,
+    "commits": 648,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2447,7 +2523,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 376,
+    "commits": 381,
     "gamesCount": 76,
     "mechanicsBonus": 2,
     "platformPRs": 29,
@@ -2537,13 +2613,15 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "joitapaul",
     "avatarInitial": "J",
     "role": "Active Contributor (NSOC '26)",
-    "commits": 24,
-    "gamesCount": 13,
+    "commits": 28,
+    "gamesCount": 17,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 1,
     "bonusPts": 0,
     "contributions": [
+      "Astro Courier",
+      "Circuit Breaker",
       "Deep Signal: Subsea Rescue",
       "Fossil Frontiers: Dig Site Puzzle",
       "Gridlock Escape",
@@ -2553,10 +2631,12 @@ const CONTRIBUTORS_REGISTRY = [
       "Neon Asteroid Escape",
       "Neon Drift Racer",
       "Parcel Panic: Conveyor Shift",
+      "Pixel Bakery Rush",
       "Potion Panic",
       "Prism Pulse: Laser Labyrinth",
       "Pumpkin Express: Haunted Rails",
-      "Quantum Pinball: Reactor Run"
+      "Quantum Pinball: Reactor Run",
+      "Tidal Tunnels"
     ]
   },
   {
@@ -2564,7 +2644,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "mistu7debnath",
     "avatarInitial": "M",
     "role": "Contributor (NSOC '26)",
-    "commits": 19,
+    "commits": 22,
     "gamesCount": 11,
     "mechanicsBonus": 1,
     "platformPRs": 0,
@@ -2610,7 +2690,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "pratikadamas",
     "avatarInitial": "P",
     "role": "Contributor (NSOC '26)",
-    "commits": 60,
+    "commits": 79,
     "gamesCount": 1,
     "mechanicsBonus": 0,
     "platformPRs": 1,
@@ -2641,7 +2721,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "ArshiBansal",
     "avatarInitial": "A",
     "role": "Puzzle Developer (NSOC '26)",
-    "commits": 2,
+    "commits": 3,
     "gamesCount": 1,
     "mechanicsBonus": 0,
     "platformPRs": 0,
