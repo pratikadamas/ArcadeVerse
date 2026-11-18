@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5ead5">
+  <title>Pixel Bakery Rush | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <svg class="icon-library" aria-hidden="true" focusable="false">
+    <symbol id="icon-bread" viewBox="0 0 48 48">
+      <path d="M9 18h4v-5h5V9h12v4h5v5h4v21H9z" fill="currentColor"/>
+      <path d="M17 18h4v8h-4zm10-5h4v8h-4zm4 13h4v8h-4z" fill="#fff1ce"/>
+    </symbol>
+    <symbol id="icon-croissant" viewBox="0 0 48 48">
+      <path d="M5 26l5-3 3-8 7-5 5 5 7-5 8 4 3 8 5 4-5 9-8-2-8 4-8-4-8 2z" fill="currentColor"/>
+      <path d="M16 17l5 4-3 10m8-13l-4 5 5 10m3-17l-3 7 7 5" fill="none" stroke="#fff1ce" stroke-width="3"/>
+    </symbol>
+    <symbol id="icon-roll" viewBox="0 0 48 48">
+      <path d="M9 15h5v-5h20v5h5v7h4v16H5V22h4z" fill="currentColor"/>
+      <path d="M18 16h12v4H18zm-4 8h20v4H14zm7 8h6v4h-6z" fill="#fff1ce"/>
+    </symbol>
+    <symbol id="icon-cupcake" viewBox="0 0 48 48">
+      <path d="M16 7h16v4h5v7h5v8h-5v4H11v-4H6v-8h5v-7h5z" fill="currentColor"/>
+      <path d="M14 30h20l-3 10H17z" fill="#a64b37"/>
+      <path d="M19 33h3v5h-3zm7 0h3v5h-3z" fill="#f3c45f"/>
+    </symbol>
+    <symbol id="icon-pretzel" viewBox="0 0 48 48">
+      <path d="M5 14h7V9h8v5h4v5h4v-5h4V9h8v5h4v8h-5v6h-6v5h-4v7h-8v-7h-4v-5h-6v-6H5z" fill="currentColor"/>
+      <path d="M12 17h7v7h-4v5h-4v-6h5v-3h-4zm24 0h-7v7h4v5h4v-6h-5v-3h4zM21 25h6v8h-6z" fill="#fff1ce"/>
+    </symbol>
+    <symbol id="icon-tart" viewBox="0 0 48 48">
+      <path d="M8 15h32v5h4v16H4V20h4z" fill="currentColor"/>
+      <path d="M12 20h24v7H12zm-3 11h30v3H9z" fill="#fff1ce"/>
+      <path d="M17 15h5v5h-5zm9 0h5v5h-5z" fill="#a64b37"/>
+    </symbol>
+  </svg>
+
+  <main class="game-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">PB</span>
+        <span>ARCADEVERSE <span class="brand-divider">/</span> BAKERY</span>
+      </div>
+      <div class="top-actions">
+        <button id="help-button" class="quiet-button" type="button">How to play</button>
+        <button id="pause-button" class="quiet-button" type="button" disabled>Pause</button>
+      </div>
+    </header>
+
+    <section class="intro">
+      <div>
+        <p class="eyebrow">COUNTER OPEN / SHIFT 01</p>
+        <h1>Pixel Bakery <span>Rush</span></h1>
+        <p class="subtitle">Read the ticket. Fill the tray. Keep the line moving.</p>
+      </div>
+      <button id="restart-button" class="outline-button" type="button">New shift</button>
+    </section>
+
+    <section class="scoreboard" aria-label="Shift stats">
+      <div class="stat-card timer-stat">
+        <span class="stat-label">SHIFT TIME</span>
+        <strong id="shift-time">01:15</strong>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">BAKE POINTS</span>
+        <strong id="score">0000</strong>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">ORDERS FILLED</span>
+        <strong id="orders-filled">0</strong>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">MISSED ORDERS</span>
+        <strong id="strikes">0 / 3</strong>
+      </div>
+    </section>
+
+    <div class="workbench">
+      <section class="ticket-panel panel" aria-labelledby="ticket-heading">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">NEXT UP <span id="order-number">#001</span></p>
+            <h2 id="ticket-heading">Customer ticket</h2>
+          </div>
+          <span id="difficulty" class="level-pill">LEVEL 01</span>
+        </div>
+
+        <div class="customer">
+          <div class="customer-avatar" aria-hidden="true">?</div>
+          <div>
+            <span class="small-label">BAKER'S PICKUP</span>
+            <strong id="customer-name">Waiting for the first order</strong>
+          </div>
+        </div>
+
+        <div class="patience-row">
+          <span class="small-label">CUSTOMER PATIENCE</span>
+          <span id="patience-time">--</span>
+        </div>
+        <div class="patience-track" role="progressbar" aria-label="Customer patience" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+          <span id="patience-fill"></span>
+        </div>
+
+        <ul id="order-items" class="order-list" aria-label="Items requested"></ul>
+        <p id="feedback" class="feedback" role="status" aria-live="polite">Start the shift when you are ready.</p>
+      </section>
+
+      <section class="station-panel panel" aria-labelledby="station-heading">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">PICK FROM THE CASE</p>
+            <h2 id="station-heading">Bakery counter</h2>
+          </div>
+          <span class="small-label">KEYS 1-6</span>
+        </div>
+
+        <div id="product-grid" class="product-grid">
+          <button class="product-card" type="button" data-product="sourdough" aria-keyshortcuts="1">
+            <span class="key-hint">1</span>
+            <svg class="product-icon" aria-hidden="true"><use href="#icon-bread"></use></svg>
+            <span class="product-name">Sourdough</span>
+            <span class="product-qty" aria-hidden="true"></span>
+          </button>
+          <button class="product-card" type="button" data-product="croissant" aria-keyshortcuts="2">
+            <span class="key-hint">2</span>
+            <svg class="product-icon" aria-hidden="true"><use href="#icon-croissant"></use></svg>
+            <span class="product-name">Croissant</span>
+            <span class="product-qty" aria-hidden="true"></span>
+          </button>
+          <button class="product-card" type="button" data-product="cinnamon-roll" aria-keyshortcuts="3">
+            <span class="key-hint">3</span>
+            <svg class="product-icon" aria-hidden="true"><use href="#icon-roll"></use></svg>
+            <span class="product-name">Cinnamon roll</span>
+            <span class="product-qty" aria-hidden="true"></span>
+          </button>
+          <button class="product-card" type="button" data-product="cupcake" aria-keyshortcuts="4">
+            <span class="key-hint">4</span>
+            <svg class="product-icon" aria-hidden="true"><use href="#icon-cupcake"></use></svg>
+            <span class="product-name">Cupcake</span>
+            <span class="product-qty" aria-hidden="true"></span>
+          </button>
+          <button class="product-card" type="button" data-product="pretzel" aria-keyshortcuts="5">
+            <span class="key-hint">5</span>
+            <svg class="product-icon" aria-hidden="true"><use href="#icon-pretzel"></use></svg>
+            <span class="product-name">Pretzel</span>
+            <span class="product-qty" aria-hidden="true"></span>
+          </button>
+          <button class="product-card" type="button" data-product="berry-tart" aria-keyshortcuts="6">
+            <span class="key-hint">6</span>
+            <svg class="product-icon" aria-hidden="true"><use href="#icon-tart"></use></svg>
+            <span class="product-name">Berry tart</span>
+            <span class="product-qty" aria-hidden="true"></span>
+          </button>
+        </div>
+
+        <div class="tray-area">
+          <div class="tray-heading">
+            <div>
+              <span class="small-label">YOUR TRAY</span>
+              <strong id="tray-count">0 items</strong>
+            </div>
+            <button id="clear-tray-button" class="text-button" type="button" disabled>Clear tray</button>
+          </div>
+          <div id="tray-items" class="tray-items" aria-label="Items on your tray">
+            <span class="tray-empty">Choose baked goods from the counter.</span>
+          </div>
+          <button id="serve-button" class="serve-button" type="button" disabled>
+            <span>Serve this order</span>
+            <span class="serve-key">ENTER</span>
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <footer class="controls-hint">
+      <span>1-6 choose items</span>
+      <span>ENTER serve order</span>
+      <span>P or ESC pause</span>
+      <span>R restart shift</span>
+    </footer>
+  </main>
+
+  <section id="start-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="start-title">
+    <div class="dialog-card">
+      <p class="eyebrow">HOW TO PLAY</p>
+      <h2 id="start-title">A busy little bakery</h2>
+      <p>Match every item on the customer's ticket, then serve the tray before patience runs out.</p>
+      <ul class="instruction-list">
+        <li><strong>Choose:</strong> Click or tap a pastry, or press keys 1-6. Choose it again to add another.</li>
+        <li><strong>Serve:</strong> Match the ticket exactly and press Enter or the serve button. Click a tray item to remove one.</li>
+        <li><strong>Score:</strong> Fill orders for points. Fast service and an unbroken streak earn a bonus.</li>
+        <li><strong>Survive:</strong> The shift timer is shared by every order. Three misses end the shift; each level brings larger orders and less patience.</li>
+        <li><strong>Pause / restart:</strong> Press P or Escape to pause. Press R or use New shift to start over.</li>
+      </ul>
+      <button id="start-button" class="serve-button dialog-action" type="button">Start the shift</button>
+    </div>
+  </section>
+
+  <section id="help-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="help-title" hidden>
+    <div class="dialog-card">
+      <p class="eyebrow">COUNTER GUIDE</p>
+      <h2 id="help-title">How to play</h2>
+      <ul class="instruction-list">
+        <li><strong>Choose:</strong> Click or tap a pastry, or press keys 1-6. Choose it again to add another.</li>
+        <li><strong>Serve:</strong> Match the ticket exactly and press Enter or the serve button. Click a tray item to remove one.</li>
+        <li><strong>Score:</strong> Fill orders for points. Fast service and an unbroken streak earn a bonus.</li>
+        <li><strong>Survive:</strong> The shift timer is shared by every order. Three misses end the shift; each level brings larger orders and less patience.</li>
+        <li><strong>Pause / restart:</strong> Press P or Escape to pause. Press R or use New shift to start over.</li>
+      </ul>
+      <button id="close-help-button" class="serve-button dialog-action" type="button">Back to the counter</button>
+    </div>
+  </section>
+
+  <section id="pause-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
+    <div class="dialog-card compact-dialog">
+      <p class="eyebrow">SHIFT PAUSED</p>
+      <h2 id="pause-title">Take a breather</h2>
+      <p>Your timers are stopped. Get back to the counter when you are ready.</p>
+      <div class="dialog-actions">
+        <button id="resume-button" class="serve-button" type="button">Resume shift</button>
+        <button id="paused-restart-button" class="outline-button" type="button">Restart shift</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="game-over-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="game-over-title" hidden>
+    <div class="dialog-card compact-dialog">
+      <p class="eyebrow">SHIFT COMPLETE</p>
+      <h2 id="game-over-title">The ovens are cooling</h2>
+      <p id="game-over-summary">You filled 0 orders and earned 0 points.</p>
+      <button id="play-again-button" class="serve-button dialog-action" type="button">Start another shift</button>
+    </div>
+  </section>
+
+  <script src="game.js"></script>
+</body>
+</html>

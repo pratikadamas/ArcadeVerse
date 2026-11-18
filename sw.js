@@ -3,6 +3,7 @@
  * Provides offline caching, stale-while-revalidate asset delivery,
  * Background Sync API fallback for offline queues,
  * and graceful fallback for hub pages and previously played local games.
+ * Includes skipWaiting handling for PWA update available banner (#555).
  *
  * NSOC Winter Edition 2026
  */
@@ -30,11 +31,24 @@ const SHELL_ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(STATIC_CACHE_NAME).then((cache) => {
-      return cache.addAll(SHELL_ASSETS).catch((err) => {
-        console.warn('[ArcadeVerse:SW] Non-fatal shell pre-cache skip:', err);
-      });
-    }).then(() => self.skipWaiting())
+    caches.open(SHELL_CACHE)
+      .then(async (cache) => {
+        try {
+          await cache.addAll(CORE_SHELL_ASSETS);
+        } catch (_) {
+          // Graceful fallback: individual caching in case of partial network availability
+          await Promise.allSettled(
+            CORE_SHELL_ASSETS.map(async (assetUrl) => {
+              try {
+                const response = await fetch(assetUrl);
+                if (response && response.ok) {
+                  await cache.put(assetUrl, response);
+                }
+              } catch (_) {}
+            })
+          );
+        }
+      })
   );
 });
 
