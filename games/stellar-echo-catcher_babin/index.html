@@ -99,15 +99,28 @@
       </div>
     </div>
 
+    <!-- Frequency Tuner Dial & Range Controls -->
+    <div class="tuner-panel">
+      <div class="tuner-header">
+        <span class="tuner-label">FREQUENCY TUNER (88.0 - 108.0 MHz)</span>
+        <span id="statFreq" class="tuner-val">98.0 MHz</span>
+      </div>
+      <div class="tuner-controls">
+        <button id="btnFreqMinus" class="freq-btn" aria-label="Decrease Frequency by 0.1 MHz">- 0.1</button>
+        <input type="range" id="freqSlider" min="88.0" max="108.0" step="0.1" value="98.0" class="freq-slider" aria-label="Frequency Range Slider (88.0 to 108.0 MHz)">
+        <button id="btnFreqPlus" class="freq-btn" aria-label="Increase Frequency by 0.1 MHz">+ 0.1</button>
+      </div>
+    </div>
+
     <!-- Mobile Virtual Controls -->
     <div class="touch-controls">
-      <button id="btnLeft" class="touch-btn" aria-label="Rotate Counter-Clockwise">
+      <button id="btnLeft" class="touch-btn" aria-label="Rotate Counter-Clockwise / Tune Down">
         <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="15 18 9 12 15 6"></polyline>
         </svg>
       </button>
       <button id="btnCatch" class="touch-btn action" aria-label="Capture Signal">CAPTURE</button>
-      <button id="btnRight" class="touch-btn" aria-label="Rotate Clockwise">
+      <button id="btnRight" class="touch-btn" aria-label="Rotate Clockwise / Tune Up">
         <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="9 18 15 12 9 6"></polyline>
         </svg>
@@ -127,8 +140,8 @@
           </button>
         </div>
         <div class="modal-body">
-          <p><strong>Controls:</strong> Rotate the receiver dish using Arrow Keys / A & D, or drag on the canvas.</p>
-          <p><strong>Objective:</strong> Intercept pulsating signal rings when they touch the perimeter dish sensor.</p>
+          <p><strong>Controls:</strong> Tune frequency via scroll wheel, on-screen +/- buttons, slider, Arrow Keys / A & D, or drag the needle on canvas.</p>
+          <p><strong>Objective:</strong> Align your 88.0 - 108.0 MHz tuner to match incoming stellar telemetry and press CAPTURE / Space to intercept signals.</p>
           <p><strong>Clarity:</strong> Missing waves diminishes your signal clarity. Catching pulses replenishes sensor strength!</p>
         </div>
       </div>

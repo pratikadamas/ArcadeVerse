@@ -102,28 +102,59 @@
     });
 
     const navbar = document.getElementById("navbar");
-    const menuBtn = document.getElementById("mobile-menu-btn");
+    const menuBtn = document.getElementById("mobile-menu-btn") || document.getElementById("hamburger-btn");
     const mobileDrawer = document.getElementById("mobile-nav-drawer");
 
     if (menuBtn && mobileDrawer) {
+      // Screen-reader dialog containment attributes
+      if (!mobileDrawer.hasAttribute("role")) {
+        mobileDrawer.setAttribute("role", "dialog");
+      }
+      mobileDrawer.setAttribute("aria-modal", "true");
+      if (!mobileDrawer.hasAttribute("aria-label")) {
+        mobileDrawer.setAttribute("aria-label", "Mobile navigation menu");
+      }
+
+      function getFocusableElements() {
+        const selector = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+        return Array.from(mobileDrawer.querySelectorAll(selector)).filter((el) => {
+          return Boolean(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+        });
+      }
+
       function openMobileMenu() {
         menuBtn.classList.add("active");
         menuBtn.setAttribute("aria-expanded", "true");
         mobileDrawer.classList.add("open");
         mobileDrawer.setAttribute("aria-hidden", "false");
+
+        // Transfer keyboard focus to the first focusable element inside the drawer
+        requestAnimationFrame(() => {
+          const focusables = getFocusableElements();
+          if (focusables.length > 0) {
+            focusables[0].focus();
+          } else {
+            mobileDrawer.setAttribute("tabindex", "-1");
+            mobileDrawer.focus();
+          }
+        });
       }
 
-      function closeMobileMenu() {
+      function closeMobileMenu(restoreFocus = true) {
         menuBtn.classList.remove("active");
         menuBtn.setAttribute("aria-expanded", "false");
         mobileDrawer.classList.remove("open");
         mobileDrawer.setAttribute("aria-hidden", "true");
+
+        if (restoreFocus) {
+          menuBtn.focus();
+        }
       }
 
       function toggleMobileMenu() {
         const isOpen = mobileDrawer.classList.contains("open");
         if (isOpen) {
-          closeMobileMenu();
+          closeMobileMenu(true);
         } else {
           openMobileMenu();
         }
@@ -138,29 +169,59 @@
       const drawerLinks = mobileDrawer.querySelectorAll("a");
       drawerLinks.forEach((link) => {
         link.addEventListener("click", () => {
-          closeMobileMenu();
+          closeMobileMenu(false);
         });
       });
 
-      // Close on click outside navbar
+      // Close on click outside navbar and restore focus to hamburger toggle
       document.addEventListener("click", (e) => {
         if (mobileDrawer.classList.contains("open") && navbar && !navbar.contains(e.target)) {
-          closeMobileMenu();
+          closeMobileMenu(true);
         }
       });
 
-      // Close on Escape key press
+      // Keyboard Focus Trap & Escape Dismissal
       document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && mobileDrawer.classList.contains("open")) {
-          closeMobileMenu();
-          menuBtn.focus();
+        if (!mobileDrawer.classList.contains("open")) return;
+
+        // Escape dismisses drawer cleanly and restores focus to hamburger toggle
+        if (e.key === "Escape") {
+          e.preventDefault();
+          closeMobileMenu(true);
+          return;
+        }
+
+        // Tab Navigation Containment Trap
+        if (e.key === "Tab") {
+          const focusables = getFocusableElements();
+          if (focusables.length === 0) {
+            e.preventDefault();
+            return;
+          }
+
+          const firstEl = focusables[0];
+          const lastEl = focusables[focusables.length - 1];
+
+          if (e.shiftKey) {
+            // Shift + Tab: wrap from first element to last
+            if (document.activeElement === firstEl || !mobileDrawer.contains(document.activeElement)) {
+              e.preventDefault();
+              lastEl.focus();
+            }
+          } else {
+            // Tab: wrap from last element to first
+            if (document.activeElement === lastEl || !mobileDrawer.contains(document.activeElement)) {
+              e.preventDefault();
+              firstEl.focus();
+            }
+          }
         }
       });
 
-      // Close if window is resized beyond mobile breakpoint
+      // Close without focus stealing if window is resized beyond mobile breakpoint
       window.addEventListener("resize", () => {
         if (window.innerWidth > 1280 && mobileDrawer.classList.contains("open")) {
-          closeMobileMenu();
+          closeMobileMenu(false);
         }
       }, { passive: true });
     }
@@ -310,6 +371,24 @@
   }
 
   document.addEventListener('DOMContentLoaded', bindPageTransitionLoader);
+
+  // Non-intrusive Service Worker Registration for PWA & Offline Shell Support
+  if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      const isLocalhost = Boolean(
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '[::1]' ||
+        window.location.hostname.match(/^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/)
+      );
+      if (window.location.protocol === 'https:' || isLocalhost || window.location.protocol === 'http:') {
+        navigator.serviceWorker
+          .register('./sw.js', { scope: './' })
+          .catch(() => {
+            // Graceful fallback: non-intrusive if restricted or offline
+          });
+      }
+    });
+  }
 
 })();
 

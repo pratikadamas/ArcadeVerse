@@ -1,6 +1,6 @@
 {
   "title": "Math Blitz: 60s Arithmetic Sprint",
-  "category": "Arcade / Educational",
+  "category": "Arcade",
   "lucideIcon": "calculator",
   "description": "Fast-paced arithmetic sprint! Race against a 60-second timer to solve 10 dynamically generated math equations with integer precision.",
   "author": "Pratik Giri",
@@ -18,4 +18,3 @@
   "featured": true,
   "stars": 30
 }
-
