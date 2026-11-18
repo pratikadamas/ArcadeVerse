@@ -2965,3 +2965,112 @@ html.a11y-reduced-motion .btn-export-markdown:hover {
   transition: none !important;
   transform: none !important;
 }
+
+/* ===================================================
+   SDK INTERACTIVE SANDBOX PLAYGROUND (#703)
+   =================================================== */
+
+.sdk-sandbox-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin: 1.5rem 0 2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .sdk-sandbox-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sdk-sandbox-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5rem;
+}
+
+.sdk-sandbox-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: #060c18;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: #00f3ff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  padding: 0.75rem;
+  resize: vertical;
+}
+
+.sdk-sandbox-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.sdk-sandbox-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.2s;
+}
+
+.sdk-sandbox-btn.primary {
+  background: var(--accent-primary);
+  color: #080d1c;
+  border-color: var(--accent-primary);
+}
+
+.sdk-sandbox-btn:hover {
+  opacity: 0.9;
+}
+
+.sdk-sandbox-console {
+  height: 180px;
+  overflow-y: auto;
+  background: #060c18;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+}
+
+.sandbox-log-item {
+  margin-bottom: 0.35rem;
+  line-height: 1.4;
+}
+
+.sandbox-log-item.exec {
+  color: #94a3b8;
+}
+
+.sandbox-log-item.event {
+  color: #00f3ff;
+}
+
+.sandbox-log-item.success {
+  color: #10b981;
+}
+
+.sandbox-log-item.error {
+  color: #ef4444;
+}
+
+.sandbox-log-info {
+  color: #64748b;
+  font-style: italic;
+}
