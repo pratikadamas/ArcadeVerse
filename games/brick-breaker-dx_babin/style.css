@@ -167,6 +167,10 @@ html, body {
   height: 100%;
   display: block;
   cursor: ew-resize;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 /* SCREEN OVERLAYS */

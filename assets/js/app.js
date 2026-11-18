@@ -36,15 +36,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const favoritesCountBadge = document.getElementById("favorites-count-badge");
   const modalFavBtn = document.getElementById("modal-fav-btn");
   const modalSoundBtn = document.getElementById("modal-sound-btn");
+  const scratchpadBtn = document.getElementById("modal-scratchpad-btn");
+  const scratchpadPanel = document.getElementById("game-scratchpad");
+  const scratchpadCloseBtn = document.getElementById("scratchpad-close-btn");
+  const scratchpadNotes = document.getElementById("scratchpad-notes");
+  const scratchpadTitle = document.getElementById("scratchpad-game-title");
+  const scratchpadStatus = document.getElementById("scratchpad-status");
+  const scratchpadClearConfirm = document.getElementById("scratchpad-clear-confirm");
 
   let currentCategory = "all";
   let currentDurationFacet = "all";
   let currentControlsFacet = "all";
   let currentLetterFilter = "all";
   let currentTagFilter = "";
+  let currentMixFilter = null; // curated mix filter (#583), read by the catalog filter below
   let searchQuery = "";
   let currentSort = "featured";
   let searchDebounceTimer = null;
+  const CATALOG_SORT_STORAGE_KEY = "arcadeverse_catalog_sort";
   const CATALOG_VIEW_STORAGE_KEY = "arcadeverse_catalog_view";
   let currentCatalogView = "grid";
   try {
@@ -54,6 +63,27 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   } catch (_) { }
   let lastFocusedElement = null;
+
+  // Screen reader live region, used by the launch / catalog / pause announcements below
+  function announceToScreenReader(message) {
+    if (!message) return;
+    let liveRegion = document.getElementById("a11y-live-region");
+    if (!liveRegion) {
+      liveRegion = document.createElement("div");
+      liveRegion.id = "a11y-live-region";
+      liveRegion.className = "sr-only";
+      liveRegion.setAttribute("role", "status");
+      liveRegion.setAttribute("aria-live", "polite");
+      liveRegion.setAttribute("aria-atomic", "true");
+      document.body.appendChild(liveRegion);
+    }
+    // Clear first so a repeated message is announced again
+    liveRegion.textContent = "";
+    setTimeout(() => {
+      liveRegion.textContent = message;
+    }, 50);
+  }
+  window.announceToScreenReader = announceToScreenReader;
 
   // ========================================================
   // REBINDABLE KEYBOARD CONTROLS SUBSYSTEM (#516)
@@ -647,6 +677,11 @@ document.addEventListener("DOMContentLoaded", () => {
     ArcadeStorageResilience.safeSetItem(FAVORITES_STORAGE_KEY, serialized);
     ArcadeStorageResilience.safeSetItem(LEGACY_FAVORITES_STORAGE_KEY, serialized);
     updateFavoritesBadge();
+
+    // Offline dispatch queue integration (#554)
+    if (typeof navigator !== 'undefined' && !navigator.onLine && window.AvOfflineQueue) {
+      window.AvOfflineQueue.enqueue('FAVORITES_SYNC', { favorites: list });
+    }
   }
 
   function isFavorite(gameId) {
@@ -1167,7 +1202,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
 
-      return matchesCategory && matchesTag && matchesDuration && matchesControls && matchesLetter;
+      // Curated Mix Playlist Filter (#583)
+      let matchesCuratedMix = true;
+      if (currentMixFilter && Array.isArray(currentMixFilter)) {
+        matchesCuratedMix = currentMixFilter.includes(item.id);
+      }
+
+      return matchesCategory && matchesTag && matchesDuration && matchesControls && matchesLetter && matchesCuratedMix;
     });
 
     const cleanSearch = searchQuery.replace(/^by\s+@?/, "").replace(/^@/, "").trim();
@@ -1193,6 +1234,28 @@ document.addEventListener("DOMContentLoaded", () => {
       if (filtered.length > 0) {
         isFuzzyFallback = true;
       }
+    }
+
+    function getDifficultyRank(game) {
+      if (!game) return 2;
+      const raw = String(game.difficulty || "").toLowerCase().trim();
+      if (raw.includes("easy") || raw.includes("beginner") || raw.includes("all skill") || raw.includes("casual")) return 1;
+      if (raw.includes("hard") || raw.includes("advanced") || raw.includes("expert") || raw.includes("survival")) return 3;
+      if (raw.includes("medium") || raw.includes("intermediate")) return 2;
+
+      const text = (String(game.title || "") + " " + String(game.category || "") + " " + (Array.isArray(game.tags) ? game.tags.join(" ") : "") + " " + String(game.description || "")).toLowerCase();
+      if (text.includes("easy") || text.includes("casual") || text.includes("relaxing") || text.includes("simple") || text.includes("calm") || text.includes("clicker")) return 1;
+      if (text.includes("expert") || text.includes("hardcore") || text.includes("insane") || text.includes("complex") || text.includes("rpg") || text.includes("hard") || text.includes("survival") || text.includes("roguelike")) return 3;
+      return 2;
+    }
+
+    function getGameReleaseTime(game) {
+      if (!game) return 0;
+      if (game.releaseDate) {
+        const t = new Date(game.releaseDate).getTime();
+        if (!isNaN(t)) return t;
+      }
+      return 0;
     }
 
     // Apply Sorting
@@ -1539,13 +1602,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
       card.innerHTML = `
         <div class="game-card-preview">
+          <canvas class="card-micro-preview-canvas" width="280" height="140"></canvas>
           <span class="game-category-tag">${safeCategory}</span>
           ${halloweenBadgeHtml}
-          <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
-              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-            </svg>
-          </button>
+          <div class="card-options-top">
+            <label class="game-compare-label" title="Select to compare with another game">
+              <input type="checkbox" class="game-compare-checkbox" data-game-id="${safeGameId}">
+              <span class="compare-custom-box"></span>
+            </label>
+            <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+              </svg>
+            </button>
+          </div>
           <div class="game-icon">${iconHtml}</div>
         </div>
         <div class="game-card-body">
@@ -1650,15 +1720,98 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
 
+      // Interactive Micro-Preview Particle Animation on Hover (#588)
+      const previewCanvas = card.querySelector(".card-micro-preview-canvas");
+      let microAnimId = null;
+      let microParticles = [];
+
+      card.addEventListener("pointerenter", () => {
+        if (!previewCanvas) return;
+        const pctx = previewCanvas.getContext("2d");
+        if (!pctx) return;
+        previewCanvas.style.opacity = "1";
+
+        microParticles = [];
+        const color = (game.category || "").toLowerCase().includes("action") ? "#ef4444" :
+                      (game.category || "").toLowerCase().includes("puzzle") ? "#a855f7" :
+                      (game.category || "").toLowerCase().includes("strategy") ? "#10b981" : "#38bdf8";
+
+        for (let i = 0; i < 22; i++) {
+          microParticles.push({
+            x: Math.random() * previewCanvas.width,
+            y: Math.random() * previewCanvas.height,
+            vx: (Math.random() - 0.5) * 1.8,
+            vy: (Math.random() - 0.5) * 1.8,
+            size: Math.random() * 3 + 1,
+            color: color
+          });
+        }
+
+        const startTime = Date.now();
+        function loopPreview() {
+          if (Date.now() - startTime > 3000) {
+            cancelAnimationFrame(microAnimId);
+            return;
+          }
+          pctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+          pctx.fillStyle = color;
+          for (const pt of microParticles) {
+            pt.x += pt.vx;
+            pt.y += pt.vy;
+            if (pt.x < 0) pt.x = previewCanvas.width;
+            if (pt.x > previewCanvas.width) pt.x = 0;
+            if (pt.y < 0) pt.y = previewCanvas.height;
+            if (pt.y > previewCanvas.height) pt.y = 0;
+
+            pctx.beginPath();
+            pctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+            pctx.fill();
+          }
+          microAnimId = requestAnimationFrame(loopPreview);
+        }
+        loopPreview();
+      });
+
+      card.addEventListener("pointerleave", () => {
+        if (microAnimId) {
+          cancelAnimationFrame(microAnimId);
+          microAnimId = null;
+        }
+        if (previewCanvas) {
+          const pctx = previewCanvas.getContext("2d");
+          if (pctx) pctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+          previewCanvas.style.opacity = "0";
+        }
+      });
+
       // Only clicking the dedicated Play Now button launches the game modal
       gamesGrid.appendChild(card);
     });
 
     updateFacetSummaryUI();
 
+    // Lightweight DOM Windowing / Virtualization for Catalog Cards (#590)
+    // Ensures silky 60 FPS scrolling on mobile devices by checking IntersectionObserver
+    if (window.IntersectionObserver) {
+      const cardObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          const el = entry.target;
+          if (entry.isIntersecting) {
+            el.classList.remove("card-virtual-hidden");
+          } else {
+            // Keep height spacer for off-screen cards
+            el.classList.add("card-virtual-hidden");
+          }
+        });
+      }, { rootMargin: "250px 0px" });
+
+      const allCards = gamesGrid.querySelectorAll(".game-card");
+      allCards.forEach((c) => cardObserver.observe(c));
+    }
+
     // Assistive Screen Reader Notification for Catalog Filter/Search Updates (#513)
     if (typeof announceToScreenReader === "function") {
-      const count = finalResults.length;
+      const count = filtered.length;
       let filterDesc = [];
       if (currentCategory && currentCategory !== "all") filterDesc.push(`category "${currentCategory}"`);
       if (searchQuery) filterDesc.push(`matching "${searchQuery}"`);
@@ -1977,11 +2130,11 @@ document.addEventListener("DOMContentLoaded", () => {
   if (gameIframe) {
     gameIframe.addEventListener("load", () => {
       // Ignore blanking resets
-      if (!gameIframe.src || gameIframe.src.includes("about:blank")) return;
+      if (!frame.src || frame.src.includes("about:blank")) return;
 
       iframeLoadSucceeded = true;
       resetIframeBoundary();
-      gameIframe.classList.add("loaded");
+      frame.classList.add("loaded");
       guardIframeTouchInteractions();
 
       // Establish cryptographic session handshake with child game frame
@@ -2005,13 +2158,15 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (_) { }
     });
 
-    gameIframe.addEventListener("error", () => {
+    frame.addEventListener("error", () => {
+      if (frame !== gameIframe) return;
       iframeLoadSucceeded = false;
       if (activeGame) {
         triggerModalErrorBoundary(activeGame);
       }
     });
   }
+  bindGameIframeListeners();
 
   // =========================================================================
   // TOP-LEVEL NAVIGATION GUARD & ROGUE SCRIPT PROTECTION (#492)
@@ -2067,10 +2222,17 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.classList.remove("modal-launching-in-progress");
     }, 450);
 
+    flushScratchpadSave();
     activeGame = game;
+    loadScratchpadGame(game);
     isGameSessionActive = true;
     gameSessionStartTime = Date.now();
     isConfirmingQuit = false;
+
+    // LRU Game Cache Manager record play touch (#556)
+    if (window.AvGameLruCacheManager) {
+      window.AvGameLruCacheManager.recordGamePlay(game.id);
+    }
     hideQuitConfirmationModal();
     lastFocusedElement = triggerElement || document.activeElement;
 
@@ -2085,6 +2247,9 @@ document.addEventListener("DOMContentLoaded", () => {
     lastAnnouncedScore = 0;
     lastScoreAnnouncementTime = Date.now();
     announceToScreenReader(`Launching ${game.title}. Category: ${game.category}. Built by ${game.author}.`);
+    if (window.ArcadeAnnouncer && typeof window.ArcadeAnnouncer.announce === "function") {
+      window.ArcadeAnnouncer.announce("Ready Player One");
+    }
     startIframeTimeout(game);
 
     const audioState = syncAudioPreferences();
@@ -2099,6 +2264,9 @@ document.addEventListener("DOMContentLoaded", () => {
     updateModalFavoriteButton(isFavorite(game.id));
     if (window.SoundEngine && typeof window.SoundEngine.updateUI === "function") {
       window.SoundEngine.updateUI();
+    }
+    if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.mountControls === "function") {
+      window.GameSpeedRegulator.mountControls();
     }
 
     // Monitor game frame lifecycle and attach watchdog
@@ -2137,6 +2305,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     checkOrientationLandscapePrompt(game);
+
+    // "Players Also Played" Intelligent Recommendation Strip in Modal Footer (#591)
+    renderModalRecommendations(game);
 
     if (!isDirectDeepLink) {
       modalPushedHistory = true;
@@ -2274,9 +2445,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeGameModal(isFromPopState = false) {
     if (!gameModal || (!gameModal.classList.contains("active") && !activeGame)) return;
+    if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.closeMenu === "function") {
+      window.GameSpeedRegulator.closeMenu();
+    }
     hideLandscapePrompt();
+    closeScratchpad(false);
     activeGame = null;
     isGameSessionActive = false;
+    // Stop the 15s load timer so a game closed mid load does not raise the error screen later
+    resetIframeBoundary();
     gameModal.classList.remove("active");
     gameModal.setAttribute("aria-hidden", "true");
     if (newTabBtn) {
@@ -2378,11 +2555,13 @@ document.addEventListener("DOMContentLoaded", () => {
           newIframe.setAttribute("title", currentFrame.getAttribute("title") || "Arcade Game Screen");
           newIframe.setAttribute("loading", "lazy");
           newIframe.setAttribute("allow", "gamepad; autoplay; fullscreen");
+          if (currentFrame.hasAttribute("sandbox")) newIframe.setAttribute("sandbox", currentFrame.getAttribute("sandbox"));
           newIframe.src = "about:blank";
           parent.replaceChild(newIframe, currentFrame);
-          // Re-bind global reference so openGameModal can find the new live iframe node
-          gameIframe = document.getElementById("game-iframe");
-          if (!gameIframe) gameIframe = newIframe;
+          // The reference and listeners must follow the new node, otherwise the next game
+          // is loaded into a detached iframe and never shows
+          gameIframe = newIframe;
+          bindGameIframeListeners();
         }
       } catch (_) { }
     }, 100);
@@ -2421,6 +2600,260 @@ document.addEventListener("DOMContentLoaded", () => {
 
   closeModalBtn.addEventListener("click", () => requestModalClose(false));
   modalOverlay.addEventListener("click", () => requestModalClose(false));
+
+  let scratchpadSaveTimer = null;
+  let scratchpadHideTimer = null;
+  let scratchpadTrigger = scratchpadBtn;
+  let scratchpadGameStartTime = 0;
+
+  function getScratchpadStorageKey(gameId) {
+    return `arcadeverse_notes_${gameId}`;
+  }
+
+  function setScratchpadStatus(message) {
+    if (scratchpadStatus) scratchpadStatus.textContent = message;
+  }
+
+  function updateScratchpadIndicator(notes) {
+    if (!scratchpadBtn) return;
+    const hasNotes = Boolean(notes && notes.trim());
+    scratchpadBtn.dataset.hasNotes = hasNotes ? "true" : "false";
+    scratchpadBtn.setAttribute("aria-label", hasNotes ? "Open Strategy Scratchpad, notes saved" : "Open Strategy Scratchpad");
+  }
+
+  function flushScratchpadSave() {
+    if (scratchpadSaveTimer) {
+      clearTimeout(scratchpadSaveTimer);
+      scratchpadSaveTimer = null;
+    }
+    if (!activeGame || !scratchpadNotes) return;
+
+    const notes = scratchpadNotes.value;
+    const key = getScratchpadStorageKey(activeGame.id);
+    if (!window.ArcadeStorageResilience || !window.ArcadeStorageResilience.safeSetItem(key, notes)) {
+      setScratchpadStatus("Unable to save notes locally");
+      return;
+    }
+    updateScratchpadIndicator(notes);
+    setScratchpadStatus("Saved locally per game");
+  }
+
+  function scheduleScratchpadSave() {
+    if (scratchpadSaveTimer) clearTimeout(scratchpadSaveTimer);
+    if (!activeGame || !scratchpadNotes) return;
+
+    const key = getScratchpadStorageKey(activeGame.id);
+    const gameId = activeGame.id;
+    const notes = scratchpadNotes.value;
+    setScratchpadStatus("Saving...");
+    scratchpadSaveTimer = setTimeout(() => {
+      scratchpadSaveTimer = null;
+      if (!window.ArcadeStorageResilience || !window.ArcadeStorageResilience.safeSetItem(key, notes)) {
+        setScratchpadStatus("Unable to save notes locally");
+        return;
+      }
+      if (activeGame && activeGame.id === gameId) {
+        updateScratchpadIndicator(notes);
+        setScratchpadStatus("Saved locally per game");
+      }
+    }, 300);
+  }
+
+  function loadScratchpadGame(game) {
+    if (!game || !scratchpadNotes) return;
+    scratchpadGameStartTime = Date.now();
+    if (scratchpadTitle) scratchpadTitle.textContent = game.title;
+    try {
+      scratchpadNotes.value = localStorage.getItem(getScratchpadStorageKey(game.id)) || "";
+      updateScratchpadIndicator(scratchpadNotes.value);
+      setScratchpadStatus("Saved locally per game");
+    } catch (error) {
+      scratchpadNotes.value = "";
+      updateScratchpadIndicator("");
+      setScratchpadStatus("Local storage is unavailable");
+      console.warn("[ArcadeVerse Scratchpad] Unable to load game notes:", error);
+    }
+    const clearConfirm = document.getElementById("scratchpad-clear-confirm");
+    if (clearConfirm) clearConfirm.hidden = true;
+  }
+
+  function openScratchpad() {
+    if (!activeGame || !scratchpadPanel || !scratchpadBtn) return;
+    if (scratchpadHideTimer) {
+      clearTimeout(scratchpadHideTimer);
+      scratchpadHideTimer = null;
+    }
+    scratchpadTrigger = scratchpadBtn;
+    scratchpadPanel.hidden = false;
+    scratchpadPanel.inert = false;
+    scratchpadPanel.setAttribute("aria-hidden", "false");
+    scratchpadBtn.setAttribute("aria-expanded", "true");
+    modalWindow.classList.add("scratchpad-open");
+    requestAnimationFrame(() => {
+      scratchpadPanel.classList.add("is-open");
+      scratchpadNotes.focus();
+    });
+  }
+
+  function closeScratchpad(restoreFocus = true) {
+    if (!scratchpadPanel || scratchpadPanel.hidden) return;
+    flushScratchpadSave();
+    scratchpadPanel.inert = true;
+    scratchpadPanel.setAttribute("aria-hidden", "true");
+    scratchpadPanel.classList.remove("is-open");
+    scratchpadBtn.setAttribute("aria-expanded", "false");
+    modalWindow.classList.remove("scratchpad-open");
+    if (scratchpadHideTimer) clearTimeout(scratchpadHideTimer);
+    scratchpadHideTimer = setTimeout(() => {
+      scratchpadPanel.hidden = true;
+      scratchpadHideTimer = null;
+    }, 250);
+    if (restoreFocus && scratchpadTrigger && scratchpadTrigger.isConnected) scratchpadTrigger.focus();
+  }
+
+  function toggleScratchpad() {
+    if (!activeGame) return;
+    if (scratchpadPanel.hidden || !scratchpadPanel.classList.contains("is-open")) {
+      openScratchpad();
+    } else {
+      closeScratchpad();
+    }
+  }
+
+  function formatPlaytime(seconds) {
+    const total = Math.max(0, Math.floor(seconds));
+    const hours = String(Math.floor(total / 3600)).padStart(2, "0");
+    const minutes = String(Math.floor((total % 3600) / 60)).padStart(2, "0");
+    const remainingSeconds = String(total % 60).padStart(2, "0");
+    return `${hours}:${minutes}:${remainingSeconds}`;
+  }
+
+  if (scratchpadBtn) scratchpadBtn.addEventListener("click", toggleScratchpad);
+  if (scratchpadCloseBtn) scratchpadCloseBtn.addEventListener("click", () => closeScratchpad());
+  if (scratchpadNotes) scratchpadNotes.addEventListener("input", scheduleScratchpadSave);
+
+  const scratchpadStampBtn = document.getElementById("scratchpad-stamp-btn");
+  if (scratchpadStampBtn) {
+    scratchpadStampBtn.addEventListener("click", () => {
+      if (!activeGame || !scratchpadNotes) return;
+      const start = scratchpadNotes.selectionStart;
+      const end = scratchpadNotes.selectionEnd;
+      const value = scratchpadNotes.value;
+      const prefix = start > 0 && value[start - 1] !== "\n" ? "\n" : "";
+      const suffix = end < value.length && value[end] !== "\n" ? "\n" : "";
+      const stamp = `[${formatPlaytime((Date.now() - scratchpadGameStartTime) / 1000)}] Clue: `;
+      const insertion = `${prefix}${stamp}${suffix}`;
+      scratchpadNotes.setRangeText(insertion, start, end, "end");
+      scratchpadNotes.focus();
+      scheduleScratchpadSave();
+    });
+  }
+
+  const scratchpadCopyBtn = document.getElementById("scratchpad-copy-btn");
+  if (scratchpadCopyBtn) {
+    scratchpadCopyBtn.addEventListener("click", async () => {
+      const text = scratchpadNotes ? scratchpadNotes.value : "";
+      try {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+          await navigator.clipboard.writeText(text);
+        } else {
+          const copyTarget = document.createElement("textarea");
+          copyTarget.value = text;
+          copyTarget.setAttribute("readonly", "");
+          copyTarget.style.position = "fixed";
+          copyTarget.style.opacity = "0";
+          document.body.appendChild(copyTarget);
+          try {
+            copyTarget.select();
+            if (!document.execCommand("copy")) throw new Error("Clipboard copy command was rejected");
+          } finally {
+            copyTarget.remove();
+          }
+        }
+        setScratchpadStatus("Notes copied to clipboard");
+      } catch (error) {
+        setScratchpadStatus("Clipboard access failed");
+        console.warn("[ArcadeVerse Scratchpad] Unable to copy notes:", error);
+      }
+    });
+  }
+
+  const scratchpadExportBtn = document.getElementById("scratchpad-export-btn");
+  if (scratchpadExportBtn) {
+    scratchpadExportBtn.addEventListener("click", () => {
+      if (!activeGame || !scratchpadNotes) return;
+      const safeTitle = activeGame.title.replace(/[<>:"/\\|?*\x00-\x1F]/g, "").trim().replace(/\s+/g, "_") || "Game";
+      const file = new Blob([scratchpadNotes.value], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(file);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `ArcadeVerse_${safeTitle}_Notes.txt`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setScratchpadStatus("Notes exported");
+    });
+  }
+
+  const scratchpadClearBtn = document.getElementById("scratchpad-clear-btn");
+  const scratchpadClearConfirmBtn = document.getElementById("scratchpad-clear-confirm-btn");
+  const scratchpadClearCancelBtn = document.getElementById("scratchpad-clear-cancel-btn");
+  if (scratchpadClearBtn && scratchpadClearConfirm) {
+    scratchpadClearBtn.addEventListener("click", () => {
+      scratchpadClearConfirm.hidden = false;
+      scratchpadClearConfirmBtn.focus();
+    });
+  }
+  if (scratchpadClearConfirmBtn) {
+    scratchpadClearConfirmBtn.addEventListener("click", () => {
+      if (!scratchpadNotes) return;
+      scratchpadNotes.value = "";
+      scratchpadClearConfirm.hidden = true;
+      scheduleScratchpadSave();
+      scratchpadNotes.focus();
+    });
+  }
+  if (scratchpadClearCancelBtn) {
+    scratchpadClearCancelBtn.addEventListener("click", () => {
+      if (scratchpadClearConfirm) scratchpadClearConfirm.hidden = true;
+      if (scratchpadClearBtn) scratchpadClearBtn.focus();
+    });
+  }
+
+  window.addEventListener("keydown", (event) => {
+    if (!gameModal || !gameModal.classList.contains("active")) return;
+    if (event.altKey && !event.ctrlKey && !event.metaKey && event.key.toLowerCase() === "n") {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      toggleScratchpad();
+      return;
+    }
+    if (!scratchpadPanel || scratchpadPanel.hidden || !scratchpadPanel.classList.contains("is-open")) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      closeScratchpad();
+      return;
+    }
+    if (event.key !== "Tab") return;
+    const focusable = Array.from(scratchpadPanel.querySelectorAll("button:not([disabled]), textarea:not([disabled])"))
+      .filter((element) => !element.closest("[hidden]"));
+    if (!focusable.length) {
+      event.preventDefault();
+      scratchpadPanel.focus();
+      return;
+    }
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && (document.activeElement === first || !scratchpadPanel.contains(document.activeElement))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (document.activeElement === last || !scratchpadPanel.contains(document.activeElement))) {
+      event.preventDefault();
+      first.focus();
+    }
+  }, true);
 
   if (modalFavBtn) {
     modalFavBtn.addEventListener("click", () => {
@@ -2680,6 +3113,16 @@ document.addEventListener("DOMContentLoaded", () => {
       if (typeof announceToScreenReader === "function") {
         announceToScreenReader(`Game over. Final score: ${finalScore}.`);
       }
+
+      // Offline dispatch queue integration (#554)
+      if (typeof navigator !== 'undefined' && !navigator.onLine && window.AvOfflineQueue) {
+        window.AvOfflineQueue.enqueue('HIGH_SCORE_SYNC', {
+          gameId: activeGame ? activeGame.id : null,
+          score: finalScore,
+          timestamp: Date.now()
+        });
+      }
+
       window.dispatchEvent(
         new CustomEvent("arcadeverse:game-over", {
           detail: {
@@ -3560,7 +4003,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (playlistTrigger) {
     playlistTrigger.addEventListener("click", () => {
       if (window.ArcadePlaylists) {
-        window.ArcadePlaylists.openDrawer();
+        window.ArcadePlaylists.openDrawer(playlistTrigger);
       }
     });
   }
@@ -3583,7 +4026,10 @@ document.addEventListener("DOMContentLoaded", () => {
         playlistDrawer.classList.remove("open");
         playlistDrawer.setAttribute("aria-hidden", "true");
       }
-      if (playlistTrigger) playlistTrigger.classList.remove("active");
+      if (playlistTrigger) {
+        playlistTrigger.classList.remove("active");
+        playlistTrigger.setAttribute("aria-expanded", "false");
+      }
 
       categoryPills.forEach((p) => {
         p.classList.remove("active");
@@ -4292,6 +4738,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initAZJumpBar();
   initURLDeepLinking();
   initControlsLegend();
+  initMultiChannelAudioMixer();
+  initOfflineDispatchQueue();
 });
 
 // ========================================================

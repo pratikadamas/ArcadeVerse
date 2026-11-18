@@ -52,7 +52,7 @@
     const timestamp = new Date().toISOString();
 
     const issueTitle = `[Game Bug]: ${titleText} (${gameId})`;
-    const issueBody = `### 🐛 Mini-Game Bug Report
+    const issueBody = `### Mini-Game Bug Report
 
 **Game Title:** ${titleText}
 **Game ID:** \`${gameId}\`
@@ -62,7 +62,7 @@
 
 ---
 
-### 🔍 Environment Diagnostics
+### Environment Diagnostics
 - **Browser / User Agent:** \`${browserInfo}\`
 - **Screen Resolution:** ${screenRes}
 - **Active Viewport:** ${viewportRes}
@@ -70,19 +70,19 @@
 
 ---
 
-### 📋 Steps to Reproduce
+### Steps to Reproduce
 1. Launch **${titleText}** from ArcadeVerse catalog.
 2. [Describe what actions were performed...]
 3. Observe unexpected behavior or console error.
 
 ---
 
-### 🎯 Expected Behavior
+### Expected Behavior
 [What should happen when playing?]
 
 ---
 
-### ⚠️ Actual Behavior & Console Errors
+### Actual Behavior & Console Errors
 [Describe the bug, frozen canvas, unresponsive controls, audio glitches, etc.]
 `;
 

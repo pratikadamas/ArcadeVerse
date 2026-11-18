@@ -128,6 +128,73 @@
       }
     },
 
+    // ========================================================
+    // CLIENT-SIDE ANTI-TAMPER CHECKSUM SIGNATURES (#576)
+    // HMAC/SHA-256 Checksum generation and verification for game scores
+    // ========================================================
+    /**
+     * Computes anti-tamper signature for a submitted score
+     * @param {string} gameId
+     * @param {number} score
+     * @param {number} timestamp
+     * @returns {Promise<string>} Hex signature
+     */
+    generateScoreSignature: function (gameId, score, timestamp) {
+      var payload = "av_salt_2026_" + String(gameId) + ":" + String(score) + ":" + String(timestamp);
+      if (typeof crypto !== 'undefined' && crypto.subtle && typeof TextEncoder !== 'undefined') {
+        var encoder = new TextEncoder();
+        var data = encoder.encode(payload);
+        return crypto.subtle.digest("SHA-256", data).then(function (buffer) {
+          var hashArray = Array.from(new Uint8Array(buffer));
+          return hashArray.map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+        }).catch(function () {
+          return "fallback_" + Math.abs(payload.split("").reduce(function (a, b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0)).toString(16);
+        });
+      }
+      var simpleHash = Math.abs(payload.split("").reduce(function (a, b) { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0)).toString(16);
+      return Promise.resolve("fallback_" + simpleHash);
+    },
+
+    /**
+     * Stores a validated high score with its tamper signature
+     */
+    saveSignedScore: function (gameId, score) {
+      var self = this;
+      var ts = Date.now();
+      return this.generateScoreSignature(gameId, score, ts).then(function (sig) {
+        var record = {
+          gameId: gameId,
+          score: Number(score),
+          timestamp: ts,
+          signature: sig
+        };
+        self.setJSON("signed_score", record);
+        self.setItem("highScore", String(score));
+        return record;
+      });
+    },
+
+    /**
+     * Verifies stored score against signature. Resets score to 0 if tampered.
+     */
+    verifySignedScore: function (gameId) {
+      var self = this;
+      var record = this.getJSON("signed_score", null);
+      if (!record || typeof record.score !== 'number' || !record.signature) {
+        return Promise.resolve({ valid: true, score: Number(self.getItem("highScore") || 0) });
+      }
+      return this.generateScoreSignature(gameId, record.score, record.timestamp).then(function (expectedSig) {
+        if (record.signature === expectedSig) {
+          return { valid: true, score: record.score };
+        } else {
+          console.warn("[AntiCheat] Tampering detected in score storage for " + gameId + "! Resetting score.");
+          self.setItem("highScore", "0");
+          self.removeItem("signed_score");
+          return { valid: false, score: 0 };
+        }
+      });
+    },
+
     /**
      * Transparent Storage Interceptor
      * Automatically traps raw localStorage calls for legacy game scripts
@@ -247,6 +314,8 @@
   var resumeHandlers = [];
   var teardownHandlers = [];
   var audioConfigHandlers = [];
+  var speedChangeHandlers = [];
+  var currentGameSpeed = 1.0;
 
   // Cryptographic Session Handshake Subsystem (Issue #489)
   var sessionToken = null;
@@ -512,6 +581,26 @@
         executeHandlers(audioConfigHandlers, currentAudioConfig);
         break;
 
+      case "ARCADEVERSE_SET_SPEED":
+      case "AV_SET_GAME_SPEED":
+        var targetSpeed = 1.0;
+        if (data && typeof data.speedMultiplier === "number") {
+          targetSpeed = data.speedMultiplier;
+        } else if (data && typeof data.speed === "number") {
+          targetSpeed = data.speed;
+        }
+        targetSpeed = Math.max(0.25, Math.min(3.0, targetSpeed));
+        currentGameSpeed = targetSpeed;
+        executeHandlers(speedChangeHandlers, { speed: targetSpeed, speedMultiplier: targetSpeed });
+        try {
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("arcadeverse:speed-changed", {
+              detail: { speed: targetSpeed, speedMultiplier: targetSpeed }
+            }));
+          }
+        } catch (_) {}
+        break;
+
       default:
         break;
     }
@@ -624,6 +713,210 @@
     registeredWebGLContexts.length = 0;
   }
 
+  // ========================================================
+  // IN-BROWSER DEV MANIFEST VALIDATOR WIDGET (#704)
+  // Visible exclusively when window.location.hostname === 'localhost' or '127.0.0.1'
+  // Zero production overhead: bypassed completely on live/production domains
+  // ========================================================
+  var isDevHost = (function () {
+    try {
+      if (typeof window === "undefined" || !window.location) return false;
+      var h = window.location.hostname;
+      return h === "localhost" || h === "127.0.0.1" || h === "[::1]";
+    } catch (_) {
+      return false;
+    }
+  })();
+
+  function initDevValidator() {
+    if (!isDevHost) return;
+    if (typeof document === "undefined" || typeof window === "undefined") return;
+
+    var EMOJI_REGEX = /[\uD83C-\uDBFF\uDC00-\uDFFF]|[\u2600-\u27BF]/;
+    var REQUIRED_JSON_FIELDS = ["title", "category", "description", "author", "github"];
+
+    function runAudit() {
+      var errors = [];
+      var warnings = [];
+      var passed = [];
+
+      var jsonUrl = "game.json";
+      var cssUrl = "style.css";
+      var jsUrl = "game.js";
+
+      Promise.all([
+        // 1. Fetch game.json
+        fetch(jsonUrl).then(function (res) {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return res.text();
+        }).catch(function (err) {
+          return { error: "Missing or unreachable file: game.json (" + err.message + ")" };
+        }),
+        // 2. Head check style.css
+        fetch(cssUrl, { method: "HEAD" }).then(function (res) {
+          return res.ok;
+        }).catch(function () { return false; }),
+        // 3. Head check game.js
+        fetch(jsUrl, { method: "HEAD" }).then(function (res) {
+          return res.ok;
+        }).catch(function () { return false; })
+      ]).then(function (results) {
+        var jsonRaw = results[0];
+        var cssOk = results[1];
+        var jsOk = results[2];
+
+        // 4-file compliance check: index.html, style.css, game.js, game.json
+        if (!cssOk) {
+          errors.push("Missing required bundle file: style.css");
+        } else {
+          passed.push("style.css present");
+        }
+
+        if (!jsOk) {
+          errors.push("Missing required bundle file: game.js");
+        } else {
+          passed.push("game.js present");
+        }
+
+        if (!document.title || !document.title.trim()) {
+          errors.push("index.html is missing a <title> tag");
+        } else {
+          passed.push("index.html <title> present");
+        }
+
+        // game.json structure & field validation
+        if (typeof jsonRaw === "object" && jsonRaw.error) {
+          errors.push(jsonRaw.error);
+        } else if (typeof jsonRaw === "string") {
+          // Emoji check in game.json
+          if (EMOJI_REGEX.test(jsonRaw)) {
+            warnings.push("Unicode emoji detected in game.json (use Lucide icons or SVG)");
+          }
+
+          try {
+            var meta = JSON.parse(jsonRaw);
+            REQUIRED_JSON_FIELDS.forEach(function (field) {
+              if (!meta[field] || (typeof meta[field] === "string" && !meta[field].trim())) {
+                errors.push("game.json missing required field: \"" + field + "\"");
+              }
+            });
+
+            ["title", "category", "author", "description"].forEach(function (field) {
+              var val = meta[field];
+              if (typeof val === "string" && (val.indexOf('"') !== -1 || val.indexOf("<") !== -1 || val.indexOf(">") !== -1)) {
+                errors.push("Attribute breakout risk: \"" + field + "\" contains unescaped quotes or angle brackets");
+              }
+            });
+
+            if (errors.filter(function (e) { return e.indexOf("game.json") !== -1; }).length === 0) {
+              passed.push("game.json manifest schema valid");
+            }
+          } catch (jsonErr) {
+            errors.push("game.json contains invalid JSON: " + jsonErr.message);
+          }
+        }
+
+        // Unicode emoji scan in DOM body
+        var bodyHtml = document.body ? document.body.innerHTML : "";
+        if (EMOJI_REGEX.test(bodyHtml)) {
+          warnings.push("Unicode emoji detected in index.html DOM (replace with SVG/Lucide)");
+        } else {
+          passed.push("Zero unicode emojis in HTML");
+        }
+
+        renderBadge(errors, warnings, passed);
+        logConsole(errors, warnings, passed);
+      }).catch(function (fatal) {
+        console.warn("[ArcadeVerse DevValidator] Unexpected audit error:", fatal);
+      });
+    }
+
+    function logConsole(errors, warnings, passed) {
+      if (errors.length === 0 && warnings.length === 0) {
+        console.group("%c[ArcadeVerse DevValidator] %cPASS", "color:#38bdf8;font-weight:bold;", "color:#22c55e;font-weight:bold;");
+        passed.forEach(function (p) { console.log("%c✓ " + p, "color:#22c55e;"); });
+        console.log("%cPre-flight validation passed for local development.", "color:#94a3b8;font-style:italic;");
+        console.groupEnd();
+      } else {
+        var statusLabel = errors.length > 0 ? "FAIL (" + errors.length + " errors)" : "WARN (" + warnings.length + " warnings)";
+        var statusColor = errors.length > 0 ? "color:#ef4444;font-weight:bold;" : "color:#f59e0b;font-weight:bold;";
+        console.group("%c[ArcadeVerse DevValidator] %c" + statusLabel, "color:#38bdf8;font-weight:bold;", statusColor);
+        errors.forEach(function (e) { console.error("❌ " + e); });
+        warnings.forEach(function (w) { console.warn("⚠️ " + w); });
+        passed.forEach(function (p) { console.log("%c✓ " + p, "color:#94a3b8;"); });
+        console.groupEnd();
+      }
+    }
+
+    function renderBadge(errors, warnings, passed) {
+      var existing = document.getElementById("dev-validator-badge");
+      if (existing) existing.remove();
+
+      var badge = document.createElement("div");
+      badge.id = "dev-validator-badge";
+      badge.setAttribute("role", "status");
+      badge.setAttribute("aria-live", "polite");
+
+      var statusClass = errors.length > 0 ? "fail" : (warnings.length > 0 ? "warn" : "pass");
+      badge.className = "dev-validator-badge " + statusClass;
+
+      var statusText = errors.length > 0
+        ? "DEV: FAIL (" + errors.length + ")"
+        : (warnings.length > 0 ? "DEV: " + warnings.length + " WARN" : "DEV: PASS");
+
+      var titleAttr = errors.length > 0
+        ? "ArcadeVerse DevTools: Validation errors detected (Click to expand / check console)"
+        : "ArcadeVerse DevTools: All pre-flight checks passed";
+
+      var html = '<div class="dev-validator-pill" title="' + titleAttr + '">' +
+        '<span class="dev-validator-dot"></span>' +
+        '<span class="dev-validator-text">' + statusText + '</span>' +
+        '</div>';
+
+      html += '<div class="dev-validator-details">';
+      errors.forEach(function (e) {
+        html += '<div class="dev-validator-item error">❌ ' + escapeHtml(e) + '</div>';
+      });
+      warnings.forEach(function (w) {
+        html += '<div class="dev-validator-item warn">⚠️ ' + escapeHtml(w) + '</div>';
+      });
+      passed.forEach(function (p) {
+        html += '<div class="dev-validator-item pass">✓ ' + escapeHtml(p) + '</div>';
+      });
+      html += '</div>';
+
+      badge.innerHTML = html;
+
+      // Inline fallback styling in case game doesn't link style.css
+      badge.style.position = "fixed";
+      badge.style.bottom = "12px";
+      badge.style.right = "12px";
+      badge.style.zIndex = "999999";
+      badge.style.fontSize = "11px";
+      badge.style.fontWeight = "600";
+      badge.style.borderRadius = "20px";
+      badge.style.cursor = "pointer";
+      badge.style.userSelect = "none";
+      badge.style.fontFamily = "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif";
+
+      badge.addEventListener("click", function () {
+        badge.classList.toggle("expanded");
+      });
+
+      document.body.appendChild(badge);
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", runAudit);
+    } else {
+      setTimeout(runAudit, 120);
+    }
+  }
+
   /**
    * Initializes message bridging with parent window
    */
@@ -657,15 +950,16 @@
         currentAudioConfig.muted = isMuted;
       } catch (_) {}
 
-      // Ping parent window for initial audio configuration
+      // Ping parent window for initial audio and speed configuration
       if (window.parent && window.parent !== window) {
         securePostToParent("ARCADEVERSE_REQUEST_AUDIO_CONFIG", {});
+        securePostToParent("ARCADEVERSE_REQUEST_SPEED_CONFIG", {});
 
         // Forward global keyboard shortcuts from inside game iframe to parent shell
         window.addEventListener("keydown", function (e) {
           var key = (e.key || "").toLowerCase();
-          // Escape (close modal), f (fullscreen), r (restart), m (mute), t (theme)
-          if (e.key === "Escape" || key === "f" || key === "r" || key === "m" || key === "t") {
+          // Escape (close modal), f (fullscreen), r (restart), m (mute), t (theme), [ / ] (speed)
+          if (e.key === "Escape" || key === "f" || key === "r" || key === "m" || key === "t" || e.key === "[" || e.key === "]") {
             // If typing in input/textarea inside game, skip
             var tag = (e.target && e.target.tagName ? e.target.tagName.toLowerCase() : "");
             if (tag === "input" || tag === "textarea" || (e.target && e.target.isContentEditable)) return;

@@ -249,6 +249,111 @@ canvas {
   box-shadow: 0 0 24px rgba(56, 189, 248, 0.8);
 }
 
+/* Frequency Tuner Panel */
+.tuner-panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-neon);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tuner-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tuner-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.tuner-val {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--sky-neon);
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+  font-family: monospace;
+}
+
+.tuner-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.freq-btn {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid var(--border-neon);
+  color: var(--text-main);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+
+.freq-btn:hover {
+  background: rgba(56, 189, 248, 0.35);
+  border-color: var(--sky-neon);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+}
+
+.freq-btn:active {
+  transform: scale(0.96);
+  background: var(--sky-neon);
+  color: #020617;
+}
+
+.freq-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  cursor: pointer;
+}
+
+.freq-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--sky-neon);
+  box-shadow: 0 0 10px var(--sky-neon);
+  cursor: pointer;
+  border: 2px solid #fff;
+  transition: transform 0.1s ease;
+}
+
+.freq-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.freq-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--sky-neon);
+  box-shadow: 0 0 10px var(--sky-neon);
+  cursor: pointer;
+  border: 2px solid #fff;
+  transition: transform 0.1s ease;
+}
+
 .touch-controls {
   display: none;
   justify-content: center;
