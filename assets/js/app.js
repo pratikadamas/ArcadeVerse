@@ -61,13 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (savedView === "list" || savedView === "grid") {
       currentCatalogView = savedView;
     }
-  } catch (_) {}
-  try {
-    const savedSort = localStorage.getItem(CATALOG_SORT_STORAGE_KEY);
-    if (savedSort && sortSelect && Array.from(sortSelect.options).some((o) => o.value === savedSort)) {
-      currentSort = savedSort;
-    }
-  } catch (_) {}
+  } catch (_) { }
   let lastFocusedElement = null;
 
   // Screen reader live region, used by the launch / catalog / pause announcements below
@@ -121,7 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (savedBindings) {
       activeKeybindings = Object.assign({}, DEFAULT_KEYBINDINGS, JSON.parse(savedBindings));
     }
-  } catch (_) {}
+  } catch (_) { }
 
   function ensureControlsSettingsDOM() {
     let btn = document.getElementById("modal-controls-btn");
@@ -219,7 +213,7 @@ document.addEventListener("DOMContentLoaded", () => {
         activeKeybindings = Object.assign({}, DEFAULT_KEYBINDINGS);
         try {
           localStorage.removeItem(KEYBINDINGS_STORAGE_KEY);
-        } catch (_) {}
+        } catch (_) { }
         cancelRebinding();
       });
     }
@@ -228,7 +222,7 @@ document.addEventListener("DOMContentLoaded", () => {
       saveControlsBtn.addEventListener("click", () => {
         try {
           localStorage.setItem(KEYBINDINGS_STORAGE_KEY, JSON.stringify(activeKeybindings));
-        } catch (_) {}
+        } catch (_) { }
         cancelRebinding();
         if (typeof controlsDialog.close === "function") controlsDialog.close();
         else controlsDialog.removeAttribute("open");
@@ -340,7 +334,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("keyup", (e) => translateAndDispatchRemappedKey(e, "keyup"), false);
   let activeGame = null;
   let modalPushedHistory = false;
-  let closeAutocomplete = () => {};
+  let closeAutocomplete = () => { };
 
   // History API State Synchronization & Deep-Linking Engine
   function syncURLState(push = false) {
@@ -503,7 +497,9 @@ document.addEventListener("DOMContentLoaded", () => {
       "arcadeverse_theme",
       "arcadeverse_game_ratings",
       "arcadeverse_master_volume",
-      "arcadeverse_muted"
+      "arcadeverse_muted",
+      "av_master_volume",
+      "av_sound_muted"
     ]);
 
     function isQuotaError(err) {
@@ -576,9 +572,9 @@ document.addEventListener("DOMContentLoaded", () => {
             bytesFreed += (key.length + val.length) * 2;
             localStorage.removeItem(key);
             keysRemoved++;
-          } catch (_) {}
+          } catch (_) { }
         });
-      } catch (_) {}
+      } catch (_) { }
       return { bytesFreed, keysRemoved };
     }
 
@@ -657,7 +653,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ArcadeStorageResilience.safeSetItem(FAVORITES_STORAGE_KEY, legacy);
       }
     }
-  } catch (_) {}
+  } catch (_) { }
 
   function getFavorites() {
     try {
@@ -995,7 +991,7 @@ document.addEventListener("DOMContentLoaded", () => {
   updateFavoritesBadge();
 
   // Render Games
-  
+
   // --- Facet Filter Summary Indicator Engine ---
   function updateFacetSummaryUI() {
     const summaryContainer = document.getElementById("active-filters-summary");
@@ -1112,7 +1108,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  
+
   // Helper to identify Halloween Special Games
   function isHalloweenGame(g) {
     if (!g) return false;
@@ -1942,7 +1938,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
       try {
         return crypto.randomUUID();
-      } catch (_) {}
+      } catch (_) { }
     }
     if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
       const bytes = new Uint8Array(16);
@@ -2044,15 +2040,95 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 3500);
   }
 
-  // Bind the load / error listeners on the current game iframe. closeGameModal swaps in a fresh
-  // iframe node, so this runs again for each new one.
-  function bindGameIframeListeners() {
-    const frame = gameIframe;
-    if (!frame) return;
+  // =========================================================================
+  // ARCADEVERSE MASTER VOLUME & AUDIO SYNC BUS
+  // Synchronizes av_master_volume & av_sound_muted with embedded iframe games
+  // =========================================================================
+  function syncAudioPreferences(muted, volume) {
+    try {
+      let isMuted;
+      if (typeof muted === "boolean") {
+        isMuted = muted;
+      } else if (window.SoundEngine && typeof window.SoundEngine.enabled === "boolean") {
+        isMuted = !window.SoundEngine.enabled;
+      } else if (localStorage.getItem("av_sound_muted") !== null) {
+        isMuted = localStorage.getItem("av_sound_muted") === "true";
+      } else {
+        isMuted = localStorage.getItem("arcadeverse_muted") === "true";
+      }
 
-    frame.addEventListener("load", () => {
-      // A replaced iframe can still deliver a late event, only the live one counts
-      if (frame !== gameIframe) return;
+      let masterVol;
+      if (typeof volume === "number") {
+        masterVol = volume;
+      } else if (window.SoundEngine && typeof window.SoundEngine.volume === "number") {
+        masterVol = window.SoundEngine.volume;
+      } else if (localStorage.getItem("av_master_volume") !== null) {
+        masterVol = parseFloat(localStorage.getItem("av_master_volume"));
+      } else {
+        masterVol = parseFloat(localStorage.getItem("arcadeverse_master_volume"));
+      }
+      if (isNaN(masterVol) || masterVol === null || masterVol === undefined) {
+        masterVol = 0.28;
+      }
+
+      localStorage.setItem("av_sound_muted", isMuted ? "true" : "false");
+      localStorage.setItem("av_master_volume", String(masterVol));
+      localStorage.setItem("arcadeverse_muted", isMuted ? "true" : "false");
+      localStorage.setItem("arcadeverse_master_volume", String(masterVol));
+
+      return { muted: isMuted, volume: masterVol };
+    } catch (_) {
+      return { muted: false, volume: 0.28 };
+    }
+  }
+
+  function broadcastVolumeSyncToGame(muted, volume) {
+    try {
+      if (!gameIframe || !gameIframe.contentWindow) return;
+      const state = (typeof muted === "boolean" && typeof volume === "number")
+        ? { muted, volume }
+        : syncAudioPreferences();
+
+      const payload = {
+        type: "ARCADEVERSE_VOLUME_SYNC",
+        sessionToken: (activeGameSession && activeGameSession.token) || null,
+        muted: state.muted,
+        volume: state.volume,
+        gain: state.muted ? 0 : state.volume,
+        timestamp: Date.now()
+      };
+
+      gameIframe.contentWindow.postMessage(payload, "*");
+    } catch (_) { }
+  }
+
+  function hookSoundEngineAudioSync() {
+    if (!window.SoundEngine) return;
+    const origBroadcast = window.SoundEngine.broadcastAudioConfig;
+    window.SoundEngine.broadcastAudioConfig = function () {
+      if (typeof origBroadcast === "function") {
+        try { origBroadcast.apply(this, arguments); } catch (_) { }
+      }
+      const audioState = syncAudioPreferences(!window.SoundEngine.enabled, window.SoundEngine.volume);
+      broadcastVolumeSyncToGame(audioState.muted, audioState.volume);
+    };
+
+    const origSaveSettings = window.SoundEngine.saveSettings;
+    window.SoundEngine.saveSettings = function () {
+      if (typeof origSaveSettings === "function") {
+        try { origSaveSettings.apply(this, arguments); } catch (_) { }
+      }
+      syncAudioPreferences(!window.SoundEngine.enabled, window.SoundEngine.volume);
+    };
+  }
+
+  hookSoundEngineAudioSync();
+  setTimeout(hookSoundEngineAudioSync, 50);
+  setTimeout(hookSoundEngineAudioSync, 200);
+
+  // Bind iframe load listener once at root level to ensure 100% reliable load detection
+  if (gameIframe) {
+    gameIframe.addEventListener("load", () => {
       // Ignore blanking resets
       if (!frame.src || frame.src.includes("about:blank")) return;
 
@@ -2065,28 +2141,21 @@ document.addEventListener("DOMContentLoaded", () => {
       initiateGameIframeSession(activeGame);
 
       try {
+        const audioState = syncAudioPreferences();
+        broadcastVolumeSyncToGame(audioState.muted, audioState.volume);
+
         if (window.SoundEngine && typeof window.SoundEngine.broadcastAudioConfig === "function") {
           window.SoundEngine.broadcastAudioConfig();
-        } else {
-          const isMuted = localStorage.getItem("arcadeverse_muted") === "true";
-          const masterVol = parseFloat(localStorage.getItem("arcadeverse_master_volume")) || 0.28;
-          if (frame.contentWindow) {
-            frame.contentWindow.postMessage({
-              type: "ARCADEVERSE_AUDIO_CONFIG",
-              sessionToken: activeGameSession.token,
-              muted: isMuted,
-              volume: masterVol
-            }, "*");
-          }
+        } else if (gameIframe.contentWindow) {
+          gameIframe.contentWindow.postMessage({
+            type: "ARCADEVERSE_AUDIO_CONFIG",
+            sessionToken: activeGameSession.token,
+            muted: audioState.muted,
+            volume: audioState.volume,
+            gain: audioState.muted ? 0 : audioState.volume
+          }, "*");
         }
-      } catch (_) {}
-
-      // Synchronize game simulation speed multiplier (#656)
-      try {
-        if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.broadcastSpeedConfig === "function") {
-          window.GameSpeedRegulator.broadcastSpeedConfig();
-        }
-      } catch (_) {}
+      } catch (_) { }
     });
 
     frame.addEventListener("error", () => {
@@ -2183,6 +2252,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     startIframeTimeout(game);
 
+    const audioState = syncAudioPreferences();
+
     // Storage Isolation Bridge: Pass gameId via URL parameter so SDK attaches namespaced proxy (#493, #824)
     const iframeUrl = buildIsolatedGameUrl(game);
     gameIframe.src = iframeUrl;
@@ -2207,10 +2278,10 @@ document.addEventListener("DOMContentLoaded", () => {
             if (win && win.ArcadeVerse && typeof win.ArcadeVerse.enableAggressiveRAFShield === 'function') {
               win.ArcadeVerse.enableAggressiveRAFShield();
             }
-          } catch (_) {}
+          } catch (_) { }
         }, { once: true });
       }
-    } catch (_) {}
+    } catch (_) { }
 
     // Record game play in Recently Played drawer
     if (window.ArcadeRecent && typeof window.ArcadeRecent.recordPlayed === "function") {
@@ -2340,7 +2411,7 @@ document.addEventListener("DOMContentLoaded", () => {
           try {
             gameIframe.contentWindow.focus();
             gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_RESUME" }, "*");
-          } catch (_) {}
+          } catch (_) { }
         }
       });
 
@@ -2360,7 +2431,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (gameIframe && gameIframe.contentWindow) {
       try {
         gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
-      } catch (_) {}
+      } catch (_) { }
     }
   }
 
@@ -2402,7 +2473,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // Dynamically discover and cancel active animation frame handles (#497, #825)
             if (typeof win.cancelAnimationFrame === "function") {
               if (typeof win.requestAnimationFrame === "function") {
-                const maxFrameId = win.requestAnimationFrame(() => {});
+                const maxFrameId = win.requestAnimationFrame(() => { });
                 win.cancelAnimationFrame(maxFrameId);
                 if (typeof maxFrameId === "number" && maxFrameId > 0) {
                   const minFrameId = Math.max(1, maxFrameId - 50000);
@@ -2418,14 +2489,14 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             // Clear any active timeouts/intervals left by rogue loops
             if (typeof win.clearTimeout === "function" && typeof win.clearInterval === "function") {
-              const maxTimerId = win.setTimeout(() => {}, 0);
+              const maxTimerId = win.setTimeout(() => { }, 0);
               for (let timerId = 1; timerId <= maxTimerId; timerId++) {
                 win.clearTimeout(timerId);
                 win.clearInterval(timerId);
               }
             }
           }
-        } catch (_) {}
+        } catch (_) { }
 
         // Proactively probe and dispose WebGL contexts in child iframe if accessible
         try {
@@ -2437,19 +2508,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 const gl = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl");
                 if (gl && !gl.isContextLost()) {
                   const loseExt = gl.getExtension("WEBGL_lose_context") ||
-                                  gl.getExtension("WEBKIT_WEBGL_lose_context") ||
-                                  gl.getExtension("MOZ_WEBGL_lose_context");
+                    gl.getExtension("WEBKIT_WEBGL_lose_context") ||
+                    gl.getExtension("MOZ_WEBGL_lose_context");
                   if (loseExt && typeof loseExt.loseContext === "function") {
                     loseExt.loseContext();
                   }
                 }
-              } catch (_) {}
+              } catch (_) { }
             });
           }
-        } catch (_) {}
+        } catch (_) { }
       }
-    } catch (_) {}
-    
+    } catch (_) { }
+
     // Terminate any rogue event listeners or workers in child frame prior to blanking
     try {
       if (gameIframe && gameIframe.contentWindow) {
@@ -2458,7 +2529,7 @@ document.addEventListener("DOMContentLoaded", () => {
           win.stop();
         }
       }
-    } catch (_) {}
+    } catch (_) { }
 
     // Safely blank out iframe after a 100ms grace period to allow games to close AudioContexts and stop RAF loops
     const currentFrame = gameIframe;
@@ -2492,7 +2563,7 @@ document.addEventListener("DOMContentLoaded", () => {
           gameIframe = newIframe;
           bindGameIframeListeners();
         }
-      } catch (_) {}
+      } catch (_) { }
     }, 100);
 
     document.body.style.overflow = "";
@@ -2505,7 +2576,7 @@ document.addEventListener("DOMContentLoaded", () => {
     modalWindow.classList.remove("fullscreen");
     if (gameModal) gameModal.classList.remove("fullscreen-mode");
     if (document.fullscreenElement || document.webkitFullscreenElement) {
-      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+      if (document.exitFullscreen) document.exitFullscreen().catch(() => { });
     }
     if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
       lastFocusedElement.focus();
@@ -2796,7 +2867,22 @@ document.addEventListener("DOMContentLoaded", () => {
     modalSoundBtn.addEventListener("click", () => {
       if (window.SoundEngine && typeof window.SoundEngine.toggleMute === "function") {
         window.SoundEngine.toggleMute();
+      } else {
+        const currentMuted = localStorage.getItem("av_sound_muted") === "true";
+        syncAudioPreferences(!currentMuted);
       }
+      const audioState = syncAudioPreferences();
+      broadcastVolumeSyncToGame(audioState.muted, audioState.volume);
+    });
+  }
+
+  const globalSoundToggleBtn = document.getElementById("global-sound-toggle-btn");
+  if (globalSoundToggleBtn) {
+    globalSoundToggleBtn.addEventListener("click", () => {
+      setTimeout(() => {
+        const audioState = syncAudioPreferences();
+        broadcastVolumeSyncToGame(audioState.muted, audioState.volume);
+      }, 0);
     });
   }
 
@@ -2885,7 +2971,7 @@ document.addEventListener("DOMContentLoaded", () => {
           gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
           gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_ESC_PAUSE" }, "*");
         }
-      } catch (_) {}
+      } catch (_) { }
 
       showEscExitToast();
 
@@ -2897,7 +2983,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Announce session close to active listeners
       try {
         window.dispatchEvent(new CustomEvent("arcadeverse:esc-exit-confirmed"));
-      } catch (_) {}
+      } catch (_) { }
       // Second press within 1.5s: close modal with protection
       if (escPressTimer) clearTimeout(escPressTimer);
       escPressCount = 0;
@@ -2968,21 +3054,37 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // Handle initial audio configuration request from child game iframe
+    if (type === "ARCADEVERSE_REQUEST_AUDIO_CONFIG") {
+      const audioState = syncAudioPreferences();
+      broadcastVolumeSyncToGame(audioState.muted, audioState.volume);
+      if (gameIframe && gameIframe.contentWindow) {
+        gameIframe.contentWindow.postMessage({
+          type: "ARCADEVERSE_AUDIO_CONFIG",
+          sessionToken: activeGameSession.token,
+          muted: audioState.muted,
+          volume: audioState.volume,
+          gain: audioState.muted ? 0 : audioState.volume
+        }, "*");
+      }
+      return;
+    }
+
     // Handle mobile haptic vibration forwarding from iframe games (#521)
     if (type === "ARCADEVERSE_HAPTIC") {
       try {
         if (navigator && typeof navigator.vibrate === "function") {
           navigator.vibrate(e.data.pattern || 20);
         }
-      } catch (_) {}
+      } catch (_) { }
       return;
     }
 
-  // Screen reader score announcement throttler (#513)
-  let lastAnnouncedScore = 0;
-  let lastScoreAnnouncementTime = 0;
+    // Screen reader score announcement throttler (#513)
+    let lastAnnouncedScore = 0;
+    let lastScoreAnnouncementTime = 0;
 
-  // Handle score events from verified child games
+    // Handle score events from verified child games
     if (type === "ARCADEVERSE_GAME_SCORE") {
       const score = Number(e.data.score) || 0;
       const now = Date.now();
@@ -3112,7 +3214,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (currentFs) {
         try {
           if (document.exitFullscreen) {
-            document.exitFullscreen().catch(() => {});
+            document.exitFullscreen().catch(() => { });
           } else if (document.webkitExitFullscreen) {
             document.webkitExitFullscreen();
           } else if (document.mozCancelFullScreen) {
@@ -3120,7 +3222,7 @@ document.addEventListener("DOMContentLoaded", () => {
           } else if (document.msExitFullscreen) {
             document.msExitFullscreen();
           }
-        } catch (_err) {}
+        } catch (_err) { }
       }
     }
 
@@ -3139,7 +3241,7 @@ document.addEventListener("DOMContentLoaded", () => {
             type: "AV_FULLSCREEN_CHANGE",
             payload: { isFullscreen: true, mode: "pseudo" }
           }, "*");
-        } catch (_e) {}
+        } catch (_e) { }
       }
     }
 
@@ -3155,7 +3257,7 @@ document.addEventListener("DOMContentLoaded", () => {
             type: "AV_FULLSCREEN_CHANGE",
             payload: { isFullscreen: false, mode: "pseudo" }
           }, "*");
-        } catch (_e) {}
+        } catch (_e) { }
       }
     }
   });
@@ -3458,7 +3560,7 @@ document.addEventListener("DOMContentLoaded", () => {
               `;
             }
           }
-        } catch (_) {}
+        } catch (_) { }
       }
 
       // Apply initial guard styling
@@ -3525,7 +3627,7 @@ document.addEventListener("DOMContentLoaded", () => {
               debouncedApply();
             });
             ro.observe(doc.body);
-          } catch (_) {}
+          } catch (_) { }
         }
 
         if (typeof win.MutationObserver === "function" && doc.body) {
@@ -3539,7 +3641,7 @@ document.addEventListener("DOMContentLoaded", () => {
               attributes: true,
               attributeFilter: ["data-scroll-lock", "data-scrollable", "style", "class"]
             });
-          } catch (_) {}
+          } catch (_) { }
         }
       }
 
@@ -3547,7 +3649,7 @@ document.addEventListener("DOMContentLoaded", () => {
       setTimeout(applyAdaptiveTouchGuard, 120);
       setTimeout(applyAdaptiveTouchGuard, 400);
       setTimeout(applyAdaptiveTouchGuard, 1000);
-    } catch (_) {}
+    } catch (_) { }
   }
 
   // ===================================================
@@ -4175,7 +4277,7 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
       }
-    } catch (_) {}
+    } catch (_) { }
 
     // Match wide action / arcade / racer / flight games
     const wideKeywords = /racer|drive|flight|pong|hockey|lander|defense|invaders|tanks|runner|flappy|space|retro|miner|breakout|curling|glider|rogue|sub|fleet|wave/i;
@@ -4194,7 +4296,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const isTouch = window.matchMedia && (window.matchMedia('(pointer: coarse)').matches || window.matchMedia('(hover: none)').matches);
-    
+
     // Check orientation accurately across modern and older mobile browsers
     const isPortrait = (screen.orientation && screen.orientation.type)
       ? screen.orientation.type.startsWith('portrait')
@@ -4527,7 +4629,7 @@ document.addEventListener("DOMContentLoaded", () => {
         closeAutocomplete();
         renderGames();
       }
-    } catch (_) {}
+    } catch (_) { }
   });
 
   // ========================================================
@@ -4640,104 +4742,104 @@ document.addEventListener("DOMContentLoaded", () => {
   initOfflineDispatchQueue();
 });
 
-  // ========================================================
-  // INTERACTIVE GAME CONTROLS LEGEND & INPUT MAP ENGINE (#Feature)
-  // Dynamic extraction, keymap visualization, and toolbar integration
-  // ========================================================
-  let controlsLegendDialog = null;
-  let controlsLegendBtn = null;
-  let closeControlsLegend = () => {};
+// ========================================================
+// INTERACTIVE GAME CONTROLS LEGEND & INPUT MAP ENGINE (#Feature)
+// Dynamic extraction, keymap visualization, and toolbar integration
+// ========================================================
+let controlsLegendDialog = null;
+let controlsLegendBtn = null;
+let closeControlsLegend = () => { };
 
-  function getGameControlsConfig(game) {
-    if (!game) {
-      return {
-        bindings: [
-          { keys: ["W", "A", "S", "D"], codeKeys: ["KeyW", "KeyA", "KeyS", "KeyD"], action: "Directional Movement" },
-          { keys: ["↑", "←", "↓", "→"], codeKeys: ["ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight"], action: "Alternative Directional Move" },
-          { keys: ["Space"], codeKeys: ["Space"], action: "Primary Action / Jump" },
-          { keys: ["P"], codeKeys: ["KeyP"], action: "Pause / Resume Game" },
-          { keys: ["R"], codeKeys: ["KeyR"], action: "Restart Session" },
-          { keys: ["Esc"], codeKeys: ["Escape"], action: "Close Game Player" }
-        ],
-        activeKeys: new Set(["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight", "Space", "KeyP", "KeyR", "Escape"]),
-        touchControls: [
-          { label: "Tap Screen", desc: "Jump / Fire / Confirm" },
-          { label: "Swipe / Drag", desc: "Directional Motion / Aim" }
-        ]
-      };
-    }
-
-    const category = (game.category || "").toLowerCase();
-    const tags = Array.isArray(game.tags) ? game.tags.map((t) => t.toLowerCase()) : [];
-    const title = (game.title || "").toLowerCase();
-    const desc = (game.description || "").toLowerCase();
-
-    const isShooter = category.includes("shooter") || tags.includes("shooter") || desc.includes("shoot") || desc.includes("blast") || desc.includes("laser");
-    const isPlatformer = category.includes("platformer") || tags.includes("platformer") || desc.includes("jump") || desc.includes("bounce");
-    const isRacing = category.includes("racing") || tags.includes("racing") || desc.includes("drive") || desc.includes("drift") || desc.includes("racer");
-    const isPuzzle = category.includes("puzzle") || tags.includes("puzzle") || category.includes("board") || tags.includes("logic") || tags.includes("word");
-    const isRhythm = category.includes("rhythm") || tags.includes("rhythm") || tags.includes("music") || title.includes("typer") || tags.includes("typing");
-
-    const bindings = [];
-    const activeKeys = new Set(["KeyP", "KeyR", "Escape"]);
-
-    if (isShooter) {
-      bindings.push({ keys: ["W", "A", "S", "D"], codeKeys: ["KeyW", "KeyA", "KeyS", "KeyD"], action: "Thrust & Directional Steering" });
-      bindings.push({ keys: ["↑", "←", "↓", "→"], codeKeys: ["ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight"], action: "Alternative Arrow Steering" });
-      bindings.push({ keys: ["Space"], codeKeys: ["Space"], action: "Primary Fire / Plasma Blaster" });
-      bindings.push({ keys: ["Shift"], codeKeys: ["ShiftLeft", "ShiftRight"], action: "Hyper-Drive / Afterburner Boost" });
-      ["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight", "Space", "ShiftLeft", "ShiftRight"].forEach((k) => activeKeys.add(k));
-    } else if (isPlatformer || isRacing) {
-      bindings.push({ keys: ["A", "D"], codeKeys: ["KeyA", "KeyD"], action: "Steer Left / Steer Right" });
-      bindings.push({ keys: ["←", "→"], codeKeys: ["ArrowLeft", "ArrowRight"], action: "Alternative Steering Keys" });
-      bindings.push({ keys: ["W", "↑", "Space"], codeKeys: ["KeyW", "ArrowUp", "Space"], action: "Jump / Accelerate" });
-      bindings.push({ keys: ["S", "↓"], codeKeys: ["KeyS", "ArrowDown"], action: "Duck / Slide / Brake" });
-      ["KeyA", "KeyD", "ArrowLeft", "ArrowRight", "KeyW", "ArrowUp", "Space", "KeyS", "ArrowDown"].forEach((k) => activeKeys.add(k));
-    } else if (isRhythm) {
-      bindings.push({ keys: ["D", "F", "J", "K"], codeKeys: ["KeyD", "KeyF", "KeyJ", "KeyK"], action: "Rhythm Lane Beats" });
-      bindings.push({ keys: ["Space"], codeKeys: ["Space"], action: "Bass Beat / Stomp" });
-      bindings.push({ keys: ["A - Z"], codeKeys: ["KeyA", "KeyB", "KeyC", "KeyD", "KeyE", "KeyF"], action: "Typing Terminal Defense Keys" });
-      ["KeyD", "KeyF", "KeyJ", "KeyK", "Space", "KeyA", "KeyB", "KeyC"].forEach((k) => activeKeys.add(k));
-    } else if (isPuzzle) {
-      bindings.push({ keys: ["Left Click"], codeKeys: [], action: "Select & Interact with Puzzle Elements" });
-      bindings.push({ keys: ["↑", "←", "↓", "→"], codeKeys: ["ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight"], action: "Grid Shift / Tile Navigation" });
-      bindings.push({ keys: ["Space"], codeKeys: ["Space"], action: "Confirm / Rotate Piece" });
-      ["ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight", "Space"].forEach((k) => activeKeys.add(k));
-    } else {
-      bindings.push({ keys: ["W", "A", "S", "D"], codeKeys: ["KeyW", "KeyA", "KeyS", "KeyD"], action: "Directional Motion" });
-      bindings.push({ keys: ["↑", "←", "↓", "→"], codeKeys: ["ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight"], action: "Alternative Arrow Movement" });
-      bindings.push({ keys: ["Space"], codeKeys: ["Space"], action: "Primary Action / Start" });
-      ["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight", "Space"].forEach((k) => activeKeys.add(k));
-    }
-
-    bindings.push({ keys: ["P"], codeKeys: ["KeyP"], action: "Pause / Resume Gameplay" });
-    bindings.push({ keys: ["R"], codeKeys: ["KeyR"], action: "Quick Restart Session" });
-    bindings.push({ keys: ["Esc"], codeKeys: ["Escape"], action: "Exit Player Modal" });
-
-    const touchControls = [
-      { label: "Tap Screen", desc: "Jump / Fire / Select Action" },
-      { label: "Swipe / Drag", desc: "Directional Motion / Aim Cursor" }
-    ];
-
-    return { bindings, activeKeys, touchControls };
+function getGameControlsConfig(game) {
+  if (!game) {
+    return {
+      bindings: [
+        { keys: ["W", "A", "S", "D"], codeKeys: ["KeyW", "KeyA", "KeyS", "KeyD"], action: "Directional Movement" },
+        { keys: ["↑", "←", "↓", "→"], codeKeys: ["ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight"], action: "Alternative Directional Move" },
+        { keys: ["Space"], codeKeys: ["Space"], action: "Primary Action / Jump" },
+        { keys: ["P"], codeKeys: ["KeyP"], action: "Pause / Resume Game" },
+        { keys: ["R"], codeKeys: ["KeyR"], action: "Restart Session" },
+        { keys: ["Esc"], codeKeys: ["Escape"], action: "Close Game Player" }
+      ],
+      activeKeys: new Set(["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight", "Space", "KeyP", "KeyR", "Escape"]),
+      touchControls: [
+        { label: "Tap Screen", desc: "Jump / Fire / Confirm" },
+        { label: "Swipe / Drag", desc: "Directional Motion / Aim" }
+      ]
+    };
   }
 
-  function renderKeyboardVisualizer(activeKeys) {
-    const isWActive = activeKeys.has("KeyW");
-    const isAActive = activeKeys.has("KeyA");
-    const isSActive = activeKeys.has("KeyS");
-    const isDActive = activeKeys.has("KeyD");
-    const isUpActive = activeKeys.has("ArrowUp");
-    const isLeftActive = activeKeys.has("ArrowLeft");
-    const isDownActive = activeKeys.has("ArrowDown");
-    const isRightActive = activeKeys.has("ArrowRight");
-    const isSpaceActive = activeKeys.has("Space");
-    const isShiftActive = activeKeys.has("ShiftLeft") || activeKeys.has("ShiftRight");
-    const isPActive = activeKeys.has("KeyP");
-    const isRActive = activeKeys.has("KeyR");
-    const isEscActive = activeKeys.has("Escape");
+  const category = (game.category || "").toLowerCase();
+  const tags = Array.isArray(game.tags) ? game.tags.map((t) => t.toLowerCase()) : [];
+  const title = (game.title || "").toLowerCase();
+  const desc = (game.description || "").toLowerCase();
 
-    return `
+  const isShooter = category.includes("shooter") || tags.includes("shooter") || desc.includes("shoot") || desc.includes("blast") || desc.includes("laser");
+  const isPlatformer = category.includes("platformer") || tags.includes("platformer") || desc.includes("jump") || desc.includes("bounce");
+  const isRacing = category.includes("racing") || tags.includes("racing") || desc.includes("drive") || desc.includes("drift") || desc.includes("racer");
+  const isPuzzle = category.includes("puzzle") || tags.includes("puzzle") || category.includes("board") || tags.includes("logic") || tags.includes("word");
+  const isRhythm = category.includes("rhythm") || tags.includes("rhythm") || tags.includes("music") || title.includes("typer") || tags.includes("typing");
+
+  const bindings = [];
+  const activeKeys = new Set(["KeyP", "KeyR", "Escape"]);
+
+  if (isShooter) {
+    bindings.push({ keys: ["W", "A", "S", "D"], codeKeys: ["KeyW", "KeyA", "KeyS", "KeyD"], action: "Thrust & Directional Steering" });
+    bindings.push({ keys: ["↑", "←", "↓", "→"], codeKeys: ["ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight"], action: "Alternative Arrow Steering" });
+    bindings.push({ keys: ["Space"], codeKeys: ["Space"], action: "Primary Fire / Plasma Blaster" });
+    bindings.push({ keys: ["Shift"], codeKeys: ["ShiftLeft", "ShiftRight"], action: "Hyper-Drive / Afterburner Boost" });
+    ["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight", "Space", "ShiftLeft", "ShiftRight"].forEach((k) => activeKeys.add(k));
+  } else if (isPlatformer || isRacing) {
+    bindings.push({ keys: ["A", "D"], codeKeys: ["KeyA", "KeyD"], action: "Steer Left / Steer Right" });
+    bindings.push({ keys: ["←", "→"], codeKeys: ["ArrowLeft", "ArrowRight"], action: "Alternative Steering Keys" });
+    bindings.push({ keys: ["W", "↑", "Space"], codeKeys: ["KeyW", "ArrowUp", "Space"], action: "Jump / Accelerate" });
+    bindings.push({ keys: ["S", "↓"], codeKeys: ["KeyS", "ArrowDown"], action: "Duck / Slide / Brake" });
+    ["KeyA", "KeyD", "ArrowLeft", "ArrowRight", "KeyW", "ArrowUp", "Space", "KeyS", "ArrowDown"].forEach((k) => activeKeys.add(k));
+  } else if (isRhythm) {
+    bindings.push({ keys: ["D", "F", "J", "K"], codeKeys: ["KeyD", "KeyF", "KeyJ", "KeyK"], action: "Rhythm Lane Beats" });
+    bindings.push({ keys: ["Space"], codeKeys: ["Space"], action: "Bass Beat / Stomp" });
+    bindings.push({ keys: ["A - Z"], codeKeys: ["KeyA", "KeyB", "KeyC", "KeyD", "KeyE", "KeyF"], action: "Typing Terminal Defense Keys" });
+    ["KeyD", "KeyF", "KeyJ", "KeyK", "Space", "KeyA", "KeyB", "KeyC"].forEach((k) => activeKeys.add(k));
+  } else if (isPuzzle) {
+    bindings.push({ keys: ["Left Click"], codeKeys: [], action: "Select & Interact with Puzzle Elements" });
+    bindings.push({ keys: ["↑", "←", "↓", "→"], codeKeys: ["ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight"], action: "Grid Shift / Tile Navigation" });
+    bindings.push({ keys: ["Space"], codeKeys: ["Space"], action: "Confirm / Rotate Piece" });
+    ["ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight", "Space"].forEach((k) => activeKeys.add(k));
+  } else {
+    bindings.push({ keys: ["W", "A", "S", "D"], codeKeys: ["KeyW", "KeyA", "KeyS", "KeyD"], action: "Directional Motion" });
+    bindings.push({ keys: ["↑", "←", "↓", "→"], codeKeys: ["ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight"], action: "Alternative Arrow Movement" });
+    bindings.push({ keys: ["Space"], codeKeys: ["Space"], action: "Primary Action / Start" });
+    ["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight", "Space"].forEach((k) => activeKeys.add(k));
+  }
+
+  bindings.push({ keys: ["P"], codeKeys: ["KeyP"], action: "Pause / Resume Gameplay" });
+  bindings.push({ keys: ["R"], codeKeys: ["KeyR"], action: "Quick Restart Session" });
+  bindings.push({ keys: ["Esc"], codeKeys: ["Escape"], action: "Exit Player Modal" });
+
+  const touchControls = [
+    { label: "Tap Screen", desc: "Jump / Fire / Select Action" },
+    { label: "Swipe / Drag", desc: "Directional Motion / Aim Cursor" }
+  ];
+
+  return { bindings, activeKeys, touchControls };
+}
+
+function renderKeyboardVisualizer(activeKeys) {
+  const isWActive = activeKeys.has("KeyW");
+  const isAActive = activeKeys.has("KeyA");
+  const isSActive = activeKeys.has("KeyS");
+  const isDActive = activeKeys.has("KeyD");
+  const isUpActive = activeKeys.has("ArrowUp");
+  const isLeftActive = activeKeys.has("ArrowLeft");
+  const isDownActive = activeKeys.has("ArrowDown");
+  const isRightActive = activeKeys.has("ArrowRight");
+  const isSpaceActive = activeKeys.has("Space");
+  const isShiftActive = activeKeys.has("ShiftLeft") || activeKeys.has("ShiftRight");
+  const isPActive = activeKeys.has("KeyP");
+  const isRActive = activeKeys.has("KeyR");
+  const isEscActive = activeKeys.has("Escape");
+
+  return `
       <div class="legend-keyboard-grid">
         <div class="legend-keys-cluster-row">
           <!-- WASD Cluster -->
@@ -4774,55 +4876,55 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       </div>
     `;
-  }
+}
 
-  function initControlsLegend() {
-    const modalControls = document.querySelector(".modal-controls");
-    const modalWindow = document.querySelector(".modal-window");
-    if (!modalControls || !modalWindow) return;
+function initControlsLegend() {
+  const modalControls = document.querySelector(".modal-controls");
+  const modalWindow = document.querySelector(".modal-window");
+  if (!modalControls || !modalWindow) return;
 
-    // Inject Toolbar Button before bug report button or close button
-    controlsLegendBtn = document.createElement("button");
-    controlsLegendBtn.type = "button";
-    controlsLegendBtn.className = "btn btn-sm btn-icon btn-controls-legend";
-    controlsLegendBtn.id = "modal-controls-legend-btn";
-    controlsLegendBtn.title = "View Game Controls & Input Map (K)";
-    controlsLegendBtn.setAttribute("aria-label", "View Game Controls and Input Map");
-    controlsLegendBtn.setAttribute("aria-haspopup", "dialog");
-    controlsLegendBtn.setAttribute("aria-expanded", "false");
-    controlsLegendBtn.innerHTML = `
+  // Inject Toolbar Button before bug report button or close button
+  controlsLegendBtn = document.createElement("button");
+  controlsLegendBtn.type = "button";
+  controlsLegendBtn.className = "btn btn-sm btn-icon btn-controls-legend";
+  controlsLegendBtn.id = "modal-controls-legend-btn";
+  controlsLegendBtn.title = "View Game Controls & Input Map (K)";
+  controlsLegendBtn.setAttribute("aria-label", "View Game Controls and Input Map");
+  controlsLegendBtn.setAttribute("aria-haspopup", "dialog");
+  controlsLegendBtn.setAttribute("aria-expanded", "false");
+  controlsLegendBtn.innerHTML = `
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <rect width="20" height="16" x="2" y="4" rx="2"></rect>
         <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"></path>
       </svg>
     `;
 
-    const reportBugBtn = document.getElementById("modal-report-bug-btn");
-    const closeBtn = document.getElementById("close-modal-btn");
-    if (reportBugBtn) {
-      modalControls.insertBefore(controlsLegendBtn, reportBugBtn);
-    } else if (closeBtn) {
-      modalControls.insertBefore(controlsLegendBtn, closeBtn);
-    } else {
-      modalControls.appendChild(controlsLegendBtn);
-    }
+  const reportBugBtn = document.getElementById("modal-report-bug-btn");
+  const closeBtn = document.getElementById("close-modal-btn");
+  if (reportBugBtn) {
+    modalControls.insertBefore(controlsLegendBtn, reportBugBtn);
+  } else if (closeBtn) {
+    modalControls.insertBefore(controlsLegendBtn, closeBtn);
+  } else {
+    modalControls.appendChild(controlsLegendBtn);
+  }
 
-    // Build Floating Controls Legend Dialog
-    controlsLegendDialog = document.createElement("div");
-    controlsLegendDialog.id = "modal-controls-legend-dialog";
-    controlsLegendDialog.className = "controls-legend-overlay";
-    controlsLegendDialog.setAttribute("role", "dialog");
-    controlsLegendDialog.setAttribute("aria-modal", "true");
-    controlsLegendDialog.setAttribute("aria-labelledby", "controls-legend-title");
-    controlsLegendDialog.style.display = "none";
-    modalWindow.appendChild(controlsLegendDialog);
+  // Build Floating Controls Legend Dialog
+  controlsLegendDialog = document.createElement("div");
+  controlsLegendDialog.id = "modal-controls-legend-dialog";
+  controlsLegendDialog.className = "controls-legend-overlay";
+  controlsLegendDialog.setAttribute("role", "dialog");
+  controlsLegendDialog.setAttribute("aria-modal", "true");
+  controlsLegendDialog.setAttribute("aria-labelledby", "controls-legend-title");
+  controlsLegendDialog.style.display = "none";
+  modalWindow.appendChild(controlsLegendDialog);
 
-    function updateControlsContent() {
-      const config = getGameControlsConfig(activeGame);
-      const gameTitle = activeGame ? activeGame.title : "Community Arcade Game";
+  function updateControlsContent() {
+    const config = getGameControlsConfig(activeGame);
+    const gameTitle = activeGame ? activeGame.title : "Community Arcade Game";
 
-      const actionsHtml = config.bindings
-        .map((b) => `
+    const actionsHtml = config.bindings
+      .map((b) => `
           <div class="legend-action-row">
             <div class="legend-action-keys">
               ${b.keys.map((k) => `<span class="legend-action-key-pill">${k}</span>`).join("")}
@@ -4830,10 +4932,10 @@ document.addEventListener("DOMContentLoaded", () => {
             <span class="legend-action-desc">${b.action}</span>
           </div>
         `)
-        .join("");
+      .join("");
 
-      const touchHtml = config.touchControls
-        .map((t) => `
+    const touchHtml = config.touchControls
+      .map((t) => `
           <div class="legend-touch-card">
             <svg class="legend-touch-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect>
@@ -4845,9 +4947,9 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
           </div>
         `)
-        .join("");
+      .join("");
 
-      controlsLegendDialog.innerHTML = `
+    controlsLegendDialog.innerHTML = `
         <div class="controls-legend-card">
           <div class="controls-legend-header">
             <div class="controls-legend-title-wrap">
@@ -4904,775 +5006,154 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       `;
 
-      const dialogCloseBtn = controlsLegendDialog.querySelector("#close-controls-legend-btn");
-      const dialogDismissBtn = controlsLegendDialog.querySelector("#dismiss-controls-legend-btn");
-      if (dialogCloseBtn) dialogCloseBtn.addEventListener("click", closeControlsLegend);
-      if (dialogDismissBtn) dialogDismissBtn.addEventListener("click", closeControlsLegend);
-    }
+    const dialogCloseBtn = controlsLegendDialog.querySelector("#close-controls-legend-btn");
+    const dialogDismissBtn = controlsLegendDialog.querySelector("#dismiss-controls-legend-btn");
+    if (dialogCloseBtn) dialogCloseBtn.addEventListener("click", closeControlsLegend);
+    if (dialogDismissBtn) dialogDismissBtn.addEventListener("click", closeControlsLegend);
+  }
 
-    // Tactile Web Audio Mechanical Switch Sound Synthesizer
-    function playKeycapAudio() {
-      try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        if (window.ArcadeAudio && typeof window.ArcadeAudio.isMuted === "function" && window.ArcadeAudio.isMuted()) return;
-        const ctx = new AudioCtx();
-        if (ctx.state === "suspended") {
-          ctx.resume();
-        }
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        const filter = ctx.createBiquadFilter();
-
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(650, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(160, ctx.currentTime + 0.02);
-
-        filter.type = "bandpass";
-        filter.frequency.setValueAtTime(800, ctx.currentTime);
-        filter.Q.setValueAtTime(2, ctx.currentTime);
-
-        gain.gain.setValueAtTime(0.06, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.025);
-
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start();
-        osc.stop(ctx.currentTime + 0.03);
-        setTimeout(() => {
-          if (ctx.state !== "closed") ctx.close();
-        }, 60);
-      } catch (_) {}
-    }
-
-    // Live Physical Keypress Tester Event Handlers
-    function handleKeyTesterDown(e) {
-      if (!controlsLegendDialog || controlsLegendDialog.style.display !== "flex") return;
-      if (e.key === "Escape") {
-        e.preventDefault();
-        e.stopPropagation();
-        closeControlsLegend();
-        return;
+  // Tactile Web Audio Mechanical Switch Sound Synthesizer
+  function playKeycapAudio() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      if (window.ArcadeAudio && typeof window.ArcadeAudio.isMuted === "function" && window.ArcadeAudio.isMuted()) return;
+      const ctx = new AudioCtx();
+      if (ctx.state === "suspended") {
+        ctx.resume();
       }
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
 
-      const code = e.code;
-      const keycap = controlsLegendDialog.querySelector(`.legend-keycap[data-code="${code}"]`);
-      if (keycap) {
-        if (!keycap.classList.contains("pressed")) {
-          keycap.classList.add("pressed");
-          playKeycapAudio();
-        }
-      } else if (code === "ShiftRight") {
-        const shiftKeycap = controlsLegendDialog.querySelector(`.legend-keycap[data-code="ShiftLeft"]`);
-        if (shiftKeycap && !shiftKeycap.classList.contains("pressed")) {
-          shiftKeycap.classList.add("pressed");
-          playKeycapAudio();
-        }
-      }
-    }
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(650, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(160, ctx.currentTime + 0.02);
 
-    function handleKeyTesterUp(e) {
-      if (!controlsLegendDialog || controlsLegendDialog.style.display !== "flex") return;
-      const code = e.code;
-      const keycap = controlsLegendDialog.querySelector(`.legend-keycap[data-code="${code}"]`);
-      if (keycap) {
-        keycap.classList.remove("pressed");
-      } else if (code === "ShiftRight") {
-        const shiftKeycap = controlsLegendDialog.querySelector(`.legend-keycap[data-code="ShiftLeft"]`);
-        if (shiftKeycap) shiftKeycap.classList.remove("pressed");
-      }
-    }
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(800, ctx.currentTime);
+      filter.Q.setValueAtTime(2, ctx.currentTime);
 
-    window.addEventListener("keydown", handleKeyTesterDown);
-    window.addEventListener("keyup", handleKeyTesterUp);
+      gain.gain.setValueAtTime(0.06, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.025);
 
-    closeControlsLegend = function () {
-      if (!controlsLegendDialog) return;
-      controlsLegendDialog.style.display = "none";
-      if (controlsLegendBtn) {
-        controlsLegendBtn.classList.remove("active");
-        controlsLegendBtn.setAttribute("aria-expanded", "false");
-        try {
-          controlsLegendBtn.focus();
-        } catch (_) {}
-      }
-      const pressed = controlsLegendDialog.querySelectorAll(".legend-keycap.pressed");
-      pressed.forEach((p) => p.classList.remove("pressed"));
-    };
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
 
-    function openControlsLegend() {
-      if (!controlsLegendDialog) return;
-      updateControlsContent();
-      controlsLegendDialog.style.display = "flex";
-      if (controlsLegendBtn) {
-        controlsLegendBtn.classList.add("active");
-        controlsLegendBtn.setAttribute("aria-expanded", "true");
-      }
-      const closeBtn = controlsLegendDialog.querySelector("#close-controls-legend-btn");
-      if (closeBtn) {
-        setTimeout(() => closeBtn.focus(), 50);
-      }
-    }
+      osc.start();
+      osc.stop(ctx.currentTime + 0.03);
+      setTimeout(() => {
+        if (ctx.state !== "closed") ctx.close();
+      }, 60);
+    } catch (_) { }
+  }
 
-    controlsLegendBtn.addEventListener("click", (e) => {
+  // Live Physical Keypress Tester Event Handlers
+  function handleKeyTesterDown(e) {
+    if (!controlsLegendDialog || controlsLegendDialog.style.display !== "flex") return;
+    if (e.key === "Escape") {
+      e.preventDefault();
       e.stopPropagation();
-      if (controlsLegendDialog.style.display === "flex") {
-        closeControlsLegend();
-      } else {
-        openControlsLegend();
-      }
-    });
+      closeControlsLegend();
+      return;
+    }
 
-    controlsLegendDialog.addEventListener("click", (e) => {
-      if (e.target === controlsLegendDialog) {
-        closeControlsLegend();
+    const code = e.code;
+    const keycap = controlsLegendDialog.querySelector(`.legend-keycap[data-code="${code}"]`);
+    if (keycap) {
+      if (!keycap.classList.contains("pressed")) {
+        keycap.classList.add("pressed");
+        playKeycapAudio();
       }
-    });
-
-    // Global 'K' shortcut toggle when modal is active
-    window.addEventListener("keydown", (e) => {
-      if ((e.key === "k" || e.key === "K") && gameModal && gameModal.classList.contains("active")) {
-        const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : "";
-        if (tag !== "input" && tag !== "textarea") {
-          e.preventDefault();
-          if (controlsLegendDialog && controlsLegendDialog.style.display === "flex") {
-            closeControlsLegend();
-          } else if (controlsLegendBtn) {
-            controlsLegendBtn.click();
-          }
-        }
+    } else if (code === "ShiftRight") {
+      const shiftKeycap = controlsLegendDialog.querySelector(`.legend-keycap[data-code="ShiftLeft"]`);
+      if (shiftKeycap && !shiftKeycap.classList.contains("pressed")) {
+        shiftKeycap.classList.add("pressed");
+        playKeycapAudio();
       }
-    });
+    }
   }
 
-  // ========================================================
-  // DAILY GAME LOGIN STREAK CALENDAR & XP MULTIPLIER (#659)
-  // Calculates consecutive day UTC streak, tracks av_current_streak_days
-  // ========================================================
-  function initDailyStreakTracker() {
-    const todayUTC = new Date().toISOString().slice(0, 10);
-    const lastPlayed = localStorage.getItem("av_last_played_date");
-    let streakDays = parseInt(localStorage.getItem("av_current_streak_days") || "0", 10);
+  function handleKeyTesterUp(e) {
+    if (!controlsLegendDialog || controlsLegendDialog.style.display !== "flex") return;
+    const code = e.code;
+    const keycap = controlsLegendDialog.querySelector(`.legend-keycap[data-code="${code}"]`);
+    if (keycap) {
+      keycap.classList.remove("pressed");
+    } else if (code === "ShiftRight") {
+      const shiftKeycap = controlsLegendDialog.querySelector(`.legend-keycap[data-code="ShiftLeft"]`);
+      if (shiftKeycap) shiftKeycap.classList.remove("pressed");
+    }
+  }
 
-    if (lastPlayed) {
-      const lastDate = new Date(lastPlayed);
-      const currDate = new Date(todayUTC);
-      const diffDays = Math.round((currDate - lastDate) / (1000 * 60 * 60 * 24));
+  window.addEventListener("keydown", handleKeyTesterDown);
+  window.addEventListener("keyup", handleKeyTesterUp);
 
-      if (diffDays === 1) {
-        streakDays += 1;
-        localStorage.setItem("av_current_streak_days", String(streakDays));
-        localStorage.setItem("av_last_played_date", todayUTC);
-      } else if (diffDays > 1) {
-        // Skipped > 48h -> Reset streak cleanly to 1
-        streakDays = 1;
-        localStorage.setItem("av_current_streak_days", "1");
-        localStorage.setItem("av_last_played_date", todayUTC);
-      }
+  closeControlsLegend = function () {
+    if (!controlsLegendDialog) return;
+    controlsLegendDialog.style.display = "none";
+    if (controlsLegendBtn) {
+      controlsLegendBtn.classList.remove("active");
+      controlsLegendBtn.setAttribute("aria-expanded", "false");
+      try {
+        controlsLegendBtn.focus();
+      } catch (_) { }
+    }
+    const pressed = controlsLegendDialog.querySelectorAll(".legend-keycap.pressed");
+    pressed.forEach((p) => p.classList.remove("pressed"));
+  };
+
+  function openControlsLegend() {
+    if (!controlsLegendDialog) return;
+    updateControlsContent();
+    controlsLegendDialog.style.display = "flex";
+    if (controlsLegendBtn) {
+      controlsLegendBtn.classList.add("active");
+      controlsLegendBtn.setAttribute("aria-expanded", "true");
+    }
+    const closeBtn = controlsLegendDialog.querySelector("#close-controls-legend-btn");
+    if (closeBtn) {
+      setTimeout(() => closeBtn.focus(), 50);
+    }
+  }
+
+  controlsLegendBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (controlsLegendDialog.style.display === "flex") {
+      closeControlsLegend();
     } else {
-      streakDays = 1;
-      localStorage.setItem("av_current_streak_days", "1");
-      localStorage.setItem("av_last_played_date", todayUTC);
-    }
-
-    // Render streak widget in navigation header
-    const navActions = document.querySelector(".nav-actions");
-    if (navActions && !document.getElementById("av-daily-streak-btn")) {
-      const streakBtn = document.createElement("button");
-      streakBtn.id = "av-daily-streak-btn";
-      streakBtn.type = "button";
-      streakBtn.className = "nav-streak-pill";
-      streakBtn.title = "Daily Game Streak & XP Multiplier";
-      streakBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2.5"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
-        <span>${streakDays} Day${streakDays === 1 ? '' : 's'}</span>
-      `;
-      navActions.insertBefore(streakBtn, navActions.firstChild);
-    }
-  }
-
-  initDailyStreakTracker();
-
-  // Universal Virtual Touch Controller Loader (#517)
-  if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
-    if (!document.querySelector('script[src*="virtual-controller.js"]')) {
-      const vcScript = document.createElement('script');
-      vcScript.src = 'assets/js/virtual-controller.js';
-      document.body.appendChild(vcScript);
-    }
-  }
-
-  // ========================================================
-  // "PLAYERS ALSO PLAYED" MODAL RECOMMENDATIONS (#591)
-  // Recommends 3 relevant games based on Jaccard tag similarity
-  // ========================================================
-  function renderModalRecommendations(currentGame) {
-    if (!currentGame || !modalWindow) return;
-    let strip = document.getElementById("modal-recommendations-strip");
-    if (!strip) {
-      strip = document.createElement("div");
-      strip.id = "modal-recommendations-strip";
-      strip.className = "modal-recommendations-strip";
-      modalWindow.appendChild(strip);
-    }
-
-    if (typeof GAMES_REGISTRY === "undefined" || !Array.isArray(GAMES_REGISTRY)) {
-      strip.style.display = "none";
-      return;
-    }
-
-    const currentTags = new Set((currentGame.tags || []).map(t => t.toLowerCase()));
-    currentTags.add((currentGame.category || "").toLowerCase());
-
-    const candidates = GAMES_REGISTRY.filter(g => g.id !== currentGame.id).map(g => {
-      const gTags = new Set((g.tags || []).map(t => t.toLowerCase()));
-      gTags.add((g.category || "").toLowerCase());
-
-      // Jaccard similarity
-      let intersection = 0;
-      for (const t of currentTags) {
-        if (gTags.has(t)) intersection++;
-      }
-      const union = new Set([...currentTags, ...gTags]).size;
-      const score = union > 0 ? intersection / union : 0;
-      return { game: g, score };
-    });
-
-    candidates.sort((a, b) => b.score - a.score);
-    const top3 = candidates.slice(0, 3).map(c => c.game);
-
-    if (top3.length === 0) {
-      strip.style.display = "none";
-      return;
-    }
-
-    strip.style.display = "flex";
-    strip.innerHTML = `
-      <div class="rec-strip-title">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
-        <span>Players Also Played:</span>
-      </div>
-      <div class="rec-chips-wrap">
-        ${top3.map(g => `
-          <button type="button" class="rec-game-chip" data-game-id="${g.id}">
-            <span>${escapeHTML(g.title)}</span>
-            <small>• ${escapeHTML(g.category || "Arcade")}</small>
-          </button>
-        `).join("")}
-      </div>
-    `;
-
-    strip.querySelectorAll(".rec-game-chip").forEach(chip => {
-      chip.addEventListener("click", () => {
-        const gid = chip.getAttribute("data-game-id");
-        const nextGame = GAMES_REGISTRY.find(g => g.id === gid);
-        if (nextGame) {
-          openGameModal(nextGame);
-        }
-      });
-    });
-  }
-
-  // Universal Virtual Touch Controller Loader (#517)
-  if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
-    if (!document.querySelector('script[src*="virtual-controller.js"]')) {
-      const vcScript = document.createElement('script');
-      vcScript.src = 'assets/js/virtual-controller.js';
-      document.body.appendChild(vcScript);
-    }
-  }
-
-  // COMPARE TWO GAMES MULTI-SELECT INSPECTION DRAWER (#589)
-  // Side-by-side comparison of difficulty, duration, controls & ratings
-  // ========================================================
-  const selectedCompareGameIds = new Set();
-
-  function openCompareDrawer() {
-    let drawer = document.getElementById("game-compare-drawer");
-    if (!drawer) {
-      drawer = document.createElement("div");
-      drawer.id = "game-compare-drawer";
-      drawer.className = "game-compare-drawer";
-      document.body.appendChild(drawer);
-    }
-
-    const ids = Array.from(selectedCompareGameIds);
-    if (ids.length !== 2) {
-      drawer.classList.remove("visible");
-      return;
-    }
-
-    const gameA = (typeof GAMES_REGISTRY !== "undefined") ? GAMES_REGISTRY.find(g => g.id === ids[0]) : null;
-    const gameB = (typeof GAMES_REGISTRY !== "undefined") ? GAMES_REGISTRY.find(g => g.id === ids[1]) : null;
-    if (!gameA || !gameB) return;
-
-    drawer.innerHTML = `
-      <div class="compare-drawer-header">
-        <div class="compare-drawer-title">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>
-          <span>Game Comparison Analysis</span>
-        </div>
-        <button type="button" class="compare-close-btn" aria-label="Close comparison">&times;</button>
-      </div>
-      <div class="compare-grid">
-        <div class="compare-col">
-          <h4 class="compare-game-title">${escapeHTML(gameA.title)}</h4>
-          <span class="compare-pill">${escapeHTML(gameA.category || "Arcade")}</span>
-          <div class="compare-attr-list">
-            <div class="compare-attr-row"><strong>Author:</strong> <span>@${escapeHTML(gameA.github || gameA.author || "Babin")}</span></div>
-            <div class="compare-attr-row"><strong>Controls:</strong> <span>${gameA.responsive ? "Keyboard + Touch" : "Keyboard/Mouse"}</span></div>
-            <div class="compare-attr-row"><strong>Rating:</strong> <span>${gameA.stars ? (gameA.stars / 10).toFixed(1) : "5.0"} / 5.0</span></div>
-            <div class="compare-attr-row"><strong>Tags:</strong> <span>${(gameA.tags || []).slice(0, 3).join(", ") || "arcade, retro"}</span></div>
-          </div>
-        </div>
-        <div class="compare-vs">VS</div>
-        <div class="compare-col">
-          <h4 class="compare-game-title">${escapeHTML(gameB.title)}</h4>
-          <span class="compare-pill">${escapeHTML(gameB.category || "Arcade")}</span>
-          <div class="compare-attr-list">
-            <div class="compare-attr-row"><strong>Author:</strong> <span>@${escapeHTML(gameB.github || gameB.author || "Babin")}</span></div>
-            <div class="compare-attr-row"><strong>Controls:</strong> <span>${gameB.responsive ? "Keyboard + Touch" : "Keyboard/Mouse"}</span></div>
-            <div class="compare-attr-row"><strong>Rating:</strong> <span>${gameB.stars ? (gameB.stars / 10).toFixed(1) : "5.0"} / 5.0</span></div>
-            <div class="compare-attr-row"><strong>Tags:</strong> <span>${(gameB.tags || []).slice(0, 3).join(", ") || "arcade, retro"}</span></div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    drawer.classList.add("visible");
-    const closeBtn = drawer.querySelector(".compare-close-btn");
-    closeBtn.addEventListener("click", () => {
-      drawer.classList.remove("visible");
-      selectedCompareGameIds.clear();
-      document.querySelectorAll(".game-compare-checkbox").forEach(cb => cb.checked = false);
-    });
-  }
-
-  document.addEventListener("change", (e) => {
-    if (e.target && e.target.classList.contains("game-compare-checkbox")) {
-      const gid = e.target.getAttribute("data-game-id");
-      if (e.target.checked) {
-        if (selectedCompareGameIds.size >= 2) {
-          // Uncheck and alert
-          e.target.checked = false;
-          alert("You can compare up to two games at a time.");
-          return;
-        }
-        selectedCompareGameIds.add(gid);
-      } else {
-        selectedCompareGameIds.delete(gid);
-      }
-
-      if (selectedCompareGameIds.size === 2) {
-        openCompareDrawer();
-      } else {
-        const drawer = document.getElementById("game-compare-drawer");
-        if (drawer) drawer.classList.remove("visible");
-      }
+      openControlsLegend();
     }
   });
 
-  // Universal Virtual Touch Controller Loader (#517)
-  if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
-    if (!document.querySelector('script[src*="virtual-controller.js"]')) {
-      const vcScript = document.createElement('script');
-      vcScript.src = 'assets/js/virtual-controller.js';
-      document.body.appendChild(vcScript);
+  controlsLegendDialog.addEventListener("click", (e) => {
+    if (e.target === controlsLegendDialog) {
+      closeControlsLegend();
     }
+  });
+
+  // Global 'K' shortcut toggle when modal is active
+  window.addEventListener("keydown", (e) => {
+    if ((e.key === "k" || e.key === "K") && gameModal && gameModal.classList.contains("active")) {
+      const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : "";
+      if (tag !== "input" && tag !== "textarea") {
+        e.preventDefault();
+        if (controlsLegendDialog && controlsLegendDialog.style.display === "flex") {
+          closeControlsLegend();
+        } else if (controlsLegendBtn) {
+          controlsLegendBtn.click();
+        }
+      }
+    }
+  });
+}
+
+// Universal Virtual Touch Controller Loader (#517)
+if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches))) {
+  if (!document.querySelector('script[src*="virtual-controller.js"]')) {
+    const vcScript = document.createElement('script');
+    vcScript.src = 'assets/js/virtual-controller.js';
+    document.body.appendChild(vcScript);
   }
-
-  // ========================================================
-  // LRU GAME ASSETS CACHE MANAGER WITH 50MB BUDGET GUARD (#556)
-  // Auto-evicts oldest unplayed games while protecting favorites
-  // ========================================================
-  const AvGameLruCacheManager = (function () {
-    const LRU_TRACKER_KEY = 'av_lru_game_access';
-    const MAX_BUDGET_BYTES = 50 * 1024 * 1024; // 50MB Threshold
-    const GAME_CACHE_PREFIX = 'av-game-';
-
-    function getAccessMap() {
-      try {
-        const raw = localStorage.getItem(LRU_TRACKER_KEY);
-        return raw ? JSON.parse(raw) : {};
-      } catch (_) {
-        return {};
-      }
-    }
-
-    function saveAccessMap(map) {
-      try {
-        localStorage.setItem(LRU_TRACKER_KEY, JSON.stringify(map));
-      } catch (_) {}
-    }
-
-    function recordGamePlay(gameId) {
-      if (!gameId) return;
-      const map = getAccessMap();
-      map[gameId] = Date.now();
-      saveAccessMap(map);
-      checkStorageBudget();
-    }
-
-    async function checkStorageBudget() {
-      if (!('storage' in navigator && 'estimate' in navigator.storage)) return;
-      if (!('caches' in window)) return;
-
-      try {
-        const estimate = await navigator.storage.estimate();
-        const usage = estimate.usage || 0;
-
-        // If usage approaches or exceeds 50MB, perform LRU eviction
-        if (usage > MAX_BUDGET_BYTES) {
-          await performLruEviction();
-        }
-      } catch (err) {
-        console.warn('[ArcadeVerse:LRU] Storage estimate failed:', err);
-      }
-    }
-
-    async function performLruEviction() {
-      const favSet = getFavorites();
-      const accessMap = getAccessMap();
-      const allCacheKeys = await caches.keys();
-      const gameCaches = allCacheKeys.filter((k) => k.startsWith(GAME_CACHE_PREFIX));
-
-      if (gameCaches.length === 0) return;
-
-      // Map cache to gameId and last accessed timestamp
-      const candidates = gameCaches.map((cacheKey) => {
-        const gameId = cacheKey.replace(GAME_CACHE_PREFIX, '');
-        return {
-          cacheKey,
-          gameId,
-          isFavorite: favSet.has(gameId),
-          lastAccess: accessMap[gameId] || 0
-        };
-      });
-
-      // Filter out favorites (locked and exempt from eviction)
-      const evictable = candidates.filter((c) => !c.isFavorite);
-
-      // Sort ascending by lastAccess (oldest unplayed first)
-      evictable.sort((a, b) => a.lastAccess - b.lastAccess);
-
-      // Evict oldest unplayed caches until under threshold or top 30% cleared
-      const toEvict = evictable.slice(0, Math.max(1, Math.ceil(evictable.length * 0.35)));
-      for (const item of toEvict) {
-        await caches.delete(item.cacheKey);
-        delete accessMap[item.gameId];
-        console.log(`[ArcadeVerse:LRU] Evicted game cache under 50MB budget: ${item.gameId}`);
-      }
-      saveAccessMap(accessMap);
-
-      // Signal Service Worker
-      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'AV_EVICT_GAME_CACHES',
-          evictList: toEvict.map((i) => i.gameId)
-        });
-      }
-    }
-
-    return {
-      recordGamePlay,
-      checkStorageBudget,
-      performLruEviction
-    };
-  })();
-
-  window.AvGameLruCacheManager = AvGameLruCacheManager;
-
-  function initGameLruCacheManager() {
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(() => {});
-      });
-    }
-    // Check initial storage budget on launch
-    setTimeout(() => {
-      AvGameLruCacheManager.checkStorageBudget();
-    }, 2000);
-  }
-
-  // ========================================================
-  // APP BADGING API ENGINE (#557)
-  // Badges dock/taskbar icon for unclaimed daily streaks & trophies
-  // ========================================================
-  const AvAppBadging = (function () {
-    const STREAK_KEY = 'av_daily_streak_date';
-    const UNCLAIMED_KEY = 'av_unclaimed_streak_count';
-
-    function isSupported() {
-      return typeof navigator !== 'undefined' && 'setAppBadge' in navigator;
-    }
-
-    function calculateUnclaimedCount() {
-      let count = 0;
-      try {
-        const lastDate = localStorage.getItem(STREAK_KEY);
-        const today = new Date().toISOString().slice(0, 10);
-        if (lastDate !== today) {
-          count += 1; // Unclaimed daily streak for today
-        }
-        const storedUnclaimed = parseInt(localStorage.getItem(UNCLAIMED_KEY) || '0', 10);
-        count += storedUnclaimed;
-      } catch (_) {}
-      return count;
-    }
-
-    async function updateBadge() {
-      if (!isSupported()) return;
-      const count = calculateUnclaimedCount();
-      try {
-        if (count > 0) {
-          await navigator.setAppBadge(count);
-        } else {
-          await navigator.clearAppBadge();
-        }
-      } catch (err) {
-        console.warn('[ArcadeVerse:Badging] Failed to set badge:', err);
-      }
-    }
-
-    async function clearBadge() {
-      try {
-        const today = new Date().toISOString().slice(0, 10);
-        localStorage.setItem(STREAK_KEY, today);
-        localStorage.setItem(UNCLAIMED_KEY, '0');
-        if (isSupported()) {
-          await navigator.clearAppBadge();
-        }
-      } catch (err) {
-        console.warn('[ArcadeVerse:Badging] Failed to clear badge:', err);
-      }
-    }
-
-    return {
-      isSupported,
-      updateBadge,
-      clearBadge
-    };
-  })();
-
-  window.AvAppBadging = AvAppBadging;
-
-  function initAppBadgingManager() {
-    AvAppBadging.updateBadge();
-
-    // Clear badge when player interacts with rewards or navigates to leaderboard
-    const leaderboardLinks = document.querySelectorAll('a[href*="leaderboard.html"]');
-    leaderboardLinks.forEach((link) => {
-      link.addEventListener('click', () => {
-        AvAppBadging.clearBadge();
-      });
-    });
-
-    window.addEventListener('arcadeverse:claim-streak', () => {
-      AvAppBadging.clearBadge();
-    });
-  }
-
-  // ========================================================
-  // BACKGROUND SYNC API & INDEXEDDB OFFLINE DISPATCH QUEUE (#554)
-  // Preserves high scores and favorites across offline sessions
-  // ========================================================
-  const AvOfflineQueue = (function () {
-    const DB_NAME = 'av_offline_queue';
-    const DB_VERSION = 1;
-    const STORE_NAME = 'dispatch_queue';
-    let dbPromise = null;
-
-    function getDB() {
-      if (!dbPromise) {
-        dbPromise = new Promise((resolve, reject) => {
-          if (typeof indexedDB === 'undefined') {
-            resolve(null);
-            return;
-          }
-          const request = indexedDB.open(DB_NAME, DB_VERSION);
-          request.onupgradeneeded = (e) => {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-              db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
-            }
-          };
-          request.onsuccess = () => resolve(request.result);
-          request.onerror = () => {
-            console.warn('[ArcadeVerse:OfflineQueue] IndexedDB open error:', request.error);
-            resolve(null);
-          };
-        });
-      }
-      return dbPromise;
-    }
-
-    async function enqueue(type, payload) {
-      try {
-        const db = await getDB();
-        if (!db) {
-          // Fallback to local storage buffer if IndexedDB is unavailable
-          const raw = localStorage.getItem('av_offline_fallback_queue') || '[]';
-          const arr = JSON.parse(raw);
-          arr.push({ type, payload, queuedAt: Date.now() });
-          localStorage.setItem('av_offline_fallback_queue', JSON.stringify(arr));
-          return;
-        }
-        return new Promise((resolve) => {
-          const tx = db.transaction(STORE_NAME, 'readwrite');
-          const store = tx.objectStore(STORE_NAME);
-          store.add({ type, payload, queuedAt: Date.now() });
-          tx.oncomplete = () => {
-            requestBackgroundSync();
-            resolve();
-          };
-          tx.onerror = () => resolve();
-        });
-      } catch (err) {
-        console.warn('[ArcadeVerse:OfflineQueue] Failed to enqueue:', err);
-      }
-    }
-
-    function requestBackgroundSync() {
-      if ('serviceWorker' in navigator && 'SyncManager' in window) {
-        navigator.serviceWorker.ready.then((reg) => {
-          return reg.sync.register('av-sync-offline-queue');
-        }).catch(() => {});
-      }
-    }
-
-    async function flushQueue() {
-      let flushedCount = 0;
-      try {
-        const db = await getDB();
-        if (db) {
-          const items = await new Promise((resolve) => {
-            const tx = db.transaction(STORE_NAME, 'readonly');
-            const store = tx.objectStore(STORE_NAME);
-            const req = store.getAll();
-            req.onsuccess = () => resolve(req.result || []);
-            req.onerror = () => resolve([]);
-          });
-
-          if (items && items.length > 0) {
-            for (const item of items) {
-              if (item.type === 'FAVORITES_SYNC' && item.payload && Array.isArray(item.payload.favorites)) {
-                try {
-                  const existing = JSON.parse(localStorage.getItem('av_favorites') || '[]');
-                  const merged = Array.from(new Set([...existing, ...item.payload.favorites]));
-                  localStorage.setItem('av_favorites', JSON.stringify(merged));
-                  localStorage.setItem('arcadeverse_favorite_games', JSON.stringify(merged));
-                } catch (_) {}
-              } else if (item.type === 'HIGH_SCORE_SYNC' && item.payload && item.payload.gameId) {
-                try {
-                  const scoreKey = `av_score_${item.payload.gameId}`;
-                  const currentScore = parseInt(localStorage.getItem(scoreKey) || '0', 10);
-                  if (item.payload.score > currentScore) {
-                    localStorage.setItem(scoreKey, item.payload.score.toString());
-                  }
-                } catch (_) {}
-              }
-              flushedCount++;
-            }
-
-            // Clear flushed items from DB
-            await new Promise((resolve) => {
-              const tx = db.transaction(STORE_NAME, 'readwrite');
-              const store = tx.objectStore(STORE_NAME);
-              const clearReq = store.clear();
-              clearReq.onsuccess = () => resolve();
-              clearReq.onerror = () => resolve();
-            });
-          }
-        }
-
-        // Flush any localStorage fallback queue items
-        const rawFallback = localStorage.getItem('av_offline_fallback_queue');
-        if (rawFallback) {
-          try {
-            const fallbackItems = JSON.parse(rawFallback);
-            if (Array.isArray(fallbackItems) && fallbackItems.length > 0) {
-              flushedCount += fallbackItems.length;
-              localStorage.removeItem('av_offline_fallback_queue');
-            }
-          } catch (_) {}
-        }
-
-        if (flushedCount > 0) {
-          showSyncToast(`Synced ${flushedCount} offline score${flushedCount > 1 ? 's' : ''} and favorite${flushedCount > 1 ? 's' : ''}!`);
-        }
-      } catch (err) {
-        console.warn('[ArcadeVerse:OfflineQueue] Flush error:', err);
-      }
-    }
-
-    function showSyncToast(message) {
-      if (typeof announceToScreenReader === 'function') {
-        announceToScreenReader(message);
-      }
-      let toast = document.getElementById('av-offline-sync-toast');
-      if (!toast) {
-        toast = document.createElement('div');
-        toast.id = 'av-offline-sync-toast';
-        toast.className = 'av-storage-quota-toast network-toast toast-online';
-        toast.setAttribute('role', 'status');
-        toast.setAttribute('aria-live', 'polite');
-        document.body.appendChild(toast);
-      }
-      toast.innerHTML = `
-        <div class="av-quota-toast-content network-toast-body" style="display:flex;align-items:center;gap:10px;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-          <span class="av-quota-toast-text" style="font-weight:600;font-size:0.9rem;">${message}</span>
-        </div>
-      `;
-      toast.classList.add('visible');
-      toast.classList.add('toast-visible');
-      setTimeout(() => {
-        toast.classList.remove('visible');
-        toast.classList.remove('toast-visible');
-      }, 4500);
-    }
-
-    return {
-      enqueue,
-      flushQueue,
-      showSyncToast
-    };
-  })();
-
-  window.AvOfflineQueue = AvOfflineQueue;
-
-  function initOfflineDispatchQueue() {
-    // Register Service Worker if supported
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').then((reg) => {
-          // Listen for updates or background sync triggers
-          navigator.serviceWorker.addEventListener('message', (event) => {
-            if (event.data && event.data.type === 'AV_TRIGGER_OFFLINE_SYNC') {
-              AvOfflineQueue.flushQueue();
-            }
-          });
-        }).catch((err) => {
-          console.warn('[ArcadeVerse:PWA] Service Worker registration failed:', err);
-        });
-      });
-    }
-
-    // Flush automatically upon internet reconnect
-    window.addEventListener('online', () => {
-      setTimeout(() => {
-        AvOfflineQueue.flushQueue();
-      }, 500);
-    });
-
-    // Check on startup if online and pending items exist
-    if (navigator.onLine) {
-      setTimeout(() => {
-        AvOfflineQueue.flushQueue();
-      }, 1500);
-    }
-  }
+}
