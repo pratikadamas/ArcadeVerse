@@ -2200,6 +2200,43 @@ document.addEventListener("DOMContentLoaded", () => {
   let modalLaunchCooldownTimer = null;
   let closeModalCleanupTimer = null;
 
+  // Screen Wake Lock Controller (#723)
+  // Keeps screen awake during active gameplay sessions on mobile devices
+  let screenWakeLock = null;
+
+  async function requestScreenWakeLock() {
+    if (!("wakeLock" in navigator) || typeof navigator.wakeLock.request !== "function") return;
+    try {
+      if (!screenWakeLock) {
+        screenWakeLock = await navigator.wakeLock.request("screen");
+        screenWakeLock.addEventListener("release", () => {
+          screenWakeLock = null;
+        });
+      }
+    } catch (_) {
+      screenWakeLock = null;
+    }
+  }
+
+  async function releaseScreenWakeLock() {
+    if (screenWakeLock) {
+      try {
+        await screenWakeLock.release();
+      } catch (_) {}
+      screenWakeLock = null;
+    }
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      if (gameModal && gameModal.classList.contains("active")) {
+        requestScreenWakeLock();
+      }
+    } else {
+      releaseScreenWakeLock();
+    }
+  });
+
   // Modal Handlers
   function openGameModal(game, triggerElement = null, isDirectDeepLink = false) {
     if (!game) return;
@@ -2269,6 +2306,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (newTabBtn) {
       newTabBtn.href = iframeUrl;
     }
+    requestScreenWakeLock();
 
     updateModalFavoriteButton(isFavorite(game.id));
     if (window.SoundEngine && typeof window.SoundEngine.updateUI === "function") {
@@ -2467,6 +2505,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (newTabBtn) {
       newTabBtn.href = "#";
     }
+    releaseScreenWakeLock();
 
     // Standardized Game Lifecycle Bridge: Dispatch teardown & pause events before unmounting iframe
     try {
