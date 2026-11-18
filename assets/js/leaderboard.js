@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchInput = document.getElementById("leaderboard-search-input");
   const exportCsvBtn = document.getElementById("export-csv-btn");
   const exportJsonBtn = document.getElementById("export-json-btn");
+  let exportMarkdownBtn = document.getElementById("export-markdown-btn");
   let tableSearchQuery = "";
   let searchDebounceTimer = null;
   let currentTierFilter = "all";
@@ -245,6 +246,34 @@ document.addEventListener("DOMContentLoaded", () => {
   if (exportJsonBtn) {
     exportJsonBtn.addEventListener("click", () => {
       exportStandingsJson();
+    });
+  }
+
+  // Dynamic Mount for Export Markdown Button (#692)
+  if (!exportMarkdownBtn) {
+    const toolsContainer = document.querySelector(".table-header-tools");
+    if (toolsContainer) {
+      exportMarkdownBtn = document.createElement("button");
+      exportMarkdownBtn.type = "button";
+      exportMarkdownBtn.className = "btn btn-secondary btn-sm btn-export-csv btn-export-markdown";
+      exportMarkdownBtn.id = "export-markdown-btn";
+      exportMarkdownBtn.title = "Export filtered leaderboard standings as GitHub Flavored Markdown table";
+      exportMarkdownBtn.innerHTML = `<i data-lucide="file-text"></i> <span>Export Markdown</span>`;
+
+      if (exportJsonBtn && exportJsonBtn.nextSibling) {
+        toolsContainer.insertBefore(exportMarkdownBtn, exportJsonBtn.nextSibling);
+      } else {
+        toolsContainer.appendChild(exportMarkdownBtn);
+      }
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+    }
+  }
+
+  if (exportMarkdownBtn) {
+    exportMarkdownBtn.addEventListener("click", () => {
+      exportStandingsMarkdown();
     });
   }
 
@@ -1310,17 +1339,32 @@ document.addEventListener("DOMContentLoaded", () => {
     return repoInput ? repoInput.value.trim() : "DebasmitaBose0/ArcadeVerse";
   }
 
-  // The rows both exports are built from, so the CSV and the JSON always list the same people
-  // in the same order as the Community Contributors table.
-  function getStandingsRows() {
-    return getCommunityContributors().map((item, idx) => ({
+  // The rows exports are built from, respecting current search/filter state when requested
+  function getStandingsRows(onlyFiltered = false) {
+    const all = getCommunityContributors().map((item, idx) => ({
+      ...item,
       rank: idx + 1,
       name: item.name || "",
       login: item.login || "",
+      role: item.role || "",
       games: item.gamesCount || 0,
       commits: item.commits || 0,
       score: calculateScore(item),
     }));
+
+    if (!onlyFiltered || !tableSearchQuery) {
+      return all;
+    }
+
+    const q = tableSearchQuery.toLowerCase().trim();
+    return all.filter(item => {
+      const nameMatch = (item.name || "").toLowerCase().includes(q);
+      const loginMatch = (item.login || "").toLowerCase().includes(q);
+      const roleMatch = (item.role || "").toLowerCase().includes(q);
+      const badges = getContributorBadges(item);
+      const badgeMatch = badges.some(b => (b.label || "").toLowerCase().includes(q));
+      return nameMatch || loginMatch || roleMatch || badgeMatch;
+    });
   }
 
   function downloadTextFile(content, mimeType, filename) {
@@ -1347,7 +1391,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function exportStandingsCsv() {
-    const list = getStandingsRows();
+    const list = getStandingsRows(true);
     if (list.length === 0) return;
 
     const headers = ["Rank", "Contributor", "GitHub Handle", "Verified Games", "Commits", "Arcade Score"].map(escapeCsvCell);
@@ -1367,7 +1411,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function exportStandingsJson() {
-    const list = getStandingsRows();
+    const list = getStandingsRows(true);
     if (list.length === 0) return;
 
     const standings = list.map((row) => ({
@@ -1380,6 +1424,90 @@ document.addEventListener("DOMContentLoaded", () => {
     }));
 
     downloadTextFile(JSON.stringify(standings, null, 2), "application/json;charset=utf-8;", "ArcadeVerse_Leaderboard_NSOC2026.json");
+  }
+
+  // Escape special markdown characters inside table cells
+  function escapeMarkdownCell(val) {
+    if (val === null || val === undefined) return "";
+    return String(val)
+      .replace(/\|/g, "\\|")
+      .replace(/\[/g, "\\[")
+      .replace(/\]/g, "\\]")
+      .replace(/\r?\n|\r/g, " ")
+      .trim();
+  }
+
+  // Cross-browser clipboard copy with fallback
+  function copyTextToClipboard(text, onSuccess, onError) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(onSuccess).catch(() => {
+        fallbackCopyText(text, onSuccess, onError);
+      });
+    } else {
+      fallbackCopyText(text, onSuccess, onError);
+    }
+  }
+
+  function fallbackCopyText(text, onSuccess, onError) {
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.top = "-9999px";
+      textarea.style.left = "-9999px";
+      textarea.setAttribute("readonly", "");
+      document.body.appendChild(textarea);
+      textarea.select();
+      textarea.setSelectionRange(0, 99999);
+      const successful = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      if (successful) {
+        if (onSuccess) onSuccess();
+      } else {
+        if (onError) onError(new Error("execCommand copy returned false"));
+      }
+    } catch (err) {
+      if (onError) onError(err);
+    }
+  }
+
+  // Export Filtered Contributor Standings as Formatted GitHub Markdown Table (#692)
+  function exportStandingsMarkdown() {
+    const list = getStandingsRows(true);
+    if (!list || list.length === 0) {
+      showLeaderboardToast("No contributors to export!");
+      return;
+    }
+
+    const header = "| Rank | Contributor | Games | Commits | Points |";
+    const separator = "| :---: | :--- | :---: | :---: | :---: |";
+
+    const rows = list.map((row) => {
+      let contributorStr;
+      const cleanName = escapeMarkdownCell(row.name);
+      const cleanLogin = escapeMarkdownCell(row.login);
+
+      if (cleanLogin) {
+        if (cleanName && cleanName.toLowerCase() !== cleanLogin.toLowerCase()) {
+          contributorStr = `[${cleanName}](https://github.com/${cleanLogin}) (@${cleanLogin})`;
+        } else {
+          contributorStr = `[@${cleanLogin}](https://github.com/${cleanLogin})`;
+        }
+      } else {
+        contributorStr = cleanName || "Anonymous";
+      }
+
+      return `| ${row.rank} | ${contributorStr} | ${row.games} | ${row.commits} | ${row.score} |`;
+    });
+
+    const markdownTable = [header, separator, ...rows].join("\n");
+
+    copyTextToClipboard(markdownTable, () => {
+      showLeaderboardToast("Standings table copied to clipboard!");
+    }, () => {
+      downloadTextFile(markdownTable, "text/markdown;charset=utf-8;", "ArcadeVerse_Leaderboard_NSOC2026.md");
+      showLeaderboardToast("Standings table copied to clipboard!");
+    });
   }
 
   if (fetchBtn) {
