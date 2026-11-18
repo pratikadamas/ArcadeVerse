@@ -3,6 +3,13 @@
  * Handles live games catalog, in-app modal launcher, and category/search filtering
  */
 
+if (!window.PWACachePrewarmer && !document.querySelector('script[data-pwa-cache-prewarmer]')) {
+  const prewarmerScript = document.createElement("script");
+  prewarmerScript.src = new URL("assets/js/pwa-cache-prewarmer.js", document.baseURI).href;
+  prewarmerScript.dataset.pwaCachePrewarmer = "true";
+  document.head.appendChild(prewarmerScript);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   // Ensure viewport has viewport-fit=cover for safe-area insets on mobile
   const metaViewport = document.querySelector('meta[name="viewport"]');
@@ -1697,6 +1704,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (window.lucide) {
       lucide.createIcons();
     }
+    if (window.PWACachePrewarmer && typeof window.PWACachePrewarmer.refreshBadges === "function") {
+      window.PWACachePrewarmer.refreshBadges();
+    }
   }
 
   // Global modal state variables
@@ -2210,10 +2220,12 @@ document.addEventListener("DOMContentLoaded", () => {
   function closeGameModal(isFromPopState = false) {
     if (!gameModal || (!gameModal.classList.contains("active") && !activeGame)) return;
     hideLandscapePrompt();
+    const closedGame = activeGame;
     activeGame = null;
     isGameSessionActive = false;
     gameModal.classList.remove("active");
     gameModal.setAttribute("aria-hidden", "true");
+    window.dispatchEvent(new CustomEvent("arcadeverse:game-closed", { detail: closedGame }));
     if (newTabBtn) {
       newTabBtn.href = "#";
     }
