@@ -2356,6 +2356,26 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "tidal-tunnels_joitapaul",
+    "title": "Tidal Tunnels",
+    "category": "Arcade",
+    "lucideIcon": "gamepad-2",
+    "description": "Guide a diver through a scrolling reef, collect air bubbles, and avoid moving mines before oxygen runs out.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/tidal-tunnels_joitapaul/index.html",
+    "tags": [
+      "Arcade",
+      "Action",
+      "Underwater",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false,
+    "difficulty": "Intermediate"
+  },
+  {
     "id": "time-warp_mistu7debnath",
     "title": "Time Warp: Chrono Shift",
     "category": "Puzzle",
@@ -2427,7 +2447,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 634,
+    "commits": 638,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2537,8 +2557,8 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "joitapaul",
     "avatarInitial": "J",
     "role": "Active Contributor (NSOC '26)",
-    "commits": 24,
-    "gamesCount": 13,
+    "commits": 25,
+    "gamesCount": 14,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 1,
@@ -2556,7 +2576,8 @@ const CONTRIBUTORS_REGISTRY = [
       "Potion Panic",
       "Prism Pulse: Laser Labyrinth",
       "Pumpkin Express: Haunted Rails",
-      "Quantum Pinball: Reactor Run"
+      "Quantum Pinball: Reactor Run",
+      "Tidal Tunnels"
     ]
   },
   {
@@ -2610,7 +2631,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "pratikadamas",
     "avatarInitial": "P",
     "role": "Contributor (NSOC '26)",
-    "commits": 71,
+    "commits": 75,
     "gamesCount": 1,
     "mechanicsBonus": 0,
     "platformPRs": 1,
@@ -2641,7 +2662,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "ArshiBansal",
     "avatarInitial": "A",
     "role": "Puzzle Developer (NSOC '26)",
-    "commits": 2,
+    "commits": 3,
     "gamesCount": 1,
     "mechanicsBonus": 0,
     "platformPRs": 0,
