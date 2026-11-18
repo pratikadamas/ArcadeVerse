@@ -27,7 +27,7 @@
 
   // Web Audio Synth
   let audioCtx = null;
-  function playSound(type) {
+  function playSound(type, emitterX) {
     try {
       if (!audioCtx) {
         const AudioClass = window.AudioContext || window.webkitAudioContext;
@@ -38,8 +38,33 @@
 
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
+
+      // HRTF 3D Spatial Audio Panning (#569)
+      let panner = null;
+      if (typeof emitterX === 'number' && audioCtx.createPanner) {
+        try {
+          panner = audioCtx.createPanner();
+          panner.panningModel = 'HRTF';
+          panner.distanceModel = 'inverse';
+          const relX = (emitterX - (canvas.width / 2)) / (canvas.width / 2);
+          if (panner.positionX) {
+            panner.positionX.setValueAtTime(relX, audioCtx.currentTime);
+            panner.positionY.setValueAtTime(0, audioCtx.currentTime);
+            panner.positionZ.setValueAtTime(-0.5, audioCtx.currentTime);
+          } else if (typeof panner.setPosition === 'function') {
+            panner.setPosition(relX, 0, -0.5);
+          }
+          osc.connect(gain);
+          gain.connect(panner);
+          panner.connect(audioCtx.destination);
+        } catch (_) {
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+        }
+      } else {
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+      }
 
       if (type === 'laser') {
         osc.type = 'sawtooth';
@@ -196,26 +221,28 @@
     if (keys.left) ship.angle -= ship.rotSpeed;
     if (keys.right) ship.angle += ship.rotSpeed;
 
-    if (keys.thrust) {
+    // Vacuum inertia mode: fuel only drains when thrusters are actively engaged (#667)
+    if (keys.thrust && fuel > 0) {
       ship.vx += Math.cos(ship.angle) * ship.thrust;
       ship.vy += Math.sin(ship.angle) * ship.thrust;
-      fuel = Math.max(0, fuel - 0.05);
+      // 1 unit per second calibrated at 60 FPS (~0.0167 / frame)
+      fuel = Math.max(0, fuel - 0.0167);
 
-      // Engine particles
+      // Engine particles with active thruster flame
       particles.push({
         x: ship.x - Math.cos(ship.angle) * ship.radius,
         y: ship.y - Math.sin(ship.angle) * ship.radius,
-        vx: -Math.cos(ship.angle) * 2 + (Math.random() - 0.5),
-        vy: -Math.sin(ship.angle) * 2 + (Math.random() - 0.5),
-        size: 3,
+        vx: -Math.cos(ship.angle) * 2.5 + (Math.random() - 0.5),
+        vy: -Math.sin(ship.angle) * 2.5 + (Math.random() - 0.5),
+        size: 3.5,
         alpha: 1,
-        color: '#f59e0b'
+        color: Math.random() > 0.5 ? '#f59e0b' : '#ef4444'
       });
     }
 
-    // Drag
-    ship.vx *= 0.985;
-    ship.vy *= 0.985;
+    // Pure vacuum inertia: coasting smoothly with minimal space friction
+    ship.vx *= 0.998;
+    ship.vy *= 0.998;
     ship.x += ship.vx;
     ship.y += ship.vy;
 
@@ -238,7 +265,7 @@
         if (Math.hypot(laser.x - ast.x, laser.y - ast.y) < ast.radius) {
           ast.ore -= 5;
           score += 15;
-          playSound('mine');
+          playSound('mine', ast.x);
           lasers.splice(l, 1);
 
           for (let p = 0; p < 5; p++) {
@@ -353,6 +380,19 @@
     ctx.strokeStyle = '#f8fafc';
     ctx.fillStyle = '#0284c7';
     ctx.lineWidth = 2;
+
+    // Thruster flame when thrust is active
+    if (keys.thrust && fuel > 0) {
+      ctx.fillStyle = Math.random() > 0.5 ? '#f59e0b' : '#ef4444';
+      ctx.beginPath();
+      ctx.moveTo(-ship.radius * 0.5, -ship.radius * 0.3);
+      ctx.lineTo(-ship.radius * 1.3 - Math.random() * 6, 0);
+      ctx.lineTo(-ship.radius * 0.5, ship.radius * 0.3);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    ctx.fillStyle = '#0284c7';
     ctx.beginPath();
     ctx.moveTo(ship.radius, 0);
     ctx.lineTo(-ship.radius * 0.7, -ship.radius * 0.6);
