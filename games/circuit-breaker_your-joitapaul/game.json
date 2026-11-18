@@ -1,0 +1,11 @@
+{
+  "title": "Circuit Breaker",
+  "category": "Puzzle",
+  "lucideIcon": "cpu",
+  "description": "Rotate circuit tiles to connect the power source to the target across four increasingly complex grids.",
+  "author": "Joita Paul",
+  "github": "joitapaul",
+  "role": "Arcade Developer",
+  "tags": ["Puzzle", "Logic", "NSOC26"],
+  "featured": false
+}

@@ -415,6 +415,7 @@
   }
 
   function resetShip() {
+    stopAllAudio();
     const s = level.spawn;
     ship.x = s.x;
     ship.y = s.y;
@@ -528,6 +529,26 @@
   let master = null;
   let rumbleGain = null;
   let rumbleFilter = null;
+  const activeNodes = new Set();
+
+  function trackNode(node) {
+    activeNodes.add(node);
+    node.onended = () => {
+      activeNodes.delete(node);
+    };
+    return node;
+  }
+
+  function stopAllAudio() {
+    setRumble(0);
+    activeNodes.forEach(node => {
+      try {
+        node.stop();
+        node.disconnect();
+      } catch (_) {}
+    });
+    activeNodes.clear();
+  }
 
   function initAudio() {
     if (actx) { ensureAudioRunning(); return; }
@@ -560,6 +581,7 @@
       src.connect(rumbleFilter);
       rumbleFilter.connect(rumbleGain);
       rumbleGain.connect(master);
+      trackNode(src);
       src.start();
     } catch (e) {
       actx = null;
@@ -593,6 +615,7 @@
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
     o.connect(g);
     g.connect(master);
+    trackNode(o);
     o.start(t0);
     o.stop(t0 + dur + 0.05);
   }
@@ -624,6 +647,7 @@
     src.connect(f);
     f.connect(g);
     g.connect(master);
+    trackNode(src);
     src.start(t0);
     const o = actx.createOscillator();
     const og = actx.createGain();
@@ -634,12 +658,16 @@
     og.gain.exponentialRampToValueAtTime(0.001, t0 + 0.7);
     o.connect(og);
     og.connect(master);
+    trackNode(o);
     o.start(t0);
     o.stop(t0 + 0.8);
   }
 
   function setSound(on) {
     soundOn = on;
+    if (!on) {
+      stopAllAudio();
+    }
     storeSet(LS_SOUND, on ? '1' : '0');
     el.soundOn.classList.toggle('hidden', !on);
     el.soundOff.classList.toggle('hidden', on);
@@ -1032,6 +1060,7 @@
       showOverlay(el.crash, 'retry-btn');
     } else {
       state = 'over';
+      stopAllAudio();
       $('over-reason').textContent = r.reasons.slice(0, 2).join(' ');
       $('over-score').textContent = String(score);
       $('over-levels').textContent = String(cleared);
@@ -1648,5 +1677,10 @@
   loadLevel(1);
   updateHud(true);
   showOverlay(el.start, 'start-btn');
+  window.addEventListener('message', (e) => {
+    if (e.data && (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE')) {
+      stopAllAudio();
+    }
+  });
   requestAnimationFrame(frame);
 })();

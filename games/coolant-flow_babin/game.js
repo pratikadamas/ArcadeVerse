@@ -170,12 +170,19 @@
     };
   }
 
+  // Fixed-point arithmetic quantizer for pressure and temperature (#671)
+  let valvePressureBar = 1.0;
+  function quantizePressure(val) {
+    return Math.round(val * 100) / 100;
+  }
+
   // Init Level
   function initStage(stageIdx) {
     currentStageIndex = stageIdx % STAGES.length;
     const stage = STAGES[currentStageIndex];
     gridSize = stage.grid;
     timerRemaining = stage.time;
+    valvePressureBar = quantizePressure(1.0 + (stageIdx * 0.2));
     isFlowing = false;
     isSpill = false;
     isCoreReached = false;
@@ -217,7 +224,7 @@
     timerDisplay.textContent = `${timerRemaining}s`;
     timerDisplay.className = 'stat-val';
     coolantFillBar.style.height = '0%';
-    pumpStatusLabel.textContent = 'PRESSURIZING';
+    pumpStatusLabel.textContent = `PRESSURIZING (${valvePressureBar.toFixed(2)} bar)`;
     tempDisplay.textContent = `${(5000 + currentStageIndex * 850).toLocaleString()} K`;
     logText.textContent = `Sector ${currentStageIndex + 1}: Rotate conduits to create safe passage from Pump to Reactor Core.`;
 
@@ -235,13 +242,17 @@
     timerRemaining--;
     timerDisplay.textContent = `${timerRemaining}s`;
 
+    // Quantized pressure accumulation (0.1 bar per second) without IEEE-754 precision drift (#671)
+    valvePressureBar = quantizePressure(valvePressureBar + 0.1);
+    pumpStatusLabel.textContent = `PRESSURE: ${valvePressureBar.toFixed(2)} bar`;
+
     const stage = STAGES[currentStageIndex];
     const fillPercent = ((stage.time - timerRemaining) / stage.time) * 100;
     coolantFillBar.style.height = `${Math.min(100, fillPercent)}%`;
 
     if (timerRemaining <= 5) {
       timerDisplay.className = 'stat-val warning';
-      pumpStatusLabel.textContent = 'WARNING: FLUSH IMMINENT';
+      pumpStatusLabel.textContent = `CRITICAL PRESSURE: ${valvePressureBar.toFixed(2)} bar`;
     }
 
     if (timerRemaining <= 0) {
@@ -560,6 +571,40 @@
   }
 
   window.addEventListener('resize', resizeCanvas);
+
+  // WebGL & Canvas Context Loss and Restoration Handler (#562)
+  canvas.addEventListener('webglcontextlost', (e) => {
+    e.preventDefault();
+    if (animFrameId) {
+      cancelAnimationFrame(animFrameId);
+      animFrameId = null;
+    }
+    console.warn('[Coolant Flow] WebGL/Canvas context lost. Freezing animation loop.');
+  }, false);
+
+  canvas.addEventListener('webglcontextrestored', () => {
+    console.log('[Coolant Flow] WebGL/Canvas context restored. Re-initializing rendering.');
+    resizeCanvas();
+    if (!animFrameId) {
+      lastRenderTime = performance.now();
+      animFrameId = requestAnimationFrame(render);
+    }
+  }, false);
+
+  canvas.addEventListener('contextlost', (e) => {
+    e.preventDefault();
+    if (animFrameId) {
+      cancelAnimationFrame(animFrameId);
+      animFrameId = null;
+    }
+  }, false);
+
+  canvas.addEventListener('contextrestored', () => {
+    resizeCanvas();
+    if (!animFrameId) {
+      animFrameId = requestAnimationFrame(render);
+    }
+  }, false);
 
   // Initialize
   initStage(0);

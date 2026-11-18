@@ -173,6 +173,7 @@
     noiseBuf: null,
     muted: false,
     bow: null,
+    activeNodes: new Set(),
 
     ensure: function () {
       if (!this.ctx) {
@@ -202,12 +203,34 @@
       return !!this.ctx && !this.muted;
     },
 
+    trackNode: function (node) {
+      if (!this.activeNodes) this.activeNodes = new Set();
+      this.activeNodes.add(node);
+      node.onended = () => {
+        if (this.activeNodes) this.activeNodes.delete(node);
+      };
+      return node;
+    },
+
+    stopAll: function () {
+      this.drawStop();
+      if (this.activeNodes) {
+        this.activeNodes.forEach(node => {
+          try {
+            node.stop();
+            node.disconnect();
+          } catch (_) {}
+        });
+        this.activeNodes.clear();
+      }
+    },
+
     setMuted: function (m) {
       this.muted = m;
       if (this.master) {
         this.master.gain.setTargetAtTime(m ? 0 : 0.7, this.ctx.currentTime, 0.02);
       }
-      if (m) this.drawStop();
+      if (m) this.stopAll();
     },
 
     tone: function (o) {
@@ -224,6 +247,7 @@
       g.gain.exponentialRampToValueAtTime(0.0001, t + o.dur);
       osc.connect(g);
       g.connect(this.master);
+      this.trackNode(osc);
       osc.start(t);
       osc.stop(t + o.dur + 0.05);
     },
@@ -246,6 +270,7 @@
       src.connect(f);
       f.connect(g);
       g.connect(this.master);
+      this.trackNode(src);
       src.start(t, Math.random() * 0.3);
       src.stop(t + o.dur + 0.05);
     },
@@ -266,6 +291,8 @@
       o2.connect(f);
       f.connect(g);
       g.connect(this.master);
+      this.trackNode(o1);
+      this.trackNode(o2);
       o1.start();
       o2.start();
       this.bow = { o1: o1, o2: o2, f: f, g: g };
@@ -293,6 +320,8 @@
       try {
         b.o1.stop(t + 0.15);
         b.o2.stop(t + 0.15);
+        b.o1.disconnect();
+        b.o2.disconnect();
       } catch (e) { /* ignore */ }
     },
 
@@ -606,9 +635,39 @@
     return 1 + 0.25 * Math.min(Math.max(S.streak - 1, 0), 8);
   }
 
+  function emitTelemetryScore() {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'ARCADEVERSE_GAME_SCORE',
+          score: S.score,
+          level: S.stageIdx + 1
+        }, '*');
+      }
+    } catch (_) {}
+  }
+
+  function emitTelemetryGameOver(cleared) {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'ARCADEVERSE_GAME_OVER',
+          score: S.score,
+          details: {
+            score: S.score,
+            stage: S.stageIdx + 1,
+            cleared: !!cleared,
+            accuracy: S.shots > 0 ? Math.round((S.hits / S.shots) * 100) : 0
+          }
+        }, '*');
+      }
+    } catch (_) {}
+  }
+
   function addScore(n) {
     S.score += n;
     if (S.score > save.best) save.best = S.score;
+    emitTelemetryScore();
   }
 
   /* ======================================================================
@@ -675,6 +734,7 @@
 
   function restartStage() {
     audio.ensure();
+    audio.stopAll();
     beginStage(S.stageIdx, S.stageStartScore);
   }
 
@@ -1087,6 +1147,7 @@
     const last = S.stageIdx >= STAGES.length - 1;
     if (!last) save.unlocked = Math.max(save.unlocked, S.stageIdx + 2);
     persist();
+    audio.stopAll();
     audio.clear();
     S.mode = last ? 'victory' : 'clear';
 
@@ -1106,6 +1167,7 @@
       $('victory-star-count').textContent = total + ' / ' + STAGES.length * 3;
       $('victory-stars').innerHTML = starRow(Math.round(total / STAGES.length), true);
       showOverlay('victory');
+      emitTelemetryGameOver(true);
     } else {
       showOverlay('clear');
     }
@@ -1115,6 +1177,7 @@
   function stageFail() {
     cancelAim();
     persist();
+    audio.stopAll();
     audio.fail();
     S.mode = 'fail';
     const left = countAlive();
@@ -1122,6 +1185,7 @@
     $('fail-score').textContent = String(S.score);
     $('fail-best').textContent = String(save.best);
     showOverlay('fail');
+    emitTelemetryGameOver(false);
   }
 
   /* ======================================================================
@@ -2052,6 +2116,23 @@
   // Clicking the dimmed backdrop of the help modal closes it
   overlays.help.addEventListener('click', function (e) {
     if (e.target === overlays.help) closeHelp();
+  });
+
+  window.addEventListener('message', function (e) {
+    if (!e.data || typeof e.data !== 'object') return;
+    const type = e.data.type;
+    if (type === 'AV_RESIZE') {
+      fitCanvas();
+    } else if (type === 'ARCADEVERSE_PAUSE') {
+      audio.stopAll();
+      if (S.mode === 'playing') pauseGame();
+    } else if (type === 'ARCADEVERSE_RESUME') {
+      if (S.mode === 'playing' && S.paused) resumeGame();
+    } else if (type === 'ARCADEVERSE_TEARDOWN') {
+      audio.stopAll();
+      cancelAim();
+      if (S.mode === 'playing') pauseGame();
+    }
   });
 
   /* ======================================================================

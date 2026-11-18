@@ -1,28 +1,85 @@
 "use strict";
 
 (() => {
-  const MAP_ROWS = [
-    "###############",
-    "#S....#....B..#",
-    "#.##..#.......#",
-    "#....H.....##.#",
-    "###.#...#.....#",
-    "#...#..B#..H..#",
-    "#.H.#...#.....#",
-    "#....##.......#",
-    "#B......##....#",
-    "#..H..........#",
-    "###############"
+  const SECTOR_MAPS = [
+    // Sector 1: Coastal Abyss
+    [
+      "###############",
+      "#S....#....B..#",
+      "#.##..#.......#",
+      "#....H.....##.#",
+      "###.#...#.....#",
+      "#...#..B#..H..#",
+      "#.H.#...#.....#",
+      "#....##.......#",
+      "#B......##....#",
+      "#..H..........#",
+      "###############"
+    ],
+    // Sector 2: Mariana Trench Trenchway
+    [
+      "###############",
+      "#S..#.....B...#",
+      "#.H.#.###.###.#",
+      "#...#.#.....#.#",
+      "###...#.###.#.#",
+      "#...#.#...#...#",
+      "#.###.###.#.H.#",
+      "#...#.....#...#",
+      "#.H.###.###.B.#",
+      "#...B.....#...#",
+      "###############"
+    ],
+    // Sector 3: Sunken Citadel
+    [
+      "###############",
+      "#S....#...B...#",
+      "#.###.#.#####.#",
+      "#.#...#...#...#",
+      "#.#.#####.#.H.#",
+      "#.#...#...#...#",
+      "#.###.#.#####.#",
+      "#...#.#.....#.#",
+      "#.B.#.#####.#.#",
+      "#...H...B.....#",
+      "###############"
+    ],
+    // Sector 4: Abyssal Caldera
+    [
+      "###############",
+      "#S..#...H.B...#",
+      "#.#.#.#######.#",
+      "#.#.#.#.....#.#",
+      "#.#.#.#.###.#.#",
+      "#...#...#B#...#",
+      "###.###.#.#.###",
+      "#...#...#.#...#",
+      "#.H.#.###.#.B.#",
+      "#.....H.......#",
+      "###############"
+    ],
+    // Sector 5: Deep Core Void
+    [
+      "###############",
+      "#S....#...B.H.#",
+      "#.###.#.#####.#",
+      "#...#...#...#.#",
+      "###.#.###.#.#.#",
+      "#B..#.....#.#.#",
+      "#.#######.#.#.#",
+      "#.....#...#.#.#",
+      "#.###.#.###.#.#",
+      "#..H..#....B..#",
+      "###############"
+    ]
   ];
+
   const SONAR_SUPPLY = 5;
   const MAX_INTEGRITY = 4;
   const SONAR_RADIUS = 4;
   const SONAR_DURATION_MS = 2500;
-  const WIDTH = MAP_ROWS[0].length;
-  const HEIGHT = MAP_ROWS.length;
-  const CELLS = MAP_ROWS.join("");
-  const START_INDEX = CELLS.indexOf("S");
-  const BEACON_TOTAL = [...CELLS].filter((cell) => cell === "B").length;
+  const WIDTH = SECTOR_MAPS[0][0].length;
+  const HEIGHT = SECTOR_MAPS[0].length;
   const DIRECTIONS = {
     up: { x: 0, y: -1 },
     down: { x: 0, y: 1 },
@@ -42,6 +99,13 @@
   const beaconsTotalElement = document.querySelector("#beacons-total");
   const directionButtons = document.querySelectorAll("[data-direction]");
 
+  let currentSectorIndex = 0;
+  let totalScore = 0;
+  let currentMapRows = SECTOR_MAPS[0];
+  let CELLS = currentMapRows.join("");
+  let START_INDEX = CELLS.indexOf("S");
+  let BEACON_TOTAL = [...CELLS].filter((cell) => cell === "B").length;
+
   let cellElements = [];
   let submarinePosition = START_INDEX;
   let integrity = MAX_INTEGRITY;
@@ -50,7 +114,7 @@
   let surveyedCells = new Set();
   let activePulseCells = new Set();
   let pulseTimeout = null;
-  let gameState = "playing";
+  let gameState = "playing"; // "playing" | "paused" | "won" | "lost"
 
   function getCoordinates(index) {
     return { x: index % WIDTH, y: Math.floor(index / WIDTH) };
@@ -130,6 +194,67 @@
     updateControls();
   }
 
+  function emitTelemetryScore() {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: "ARCADEVERSE_GAME_SCORE",
+          score: totalScore
+        }, "*");
+      }
+    } catch (_) {}
+  }
+
+  function emitTelemetryGameOver(won) {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: "ARCADEVERSE_GAME_OVER",
+          score: totalScore,
+          details: {
+            score: totalScore,
+            sector: currentSectorIndex + 1,
+            won: !!won,
+            integrity: integrity
+          }
+        }, "*");
+      }
+    } catch (_) {}
+  }
+
+  function advanceSector() {
+    const sectorBonus = (currentSectorIndex + 1) * 200 + integrity * 50 + sonarPulses * 30;
+    totalScore += sectorBonus;
+    emitTelemetryScore();
+
+    currentSectorIndex++;
+    if (currentSectorIndex >= SECTOR_MAPS.length) {
+      // Completed all available sectors!
+      finishGame(true);
+      return;
+    }
+
+    currentMapRows = SECTOR_MAPS[currentSectorIndex];
+    CELLS = currentMapRows.join("");
+    START_INDEX = CELLS.indexOf("S");
+    BEACON_TOTAL = [...CELLS].filter((cell) => cell === "B").length;
+
+    if (pulseTimeout !== null) {
+      clearTimeout(pulseTimeout);
+      pulseTimeout = null;
+    }
+    submarinePosition = START_INDEX;
+    integrity = MAX_INTEGRITY;
+    sonarPulses = SONAR_SUPPLY;
+    collectedBeacons = new Set();
+    surveyedCells = new Set();
+    activePulseCells = new Set();
+    gameState = "playing";
+
+    setStatus(`Sector ${currentSectorIndex} clear (+${sectorBonus} pts)! Entering Sector ${currentSectorIndex + 1} of ${SECTOR_MAPS.length}.`);
+    updateDisplay();
+  }
+
   function finishGame(won) {
     gameState = won ? "won" : "lost";
     activePulseCells.clear();
@@ -137,9 +262,15 @@
       clearTimeout(pulseTimeout);
       pulseTimeout = null;
     }
-    setStatus(won
-      ? "All rescue beacons reached. Subsea mission complete."
-      : "Submarine integrity is gone. Mission failed. Restart to launch again.");
+    if (won) {
+      const victoryBonus = 500;
+      totalScore += victoryBonus;
+      emitTelemetryScore();
+      setStatus(`All deep-sea sectors conquered! Final score: ${totalScore}. Mission complete.`);
+    } else {
+      setStatus(`Submarine integrity is gone in Sector ${currentSectorIndex + 1}. Mission failed. Restart to launch again.`);
+    }
+    emitTelemetryGameOver(won);
     updateDisplay();
   }
 
@@ -171,11 +302,13 @@
       setStatus(`Hazard impact. Submarine integrity is now ${integrity} of ${MAX_INTEGRITY}.`);
     } else if (terrain === "B" && !collectedBeacons.has(nextPosition)) {
       collectedBeacons.add(nextPosition);
+      totalScore += 100;
+      emitTelemetryScore();
       if (collectedBeacons.size === BEACON_TOTAL) {
-        finishGame(true);
+        advanceSector();
         return;
       }
-      setStatus(`Rescue beacon reached. ${BEACON_TOTAL - collectedBeacons.size} more to go.`);
+      setStatus(`Rescue beacon reached (+100 pts). ${BEACON_TOTAL - collectedBeacons.size} more to go in Sector ${currentSectorIndex + 1}.`);
     } else {
       setStatus("Course updated. Send sonar to reveal nearby waters.");
     }
@@ -214,11 +347,39 @@
     updateDisplay();
   }
 
+  function pauseGame() {
+    if (gameState === "playing") {
+      gameState = "paused";
+      if (pulseTimeout !== null) {
+        clearTimeout(pulseTimeout);
+        pulseTimeout = null;
+        activePulseCells.clear();
+      }
+      setStatus("Mission paused. Switch back to resume navigation.");
+      updateControls();
+    }
+  }
+
+  function resumeGame() {
+    if (gameState === "paused") {
+      gameState = "playing";
+      setStatus(`Mission resumed in Sector ${currentSectorIndex + 1}. Send sonar to chart terrain.`);
+      updateControls();
+    }
+  }
+
   function resetMission() {
     if (pulseTimeout !== null) {
       clearTimeout(pulseTimeout);
       pulseTimeout = null;
     }
+    currentSectorIndex = 0;
+    totalScore = 0;
+    currentMapRows = SECTOR_MAPS[0];
+    CELLS = currentMapRows.join("");
+    START_INDEX = CELLS.indexOf("S");
+    BEACON_TOTAL = [...CELLS].filter((cell) => cell === "B").length;
+
     submarinePosition = START_INDEX;
     integrity = MAX_INTEGRITY;
     sonarPulses = SONAR_SUPPLY;
@@ -227,6 +388,7 @@
     activePulseCells = new Set();
     gameState = "playing";
     setStatus("The water is dark. Send a sonar pulse to chart nearby terrain and rescue beacons.");
+    emitTelemetryScore();
     updateDisplay();
   }
 
@@ -241,6 +403,27 @@
       return element;
     });
   }
+
+  // Lifecycle listeners
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      pauseGame();
+    } else if (gameState === "paused") {
+      resumeGame();
+    }
+  });
+
+  window.addEventListener("message", (e) => {
+    if (!e.data || typeof e.data !== "object") return;
+    const type = e.data.type;
+    if (type === "ARCADEVERSE_PAUSE") {
+      pauseGame();
+    } else if (type === "ARCADEVERSE_RESUME") {
+      resumeGame();
+    } else if (type === "ARCADEVERSE_TEARDOWN") {
+      pauseGame();
+    }
+  });
 
   directionButtons.forEach((button) => {
     button.addEventListener("click", () => moveSubmarine(button.dataset.direction));

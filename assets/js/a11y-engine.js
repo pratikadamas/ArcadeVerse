@@ -15,7 +15,8 @@
       reducedMotion: false,
       highContrast: false,
       largeText: false,
-      focusHighlight: false
+      focusHighlight: false,
+      defaultGameSpeed: 1.0
     },
     lastFocusedElement: null,
 
@@ -141,6 +142,19 @@
               </div>
               <input type="checkbox" id="a11y-opt-focus" class="a11y-checkbox" ${this.prefs.focusHighlight ? 'checked' : ''}>
             </label>
+            <div class="a11y-toggle-row a11y-select-row">
+              <div>
+                <strong class="a11y-toggle-title">Default Game Velocity</strong>
+                <span class="a11y-toggle-sub">Pacing assist for motor & visual accessibility</span>
+              </div>
+              <select id="a11y-opt-speed" class="a11y-select" aria-label="Default Game Velocity">
+                <option value="0.5" ${this.prefs.defaultGameSpeed === 0.5 ? 'selected' : ''}>0.5x (Slow-Mo Assist)</option>
+                <option value="0.75" ${this.prefs.defaultGameSpeed === 0.75 ? 'selected' : ''}>0.75x (Relaxed Pace)</option>
+                <option value="1.0" ${this.prefs.defaultGameSpeed === 1.0 || !this.prefs.defaultGameSpeed ? 'selected' : ''}>1.0x (Standard Velocity)</option>
+                <option value="1.25" ${this.prefs.defaultGameSpeed === 1.25 ? 'selected' : ''}>1.25x (Accelerated)</option>
+                <option value="1.5" ${this.prefs.defaultGameSpeed === 1.5 ? 'selected' : ''}>1.5x (Turbo Overdrive)</option>
+              </select>
+            </div>
           </div>
           <button id="a11y-reset-btn" class="a11y-reset-btn" type="button">Reset All to Default</button>
         `;
@@ -186,6 +200,13 @@
           this.prefs.focusHighlight = e.target.checked;
           this.savePrefs();
           this.applyPrefs();
+        } else if (e.target.id === 'a11y-opt-speed') {
+          const spd = parseFloat(e.target.value);
+          this.prefs.defaultGameSpeed = !isNaN(spd) ? spd : 1.0;
+          this.savePrefs();
+          if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.setSpeed === 'function') {
+            window.GameSpeedRegulator.setSpeed(this.prefs.defaultGameSpeed);
+          }
         }
       });
 
@@ -241,11 +262,17 @@
         reducedMotion: false,
         highContrast: false,
         largeText: false,
-        focusHighlight: false
+        focusHighlight: false,
+        defaultGameSpeed: 1.0
       };
       this.savePrefs();
       this.applyPrefs();
       document.querySelectorAll('.a11y-checkbox').forEach(cb => { cb.checked = false; });
+      const speedSelect = document.getElementById('a11y-opt-speed');
+      if (speedSelect) speedSelect.value = '1.0';
+      if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.setSpeed === 'function') {
+        window.GameSpeedRegulator.setSpeed(1.0);
+      }
     }
   };
 

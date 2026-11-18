@@ -84,19 +84,38 @@
         <div class="overlay-card">
           <h2 class="overlay-title win-text">Stage Cleared!</h2>
           <p class="overlay-desc">Target objective reached.</p>
+          <div class="results-stats">
+            <div class="stat-row"><span>Stage Score:</span><strong id="stage-clear-score">0</strong></div>
+            <div class="stat-row"><span>Target Hits:</span><strong id="stage-clear-hits">0</strong></div>
+            <div class="stat-row"><span>Total Score:</span><strong id="stage-clear-total">0</strong></div>
+          </div>
           <button id="next-stage-btn" class="btn btn-primary" type="button">Next Stage</button>
+        </div>
+      </div>
+
+      <div id="stage-failed-overlay" class="overlay hidden">
+        <div class="overlay-card">
+          <h2 class="overlay-title gameover-text">Stage Failed</h2>
+          <p class="overlay-desc" id="stage-failed-desc">Target objective was not met. Required precision was not achieved.</p>
+          <div class="results-stats">
+            <div class="stat-row"><span>Stage Score:</span><strong id="stage-failed-score">0</strong></div>
+            <div class="stat-row"><span>Target Hits:</span><strong id="stage-failed-hits">0</strong></div>
+            <div class="stat-row"><span>Required to Pass:</span><strong id="stage-failed-req">3 hits / 75 pts</strong></div>
+          </div>
+          <button id="retry-stage-btn" class="btn btn-primary" type="button">Retry Stage</button>
         </div>
       </div>
 
       <div id="instructions-modal" class="overlay hidden">
         <div class="overlay-card">
-          <h2 class="overlay-title">Target Scoring</h2>
+          <h2 class="overlay-title">Target Scoring &amp; Rules</h2>
           <ul class="rules-list">
             <li><strong>Outer Blue Ring:</strong> 15 Points</li>
             <li><strong>Middle Yellow Ring:</strong> 40 Points</li>
             <li><strong>Inner Magenta Ring:</strong> 75 Points</li>
             <li><strong>White Bullseye:</strong> 150 Points + Streak Multiplier!</li>
             <li><strong>Barriers:</strong> Arrows hitting rotating red shields deflect harmlessly.</li>
+            <li><strong>Stage Requirements:</strong> Each stage requires minimum target hits and score before arrows deplete to advance.</li>
           </ul>
           <button id="close-help-btn" class="btn btn-secondary" type="button">Dismiss</button>
         </div>

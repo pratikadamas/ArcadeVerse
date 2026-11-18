@@ -69,9 +69,10 @@
   let statusTimeout = 0;
   let ambientTime = 0;
   let nearLockedGate = false;
-  // Issue #597: Bounded particle emitter pool preventing lingering memory leaks
-  const MAX_GHOST_PARTICLES = 36;
-  let ghostParticles = [];
+  // Issue #737: Bounded particle emitter pool preventing lingering memory leaks
+  const MAX_AMBIENT_PARTICLES = 120;
+  let particles = [];
+  let ghostParticles = particles;
 
   function centerOf(cell) {
     return { x: (cell.x + 0.5) * tileSize, y: (cell.y + 0.5) * tileSize };
@@ -125,7 +126,8 @@
   function resetRun() {
     window.cancelAnimationFrame(animationFrame);
     pressedDirections.clear();
-    ghostParticles = [];
+    particles = [];
+    ghostParticles = particles;
     keyLocations.forEach((key) => { key.collected = false; });
     ghosts.forEach((ghost, index) => {
       const start = centerOf(ghost.route[0]);
@@ -175,6 +177,21 @@
       : `The graveyard claimed your last ward. You recovered ${keysFound} of ${keyLocations.length} keys.`;
     startButton.textContent = "Run again";
     overlay.hidden = false;
+    try {
+      if (window.parent && window.parent !== window) {
+        const finalScore = won ? 1000 + lives * 200 + Math.round(energy) : keysFound * 250;
+        window.parent.postMessage({
+          type: "ARCADEVERSE_GAME_OVER",
+          score: finalScore,
+          details: {
+            won,
+            keysFound,
+            livesRemaining: lives,
+            energyRemaining: Math.round(energy)
+          }
+        }, "*");
+      }
+    } catch (_) {}
   }
 
   function advanceGhost(ghost, delta) {
@@ -284,29 +301,55 @@
     movePlayer(delta);
     ghosts.forEach((ghost) => {
       advanceGhost(ghost, delta);
-      // Spawn subtle ethereal wisps pooled to cap
-      if (ghostParticles.length < MAX_GHOST_PARTICLES && Math.random() < 0.25) {
-        ghostParticles.push({
+      // Spawn subtle ethereal phantom spirit wisps pooled to cap
+      if (particles.length < MAX_AMBIENT_PARTICLES && Math.random() < 0.25) {
+        particles.push({
+          type: "spirit",
           x: ghost.x + (Math.random() * 8 - 4),
           y: ghost.y + (Math.random() * 8 - 4),
           vx: (Math.random() - 0.5) * 6,
           vy: -Math.random() * 8 - 4,
-          life: 0.55,
+          radius: 2,
+          color: "180, 217, 194",
+          alpha: 0.35,
+          fadeRate: 0.65,
+          life: 0,
           maxLife: 0.55
         });
       }
     });
 
-    // Update ghost particles with instant cleanup upon expiration
-    for (let i = ghostParticles.length - 1; i >= 0; i--) {
-      const p = ghostParticles[i];
-      p.x += p.vx * delta;
-      p.y += p.vy * delta;
-      p.life -= delta;
-      if (p.life <= 0) {
-        ghostParticles.splice(i, 1);
-      }
+    // Spawn ambient graveyard mist/fog particles bounded to pool cap
+    if (particles.length < MAX_AMBIENT_PARTICLES && Math.random() < 0.2) {
+      const fogLife = 2.5 + Math.random() * 1.5;
+      const initialAlpha = 0.12 + Math.random() * 0.08;
+      particles.push({
+        type: "fog",
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 8 + 3,
+        vy: (Math.random() - 0.5) * 3,
+        radius: 10 + Math.random() * 14,
+        color: "160, 190, 175",
+        alpha: initialAlpha,
+        fadeRate: initialAlpha / fogLife,
+        life: 0,
+        maxLife: fogLife
+      });
     }
+
+    // Update particles with strict culling threshold and lifespan checks
+    particles = particles.filter((particle) => {
+      particle.x += particle.vx * delta;
+      particle.y += particle.vy * delta;
+      particle.alpha = Math.max(0, particle.alpha - delta * particle.fadeRate);
+      particle.life += delta;
+      return particle.alpha > 0.01 && particle.life < particle.maxLife;
+    });
+    if (particles.length > MAX_AMBIENT_PARTICLES) {
+      particles.length = MAX_AMBIENT_PARTICLES;
+    }
+    ghostParticles = particles;
     collectKeys();
     checkGhostContact();
     updateGateHint();
@@ -544,13 +587,12 @@
     shrineLocations.forEach(drawShrine);
     keyLocations.forEach(drawKey);
     drawExit();
-    // Render ethereal particle wisps
-    ghostParticles.forEach(p => {
+    // Render spooky fog and phantom spirit particles
+    particles.forEach((p) => {
       context.save();
-      const alpha = Math.max(0, p.life / p.maxLife) * 0.35;
-      context.fillStyle = `rgba(180, 217, 194, ${alpha})`;
+      context.fillStyle = `rgba(${p.color || "180, 217, 194"}, ${p.alpha})`;
       context.beginPath();
-      context.arc(p.x, p.y, 2, 0, Math.PI * 2);
+      context.arc(p.x, p.y, p.radius || 2, 0, Math.PI * 2);
       context.fill();
       context.restore();
     });

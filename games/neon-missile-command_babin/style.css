@@ -300,3 +300,26 @@ body {
 .btn-secondary:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
+@media (max-width: 600px) {
+  body {
+    padding: 6px;
+  }
+
+  .game-container {
+    padding: 8px;
+    border-radius: 12px;
+  }
+
+  .scoreboard-bar {
+    gap: 6px;
+  }
+
+  .score-card {
+    padding: 4px 6px;
+  }
+
+  .score-card .value {
+    font-size: 0.85rem;
+  }
+}

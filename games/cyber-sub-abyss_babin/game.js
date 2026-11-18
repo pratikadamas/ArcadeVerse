@@ -7,6 +7,7 @@
     constructor() {
       this.ctx = null;
       this.muted = false;
+      this.activeNodes = new Set();
     }
     init() {
       if (!this.ctx) {
@@ -15,6 +16,25 @@
       }
       if (this.ctx && this.ctx.state === 'suspended') {
         this.ctx.resume();
+      }
+    }
+    trackNode(osc) {
+      if (!this.activeNodes) this.activeNodes = new Set();
+      this.activeNodes.add(osc);
+      osc.onended = () => {
+        if (this.activeNodes) this.activeNodes.delete(osc);
+      };
+      return osc;
+    }
+    stopAll() {
+      if (this.activeNodes) {
+        this.activeNodes.forEach(node => {
+          try {
+            node.stop();
+            node.disconnect();
+          } catch (_) {}
+        });
+        this.activeNodes.clear();
       }
     }
     playTone(freq, type, duration, vol = 0.1) {
@@ -28,6 +48,7 @@
         gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
         osc.connect(gain);
         gain.connect(this.ctx.destination);
+        this.trackNode(osc);
         osc.start();
         osc.stop(this.ctx.currentTime + duration);
       } catch (e) {}
@@ -48,6 +69,7 @@
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
         osc.connect(gain);
         gain.connect(this.ctx.destination);
+        this.trackNode(osc);
         osc.start(now);
         osc.stop(now + 0.15);
       } catch (e) {}
@@ -601,6 +623,7 @@
 
   function startGame() {
     sfx.init();
+    sfx.stopAll();
     resetGame();
     isRunning = true;
     isPaused = false;
@@ -612,6 +635,7 @@
 
   function endGame(title, desc) {
     isRunning = false;
+    sfx.stopAll();
     sfx.gameOver();
     if (animFrameId) cancelAnimationFrame(animFrameId);
 
@@ -725,7 +749,16 @@
 
   btnMute.addEventListener('click', () => {
     sfx.muted = !sfx.muted;
+    if (sfx.muted) {
+      sfx.stopAll();
+    }
     btnMute.classList.toggle('active', sfx.muted);
+  });
+
+  window.addEventListener('message', (e) => {
+    if (e.data && (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE')) {
+      sfx.stopAll();
+    }
   });
 
 })();

@@ -92,6 +92,8 @@ const state = {
   discoveredRecipes: new Set(),
   discoveredPotions: new Set(),
   selectedSlots: [null, null, null], // ingredientId | null per slot
+  cauldronIngredients: [], // active ingredients in cauldron array
+  isAddingIngredient: false, // atomic transition state lock
   brewing: false,
   brewTimer: null,
   brewTotal: 0,
@@ -113,6 +115,7 @@ let bubbles = [];
 let cauldronColor = '#7c3aed';
 let brewingEffect = false;
 let sparkles = [];
+let dropAnimations = [];
 
 function initCauldron() {
   const canvas = document.getElementById('cauldron-canvas');
@@ -258,6 +261,25 @@ function drawCauldron(frame) {
     ctx.stroke();
   }
 
+  // --- Falling Droplet Animations ---
+  dropAnimations = dropAnimations.filter(d => d.life < d.maxLife);
+  for (const d of dropAnimations) {
+    d.life++;
+    if (d.y < d.targetY) {
+      d.y += d.vy;
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+      ctx.fillStyle = d.color;
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    } else if (!d.splashed) {
+      d.splashed = true;
+      burstSparkles(d.color);
+    }
+  }
+
   // --- Sparkles (brew result) ---
   sparkles = sparkles.filter(s => s.life < s.maxLife);
   for (const s of sparkles) {
@@ -285,6 +307,48 @@ function drawCauldron(frame) {
   }
 
   ctx.restore();
+}
+
+function triggerCauldronDropAnimation(color, onComplete) {
+  const cx = 110, cy = 90;
+  // Falling droplet
+  dropAnimations.push({
+    x: cx + (Math.random() - 0.5) * 30,
+    y: 20,
+    targetY: cy - 10,
+    vy: 4.5,
+    r: 6,
+    color: color,
+    splashed: false,
+    life: 0,
+    maxLife: 20,
+  });
+
+  // Temporarily increase bubble churn
+  brewingEffect = true;
+
+  // Burst bubbles on liquid surface with ingredient color
+  for (let i = 0; i < 16; i++) {
+    const angle = (Math.PI * 2 * i) / 16 + (Math.random() - 0.5) * 0.4;
+    const speed = 1.2 + Math.random() * 2.2;
+    bubbles.push({
+      x: cx + (Math.random() - 0.5) * 50,
+      y: cy - 10,
+      r: 3 + Math.random() * 5,
+      vy: Math.sin(angle) * speed - 1.2,
+      life: 0,
+      maxLife: 30 + Math.random() * 20,
+      color: color,
+    });
+  }
+
+  // Sparkles
+  burstSparkles(color);
+
+  setTimeout(() => {
+    brewingEffect = false;
+    if (onComplete) onComplete();
+  }, 250);
 }
 
 function burstSparkles(color) {
@@ -334,6 +398,7 @@ function saveGame() {
       score: state.score,
       inventory: state.inventory,
       potionInventory: state.potionInventory,
+      cauldronIngredients: state.cauldronIngredients,
       discoveredRecipes: Array.from(state.discoveredRecipes),
       discoveredPotions: Array.from(state.discoveredPotions),
     };
@@ -352,6 +417,17 @@ function loadGame() {
     state.potionInventory = data.potionInventory || {};
     state.discoveredRecipes = new Set(data.discoveredRecipes || []);
     state.discoveredPotions = new Set(data.discoveredPotions || []);
+    if (data.cauldronIngredients && Array.isArray(data.cauldronIngredients)) {
+      state.cauldronIngredients = data.cauldronIngredients.slice(0, 3);
+      state.selectedSlots = [
+        state.cauldronIngredients[0] || null,
+        state.cauldronIngredients[1] || null,
+        state.cauldronIngredients[2] || null
+      ];
+    } else {
+      state.cauldronIngredients = [];
+      state.selectedSlots = [null, null, null];
+    }
     return true;
   } catch (e) { return false; }
 }
@@ -364,6 +440,8 @@ function resetGame() {
   state.discoveredRecipes = new Set();
   state.discoveredPotions = new Set();
   state.selectedSlots = [null, null, null];
+  state.cauldronIngredients = [];
+  state.isAddingIngredient = false;
   state.brewing = false;
   if (state.brewTimer) { clearInterval(state.brewTimer); state.brewTimer = null; }
   state.orders = [];
@@ -403,26 +481,122 @@ function removePotion(id) {
 }
 
 /* ============================================================
-   SLOT MANAGEMENT
+   SLOT & CAULDRON MANAGEMENT
    ============================================================ */
+let lastAddTimestamp = 0;
+
 function getFilledSlots() {
-  return state.selectedSlots.filter(s => s !== null);
+  return state.cauldronIngredients.slice();
 }
 
-function addToSlot(ingredientId) {
+function addIngredientToCauldron(id) {
+  // 1. Atomic transition state lock & gameplay state check
+  if (state.brewing || state.paused || state.isAddingIngredient) {
+    return false;
+  }
+
+  // 2. Debounce rapid double-clicks and simultaneous multi-touch taps (250ms threshold)
+  const now = Date.now();
+  if (now - lastAddTimestamp < 250) {
+    return false;
+  }
+
+  // 3. Check capacity (max 3 ingredients in cauldron)
+  if (state.cauldronIngredients.length >= 3) {
+    showToast('Cauldron is full! Maximum 3 ingredients.', 'info');
+    return false;
+  }
+
+  // 4. Validate that each ingredient addition strictly verifies inventory[id] > 0 at the exact moment of insertion
+  if (getQty(id) <= 0) {
+    showToast('Not enough of this ingredient!', 'error');
+    return false;
+  }
+
   const freeIdx = state.selectedSlots.indexOf(null);
-  if (freeIdx === -1) return false;
-  state.selectedSlots[freeIdx] = ingredientId;
+  if (freeIdx === -1) {
+    showToast('All 3 slots are filled. Remove one first.', 'info');
+    return false;
+  }
+
+  // Engage atomic transition state lock
+  state.isAddingIngredient = true;
+  lastAddTimestamp = now;
+
+  // Atomically decrement inventory count
+  removeIngredient(id, 1);
+
+  // Push to cauldronIngredients and update selectedSlots
+  state.selectedSlots[freeIdx] = id;
+  state.cauldronIngredients.push(id);
+
+  // Trigger drop and bubble burst animation
+  const ing = INGREDIENTS.find(x => x.id === id);
+  const color = ing ? ing.color : '#c084fc';
+  triggerCauldronDropAnimation(color, () => {
+    // Release atomic transition state lock when animation finishes
+    state.isAddingIngredient = false;
+    renderSlots();
+    renderIngredientGrid();
+    updateBrewBtn();
+  });
+
+  saveGame();
+  renderSlots();
+  renderIngredientGrid();
+  updateBrewBtn();
   return true;
 }
 
+function removeIngredientFromCauldron(id) {
+  if (state.brewing || state.paused || state.isAddingIngredient) return false;
+
+  const slotIdx = state.selectedSlots.indexOf(id);
+  if (slotIdx === -1) return false;
+
+  // Refund inventory count
+  addIngredient(id, 1);
+  state.selectedSlots[slotIdx] = null;
+
+  const cIdx = state.cauldronIngredients.indexOf(id);
+  if (cIdx !== -1) {
+    state.cauldronIngredients.splice(cIdx, 1);
+  }
+
+  saveGame();
+  renderSlots();
+  renderIngredientGrid();
+  updateBrewBtn();
+  return true;
+}
+
+function addToSlot(ingredientId) {
+  return addIngredientToCauldron(ingredientId);
+}
+
 function removeFromSlots(ingredientId) {
-  const idx = state.selectedSlots.indexOf(ingredientId);
-  if (idx !== -1) state.selectedSlots[idx] = null;
+  return removeIngredientFromCauldron(ingredientId);
 }
 
 function clearSlots() {
   state.selectedSlots = [null, null, null];
+  state.cauldronIngredients = [];
+}
+
+function clearCauldron() {
+  if (state.brewing) return;
+  state.isAddingIngredient = false;
+  // Refund all ingredients currently in cauldron back to inventory
+  for (const id of state.cauldronIngredients) {
+    addIngredient(id, 1);
+  }
+  state.cauldronIngredients = [];
+  clearSlots();
+  saveGame();
+  renderSlots();
+  renderIngredientGrid();
+  updateBrewBtn();
+  setBrustatus('Select up to 3 ingredients');
 }
 
 /* ============================================================
@@ -442,21 +616,9 @@ function matchRecipe(slotIngredients) {
    BREWING
    ============================================================ */
 function startBrew() {
-  if (state.brewing || state.paused) return;
+  if (state.brewing || state.paused || state.isAddingIngredient) return;
   const filled = getFilledSlots();
   if (filled.length === 0) return;
-
-  // Check have all ingredients
-  const counts = {};
-  for (const id of filled) counts[id] = (counts[id] || 0) + 1;
-  for (const [id, need] of Object.entries(counts)) {
-    if (getQty(id) < need) {
-      showToast('Not enough of some ingredients!', 'error'); return;
-    }
-  }
-
-  // Deduct ingredients
-  for (const [id, need] of Object.entries(counts)) removeIngredient(id, need);
 
   const recipe = matchRecipe(filled);
   const brewTime = recipe ? recipe.brewTime : 3;
@@ -512,6 +674,8 @@ function finishBrew(recipe) {
     showBrewResult(false, null, null, false);
   }
 
+  // Ingredients were consumed in brew, empty cauldron without refund
+  state.cauldronIngredients = [];
   clearSlots();
   saveGame();
   renderAll();
@@ -630,12 +794,13 @@ function renderIngredientGrid() {
 
   for (const ing of INGREDIENTS) {
     const qty = getQty(ing.id);
-    const inSlot = state.selectedSlots.includes(ing.id);
-    const unavail = qty === 0;
+    const inCauldron = state.cauldronIngredients.includes(ing.id);
+    const unavail = qty === 0 && !inCauldron;
 
     const card = document.createElement('div');
-    card.className = 'ingredient-card' + (inSlot ? ' selected' : '') + (unavail ? ' unavailable' : '');
+    card.className = 'ingredient-card' + (inCauldron ? ' selected' : '') + (unavail ? ' unavailable' : '');
     card.dataset.id = ing.id;
+    card.setAttribute('draggable', qty > 0 ? 'true' : 'false');
 
     card.innerHTML = `
       <span class="ingredient-rarity rarity-${ing.rarity}">${ing.rarity.toUpperCase()[0]}</span>
@@ -647,6 +812,17 @@ function renderIngredientGrid() {
       <div class="ingredient-name">${ing.name}</div>
       <div class="ingredient-qty">${qty} left</div>
     `;
+
+    if (qty > 0) {
+      card.addEventListener('dragstart', (e) => {
+        if (state.brewing || state.paused || state.isAddingIngredient) {
+          e.preventDefault();
+          return;
+        }
+        e.dataTransfer.setData('text/plain', ing.id);
+        e.dataTransfer.effectAllowed = 'copy';
+      });
+    }
 
     if (!unavail) {
       card.addEventListener('click', () => onIngredientClick(ing.id));
@@ -685,30 +861,43 @@ function renderSlots() {
 }
 
 function onIngredientClick(id) {
-  if (state.brewing || state.paused) return;
+  if (state.brewing || state.paused || state.isAddingIngredient) return;
 
-  if (state.selectedSlots.includes(id)) {
-    // Remove from slot
-    removeFromSlots(id);
-  } else {
-    // Add to free slot
-    const freeSlots = state.selectedSlots.filter(s => s === null).length;
-    if (freeSlots === 0) {
-      showToast('All 3 slots are filled. Remove one first.', 'info'); return;
-    }
-    if (getQty(id) === 0) return;
-    addToSlot(id);
+  // If already in cauldron and inventory is depleted, or slots are full:
+  // clicking removes it from the cauldron and refunds it
+  if (state.cauldronIngredients.includes(id) && (getQty(id) === 0 || state.cauldronIngredients.length >= 3)) {
+    removeIngredientFromCauldron(id);
+    return;
   }
 
-  renderSlots();
-  renderIngredientGrid();
+  // Check inventory before attempting to add
+  if (getQty(id) <= 0) {
+    showToast('Not enough of this ingredient!', 'error');
+    return;
+  }
+
+  // Add to cauldron with atomic lock and debounce
+  addIngredientToCauldron(id);
 }
 
 function onSlotClick(slotIndex) {
-  if (state.brewing || state.paused) return;
+  if (state.brewing || state.paused || state.isAddingIngredient) return;
+  const ingId = state.selectedSlots[slotIndex];
+  if (!ingId) return;
+
+  // Refund inventory count and free slot
+  addIngredient(ingId, 1);
   state.selectedSlots[slotIndex] = null;
+
+  const cIdx = state.cauldronIngredients.indexOf(ingId);
+  if (cIdx !== -1) {
+    state.cauldronIngredients.splice(cIdx, 1);
+  }
+
+  saveGame();
   renderSlots();
   renderIngredientGrid();
+  updateBrewBtn();
 }
 
 function updateBrewBtn() {
@@ -1068,7 +1257,13 @@ function wireEvents() {
     state.gameStarted = false;
     state.paused = false;
     state.brewing = false;
+    state.isAddingIngredient = false;
+    for (const id of state.cauldronIngredients) {
+      addIngredient(id, 1);
+    }
+    state.cauldronIngredients = [];
     clearSlots();
+    saveGame();
     closeModal('modal-pause');
     openModal('modal-menu');
   });
@@ -1076,12 +1271,51 @@ function wireEvents() {
   // Brewing
   document.getElementById('brew-btn').addEventListener('click', startBrew);
   document.getElementById('clear-btn').addEventListener('click', () => {
-    if (state.brewing) return;
-    clearSlots();
-    renderSlots();
-    renderIngredientGrid();
-    setBrustatus('Select up to 3 ingredients');
+    clearCauldron();
   });
+
+  // Cauldron Drag & Drop Listeners
+  const cauldronArea = document.querySelector('.cauldron-area');
+  if (cauldronArea) {
+    cauldronArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      cauldronArea.classList.add('drag-over');
+    });
+    cauldronArea.addEventListener('dragleave', () => {
+      cauldronArea.classList.remove('drag-over');
+    });
+    cauldronArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      cauldronArea.classList.remove('drag-over');
+      const id = e.dataTransfer.getData('text/plain');
+      if (id) {
+        addIngredientToCauldron(id);
+      }
+    });
+  }
+
+  for (let i = 0; i < 3; i++) {
+    const slotEl = document.getElementById('slot-' + i);
+    if (slotEl) {
+      slotEl.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+        slotEl.classList.add('drag-over');
+      });
+      slotEl.addEventListener('dragleave', () => {
+        slotEl.classList.remove('drag-over');
+      });
+      slotEl.addEventListener('drop', (e) => {
+        e.preventDefault();
+        slotEl.classList.remove('drag-over');
+        const id = e.dataTransfer.getData('text/plain');
+        if (id) {
+          addIngredientToCauldron(id);
+        }
+      });
+    }
+  }
 
   // Recipe book
   document.getElementById('recipebook-btn').addEventListener('click', openRecipeBook);

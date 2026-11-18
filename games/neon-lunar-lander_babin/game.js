@@ -38,7 +38,14 @@
 
   // Audio Synthesizer via Web Audio API
   let audioCtx = null;
-  let soundEnabled = localStorage.getItem('neon-lander-sound') !== 'false';
+  let soundEnabled = true;
+  try {
+    const stored = localStorage.getItem('neon-lander-sound');
+    soundEnabled = stored !== 'false';
+  } catch (_) {}
+
+  let rafId = null;
+  let lastTime = performance.now();
 
   function initAudio() {
     if (!audioCtx) {
@@ -241,13 +248,42 @@
     }
   }
 
-  function checkTouchdown() {
-    const landerBottomY = lander.y + lander.height / 2;
+  function getTerrainHeightAt(x) {
+    for (let i = 0; i < terrainPoints.length - 1; i++) {
+      const p1 = terrainPoints[i];
+      const p2 = terrainPoints[i + 1];
+      if (x >= p1.x && x <= p2.x) {
+        const dx = p2.x - p1.x;
+        if (dx === 0) return p1.y;
+        const t = (x - p1.x) / dx;
+        return p1.y + t * (p2.y - p1.y);
+      }
+    }
+    return HEIGHT;
+  }
 
-    // Check if within any flat landing pad horizontal boundary
+  function checkTouchdown() {
+    const cosA = Math.cos(lander.angle);
+    const sinA = Math.sin(lander.angle);
+
+    // Left and right landing foot positions in world coordinates
+    const leftFootX = lander.x - (lander.width / 2 + 4) * cosA - (lander.height / 2) * -sinA;
+    const leftFootY = lander.y - (lander.width / 2 + 4) * sinA + (lander.height / 2) * cosA;
+
+    const rightFootX = lander.x + (lander.width / 2 + 4) * cosA - (lander.height / 2) * -sinA;
+    const rightFootY = lander.y + (lander.width / 2 + 4) * sinA + (lander.height / 2) * cosA;
+
+    const centerFootY = lander.y + (lander.height / 2) * cosA;
+
+    // Check if both feet contact the same flat landing pad
     for (let pad of landingPads) {
-      if (lander.x >= pad.x1 && lander.x <= pad.x2) {
-        if (landerBottomY >= pad.y - 2 && landerBottomY <= pad.y + 8) {
+      const leftOnPad = leftFootX >= pad.x1 - 4 && leftFootX <= pad.x2 + 4;
+      const rightOnPad = rightFootX >= pad.x1 - 4 && rightFootX <= pad.x2 + 4;
+      const centerTouching = centerFootY >= pad.y - 2 && centerFootY <= pad.y + 8;
+      const feetTouching = (leftFootY >= pad.y - 4 && leftFootY <= pad.y + 8) || (rightFootY >= pad.y - 4 && rightFootY <= pad.y + 8);
+
+      if ((leftOnPad || rightOnPad) && (centerTouching || feetTouching)) {
+        if (leftOnPad && rightOnPad) {
           const absVspeed = Math.abs(lander.vy);
           const absHspeed = Math.abs(lander.vx);
           const absAngle = Math.abs(lander.angle);
@@ -268,6 +304,17 @@
             fuelBonus.textContent = `+${pointsFromFuel}`;
             landingScore.textContent = `+${totalGain}`;
             landingClearOverlay.classList.remove('hidden');
+
+            try {
+              if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                  type: 'ARCADEVERSE_GAME_SCORE',
+                  score,
+                  landings: landingsCount,
+                  fuelRemaining: Math.floor(lander.fuel)
+                }, '*');
+              }
+            } catch (_) {}
             return;
           } else {
             // Crash due to bad landing telemetry
@@ -278,24 +325,26 @@
             );
             return;
           }
+        } else {
+          // One leg on pad, one hanging off/uneven pad crash
+          triggerCrash('Lander missed pad boundary with outer landing leg!');
+          return;
         }
       }
     }
 
-    // Check terrain segment line intersection
-    for (let i = 0; i < terrainPoints.length - 1; i++) {
-      const p1 = terrainPoints[i];
-      const p2 = terrainPoints[i + 1];
+    // Check terrain collision for left leg, center, and right leg
+    const samplePoints = [
+      { x: leftFootX, y: leftFootY, name: 'Left landing leg' },
+      { x: lander.x, y: centerFootY, name: 'Lander hull' },
+      { x: rightFootX, y: rightFootY, name: 'Right landing leg' }
+    ];
 
-      if (lander.x >= p1.x && lander.x <= p2.x) {
-        // Interpolate terrain Y at lander X
-        const t = (lander.x - p1.x) / (p2.x - p1.x);
-        const terrainY = p1.y + t * (p2.y - p1.y);
-
-        if (landerBottomY >= terrainY - 2) {
-          triggerCrash('Lander impacted jagged lunar crags!');
-          return;
-        }
+    for (let sample of samplePoints) {
+      const groundY = getTerrainHeightAt(sample.x);
+      if (sample.y >= groundY - 2) {
+        triggerCrash(`${sample.name} impacted jagged lunar crags!`);
+        return;
       }
     }
 
@@ -313,46 +362,60 @@
     finalScore.textContent = score;
     finalLandings.textContent = landingsCount;
     gameoverOverlay.classList.remove('hidden');
+
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'ARCADEVERSE_GAME_OVER',
+          score,
+          details: {
+            score,
+            landings: landingsCount,
+            reason
+          }
+        }, '*');
+      }
+    } catch (_) {}
   }
 
-  function update() {
+  function update(dt = 1) {
     if (gameState !== 'flying') return;
 
     // Apply Gravity
-    lander.vy += GRAVITY;
+    lander.vy += GRAVITY * dt;
 
     // Attitude Rotation
-    if (keys.left) lander.angle -= ROTATE_SPEED;
-    if (keys.right) lander.angle += ROTATE_SPEED;
+    if (keys.left) lander.angle -= ROTATE_SPEED * dt;
+    if (keys.right) lander.angle += ROTATE_SPEED * dt;
 
     // Main Thruster
     if (keys.main && lander.fuel > 0) {
-      lander.vx += Math.sin(lander.angle) * THRUST_POWER;
-      lander.vy -= Math.cos(lander.angle) * THRUST_POWER;
-      lander.fuel = Math.max(0, lander.fuel - 0.22);
+      lander.vx += Math.sin(lander.angle) * THRUST_POWER * dt;
+      lander.vy -= Math.cos(lander.angle) * THRUST_POWER * dt;
+      lander.fuel = Math.max(0, lander.fuel - 0.22 * dt);
       spawnExhaust();
       playSound('thrust');
     }
 
     // Apply velocity
-    lander.x += lander.vx;
-    lander.y += lander.vy;
+    lander.x += lander.vx * dt;
+    lander.y += lander.vy * dt;
 
     // Update exhaust particles
     for (let i = exhaustParticles.length - 1; i >= 0; i--) {
       const p = exhaustParticles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.alpha -= p.decay;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.alpha -= p.decay * dt;
       if (p.alpha <= 0) exhaustParticles.splice(i, 1);
     }
 
     // Update explosion particles
     for (let i = explosionParticles.length - 1; i >= 0; i--) {
       const p = explosionParticles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.alpha -= p.decay;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.alpha -= p.decay * dt;
       if (p.alpha <= 0) explosionParticles.splice(i, 1);
     }
 
@@ -485,10 +548,14 @@
     scoreDisplay.textContent = score;
   }
 
-  function gameLoop() {
-    update();
+  function gameLoop(timestamp = performance.now()) {
+    const deltaMs = Math.min(100, timestamp - lastTime);
+    lastTime = timestamp;
+    const dt = deltaMs / 16.667;
+
+    update(dt);
     render();
-    requestAnimationFrame(gameLoop);
+    rafId = requestAnimationFrame(gameLoop);
   }
 
   // Event Listeners
@@ -552,7 +619,9 @@
 
   soundBtn.addEventListener('click', () => {
     soundEnabled = !soundEnabled;
-    localStorage.setItem('neon-lander-sound', soundEnabled.toString());
+    try {
+      localStorage.setItem('neon-lander-sound', soundEnabled.toString());
+    } catch (_) {}
     updateSoundUI();
     if (soundEnabled) playSound('thrust');
   });
@@ -563,6 +632,35 @@
 
   closeHelpBtn.addEventListener('click', () => {
     instructionsModal.classList.add('hidden');
+  });
+
+  // Lifecycle & Messages
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && gameState === 'flying') {
+      keys.main = false;
+      keys.left = false;
+      keys.right = false;
+    }
+  });
+
+  window.addEventListener('message', (event) => {
+    if (!event.data || typeof event.data !== 'object') return;
+    const type = event.data.type;
+    if (type === 'ARCADEVERSE_PAUSE') {
+      if (gameState === 'flying') {
+        keys.main = false;
+        keys.left = false;
+        keys.right = false;
+      }
+    } else if (type === 'ARCADEVERSE_TEARDOWN') {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      if (audioCtx) {
+        try { audioCtx.close(); } catch (_) {}
+      }
+    }
   });
 
   // Initialize

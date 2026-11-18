@@ -651,6 +651,24 @@ function completeStage(stage) {
     state.currentStage += 1;
   }
 
+  // Emit telemetry to ArcadeVerse hub
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'ARCADEVERSE_GAME_SCORE',
+        score: state.completedStages.length,
+        details: { stageId: stage.id, stageTitle: stage.title, buildings: state.buildings.length }
+      }, '*');
+      if (state.completedStages.length >= STAGES.length) {
+        window.parent.postMessage({
+          type: 'ARCADEVERSE_GAME_OVER',
+          score: state.completedStages.length,
+          details: { completed: true, stages: state.completedStages.length, population: state.population }
+        }, '*');
+      }
+    }
+  } catch (_) {}
+
   saveGame();
   showCelebrationModal(stage);
   updateHUD();
@@ -1299,8 +1317,25 @@ function showToast(msg, type = 'info') {
 // ============================================================
 // INPUT & INTERACTION HANDLING
 // ============================================================
+
+/** Clamp camera so the map never fully scrolls off-screen. */
+function clampCamera() {
+  const totalMapPx = GRID_SIZE * TILE_SIZE * state.zoom;
+  const vp = document.getElementById('viewport');
+  const vpW = vp ? vp.clientWidth : canvas.width;
+  const vpH = vp ? vp.clientHeight : canvas.height;
+  const margin = 80;
+  state.camX = Math.max(margin - totalMapPx, Math.min(vpW - margin, state.camX));
+  state.camY = Math.max(margin - totalMapPx, Math.min(vpH - margin, state.camY));
+}
+
 function setupInputListeners() {
   const vp = document.getElementById('viewport');
+
+  // --- Drag displacement tracker for disambiguation ---
+  let pointerDownX = 0;
+  let pointerDownY = 0;
+  let didDrag = false;
 
   // Mouse move for hover tile & drag-pan
   canvas.addEventListener('mousemove', e => {
@@ -1309,8 +1344,12 @@ function setupInputListeners() {
     const my = e.clientY - rect.top;
 
     if (state.isDragging) {
+      const dx = mx - pointerDownX;
+      const dy = my - pointerDownY;
+      if (!didDrag && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) didDrag = true;
       state.camX = mx - state.dragStartX;
       state.camY = my - state.dragStartY;
+      clampCamera();
     }
 
     hoverTile = screenToTile(mx, my);
@@ -1332,9 +1371,12 @@ function setupInputListeners() {
       } else {
         // Start Drag-Pan or Select building
         state.isDragging = true;
+        didDrag = false;
         const rect = canvas.getBoundingClientRect();
-        state.dragStartX = (e.clientX - rect.left) - state.camX;
-        state.dragStartY = (e.clientY - rect.top) - state.camY;
+        pointerDownX = e.clientX - rect.left;
+        pointerDownY = e.clientY - rect.top;
+        state.dragStartX = pointerDownX - state.camX;
+        state.dragStartY = pointerDownY - state.camY;
       }
     }
   });
@@ -1346,8 +1388,9 @@ function setupInputListeners() {
     }
   });
 
-  // Click on tile to select existing building
+  // Click on tile to select existing building — suppressed if user dragged
   canvas.addEventListener('click', e => {
+    if (didDrag) { didDrag = false; return; }
     if (state.placingType) return;
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left;
@@ -1379,6 +1422,58 @@ function setupInputListeners() {
     state.camX = mx - (mx - state.camX) * (newZoom / state.zoom);
     state.camY = my - (my - state.camY) * (newZoom / state.zoom);
     state.zoom = newZoom;
+    clampCamera();
+  }, { passive: false });
+
+  // --- Touch support (single-finger pan + tap) ---
+  let touchStartX = 0, touchStartY = 0, touchCamX0 = 0, touchCamY0 = 0;
+  let touchDidDrag = false;
+
+  canvas.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    touchStartX = t.clientX - rect.left;
+    touchStartY = t.clientY - rect.top;
+    touchCamX0 = state.camX;
+    touchCamY0 = state.camY;
+    touchDidDrag = false;
+    hoverTile = screenToTile(touchStartX, touchStartY);
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', e => {
+    if (e.touches.length !== 1) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const mx = t.clientX - rect.left;
+    const my = t.clientY - rect.top;
+    const dx = mx - touchStartX;
+    const dy = my - touchStartY;
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) touchDidDrag = true;
+    state.camX = touchCamX0 + dx;
+    state.camY = touchCamY0 + dy;
+    clampCamera();
+    hoverTile = screenToTile(mx, my);
+  }, { passive: false });
+
+  canvas.addEventListener('touchend', e => {
+    if (touchDidDrag) { touchDidDrag = false; return; }
+    // Treat short tap as a click/selection
+    if (state.placingType) {
+      if (hoverTile && canBuildAt(hoverTile.tx, hoverTile.ty)) {
+        constructBuilding(state.placingType, hoverTile.tx, hoverTile.ty);
+      }
+    } else if (hoverTile) {
+      const b = getBuildingAt(hoverTile.tx, hoverTile.ty);
+      if (b) {
+        renderInspector(b);
+      } else {
+        state.selectedBuilding = null;
+        document.getElementById('building-inspector').classList.add('hidden');
+      }
+    }
   }, { passive: false });
 
   // Keyboard Shortcuts
@@ -1404,6 +1499,32 @@ function setupInputListeners() {
   // Window Resize
   window.addEventListener('resize', () => {
     resizeCanvas();
+  });
+
+  // Auto-pause simulation when tab is hidden
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (simInterval) { clearInterval(simInterval); simInterval = null; }
+    } else {
+      if (state.gameStarted && !state.paused && !simInterval) {
+        startSimulation();
+      }
+    }
+  });
+
+  // ArcadeVerse parent hub lifecycle bridge
+  window.addEventListener('message', (e) => {
+    if (!e.data || typeof e.data !== 'object') return;
+    const type = e.data.type;
+    if (type === 'ARCADEVERSE_PAUSE') {
+      if (state.gameStarted && !state.paused) pauseGame();
+    } else if (type === 'ARCADEVERSE_RESUME') {
+      if (state.paused) resumeGame();
+    } else if (type === 'ARCADEVERSE_TEARDOWN') {
+      if (simInterval) { clearInterval(simInterval); simInterval = null; }
+    } else if (type === 'AV_RESIZE') {
+      resizeCanvas();
+    }
   });
 }
 

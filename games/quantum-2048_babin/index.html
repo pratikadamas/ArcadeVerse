@@ -4,11 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Quantum 2048 | ArcadeVerse</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Favicon and Brand Icons -->
   <link rel="icon" type="image/x-icon" href="../../assets/public/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="../../assets/public/favicon-32x32.png">
@@ -20,7 +16,7 @@
     <header class="game-header">
       <div class="header-titles">
         <h1 class="game-title" style="display: flex; align-items: center; gap: 8px;">
-          <i data-lucide="atom"></i> QUANTUM <span class="accent-text">2048</span>
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"></circle><path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z"></path><path d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z"></path></svg> QUANTUM <span class="accent-text">2048</span>
         </h1>
         <p class="game-subtitle">Synthesize atomic isotopes to unlock the 2048 Singularity</p>
       </div>
@@ -45,17 +41,17 @@
     <div class="toolbar">
       <div class="toolbar-actions">
         <button id="rules-btn" class="tool-btn" title="How to Play Guide">
-          <span style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="help-circle"></i> Guide</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Guide</span>
         </button>
         <button id="undo-btn" class="tool-btn" title="Undo last move" disabled>
-          <span style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="undo-2"></i> Undo</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 14-5-5 5-5"></path><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"></path></svg> Undo</span>
         </button>
         <button id="sound-btn" class="tool-btn" title="Toggle audio synthesis">
-          <span id="sound-icon" style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="volume-2"></i> Sound ON</span>
+          <span id="sound-icon" style="display: inline-flex; align-items: center; gap: 4px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg> Sound ON</span>
         </button>
       </div>
       <button id="restart-btn" class="action-btn">
-        <span style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="refresh-cw"></i> New Reaction</span>
+        <span style="display: inline-flex; align-items: center; gap: 4px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg> New Reaction</span>
       </button>
     </div>
 
@@ -81,14 +77,14 @@
     <!-- Game Over Overlay -->
     <div class="overlay hidden" id="game-over-overlay" role="dialog" aria-modal="true" aria-labelledby="game-over-title">
       <div class="overlay-card">
-        <div class="overlay-icon"><i data-lucide="alert-triangle"></i></div>
+        <div class="overlay-icon"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
         <h2 id="game-over-title">CONTAINMENT BREACH</h2>
         <p class="overlay-desc">No valid quantum fusion pathways remaining.</p>
         <div class="overlay-stats">
           <div>Final Score: <strong id="game-over-score">0</strong></div>
         </div>
         <button id="overlay-restart-btn" class="action-btn">
-          <span style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="refresh-cw"></i> Try Again</span>
+          <span style="display: inline-flex; align-items: center; gap: 4px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg> Try Again</span>
         </button>
       </div>
     </div>
@@ -96,7 +92,7 @@
     <!-- Victory Overlay -->
     <div class="overlay hidden" id="victory-overlay" role="dialog" aria-modal="true" aria-labelledby="victory-title">
       <div class="overlay-card victory">
-        <div class="overlay-icon"><i data-lucide="trophy"></i></div>
+        <div class="overlay-icon"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg></div>
         <h2 id="victory-title">QUANTUM SINGULARITY REACHED!</h2>
         <p class="overlay-desc">You successfully synthesized the elusive 2048 element!</p>
         <div class="overlay-stats">
@@ -104,10 +100,10 @@
         </div>
         <div class="overlay-actions">
           <button id="continue-btn" class="tool-btn">
-            <span style="display: inline-flex; align-items: center; gap: 4px;">Keep Playing <i data-lucide="play"></i></span>
+            <span style="display: inline-flex; align-items: center; gap: 4px;">Keep Playing <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></span>
           </button>
           <button id="victory-restart-btn" class="action-btn">
-            <span style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="refresh-cw"></i> New Game</span>
+            <span style="display: inline-flex; align-items: center; gap: 4px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M8 16H3v5"></path></svg> New Game</span>
           </button>
         </div>
       </div>
@@ -115,11 +111,6 @@
   </div>
 
   <script src="game.js"></script>
-  <script>
-    if (window.lucide) {
-      lucide.createIcons();
-    }
-  </script>
 
   <!-- How to Play Modal -->
   <div id="rules-modal" class="modal" role="dialog" aria-modal="true" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 999; justify-content: center; align-items: center;">
