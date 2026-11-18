@@ -5285,3 +5285,108 @@ if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.m
   }
 
   initPwaUpdateNotifier();
+
+
+// ========================================================
+// COMBO KEY SEQUENCE RECOGNIZER & KONAMI EASTER EGG (#696)
+// ========================================================
+(() => {
+  const KONAMI_CODE = [
+    'ArrowUp', 'ArrowUp',
+    'ArrowDown', 'ArrowDown',
+    'ArrowLeft', 'ArrowRight',
+    'ArrowLeft', 'ArrowRight',
+    'b', 'a'
+  ];
+  let keySequence = [];
+
+  function playKonamiFanfare() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99];
+      const now = ctx.currentTime;
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(freq, now + i * 0.1);
+        gain.gain.setValueAtTime(0.15, now + i * 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.2);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + i * 0.1);
+        osc.stop(now + i * 0.1 + 0.2);
+      });
+    } catch (_) {}
+  }
+
+  function launchConfettiShower() {
+    let canvas = document.getElementById('konami-confetti-canvas');
+    if (!canvas) {
+      canvas = document.createElement('canvas');
+      canvas.id = 'konami-confetti-canvas';
+      canvas.style.position = 'fixed';
+      canvas.style.inset = '0';
+      canvas.style.pointerEvents = 'none';
+      canvas.style.zIndex = '999999';
+      document.body.appendChild(canvas);
+    }
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles = Array.from({ length: 80 }, () => ({
+      x: Math.random() * canvas.width,
+      y: -20 - Math.random() * 50,
+      size: Math.random() * 6 + 4,
+      vx: (Math.random() - 0.5) * 4,
+      vy: Math.random() * 4 + 3,
+      color: ['#00f3ff', '#ff0055', '#ffe600', '#00ff66', '#a855f7'][Math.floor(Math.random() * 5)]
+    }));
+
+    let frames = 0;
+    function renderConfetti() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+      });
+      frames++;
+      if (frames < 200) {
+        requestAnimationFrame(renderConfetti);
+      } else {
+        canvas.remove();
+      }
+    }
+    requestAnimationFrame(renderConfetti);
+  }
+
+  window.addEventListener('keydown', (e) => {
+    const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    keySequence.push(key);
+    if (keySequence.length > KONAMI_CODE.length) {
+      keySequence.shift();
+    }
+
+    const match = KONAMI_CODE.every((expected, idx) => {
+      const actual = keySequence[idx];
+      return actual && actual.toLowerCase() === expected.toLowerCase();
+    });
+
+    if (match) {
+      keySequence = [];
+      playKonamiFanfare();
+      launchConfettiShower();
+      try {
+        localStorage.setItem('av_badge_retro_enthusiast', 'unlocked');
+      } catch (_) {}
+      if (typeof showToast === 'function') {
+        showToast('Secret Konami Code Activated! Retro Enthusiast Badge Unlocked.');
+      }
+    }
+  });
+})();
