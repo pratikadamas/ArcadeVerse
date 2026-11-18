@@ -11729,9 +11729,171 @@ html.a11y-reduced-motion .search-clear-btn {
   transform: scale(1.2);
 }
 
-/* ===================================================
-   CARD MICRO-PREVIEW ANIMATED CANVAS BANNER (#588)
-   =================================================== */
+/* ========================================================
+   CYBERNETIC PWA UPDATE AVAILABLE BANNER (#555)
+   ======================================================== */
+.av-update-toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+.av-update-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 20px rgba(6, 182, 212, 0.25);
+  border-radius: 12px;
+  padding: 14px 18px;
+  color: #f8fafc;
+  font-family: inherit;
+  transform: translateY(120%);
+  opacity: 0;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+  max-width: 440px;
+}
+
+.av-update-toast.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.av-update-toast-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.av-update-icon-glow {
+  color: #06b6d4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  animation: av-update-pulse 2s infinite ease-in-out;
+}
+
+@keyframes av-update-pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px #06b6d4);
+  }
+  50% {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 8px #06b6d4);
+  }
+}
+
+.av-update-text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.av-update-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+}
+
+.av-update-subtitle {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.av-update-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-update-now {
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
+  transition: all 0.2s ease;
+}
+
+.btn-update-now:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 18px rgba(6, 182, 212, 0.6);
+}
+
+.btn-update-now:active {
+  transform: translateY(0);
+}
+
+.btn-update-dismiss {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.btn-update-dismiss:hover {
+  color: #cbd5e1;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+@media (max-width: 640px) {
+  .av-update-toast-container {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+  }
+  .av-update-toast {
+    max-width: 100%;
+  }
+}
+
+
+.crt-screen-overlay.active {
+  display: block;
+}
+
+/* Fine horizontal scanlines */
+.crt-screen-overlay::before {
+  content: " ";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.35) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.04),
+    rgba(0, 255, 0, 0.02),
+    rgba(0, 0, 255, 0.04)
+  );
+  background-size: 100% 3px, 6px 100%;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.85;
+}
 
 .card-micro-preview-canvas {
   position: absolute;
