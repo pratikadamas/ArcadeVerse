@@ -238,6 +238,24 @@ function resetLevel(isNextStage = false) {
   renderBoard();
 }
 
+let beamParticles = [];
+const MAX_BEAM_BOUNCES = 24;
+const MIN_RAY_STEP = 0.001;
+
+function spawnDissipationBloom(row, col) {
+  beamParticles = [];
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2;
+    beamParticles.push({
+      row,
+      col,
+      dx: Math.cos(angle) * Math.max(0.2, MIN_RAY_STEP * 200),
+      dy: Math.sin(angle) * Math.max(0.2, MIN_RAY_STEP * 200),
+      life: 1.0
+    });
+  }
+}
+
 function reflect(direction, orientation) {
   if (orientation === "/") return direction % 2 === 0 ? direction + 1 : direction - 1;
   return 3 - direction;
@@ -253,26 +271,47 @@ function traceBeam() {
   let col = level.emitter.col;
   let direction = level.emitter.direction;
   let reachedReceiver = false;
+  let bounceCount = 0;
+  let lastRow = row;
+  let lastCol = col;
 
   for (let step = 0; step < SIZE * SIZE * 4; step++) {
+    const stepEpsilon = Math.max(step * 0.01, MIN_RAY_STEP);
+    if (stepEpsilon <= 0) break;
+
     const state = `${row},${col},${direction}`;
     if (visited.has(state)) break;
     visited.add(state);
 
+    lastRow = row;
+    lastCol = col;
     const position = keyFor(row, col);
     cells.add(position);
     if (row === level.receiver.row && col === level.receiver.col) {
       reachedReceiver = true;
       break;
     }
-    if (blockers.has(position)) break;
+    if (blockers.has(position)) {
+      spawnDissipationBloom(row, col);
+      break;
+    }
 
     const mirror = mirrorByPosition.get(position);
-    if (mirror) direction = reflect(direction, mirror.orientation);
+    if (mirror) {
+      bounceCount++;
+      if (bounceCount > MAX_BEAM_BOUNCES) {
+        spawnDissipationBloom(row, col);
+        break;
+      }
+      direction = reflect(direction, mirror.orientation);
+    }
 
     row += DIRECTIONS[direction].row;
     col += DIRECTIONS[direction].col;
-    if (row < 0 || row >= SIZE || col < 0 || col >= SIZE) break;
+    if (row < 0 || row >= SIZE || col < 0 || col >= SIZE) {
+      spawnDissipationBloom(lastRow, lastCol);
+      break;
+    }
   }
 
   beamCells = cells;
