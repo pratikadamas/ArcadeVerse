@@ -11995,3 +11995,73 @@ html.a11y-reduced-motion .search-clear-btn {
   white-space: nowrap;
   border-width: 0;
 }
+
+
+/* ===================================================
+   MULTI-SELECT DYNAMIC TAG FILTER BAR (#738)
+   =================================================== */
+
+.tag-filter-bar {
+  margin: 0.6rem 0 0.8rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.tag-filter-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-secondary, #94a3b8);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.tag-pill:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.tag-pill.active {
+  background: rgba(0, 243, 255, 0.15);
+  border-color: var(--accent-primary, #00f3ff);
+  color: var(--accent-primary, #00f3ff);
+  box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+}
+
+.tag-pill-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+}
+
+.tag-pill-icon i,
+.tag-pill-icon svg {
+  width: 13px;
+  height: 13px;
+}
+
+.tag-filter-count {
+  font-size: 0.72rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--accent-primary, #00f3ff);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(0, 243, 255, 0.1);
+  border: 1px solid rgba(0, 243, 255, 0.2);
+}

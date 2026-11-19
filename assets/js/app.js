@@ -5285,3 +5285,113 @@ if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.m
   }
 
   initPwaUpdateNotifier();
+
+
+// ========================================================
+// MULTI-SELECT DYNAMIC TAG FILTERING ENGINE (#738)
+// ========================================================
+(() => {
+  const activeTags = new Set();
+
+  function updateTagFilterMatches() {
+    const games = Array.isArray(window.GAMES_REGISTRY) ? window.GAMES_REGISTRY : [];
+    const countBadge = document.getElementById('tag-filter-count');
+    if (!countBadge) return;
+
+    if (activeTags.size === 0) {
+      countBadge.style.display = 'none';
+      return;
+    }
+
+    let matchCount = 0;
+    games.forEach(game => {
+      let matchesAll = true;
+      if (activeTags.has('top-rated')) {
+        const rating = typeof getGameAverageRating === 'function' ? getGameAverageRating(game.id) : (game.rating || 5);
+        if (rating < 4.5) matchesAll = false;
+      }
+      if (activeTags.has('featured')) {
+        if (!game.featured && !game.badge) matchesAll = false;
+      }
+      if (activeTags.has('favorites')) {
+        const isFav = typeof isFavorite === 'function' ? isFavorite(game.id) : false;
+        if (!isFav) matchesAll = false;
+      }
+      if (activeTags.has('touch')) {
+        const hasTouchTag = Array.isArray(game.tags) && game.tags.some(t => String(t).toLowerCase().includes('touch') || String(t).toLowerCase().includes('mobile'));
+        if (!hasTouchTag && !game.touchControls) matchesAll = false;
+      }
+      if (matchesAll) matchCount++;
+    });
+
+    countBadge.textContent = `${matchCount} match${matchCount === 1 ? '' : 'es'}`;
+    countBadge.style.display = 'inline-block';
+  }
+
+  function applyTagFilterToGrid() {
+    const cards = document.querySelectorAll('.game-card');
+    cards.forEach(card => {
+      const gameId = card.getAttribute('data-game-id');
+      const game = (Array.isArray(window.GAMES_REGISTRY) ? window.GAMES_REGISTRY : []).find(g => g.id === gameId);
+      if (!game) return;
+
+      let passesTags = true;
+      if (activeTags.has('top-rated')) {
+        const rating = typeof getGameAverageRating === 'function' ? getGameAverageRating(game.id) : (game.rating || 5);
+        if (rating < 4.5) passesTags = false;
+      }
+      if (activeTags.has('featured')) {
+        if (!game.featured && !game.badge) passesTags = false;
+      }
+      if (activeTags.has('favorites')) {
+        const isFav = typeof isFavorite === 'function' ? isFavorite(game.id) : false;
+        if (!isFav) passesTags = false;
+      }
+      if (activeTags.has('touch')) {
+        const hasTouchTag = Array.isArray(game.tags) && game.tags.some(t => String(t).toLowerCase().includes('touch') || String(t).toLowerCase().includes('mobile'));
+        if (!hasTouchTag && !game.touchControls) passesTags = false;
+      }
+
+      if (!passesTags) {
+        card.style.display = 'none';
+      }
+    });
+
+    updateTagFilterMatches();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const pills = document.querySelectorAll('.tag-pill');
+    pills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        const tag = pill.getAttribute('data-tag');
+        if (activeTags.has(tag)) {
+          activeTags.delete(tag);
+          pill.classList.remove('active');
+          pill.setAttribute('aria-pressed', 'false');
+        } else {
+          activeTags.add(tag);
+          pill.classList.add('active');
+          pill.setAttribute('aria-pressed', 'true');
+        }
+
+        if (typeof filterGames === 'function') {
+          filterGames();
+        }
+        applyTagFilterToGrid();
+      });
+    });
+
+    // Re-apply tag filter after catalog re-renders
+    const originalFilterGames = window.filterGames;
+    if (typeof originalFilterGames === 'function') {
+      window.filterGames = function (...args) {
+        const res = originalFilterGames.apply(this, args);
+        if (activeTags.size > 0) {
+          applyTagFilterToGrid();
+        }
+        return res;
+      };
+    }
+  });
+})();
