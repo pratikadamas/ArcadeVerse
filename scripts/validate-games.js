@@ -135,7 +135,11 @@ try {
       const touchedList = diffOutput.split('\n').map(s => s.trim().replace(/\\/g, '/')).filter(Boolean);
       touchedList.forEach(f => touchedFilesSet.add(f));
 
-      const illegalFiles = touchedList.filter(f => FORBIDDEN_ROOT_FILES.includes(f));
+      const isGamePr = touchedList.some(f => f.startsWith('games/'));
+      const activeForbiddenFiles = isGamePr
+        ? FORBIDDEN_ROOT_FILES
+        : ['assets/js/games-registry.js'];
+      const illegalFiles = touchedList.filter(f => activeForbiddenFiles.includes(f));
 
       if (illegalFiles.length > 0) {
         console.log('🚨 ========================================================');
