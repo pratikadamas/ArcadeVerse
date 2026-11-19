@@ -3,6 +3,13 @@
  * Handles live games catalog, in-app modal launcher, and category/search filtering
  */
 
+if (!window.PWACachePrewarmer && !document.querySelector('script[data-pwa-cache-prewarmer]')) {
+  const prewarmerScript = document.createElement("script");
+  prewarmerScript.src = new URL("assets/js/pwa-cache-prewarmer.js", document.baseURI).href;
+  prewarmerScript.dataset.pwaCachePrewarmer = "true";
+  document.head.appendChild(prewarmerScript);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   // Ensure viewport has viewport-fit=cover for safe-area insets on mobile
   const metaViewport = document.querySelector('meta[name="viewport"]');
@@ -46,6 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentMixFilter = null; // curated mix filter (#583), read by the catalog filter below
   let searchQuery = "";
   let currentSort = "featured";
+  let currentMixFilter = null;
   let searchDebounceTimer = null;
   const CATALOG_SORT_STORAGE_KEY = "arcadeverse_catalog_sort";
   const CATALOG_VIEW_STORAGE_KEY = "arcadeverse_catalog_view";
@@ -1929,6 +1937,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (window.lucide) {
       lucide.createIcons();
     }
+    if (window.PWACachePrewarmer && typeof window.PWACachePrewarmer.refreshBadges === "function") {
+      window.PWACachePrewarmer.refreshBadges();
+    }
   }
 
   // Global modal state variables
@@ -2325,15 +2336,9 @@ document.addEventListener("DOMContentLoaded", () => {
     modalGameAuthor.textContent = `Built by @${game.author}`;
     lastAnnouncedScore = 0;
     lastScoreAnnouncementTime = Date.now();
-    isNewHighScoreAnnounced = false;
-    currentSessionHighScore = 0;
-    try {
-      const storedHighScore = Number(localStorage.getItem(`av_${game.id}_highScore`)) ||
-                               Number(localStorage.getItem(`av_score_${game.id}`)) ||
-                               Number(localStorage.getItem("highScore")) || 0;
-      currentSessionHighScore = storedHighScore;
-    } catch (_) {}
-    announceToScreenReader(`Now playing ${game.title} by ${game.author}. Press Escape to pause or exit.`);
+    if (typeof announceToScreenReader === "function") {
+      announceToScreenReader(`Launching ${game.title}. Category: ${game.category}. Built by ${game.author}.`);
+    }
     startIframeTimeout(game);
 
     const audioState = syncAudioPreferences();
@@ -2541,14 +2546,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const closedGameId = closedGame ? closedGame.id : null;
     const elementToRestore = lastFocusedElement;
     hideLandscapePrompt();
+    const closedGame = activeGame;
     activeGame = null;
     isGameSessionActive = false;
     // Stop the 15s load timer so a game closed mid load does not raise the error screen later
     resetIframeBoundary();
     gameModal.classList.remove("active");
     gameModal.setAttribute("aria-hidden", "true");
-    hideGameLoader();
-    announceToScreenReader(`Exited ${closedGameTitle}. Returned to catalog.`);
+    window.dispatchEvent(new CustomEvent("arcadeverse:game-closed", { detail: closedGame }));
+    if (newTabBtn) {
+      newTabBtn.href = "#";
+    }
 
     // Standardized Game Lifecycle Bridge: Dispatch teardown & pause events before unmounting iframe
     try {

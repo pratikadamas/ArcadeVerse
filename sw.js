@@ -8,10 +8,10 @@
  * NSOC Winter Edition 2026
  */
 
-const SW_VERSION = 'av-sw-v1';
-const STATIC_CACHE_NAME = `arcadeverse-static-${SW_VERSION}`;
-const GAME_CACHE_PREFIX = 'av-game-';
-const MAX_GAME_CACHE_BYTES = 50 * 1024 * 1024; // 50MB safe storage budget
+const CACHE_VERSION = 'arcadeverse-v1';
+const SHELL_CACHE = `${CACHE_VERSION}-shell`;
+const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
+const GAME_VAULT_CACHE = 'arcadeverse-game-vault-v1';
 
 // Static assets for offline shell
 const SHELL_ASSETS = [
@@ -20,9 +20,14 @@ const SHELL_ASSETS = [
   './manifest.webmanifest',
   './assets/css/style.css',
   './assets/css/network-detector.css',
+  './assets/css/trophy-card.css',
+  './assets/css/sound-engine.css',
+  './assets/css/game-ratings.css',
+  './assets/css/pwa-cache-prewarmer.css',
+  './assets/js/navbar.js',
   './assets/js/app.js',
   './assets/js/network-detector.js',
-  './assets/js/arcadeverse-sdk.js',
+  './assets/js/pwa-cache-prewarmer.js',
   './assets/js/leaderboard.js',
   './assets/public/favicon.ico',
   './assets/public/favicon-32x32.png',
@@ -53,6 +58,8 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
+  const allowedCaches = [SHELL_CACHE, RUNTIME_CACHE, GAME_VAULT_CACHE];
+
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
@@ -80,10 +87,48 @@ self.addEventListener('fetch', (event) => {
     const gameId = gameMatch[1];
     const cacheName = `${GAME_CACHE_PREFIX}${gameId}`;
 
-    event.respondWith(
-      caches.open(cacheName).then((gameCache) => {
-        return gameCache.match(request).then((cachedResponse) => {
+  event.respondWith(
+    caches.open(GAME_VAULT_CACHE).then((gameCache) => gameCache.match(request, { ignoreSearch: true }))
+      .then((vaultResponse) => {
+        if (vaultResponse) return vaultResponse;
+        return caches.match(request).then((cachedResponse) => {
+          // Revalidation fetch in background
+          const fetchPromise = fetch(request)
+            .then((networkResponse) => {
+              // Cache successful responses into runtime cache for offline re-use
+              if (networkResponse && networkResponse.status === 200) {
+                const clonedResponse = networkResponse.clone();
+                caches.open(RUNTIME_CACHE).then((cache) => {
+                  cache.put(request, clonedResponse);
+                }).catch(() => {});
+              }
+              return networkResponse;
+            })
+            .catch(async () => {
+              // If offline and request is already in cache, serve cached version
+              if (cachedResponse) {
+                return cachedResponse;
+              }
+
+              // Navigation fallback for offline browsing
+              if (request.mode === 'navigate') {
+                const offlineIndex = await caches.match('./index.html');
+                if (offlineIndex) return offlineIndex;
+                const offline404 = await caches.match('./404.html');
+                if (offline404) return offline404;
+              }
+
+              return new Response('Network unavailable (Offline)', {
+                status: 503,
+                statusText: 'Service Unavailable (Offline)',
+                headers: { 'Content-Type': 'text/plain' }
+              });
+            });
+
+          // Stale-While-Revalidate: return cached response immediately if present,
+          // while dispatching network revalidation in the background.
           if (cachedResponse) {
+            event.waitUntil(fetchPromise.catch(() => {}));
             return cachedResponse;
           }
           return fetch(request).then((networkResponse) => {
@@ -105,30 +150,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Shell & Static asset routing
-  event.respondWith(
-    fetch(request)
-      .then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
-          const clone = networkResponse.clone();
-          caches.open(STATIC_CACHE_NAME).then((cache) => {
-            cache.put(request, clone).catch(() => {});
+          // If cache miss, await network response
+          return fetchPromise;
           });
-        }
-        return networkResponse;
-      })
-      .catch(() => {
-        return caches.match(request).then((cachedResponse) => {
-          if (cachedResponse) return cachedResponse;
-          if (request.mode === 'navigate') {
-            return caches.match('./index.html');
-          }
-          return new Response('Offline and asset not cached', {
-            status: 503,
-            statusText: 'Service Unavailable',
-            headers: new Headers({ 'Content-Type': 'text/plain' })
-          });
-        });
       })
   );
 });
