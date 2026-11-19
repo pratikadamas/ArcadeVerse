@@ -43,6 +43,7 @@
       window.addEventListener('offline', () => {
         this.wasOffline = true;
         this.showOfflineToast();
+        this.dispatchNetworkChange();
       });
 
       window.addEventListener('online', () => {
@@ -50,7 +51,25 @@
           this.showOnlineToast();
           this.wasOffline = false;
         }
+        this.dispatchNetworkChange();
       });
+
+      const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      if (connection && typeof connection.addEventListener === 'function') {
+        connection.addEventListener('change', () => this.dispatchNetworkChange());
+      }
+    },
+
+    dispatchNetworkChange() {
+      const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      window.dispatchEvent(new CustomEvent('arcadeverse:network-changed', {
+        detail: {
+          online: navigator.onLine,
+          saveData: Boolean(connection && connection.saveData),
+          effectiveType: connection ? connection.effectiveType || null : null,
+          type: connection ? connection.type || null : null
+        }
+      }));
     },
 
     getGameCount() {
