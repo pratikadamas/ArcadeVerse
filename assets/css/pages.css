@@ -2924,6 +2924,91 @@ html.a11y-reduced-motion .stat-card {
   transform: none !important;
 }
 
+/* ==========================================================================
+   Hall of Fame Leaderboard - Multi-Column Sort Styling (#714)
+   ========================================================================== */
+.leaderboard-table th[data-sort] {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  position: relative;
+}
+
+.leaderboard-table th[data-sort]:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.leaderboard-table th[data-sort]:focus-visible {
+  outline: 2px solid var(--accent-primary, #6366f1);
+  outline-offset: -2px;
+}
+
+.leaderboard-table th[data-sort][aria-sort="ascending"],
+.leaderboard-table th[data-sort][aria-sort="descending"] {
+  color: #a5b4fc;
+}
+
+.sort-header-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+}
+
+.leaderboard-table th[style*="text-align: center"] .sort-header-inner {
+  justify-content: center;
+}
+
+.leaderboard-table th[style*="text-align: right"] .sort-header-inner {
+  justify-content: flex-end;
+}
+
+.sort-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  opacity: 0.45;
+  transition: opacity 0.15s ease, transform 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.leaderboard-table th[data-sort]:hover .sort-icon-wrap {
+  opacity: 0.85;
+}
+
+.leaderboard-table th[data-sort][aria-sort="ascending"] .sort-icon-wrap,
+.leaderboard-table th[data-sort][aria-sort="descending"] .sort-icon-wrap {
+  opacity: 1;
+  color: #818cf8;
+}
+
+.sort-icon-wrap svg,
+.sort-icon-wrap i {
+  width: 13px;
+  height: 13px;
+  stroke-width: 2.2;
+}
+
+/* Light theme overrides */
+[data-theme="light"] .leaderboard-table th[data-sort]:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #0f172a;
+}
+
+[data-theme="light"] .leaderboard-table th[data-sort][aria-sort="ascending"],
+[data-theme="light"] .leaderboard-table th[data-sort][aria-sort="descending"] {
+  color: #4f46e5;
+}
+
+[data-theme="light"] .leaderboard-table th[data-sort][aria-sort="ascending"] .sort-icon-wrap,
+[data-theme="light"] .leaderboard-table th[data-sort][aria-sort="descending"] .sort-icon-wrap {
+  color: #4f46e5;
+}
+
 /* ===================================================
    EXPORT MARKDOWN STANDINGS BUTTON (#692)
    =================================================== */
