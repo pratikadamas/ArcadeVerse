@@ -1,3 +1,6 @@
+@layer base, components, themes, a11y;
+
+@layer themes {
 /**
  * ArcadeVerse - Halloween Special Showcase Styles
  * Premium Digital Gaming Portal Experience
@@ -233,12 +236,12 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.45rem 1.25rem;
-  background: rgba(255, 119, 0, 0.18) !important;
-  border: 1.5px solid #ff7700 !important;
+  background: rgba(255, 119, 0, 0.18);
+  border: 1.5px solid #ff7700;
   border-radius: 9999px;
   font-size: 0.8rem;
   font-weight: 800;
-  color: #ffa500 !important;
+  color: #ffa500;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   margin-bottom: 0.85rem;
@@ -271,10 +274,10 @@
   font-size: clamp(2.2rem, 5vw, 3.8rem);
   line-height: 1.1;
   letter-spacing: 2px;
-  color: #ff7700 !important;
+  color: #ff7700;
   text-shadow: 0 0 18px rgba(255, 119, 0, 0.85),
                0 0 40px rgba(255, 60, 0, 0.55),
-               0 2px 4px rgba(0, 0, 0, 0.9) !important;
+               0 2px 4px rgba(0, 0, 0, 0.9);
   margin: 0;
   position: relative;
   z-index: 2;
@@ -324,12 +327,12 @@
 [data-theme="light"] .halloween-subtitle,
 [data-theme="light"] p.halloween-subtitle {
   font-size: 1.05rem;
-  color: #f3e8ff !important;
+  color: #f3e8ff;
   max-width: 680px;
   margin: 0 auto;
   line-height: 1.55;
   font-weight: 500;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
 /* ==========================================================================
@@ -356,8 +359,8 @@
 /* Card Base with Glowing Animated Border */
 .halloween-card,
 [data-theme="light"] .halloween-card {
-  background: rgba(22, 10, 36, 0.94) !important;
-  border: 2px solid rgba(255, 119, 0, 0.4) !important;
+  background: rgba(22, 10, 36, 0.94);
+  border: 2px solid rgba(255, 119, 0, 0.4);
   border-radius: 18px;
   overflow: hidden;
   display: flex;
@@ -366,7 +369,7 @@
               box-shadow 0.35s ease,
               border-color 0.35s ease;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7),
-              0 0 18px rgba(255, 119, 0, 0.2) !important;
+              0 0 18px rgba(255, 119, 0, 0.2);
   position: relative;
   transform-style: preserve-3d;
   will-change: transform;
@@ -374,18 +377,18 @@
 }
 
 .halloween-card:focus-visible {
-  border-color: #ffa500 !important;
-  box-shadow: 0 0 0 3px rgba(255, 119, 0, 0.6), 0 12px 35px rgba(0, 0, 0, 0.8) !important;
+  border-color: #ffa500;
+  box-shadow: 0 0 0 3px rgba(255, 119, 0, 0.6), 0 12px 35px rgba(0, 0, 0, 0.8);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .halloween-card:hover,
   [data-theme="light"] .halloween-card:hover {
     transform: translateY(-8px) scale(1.015);
-    border-color: #ff7700 !important;
+    border-color: #ff7700;
     box-shadow: 0 20px 48px rgba(0, 0, 0, 0.9),
                 0 0 36px rgba(255, 119, 0, 0.6),
-                0 0 14px rgba(255, 170, 50, 0.5) !important;
+                0 0 14px rgba(255, 170, 50, 0.5);
   }
 
   .halloween-card:hover .btn-halloween-play {
@@ -399,7 +402,7 @@
 @media (hover: none) {
   .halloween-card:active {
     transform: scale(0.99);
-    border-color: #ffaa32 !important;
+    border-color: #ffaa32;
   }
 }
 
@@ -448,9 +451,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(12, 4, 22, 0.94) !important;
-  border: 1px solid #ff7700 !important;
-  color: #ffd88a !important;
+  background: rgba(12, 4, 22, 0.94);
+  border: 1px solid #ff7700;
+  color: #ffd88a;
   font-size: 0.68rem;
   font-weight: 800;
   padding: 4px 10px;
@@ -549,16 +552,16 @@
    Game 1 Visual Identity: HAUNTED HOUSE (Victorian Manor)
    -------------------------------------------------------------------------- */
 .theme-manor .halloween-card-banner {
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  text-align: center !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
   background: radial-gradient(circle at 50% 15%, rgba(255, 85, 0, 0.35) 0%, rgba(18, 6, 32, 0.98) 75%);
 }
 
 .theme-manor .halloween-card-icon {
-  margin: 0 auto !important;
-  align-self: center !important;
+  margin: 0 auto;
+  align-self: center;
   background: linear-gradient(135deg, rgba(45, 18, 68, 0.95), rgba(20, 8, 32, 0.95));
   border: 2px solid #ff7700;
   color: #ffaa32;
@@ -721,7 +724,7 @@
 [data-theme="light"] .halloween-card-desc {
   font-size: 0.88rem;
   line-height: 1.6;
-  color: #d1c4e9 !important;
+  color: #d1c4e9;
   margin-bottom: 1.25rem;
   flex: 1;
   display: -webkit-box;
@@ -735,7 +738,7 @@
 [data-theme="light"] .halloween-card-category {
   font-size: 0.72rem;
   font-weight: 700;
-  color: #c084fc !important;
+  color: #c084fc;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-bottom: 0.45rem;
@@ -748,10 +751,10 @@
 [data-theme="light"] h3.halloween-card-title {
   font-size: 1.28rem;
   font-weight: 800;
-  color: #fff6e5 !important;
+  color: #fff6e5;
   margin-bottom: 0.6rem;
   line-height: 1.3;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9) !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
 }
 
 /* Card description text with guaranteed high contrast in light mode */
@@ -759,12 +762,12 @@
 [data-theme="light"] .halloween-card-desc,
 [data-theme="light"] p.halloween-card-desc {
   font-size: 0.88rem;
-  color: #e2d4f5 !important;
+  color: #e2d4f5;
   line-height: 1.55;
   margin-bottom: 1.25rem;
   font-weight: 500;
   flex: 1;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .halloween-card-footer {
@@ -801,13 +804,13 @@
 .halloween-author-name,
 [data-theme="light"] .halloween-author-name {
   font-size: 0.76rem;
-  color: #d8c2f0 !important;
+  color: #d8c2f0;
   font-weight: 500;
 }
 
 .halloween-author-name strong,
 [data-theme="light"] .halloween-author-name strong {
-  color: #ffaa32 !important;
+  color: #ffaa32;
   font-weight: 700;
 }
 
@@ -817,9 +820,9 @@
 
 .btn-halloween-play,
 [data-theme="light"] .btn-halloween-play {
-  background: linear-gradient(135deg, #ff7700 0%, #d9480f 100%) !important;
+  background: linear-gradient(135deg, #ff7700 0%, #d9480f 100%);
   border: none;
-  color: #ffffff !important;
+  color: #ffffff;
   padding: 8px 18px;
   border-radius: 10px;
   font-size: 0.85rem;
@@ -828,7 +831,7 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  box-shadow: 0 4px 16px rgba(255, 119, 0, 0.45) !important;
+  box-shadow: 0 4px 16px rgba(255, 119, 0, 0.45);
   transition: all 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
   position: relative;
   overflow: hidden;
@@ -836,12 +839,12 @@
 }
 
 .btn-halloween-play:focus-visible {
-  box-shadow: 0 0 0 3px #ffffff, 0 0 0 5px #ff7700 !important;
+  box-shadow: 0 0 0 3px #ffffff, 0 0 0 5px #ff7700;
 }
 
 .btn-halloween-play span,
 [data-theme="light"] .btn-halloween-play span {
-  color: #ffffff !important;
+  color: #ffffff;
   font-weight: 800;
   letter-spacing: 0.3px;
 }
@@ -850,16 +853,16 @@
 [data-theme="light"] .btn-halloween-play svg {
   width: 14px;
   height: 14px;
-  color: #ffffff !important;
-  stroke: #ffffff !important;
+  color: #ffffff;
+  stroke: #ffffff;
   transition: transform 0.25s ease;
 }
 
 .btn-halloween-play:hover,
 [data-theme="light"] .btn-halloween-play:hover {
   transform: translateY(-3px) scale(1.03);
-  box-shadow: 0 8px 24px rgba(255, 119, 0, 0.75), 0 0 16px rgba(255, 180, 50, 0.5) !important;
-  background: linear-gradient(135deg, #ff922b 0%, #f76707 100%) !important;
+  box-shadow: 0 8px 24px rgba(255, 119, 0, 0.75), 0 0 16px rgba(255, 180, 50, 0.5);
+  background: linear-gradient(135deg, #ff922b 0%, #f76707 100%);
 }
 
 .btn-halloween-play:hover svg {
@@ -1386,15 +1389,15 @@
 html[data-theme="light"] #halloween-games h2.halloween-title,
 body[data-theme="light"] #halloween-games h2.halloween-title,
 [data-theme="light"] #halloween-games .halloween-title {
-  color: #ff7700 !important;
-  text-shadow: 0 0 18px rgba(255, 119, 0, 0.85), 0 0 40px rgba(255, 60, 0, 0.55), 0 2px 4px rgba(0, 0, 0, 0.9) !important;
+  color: #ff7700;
+  text-shadow: 0 0 18px rgba(255, 119, 0, 0.85), 0 0 40px rgba(255, 60, 0, 0.55), 0 2px 4px rgba(0, 0, 0, 0.9);
 }
 
 html[data-theme="light"] #halloween-games p.halloween-subtitle,
 body[data-theme="light"] #halloween-games p.halloween-subtitle,
 [data-theme="light"] #halloween-games .halloween-subtitle {
-  color: #f1f5f9 !important;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+  color: #f1f5f9;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
 html[data-theme="light"] #halloween-games .halloween-card .halloween-card-title,
@@ -1404,8 +1407,8 @@ body[data-theme="light"] #halloween-games h3.halloween-card-title,
 [data-theme="light"] .halloween-card-title,
 [data-theme="light"] h3.halloween-card-title,
 .halloween-card-title {
-  color: #ffffff !important;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95), 0 0 12px rgba(255, 170, 50, 0.25) !important;
+  color: #ffffff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95), 0 0 12px rgba(255, 170, 50, 0.25);
 }
 
 html[data-theme="light"] #halloween-games .halloween-card .halloween-card-desc,
@@ -1415,30 +1418,30 @@ body[data-theme="light"] #halloween-games p.halloween-card-desc,
 [data-theme="light"] .halloween-card-desc,
 [data-theme="light"] p.halloween-card-desc,
 .halloween-card-desc {
-  color: #e2e8f0 !important;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95) !important;
+  color: #e2e8f0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
 }
 
 html[data-theme="light"] #halloween-games .halloween-card .halloween-card-category,
 body[data-theme="light"] #halloween-games .halloween-card .halloween-card-category,
 [data-theme="light"] .halloween-card-category,
 .halloween-card-category {
-  color: #fb923c !important;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9) !important;
+  color: #fb923c;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
 html[data-theme="light"] #halloween-games .halloween-card .halloween-author-name,
 body[data-theme="light"] #halloween-games .halloween-card .halloween-author-name,
 [data-theme="light"] .halloween-author-name,
 .halloween-author-name {
-  color: #cbd5e1 !important;
+  color: #cbd5e1;
 }
 
 html[data-theme="light"] #halloween-games .halloween-card .halloween-author-name strong,
 body[data-theme="light"] #halloween-games .halloween-card .halloween-author-name strong,
 [data-theme="light"] .halloween-author-name strong,
 .halloween-author-name strong {
-  color: #ffaa32 !important;
+  color: #ffaa32;
 }
 
 /* Halloween pill SVG styling */
@@ -1533,40 +1536,40 @@ body[data-theme="light"] #halloween-games .halloween-card .halloween-author-name
 /* Print Stylesheet Resilience */
 @media print {
   .halloween-showcase-section {
-    background: transparent !important;
-    color: #000000 !important;
+    background: transparent;
+    color: #000000;
   }
   .halloween-container {
-    border: 1px solid #333333 !important;
-    box-shadow: none !important;
-    background: #ffffff !important;
+    border: 1px solid #333333;
+    box-shadow: none;
+    background: #ffffff;
   }
   .halloween-card {
     page-break-inside: avoid;
-    border: 1px solid #cccccc !important;
-    box-shadow: none !important;
-    background: #ffffff !important;
+    border: 1px solid #cccccc;
+    box-shadow: none;
+    background: #ffffff;
   }
   .halloween-title,
   .halloween-card-title,
   .halloween-card-desc {
-    color: #000000 !important;
-    text-shadow: none !important;
+    color: #000000;
+    text-shadow: none;
   }
 }
 
 /* High Contrast Mode Adaptation (Windows Contrast Themes) */
 @media (forced-colors: active) {
   .halloween-card {
-    border: 2px solid ButtonText !important;
+    border: 2px solid ButtonText;
   }
   .halloween-tag-pill,
   .halloween-diff-badge,
   .btn-halloween-play {
-    border: 1px solid ButtonText !important;
+    border: 1px solid ButtonText;
   }
   .halloween-badge {
-    border: 2px solid Highlight !important;
+    border: 2px solid Highlight;
   }
 }
 
@@ -1608,7 +1611,7 @@ body[data-theme="light"] #halloween-games .halloween-card .halloween-author-name
 /* Focus styles for keyboard accessibility */
 .halloween-card:focus-visible,
 .btn-halloween-play:focus-visible {
-  outline: 2px solid #ffa500 !important;
+  outline: 2px solid #ffa500;
   outline-offset: 3px;
 }
 
@@ -1616,7 +1619,7 @@ body[data-theme="light"] #halloween-games .halloween-card .halloween-author-name
 @media (prefers-reduced-data: reduce) {
   .halloween-card-banner,
   .halloween-container {
-    background-image: none !important;
+    background-image: none;
   }
 }
 
@@ -1685,4 +1688,6 @@ body[data-theme="light"] #halloween-games .halloween-card .halloween-author-name
   vertical-align: middle;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
 }
