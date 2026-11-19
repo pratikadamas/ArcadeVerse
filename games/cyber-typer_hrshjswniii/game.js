@@ -1054,9 +1054,9 @@
 
   // Clean audio on teardown (#507)
   window.addEventListener('message', (e) => {
-    if (e.data && e.data.type === 'ARCADEVERSE_TEARDOWN') {
+    if (e.data && (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE')) {
       stopAllAudio();
-      if (audioCtx && audioCtx.state !== 'closed') {
+      if (e.data.type === 'ARCADEVERSE_TEARDOWN' && audioCtx && audioCtx.state !== 'closed') {
         try { audioCtx.close(); } catch (_) {}
       }
     }

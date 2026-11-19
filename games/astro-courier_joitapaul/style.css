@@ -1,0 +1,709 @@
+:root {
+  color-scheme: dark;
+  --ink: #f2f5fc;
+  --muted: #9daac0;
+  --panel: #151d30;
+  --panel-soft: #1b2940;
+  --line: rgba(175, 206, 225, 0.15);
+  --mint: #83e3c2;
+  --gold: #ffd077;
+  --coral: #ff806c;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  background:
+    radial-gradient(ellipse at 18% 0%, rgba(52, 94, 128, 0.35), transparent 38rem),
+    #10172b;
+  color: var(--ink);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+button {
+  color: inherit;
+  font: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+canvas:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 3px;
+}
+
+.page-shell {
+  width: min(1240px, 100%);
+  margin: 0 auto;
+  padding: 22px 26px 18px;
+}
+
+.topbar,
+.top-actions,
+.brand,
+.intro,
+.hud,
+.status-row,
+.guide-heading,
+.guide-item,
+.shipment-card,
+.footer-note {
+  display: flex;
+  align-items: center;
+}
+
+.topbar,
+.intro,
+.status-row,
+.footer-note {
+  justify-content: space-between;
+}
+
+.topbar {
+  gap: 18px;
+  margin-bottom: 32px;
+}
+
+.brand {
+  gap: 10px;
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.11em;
+  text-decoration: none;
+}
+
+.brand svg,
+.guide-heading svg {
+  width: 30px;
+  fill: none;
+  stroke: var(--mint);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.brand i {
+  margin: 0 4px;
+  color: #64758e;
+  font-style: normal;
+}
+
+.top-actions {
+  gap: 9px;
+}
+
+.button,
+.touch-button {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #202b42;
+  cursor: pointer;
+  transition: background 140ms ease, transform 140ms ease, border-color 140ms ease;
+}
+
+.button {
+  min-height: 40px;
+  padding: 8px 14px;
+}
+
+.button:hover:not(:disabled),
+.touch-button:hover {
+  border-color: rgba(131, 227, 194, 0.65);
+  background: #283951;
+}
+
+.button:active:not(:disabled),
+.touch-button:active {
+  transform: translateY(1px);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.button-quiet {
+  color: #c8d3e3;
+}
+
+.button-primary {
+  min-width: 160px;
+  border-color: transparent;
+  background: linear-gradient(110deg, #83e3c2, #c0efc9);
+  color: #142638;
+  font-weight: 800;
+}
+
+.button-primary:hover:not(:disabled) {
+  border-color: transparent;
+  background: linear-gradient(110deg, #9af0d0, #d6f5d6);
+}
+
+.intro {
+  gap: 22px;
+  margin-bottom: 22px;
+}
+
+.eyebrow,
+.hud-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 7px;
+  font-size: clamp(1.9rem, 4vw, 3rem);
+  letter-spacing: -0.045em;
+  line-height: 1.06;
+}
+
+h1 span {
+  color: var(--mint);
+}
+
+.subtitle {
+  margin-bottom: 0;
+  color: #aab8ca;
+}
+
+.route-stamp {
+  display: grid;
+  min-width: 110px;
+  padding: 11px 16px;
+  border: 1px solid rgba(131, 227, 194, 0.24);
+  border-radius: 12px;
+  background: rgba(37, 65, 75, 0.3);
+  color: var(--muted);
+  text-align: center;
+}
+
+.route-stamp span {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+}
+
+.route-stamp strong {
+  color: var(--mint);
+  font-size: 1.55rem;
+  line-height: 1.1;
+}
+
+.game-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(260px, 0.75fr);
+  align-items: start;
+  gap: 18px;
+}
+
+.play-column,
+.guide-panel {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background: rgba(21, 29, 48, 0.88);
+  box-shadow: 0 20px 60px rgba(2, 8, 20, 0.16);
+}
+
+.play-column {
+  padding: 13px;
+}
+
+.hud {
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 3px 13px;
+}
+
+.hud-card {
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+}
+
+.hud-card strong {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink);
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
+.game-frame {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(186, 218, 234, 0.2);
+  border-radius: 13px;
+  background: #17254b;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  touch-action: pan-y;
+}
+
+.overlay {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  padding: 18px;
+  background: rgba(8, 14, 29, 0.76);
+  backdrop-filter: blur(7px);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.dialog-card {
+  width: min(520px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  padding: clamp(18px, 3vw, 27px);
+  border: 1px solid rgba(180, 218, 224, 0.2);
+  border-radius: 16px;
+  background: #18243a;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+}
+
+.dialog-card h2 {
+  margin: 6px 0 10px;
+  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  letter-spacing: -0.035em;
+  line-height: 1.14;
+}
+
+.dialog-card > p:not(.eyebrow) {
+  color: #b7c4d4;
+}
+
+.dialog-compact {
+  width: min(430px, 100%);
+  text-align: center;
+}
+
+.brief-list {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0 22px;
+  padding-left: 20px;
+  color: #bdc9d8;
+  font-size: 0.88rem;
+}
+
+.brief-list strong {
+  color: #eaf3f3;
+}
+
+.status-row {
+  gap: 12px;
+  padding: 11px 4px 0;
+}
+
+#status-message {
+  min-height: 22px;
+  margin: 0;
+  color: #aab9ca;
+  font-size: 0.8rem;
+}
+
+.lives {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.lives strong {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 1px solid rgba(255, 128, 108, 0.45);
+  border-radius: 50%;
+  background: rgba(255, 128, 108, 0.12);
+  color: #ffab99;
+  font-size: 0.8rem;
+}
+
+.touch-controls {
+  display: none;
+}
+
+.guide-panel {
+  padding: 20px;
+}
+
+.guide-heading {
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.guide-heading h2 {
+  margin: 4px 0 0;
+  font-size: 1.25rem;
+  letter-spacing: -0.025em;
+}
+
+.guide-heading svg {
+  width: 42px;
+  fill: rgba(131, 227, 194, 0.12);
+}
+
+.guide-copy {
+  margin-bottom: 19px;
+  color: #aebbd0;
+  font-size: 0.88rem;
+}
+
+.guide-section {
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+
+.guide-section h3 {
+  margin-bottom: 11px;
+  color: #e3eaf3;
+  font-size: 0.82rem;
+}
+
+.guide-item {
+  gap: 11px;
+  margin: 10px 0;
+  color: #d7e0eb;
+  font-size: 0.8rem;
+}
+
+.guide-item strong,
+.guide-item small {
+  display: block;
+}
+
+.guide-item small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.73rem;
+}
+
+.swatch {
+  flex: 0 0 13px;
+  width: 13px;
+  height: 13px;
+  border-radius: 4px;
+}
+
+.swatch-platform {
+  background: #6ea9bc;
+  box-shadow: 0 0 10px rgba(131, 227, 194, 0.25);
+}
+
+.swatch-parcel {
+  background: var(--gold);
+}
+
+.swatch-hazard {
+  background: var(--coral);
+}
+
+.swatch-goal {
+  border: 2px solid var(--mint);
+  background: transparent;
+}
+
+.control-guide p {
+  margin: 8px 0;
+  color: #b8c5d5;
+  font-size: 0.77rem;
+}
+
+kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  border: 1px solid rgba(202, 220, 234, 0.17);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: #202d44;
+  color: #edf3fa;
+  font: inherit;
+  font-size: 0.68rem;
+}
+
+.shipment-card {
+  gap: 11px;
+  margin-top: 3px;
+  padding: 12px;
+  border: 1px solid rgba(255, 208, 119, 0.16);
+  border-radius: 11px;
+  background: rgba(255, 208, 119, 0.06);
+}
+
+.shipment-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(255, 208, 119, 0.13);
+}
+
+.shipment-icon svg {
+  width: 22px;
+  fill: none;
+  stroke: var(--gold);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.shipment-card strong {
+  display: block;
+  margin-top: 2px;
+  color: #f5e1b5;
+  font-size: 0.79rem;
+}
+
+.footer-note {
+  gap: 12px;
+  padding: 18px 4px 0;
+  color: #66748e;
+  font-size: 0.66rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+}
+
+@media (max-width: 900px) {
+  .page-shell {
+    padding: 18px 18px 16px;
+  }
+
+  .game-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .guide-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 22px;
+  }
+
+  .guide-heading,
+  .guide-copy,
+  .shipment-card {
+    grid-column: 1 / -1;
+  }
+
+  .guide-section {
+    align-self: start;
+  }
+
+  .touch-controls {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 12px;
+  }
+
+  .move-controls {
+    display: flex;
+    gap: 9px;
+  }
+
+  .touch-button {
+    min-width: 78px;
+    min-height: 48px;
+    padding: 10px 14px;
+    border-color: rgba(131, 227, 194, 0.24);
+    background: #1c2a40;
+    color: #bfeee0;
+    font-size: 0.72rem;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+    touch-action: none;
+    user-select: none;
+  }
+
+  .touch-jump {
+    min-width: 112px;
+    background: #28444b;
+    color: #d5f8e9;
+  }
+}
+
+@media (max-width: 560px) {
+  .page-shell {
+    padding: 13px 10px;
+  }
+
+  .topbar {
+    gap: 8px;
+    margin-bottom: 23px;
+  }
+
+  .brand {
+    gap: 6px;
+    font-size: 0.61rem;
+    letter-spacing: 0.06em;
+  }
+
+  .brand svg {
+    width: 24px;
+  }
+
+  .top-actions {
+    gap: 6px;
+  }
+
+  .button {
+    min-height: 36px;
+    padding: 7px 9px;
+    font-size: 0.72rem;
+  }
+
+  .intro {
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+
+  .intro .subtitle {
+    max-width: 34ch;
+    font-size: 0.83rem;
+  }
+
+  .route-stamp {
+    min-width: 67px;
+    padding: 8px 7px;
+  }
+
+  .route-stamp span {
+    font-size: 0.47rem;
+  }
+
+  .route-stamp strong {
+    font-size: 1.28rem;
+  }
+
+  .play-column {
+    padding: 8px;
+    border-radius: 13px;
+  }
+
+  .hud {
+    gap: 4px;
+    padding-bottom: 8px;
+  }
+
+  .hud-card {
+    font-size: 0.5rem;
+    letter-spacing: 0.07em;
+  }
+
+  .hud-card strong {
+    font-size: 0.83rem;
+  }
+
+  .game-frame {
+    border-radius: 9px;
+  }
+
+  .overlay {
+    padding: 9px;
+  }
+
+  .dialog-card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .dialog-card h2 {
+    font-size: 1.22rem;
+  }
+
+  .dialog-card > p:not(.eyebrow) {
+    margin-bottom: 10px;
+    font-size: 0.78rem;
+  }
+
+  .brief-list {
+    gap: 4px;
+    margin: 10px 0 13px;
+    padding-left: 17px;
+    font-size: 0.69rem;
+    line-height: 1.35;
+  }
+
+  .button-primary {
+    min-width: 135px;
+  }
+
+  .status-row {
+    gap: 8px;
+    padding-top: 8px;
+  }
+
+  #status-message {
+    font-size: 0.68rem;
+  }
+
+  .lives {
+    gap: 5px;
+  }
+
+  .lives .hud-label {
+    font-size: 0.55rem;
+  }
+
+  .guide-panel {
+    grid-template-columns: 1fr;
+    padding: 15px;
+  }
+
+  .guide-heading,
+  .guide-copy,
+  .shipment-card {
+    grid-column: auto;
+  }
+
+  .guide-section {
+    padding: 10px 0;
+  }
+
+  .footer-note {
+    flex-wrap: wrap;
+    justify-content: center;
+    font-size: 0.55rem;
+    text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

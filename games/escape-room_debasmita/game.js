@@ -81,6 +81,7 @@
       this.ctx = null;
       this.muted = false;
       this.droneStarted = false;
+      this.activeNodes = new Set();
     }
 
     init() {
@@ -90,6 +91,28 @@
       }
       if (this.ctx && this.ctx.state === 'suspended') {
         this.ctx.resume();
+      }
+    }
+
+    trackNode(osc) {
+      if (!this.activeNodes) this.activeNodes = new Set();
+      this.activeNodes.add(osc);
+      osc.onended = () => {
+        if (this.activeNodes) this.activeNodes.delete(osc);
+      };
+      return osc;
+    }
+
+    stopAll() {
+      this.droneStarted = false;
+      if (this.activeNodes) {
+        this.activeNodes.forEach(node => {
+          try {
+            node.stop();
+            node.disconnect();
+          } catch (_) {}
+        });
+        this.activeNodes.clear();
       }
     }
 
@@ -105,6 +128,7 @@
         gain.gain.setValueAtTime(0.04, this.ctx.currentTime);
         osc.connect(gain);
         gain.connect(this.ctx.destination);
+        this.trackNode(osc);
         osc.start();
         this.droneStarted = true;
       } catch (e) {}
@@ -123,6 +147,7 @@
       gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start();
       osc.stop(this.ctx.currentTime + 0.08);
     }
@@ -140,6 +165,7 @@
       gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start();
       osc.stop(this.ctx.currentTime + 0.08);
     }
@@ -158,6 +184,7 @@
       gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.45);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start();
       osc.stop(this.ctx.currentTime + 0.45);
     }
@@ -175,6 +202,7 @@
       gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start();
       osc.stop(this.ctx.currentTime + 0.25);
     }
@@ -195,6 +223,7 @@
           gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
           osc.connect(gain);
           gain.connect(this.ctx.destination);
+          this.trackNode(osc);
           osc.start();
           osc.stop(this.ctx.currentTime + 0.15);
         }, i * 110);
@@ -217,6 +246,7 @@
           gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.5);
           osc.connect(gain);
           gain.connect(this.ctx.destination);
+          this.trackNode(osc);
           osc.start();
           osc.stop(this.ctx.currentTime + 0.5);
         }, idx * 160);
@@ -1568,6 +1598,7 @@
   function miasmaDefeat() {
     state.gameOver = true;
     state.timerActive = false;
+    sound.stopAll();
     const locks = state.gateLocks;
     const broken = [locks.chains, locks.keyhole, locks.sigil].filter(Boolean).length;
     document.getElementById('defeatProgress').textContent = `Gate wards broken: ${broken} / 3`;
@@ -1577,7 +1608,14 @@
   }
 
   document.getElementById('defeatRetryBtn').addEventListener('click', () => {
+    sound.stopAll();
     window.location.reload();
+  });
+
+  window.addEventListener('message', (e) => {
+    if (e.data && (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE')) {
+      sound.stopAll();
+    }
   });
 
   // --- Timer Loop ---

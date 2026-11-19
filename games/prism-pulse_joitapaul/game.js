@@ -201,6 +201,7 @@ function playWinSound() {
 
 let levelIndex = 0;
 let moves = 0;
+let totalMoves = 0;
 let mirrors = [];
 let beamCells = new Set();
 let receiverLit = false;
@@ -214,9 +215,14 @@ function getLevel() {
   return LEVELS[levelIndex];
 }
 
-function resetLevel() {
+function resetLevel(isNextStage = false) {
   const level = getLevel();
-  moves = 0;
+  if (isNextStage) {
+    moves = 0;
+  } else {
+    totalMoves -= moves;
+    moves = 0;
+  }
   levelComplete = false;
   receiverLit = false;
   mirrors = level.mirrors.map((mirror) => ({
@@ -224,12 +230,30 @@ function resetLevel() {
     orientation: mirror.solved === "/" ? "\\" : "/"
   }));
   levelLabel.textContent = `${levelIndex + 1} / ${LEVELS.length}`;
-  movesLabel.textContent = "0";
+  movesLabel.textContent = totalMoves;
   statusElement.textContent = `${level.name}: rotate mirrors to guide the beam.`;
   statusElement.classList.remove("success");
   nextButton.hidden = true;
   traceBeam();
   renderBoard();
+}
+
+let beamParticles = [];
+const MAX_BEAM_BOUNCES = 24;
+const MIN_RAY_STEP = 0.001;
+
+function spawnDissipationBloom(row, col) {
+  beamParticles = [];
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2;
+    beamParticles.push({
+      row,
+      col,
+      dx: Math.cos(angle) * Math.max(0.2, MIN_RAY_STEP * 200),
+      dy: Math.sin(angle) * Math.max(0.2, MIN_RAY_STEP * 200),
+      life: 1.0
+    });
+  }
 }
 
 function reflect(direction, orientation) {
@@ -247,30 +271,184 @@ function traceBeam() {
   let col = level.emitter.col;
   let direction = level.emitter.direction;
   let reachedReceiver = false;
+  let bounceCount = 0;
+  let lastRow = row;
+  let lastCol = col;
 
   for (let step = 0; step < SIZE * SIZE * 4; step++) {
+    const stepEpsilon = Math.max(step * 0.01, MIN_RAY_STEP);
+    if (stepEpsilon <= 0) break;
+
     const state = `${row},${col},${direction}`;
     if (visited.has(state)) break;
     visited.add(state);
 
+    lastRow = row;
+    lastCol = col;
     const position = keyFor(row, col);
     cells.add(position);
     if (row === level.receiver.row && col === level.receiver.col) {
       reachedReceiver = true;
       break;
     }
-    if (blockers.has(position)) break;
+    if (blockers.has(position)) {
+      spawnDissipationBloom(row, col);
+      break;
+    }
 
     const mirror = mirrorByPosition.get(position);
-    if (mirror) direction = reflect(direction, mirror.orientation);
+    if (mirror) {
+      bounceCount++;
+      if (bounceCount > MAX_BEAM_BOUNCES) {
+        spawnDissipationBloom(row, col);
+        break;
+      }
+      direction = reflect(direction, mirror.orientation);
+    }
 
     row += DIRECTIONS[direction].row;
     col += DIRECTIONS[direction].col;
-    if (row < 0 || row >= SIZE || col < 0 || col >= SIZE) break;
+    if (row < 0 || row >= SIZE || col < 0 || col >= SIZE) {
+      spawnDissipationBloom(lastRow, lastCol);
+      break;
+    }
   }
 
   beamCells = cells;
   receiverLit = reachedReceiver;
+}
+
+function showVictoryDialog(totalRotations, score) {
+  let dialog = document.getElementById("victory-dialog");
+  if (!dialog) {
+    dialog = document.createElement("div");
+    dialog.id = "victory-dialog";
+    dialog.className = "victory-overlay";
+    dialog.setAttribute("role", "dialog");
+    dialog.setAttribute("aria-modal", "true");
+    dialog.setAttribute("aria-labelledby", "victory-title");
+
+    if (!document.getElementById("prism-pulse-victory-style")) {
+      const style = document.createElement("style");
+      style.id = "prism-pulse-victory-style";
+      style.textContent = `
+        .victory-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(8, 11, 20, 0.88);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 100;
+          padding: 1.5rem;
+        }
+        .victory-overlay.hidden {
+          display: none !important;
+        }
+        .victory-card {
+          background: rgba(16, 22, 37, 0.98);
+          border: 1px solid rgba(99, 212, 255, 0.35);
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(99, 212, 255, 0.15);
+          border-radius: 1rem;
+          padding: 2rem;
+          max-width: 400px;
+          width: 100%;
+          text-align: center;
+        }
+        .victory-icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          background: rgba(99, 212, 255, 0.1);
+          border: 1.5px solid #63d4ff;
+          margin-bottom: 0.8rem;
+          color: #63d4ff;
+        }
+        .victory-card h2 {
+          margin: 0 0 0.4rem;
+          font-size: 1.5rem;
+          color: #f4f7ff;
+        }
+        .victory-desc {
+          color: #98a7c1;
+          font-size: 0.88rem;
+          margin: 0 0 1.25rem;
+          line-height: 1.45;
+        }
+        .victory-stats {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0.8rem;
+          background: rgba(8, 11, 20, 0.6);
+          padding: 0.8rem 1rem;
+          border-radius: 0.75rem;
+          margin-bottom: 1.4rem;
+          border: 1px solid rgba(130, 158, 205, 0.12);
+        }
+        .victory-stats .v-label {
+          font-size: 0.65rem;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          color: #63d4ff;
+          display: block;
+        }
+        .victory-stats .v-value {
+          font-size: 1.35rem;
+          color: #f4f7ff;
+          display: block;
+          margin-top: 0.2rem;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    document.body.appendChild(dialog);
+  }
+
+  dialog.innerHTML = `
+    <div class="victory-card">
+      <div class="victory-icon" aria-hidden="true">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="6"/>
+          <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
+        </svg>
+      </div>
+      <h2 id="victory-title">Campaign Solved!</h2>
+      <p class="victory-desc">All labyrinths completed. The prism is stable and perfectly aligned!</p>
+      <div class="victory-stats">
+        <div class="v-stat">
+          <span class="v-label">ROTATIONS</span>
+          <strong class="v-value">${totalRotations}</strong>
+        </div>
+        <div class="v-stat">
+          <span class="v-label">SCORE</span>
+          <strong class="v-value">${score}</strong>
+        </div>
+      </div>
+      <div class="victory-actions">
+        <button id="btn-play-again" class="primary-button" type="button">Play Again</button>
+      </div>
+    </div>
+  `;
+
+  dialog.classList.remove("hidden");
+
+  const playAgainBtn = dialog.querySelector("#btn-play-again");
+  if (playAgainBtn) {
+    playAgainBtn.addEventListener("click", () => {
+      dialog.classList.add("hidden");
+      levelIndex = 0;
+      totalMoves = 0;
+      moves = 0;
+      resetLevel(true);
+    });
+    playAgainBtn.focus();
+  }
 }
 
 function rotateMirror(index) {
@@ -279,7 +457,8 @@ function rotateMirror(index) {
   playRotateSound();
   mirrors[index].orientation = mirrors[index].orientation === "/" ? "\\" : "/";
   moves++;
-  movesLabel.textContent = moves;
+  totalMoves++;
+  movesLabel.textContent = totalMoves;
   traceBeam();
   renderBoard();
 
@@ -287,13 +466,47 @@ function rotateMirror(index) {
     levelComplete = true;
     playLitSound();
     playWinSound();
-    statusElement.textContent = levelIndex === LEVELS.length - 1
-      ? `Labyrinth solved in ${moves} rotations. The prism is stable!`
-      : `${getLevel().name} complete in ${moves} rotations.`;
-    statusElement.classList.add("success");
-    nextButton.hidden = levelIndex === LEVELS.length - 1;
-    if (levelIndex === LEVELS.length - 1) nextButton.textContent = "All labyrinths solved!";
-    else nextButton.textContent = "Next labyrinth →";
+
+    const isFinalLevel = levelIndex === LEVELS.length - 1;
+    const totalCampaignScore = Math.max(500, (LEVELS.length * 1000) - (totalMoves * 35));
+
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: "ARCADEVERSE_GAME_SCORE",
+          score: Math.max(100, ((levelIndex + 1) * 1000) - (totalMoves * 35))
+        }, "*");
+      }
+    } catch (_) {}
+
+    if (isFinalLevel) {
+      statusElement.textContent = `All labyrinths solved in ${totalMoves} rotations! Score: ${totalCampaignScore}`;
+      statusElement.classList.add("success");
+      nextButton.hidden = true;
+
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: "ARCADEVERSE_GAME_OVER",
+            score: totalCampaignScore,
+            details: {
+              score: totalCampaignScore,
+              totalMoves: totalMoves,
+              levelsCompleted: LEVELS.length
+            }
+          }, "*");
+        }
+      } catch (_) {}
+
+      setTimeout(() => {
+        showVictoryDialog(totalMoves, totalCampaignScore);
+      }, 450);
+    } else {
+      statusElement.textContent = `${getLevel().name} complete in ${moves} rotations.`;
+      statusElement.classList.add("success");
+      nextButton.hidden = false;
+      nextButton.textContent = "Next labyrinth ->";
+    }
   } else {
     statusElement.textContent = "The beam is moving. Try another mirror to change its route.";
   }
@@ -318,7 +531,7 @@ function createCell(row, col, level) {
     cell.classList.add("receiver");
     if (receiverLit) cell.classList.add("lit");
     cell.setAttribute("aria-label", receiverLit ? "Receiver lit" : "Laser receiver");
-    cell.innerHTML = '<span class="endpoint-icon" aria-hidden="true">◎</span>';
+    cell.innerHTML = '<span class="endpoint-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg></span>';
     return cell;
   }
 
@@ -365,11 +578,11 @@ function renderBoard() {
   boardElement.replaceChildren(fragment);
 }
 
-resetButton.addEventListener("click", resetLevel);
+resetButton.addEventListener("click", () => resetLevel(false));
 nextButton.addEventListener("click", () => {
   if (!levelComplete || levelIndex >= LEVELS.length - 1) return;
   levelIndex++;
-  resetLevel();
+  resetLevel(true);
 });
 
 const soundToggleBtn = document.getElementById("sound-toggle-btn");

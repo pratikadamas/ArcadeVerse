@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="assets/public/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/public/favicon-192x192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/public/apple-touch-icon.png">
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cambria+Math&family=Permanent+Marker&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -233,6 +233,12 @@
                   <td><code>arcadeverse_catalog_view</code></td>
                   <td>Catalog display layout preference ('grid' or 'list' view)</td>
                   <td>String ('grid' / 'list')</td>
+                  <td>Persistent</td>
+                </tr>
+                <tr>
+                  <td><code>arcadeverse_play_counts</code></td>
+                  <td>How many times you played each game (counted after 10 seconds in the player), used for the Most Played sort and the play count badge</td>
+                  <td>JSON Object (game id to number)</td>
                   <td>Persistent</td>
                 </tr>
                 <tr>

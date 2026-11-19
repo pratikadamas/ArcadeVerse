@@ -670,6 +670,13 @@
     },
 
     /**
+     * Alias for trackAudioContext
+     */
+    registerAudioContext: function (ctx) {
+      return this.trackAudioContext(ctx);
+    },
+
+    /**
      * Micro-Limiter for Master Audio Bus (#507)
      * Creates a brickwall DynamicsCompressorNode calibrated to suppress harsh clipping above 0dB.
      * @param {AudioContext} audioCtx
@@ -782,6 +789,29 @@
     },
 
     /**
+     * Registers and scales any master GainNode to match the hub volume and mute state
+     * @param {GainNode} gainNode
+     * @returns {GainNode}
+     */
+    registerMasterGainNode: function (gainNode) {
+      if (gainNode && registeredGainNodes.indexOf(gainNode) === -1) {
+        registeredGainNodes.push(gainNode);
+      }
+      if (gainNode) {
+        scaleMasterGainNode(gainNode);
+        if (gainNode.context) this.trackAudioContext(gainNode.context);
+      }
+      return gainNode;
+    },
+
+    /**
+     * Alias for registerMasterGainNode
+     */
+    registerGainNode: function (gainNode) {
+      return this.registerMasterGainNode(gainNode);
+    },
+
+    /**
      * Creates and registers a master GainNode connected through a 0dB micro-limiter
      * to AudioContext destination.
      * All game sound oscillators and buffer nodes should connect to this node!
@@ -791,7 +821,7 @@
     createMasterGain: function (ctx) {
       if (!ctx) return null;
       var gainNode = ctx.createGain();
-      gainNode.gain.setValueAtTime(currentAudioConfig.muted ? 0 : currentAudioConfig.volume, 0);
+      scaleMasterGainNode(gainNode);
       var limiter = this.createMicroLimiter(ctx);
       if (limiter) {
         gainNode.connect(limiter);

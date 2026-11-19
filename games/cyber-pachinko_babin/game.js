@@ -4,6 +4,7 @@ class PachinkoAudio {
   constructor() {
     this.ctx = null;
     this.muted = false;
+    this.lastPingTime = 0;
   }
 
   init() {
@@ -16,74 +17,106 @@ class PachinkoAudio {
     }
   }
 
+  playPinballPing(freq = 1400) {
+    if (this.muted) return;
+    this.init();
+    if (!this.ctx) return;
+    try {
+      const now = this.ctx.currentTime;
+      if (now - this.lastPingTime < 0.015) return;
+      this.lastPingTime = now;
+
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      const actualFreq = freq + (Math.random() - 0.5) * 200;
+      osc.frequency.setValueAtTime(actualFreq, now);
+      osc.frequency.exponentialRampToValueAtTime(actualFreq * 1.35, now + 0.04);
+      gain.gain.setValueAtTime(0.06, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(now + 0.04);
+    } catch (e) {}
+  }
+
   playPegClick(speed = 1) {
     if (this.muted) return;
     this.init();
     if (!this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(800 + Math.random() * 800, this.ctx.currentTime);
-    gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.03);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.03);
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(800 + Math.random() * 800, this.ctx.currentTime);
+      gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.03);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.03);
+    } catch (e) {}
   }
 
   playBumperBounce() {
     if (this.muted) return;
     this.init();
     if (!this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(350, this.ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(700, this.ctx.currentTime + 0.1);
-    gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.1);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.1);
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(350, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(700, this.ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.1);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.1);
+    } catch (e) {}
   }
 
   playVortexTeleport() {
     if (this.muted) return;
     this.init();
     if (!this.ctx) return;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(600, this.ctx.currentTime);
-    osc.frequency.linearRampToValueAtTime(150, this.ctx.currentTime + 0.15);
-    gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.15);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start();
-    osc.stop(this.ctx.currentTime + 0.15);
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(150, this.ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.15);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.15);
+    } catch (e) {}
   }
 
   playJackpot() {
     if (this.muted) return;
     this.init();
     if (!this.ctx) return;
-    const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
-    const now = this.ctx.currentTime;
-    notes.forEach((freq, idx) => {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, now + idx * 0.06);
-      gain.gain.setValueAtTime(0.15, now + idx * 0.06);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.25);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(now + idx * 0.06);
-      osc.stop(now + idx * 0.06 + 0.25);
-    });
+    try {
+      const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+      const now = this.ctx.currentTime;
+      notes.forEach((freq, idx) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+        gain.gain.setValueAtTime(0.15, now + idx * 0.06);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.25);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now + idx * 0.06);
+        osc.stop(now + idx * 0.06 + 0.25);
+      });
+    } catch (e) {}
   }
 }
 
@@ -303,98 +336,203 @@ class CyberPachinkoGame {
     // Vortex pulse
     this.vortex.pulse += 0.05;
 
-    // Spheres physics
+    // Sub-stepping continuous swept-collision detection integration
+    // Divide physics step into 4 sub-iterations per animation frame for high-speed balls
+    const SUB_STEPS = 4;
+    const dt = 1 / SUB_STEPS;
+    const gravity = 0.28 * dt;
+
     for (let i = this.spheres.length - 1; i >= 0; i--) {
       const s = this.spheres[i];
+      let sphereRemoved = false;
 
-      // Gravity & Velocity
-      s.vy += 0.28; // Gravity
-      s.x += s.vx;
-      s.y += s.vy;
+      for (let sub = 0; sub < SUB_STEPS; sub++) {
+        const prevX = s.x;
+        const prevY = s.y;
 
-      // Outer chute guide curve
-      if (s.x > 410 && s.y > 60) {
-        s.vx *= 0.98;
-        if (s.y < 90) {
-          s.vx = -4 - Math.random() * 2; // Curve over the top arch
+        // Apply fractional gravity and sub-step velocity
+        s.vy += gravity;
+
+        // Clamp excessive velocity to prevent numerical instability at extreme drop speeds
+        const speed = Math.hypot(s.vx, s.vy);
+        const maxSpeed = 24;
+        if (speed > maxSpeed) {
+          s.vx = (s.vx / speed) * maxSpeed;
+          s.vy = (s.vy / speed) * maxSpeed;
         }
-      }
 
-      // Walls
-      if (s.x < 18 + s.r) {
-        s.x = 18 + s.r;
-        s.vx = -s.vx * 0.7;
-      } else if (s.x > 440 - s.r) {
-        s.x = 440 - s.r;
-        s.vx = -s.vx * 0.7;
-      }
+        s.x += s.vx * dt;
+        s.y += s.vy * dt;
 
-      // Peg collisions
-      this.pegs.forEach(p => {
-        const dist = Math.hypot(s.x - p.x, s.y - p.y);
-        if (dist < s.r + p.r) {
-          const nx = (s.x - p.x) / dist;
-          const ny = (s.y - p.y) / dist;
-          s.x = p.x + nx * (s.r + p.r);
-          s.y = p.y + ny * (s.r + p.r);
-
-          const dot = s.vx * nx + s.vy * ny;
-          s.vx = (s.vx - 2 * dot * nx) * 0.65 + (Math.random() - 0.5) * 0.5;
-          s.vy = (s.vy - 2 * dot * ny) * 0.65;
-
-          p.hitFlash = 1;
-          this.score += 10 * this.multiplier;
-          this.audio.playPegClick();
+        // Outer chute guide curve
+        if (s.x > 410 && s.y > 60) {
+          s.vx *= Math.pow(0.98, dt);
+          if (s.y < 90) {
+            s.vx = -4 - Math.random() * 2; // Curve over the top arch
+          }
         }
-      });
 
-      // Bumper collisions
-      this.bumpers.forEach(b => {
-        const dist = Math.hypot(s.x - b.x, s.y - b.y);
-        if (dist < s.r + b.r) {
-          const nx = (s.x - b.x) / dist;
-          const ny = (s.y - b.y) / dist;
-          s.vx = nx * 8;
-          s.vy = ny * 8;
-          b.hitFlash = 1;
-          this.score += b.points * this.multiplier;
-          this.audio.playBumperBounce();
+        // Walls
+        if (s.x < 18 + s.r) {
+          s.x = 18 + s.r;
+          s.vx = Math.abs(s.vx) * 0.7;
+          this.audio.playPinballPing(700);
+        } else if (s.x > 440 - s.r) {
+          s.x = 440 - s.r;
+          s.vx = -Math.abs(s.vx) * 0.7;
+          this.audio.playPinballPing(700);
         }
-      });
 
-      // Vortex teleport
-      const vDist = Math.hypot(s.x - this.vortex.x, s.y - this.vortex.y);
-      if (vDist < this.vortex.r) {
-        s.x = 230 + (Math.random() - 0.5) * 60;
-        s.y = 80;
-        s.vy = 2;
-        s.vx = (Math.random() - 0.5) * 3;
-        this.audio.playVortexTeleport();
-        this.multiplier = 2;
-        this.multiplierTimer = 10;
-        this.updateHUD();
-        this.showToast('WARP! x2 MULTIPLIER!');
-      }
+        // Ceiling collision
+        if (s.y < 20 + s.r) {
+          s.y = 20 + s.r;
+          s.vy = Math.abs(s.vy) * 0.7;
+          this.audio.playPinballPing(750);
+        }
 
-      // Bottom Collection Bin Catch
-      if (s.y > 580) {
-        this.bins.forEach(bin => {
-          if (s.x >= bin.x && s.x <= bin.x + bin.w) {
-            const gained = 100 * bin.mult * this.multiplier;
-            this.score += gained;
+        // Swept-collision detection for Pegs
+        const moveX = s.x - prevX;
+        const moveY = s.y - prevY;
+        const moveDistSq = moveX * moveX + moveY * moveY;
 
-            if (bin.isJackpot) {
-              this.spheresRemaining += 15;
-              this.audio.playJackpot();
-              this.showToast('JACKPOT! +15 SPHERES!');
-            } else {
-              this.showToast(`+${gained} PTS`);
+        for (let pIdx = 0; pIdx < this.pegs.length; pIdx++) {
+          const p = this.pegs[pIdx];
+          const minDistance = s.r + p.r;
+
+          let collided = false;
+          let nx = 0;
+          let ny = 0;
+
+          if (moveDistSq > 0) {
+            const t = Math.max(0, Math.min(1, ((p.x - prevX) * moveX + (p.y - prevY) * moveY) / moveDistSq));
+            const closeX = prevX + t * moveX;
+            const closeY = prevY + t * moveY;
+            const closeDist = Math.hypot(closeX - p.x, closeY - p.y);
+
+            if (closeDist < minDistance) {
+              collided = true;
+              if (closeDist > 0.001) {
+                nx = (closeX - p.x) / closeDist;
+                ny = (closeY - p.y) / closeDist;
+              } else {
+                nx = 0;
+                ny = -1;
+              }
+            }
+          } else {
+            const dist = Math.hypot(s.x - p.x, s.y - p.y);
+            if (dist < minDistance) {
+              collided = true;
+              nx = dist > 0.001 ? (s.x - p.x) / dist : 0;
+              ny = dist > 0.001 ? (s.y - p.y) / dist : -1;
             }
           }
-        });
-        this.spheres.splice(i, 1);
-        this.updateHUD();
+
+          if (collided) {
+            s.x = p.x + nx * (minDistance + 0.2);
+            s.y = p.y + ny * (minDistance + 0.2);
+
+            const dot = s.vx * nx + s.vy * ny;
+            if (dot < 0) {
+              s.vx = (s.vx - 2 * dot * nx) * 0.65 + (Math.random() - 0.5) * 0.5;
+              s.vy = (s.vy - 2 * dot * ny) * 0.65;
+            }
+
+            p.hitFlash = 1;
+            this.score += 10 * this.multiplier;
+            this.audio.playPinballPing(1050 + Math.random() * 500);
+            this.audio.playPegClick();
+            break; // Collision resolved for this sub-step
+          }
+        }
+
+        // Swept-collision detection for Bumpers
+        for (let bIdx = 0; bIdx < this.bumpers.length; bIdx++) {
+          const b = this.bumpers[bIdx];
+          const minDistance = s.r + b.r;
+
+          let collided = false;
+          let nx = 0;
+          let ny = 0;
+
+          if (moveDistSq > 0) {
+            const t = Math.max(0, Math.min(1, ((b.x - prevX) * moveX + (b.y - prevY) * moveY) / moveDistSq));
+            const closeX = prevX + t * moveX;
+            const closeY = prevY + t * moveY;
+            const closeDist = Math.hypot(closeX - b.x, closeY - b.y);
+
+            if (closeDist < minDistance) {
+              collided = true;
+              if (closeDist > 0.001) {
+                nx = (closeX - b.x) / closeDist;
+                ny = (closeY - b.y) / closeDist;
+              } else {
+                nx = 0;
+                ny = -1;
+              }
+            }
+          } else {
+            const dist = Math.hypot(s.x - b.x, s.y - b.y);
+            if (dist < minDistance) {
+              collided = true;
+              nx = dist > 0.001 ? (s.x - b.x) / dist : 0;
+              ny = dist > 0.001 ? (s.y - b.y) / dist : -1;
+            }
+          }
+
+          if (collided) {
+            s.x = b.x + nx * (minDistance + 1);
+            s.y = b.y + ny * (minDistance + 1);
+            s.vx = nx * 8;
+            s.vy = ny * 8;
+            b.hitFlash = 1;
+            this.score += b.points * this.multiplier;
+            this.audio.playPinballPing(1600);
+            this.audio.playBumperBounce();
+            break; // Bumper deflection resolved for this sub-step
+          }
+        }
+
+        // Vortex teleport
+        const vDist = Math.hypot(s.x - this.vortex.x, s.y - this.vortex.y);
+        if (vDist < this.vortex.r) {
+          s.x = 230 + (Math.random() - 0.5) * 60;
+          s.y = 80;
+          s.vy = 2;
+          s.vx = (Math.random() - 0.5) * 3;
+          this.audio.playVortexTeleport();
+          this.audio.playPinballPing(1900);
+          this.multiplier = 2;
+          this.multiplierTimer = 10;
+          this.updateHUD();
+          this.showToast('WARP! x2 MULTIPLIER!');
+          break;
+        }
+
+        // Bottom Collection Bin Catch
+        if (s.y > 580) {
+          this.bins.forEach(bin => {
+            if (s.x >= bin.x && s.x <= bin.x + bin.w) {
+              const gained = 100 * bin.mult * this.multiplier;
+              this.score += gained;
+
+              if (bin.isJackpot) {
+                this.spheresRemaining += 15;
+                this.audio.playJackpot();
+                this.showToast('JACKPOT! +15 SPHERES!');
+              } else {
+                this.showToast(`+${gained} PTS`);
+              }
+            }
+          });
+          this.spheres.splice(i, 1);
+          this.updateHUD();
+          sphereRemoved = true;
+          break;
+        }
       }
+
+      if (sphereRemoved) continue;
     }
   }
 
@@ -484,5 +622,14 @@ class CyberPachinkoGame {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  new CyberPachinkoGame();
+  const game = new CyberPachinkoGame();
+
+  window.addEventListener('message', (e) => {
+    if (!e || !e.data) return;
+    if (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE') {
+      if (game.audio && game.audio.ctx && typeof game.audio.ctx.suspend === 'function') {
+        game.audio.ctx.suspend().catch(() => {});
+      }
+    }
+  });
 });

@@ -71,6 +71,26 @@
   const svgSoundOff = document.getElementById('svg-sound-off');
 
   // Audio Engine
+  const activeNodes = new Set();
+
+  function trackNode(osc) {
+    activeNodes.add(osc);
+    osc.onended = () => {
+      activeNodes.delete(osc);
+    };
+    return osc;
+  }
+
+  function stopAllAudio() {
+    activeNodes.forEach(node => {
+      try {
+        node.stop();
+        node.disconnect();
+      } catch (_) {}
+    });
+    activeNodes.clear();
+  }
+
   function getAudioContext() {
     if (!audioCtx) {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -99,6 +119,7 @@
         osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
         gain.gain.setValueAtTime(0.12, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        trackNode(osc);
         osc.start(now);
         osc.stop(now + 0.08);
       } else if (type === 'boost') {
@@ -111,6 +132,7 @@
         osc.frequency.linearRampToValueAtTime(640, now + 0.15);
         gain.gain.setValueAtTime(0.2, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        trackNode(osc);
         osc.start(now);
         osc.stop(now + 0.15);
       } else if (type === 'crash') {
@@ -123,6 +145,7 @@
         osc.frequency.exponentialRampToValueAtTime(30, now + 0.4);
         gain.gain.setValueAtTime(0.4, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        trackNode(osc);
         osc.start(now);
         osc.stop(now + 0.4);
       } else if (type === 'horn') {
@@ -135,6 +158,7 @@
         osc.frequency.setValueAtTime(440, now + 0.15);
         gain.gain.setValueAtTime(0.1, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        trackNode(osc);
         osc.start(now);
         osc.stop(now + 0.15);
       }
@@ -363,6 +387,7 @@
 
   function triggerCollisionGameOver(v1, v2) {
     isGameOver = true;
+    stopAllAudio();
     playSound('crash');
     overlayHead.textContent = 'SKYWAY PILEUP!';
     overlayDetails.textContent = `Crash detected between ${v1.type.name} and ${v2.type.name} at central intersection!`;
@@ -370,9 +395,31 @@
     addRadioLog('CODE RED: Collision reported at Skyway 4 junction. Traffic halted.');
   }
 
+  // Trackpad Pan & Pinch-Zoom Navigation (#575)
+  let viewport = { panX: 0, panY: 0, zoom: 1.0 };
+  if (window.ArcadeVerse && typeof window.ArcadeVerse.initTrackpadPanZoom === 'function') {
+    window.ArcadeVerse.initTrackpadPanZoom(canvas, {
+      minZoom: 0.6,
+      maxZoom: 2.2,
+      onTransform: (t) => {
+        // Clamp panning so map stays in reasonable bounds
+        const maxPan = 150 * t.zoom;
+        viewport.panX = Math.max(-maxPan, Math.min(maxPan, t.panX));
+        viewport.panY = Math.max(-maxPan, Math.min(maxPan, t.panY));
+        viewport.zoom = t.zoom;
+      }
+    });
+  }
+
   // Draw Arena
   function render() {
     ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+    ctx.save();
+    // Center-origin transformation for zoom and pan
+    ctx.translate(CENTER + viewport.panX, CENTER + viewport.panY);
+    ctx.scale(viewport.zoom, viewport.zoom);
+    ctx.translate(-CENTER, -CENTER);
 
     // Dark cyberpunk asphalt
     ctx.fillStyle = '#06090e';
@@ -458,6 +505,9 @@
       ctx.restore();
     });
 
+    // Restore viewport transformation
+    ctx.restore();
+
     animFrameId = requestAnimationFrame(render);
   }
 
@@ -482,8 +532,12 @@
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    const clickX = (e.clientX - rect.left) * scaleX;
-    const clickY = (e.clientY - rect.top) * scaleY;
+    const rawX = (e.clientX - rect.left) * scaleX;
+    const rawY = (e.clientY - rect.top) * scaleY;
+
+    // Invert zoom and pan transformation to locate world coordinates
+    const clickX = (rawX - CENTER - viewport.panX) / viewport.zoom + CENTER;
+    const clickY = (rawY - CENTER - viewport.panY) / viewport.zoom + CENTER;
 
     // Check if clicked any stopped vehicle to give boost
     let vehicleBoosted = false;
@@ -509,6 +563,7 @@
 
   // Shift Reset
   function resetShift() {
+    stopAllAudio();
     vehicles = [];
     carsDispatched = 0;
     score = 0;
@@ -528,8 +583,17 @@
 
   btnAudioToggle.addEventListener('click', () => {
     soundEnabled = !soundEnabled;
+    if (!soundEnabled) {
+      stopAllAudio();
+    }
     svgSoundOn.classList.toggle('hidden', !soundEnabled);
     svgSoundOff.classList.toggle('hidden', soundEnabled);
+  });
+
+  window.addEventListener('message', (e) => {
+    if (e.data && (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE')) {
+      stopAllAudio();
+    }
   });
 
   // Initialize

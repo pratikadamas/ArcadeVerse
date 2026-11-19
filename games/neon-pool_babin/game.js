@@ -104,6 +104,9 @@ class NeonPoolGame {
     this.shotsCount = 0;
     this.pocketedCount = 0;
     this.score = 0;
+    this.rafId = null;
+    this.isPaused = false;
+    this.lastTime = performance.now();
 
     this.initDOM();
     this.setupEvents();
@@ -133,6 +136,9 @@ class NeonPoolGame {
     this.shotsCount = 0;
     this.pocketedCount = 0;
     this.score = 0;
+    this.rafId = null;
+    this.isPaused = false;
+    this.lastTime = performance.now();
 
     // Cue Ball on Left
     this.cueBall = {
@@ -287,16 +293,22 @@ class NeonPoolGame {
     this.scoreVal.textContent = this.score;
   }
 
-  animate() {
-    this.update();
+  animate(timestamp) {
+    if (this.isPaused) return;
+    if (timestamp === undefined) timestamp = performance.now();
+    const deltaMs = Math.min(100, timestamp - this.lastTime);
+    this.lastTime = timestamp;
+    const dt = deltaMs / 16.667;
+
+    this.update(dt);
     this.render();
-    requestAnimationFrame(() => this.animate());
+    this.rafId = requestAnimationFrame((t) => this.animate(t));
   }
 
-  update() {
+  update(dt = 1) {
     // Power meter oscillation while charging
     if (this.isChargingPower) {
-      this.power += 0.03 * this.chargeDir;
+      this.power += 0.03 * this.chargeDir * dt;
       if (this.power >= 1) {
         this.power = 1;
         this.chargeDir = -1;
@@ -308,13 +320,14 @@ class NeonPoolGame {
     }
 
     // Ball movement & felt friction
+    const friction = Math.pow(0.985, dt);
     this.balls.forEach(b => {
       if (b.pocketed) return;
 
-      b.x += b.vx;
-      b.y += b.vy;
-      b.vx *= 0.985;
-      b.vy *= 0.985;
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      b.vx *= friction;
+      b.vy *= friction;
 
       if (Math.abs(b.vx) < 0.03) b.vx = 0;
       if (Math.abs(b.vy) < 0.03) b.vy = 0;
@@ -358,9 +371,7 @@ class NeonPoolGame {
             // Scratch!
             this.showToast('SCRATCH! CUE RESPAWN');
             setTimeout(() => {
-              this.cueBall.pocketed = false;
-              this.cueBall.x = this.feltX + 140;
-              this.cueBall.y = this.feltY + this.feltH / 2;
+              this.respawnCueBall();
             }, 800);
           } else {
             this.pocketedCount++;
@@ -370,6 +381,10 @@ class NeonPoolGame {
 
             if (this.pocketedCount === 9) {
               this.showToast('TABLE CLEARED! PERFECT!');
+              try {
+                window.parent.postMessage({ type: 'ARCADEVERSE_GAME_SCORE', score: this.score }, '*');
+                window.parent.postMessage({ type: 'ARCADEVERSE_GAME_OVER' }, '*');
+              } catch (e) {}
             }
           }
         }
@@ -388,6 +403,12 @@ class NeonPoolGame {
         const dx = b2.x - b1.x;
         const dy = b2.y - b1.y;
         const dist = Math.hypot(dx, dy);
+
+        if (dist < 1e-4) {
+          b1.x -= 0.5;
+          b2.x += 0.5;
+          continue;
+        }
 
         if (dist < this.ballRadius * 2) {
           // Collision normal
@@ -527,8 +548,84 @@ class NeonPoolGame {
       this.ctx.restore();
     });
   }
+
+  respawnCueBall() {
+    if (!this.cueBall) return;
+    this.cueBall.pocketed = false;
+    this.cueBall.vx = 0;
+    this.cueBall.vy = 0;
+
+    let posX = this.feltX + 140;
+    let posY = this.feltY + this.feltH / 2;
+    let safe = false;
+    let attempts = 0;
+
+    while (!safe && attempts < 30) {
+      safe = true;
+      for (const b of this.balls) {
+        if (b !== this.cueBall && !b.pocketed) {
+          if (Math.hypot(b.x - posX, b.y - posY) < this.ballRadius * 2.5) {
+            safe = false;
+            posX = this.feltX + 80 + Math.random() * 120;
+            posY = this.feltY + 40 + Math.random() * (this.feltH - 80);
+            break;
+          }
+        }
+      }
+      attempts++;
+    }
+
+    this.cueBall.x = posX;
+    this.cueBall.y = posY;
+  }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  new NeonPoolGame();
+  const game = new NeonPoolGame();
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      game.isPaused = true;
+      if (game.rafId) {
+        cancelAnimationFrame(game.rafId);
+        game.rafId = null;
+      }
+    } else {
+      if (game.isPaused) {
+        game.isPaused = false;
+        game.lastTime = performance.now();
+        game.animate();
+      }
+    }
+  });
+
+  window.addEventListener('message', (e) => {
+    if (!e.data || typeof e.data !== 'object') return;
+    const type = e.data.type;
+    if (type === 'ARCADEVERSE_PAUSE') {
+      game.isPaused = true;
+      if (game.rafId) {
+        cancelAnimationFrame(game.rafId);
+        game.rafId = null;
+      }
+    } else if (type === 'ARCADEVERSE_RESUME') {
+      if (game.isPaused) {
+        game.isPaused = false;
+        game.lastTime = performance.now();
+        game.animate();
+      }
+    } else if (type === 'ARCADEVERSE_TEARDOWN') {
+      game.isPaused = true;
+      if (game.rafId) {
+        cancelAnimationFrame(game.rafId);
+        game.rafId = null;
+      }
+    } else if (type === 'AV_RESIZE') {
+      const d = e.data;
+      if (d.width && d.height && game.canvas) {
+        game.canvas.width = d.width;
+        game.canvas.height = d.height;
+      }
+    }
+  });
 });

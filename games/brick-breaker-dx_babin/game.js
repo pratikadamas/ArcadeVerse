@@ -193,6 +193,9 @@
   // --- GAME CONFIG & STATE ---
   const canvas = document.getElementById('game-canvas');
   const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.imageSmoothingEnabled = false;
+  }
   const sound = new SoundSynth();
 
   const STORAGE_KEY = 'arcadeverse_brick_breaker_dx_best';

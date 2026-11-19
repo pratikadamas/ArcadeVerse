@@ -111,7 +111,7 @@
   const ctx = canvas.getContext('2d');
   const sound = new SoundEngine();
 
-  const MAX_BUFFER_FRAMES = 600; // 10.0 seconds buffer at 60 FPS
+  const MAX_BUFFER_FRAMES = 180; // 3.0 seconds buffer at 60 FPS (fixed circular frame buffer to eliminate memory leaks)
   let currentLevelIdx = 0;
   let rewindsUsed = 0;
   let isRewinding = false;
@@ -445,7 +445,7 @@
     document.getElementById('echo-status').classList.remove('playing');
     document.getElementById('echo-status').querySelector('.echo-text').textContent = 'ECHO RECORDING';
     document.getElementById('timeline-fill').style.width = '100%';
-    document.getElementById('timeline-text').textContent = '10.0s';
+    document.getElementById('timeline-text').textContent = '3.0s';
   }
 
   function commitEcho() {
@@ -594,7 +594,7 @@
   function updateTimelineUI() {
     const fraction = stateHistory.length / MAX_BUFFER_FRAMES;
     document.getElementById('timeline-fill').style.width = `${fraction * 100}%`;
-    document.getElementById('timeline-text').textContent = `${(fraction * 10.0).toFixed(1)}s`;
+    document.getElementById('timeline-text').textContent = `${(fraction * 3.0).toFixed(1)}s`;
   }
 
   // --- RENDER ---

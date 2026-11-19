@@ -154,10 +154,13 @@
   let energyCores = [];
   let particles = [];
   let spawnCooldown = 0;
+  let warpTimer = null;
+  let animId = null;
+  let lastTime = performance.now();
 
-  function spawnWorldObjects() {
+  function spawnWorldObjects(dt = 1) {
     if (spawnCooldown > 0) {
-      spawnCooldown--;
+      spawnCooldown -= dt;
       return;
     }
 
@@ -233,9 +236,13 @@
     speed = Math.min(13, 6.0 + (sector - 1) * 0.8);
     playWarpSound();
 
+    if (warpTimer) clearTimeout(warpTimer);
     warpBanner.textContent = `WARPING TO SECTOR ${sector}`;
     warpBanner.classList.add('active');
-    setTimeout(() => warpBanner.classList.remove('active'), 1800);
+    warpTimer = setTimeout(() => {
+      warpBanner.classList.remove('active');
+      warpTimer = null;
+    }, 1800);
 
     // Warp flash particles
     for (let i = 0; i < 40; i++) {
@@ -251,11 +258,11 @@
     }
   }
 
-  function update() {
+  function update(dt = 1) {
     if (!isPlaying) return;
 
-    distance += Math.round(speed / 2.5);
-    score += Math.round(1 * (1 + (sector - 1) * 0.5));
+    distance += Math.round((speed / 2.5) * dt);
+    score += Math.round(1 * (1 + (sector - 1) * 0.5) * dt);
 
     // Check Sector Progression every 300m
     const currentTargetSector = Math.floor(distance / 300) + 1;
@@ -264,8 +271,8 @@
     }
 
     // Player Physics
-    player.vy += player.gravityDir * GRAVITY_ACCEL;
-    player.y += player.vy;
+    player.vy += player.gravityDir * GRAVITY_ACCEL * dt;
+    player.y += player.vy * dt;
 
     // Floor collision
     if (player.gravityDir === 1 && player.y + player.height >= FLOOR_Y) {
@@ -282,10 +289,10 @@
     }
 
     // Smooth craft rotation towards target orientation
-    player.rotation += (player.targetRotation - player.rotation) * 0.25;
+    player.rotation += (player.targetRotation - player.rotation) * (1 - Math.pow(0.75, dt));
 
     // Thruster Trail
-    if (Math.random() < 0.75) {
+    if (Math.random() < 0.75 * dt) {
       particles.push({
         x: player.x,
         y: player.y + player.height / 2,
@@ -298,7 +305,7 @@
     }
 
     // Spawn obstacles
-    spawnWorldObjects();
+    spawnWorldObjects(dt);
 
     // Update Obstacles & Check Collisions
     const pBounds = {
@@ -310,7 +317,7 @@
 
     for (let i = obstacles.length - 1; i >= 0; i--) {
       const o = obstacles[i];
-      o.x -= speed;
+      o.x -= speed * dt;
 
       // Spike Hitbox
       if (
@@ -331,8 +338,8 @@
     // Update Energy Cores
     for (let i = energyCores.length - 1; i >= 0; i--) {
       const c = energyCores[i];
-      c.x -= speed;
-      c.bob += 0.08;
+      c.x -= speed * dt;
+      c.bob += 0.08 * dt;
 
       const cy = c.y + Math.sin(c.bob) * 5;
       const dist = Math.hypot(
@@ -369,16 +376,16 @@
 
     // Update Stars
     stars.forEach(s => {
-      s.x -= s.speed * (speed / 6);
+      s.x -= s.speed * (speed / 6) * dt;
       if (s.x < 0) s.x = WIDTH;
     });
 
     // Update Particles
     for (let i = particles.length - 1; i >= 0; i--) {
       const pt = particles[i];
-      pt.x += pt.vx;
-      pt.y += pt.vy;
-      pt.alpha -= 0.035;
+      pt.x += pt.vx * dt;
+      pt.y += pt.vy * dt;
+      pt.alpha -= 0.035 * dt;
       if (pt.alpha <= 0) particles.splice(i, 1);
     }
 
@@ -497,8 +504,12 @@
     ctx.restore();
   }
 
-  function loop() {
-    update();
+  function loop(timestamp = performance.now()) {
+    const deltaMs = Math.min(100, timestamp - lastTime);
+    lastTime = timestamp;
+    const dt = deltaMs / 16.667;
+
+    update(dt);
     draw();
     animId = requestAnimationFrame(loop);
   }
@@ -520,6 +531,10 @@
 
   function startNewGame() {
     initAudio();
+    if (warpTimer) {
+      clearTimeout(warpTimer);
+      warpTimer = null;
+    }
     isPlaying = true;
     score = 0;
     distance = 0;
@@ -543,6 +558,7 @@
     warpBanner.classList.remove('active');
 
     updateHUD();
+    lastTime = performance.now();
     if (animId) cancelAnimationFrame(animId);
     loop();
   }
@@ -550,6 +566,33 @@
   function gameOver() {
     isPlaying = false;
     playCrashSound();
+    if (warpTimer) {
+      clearTimeout(warpTimer);
+      warpTimer = null;
+    }
+    warpBanner.classList.remove('active');
+
+    // Emit score & game over telemetry
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'ARCADEVERSE_GAME_SCORE',
+          score,
+          sector,
+          distance
+        }, '*');
+        window.parent.postMessage({
+          type: 'ARCADEVERSE_GAME_OVER',
+          score,
+          details: {
+            score,
+            sector,
+            distance,
+            coresCollected
+          }
+        }, '*');
+      }
+    } catch (_) {}
 
     // Death explosion
     for (let i = 0; i < 35; i++) {
@@ -629,6 +672,39 @@
   closeRulesBtn.addEventListener('click', () => rulesModal.classList.remove('active'));
   rulesModal.addEventListener('click', (e) => {
     if (e.target === rulesModal) rulesModal.classList.remove('active');
+  });
+
+  // Lifecycle & Messages
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && isPlaying) {
+      isPlaying = false;
+      if (animId) cancelAnimationFrame(animId);
+      startOverlay.classList.add('active');
+    }
+  });
+
+  window.addEventListener('message', (event) => {
+    if (!event.data || typeof event.data !== 'object') return;
+    const type = event.data.type;
+    if (type === 'ARCADEVERSE_PAUSE') {
+      if (isPlaying) {
+        isPlaying = false;
+        if (animId) cancelAnimationFrame(animId);
+      }
+    } else if (type === 'ARCADEVERSE_RESUME') {
+      if (!isPlaying && !startOverlay.classList.contains('active') && !gameoverOverlay.classList.contains('active')) {
+        isPlaying = true;
+        lastTime = performance.now();
+        loop();
+      }
+    } else if (type === 'ARCADEVERSE_TEARDOWN') {
+      isPlaying = false;
+      if (animId) cancelAnimationFrame(animId);
+      if (warpTimer) clearTimeout(warpTimer);
+      if (audioCtx) {
+        try { audioCtx.close(); } catch (_) {}
+      }
+    }
   });
 
   // Initial draw

@@ -68,7 +68,7 @@
     activeVoices.clear();
   }
 
-  function playSound(type) {
+  function playSound(type, emitterX) {
     try {
       if (!audioCtx) {
         const AudioClass = window.AudioContext || window.webkitAudioContext;
@@ -97,7 +97,27 @@
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.connect(gain);
-      gain.connect(masterGain || audioCtx.destination);
+      if (typeof emitterX === 'number' && audioCtx.createPanner) {
+        try {
+          const panner = audioCtx.createPanner();
+          panner.panningModel = 'HRTF';
+          panner.distanceModel = 'inverse';
+          const relX = (emitterX - (canvas.width / 2)) / (canvas.width / 2);
+          if (panner.positionX) {
+            panner.positionX.setValueAtTime(relX, audioCtx.currentTime);
+            panner.positionY.setValueAtTime(0, audioCtx.currentTime);
+            panner.positionZ.setValueAtTime(-0.5, audioCtx.currentTime);
+          } else if (typeof panner.setPosition === 'function') {
+            panner.setPosition(relX, 0, -0.5);
+          }
+          gain.connect(panner);
+          panner.connect(masterGain || audioCtx.destination);
+        } catch (_) {
+          gain.connect(masterGain || audioCtx.destination);
+        }
+      } else {
+        gain.connect(masterGain || audioCtx.destination);
+      }
       trackVoice(osc);
 
       if (type === 'laser') {

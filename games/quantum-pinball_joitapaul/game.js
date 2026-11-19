@@ -184,6 +184,14 @@ function saveBestScore() {
 function updateScore(points) {
   score += points;
   scoreValue.textContent = score;
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: "ARCADEVERSE_GAME_SCORE",
+        score: score
+      }, "*");
+    }
+  } catch (_) {}
 }
 
 function resetTargets() {
@@ -234,6 +242,23 @@ function loseBall() {
     overlayMessage.textContent = "The reactor has cooled. Start a new run and beat your high score.";
     startButton.textContent = "Play again";
     overlay.classList.remove("is-hidden");
+
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: "ARCADEVERSE_GAME_SCORE",
+          score: score
+        }, "*");
+        window.parent.postMessage({
+          type: "ARCADEVERSE_GAME_OVER",
+          score: score,
+          details: {
+            score: score
+          }
+        }, "*");
+      }
+    } catch (_) {}
+
     return;
   }
 
@@ -269,6 +294,13 @@ function collideWithCircle(circle, isTarget) {
     ball.vy -= 1.85 * incoming * ny;
   }
   ball.vy -= isTarget ? 55 : 90;
+
+  const speed = Math.hypot(ball.vx, ball.vy);
+  if (speed < 15) {
+    ball.vy += 45; // Downward gravity nudge
+    ball.vx += (Math.random() - 0.5) * 30;
+  }
+
   if (isTarget) {
     circle.active = false;
     updateScore(circle.points);

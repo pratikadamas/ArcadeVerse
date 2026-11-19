@@ -137,7 +137,132 @@ if (soundToggleBtn) {
   });
 }
 
-const width = canvas.width;
+function renderLives(count) {
+  const heartSvg = '<svg class="heart-icon active" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+  const emptyHeartSvg = '<svg class="heart-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" opacity="0.3" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
+  let html = "";
+  for (let i = 0; i < 3; i++) {
+    html += i < count ? heartSvg : emptyHeartSvg;
+  }
+  return html;
+}
+
+let thrusterOscillator = null;
+let thrusterGain = null;
+
+function setThrusterAudio(active) {
+  if (!soundEnabled) {
+    stopThrusterAudio();
+    return;
+  }
+  initAudio();
+  if (!audioCtx) return;
+
+  if (active) {
+    if (!thrusterOscillator) {
+      try {
+        thrusterOscillator = audioCtx.createOscillator();
+        thrusterGain = audioCtx.createGain();
+        thrusterOscillator.type = "triangle";
+        thrusterOscillator.frequency.setValueAtTime(80, audioCtx.currentTime);
+        thrusterGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        thrusterOscillator.connect(thrusterGain);
+        thrusterGain.connect(audioCtx.destination);
+        thrusterOscillator.start();
+      } catch (_) {}
+    }
+  } else {
+    stopThrusterAudio();
+  }
+}
+
+function stopThrusterAudio() {
+  if (thrusterOscillator) {
+    try {
+      thrusterOscillator.stop();
+      thrusterOscillator.disconnect();
+    } catch (_) {}
+    thrusterOscillator = null;
+    thrusterGain = null;
+  }
+}
+
+let particles = [];
+const MAX_PARTICLES = 150;
+let warpActive = false;
+let warpTimer = 0;
+
+function triggerWarpJump() {
+  if (warpActive) return;
+  warpActive = true;
+  warpTimer = 0.6;
+  particles.length = 0;
+  stopThrusterAudio();
+  playWarpSound();
+}
+
+function playWarpSound() {
+  if (!soundEnabled) return;
+  initAudio();
+  if (!audioCtx) return;
+  try {
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(150, now);
+    osc.frequency.exponentialRampToValueAtTime(880, now + 0.4);
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.45);
+  } catch (_) {}
+}
+
+function spawnThrusterParticle(x, y) {
+  if (warpActive) return;
+  if (particles.length >= MAX_PARTICLES) {
+    particles.shift();
+  }
+  particles.push({
+    x: x + (Math.random() - 0.5) * 8,
+    y: y + player.radius * 0.7,
+    vx: (Math.random() - 0.5) * 20,
+    vy: Math.random() * 50 + 70,
+    radius: Math.random() * 3 + 2,
+    alpha: 0.9,
+    color: Math.random() > 0.4 ? "#59e6ff" : "#bd00ff"
+  });
+}
+
+function updateParticles(delta) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx * delta;
+    p.y += p.vy * delta;
+    p.alpha -= delta * 2.2;
+    p.radius = Math.max(0, p.radius - delta * 2);
+    if (p.alpha <= 0 || p.radius <= 0) {
+      particles.splice(i, 1);
+    }
+  }
+}
+
+function drawParticles() {
+  context.save();
+  particles.forEach((p) => {
+    context.globalAlpha = Math.max(0, p.alpha);
+    context.fillStyle = p.color;
+    context.shadowColor = p.color;
+    context.shadowBlur = 8;
+    context.beginPath();
+    context.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+    context.fill();
+  });
+  context.restore();
+}
 const height = canvas.height;
 const directions = { up: false, down: false, left: false, right: false };
 const keys = new Map([
@@ -202,6 +327,10 @@ function startGame() {
   invulnerableTime = 0;
   activePowerUp = null;
   powerUpTime = 0;
+  warpActive = false;
+  warpTimer = 0;
+  particles.length = 0;
+  stopThrusterAudio();
   asteroids = [];
   energyOrbs = [];
   powerUps = [];
@@ -232,6 +361,14 @@ function updateGame(delta) {
   elapsed += delta;
   score += delta * 5;
   invulnerableTime = Math.max(0, invulnerableTime - delta);
+
+  if (warpActive) {
+    warpTimer -= delta;
+    if (warpTimer <= 0) {
+      warpActive = false;
+    }
+  }
+
   if (activePowerUp) {
     powerUpTime -= delta;
     if (powerUpTime <= 0) {
@@ -242,8 +379,19 @@ function updateGame(delta) {
 
   const horizontal = Number(directions.right) - Number(directions.left);
   const vertical = Number(directions.down) - Number(directions.up);
+  const isMoving = horizontal !== 0 || vertical !== 0;
+
+  if (isMoving && !warpActive) {
+    setThrusterAudio(true);
+    spawnThrusterParticle(player.x, player.y);
+  } else {
+    setThrusterAudio(false);
+  }
+
+  updateParticles(delta);
+
   const magnitude = Math.hypot(horizontal, vertical) || 1;
-  const speedMultiplier = activePowerUp === "speed" ? 1.55 : 1;
+  const speedMultiplier = (activePowerUp === "speed" ? 1.55 : 1) * (warpActive ? 2.5 : 1);
   player.x += (horizontal / magnitude) * player.speed * speedMultiplier * delta;
   player.y += (vertical / magnitude) * player.speed * speedMultiplier * delta;
   player.x = clamp(player.x, player.radius + 8, width - player.radius - 8);
@@ -361,6 +509,7 @@ function drawScene() {
   context.fillStyle = "#080d1c";
   context.fillRect(0, 0, width, height);
   drawStars();
+  drawParticles();
   energyOrbs.forEach(drawEnergyOrb);
   powerUps.forEach(drawPowerUp);
   asteroids.forEach(drawAsteroid);
@@ -491,6 +640,8 @@ function updateHud() {
 function endGame() {
   gameState = "over";
   cancelAnimationFrame(animationFrame);
+  stopThrusterAudio();
+  particles.length = 0;
   playGameOverSound();
   overlayKicker.textContent = "FLIGHT COMPLETE";
   overlayTitle.textContent = "The asteroid field caught up";
@@ -525,13 +676,17 @@ resetBestButton.addEventListener("click", () => {
   }
 });
 
-document.addEventListener("keydown", (event) => {
-  const direction = keys.get(event.key);
-  if (direction && gameState === "running") {
-    event.preventDefault();
-    directions[direction] = true;
-  }
-});
+  document.addEventListener("keydown", (event) => {
+    if ((event.key === " " || event.key === "Spacebar" || event.key === "Shift") && gameState === "running") {
+      event.preventDefault();
+      triggerWarpJump();
+    }
+    const direction = keys.get(event.key);
+    if (direction && gameState === "running") {
+      event.preventDefault();
+      directions[direction] = true;
+    }
+  });
 
 document.addEventListener("keyup", (event) => {
   const direction = keys.get(event.key);

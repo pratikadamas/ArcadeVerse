@@ -7,52 +7,67 @@ on:
       - 'assets/js/games-registry.js'
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
 
 jobs:
-  auto-revert-registry:
+  check-and-notify-registry-conflict:
+    name: Sanitize PR Registry & Notify Contributor
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout PR Head
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          fetch-depth: 0
-
-      - name: Reset games-registry.js to Upstream Main
-        id: reset-step
-        run: |
-          git remote add upstream https://github.com/${{ github.repository }}.git || true
-          git fetch upstream main
-          git checkout upstream/main -- assets/js/games-registry.js
-          if git diff --quiet assets/js/games-registry.js; then
-            echo "clean=true" >> $GITHUB_OUTPUT
-            echo "games-registry.js is already clean."
-          else
-            echo "clean=false" >> $GITHUB_OUTPUT
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git commit -m "chore(ci): reset auto-compiled games-registry.js to main to eliminate merge conflict"
-            if git push origin HEAD:${{ github.event.pull_request.head.ref }}; then
-              echo "pushed=true" >> $GITHUB_OUTPUT
-              echo "Successfully pushed reverted games-registry.js to PR branch!"
-            else
-              echo "pushed=false" >> $GITHUB_OUTPUT
-              echo "Push failed (fork permissions restricted)."
-            fi
-          fi
-
-      - name: Comment Guidance if Push Failed
-        if: steps.reset-step.outputs.clean == 'false' && steps.reset-step.outputs.pushed == 'false'
+      - name: Inspect PR Files & Post Guidance Comment
         uses: actions/github-script@v7
         with:
           script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `⚠️ **Merge Conflict Notice:** Your PR modifies \`assets/js/games-registry.js\`. Per \`CONTRIBUTING.md\`, game registration is 100% automated by GitHub Actions from \`game.json\` upon merge.\n\nManual edits to \`games-registry.js\` create merge conflicts with the \`main\` branch. Please revert this file on your branch to resolve conflicts:\n\n\`\`\`bash\ngit checkout origin/main -- assets/js/games-registry.js\ngit commit -m "chore: revert games-registry.js"\ngit push\n\`\`\``
+            const prNumber = context.issue.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Fetch the list of modified files via GitHub REST API without checking out untrusted code
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              { owner, repo, pull_number: prNumber }
+            );
+
+            const modifiesRegistry = files.some(f => f.filename === 'assets/js/games-registry.js');
+            if (!modifiesRegistry) {
+              console.log('PR does not modify assets/js/games-registry.js. Exiting cleanly.');
+              return;
+            }
+
+            // Check if guidance comment was already posted to avoid duplicate comment spam
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              { owner, repo, issue_number: prNumber }
+            );
+
+            const alreadyCommented = comments.some(c =>
+              c.user && c.user.login === 'github-actions[bot]' &&
+              c.body && c.body.includes('Merge Conflict Notice:')
+            );
+
+            if (alreadyCommented) {
+              console.log('Guidance comment already present on PR #' + prNumber + '. Skipping duplicate notice.');
+              return;
+            }
+
+            const noticeBody = [
+              '**Merge Conflict Notice:** Your pull request modifies `assets/js/games-registry.js`. Per `CONTRIBUTING.md`, game registration is 100% automated by GitHub Actions from `games/<game-id>/game.json` upon merge.',
+              '',
+              'Manual edits to `assets/js/games-registry.js` create merge conflicts with the `main` branch. Please revert this file on your branch to resolve conflicts:',
+              '',
+              '```bash',
+              'git checkout origin/main -- assets/js/games-registry.js',
+              'git commit -m "chore: revert manual changes to games-registry.js"',
+              'git push',
+              '```'
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: prNumber,
+              body: noticeBody
             });
 
+            console.log('Successfully posted registry revert guidance to PR #' + prNumber);
