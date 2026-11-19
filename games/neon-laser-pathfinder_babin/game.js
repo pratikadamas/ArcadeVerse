@@ -305,6 +305,7 @@ class NeonLaserPathfinder {
 
   recalculateLasers() {
     this.laserSegments = [];
+    this.dispersionFlares = [];
     this.targets.forEach(t => t.powered = false);
 
     // Cast light from each emitter
@@ -329,11 +330,17 @@ class NeonLaserPathfinder {
     let dx = dirX;
     let dy = dirY;
     let maxSteps = 45;
+    const MAX_RAY_BOUNCES = 32;
+    let bounceCount = 0;
     let visited = new Set();
+    const hitPoints = [];
 
     while (maxSteps-- > 0) {
       const stateKey = `${currX},${currY},${dx},${dy}`;
-      if (visited.has(stateKey)) break;
+      if (visited.has(stateKey)) {
+        this.addDispersionFlare(currX, currY, color);
+        break;
+      }
       visited.add(stateKey);
 
       const nextX = currX + dx;
@@ -372,34 +379,35 @@ class NeonLaserPathfinder {
         } else if (obstacle.type === 'emitter') {
           break; // Absorbed on emitter body
         } else if (obstacle.type === 'prism') {
+          bounceCount++;
+          const pointKey = `${currX},${currY}`;
+          if (hitPoints.filter(p => p === pointKey).length >= 3 || bounceCount >= MAX_RAY_BOUNCES) {
+            this.addDispersionFlare(currX, currY, color);
+            break;
+          }
+          hitPoints.push(pointKey);
+
           if (obstacle.kind === 'slash') {
-            // Reflect: /
-            // dx=1, dy=0 -> dx=0, dy=-1
-            // dx=-1, dy=0 -> dx=0, dy=1
-            // dx=0, dy=1 -> dx=-1, dy=0
-            // dx=0, dy=-1 -> dx=1, dy=0
             const tempDx = dx;
             dx = -dy;
             dy = -tempDx;
           } else if (obstacle.kind === 'backslash') {
-            // Reflect: \
-            // dx=1, dy=0 -> dx=0, dy=1
-            // dx=-1, dy=0 -> dx=0, dy=-1
-            // dx=0, dy=1 -> dx=1, dy=0
-            // dx=0, dy=-1 -> dx=-1, dy=0
             const tempDx = dx;
             dx = dy;
             dy = tempDx;
           } else if (obstacle.kind === 'splitter') {
-            // Beam splitter creates orthogonal branch
             const branchDx = -dy;
             const branchDy = dx;
             this.traceRay(currX, currY, branchDx, branchDy, color);
-            // Main beam continues forward uninterrupted
           }
         }
       }
     }
+  }
+
+  addDispersionFlare(x, y, color) {
+    if (!this.dispersionFlares) this.dispersionFlares = [];
+    this.dispersionFlares.push({ x, y, color, radius: 10 });
   }
 
   updateStats() {
@@ -464,6 +472,21 @@ class NeonLaserPathfinder {
       this.ctx.lineTo(cx2, cy2);
       this.ctx.stroke();
     });
+
+    // Draw Dispersion Flares
+    if (this.dispersionFlares) {
+      this.dispersionFlares.forEach(flare => {
+        const cx = (flare.x + 0.5) * cellSize;
+        const cy = (flare.y + 0.5) * cellSize;
+        this.ctx.fillStyle = flare.color;
+        this.ctx.shadowColor = flare.color;
+        this.ctx.shadowBlur = 15;
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, flare.radius, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.shadowBlur = 0;
+      });
+    }
 
     // Draw Elements
     for (let r = 0; r < GRID_SIZE; r++) {

@@ -306,10 +306,20 @@ class NeonSolitaireGame {
       if (activeDrag.container) {
         activeDrag.container.style.zIndex = '';
       }
+      if (activeDrag.tierContainer) {
+        activeDrag.tierContainer.style.zIndex = '';
+      }
+      if (activeDrag.targetCard && activeDrag.pointerId !== undefined) {
+        try {
+          activeDrag.targetCard.releasePointerCapture(activeDrag.pointerId);
+        } catch (_) {}
+      }
       activeDrag = null;
     };
 
     document.addEventListener('pointerdown', (e) => {
+      if (activeDrag) cleanupDrag();
+
       const cardElem = e.target.closest('.card-item');
       if (!cardElem || cardElem.classList.contains('face-down')) return;
 
@@ -335,6 +345,8 @@ class NeonSolitaireGame {
       if (cards.length === 0) return;
 
       const container = wasteSlot || tableauCol;
+      const tierContainer = container.closest('.upper-tier, .tableau-tier');
+      if (tierContainer) tierContainer.style.zIndex = '1000';
       if (container) container.style.zIndex = '1000';
 
       // Elevate active drag card elements to z-index: 1000 during pointerdown
@@ -343,9 +355,15 @@ class NeonSolitaireGame {
         c.classList.add('dragging');
       });
 
+      try {
+        cardElem.setPointerCapture(e.pointerId);
+      } catch (_) {}
+
       activeDrag = {
         cards,
         container,
+        tierContainer,
+        targetCard: cardElem,
         sourceInfo,
         startX: e.clientX,
         startY: e.clientY,

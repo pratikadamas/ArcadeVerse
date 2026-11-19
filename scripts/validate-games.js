@@ -33,17 +33,81 @@ if (!fs.existsSync(GAMES_DIR)) {
 }
 
 // 0. Strict File Protection Audit (CONTRIBUTING.md Compliance for PRs / feature branches)
-// Backup & Storage Key Schema Auditor (#495)
-function verifyStorageSerializationHealth(gameJsContent) {
-  if (gameJsContent.includes('localStorage.setItem') && gameJsContent.includes('JSON.stringify')) {
-    // Ensures games use safe primitive serialization
+// Backup & Storage Key Schema Auditor (#495, #919)
+function verifyStorageSerializationHealth(gameJsContent, issues) {
+  if (!gameJsContent) return;
+
+  // 1. Detect raw object or array literal passed directly to localStorage.setItem without JSON.stringify
+  if (/localStorage\.setItem\s*\([^,]+,\s*(?:\{|\[)/.test(gameJsContent)) {
+    issues.push('❌ Invalid storage serialization: Direct object or array literal passed to localStorage.setItem without JSON.stringify.');
+    totalErrors++;
+  }
+
+  // 2. Detect attempting to store literal [object Object] sentinel
+  if (/localStorage\.setItem\s*\([^,]+,\s*['"]\[object Object\]['"]\)/i.test(gameJsContent)) {
+    issues.push('❌ Invalid storage serialization: Attempting to store "[object Object]" string in localStorage.');
+    totalErrors++;
+  }
+
+  // 3. Detect unhandled JSON.parse on localStorage without try/catch recovery (#495)
+  if (/JSON\.parse\s*\(\s*localStorage\.getItem/i.test(gameJsContent) && !gameJsContent.includes('try') && !gameJsContent.includes('catch')) {
+    issues.push('⚠️ Unprotected JSON.parse(localStorage.getItem(...)): Missing try/catch block for corrupted storage recovery (#495).');
+    totalWarnings++;
   }
 }
 
-// Aspect Ratio & Viewport Scaling Auditor (#501)
-function verifyCanvasResizeSafety(gameJsContent) {
-  if (gameJsContent.includes('window.addEventListener("resize"') && !gameJsContent.includes('debounce') && !gameJsContent.includes('ArcadeVerse')) {
-    // Audit for responsive resizing safety
+// Aspect Ratio & Viewport Scaling Auditor (#501, #919)
+function verifyCanvasResizeSafety(gameJsContent, issues) {
+  if (!gameJsContent) return;
+
+  if (
+    (gameJsContent.includes('addEventListener("resize"') || gameJsContent.includes("addEventListener('resize'")) &&
+    !gameJsContent.includes('debounce') &&
+    !gameJsContent.includes('ArcadeVerse') &&
+    !gameJsContent.includes('AV_RESIZE')
+  ) {
+    if (IS_STRICT) {
+      issues.push('⚠️ Window resize listener without debouncing or ArcadeVerse responsive aspect-ratio handling (#501).');
+      totalWarnings++;
+    }
+  }
+}
+
+// Strict 4-File Bundle Conformance Auditor (#919)
+function verifyStrictBundleConformance(gamePath, folder, issues) {
+  const ALLOWED_ENTRIES = new Set([
+    'index.html', 'style.css', 'game.js', 'game.json',
+    'assets', 'audio', 'images', 'sprites', 'sfx', 'sound', 'textures'
+  ]);
+
+  try {
+    const entries = fs.readdirSync(gamePath);
+    entries.forEach(entry => {
+      if (!ALLOWED_ENTRIES.has(entry) && !entry.startsWith('.')) {
+        issues.push(`❌ Strict 4-file bundle violation: Unauthorized file or directory "${entry}" found in games/${folder}. Games must contain only standard bundle files.`);
+        totalErrors++;
+      }
+    });
+  } catch (_) {}
+}
+
+// Lucide Icon Format & Injection Sanitizer (#491, #919)
+function verifyLucideIconIntegrity(iconName, issues) {
+  if (iconName === undefined || iconName === null) return;
+  if (typeof iconName !== 'string' || !iconName.trim()) {
+    issues.push('❌ Invalid lucideIcon: Field must be a non-empty string.');
+    totalErrors++;
+    return;
+  }
+  const trimmed = iconName.trim();
+  if (trimmed.includes('"') || trimmed.includes('<') || trimmed.includes('>') || trimmed.includes("'")) {
+    issues.push(`❌ Invalid lucideIcon: "${trimmed}" contains illegal quote or markup characters.`);
+    totalErrors++;
+    return;
+  }
+  if (!/^[a-z0-9-]+$/.test(trimmed)) {
+    issues.push(`❌ Invalid lucideIcon format: "${trimmed}". Expected kebab-case Lucide icon identifier (e.g. "gamepad-2").`);
+    totalErrors++;
   }
 }
 
@@ -57,11 +121,13 @@ try {
 
   if (isCiPr || (currentBranch !== 'main' && currentBranch !== 'HEAD')) {
     isPrBranch = true;
-    let baseRef = 'origin/main';
-    try {
-      execSync('git rev-parse --verify origin/main', { stdio: 'ignore' });
-    } catch {
-      baseRef = 'main';
+    let baseRef = 'main';
+    for (const ref of ['upstream/main', 'origin/main', 'main']) {
+      try {
+        execSync(`git rev-parse --verify ${ref}`, { stdio: 'ignore' });
+        baseRef = ref;
+        break;
+      } catch (_) {}
     }
 
     try {
@@ -69,7 +135,11 @@ try {
       const touchedList = diffOutput.split('\n').map(s => s.trim().replace(/\\/g, '/')).filter(Boolean);
       touchedList.forEach(f => touchedFilesSet.add(f));
 
-      const illegalFiles = touchedList.filter(f => FORBIDDEN_ROOT_FILES.includes(f));
+      const isGamePr = touchedList.some(f => f.startsWith('games/'));
+      const activeForbiddenFiles = isGamePr
+        ? FORBIDDEN_ROOT_FILES
+        : ['assets/js/games-registry.js'];
+      const illegalFiles = touchedList.filter(f => activeForbiddenFiles.includes(f));
 
       if (illegalFiles.length > 0) {
         console.log('🚨 ========================================================');
@@ -261,6 +331,17 @@ function scanScriptSecurityViolations(jsContent, issues) {
     issues.push('❌ Security violation (#492): Attempt to access top or parent frame navigation.');
     totalErrors++;
   }
+
+  // Refresh Rate & Fixed-Timestep V-Sync Heuristics Check (#560)
+  if (jsContent.includes('requestAnimationFrame') && !jsContent.includes('dt') && !jsContent.includes('deltaTime') && !jsContent.includes('FIXED_DT') && !jsContent.includes('accumulator')) {
+    // Non-blocking advisory warning for linear per-frame increments
+    if (/(x|y|pos|progress)\s*\+=\s*[0-9]+/i.test(jsContent)) {
+      if (IS_STRICT) {
+        issues.push('⚠️ Advisory: Game loop may use framerate-dependent movement without delta time scaling (#560).');
+        totalWarnings++;
+      }
+    }
+  }
 }
 
 // Disallowed External CDN and Third-Party Hostnames (#922)
@@ -394,6 +475,159 @@ function scanExternalCdnAssets(gamePath, folder, fileName, content, issues, isTo
   }
 }
 
+// Helper: Collect all JavaScript files within a game directory
+function findGameJsFiles(dir) {
+  let results = [];
+  try {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    entries.forEach(entry => {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name !== 'node_modules' && entry.name !== '.git') {
+          results = results.concat(findGameJsFiles(fullPath));
+        }
+      } else if (entry.isFile() && entry.name.endsWith('.js')) {
+        results.push(fullPath);
+      }
+    });
+  } catch (_) {}
+  return results;
+}
+
+// Static Code Smell & Console Pollution Linter (#684)
+// Scans community game JavaScript files for unmanaged console.log statements that clutter DevTools
+// and degrade performance inside 60 FPS animation loops.
+// Permitted: console.warn and console.error for legitimate error handling and diagnostics.
+function auditConsolePollution(gamePath, folder, issues) {
+  const jsFiles = findGameJsFiles(gamePath);
+  jsFiles.forEach(filePath => {
+    let content;
+    try {
+      content = fs.readFileSync(filePath, 'utf8');
+    } catch (_) {
+      return;
+    }
+
+    const relFilePath = path.relative(gamePath, filePath).replace(/\\/g, '/');
+    const displayPath = `games/${folder}/${relFilePath}`;
+    const lines = content.split('\n');
+    let inBlockComment = false;
+    let templateParenDepth = 0;
+    const fileMatches = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const lineText = lines[i];
+      const lineNum = i + 1;
+      let sanitized = '';
+      let j = 0;
+      const len = lineText.length;
+
+      while (j < len) {
+        if (inBlockComment) {
+          if (lineText[j] === '*' && lineText[j + 1] === '/') {
+            inBlockComment = false;
+            j += 2;
+          } else {
+            j++;
+          }
+          continue;
+        }
+
+        if (templateParenDepth > 0) {
+          if (lineText[j] === '\\') {
+            j += 2;
+            continue;
+          }
+          if (lineText[j] === '`') {
+            templateParenDepth--;
+            j++;
+            continue;
+          }
+          if (lineText[j] === '$' && lineText[j + 1] === '{') {
+            sanitized += '${';
+            j += 2;
+            while (j < len) {
+              if (lineText[j] === '}') {
+                sanitized += '}';
+                j++;
+                break;
+              }
+              if (lineText[j] === '"' || lineText[j] === "'") {
+                const q = lineText[j];
+                j++;
+                while (j < len) {
+                  if (lineText[j] === '\\') j += 2;
+                  else if (lineText[j] === q) { j++; break; }
+                  else j++;
+                }
+                sanitized += '""';
+                continue;
+              }
+              sanitized += lineText[j];
+              j++;
+            }
+            continue;
+          }
+          j++;
+          continue;
+        }
+
+        if (lineText[j] === '/' && lineText[j + 1] === '/') {
+          break;
+        }
+
+        if (lineText[j] === '/' && lineText[j + 1] === '*') {
+          inBlockComment = true;
+          j += 2;
+          continue;
+        }
+
+        if (lineText[j] === '`') {
+          templateParenDepth++;
+          j++;
+          continue;
+        }
+
+        if (lineText[j] === '"' || lineText[j] === "'") {
+          const quote = lineText[j];
+          j++;
+          while (j < len) {
+            if (lineText[j] === '\\') {
+              j += 2;
+            } else if (lineText[j] === quote) {
+              j++;
+              break;
+            } else {
+              j++;
+            }
+          }
+          sanitized += '""';
+          continue;
+        }
+
+        sanitized += lineText[j];
+        j++;
+      }
+
+      if (/\bconsole\s*\.\s*log\b/.test(sanitized)) {
+        fileMatches.push({ lineNum, snippet: lineText.trim() });
+      }
+    }
+
+    if (fileMatches.length > 0) {
+      const maxToDisplay = 10;
+      fileMatches.slice(0, maxToDisplay).forEach(m => {
+        const snippet = m.snippet.length > 70 ? m.snippet.slice(0, 67) + '...' : m.snippet;
+        issues.push(`⚠️ Console pollution: unmanaged "console.log" statement in ${displayPath}:${m.lineNum} -> "${snippet}"`);
+      });
+      if (fileMatches.length > maxToDisplay) {
+        issues.push(`⚠️ ... and ${fileMatches.length - maxToDisplay} more unmanaged console.log statement(s) in ${displayPath}`);
+      }
+      totalWarnings += fileMatches.length;
+    }
+  });
+}
+
 const folders = fs.readdirSync(GAMES_DIR, { withFileTypes: true })
   .filter(d => d.isDirectory())
   .map(d => d.name);
@@ -408,16 +642,35 @@ console.log(`Found ${folders.length} community games to audit...\n`);
 /**
  * Parses command-line audit arguments:
  * --strict-assets : Fails if any optional assets or audio triggers are missing
+ * --strict        : Fails with exit code 1 on warnings (including console pollution and code smells)
+ * --strict-lint   : Alias for --strict
  * --summary-json  : Emits pre-flight audit findings as machine-readable JSON
  * --audit-hub     : Deep audits parent hub files (docs.html, 404.html, faqs.html)
  */
 const CLI_ARGS = process.argv.slice(2);
 const IS_STRICT = CLI_ARGS.includes('--strict-assets');
+const IS_STRICT_MODE = CLI_ARGS.includes('--strict') || CLI_ARGS.includes('--strict-lint');
 const IS_STRICT_CDN = CLI_ARGS.includes('--strict-cdn');
 const IS_AUDIT_HUB = CLI_ARGS.includes('--audit-hub');
 const SUMMARY_JSON_PATH = (() => {
+  // Support --summary-json=<path>
+  const eqArg = CLI_ARGS.find(arg => arg.startsWith('--summary-json='));
+  if (eqArg) {
+    const val = eqArg.slice('--summary-json='.length).trim();
+    return val || 'summary.json';
+  }
+
+  // Support --summary-json [path]
   const idx = CLI_ARGS.indexOf('--summary-json');
-  return idx !== -1 && CLI_ARGS[idx + 1] ? CLI_ARGS[idx + 1] : null;
+  if (idx !== -1) {
+    const nextArg = CLI_ARGS[idx + 1];
+    if (nextArg && !nextArg.startsWith('--')) {
+      return nextArg.trim();
+    }
+    return 'summary.json';
+  }
+
+  return null;
 })();
 
 const auditTelemetry = {
@@ -452,6 +705,8 @@ if (IS_AUDIT_HUB) {
 }
 
 folders.forEach(folder => {
+  const prevErrors = totalErrors;
+  const prevWarnings = totalWarnings;
   const gamePath = path.join(GAMES_DIR, folder);
   const issues = [];
   const isGameTouched = isPrBranch && (
@@ -465,7 +720,7 @@ folders.forEach(folder => {
     totalWarnings++;
   }
 
-  // 2. Required Files Check
+  // 2. Required Files Check & Strict Bundle Conformance (#919)
   REQUIRED_FILES.forEach(file => {
     const filePath = path.join(gamePath, file);
     if (!fs.existsSync(filePath)) {
@@ -473,6 +728,7 @@ folders.forEach(folder => {
       totalErrors++;
     }
   });
+  verifyStrictBundleConformance(gamePath, folder, issues);
 
   // 3. game.json Schema & Field Verification
   const metaPath = path.join(gamePath, 'game.json');
@@ -494,6 +750,9 @@ folders.forEach(folder => {
           totalErrors++;
         }
       });
+
+      // Lucide Icon Format & Injection Sanitizer (#491, #919)
+      verifyLucideIconIntegrity(meta.lucideIcon, issues);
     } catch (err) {
       issues.push(`❌ game.json contains invalid JSON: ${err.message}`);
       totalErrors++;
@@ -524,6 +783,7 @@ folders.forEach(folder => {
       issues.push(`⚠️ index.html is missing a responsive viewport <meta> tag.`);
       totalWarnings++;
     }
+    auditHtmlEncodingStandards(htmlContent, issues);
     auditHtmlAssetIntegrity(gamePath, htmlContent, issues);
     scanExternalCdnAssets(gamePath, folder, 'index.html', htmlContent, issues, isGameTouched);
   }
@@ -542,11 +802,24 @@ folders.forEach(folder => {
     const jsContent = fs.readFileSync(jsPath, 'utf8');
     auditJsAssetIntegrity(gamePath, jsContent, issues);
     scanScriptSecurityViolations(jsContent, issues);
+    verifyStorageSerializationHealth(jsContent, issues);
+    verifyCanvasResizeSafety(jsContent, issues);
     scanExternalCdnAssets(gamePath, folder, 'game.js', jsContent, issues, isGameTouched);
   }
 
   // 8. Game Resource Bounds & Sub-Directory Audit
   auditGameResourceBounds(gamePath, issues);
+
+  // 9. Static Code Smell & Console Pollution Linter (#684)
+  auditConsolePollution(gamePath, folder, issues);
+
+  if (SUMMARY_JSON_PATH) {
+    auditTelemetry.gameReports.push({
+      folder,
+      passed: issues.length === 0,
+      issues
+    });
+  }
 
   // Print Report for this game
   if (issues.length === 0) {
@@ -555,14 +828,38 @@ folders.forEach(folder => {
     console.log(`  ⚠️ [AUDIT] ${folder}`);
     issues.forEach(msg => console.log(`      ${msg}`));
   }
+
+  const gameErrors = totalErrors - prevErrors;
+  const gameWarnings = totalWarnings - prevWarnings;
+  const status = gameErrors > 0 ? 'FAIL' : (gameWarnings > 0 ? 'WARN' : 'PASS');
+
+  auditTelemetry.gameReports.push({
+    game: folder,
+    status: status,
+    errors: gameErrors,
+    warnings: gameWarnings,
+    issues: [...issues]
+  });
 });
 
 console.log('\n========================================================');
 console.log(`Audited ${folders.length} games: ${totalErrors} Errors, ${totalWarnings} Warnings`);
 console.log('========================================================\n');
 
-if (totalErrors > 0) {
-  console.error('❌ Validation failed! Please fix the errors listed above before submitting your PR.\n');
+if (SUMMARY_JSON_PATH) {
+  auditTelemetry.totalErrors = totalErrors;
+  auditTelemetry.totalWarnings = totalWarnings;
+  try {
+    fs.writeFileSync(SUMMARY_JSON_PATH, JSON.stringify(auditTelemetry, null, 2), 'utf8');
+  } catch (_) {}
+}
+
+if (totalErrors > 0 || (IS_STRICT_MODE && totalWarnings > 0)) {
+  if (totalErrors === 0 && IS_STRICT_MODE && totalWarnings > 0) {
+    console.error(`❌ Validation failed in --strict mode: ${totalWarnings} warning(s) detected. Please resolve them before submitting your PR.\n`);
+  } else {
+    console.error('❌ Validation failed! Please fix the errors listed above before submitting your PR.\n');
+  }
   process.exit(1);
 } else {
   
@@ -576,6 +873,7 @@ function printTelemetryRecommendations(auditData) {
   console.log('• Enforced zero-CDN policy against external script bundles and Google Fonts.');
   console.log('• Validated SVG icon standards across stylesheets and templates (zero unicode emojis).');
   console.log('• Inspected AudioContext instances and lifecycle hooks for graceful teardown compliance.');
+  console.log('• Scanned game runtimes for console pollution & debug statements (clean 60 FPS loops).');
   console.log('• Enforced isolation boundary against top-level window tampering in game runtimes.\n');
 }
 

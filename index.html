@@ -278,6 +278,7 @@
               <option value="rating">Highest Rated (Stars)</option>
               <option value="newest">Newest Added</option>
               <option value="difficulty">Difficulty (Beginner to Expert)</option>
+              <option value="popularity">Most Played</option>
             </select>
           </div>
 
@@ -526,6 +527,10 @@
       </div>
       <div class="modal-frame-wrapper">
         <iframe id="game-iframe" src="" title="Game Frame" frameborder="0" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+        <div id="game-loader-skeleton" class="game-loader-skeleton" role="status" aria-live="polite">
+          <span class="game-loader-spinner" aria-hidden="true"></span>
+          <span class="game-loader-text">BOOTING ARCADE MATRIX...</span>
+        </div>
       </div>
     </div>
   </div>
@@ -582,7 +587,7 @@
         <ul class="footer-list">
           <li><a href="terms.html"><i data-lucide="file-text"></i> Terms of Service</a></li>
           <li><a href="privacy.html"><i data-lucide="shield"></i> Privacy Policy</a></li>
-          <li><a href="https://github.com/DebasmitaBose0/ArcadeVerse/blob/main/CODE_OF_CONDUCT.md" target="_blank" rel="noopener noreferrer"><i data-lucide="heart-handshake"></i> Code of Conduct</a></li>
+          <li><a href="code-of-conduct.html"><i data-lucide="heart-handshake"></i> Code of Conduct</a></li>
           <li><a href="https://github.com/DebasmitaBose0/ArcadeVerse/blob/main/SECURITY.md" target="_blank" rel="noopener noreferrer"><i data-lucide="lock"></i> Security Policy</a></li>
           <li><a href="https://github.com/DebasmitaBose0/ArcadeVerse/blob/main/LICENSE" target="_blank" rel="noopener noreferrer"><i data-lucide="file-check"></i> MIT License</a></li>
         </ul>
@@ -612,6 +617,7 @@
   <!-- Scripts -->
   <script src="assets/js/navbar.js"></script>
   <script src="assets/js/games-registry.js"></script>
+  <script src="assets/js/playtime-heatmap.js"></script>
   <script src="assets/js/app.js"></script>
   <script src="assets/js/halloween.js"></script>
   <script src="assets/js/daily-challenge.js"></script>
@@ -702,6 +708,9 @@
       <path d="m18 15-6-6-6 6" />
     </svg>
   </button>
+
+  <!-- Persistent Screen Reader Live Region Announcer (#702) -->
+  <div id="a11y-announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
 </body>
 

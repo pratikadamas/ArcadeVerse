@@ -352,6 +352,15 @@ class CyberPachinkoGame {
 
         // Apply fractional gravity and sub-step velocity
         s.vy += gravity;
+
+        // Clamp excessive velocity to prevent numerical instability at extreme drop speeds
+        const speed = Math.hypot(s.vx, s.vy);
+        const maxSpeed = 24;
+        if (speed > maxSpeed) {
+          s.vx = (s.vx / speed) * maxSpeed;
+          s.vy = (s.vy / speed) * maxSpeed;
+        }
+
         s.x += s.vx * dt;
         s.y += s.vy * dt;
 
@@ -420,8 +429,8 @@ class CyberPachinkoGame {
           }
 
           if (collided) {
-            s.x = p.x + nx * minDistance;
-            s.y = p.y + ny * minDistance;
+            s.x = p.x + nx * (minDistance + 0.2);
+            s.y = p.y + ny * (minDistance + 0.2);
 
             const dot = s.vx * nx + s.vy * ny;
             if (dot < 0) {
@@ -433,6 +442,7 @@ class CyberPachinkoGame {
             this.score += 10 * this.multiplier;
             this.audio.playPinballPing(1050 + Math.random() * 500);
             this.audio.playPegClick();
+            break; // Collision resolved for this sub-step
           }
         }
 
@@ -479,6 +489,7 @@ class CyberPachinkoGame {
             this.score += b.points * this.multiplier;
             this.audio.playPinballPing(1600);
             this.audio.playBumperBounce();
+            break; // Bumper deflection resolved for this sub-step
           }
         }
 

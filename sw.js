@@ -1,7 +1,9 @@
 /**
  * ArcadeVerse - Service Worker Engine (PWA & Offline Shell)
  * Provides offline caching, stale-while-revalidate asset delivery,
+ * Background Sync API fallback for offline queues,
  * and graceful fallback for hub pages and previously played local games.
+ * Includes skipWaiting handling for PWA update available banner (#555).
  *
  * NSOC Winter Edition 2026
  */
@@ -11,22 +13,12 @@ const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const GAME_VAULT_CACHE = 'arcadeverse-game-vault-v1';
 
-// Core static hub shell assets required for offline rendering
-const CORE_SHELL_ASSETS = [
+// Static assets for offline shell
+const SHELL_ASSETS = [
   './',
   './index.html',
-  './leaderboard.html',
-  './docs.html',
-  './faqs.html',
-  './404.html',
   './manifest.webmanifest',
   './assets/css/style.css',
-  './assets/css/pages.css',
-  './assets/css/a11y-engine.css',
-  './assets/css/halloween.css',
-  './assets/css/daily-challenge.css',
-  './assets/css/recently-played.css',
-  './assets/css/keyboard-shortcuts.css',
   './assets/css/network-detector.css',
   './assets/css/trophy-card.css',
   './assets/css/sound-engine.css',
@@ -34,24 +26,14 @@ const CORE_SHELL_ASSETS = [
   './assets/css/pwa-cache-prewarmer.css',
   './assets/js/navbar.js',
   './assets/js/app.js',
-  './assets/js/games-registry.js',
-  './assets/js/a11y-engine.js',
-  './assets/js/sound-engine.js',
-  './assets/js/keyboard-shortcuts.js',
   './assets/js/network-detector.js',
   './assets/js/pwa-cache-prewarmer.js',
   './assets/js/leaderboard.js',
   './assets/public/favicon.ico',
   './assets/public/favicon-32x32.png',
-  './assets/public/favicon-192x192.png',
-  './assets/public/apple-touch-icon.png',
-  './assets/public/brand-logo.webp',
-  './assets/public/brand-logo.png'
+  './assets/public/apple-touch-icon.png'
 ];
 
-/**
- * Installation event: pre-caches the core hub shell assets.
- */
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(SHELL_CACHE)
@@ -72,49 +54,38 @@ self.addEventListener('install', (event) => {
           );
         }
       })
-      .then(() => self.skipWaiting())
   );
 });
 
-/**
- * Activation event: cleans up outdated cache versions and claims clients immediately.
- */
 self.addEventListener('activate', (event) => {
   const allowedCaches = [SHELL_CACHE, RUNTIME_CACHE, GAME_VAULT_CACHE];
 
   event.waitUntil(
-    caches.keys()
-      .then((cacheNames) => {
-        return Promise.all(
-          cacheNames.map((cacheName) => {
-            if (!allowedCaches.includes(cacheName)) {
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      })
-      .then(() => self.clients.claim())
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== STATIC_CACHE_NAME && !key.startsWith(GAME_CACHE_PREFIX)) {
+            return caches.delete(key);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
   );
 });
 
-/**
- * Fetch event: Implements Stale-While-Revalidate for shell and runtime assets,
- * with network fallback and offline navigation support.
- */
+// Dynamic game asset fetch interceptor with LRU cache bucket routing
 self.addEventListener('fetch', (event) => {
   const request = event.request;
-
-  // Only handle HTTP/HTTPS GET requests
-  if (request.method !== 'GET') {
-    return;
-  }
+  if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
+  if (!url.protocol.startsWith('http')) return;
 
-  // Ignore non-http(s) schemes (browser extensions, data URIs, chrome internal, etc.)
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-    return;
-  }
+  // Detect requests to games/ directories: games/<game-id>/...
+  const gameMatch = url.pathname.match(/\/games\/([^/]+)\//);
+  if (gameMatch) {
+    const gameId = gameMatch[1];
+    const cacheName = `${GAME_CACHE_PREFIX}${gameId}`;
 
   event.respondWith(
     caches.open(GAME_VAULT_CACHE).then((gameCache) => gameCache.match(request, { ignoreSearch: true }))
@@ -160,6 +131,24 @@ self.addEventListener('fetch', (event) => {
             event.waitUntil(fetchPromise.catch(() => {}));
             return cachedResponse;
           }
+          return fetch(request).then((networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              const clone = networkResponse.clone();
+              gameCache.put(request, clone).catch(() => {});
+            }
+            return networkResponse;
+          }).catch(() => {
+            return new Response('Offline and game asset not cached', {
+              status: 503,
+              statusText: 'Service Unavailable',
+              headers: new Headers({ 'Content-Type': 'text/plain' })
+            });
+          });
+        });
+      })
+    );
+    return;
+  }
 
           // If cache miss, await network response
           return fetchPromise;
@@ -169,10 +158,39 @@ self.addEventListener('fetch', (event) => {
 });
 
 /**
+ * Background Sync API listener for offline score and favorite dispatch
+ */
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'av-sync-offline-queue') {
+    event.waitUntil(
+      self.clients.matchAll({ includeUncontrolled: true, type: 'window' }).then((clients) => {
+        if (clients && clients.length > 0) {
+          clients.forEach((client) => {
+            client.postMessage({ type: 'AV_TRIGGER_OFFLINE_SYNC' });
+          });
+        }
+      })
+    );
+  }
+});
+
+/**
  * Message listener for lifecycle commands (e.g. manual skipWaiting)
  */
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
+  if (event.data && (event.data.type === 'SKIP_WAITING' || event.data.action === 'skipWaiting')) {
     self.skipWaiting();
+    return;
+  }
+
+  if (event.data && event.data.type === 'AV_EVICT_GAME_CACHES') {
+    const { evictList } = event.data;
+    if (Array.isArray(evictList)) {
+      evictList.forEach((gameId) => {
+        caches.delete(`${GAME_CACHE_PREFIX}${gameId}`).then(() => {
+          console.log(`[ArcadeVerse:SW] LRU evicted game cache: ${gameId}`);
+        }).catch(() => {});
+      });
+    }
   }
 });
