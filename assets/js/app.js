@@ -5285,3 +5285,48 @@ if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.m
   }
 
   initPwaUpdateNotifier();
+
+
+// ========================================================
+// REAL-TIME BATTERY STATUS THROTTLING ENGINE (#749)
+// ========================================================
+(() => {
+  function broadcastPowerMode(mode) {
+    const gameIframe = document.getElementById('game-iframe');
+    if (gameIframe && gameIframe.contentWindow) {
+      gameIframe.contentWindow.postMessage({
+        type: 'ARCADEVERSE_POWER_MODE',
+        mode: mode
+      }, '*');
+    }
+  }
+
+  function initBatteryWatchdog() {
+    if (typeof navigator !== 'undefined' && 'getBattery' in navigator) {
+      navigator.getBattery().then(battery => {
+        const checkPowerState = () => {
+          const isLowBattery = !battery.charging && battery.level <= 0.20;
+          document.body.classList.toggle('battery-saver-active', isLowBattery);
+          broadcastPowerMode(isLowBattery ? 'power-save' : 'normal');
+
+          if (isLowBattery && typeof showToast === 'function' && !window._batteryToastShown) {
+            window._batteryToastShown = true;
+            showToast('Battery Saver engaged (20% or less). Throttling visual effects.');
+          }
+        };
+
+        battery.addEventListener('levelchange', checkPowerState);
+        battery.addEventListener('chargingchange', checkPowerState);
+        checkPowerState();
+      }).catch(err => {
+        console.warn('[BatteryWatchdog] Not accessible:', err);
+      });
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBatteryWatchdog);
+  } else {
+    initBatteryWatchdog();
+  }
+})();
