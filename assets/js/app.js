@@ -53,7 +53,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentMixFilter = null; // curated mix filter (#583), read by the catalog filter below
   let searchQuery = "";
   let currentSort = "featured";
-  let currentMixFilter = null;
   let searchDebounceTimer = null;
   const CATALOG_SORT_STORAGE_KEY = "arcadeverse_catalog_sort";
   const CATALOG_VIEW_STORAGE_KEY = "arcadeverse_catalog_view";
@@ -2546,7 +2545,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const closedGameId = closedGame ? closedGame.id : null;
     const elementToRestore = lastFocusedElement;
     hideLandscapePrompt();
-    const closedGame = activeGame;
     activeGame = null;
     isGameSessionActive = false;
     // Stop the 15s load timer so a game closed mid load does not raise the error screen later
