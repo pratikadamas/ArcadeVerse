@@ -1,0 +1,12 @@
+{
+  "title": "Astro Courier",
+  "category": "Arcade",
+  "lucideIcon": "package-check",
+  "difficulty": "Intermediate",
+  "description": "Deliver every parcel across three increasingly challenging floating-platform routes while avoiding patrol drones.",
+  "author": "Joita Paul",
+  "github": "joitapaul",
+  "role": "Arcade Developer",
+  "tags": ["Arcade", "Platformer", "Action", "NSOC26"],
+  "featured": false
+}

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07111d">
+  <title>Cyber Grapple: Neon Chasm Swinger | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="hub-link" href="../../index.html" aria-label="Back to ArcadeVerse">AV</a>
+      <div class="brand"><p>ARCADEVERSE / FLIGHT SYSTEMS</p><h1>CYBER <span>GRAPPLE</span></h1></div>
+      <button class="icon-button" id="sound-button" type="button" aria-label="Toggle sound">SOUND ON</button>
+    </header>
+    <section class="telemetry" aria-label="Flight telemetry">
+      <div><small>ALTITUDE</small><strong id="altitude">0 m</strong></div>
+      <div><small>SCORE</small><strong id="score">0</strong></div>
+      <div><small>DATA SHARDS</small><strong id="shards">0</strong></div>
+      <div><small>SWING CHAIN</small><strong id="combo">1x</strong></div>
+      <div><small>BEST CLIMB</small><strong id="best">0 m</strong></div>
+    </section>
+    <section class="arena" aria-label="Game area">
+      <canvas id="game" width="480" height="720" aria-label="Cyber Grapple game. Click an anchor to swing; arrow keys steer."></canvas>
+      <div class="signal"><span class="signal-dot"></span><span id="status">READY FOR DROP</span></div>
+      <div class="overlay visible" id="start-screen"><div class="panel"><div class="eyebrow">ASCENT PROTOCOL 07</div><h2>KEEP MOVING.<br><span>THE VOID IS RISING.</span></h2><p>Latch onto a glowing core, build swing speed, then release to launch upward. Gather data shards and stay ahead of the glitch tide.</p><button class="primary" id="start-button" type="button">BEGIN ASCENT</button><button class="text-button" id="rules-button" type="button">VIEW FLIGHT CONTROLS</button></div></div>
+      <div class="overlay" id="end-screen"><div class="panel"><div class="eyebrow">SIGNAL LOST</div><h2>ASCENT<br><span>TERMINATED</span></h2><p id="result">Altitude: 0 m · Shards: 0</p><button class="primary" id="restart-button" type="button">RETRY FLIGHT</button></div></div>
+      <div class="overlay" id="rules-screen"><div class="panel rules-panel"><div class="eyebrow">PILOT FIELD GUIDE</div><h2>FLIGHT<br><span>CONTROLS</span></h2><p><b>Grapple:</b> Click or touch an anchor within range. Release to slingshot.</p><p><b>Steer:</b> A/D or left/right arrows pump your swing.</p><p><b>Winch:</b> W/S or up/down arrows shorten and lengthen the cable.</p><p><b>Boost:</b> Space spends one collected energy charge. Touch controls are below the arena.</p><button class="primary" id="close-rules" type="button">GOT IT</button></div></div>
+    </section>
+    <section class="touch-controls" aria-label="Touch flight controls">
+      <button type="button" data-control="left" aria-label="Steer left">◀</button><button type="button" data-control="winch-in" aria-label="Winch in">CABLE −</button><button type="button" data-control="boost" class="boost" aria-label="Boost">BOOST <span id="boost-count">0</span></button><button type="button" data-control="winch-out" aria-label="Winch out">CABLE +</button><button type="button" data-control="right" aria-label="Steer right">▶</button>
+    </section>
+    <footer>VELOCITY IS YOUR LIFELINE <span>·</span> ESC TO PAUSE</footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10172b">
+  <title>Astro Courier | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Astro Courier home">
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M5 10 16 4l11 6v12l-11 6L5 22z"/>
+          <path d="m5 10 11 6 11-6M16 16v12M10 7l12 7"/>
+        </svg>
+        <span>ARCADEVERSE <i>/</i> ASTRO COURIER</span>
+      </a>
+      <div class="top-actions">
+        <button id="restart-button" class="button button-quiet" type="button">Restart level</button>
+        <button id="pause-button" class="button button-quiet" type="button" disabled>Pause</button>
+      </div>
+    </header>
+
+    <section class="intro">
+      <div>
+        <p class="eyebrow">PACKAGE RUN / PLATFORMER</p>
+        <h1>Deliver beyond <span>the clouds.</span></h1>
+        <p class="subtitle">Hop between sky routes, pick up every parcel, and reach the drop zone.</p>
+      </div>
+      <div class="route-stamp" aria-hidden="true">
+        <span>ROUTE</span>
+        <strong>03</strong>
+        <span>DESTINATIONS</span>
+      </div>
+    </section>
+
+    <section class="game-layout" aria-label="Astro Courier game">
+      <div class="play-column">
+        <section class="hud" aria-label="Game status">
+          <div class="hud-card">
+            <span class="hud-label">DISTRICT</span>
+            <strong id="level-value">01 / 03</strong>
+          </div>
+          <div class="hud-card">
+            <span class="hud-label">PARCELS</span>
+            <strong id="package-value">0 / 3</strong>
+          </div>
+          <div class="hud-card">
+            <span class="hud-label">DELIVERIES</span>
+            <strong id="delivery-value">0</strong>
+          </div>
+          <div class="hud-card">
+            <span class="hud-label">SCORE</span>
+            <strong id="score-value">0000</strong>
+          </div>
+        </section>
+
+        <div class="game-frame">
+          <canvas id="game-canvas" width="960" height="540" tabindex="0" role="img"
+            aria-label="Astro Courier platform game. Collect all parcels and reach the delivery gate.">
+            Your browser does not support the canvas game.
+          </canvas>
+
+          <section id="start-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="start-title">
+            <div class="dialog-card">
+              <p class="eyebrow">COURIER BRIEFING</p>
+              <h2 id="start-title">A delivery run above the clouds</h2>
+              <p>Collect every parcel on the route, avoid the moving hazard drones, then reach the glowing drop gate.</p>
+              <ul class="brief-list">
+                <li><strong>Move:</strong> A / D or the left and right arrow keys.</li>
+                <li><strong>Jump:</strong> Press W, the up arrow, or Space while on a platform. Tap again to jump again.</li>
+                <li><strong>Goal:</strong> Collect every parcel before entering the delivery gate.</li>
+                <li><strong>Scoring:</strong> Parcels and completed deliveries add points. Avoid hazards to keep your lives.</li>
+                <li><strong>Pause / restart:</strong> P or Escape pauses; R restarts the current district.</li>
+              </ul>
+              <button id="start-button" class="button button-primary" type="button">Start delivery</button>
+            </div>
+          </section>
+
+          <section id="pause-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
+            <div class="dialog-card dialog-compact">
+              <p class="eyebrow">ROUTE ON HOLD</p>
+              <h2 id="pause-title">Take a breather</h2>
+              <p>Your parcels are safe. Resume when you are ready.</p>
+              <button id="resume-button" class="button button-primary" type="button">Resume route</button>
+            </div>
+          </section>
+
+          <section id="level-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="level-title" hidden>
+            <div class="dialog-card dialog-compact">
+              <p class="eyebrow">DELIVERY CONFIRMED</p>
+              <h2 id="level-title">Route complete</h2>
+              <p id="level-summary"></p>
+              <button id="next-level-button" class="button button-primary" type="button">Next district</button>
+            </div>
+          </section>
+
+          <section id="series-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="series-title" hidden>
+            <div class="dialog-card dialog-compact">
+              <p class="eyebrow">ALL ROUTES COMPLETE</p>
+              <h2 id="series-title">Every parcel delivered</h2>
+              <p id="series-summary"></p>
+              <button id="play-again-button" class="button button-primary" type="button">Play again</button>
+            </div>
+          </section>
+
+          <section id="gameover-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="gameover-title" hidden>
+            <div class="dialog-card dialog-compact">
+              <p class="eyebrow">ROUTE INTERRUPTED</p>
+              <h2 id="gameover-title">Out of courier lives</h2>
+              <p id="gameover-summary"></p>
+              <button id="retry-button" class="button button-primary" type="button">Retry district</button>
+            </div>
+          </section>
+        </div>
+
+        <div class="status-row">
+          <p id="status-message" role="status" aria-live="polite">Start your first route when you are ready.</p>
+          <div class="lives" aria-label="Courier lives remaining">
+            <span class="hud-label">LIVES</span>
+            <strong id="lives-value">3</strong>
+          </div>
+        </div>
+
+        <div class="touch-controls" aria-label="Touch controls">
+          <div class="move-controls">
+            <button class="touch-button" type="button" data-control="left" aria-label="Move left">LEFT</button>
+            <button class="touch-button" type="button" data-control="right" aria-label="Move right">RIGHT</button>
+          </div>
+          <button class="touch-button touch-jump" type="button" data-control="jump" aria-label="Jump">JUMP</button>
+        </div>
+      </div>
+
+      <aside class="guide-panel">
+        <div class="guide-heading">
+          <div>
+            <p class="eyebrow">FIELD GUIDE</p>
+            <h2>Make the drop</h2>
+          </div>
+          <svg viewBox="0 0 48 48" aria-hidden="true">
+            <path d="M8 16 24 7l16 9v18l-16 9-16-9z"/>
+            <path d="m8 16 16 9 16-9M24 25v18"/>
+          </svg>
+        </div>
+        <p class="guide-copy">Each district is a new route across floating platforms. Land carefully, collect all parcels, and step into the gate to deliver.</p>
+
+        <div class="guide-section">
+          <h3>Route hazards</h3>
+          <div class="guide-item"><span class="swatch swatch-platform"></span><span><strong>Cloud decks</strong><small>Land from above to keep moving.</small></span></div>
+          <div class="guide-item"><span class="swatch swatch-parcel"></span><span><strong>Packages</strong><small>Collect every parcel before the gate opens.</small></span></div>
+          <div class="guide-item"><span class="swatch swatch-hazard"></span><span><strong>Patrol drones</strong><small>Touching a drone costs one life.</small></span></div>
+          <div class="guide-item"><span class="swatch swatch-goal"></span><span><strong>Delivery gate</strong><small>Reach it after gathering the full shipment.</small></span></div>
+        </div>
+
+        <div class="guide-section control-guide">
+          <h3>Controls</h3>
+          <p><kbd>A</kbd> <kbd>D</kbd> or <kbd>Arrow keys</kbd> move</p>
+          <p><kbd>W</kbd> / <kbd>Up</kbd> / <kbd>Space</kbd> jump</p>
+          <p><kbd>P</kbd> / <kbd>Esc</kbd> pause; <kbd>R</kbd> restart district</p>
+        </div>
+
+        <div class="shipment-card">
+          <span class="shipment-icon" aria-hidden="true">
+            <svg viewBox="0 0 32 32"><path d="m4 10 12-6 12 6v14l-12 6-12-6z"/><path d="m4 10 12 6 12-6M16 16v14M10 7l12 7"/></svg>
+          </span>
+          <div><span class="hud-label">SHIPMENT BONUS</span><strong>Every parcel counts</strong></div>
+        </div>
+      </aside>
+    </section>
+
+    <footer class="footer-note">
+      <span>THREE DISTRICTS / ONE SKYWAY</span>
+      <span>VANILLA HTML / CSS / JAVASCRIPT</span>
+    </footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
