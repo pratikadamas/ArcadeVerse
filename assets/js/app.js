@@ -2023,6 +2023,75 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function triggerGameCrashBoundary(gameObj, errorDetails) {
+    if (gameIframe) gameIframe.style.display = "none";
+    let errorBoundary = document.getElementById("modal-error-boundary");
+    if (!errorBoundary) {
+      errorBoundary = document.createElement("div");
+      errorBoundary.id = "modal-error-boundary";
+      errorBoundary.className = "modal-error-boundary";
+      const frameWrap = document.querySelector(".modal-frame-wrapper");
+      if (frameWrap) frameWrap.appendChild(errorBoundary);
+    }
+
+    const errMessage = (errorDetails && errorDetails.message) || "Runtime execution halted.";
+    const errStack = (errorDetails && errorDetails.stack) || "No diagnostic stack trace available.";
+
+    errorBoundary.innerHTML = `
+      <div class="boundary-content">
+        <div class="boundary-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#ff0055" stroke-width="2">
+            <polygon points="12 2 2 22 22 22"></polygon>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <circle cx="12" cy="17" r="1" fill="#ff0055"></circle>
+          </svg>
+        </div>
+        <h3 class="boundary-title">Game Runtime Crash Detected</h3>
+        <p class="boundary-desc">
+          An unhandled error occurred in <strong>${(gameObj && gameObj.title) || 'the game'}</strong>: <code>${escapeHTML(errMessage)}</code>
+        </p>
+        <details class="boundary-diagnostic-details">
+          <summary>Diagnostic Error Dump</summary>
+          <pre class="boundary-stack-pre"><code>${escapeHTML(errStack)}</code></pre>
+        </details>
+        <div class="boundary-actions">
+          <button class="btn btn-primary btn-sm" id="boundary-restart-btn">
+            <span>Restart Game</span>
+          </button>
+          <button class="btn btn-secondary btn-sm" id="boundary-catalog-btn">
+            <span>Return to Catalog</span>
+          </button>
+        </div>
+      </div>
+    `;
+
+    const restartBtn = errorBoundary.querySelector("#boundary-restart-btn");
+    if (restartBtn) {
+      restartBtn.addEventListener("click", () => {
+        resetIframeBoundary();
+        iframeLoadSucceeded = false;
+        if (gameIframe && gameObj) {
+          gameIframe.src = buildIsolatedGameUrl(gameObj);
+          startIframeTimeout(gameObj);
+        }
+      });
+    }
+
+    const catalogBtn = errorBoundary.querySelector("#boundary-catalog-btn");
+    if (catalogBtn) {
+      catalogBtn.addEventListener("click", () => {
+        closeGameModal();
+      });
+    }
+  }
+
+  // Hook iframe error message broadcaster (#728)
+  window.addEventListener("message", (event) => {
+    if (event.data && event.data.type === "ARCADEVERSE_GAME_CRASH") {
+      triggerGameCrashBoundary(activeGame, event.data.error || { message: event.data.message, stack: event.data.stack });
+    }
+  });
+
   function startIframeTimeout(gameObj) {
     resetIframeBoundary();
     iframeLoadSucceeded = false;
