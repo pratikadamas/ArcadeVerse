@@ -38,7 +38,7 @@
   }
 
   /**
-   * Procedural Multi-Curve Noise Buffer Synthesizer (#724)
+   * Procedural Multi-Curve Noise Buffer Synthesizer (#701, #724)
    * Produces White, Pink (1/f), and Brownian (1/f^2) noise buffers without external audio assets.
    * Supports polymorphic signatures: (type, duration, customCtx) or (ctx, duration, type).
    * @param {string|AudioContext} type - Noise curve name ('white', 'pink', 'brownian') or AudioContext
@@ -282,7 +282,7 @@
       filter.connect(gain);
       gain.connect(masterGain || ctx.destination);
 
-      // Memory cleanup on sound node termination (#724)
+      // Memory cleanup on sound node termination (#701, #724)
       noiseSource.onended = function () {
         try {
           noiseSource.disconnect();
@@ -334,7 +334,7 @@
       filter.connect(gain);
       gain.connect(masterGain || ctx.destination);
 
-      // Memory cleanup on sound node termination (#724)
+      // Memory cleanup on sound node termination (#701, #724)
       noiseSource.onended = function () {
         try {
           noiseSource.disconnect();
@@ -787,7 +787,7 @@
     },
 
     /**
-     * Procedural Noise Buffer Factory (#724)
+     * Procedural Noise Buffer Factory (#701, #724)
      * Generates native AudioBuffer containing white, pink (1/f), or brownian (1/f^2) noise.
      * @param {string} [type='white'] - Noise spectral curve: 'white', 'pink', 'brownian' (or 'brown' / 'red')
      * @param {number} [duration=0.25] - Buffer duration in seconds

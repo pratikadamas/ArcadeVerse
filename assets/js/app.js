@@ -5074,6 +5074,7 @@ if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.m
     vcScript.src = 'assets/js/virtual-controller.js';
     document.body.appendChild(vcScript);
   }
+}
 
   // ========================================================
   // NON-INTRUSIVE PWA UPDATE AVAILABLE NOTIFIER & SKIPWAITING (#555)
@@ -5179,3 +5180,5 @@ if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.m
       });
     }
   }
+
+  initPwaUpdateNotifier();
