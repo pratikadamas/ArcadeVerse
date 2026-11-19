@@ -49,6 +49,7 @@
   <link rel="stylesheet" href="assets/css/sound-engine.css">
   <link rel="stylesheet" href="assets/css/network-detector.css">
   <link rel="stylesheet" href="assets/css/leaderboard.css">
+  <link rel="stylesheet" href="assets/css/playtime-heatmap.css">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -145,6 +146,7 @@
       <span class="section-tag">LIVE GITHUB RANKINGS</span>
       <h1 class="section-title">Hall of Fame & Leaderboard</h1>
       <p class="section-subtitle">Real-time contribution rankings calculated from verified commits, PR merges, and games registered in NSOC '26.</p>
+      <button type="button" class="btn btn-secondary" data-open-playtime>Your play activity</button>
     </div>
 
     <!-- View Switcher: Community Contributor vs Admin Leaderboard -->
@@ -714,12 +716,38 @@
   <script src="assets/js/sound-engine.js"></script>
   <script src="assets/js/keyboard-shortcuts.js"></script>
   <script src="assets/js/leaderboard.js"></script>
+  <script src="assets/js/playtime-heatmap.js"></script>
+  <script src="assets/js/arcade-token-dispenser.js"></script>
   <script src="assets/js/network-detector.js"></script>
   <script>
     if (window.lucide) {
       lucide.createIcons();
     }
   </script>
+  <!-- Contributor Authored Games Drawer (#682) -->
+  <div class="author-games-drawer-overlay" id="author-games-drawer" role="dialog" aria-modal="true" aria-labelledby="author-drawer-title" aria-hidden="true" style="display: none;">
+    <div class="author-games-backdrop" id="author-games-backdrop"></div>
+    <div class="author-games-drawer-panel" id="author-games-panel">
+      <div class="author-games-header">
+        <div class="author-games-title-wrap">
+          <div class="author-games-icon-wrap" aria-hidden="true">
+            <i data-lucide="gamepad-2"></i>
+          </div>
+          <div>
+            <h2 id="author-drawer-title" class="author-drawer-title">Verified Games Library</h2>
+            <p class="author-drawer-subtitle" id="author-drawer-subtitle">Verified games built for ArcadeVerse</p>
+          </div>
+        </div>
+        <button type="button" class="author-drawer-close-btn" id="close-author-drawer-btn" aria-label="Close games drawer">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="author-games-body" id="author-games-body">
+        <!-- Rendered dynamically by leaderboard.js -->
+      </div>
+    </div>
+  </div>
+
   <!-- Badge Legend & Milestone Modal -->
   <div class="badge-legend-modal-overlay" id="badge-legend-modal" role="dialog" aria-modal="true" aria-labelledby="badge-legend-title" aria-hidden="true" style="display: none;">
     <div class="badge-legend-backdrop" id="badge-legend-backdrop"></div>
