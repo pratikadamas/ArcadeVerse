@@ -2138,10 +2138,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // Bind the load / error listeners on the current game iframe. closeGameModal swaps in a fresh
   // iframe node, so this runs again for each new one.
   function bindGameIframeListeners() {
-  if (gameIframe) {
-    gameIframe.addEventListener("load", () => {
+  const frame = gameIframe;
+  if (frame) {
+    frame.addEventListener("load", () => {
       // Ignore blanking resets
-      if (!frame.src || frame.src.includes("about:blank")) return;
+      if (frame !== gameIframe || !frame.src || frame.src.includes("about:blank")) return;
 
       iframeLoadSucceeded = true;
       resetIframeBoundary();
@@ -2251,6 +2252,30 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Modal Handlers
+  // Restore the catalog's namespaced storage URL bridge (#493, #824).
+  function buildIsolatedGameUrl(game) {
+    if (!game) return "";
+    const path = typeof game === "string" ? game : game.path;
+    if (!path) return "";
+    const url = new URL(path, document.baseURI);
+    if (typeof game === "object" && game.id) url.searchParams.set("gameId", game.id);
+    return url.href;
+  }
+
+  // The shared sound engine owns preferences; keep legacy modal/SDK callers
+  // working even when the optional multi-channel mixer is not installed.
+  function syncAudioPreferences(muted) {
+    const engine = window.SoundEngine;
+    if (!engine) return { muted: true, volume: 0 };
+    if (typeof muted === "boolean" && typeof engine.setMuted === "function") engine.setMuted(muted);
+    return { muted: !engine.enabled, volume: Number.isFinite(engine.volume) ? Math.max(0, Math.min(1, engine.volume)) : 0 };
+  }
+
+  function broadcastVolumeSyncToGame(muted, volume) {
+    if (!gameIframe || !gameIframe.contentWindow) return;
+    gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_VOLUME_SYNC", sessionToken: activeGameSession.token, muted, volume, gain: muted ? 0 : volume }, "*");
+  }
+
   function openGameModal(game, triggerElement = null, isDirectDeepLink = false) {
     if (!game) return;
 
@@ -2371,7 +2396,7 @@ document.addEventListener("DOMContentLoaded", () => {
     checkOrientationLandscapePrompt(game);
 
     // "Players Also Played" Intelligent Recommendation Strip in Modal Footer (#591)
-    renderModalRecommendations(game);
+    if (typeof renderModalRecommendations === "function") renderModalRecommendations(game);
 
     if (!isDirectDeepLink) {
       modalPushedHistory = true;
@@ -4724,7 +4749,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initAZJumpBar();
   initURLDeepLinking();
   initControlsLegend();
-  initMultiChannelAudioMixer();
+  if (typeof initMultiChannelAudioMixer === "function") initMultiChannelAudioMixer();
   initPwaUpdateNotifier();
 });
 
