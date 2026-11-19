@@ -11995,3 +11995,104 @@ html.a11y-reduced-motion .search-clear-btn {
   white-space: nowrap;
   border-width: 0;
 }
+
+
+/* ===================================================
+   PERIODIC HEAP MEMORY MONITOR & ALERT BANNER (#707)
+   =================================================== */
+
+.av-memory-warning-banner {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: rgba(20, 15, 30, 0.95);
+  border: 1px solid rgba(255, 170, 0, 0.6);
+  border-radius: 8px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 12px rgba(255, 170, 0, 0.3);
+  z-index: 10000;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: #fff;
+  max-width: 90%;
+}
+
+.av-memory-warning-banner.visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.av-memory-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffaa00;
+  flex-shrink: 0;
+}
+
+.av-memory-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.av-memory-title {
+  font-weight: 700;
+  color: #ffaa00;
+  font-size: 0.85rem;
+}
+
+.av-memory-desc {
+  color: #cbd5e1;
+  font-size: 0.76rem;
+}
+
+.av-memory-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.btn-memory-purge {
+  background: #ffaa00;
+  color: #0f172a;
+  border: none;
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.btn-memory-purge:hover {
+  background: #ffbb22;
+  transform: translateY(-1px);
+}
+
+.btn-memory-dismiss {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.2s ease;
+}
+
+.btn-memory-dismiss:hover {
+  color: #fff;
+}
