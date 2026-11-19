@@ -4,7 +4,7 @@
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   const ui = {
-    altitude: document.getElementById('altitude'), shards: document.getElementById('shards'),
+    altitude: document.getElementById('altitude'), score: document.getElementById('score'), shards: document.getElementById('shards'),
     combo: document.getElementById('combo'), best: document.getElementById('best'),
     boost: document.getElementById('boost-count'), status: document.getElementById('status'),
     start: document.getElementById('start-screen'), end: document.getElementById('end-screen'),
@@ -87,7 +87,7 @@
     player.x = 240; player.y = 590; player.vx = 0; player.vy = -45; player.anchor = null; player.length = 0; player.invuln = 1.2;
     anchors = []; hazards = []; cores = []; particles = []; tideY = 840; nextWorldY = 490;
     for (let i = 0; i < 8; i++) { addStage(nextWorldY); nextWorldY -= rand(125, 165); }
-    ui.altitude.textContent = '0 m'; ui.shards.textContent = '0'; ui.combo.textContent = '1x'; ui.boost.textContent = '0';
+    ui.altitude.textContent = '0 m'; ui.score.textContent = '0'; ui.shards.textContent = '0'; ui.combo.textContent = '1x'; ui.boost.textContent = '0';
   }
 
   function begin() {
@@ -100,12 +100,13 @@
     if (!running) return;
     running = false; player.anchor = null; sound(120, 0.42, 'sawtooth');
     const altitude = Math.max(0, Math.floor((590 - highest) / 10));
-    score = altitude + shards * 100;
+    score = altitude * combo + shards * 100 * combo;
     if (altitude > best) {
       best = altitude;
       try { localStorage.setItem('cyber_grapple_best', String(best)); } catch (_) {}
     }
     ui.best.textContent = best + ' m';
+    ui.score.textContent = String(score);
     ui.result.textContent = (message || 'Altitude reached') + ': ' + altitude + ' m · ' + shards + ' shards · score ' + score;
     ui.end.classList.add('visible'); ui.status.textContent = 'SIGNAL LOST';
   }
@@ -234,6 +235,7 @@
     cores = cores.filter(c => c.y < camera + canvas.height + 100 && !c.taken);
     const altitude = Math.max(0, Math.floor((590 - highest) / 10));
     ui.altitude.textContent = altitude + ' m';
+    ui.score.textContent = String(altitude * combo + shards * 100 * combo);
   }
 
   function drawBackground() {
