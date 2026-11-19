@@ -267,21 +267,30 @@
     return cell === '$' || cell === '*';
   }
 
+  const MAX_HISTORY_MOVES = 50;
+
   function recordHistory() {
-    const cloneGrid = grid.map(row => [...row]);
+    // Deep state serialization of grid matrix and entangled crate states
+    const serializedGrid = JSON.stringify(grid);
     historyStack.push({
-      grid: cloneGrid,
+      gridJson: serializedGrid,
       playerX,
       playerY,
       moves,
-      pushes
+      pushes,
+      timestamp: Date.now()
     });
+    // Keep stack capacity strictly bounded to avoid memory desync
+    if (historyStack.length > MAX_HISTORY_MOVES) {
+      historyStack.shift();
+    }
   }
 
   function undo() {
     if (historyStack.length === 0 || isLevelCompleted) return;
     const prev = historyStack.pop();
-    grid = prev.grid;
+    // Atomic state deserialization restores all entangled crate references synchronously
+    grid = JSON.parse(prev.gridJson);
     playerX = prev.playerX;
     playerY = prev.playerY;
     moves = prev.moves;
