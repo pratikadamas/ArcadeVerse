@@ -16,9 +16,9 @@
   } else if (typeof module === "object" && module.exports) {
     module.exports = factory();
   } else {
-    var instance = factory();
-    root.ArcadeVerse = instance;
-    root.arcadeverse = instance;
+    var inst = factory();
+    root.ArcadeVerse = inst;
+    root.arcadeverse = inst; // Case-insensitive alias (#720)
   }
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
@@ -920,6 +920,46 @@
   /**
    * Initializes message bridging with parent window
    */
+
+  function applyReducedMotionClass(reduce) {
+    try {
+      if (typeof document !== 'undefined' && document.documentElement) {
+        if (reduce) {
+          document.documentElement.classList.add('av-reduced-motion');
+          if (document.body) document.body.classList.add('av-reduced-motion');
+        } else {
+          document.documentElement.classList.remove('av-reduced-motion');
+          if (document.body) document.body.classList.remove('av-reduced-motion');
+        }
+      }
+    } catch (_) {}
+  }
+
+  // Auto-detect and tag documentElement with reduced motion class on initialization (#720)
+  try {
+    if (typeof window !== 'undefined') {
+      var isInitialReduced = (function () {
+        if (window.location && window.location.search && /[?&]reducedMotion=(1|true)/i.test(window.location.search)) return true;
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true;
+        if (localStorage.getItem('arcadeverse_reduced_motion') === 'true') return true;
+        return false;
+      })();
+      applyReducedMotionClass(isInitialReduced);
+
+      if (window.matchMedia) {
+        var motionMq = window.matchMedia('(prefers-reduced-motion: reduce)');
+        var handleMotionMqChange = function (e) {
+          applyReducedMotionClass(e.matches);
+        };
+        if (motionMq.addEventListener) {
+          motionMq.addEventListener('change', handleMotionMqChange);
+        } else if (motionMq.addListener) {
+          motionMq.addListener(handleMotionMqChange);
+        }
+      }
+    }
+  } catch (_) {}
+
   function init() {
     if (isInitialized) return;
     if (typeof window !== "undefined") {
@@ -2316,6 +2356,143 @@
         canvas.arcadeverseCamera = controller;
         return controller;
       }
+    },
+
+    /**
+     * Pointer lock controller for first-person canvas games.
+     */
+    initPointerLock: function (canvas, options) {
+      if (!canvas) return null;
+      var opts = options || {};
+      var sensitivity = typeof opts.sensitivity === 'number' ? opts.sensitivity : 1.0;
+      var onMove = typeof opts.onMove === 'function' ? opts.onMove : function () {};
+      var onLockChange = typeof opts.onLockChange === 'function' ? opts.onLockChange : function () {};
+
+      // Create HUD pill if not already present
+      var hud = document.getElementById('av-pointer-lock-hud');
+      if (!hud) {
+        hud = document.createElement('div');
+        hud.id = 'av-pointer-lock-hud';
+        hud.setAttribute('role', 'status');
+        hud.setAttribute('aria-live', 'polite');
+        hud.innerHTML = '<span class="hud-dot"></span><span>Pointer Locked &mdash; Press <kbd>ESC</kbd> to Release</span>';
+        hud.style.cssText = 'position:fixed;top:1rem;left:50%;transform:translateX(-50%);background:rgba(15,23,42,0.92);border:1px solid #38bdf8;box-shadow:0 0 15px rgba(56,189,248,0.3);color:#f8fafc;padding:0.4rem 0.9rem;border-radius:20px;font-size:0.8rem;font-weight:600;display:none;align-items:center;gap:0.5rem;z-index:99999;pointer-events:none;transition:opacity 0.25s ease;';
+        document.body.appendChild(hud);
+      }
+
+      function handleMouseMove(e) {
+        if (document.pointerLockElement === canvas) {
+          var mx = (e.movementX || 0) * sensitivity;
+          var my = (e.movementY || 0) * sensitivity;
+          onMove(mx, my, e);
+        }
+      }
+
+      function handleLockChange() {
+        var locked = document.pointerLockElement === canvas;
+        if (hud) {
+          hud.style.display = locked ? 'flex' : 'none';
+        }
+        onLockChange(locked);
+      }
+
+      document.addEventListener('pointerlockchange', handleLockChange);
+      document.addEventListener('mousemove', handleMouseMove);
+
+      return {
+        requestLock: function () {
+          try {
+            if (canvas.requestPointerLock) {
+              canvas.requestPointerLock();
+            }
+          } catch (_) {}
+        },
+        exitLock: function () {
+          try {
+            if (document.exitPointerLock) {
+              document.exitPointerLock();
+            }
+          } catch (_) {}
+        },
+        isLocked: function () {
+          return document.pointerLockElement === canvas;
+        },
+        destroy: function () {
+          document.removeEventListener('pointerlockchange', handleLockChange);
+          document.removeEventListener('mousemove', handleMouseMove);
+          if (hud && hud.parentElement) {
+            hud.remove();
+          }
+        }
+      };
+    },
+
+    // ========================================================
+    // ACCESSIBILITY & REDUCED MOTION SUBSYSTEM (#720)
+    // WCAG 2.3.3 (Animation from Interactions) Compliance
+    // ========================================================
+    a11y: {
+      /**
+       * Queries whether the user prefers reduced motion.
+       * Inspects OS media query, iframe query parameters, and persisted preferences.
+       * @returns {boolean}
+       */
+      prefersReducedMotion: function () {
+        try {
+          if (typeof window !== 'undefined') {
+            // 1. URL parameter override (passed by hub modal during launch)
+            if (window.location && window.location.search) {
+              if (/[?&]reducedMotion=(1|true)/i.test(window.location.search)) {
+                return true;
+              }
+            }
+            // 2. Native OS prefers-reduced-motion media query
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+              return true;
+            }
+            // 3. Persisted user preference in localStorage
+            if (localStorage.getItem('arcadeverse_reduced_motion') === 'true') {
+              return true;
+            }
+          }
+        } catch (_) {}
+        return false;
+      },
+
+      /**
+       * Subscribes to live OS / browser reduced-motion setting changes.
+       * @param {Function} callback - Receives boolean (prefersReduced)
+       */
+      onReducedMotionChange: function (callback) {
+        if (typeof callback !== 'function') return;
+        try {
+          if (typeof window !== 'undefined' && window.matchMedia) {
+            var mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+            if (mq.addEventListener) {
+              mq.addEventListener('change', function (e) { callback(e.matches); });
+            } else if (mq.addListener) {
+              mq.addListener(function (e) { callback(e.matches); });
+            }
+          }
+        } catch (_) {}
+      },
+
+      /**
+       * Filter helper for canvas games: suppresses camera/screen shake deltas
+       * when reduced motion is enabled to prevent vestibular distress.
+       * @param {number} shakeIntensity - Requested shake pixel magnitude
+       * @returns {number} 0 if reduced motion active, otherwise shakeIntensity
+       */
+      filterShake: function (shakeIntensity) {
+        return this.prefersReducedMotion() ? 0 : (Number(shakeIntensity) || 0);
+      }
+    },
+
+    /**
+     * Top-level alias for arcadeverse.a11y.prefersReducedMotion (#720)
+     */
+    prefersReducedMotion: function () {
+      return this.a11y.prefersReducedMotion();
     },
 
     /**

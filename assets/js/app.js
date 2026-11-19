@@ -3,6 +3,13 @@
  * Handles live games catalog, in-app modal launcher, and category/search filtering
  */
 
+if (!window.PWACachePrewarmer && !document.querySelector('script[data-pwa-cache-prewarmer]')) {
+  const prewarmerScript = document.createElement("script");
+  prewarmerScript.src = new URL("assets/js/pwa-cache-prewarmer.js", document.baseURI).href;
+  prewarmerScript.dataset.pwaCachePrewarmer = "true";
+  document.head.appendChild(prewarmerScript);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   // Ensure viewport has viewport-fit=cover for safe-area insets on mobile
   const metaViewport = document.querySelector('meta[name="viewport"]');
@@ -64,20 +71,25 @@ document.addEventListener("DOMContentLoaded", () => {
   } catch (_) {}
   let lastFocusedElement = null;
 
-  // Screen reader live region, used by the launch / catalog / pause announcements below
-  function announceToScreenReader(message) {
+  // Persistent screen reader live region announcer (#702)
+  // Supports polite status messages and assertive priority alerts compliant with WCAG 4.1.3
+  function announceToScreenReader(message, priority = "polite") {
     if (!message) return;
-    let liveRegion = document.getElementById("a11y-live-region");
+    let liveRegion = document.getElementById("a11y-announcer") || document.getElementById("a11y-live-region");
     if (!liveRegion) {
       liveRegion = document.createElement("div");
-      liveRegion.id = "a11y-live-region";
+      liveRegion.id = "a11y-announcer";
       liveRegion.className = "sr-only";
       liveRegion.setAttribute("role", "status");
       liveRegion.setAttribute("aria-live", "polite");
       liveRegion.setAttribute("aria-atomic", "true");
       document.body.appendChild(liveRegion);
     }
-    // Clear first so a repeated message is announced again
+    const urgency = priority === "assertive" ? "assertive" : "polite";
+    if (liveRegion.getAttribute("aria-live") !== urgency) {
+      liveRegion.setAttribute("aria-live", urgency);
+    }
+    // Clear first so repeated identical messages (e.g. "Game paused.") re-announce reliably
     liveRegion.textContent = "";
     setTimeout(() => {
       liveRegion.textContent = message;
@@ -335,6 +347,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let activeGame = null;
   let modalPushedHistory = false;
   let closeAutocomplete = () => { };
+  let lastAnnouncedScore = 0;
+  let lastScoreAnnouncementTime = 0;
+  let currentSessionHighScore = 0;
+  let isNewHighScoreAnnounced = false;
 
   // History API State Synchronization & Deep-Linking Engine
   function syncURLState(push = false) {
@@ -1920,6 +1936,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (window.lucide) {
       lucide.createIcons();
     }
+    if (window.PWACachePrewarmer && typeof window.PWACachePrewarmer.refreshBadges === "function") {
+      window.PWACachePrewarmer.refreshBadges();
+    }
   }
 
   // Global modal state variables
@@ -2129,10 +2148,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // Bind the load / error listeners on the current game iframe. closeGameModal swaps in a fresh
   // iframe node, so this runs again for each new one.
   function bindGameIframeListeners() {
-  if (gameIframe) {
-    gameIframe.addEventListener("load", () => {
+  const frame = gameIframe;
+  if (frame) {
+    frame.addEventListener("load", () => {
       // Ignore blanking resets
-      if (!frame.src || frame.src.includes("about:blank")) return;
+      if (frame !== gameIframe || !frame.src || frame.src.includes("about:blank")) return;
 
       iframeLoadSucceeded = true;
       resetIframeBoundary();
@@ -2242,6 +2262,30 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Modal Handlers
+  // Restore the catalog's namespaced storage URL bridge (#493, #824).
+  function buildIsolatedGameUrl(game) {
+    if (!game) return "";
+    const path = typeof game === "string" ? game : game.path;
+    if (!path) return "";
+    const url = new URL(path, document.baseURI);
+    if (typeof game === "object" && game.id) url.searchParams.set("gameId", game.id);
+    return url.href;
+  }
+
+  // The shared sound engine owns preferences; keep legacy modal/SDK callers
+  // working even when the optional multi-channel mixer is not installed.
+  function syncAudioPreferences(muted) {
+    const engine = window.SoundEngine;
+    if (!engine) return { muted: true, volume: 0 };
+    if (typeof muted === "boolean" && typeof engine.setMuted === "function") engine.setMuted(muted);
+    return { muted: !engine.enabled, volume: Number.isFinite(engine.volume) ? Math.max(0, Math.min(1, engine.volume)) : 0 };
+  }
+
+  function broadcastVolumeSyncToGame(muted, volume) {
+    if (!gameIframe || !gameIframe.contentWindow) return;
+    gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_VOLUME_SYNC", sessionToken: activeGameSession.token, muted, volume, gain: muted ? 0 : volume }, "*");
+  }
+
   function openGameModal(game, triggerElement = null, isDirectDeepLink = false) {
     if (!game) return;
 
@@ -2291,7 +2335,9 @@ document.addEventListener("DOMContentLoaded", () => {
     modalGameAuthor.textContent = `Built by @${game.author}`;
     lastAnnouncedScore = 0;
     lastScoreAnnouncementTime = Date.now();
-    announceToScreenReader(`Launching ${game.title}. Category: ${game.category}. Built by ${game.author}.`);
+    if (typeof announceToScreenReader === "function") {
+      announceToScreenReader(`Launching ${game.title}. Category: ${game.category}. Built by ${game.author}.`);
+    }
     startIframeTimeout(game);
 
     const audioState = syncAudioPreferences();
@@ -2354,7 +2400,7 @@ document.addEventListener("DOMContentLoaded", () => {
     checkOrientationLandscapePrompt(game);
 
     // "Players Also Played" Intelligent Recommendation Strip in Modal Footer (#591)
-    renderModalRecommendations(game);
+    if (typeof renderModalRecommendations === "function") renderModalRecommendations(game);
 
     if (!isDirectDeepLink) {
       modalPushedHistory = true;
@@ -2454,6 +2500,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       quitDialog.querySelector("#btn-quit-keep-playing").addEventListener("click", () => {
         hideQuitConfirmationModal();
+        announceToScreenReader("Game resumed.");
         if (gameIframe && gameIframe.contentWindow) {
           try {
             gameIframe.contentWindow.focus();
@@ -2469,6 +2516,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     quitDialog.classList.add("active");
+    announceToScreenReader("Game paused. Quit confirmation dialog opened. Choose Keep Playing or Quit to Catalog.");
     const keepPlayingBtn = quitDialog.querySelector("#btn-quit-keep-playing");
     if (keepPlayingBtn) {
       setTimeout(() => keepPlayingBtn.focus(), 50);
@@ -2492,7 +2540,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeGameModal(isFromPopState = false) {
     if (!gameModal || (!gameModal.classList.contains("active") && !activeGame)) return;
-    const closedGameId = activeGame ? activeGame.id : null;
+    const closedGame = activeGame;
+    const closedGameTitle = closedGame ? closedGame.title : "Game";
+    const closedGameId = closedGame ? closedGame.id : null;
     const elementToRestore = lastFocusedElement;
     hideLandscapePrompt();
     activeGame = null;
@@ -2501,7 +2551,10 @@ document.addEventListener("DOMContentLoaded", () => {
     resetIframeBoundary();
     gameModal.classList.remove("active");
     gameModal.setAttribute("aria-hidden", "true");
-    hideGameLoader();
+    window.dispatchEvent(new CustomEvent("arcadeverse:game-closed", { detail: closedGame }));
+    if (newTabBtn) {
+      newTabBtn.href = "#";
+    }
 
     // Standardized Game Lifecycle Bridge: Dispatch teardown & pause events before unmounting iframe
     try {
@@ -2677,7 +2730,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (modalFavBtn) {
     modalFavBtn.addEventListener("click", () => {
       if (activeGame) {
+        const wasFav = isFavorite(activeGame.id);
         toggleFavorite(activeGame.id);
+        announceToScreenReader(wasFav ? `Removed ${activeGame.title} from favorites.` : `Saved ${activeGame.title} to favorites.`);
       }
     });
   }
@@ -2692,6 +2747,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       const audioState = syncAudioPreferences();
       broadcastVolumeSyncToGame(audioState.muted, audioState.volume);
+      announceToScreenReader(audioState.muted ? "Game audio muted." : "Game audio unmuted.");
     });
   }
 
@@ -2701,12 +2757,14 @@ document.addEventListener("DOMContentLoaded", () => {
       setTimeout(() => {
         const audioState = syncAudioPreferences();
         broadcastVolumeSyncToGame(audioState.muted, audioState.volume);
+        announceToScreenReader(audioState.muted ? "Global audio muted." : "Global audio unmuted.");
       }, 0);
     });
   }
 
   if (reloadBtn) {
     reloadBtn.addEventListener("click", () => {
+      announceToScreenReader("Restarting game...");
       const targetSrc = (activeGame && buildIsolatedGameUrl(activeGame)) || gameIframe.src;
       if (targetSrc) {
         gameIframe.src = "";
@@ -2998,20 +3056,50 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Screen reader score announcement throttler (#513)
-    let lastAnnouncedScore = 0;
-    let lastScoreAnnouncementTime = 0;
+    // Handle pause and resume event messages from child games (#702)
+    if (type === "ARCADEVERSE_PAUSE" || type === "ARCADEVERSE_GAME_PAUSED") {
+      announceToScreenReader("Game paused.");
+      return;
+    }
 
-    // Handle score events from verified child games
+    if (type === "ARCADEVERSE_RESUME" || type === "ARCADEVERSE_GAME_RESUMED") {
+      announceToScreenReader("Game resumed.");
+      return;
+    }
+
+    // Handle explicit high score notification messages (#702)
+    if (type === "ARCADEVERSE_HIGH_SCORE" || type === "ARCADEVERSE_NEW_HIGH_SCORE") {
+      const hs = Number(e.data.score || e.data.highScore) || currentSessionHighScore;
+      if (hs > 0) {
+        currentSessionHighScore = Math.max(currentSessionHighScore, hs);
+        announceToScreenReader(`New high score! ${hs} points.`, "assertive");
+      }
+      return;
+    }
+
+    // Handle score events from verified child games (#513, #702)
     if (type === "ARCADEVERSE_GAME_SCORE") {
       const score = Number(e.data.score) || 0;
       const now = Date.now();
-      // Announce milestone scores or periodically (every 5 seconds or on major point jumps) without flooding every frame
-      if (typeof announceToScreenReader === "function" && (score >= lastAnnouncedScore + 100 || (now - lastScoreAnnouncementTime > 5000 && score !== lastAnnouncedScore))) {
+
+      // Check if player has achieved a new personal high score (#702)
+      if (score > currentSessionHighScore && currentSessionHighScore > 0 && !isNewHighScoreAnnounced) {
+        isNewHighScoreAnnounced = true;
+        currentSessionHighScore = score;
+        announceToScreenReader(`New high score! ${score} points.`, "assertive");
+      } else if (score > currentSessionHighScore) {
+        currentSessionHighScore = score;
+        if (typeof announceToScreenReader === "function" && (score >= lastAnnouncedScore + 100 || (now - lastScoreAnnouncementTime > 5000 && score !== lastAnnouncedScore))) {
+          announceToScreenReader(`Score: ${score}`);
+          lastAnnouncedScore = score;
+          lastScoreAnnouncementTime = now;
+        }
+      } else if (typeof announceToScreenReader === "function" && (score >= lastAnnouncedScore + 100 || (now - lastScoreAnnouncementTime > 5000 && score !== lastAnnouncedScore))) {
         announceToScreenReader(`Score: ${score}`);
         lastAnnouncedScore = score;
         lastScoreAnnouncementTime = now;
       }
+
       window.dispatchEvent(
         new CustomEvent("arcadeverse:score-update", {
           detail: {
@@ -3027,9 +3115,19 @@ document.addEventListener("DOMContentLoaded", () => {
     // Handle game-over lifecycle events
     if (type === "ARCADEVERSE_GAME_OVER") {
       const details = e.data.details || {};
-      const finalScore = details.score != null ? details.score : lastAnnouncedScore;
+      const finalScore = details.score != null ? Number(details.score) : lastAnnouncedScore;
       if (typeof announceToScreenReader === "function") {
-        announceToScreenReader(`Game over. Final score: ${finalScore}.`);
+        if (finalScore > currentSessionHighScore && finalScore > 0) {
+          currentSessionHighScore = finalScore;
+          try {
+            if (activeGame) {
+              localStorage.setItem(`av_${activeGame.id}_highScore`, String(finalScore));
+            }
+          } catch (_) { }
+          announceToScreenReader(`Game over. New high score: ${finalScore} points!`, "assertive");
+        } else {
+          announceToScreenReader(`Game over. Final score: ${finalScore}.`);
+        }
       }
 
       // Offline dispatch queue integration (#554)
@@ -3099,6 +3197,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     fullscreenBtn.setAttribute("aria-pressed", isNowFullscreen ? "true" : "false");
     fullscreenBtn.title = isNowFullscreen ? "Exit Fullscreen" : "Fullscreen Game";
+    announceToScreenReader(isNowFullscreen ? "Entered fullscreen mode." : "Exited fullscreen mode.");
 
     // Detect iOS / WebKit touch devices to activate pseudo-fullscreen viewport styling
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
@@ -4656,7 +4755,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initAZJumpBar();
   initURLDeepLinking();
   initControlsLegend();
-  initMultiChannelAudioMixer();
+  if (typeof initMultiChannelAudioMixer === "function") initMultiChannelAudioMixer();
   initPwaUpdateNotifier();
 });
 
@@ -5074,6 +5173,7 @@ if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.m
     vcScript.src = 'assets/js/virtual-controller.js';
     document.body.appendChild(vcScript);
   }
+}
 
   // ========================================================
   // NON-INTRUSIVE PWA UPDATE AVAILABLE NOTIFIER & SKIPWAITING (#555)
@@ -5179,3 +5279,5 @@ if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.m
       });
     }
   }
+
+  initPwaUpdateNotifier();
