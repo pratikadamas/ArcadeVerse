@@ -2503,7 +2503,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 662,
+    "commits": 663,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2767,6 +2767,21 @@ const CONTRIBUTORS_REGISTRY = [
     "avatarInitial": "N",
     "role": "Contributor (NSOC '26)",
     "commits": 3,
+    "gamesCount": 0,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Quality & Platform Contribution"
+    ]
+  },
+  {
+    "name": "divyanshagarwal123",
+    "github": "divyanshagarwal123",
+    "avatarInitial": "D",
+    "role": "Contributor (NSOC '26)",
+    "commits": 2,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,
