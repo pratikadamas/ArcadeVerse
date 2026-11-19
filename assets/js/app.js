@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentCatalogView = "grid";
   try {
     const savedView = localStorage.getItem(CATALOG_VIEW_STORAGE_KEY);
-    if (savedView === "list" || savedView === "grid") {
+    if (savedView === "list" || savedView === "grid" || savedView === "floor") {
       currentCatalogView = savedView;
     }
   } catch (_) {}
@@ -1226,6 +1226,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderGames() {
+    if (window.ArcadeFloor) window.ArcadeFloor.destroy();
     gamesGrid.innerHTML = "";
     gamesGrid.classList.toggle("view-list", currentCatalogView === "list");
     const favs = getFavorites();
@@ -1402,6 +1403,14 @@ document.addEventListener("DOMContentLoaded", () => {
         return a.title.localeCompare(b.title);
       }
     });
+
+    if (currentCatalogView === "floor" && window.ArcadeFloor) {
+      updateResultsCount(filtered.length, isFuzzyFallback);
+      updateFacetSummaryUI();
+      window.ArcadeFloor.render(gamesGrid, filtered);
+      announceToScreenReader(`Arcade floor updated. Showing ${filtered.length} cabinets.`);
+      return;
+    }
 
     // Handle Empty State with Fuzzy Smart Suggestions
     if (filtered.length === 0) {
@@ -2696,6 +2705,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (_) {}
       }
       if (closedGameId) {
+        if (window.ArcadeFloor && window.ArcadeFloor.focusGame(closedGameId)) return;
         const fallbackEl = document.querySelector(`.game-card[data-game-id="${closedGameId}"] .btn-play-trigger`) ||
                            document.querySelector(`.game-card[data-game-id="${closedGameId}"]`);
         if (fallbackEl && typeof fallbackEl.focus === "function") {
@@ -4338,23 +4348,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // --- Catalog Layout Switcher Engine (Grid vs Compact List View) ---
+  // --- Catalog Layout Switcher Engine ---
   function setCatalogView(view) {
-    currentCatalogView = view === "list" ? "list" : "grid";
+    currentCatalogView = view === "floor" && window.ArcadeFloor ? "floor" : view === "list" ? "list" : "grid";
     ArcadeStorageResilience.safeSetItem(CATALOG_VIEW_STORAGE_KEY, currentCatalogView);
-
-    if (gamesGrid) {
-      gamesGrid.classList.toggle("view-list", currentCatalogView === "list");
+    for (const button of document.querySelectorAll(".catalog-view-switcher [data-view]")) {
+      const active = button.dataset.view === currentCatalogView;
+      button.classList.toggle("active", active); button.setAttribute("aria-pressed", String(active));
     }
-
-    const gridBtn = document.getElementById("view-grid-btn");
-    const listBtn = document.getElementById("view-list-btn");
-    if (gridBtn && listBtn) {
-      gridBtn.classList.toggle("active", currentCatalogView === "grid");
-      gridBtn.setAttribute("aria-pressed", currentCatalogView === "grid" ? "true" : "false");
-      listBtn.classList.toggle("active", currentCatalogView === "list");
-      listBtn.setAttribute("aria-pressed", currentCatalogView === "list" ? "true" : "false");
-    }
+    if (gamesGrid) renderGames();
   }
 
   function initCatalogViewSwitcher() {
@@ -4366,6 +4368,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (listBtn) {
       listBtn.addEventListener("click", () => setCatalogView("list"));
     }
+    const floorBtn = document.getElementById("view-floor-btn");
+    if (floorBtn) floorBtn.addEventListener("click", () => setCatalogView("floor"));
     setCatalogView(currentCatalogView);
   }
 
