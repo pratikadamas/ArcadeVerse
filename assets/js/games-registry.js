@@ -535,6 +535,26 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "cyber-grapple_hrshjswniii",
+    "title": "Cyber Grapple: Neon Chasm Swinger",
+    "category": "Platformer",
+    "lucideIcon": "gamepad-2",
+    "description": "Swing between unstable neon anchors, dodge laser gates, and outrun the rising glitch tide in a momentum-driven chasm climb.",
+    "author": "Harsh Jaiswani",
+    "github": "hrshjswniii",
+    "role": "Arcade Contributor",
+    "path": "games/cyber-grapple_hrshjswniii/index.html",
+    "tags": [
+      "Platformer",
+      "Physics",
+      "Grapple",
+      "Action",
+      "Arcade"
+    ],
+    "stars": 0,
+    "featured": false
+  },
+  {
     "id": "cyber-gravity-hopper_babin",
     "title": "Cyber Gravity Hopper",
     "category": "Platformer",
@@ -2503,7 +2523,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 663,
+    "commits": 675,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2690,7 +2710,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "pratikadamas",
     "avatarInitial": "P",
     "role": "Contributor (NSOC '26)",
-    "commits": 81,
+    "commits": 99,
     "gamesCount": 1,
     "mechanicsBonus": 0,
     "platformPRs": 1,
@@ -2705,14 +2725,15 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "hrshjswniii",
     "avatarInitial": "H",
     "role": "Active Contributor (NSOC '26)",
-    "commits": 25,
-    "gamesCount": 2,
+    "commits": 32,
+    "gamesCount": 3,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 1,
     "bonusPts": 0,
     "contributions": [
       "Cyber Brick Breaker: Neon Velocity",
+      "Cyber Grapple: Neon Chasm Swinger",
       "Cyber Typer: Terminal Hacker"
     ]
   },
@@ -2762,11 +2783,11 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "nilesh0199",
-    "github": "nilesh0199",
-    "avatarInitial": "N",
+    "name": "divyanshagarwal123",
+    "github": "divyanshagarwal123",
+    "avatarInitial": "D",
     "role": "Contributor (NSOC '26)",
-    "commits": 3,
+    "commits": 4,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,
@@ -2777,11 +2798,11 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "divyanshagarwal123",
-    "github": "divyanshagarwal123",
-    "avatarInitial": "D",
+    "name": "nilesh0199",
+    "github": "nilesh0199",
+    "avatarInitial": "N",
     "role": "Contributor (NSOC '26)",
-    "commits": 2,
+    "commits": 3,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,
