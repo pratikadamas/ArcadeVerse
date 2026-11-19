@@ -2204,7 +2204,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let modalLaunchCooldownTimer = null;
   let closeModalCleanupTimer = null;
 
-  // Screen Wake Lock Controller (#723)
+  // Screen Wake Lock Controller (#700, #723)
   // Keeps screen awake during active gameplay sessions on mobile devices
   let screenWakeLock = null;
 
@@ -2239,6 +2239,10 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       releaseScreenWakeLock();
     }
+  });
+
+  window.addEventListener("pagehide", () => {
+    releaseScreenWakeLock();
   });
 
   // Modal Handlers
@@ -2492,6 +2496,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeGameModal(isFromPopState = false) {
     if (!gameModal || (!gameModal.classList.contains("active") && !activeGame)) return;
+    releaseScreenWakeLock();
     const closedGameId = activeGame ? activeGame.id : null;
     const elementToRestore = lastFocusedElement;
     hideLandscapePrompt();
@@ -5074,6 +5079,7 @@ if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.m
     vcScript.src = 'assets/js/virtual-controller.js';
     document.body.appendChild(vcScript);
   }
+}
 
   // ========================================================
   // NON-INTRUSIVE PWA UPDATE AVAILABLE NOTIFIER & SKIPWAITING (#555)
@@ -5179,3 +5185,5 @@ if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.m
       });
     }
   }
+
+  initPwaUpdateNotifier();
