@@ -11995,3 +11995,127 @@ html.a11y-reduced-motion .search-clear-btn {
   white-space: nowrap;
   border-width: 0;
 }
+
+
+/* ===================================================
+   SAVE-STATE BACKUP & RESTORE MODAL (#747)
+   =================================================== */
+
+.backup-restore-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-sm, 6px);
+  color: var(--text-secondary, #94a3b8);
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.backup-restore-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--accent-primary, #00f3ff);
+  border-color: rgba(0, 243, 255, 0.3);
+}
+
+.backup-restore-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 1rem;
+}
+
+.backup-restore-modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.backup-restore-modal-card {
+  background: var(--bg-card, #131722);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.15));
+  border-radius: var(--radius-md, 10px);
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 16px rgba(0, 243, 255, 0.15);
+  padding: 1.5rem;
+}
+
+.backup-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.backup-modal-header h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+  margin: 0;
+}
+
+.backup-modal-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.backup-modal-close:hover {
+  color: #fff;
+}
+
+.backup-modal-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #94a3b8);
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+}
+
+.backup-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 540px) {
+  .backup-actions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.backup-action-box {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm, 6px);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.backup-action-box h4 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent-primary, #00f3ff);
+  margin: 0;
+}
+
+.backup-action-box p {
+  font-size: 0.78rem;
+  color: var(--text-muted, #64748b);
+  margin: 0 0 0.5rem;
+  flex-grow: 1;
+}

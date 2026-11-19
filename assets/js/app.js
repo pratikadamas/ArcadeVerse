@@ -5285,3 +5285,131 @@ if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.m
   }
 
   initPwaUpdateNotifier();
+
+
+// ========================================================
+// GAME SESSION SAVE-STATE BACKUP & RESTORE HANDLER (#747)
+// ========================================================
+(() => {
+  function exportSaveStateBackup() {
+    try {
+      const backupData = {
+        app: 'ArcadeVerse',
+        version: '1.0',
+        schemaVersion: '1.0',
+        exportedAt: new Date().toISOString(),
+        totalGames: Array.isArray(window.GAMES_REGISTRY) ? window.GAMES_REGISTRY.length : 0,
+        storage: {}
+      };
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('av_') || key.startsWith('arcadeverse_') || key.includes('score') || key.includes('favorite') || key.includes('streak'))) {
+          backupData.storage[key] = localStorage.getItem(key);
+        }
+      }
+
+      const jsonString = JSON.stringify(backupData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const dateStr = new Date().toISOString().split('T')[0];
+      link.href = url;
+      link.download = `arcadeverse-backup-${dateStr}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      if (typeof showToast === 'function') {
+        showToast('Save-state backup downloaded successfully.');
+      }
+    } catch (err) {
+      console.error('[Backup] Export failed:', err);
+      if (typeof showToast === 'function') {
+        showToast('Failed to export backup file.');
+      }
+    }
+  }
+
+  function restoreSaveStateBackup(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        if (!parsed || parsed.app !== 'ArcadeVerse' || !parsed.storage || typeof parsed.storage !== 'object') {
+          throw new Error('Invalid ArcadeVerse backup schema.');
+        }
+
+        let restoredCount = 0;
+        for (const [key, value] of Object.entries(parsed.storage)) {
+          if (typeof key === 'string' && typeof value === 'string') {
+            // Guard against script injection into storage
+            const sanitizedKey = key.replace(/[^a-zA-Z0-9_\-]/g, '');
+            if (sanitizedKey.startsWith('av_') || sanitizedKey.startsWith('arcadeverse_')) {
+              localStorage.setItem(sanitizedKey, value);
+              restoredCount++;
+            }
+          }
+        }
+
+        if (typeof showToast === 'function') {
+          showToast(`Successfully restored ${restoredCount} save entries. Reloading...`);
+        }
+        setTimeout(() => window.location.reload(), 800);
+      } catch (err) {
+        console.error('[Backup] Restore failed:', err);
+        if (typeof showToast === 'function') {
+          showToast('Failed to restore backup: ' + err.message);
+        }
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const triggerBtn = document.getElementById('backup-restore-trigger-btn');
+    const modal = document.getElementById('backup-restore-modal');
+    const closeBtn = document.getElementById('backup-modal-close-btn');
+    const exportBtn = document.getElementById('btn-export-backup-json');
+    const importBtn = document.getElementById('btn-import-backup-json');
+    const fileInput = document.getElementById('backup-file-input');
+
+    if (triggerBtn && modal) {
+      triggerBtn.addEventListener('click', () => {
+        modal.classList.add('active');
+        modal.setAttribute('aria-hidden', 'false');
+      });
+    }
+
+    if (closeBtn && modal) {
+      closeBtn.addEventListener('click', () => {
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+      });
+    }
+
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.classList.remove('active');
+          modal.setAttribute('aria-hidden', 'true');
+        }
+      });
+    }
+
+    if (exportBtn) {
+      exportBtn.addEventListener('click', exportSaveStateBackup);
+    }
+
+    if (importBtn && fileInput) {
+      importBtn.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          restoreSaveStateBackup(e.target.files[0]);
+        }
+      });
+    }
+  });
+})();
