@@ -11995,3 +11995,29 @@ html.a11y-reduced-motion .search-clear-btn {
   white-space: nowrap;
   border-width: 0;
 }
+
+
+/* ===================================================
+   REAL-TIME BATTERY STATUS THROTTLING (#749)
+   =================================================== */
+
+body.battery-saver-active {
+  --transition-speed: 0s;
+}
+
+body.battery-saver-active .ambient-canvas,
+body.battery-saver-active .grid-shimmer,
+body.battery-saver-active .glow-orb {
+  display: none !important;
+}
+
+body.battery-saver-active * {
+  box-shadow: none !important;
+  text-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+body.battery-saver-active .game-card:hover {
+  transform: none !important;
+}
