@@ -24,6 +24,24 @@
   "use strict";
 
   // ========================================================
+  // LOCALSTORAGE VOLUME & MUTE CROSS-IFRAME SYNCHRONIZER (#697)
+  // Ensures av_master_volume & av_sound_muted persist and propagate across iframes
+  // ========================================================
+  try {
+    if (typeof window !== "undefined") {
+      window.addEventListener("storage", function (e) {
+        if (e.key === "av_master_volume" || e.key === "av_sound_muted" || e.key === "arcadeverse_audio_settings") {
+          var isMuted = localStorage.getItem("av_sound_muted") === "true";
+          var vol = parseFloat(localStorage.getItem("av_master_volume"));
+          if (!isNaN(vol)) currentAudioConfig.volume = Math.max(0, Math.min(1, vol));
+          currentAudioConfig.muted = isMuted;
+          executeHandlers(audioConfigHandlers, currentAudioConfig);
+        }
+      });
+    }
+  } catch (_) {}
+
+  // ========================================================
   // IN-IFRAME STORAGE NAMESPACE PROXY SUBSYSTEM (#493)
   // ========================================================
   var detectedGameId = (function () {
@@ -1727,13 +1745,26 @@
     },
 
     /**
-     * Expose or connect ArcadeAudio sound synthesizer to SDK instance (#510)
+     * Expose or connect ArcadeAudio sound synthesizer to SDK instance (#510, #694)
      */
     getSoundSynthesizer: function () {
       if (typeof window !== 'undefined' && window.ArcadeAudio) {
         return window.ArcadeAudio;
       }
       return null;
+    },
+
+    audio: {
+      playBGM: function (trackName) {
+        if (typeof window !== 'undefined' && window.ArcadeAudio && typeof window.ArcadeAudio.playBGM === 'function') {
+          window.ArcadeAudio.playBGM(trackName);
+        }
+      },
+      stopBGM: function () {
+        if (typeof window !== 'undefined' && window.ArcadeAudio && typeof window.ArcadeAudio.stopBGM === 'function') {
+          window.ArcadeAudio.stopBGM();
+        }
+      }
     },
 
     // ========================================================
