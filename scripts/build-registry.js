@@ -100,84 +100,151 @@ function loadContributorOverrides(filePath = OVERRIDES_FILE) {
 
 const { profiles: KNOWN_PROFILES, emailMap: EMAIL_MAP } = loadContributorOverrides();
 
-// Bidirectional alias & canonical lookup indices (#715)
-const ALIAS_TO_CANONICAL = new Map();
-const ALPHANUMERIC_TO_CANONICAL = new Map();
-
-function initCanonicalIndices() {
-  ALIAS_TO_CANONICAL.clear();
-  ALPHANUMERIC_TO_CANONICAL.clear();
-
-  // Index known profile canonical keys and aliases
-  for (const [canonicalKey, profile] of Object.entries(KNOWN_PROFILES)) {
-    ALIAS_TO_CANONICAL.set(canonicalKey, canonicalKey);
-
-    const stripped = canonicalKey.replace(/[^a-z0-9]/g, '');
-    if (stripped) {
-      ALPHANUMERIC_TO_CANONICAL.set(stripped, canonicalKey);
-      ALIAS_TO_CANONICAL.set(stripped, canonicalKey);
-    }
-
-    if (profile.github) {
-      const ghLower = profile.github.trim().toLowerCase();
-      ALIAS_TO_CANONICAL.set(ghLower, canonicalKey);
-      const ghStripped = ghLower.replace(/[^a-z0-9]/g, '');
-      if (ghStripped) {
-        ALPHANUMERIC_TO_CANONICAL.set(ghStripped, canonicalKey);
-        ALIAS_TO_CANONICAL.set(ghStripped, canonicalKey);
-      }
-    }
-
-    if (profile.name) {
-      const nameLower = profile.name.trim().toLowerCase();
-      ALIAS_TO_CANONICAL.set(nameLower, canonicalKey);
-      const nameHyphen = nameLower.replace(/\s+/g, '-');
-      ALIAS_TO_CANONICAL.set(nameHyphen, canonicalKey);
-      const nameStripped = nameLower.replace(/[^a-z0-9]/g, '');
-      if (nameStripped) {
-        ALPHANUMERIC_TO_CANONICAL.set(nameStripped, canonicalKey);
-        ALIAS_TO_CANONICAL.set(nameStripped, canonicalKey);
-      }
-    }
-  }
-
-  // Index email map target aliases
-  for (const [email, targetUser] of Object.entries(EMAIL_MAP)) {
-    const normTarget = targetUser.trim().toLowerCase();
-    const canonical = resolveCanonicalUser(normTarget);
-    EMAIL_MAP[email] = canonical;
-    ALIAS_TO_CANONICAL.set(normTarget, canonical);
-  }
-}
-
 /**
- * Resolves any raw username, alias, git author, or handle into its canonical verified profile key (#715)
- * Case-insensitive and normalizes delimiters (e.g. "Sarbajit-Sengupta" vs "sarbajitsengupta" -> "sarbajit-sengupta")
- * @param {string} rawIdentifier
- * @returns {string}
+ * Contributor Username & Email Deduplication Engine (#686)
+ * Normalizes Git author handles, email addresses, and known profile mappings
+ * to ensure 100% case-insensitive lookup, accurate commit aggregation,
+ * and unified profile representation across the ArcadeVerse ecosystem.
  */
-function resolveCanonicalUser(rawIdentifier) {
-  if (!rawIdentifier || typeof rawIdentifier !== 'string') return '';
-  const clean = rawIdentifier.trim().toLowerCase();
-  if (!clean) return '';
 
-  if (ALIAS_TO_CANONICAL.has(clean)) {
-    return ALIAS_TO_CANONICAL.get(clean);
+class ContributorDeduplicator {
+  constructor(knownProfiles = {}, emailMap = {}) {
+    this.knownProfiles = knownProfiles;
+    this.emailMap = emailMap;
+    this.aliasMap = new Map();
+    this.alphaNumMap = new Map();
+    this.resolutionAuditLog = [];
+    this.initIndices();
   }
 
-  if (KNOWN_PROFILES[clean]) {
+  /**
+   * Initializes bidirectional canonical indices from overrides and known profiles
+   */
+  initIndices() {
+    this.aliasMap.clear();
+    this.alphaNumMap.clear();
+
+    // Index known profile canonical keys and aliases
+    for (const [canonicalKey, profile] of Object.entries(this.knownProfiles)) {
+      const lowerKey = canonicalKey.trim().toLowerCase();
+      this.aliasMap.set(lowerKey, lowerKey);
+
+      const stripped = lowerKey.replace(/[^a-z0-9]/g, '');
+      if (stripped) {
+        this.alphaNumMap.set(stripped, lowerKey);
+        this.aliasMap.set(stripped, lowerKey);
+      }
+
+      if (profile.github) {
+        const ghLower = profile.github.trim().toLowerCase();
+        this.aliasMap.set(ghLower, lowerKey);
+        const ghStripped = ghLower.replace(/[^a-z0-9]/g, '');
+        if (ghStripped) {
+          this.alphaNumMap.set(ghStripped, lowerKey);
+          this.aliasMap.set(ghStripped, lowerKey);
+        }
+      }
+
+      if (profile.name) {
+        const nameLower = profile.name.trim().toLowerCase();
+        this.aliasMap.set(nameLower, lowerKey);
+        const nameHyphen = nameLower.replace(/\s+/g, '-');
+        this.aliasMap.set(nameHyphen, lowerKey);
+        const nameStripped = nameLower.replace(/[^a-z0-9]/g, '');
+        if (nameStripped) {
+          this.alphaNumMap.set(nameStripped, lowerKey);
+          this.aliasMap.set(nameStripped, lowerKey);
+        }
+      }
+    }
+
+    // Index email map target aliases
+    for (const [email, targetUser] of Object.entries(this.emailMap)) {
+      const normEmail = email.trim().toLowerCase();
+      const normTarget = targetUser.trim().toLowerCase();
+      const canonical = this.resolve(normTarget);
+      this.emailMap[normEmail] = canonical;
+      this.aliasMap.set(normTarget, canonical);
+    }
+  }
+
+  /**
+   * Resolves any raw username, alias, git author, or handle into its canonical verified profile key
+   * Case-insensitive, delimiter-neutral (e.g. "Sarbajit-Sengupta" vs "sarbajitsengupta" -> "sarbajit-sengupta")
+   * @param {string} rawIdentifier
+   * @returns {string}
+   */
+  resolve(rawIdentifier) {
+    if (!rawIdentifier || typeof rawIdentifier !== 'string') return '';
+    const clean = rawIdentifier.trim().toLowerCase();
+    if (!clean) return '';
+
+    if (this.aliasMap.has(clean)) {
+      return this.aliasMap.get(clean);
+    }
+
+    if (this.knownProfiles[clean]) {
+      return clean;
+    }
+
+    const alphaNum = clean.replace(/[^a-z0-9]/g, '');
+    if (alphaNum && this.alphaNumMap.has(alphaNum)) {
+      return this.alphaNumMap.get(alphaNum);
+    }
+
     return clean;
   }
 
-  const alphaNum = clean.replace(/[^a-z0-9]/g, '');
-  if (alphaNum && ALPHANUMERIC_TO_CANONICAL.has(alphaNum)) {
-    return ALPHANUMERIC_TO_CANONICAL.get(alphaNum);
+  /**
+   * Resolves an author by raw username/name and email
+   * @param {string} rawName
+   * @param {string} rawEmail
+   * @returns {string}
+   */
+  resolveAuthor(rawName, rawEmail) {
+    const cleanEmail = (rawEmail || '').trim().toLowerCase();
+    let rawKey = this.emailMap[cleanEmail];
+
+    if (!rawKey && cleanEmail) {
+      const ghMatch = cleanEmail.match(/(?:\d+\+)?([a-z0-9-]+)@users\.noreply\.github\.com/i);
+      if (ghMatch) rawKey = ghMatch[1].toLowerCase();
+    }
+
+    if (!rawKey && rawName) {
+      rawKey = rawName.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    }
+
+    const canonicalKey = this.resolve(rawKey);
+
+    if (rawKey && canonicalKey && rawKey.toLowerCase() !== canonicalKey.toLowerCase()) {
+      this.logResolution(rawKey, cleanEmail, canonicalKey);
+    }
+
+    return canonicalKey;
   }
 
-  return clean;
+  /**
+   * Records resolution notice for console audit and verification telemetry
+   */
+  logResolution(rawKey, email, canonicalKey) {
+    const notice = `[Deduplication Notice] Resolved git commit author "${rawKey}" (<${email}>) -> primary profile "${canonicalKey}".`;
+    this.resolutionAuditLog.push({ rawKey, email, canonicalKey, notice });
+    console.log(notice);
+  }
+
+  /**
+   * Returns complete audit log of unified contributor aliases
+   */
+  getAuditLog() {
+    return this.resolutionAuditLog;
+  }
 }
 
-initCanonicalIndices();
+const deduplicator = new ContributorDeduplicator(KNOWN_PROFILES, EMAIL_MAP);
+
+function resolveCanonicalUser(rawIdentifier) {
+  return deduplicator.resolve(rawIdentifier);
+}
 
 function getGitCommitCounts() {
   const commitCounts = new Map();
@@ -195,20 +262,8 @@ function getGitCommitCounts() {
         continue;
       }
 
-      let rawKey = EMAIL_MAP[email];
-      if (!rawKey) {
-        const ghMatch = email.match(/(?:\d+\+)?([a-z0-9-]+)@users\.noreply\.github\.com/i);
-        if (ghMatch) rawKey = ghMatch[1].toLowerCase();
-      }
-      if (!rawKey) {
-        rawKey = name.toLowerCase().replace(/[^a-z0-9-]/g, '');
-      }
-
-      const canonicalKey = resolveCanonicalUser(rawKey);
-
-      if (rawKey && canonicalKey && rawKey.toLowerCase() !== canonicalKey.toLowerCase()) {
-        console.log(`[Deduplication Notice] Resolved git commit author "${rawKey}" (<${email}>) -> primary profile "${canonicalKey}".`);
-      }
+      const canonicalKey = deduplicator.resolveAuthor(name, email);
+      if (!canonicalKey) continue;
 
       const existing = commitCounts.get(canonicalKey) || 0;
       commitCounts.set(canonicalKey, existing + count);
