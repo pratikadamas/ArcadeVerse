@@ -86,16 +86,18 @@
     const result = read(); notice(result.message || actionMessage); if (!result.ok) return;
     const query = dialog.querySelector("input[type=search]").value.toLowerCase(), signature = JSON.stringify([query, result.rows.map(row => [row.key, row.raw])]);
     if (!force && signature === lastView) return; lastView = signature;
-    const host = dialog.querySelector("[data-tree]"), openPaths = new Set([...host.querySelectorAll("details[open]")].map(node => node.dataset.path)); host.replaceChildren();
+    const host = dialog.querySelector("[data-tree]"), active = document.activeElement, ownedFocus = host.contains(active);
+    const focusedPath = ownedFocus ? active.closest("details")?.dataset.path : null, resetKey = ownedFocus ? active.dataset.resetKey : null;
+    const openPaths = new Set([...host.querySelectorAll("details[open]")].map(node => node.dataset.path)); host.replaceChildren();
     const rows = result.rows.filter(row => `${row.key}\n${row.raw || ""}`.toLowerCase().includes(query));
     dialog.querySelector("[data-count]").textContent = `${rows.length} matching keys · ${result.complete ? "complete" : "partial"} read · refreshed while open`;
     for (const row of rows) {
       const section = element("section", undefined, "storage-lab-key"), heading = element("h3", row.key); section.appendChild(heading);
       section.appendChild(element("p", row.kind, row.malformed ? "storage-lab-invalid" : "storage-lab-kind"));
-      section.appendChild(row.raw === null ? element("p", "Value was not parsed or retained.") : tree(row.value, "Value", row.key, 0, { remaining: 200 }, openPaths));
-      if (row.raw !== null) { const raw = element("details"); raw.appendChild(element("summary", "Raw stored text")); raw.appendChild(element("pre", row.raw, "storage-lab-value")); section.appendChild(raw); }
+      section.appendChild(row.raw === null ? element("p", "Value was not parsed or retained.") : tree(row.value, "Value", JSON.stringify([row.key]), 0, { remaining: 200 }, openPaths));
+      if (row.raw !== null) { const raw = element("details"); raw.dataset.path = JSON.stringify([row.key, "raw"]); raw.open = openPaths.has(raw.dataset.path); raw.appendChild(element("summary", "Raw stored text")); raw.appendChild(element("pre", row.raw, "storage-lab-value")); section.appendChild(raw); }
       if (row.malformed) {
-        const button = element("button", `Reset ${row.key}`); button.type = "button";
+        const button = element("button", `Reset ${row.key}`); button.type = "button"; button.dataset.resetKey = row.key;
         button.addEventListener("click", async () => {
           const revision = storageRevision;
           if (!window.confirm(`Remove only ${row.key}? Its consumer will use defaults after reload. This cannot reconstruct the original value. Close other tabs first; concurrent writers can race this check.`)) return;
@@ -114,6 +116,10 @@
       host.appendChild(section);
     }
     if (!rows.length) host.appendChild(element("p", "No matching arcadeverse_* keys."));
+    if (ownedFocus) {
+      const target = resetKey ? [...host.querySelectorAll("button")].find(node => node.dataset.resetKey === resetKey) : [...host.querySelectorAll("details")].find(node => node.dataset.path === focusedPath)?.querySelector("summary");
+      (target || dialog.querySelector("input")).focus({ preventScroll: true });
+    }
   }
   function show() { enabled = true; launch.textContent = "Storage lab"; if (!dialog.open) dialog.showModal(); refresh(true); poll(); }
   function snapshot() {
