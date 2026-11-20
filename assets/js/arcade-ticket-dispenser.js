@@ -88,7 +88,7 @@
     clearSpool(); spool = element("div", undefined, "av-ticket-spool"); spool.setAttribute("aria-hidden", "true");
     spool.innerHTML = '<div class="av-ticket-machine">TICKETS<span></span></div><div class="av-ticket-paper"><strong></strong><span>PLAY · WIN · REDEEM</span></div>';
     spool.querySelector("strong").textContent = `+${result.earned}`; document.body.appendChild(spool);
-    chatter(result.value.equipped.sound === "retro-sound"); spoolTimer = setTimeout(clearSpool, 1200);
+    chatter(result.value.equipped.sound === "retro-sound"); spoolTimer = setTimeout(clearSpool, 2400);
   }
   function clearTrail() { cancelAnimationFrame(trailFrame); trailFrame = 0; particles = []; trail?.remove(); trail = null; window.removeEventListener("pointermove", pointer); window.removeEventListener("resize", resizeTrail); }
   function resizeTrail() { if (trail) { const ratio = Math.min(window.devicePixelRatio || 1, 2); trail.width = Math.ceil(innerWidth * ratio); trail.height = Math.ceil(innerHeight * ratio); trail.getContext("2d")?.setTransform(ratio, 0, 0, ratio, 0, 0); } }
