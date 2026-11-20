@@ -1727,13 +1727,26 @@
     },
 
     /**
-     * Expose or connect ArcadeAudio sound synthesizer to SDK instance (#510)
+     * Expose or connect ArcadeAudio sound synthesizer to SDK instance (#510, #694)
      */
     getSoundSynthesizer: function () {
       if (typeof window !== 'undefined' && window.ArcadeAudio) {
         return window.ArcadeAudio;
       }
       return null;
+    },
+
+    audio: {
+      playBGM: function (trackName) {
+        if (typeof window !== 'undefined' && window.ArcadeAudio && typeof window.ArcadeAudio.playBGM === 'function') {
+          window.ArcadeAudio.playBGM(trackName);
+        }
+      },
+      stopBGM: function () {
+        if (typeof window !== 'undefined' && window.ArcadeAudio && typeof window.ArcadeAudio.stopBGM === 'function') {
+          window.ArcadeAudio.stopBGM();
+        }
+      }
     },
 
     // ========================================================
