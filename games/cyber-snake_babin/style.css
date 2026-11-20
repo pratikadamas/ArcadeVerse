@@ -369,3 +369,29 @@ body {
   height: 100%;
   display: block;
 }
+
+/* Fluid Mobile Layout Breakpoints */
+@media (max-width: 480px) {
+  .game-container {
+    max-width: 100%;
+    padding: 0.75rem;
+    border-radius: 12px;
+  }
+
+  .scoreboard-bar {
+    gap: 0.35rem;
+  }
+
+  .score-card {
+    padding: 0.4rem 0.5rem;
+  }
+
+  .score-card .value {
+    font-size: 1.1rem;
+  }
+
+  .s-dpad-btn {
+    width: 46px;
+    height: 40px;
+  }
+}

@@ -29,6 +29,22 @@
   const BLOCK_HEIGHT = 28;
   const INITIAL_WIDTH = 220;
 
+  // Safe storage helpers
+  function getStorage(key, fallback) {
+    try {
+      const val = localStorage.getItem(key);
+      return val !== null ? val : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  function setStorage(key, val) {
+    try {
+      localStorage.setItem(key, val);
+    } catch {}
+  }
+
   let stack = [];
   let level = 1;
   const levelDisplay = document.getElementById('level-display');
@@ -40,12 +56,25 @@
   let score = 0;
   let combo = 0;
   let maxCombo = 0;
-  let bestScore = 0;
-  try {
-    bestScore = parseInt(localStorage.getItem("arcadeverse_cyber_stacker_best") || "0", 10) || 0;
-  } catch (e) {}
+  let bestScore = parseInt(getStorage("arcadeverse_cyber_stacker_best", "0"), 10) || 0;
   let isPlaying = false;
   let animId = null;
+  let gameOverTimeoutId = null;
+  let lastTime = performance.now();
+
+  function clearGameOverTimer() {
+    if (gameOverTimeoutId) {
+      clearTimeout(gameOverTimeoutId);
+      gameOverTimeoutId = null;
+    }
+  }
+
+  function stopLoop() {
+    if (animId) {
+      cancelAnimationFrame(animId);
+      animId = null;
+    }
+  }
 
   bestScoreEl.textContent = bestScore;
 
@@ -54,6 +83,8 @@
   }
 
   function initGame() {
+    clearGameOverTimer();
+    stopLoop();
     stack = [];
     debris = [];
     particles = [];
@@ -80,8 +111,8 @@
     startOverlay.classList.remove("active");
     gameoverOverlay.classList.remove("active");
 
-    if (animId) cancelAnimationFrame(animId);
-    loop();
+    lastTime = performance.now();
+    animId = requestAnimationFrame(loop);
   }
 
   function spawnNextBlock() {
@@ -203,20 +234,44 @@
 
   function gameOver() {
     isPlaying = false;
+    stopLoop();
+    clearGameOverTimer();
     currentBlock = null;
+
+    if (score > bestScore) {
+      bestScore = score;
+      setStorage("arcadeverse_cyber_stacker_best", bestScore);
+      bestScoreEl.textContent = bestScore;
+    }
+
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'ARCADEVERSE_GAME_SCORE',
+        score: score,
+        combo: maxCombo
+      }, '*');
+      window.parent.postMessage({
+        type: 'ARCADEVERSE_GAME_OVER',
+        score: score,
+        combo: maxCombo
+      }, '*');
+    }
 
     finalScoreEl.textContent = score;
     finalComboEl.textContent = `${maxCombo}x`;
     finalBestEl.textContent = bestScore;
 
-    setTimeout(() => {
+    gameOverTimeoutId = setTimeout(() => {
+      gameOverTimeoutId = null;
       gameoverOverlay.classList.add("active");
     }, 600);
   }
 
-  function update() {
+  function update(deltaMs = 16.67) {
+    const dtScale = Math.min(2.0, Math.max(0.2, deltaMs / 16.667));
+
     if (isPlaying && currentBlock) {
-      currentBlock.x += blockSpeed * direction;
+      currentBlock.x += blockSpeed * direction * dtScale;
       if (currentBlock.x + currentBlock.width >= CANVAS_WIDTH) {
         currentBlock.x = CANVAS_WIDTH - currentBlock.width;
         direction = -1;
@@ -229,11 +284,11 @@
     // Update debris
     for (let i = debris.length - 1; i >= 0; i--) {
       const d = debris[i];
-      d.x += d.vx;
-      d.y += d.vy;
-      d.vy += 0.4; // gravity
-      d.rotation += d.vRot;
-      d.alpha -= 0.015;
+      d.x += d.vx * dtScale;
+      d.y += d.vy * dtScale;
+      d.vy += 0.4 * dtScale; // gravity
+      d.rotation += d.vRot * dtScale;
+      d.alpha -= 0.015 * dtScale;
 
       if (d.y > CANVAS_HEIGHT + 50 || d.alpha <= 0) {
         debris.splice(i, 1);
@@ -243,9 +298,9 @@
     // Update particles
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.life -= 0.03;
+      p.x += p.vx * dtScale;
+      p.y += p.vy * dtScale;
+      p.life -= 0.03 * dtScale;
       if (p.life <= 0) {
         particles.splice(i, 1);
       }
@@ -315,10 +370,15 @@
     });
   }
 
-  function loop() {
-    update();
+  function loop(now = performance.now()) {
+    const deltaMs = Math.min(64, now - lastTime);
+    lastTime = now;
+
+    update(deltaMs);
     draw();
-    animId = requestAnimationFrame(loop);
+    if (isPlaying) {
+      animId = requestAnimationFrame(loop);
+    }
   }
 
   // Event Listeners
@@ -344,5 +404,20 @@
   closeRulesBtn.addEventListener("click", () => rulesModal.classList.remove("active"));
   rulesModal.addEventListener("click", (e) => {
     if (e.target === rulesModal) rulesModal.classList.remove("active");
+  });
+
+  // Modal lifecycle hooks
+  window.addEventListener('pagehide', () => {
+    stopLoop();
+    clearGameOverTimer();
+  });
+
+  window.addEventListener('message', (e) => {
+    if (!e.data || typeof e.data !== 'object') return;
+    if (e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      isPlaying = false;
+      stopLoop();
+      clearGameOverTimer();
+    }
   });
 })();

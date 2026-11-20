@@ -1724,42 +1724,55 @@ document.addEventListener("DOMContentLoaded", () => {
       ` : "";
       const halloweenTitleBadge = isHalloween ? `<span class="halloween-title-badge" title="Halloween Special Games">Halloween Special Games</span>` : "";
 
+      const flipBtnHtml = window.ArcadeCardFlipManual ? window.ArcadeCardFlipManual.renderFlipButtonHtml(game) : "";
+      const cardBackHtml = window.ArcadeCardFlipManual ? window.ArcadeCardFlipManual.renderCardBackHtml(game) : "";
+
       card.innerHTML = `
-        <div class="game-card-preview">
-          <canvas class="card-micro-preview-canvas" width="280" height="140"></canvas>
-          <span class="game-category-tag">${safeCategory}</span>
-          ${halloweenBadgeHtml}
-          <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
-              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-            </svg>
-          </button>
-          <div class="game-icon">${iconHtml}</div>${playsBadgeHtml}
-        </div>
-        <div class="game-card-body">
-          <h3 class="game-card-title">${safeTitle}${halloweenTitleBadge}</h3>
-          <p class="game-card-desc">${safeDesc}</p>
-          <div class="game-card-rating-row">
-            <div class="game-rating-stars" data-game-id="${safeGameId}" aria-label="Rating for ${escapeAttr(game.title)}">
-              ${[1, 2, 3, 4, 5].map(starNum => `
-                <button type="button" class="rate-star-btn ${currentStar >= starNum ? 'voted' : ''}" data-game="${safeGameId}" data-star="${starNum}" title="Rate ${starNum} star${starNum > 1 ? 's' : ''}" aria-label="Rate ${starNum} stars">
-                  <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                </button>
-              `).join('')}
-              <span class="rating-badge">${escapeHTML(displayScore)}</span>
+        <div class="game-card-inner">
+          <div class="game-card-front">
+            <div class="game-card-preview">
+              <canvas class="card-micro-preview-canvas" width="280" height="140"></canvas>
+              <span class="game-category-tag">${safeCategory}</span>
+              ${halloweenBadgeHtml}
+              ${flipBtnHtml}
+              <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
+                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                </svg>
+              </button>
+              <div class="game-icon">${iconHtml}</div>${playsBadgeHtml}
             </div>
-          </div>
-          <div class="game-card-footer">
-            <div class="contributor-meta">
-              <div class="contributor-avatar">${escapeHTML((game.author || game.github || "A").charAt(0).toUpperCase())}</div>
-              <div class="contributor-name">
-                <button type="button" class="author-filter-btn" data-author="${safeAuthorAttr}" title="Filter games by ${safeAuthorAttr}" aria-label="Filter games by author ${safeAuthorAttr}">by @${safeGithub}</button>
+            <div class="game-card-body">
+              <h3 class="game-card-title">${safeTitle}${halloweenTitleBadge}</h3>
+              <p class="game-card-desc">${safeDesc}</p>
+              <div class="game-card-rating-row">
+                <div class="game-rating-stars" data-game-id="${safeGameId}" aria-label="Rating for ${escapeAttr(game.title)}">
+                  ${[1, 2, 3, 4, 5].map(starNum => `
+                    <button type="button" class="rate-star-btn ${currentStar >= starNum ? 'voted' : ''}" data-game="${safeGameId}" data-star="${starNum}" title="Rate ${starNum} star${starNum > 1 ? 's' : ''}" aria-label="Rate ${starNum} stars">
+                      <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </button>
+                  `).join('')}
+                  <span class="rating-badge">${escapeHTML(displayScore)}</span>
+                </div>
+              </div>
+              <div class="game-card-footer">
+                <div class="contributor-meta">
+                  <div class="contributor-avatar">${escapeHTML((game.author || game.github || "A").charAt(0).toUpperCase())}</div>
+                  <div class="contributor-name">
+                    <button type="button" class="author-filter-btn" data-author="${safeAuthorAttr}" title="Filter games by ${safeAuthorAttr}" aria-label="Filter games by author ${safeAuthorAttr}">by @${safeGithub}</button>
+                  </div>
+                </div>
+                <button class="btn-play-trigger" data-id="${safeGameId}">${actionText}</button>
               </div>
             </div>
-            <button class="btn-play-trigger" data-id="${safeGameId}">${actionText}</button>
           </div>
+          ${cardBackHtml}
         </div>
       `;
+
+      if (window.ArcadeCardFlipManual) {
+        window.ArcadeCardFlipManual.bindCard(card, game);
+      }
 
       const favBtn = card.querySelector(".btn-card-favorite");
       favBtn.addEventListener("click", (e) => {
@@ -1985,6 +1998,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (frameWrap) frameWrap.appendChild(errorBoundary);
     }
 
+    const isolatedUrl = buildIsolatedGameUrl(gameObj);
+    const displayPath = (gameObj && gameObj.path) || (gameObj && gameObj.id) || "game route";
+
     errorBoundary.innerHTML = `
       <div class="boundary-content">
         <div class="boundary-icon" aria-hidden="true">
@@ -1996,13 +2012,16 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
         <h3 class="boundary-title">Game Route Offline</h3>
         <p class="boundary-desc">
-          Failed to establish connection to <code>${(gameObj && gameObj.path) || 'game route'}</code>. The game entrypoint may be undergoing maintenance, corrupted, or unreachable.
+          Failed to establish connection to <code>${displayPath}</code>. The game entrypoint may be undergoing maintenance, corrupted, or unreachable.
         </p>
         <div class="boundary-actions">
-          <button class="btn btn-primary btn-sm" id="boundary-retry-btn">
+          <button class="btn btn-primary btn-sm" id="boundary-retry-btn" aria-label="Retry loading game with storage isolation">
             <span>Retry Load</span>
           </button>
-          <a href="https://github.com/DebasmitaBose0/ArcadeVerse/issues/new" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
+          <button class="btn btn-secondary btn-sm" id="boundary-direct-btn" aria-label="Open isolated route directly">
+            <span>Direct Route</span>
+          </button>
+          <a href="https://github.com/DebasmitaBose0/ArcadeVerse/issues/new" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" aria-label="Report broken route to project issues">
             <span>Report Broken Route</span>
           </a>
         </div>
@@ -2016,12 +2035,95 @@ document.addEventListener("DOMContentLoaded", () => {
         iframeLoadSucceeded = false;
         if (gameIframe && gameObj) {
           showGameLoader();
-          gameIframe.src = gameObj.path;
+          // Ensure storage isolation query parameter is preserved across retries (#878)
+          const retryTargetUrl = buildIsolatedGameUrl(gameObj);
+          gameIframe.src = retryTargetUrl || gameObj.path;
+          if (newTabBtn) {
+            newTabBtn.href = retryTargetUrl || gameObj.path;
+          }
           startIframeTimeout(gameObj);
         }
       });
     }
+
+    const directBtn = errorBoundary.querySelector("#boundary-direct-btn");
+    if (directBtn) {
+      directBtn.addEventListener("click", () => {
+        if (isolatedUrl) {
+          window.open(isolatedUrl, "_blank", "noopener,noreferrer");
+        }
+      });
+    }
   }
+
+  function triggerGameCrashBoundary(gameObj, errorDetails) {
+    if (gameIframe) gameIframe.style.display = "none";
+    let errorBoundary = document.getElementById("modal-error-boundary");
+    if (!errorBoundary) {
+      errorBoundary = document.createElement("div");
+      errorBoundary.id = "modal-error-boundary";
+      errorBoundary.className = "modal-error-boundary";
+      const frameWrap = document.querySelector(".modal-frame-wrapper");
+      if (frameWrap) frameWrap.appendChild(errorBoundary);
+    }
+
+    const errMessage = (errorDetails && errorDetails.message) || "Runtime execution halted.";
+    const errStack = (errorDetails && errorDetails.stack) || "No diagnostic stack trace available.";
+
+    errorBoundary.innerHTML = `
+      <div class="boundary-content">
+        <div class="boundary-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#ff0055" stroke-width="2">
+            <polygon points="12 2 2 22 22 22"></polygon>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <circle cx="12" cy="17" r="1" fill="#ff0055"></circle>
+          </svg>
+        </div>
+        <h3 class="boundary-title">Game Runtime Crash Detected</h3>
+        <p class="boundary-desc">
+          An unhandled error occurred in <strong>${(gameObj && gameObj.title) || 'the game'}</strong>: <code>${escapeHTML(errMessage)}</code>
+        </p>
+        <details class="boundary-diagnostic-details">
+          <summary>Diagnostic Error Dump</summary>
+          <pre class="boundary-stack-pre"><code>${escapeHTML(errStack)}</code></pre>
+        </details>
+        <div class="boundary-actions">
+          <button class="btn btn-primary btn-sm" id="boundary-restart-btn">
+            <span>Restart Game</span>
+          </button>
+          <button class="btn btn-secondary btn-sm" id="boundary-catalog-btn">
+            <span>Return to Catalog</span>
+          </button>
+        </div>
+      </div>
+    `;
+
+    const restartBtn = errorBoundary.querySelector("#boundary-restart-btn");
+    if (restartBtn) {
+      restartBtn.addEventListener("click", () => {
+        resetIframeBoundary();
+        iframeLoadSucceeded = false;
+        if (gameIframe && gameObj) {
+          gameIframe.src = buildIsolatedGameUrl(gameObj);
+          startIframeTimeout(gameObj);
+        }
+      });
+    }
+
+    const catalogBtn = errorBoundary.querySelector("#boundary-catalog-btn");
+    if (catalogBtn) {
+      catalogBtn.addEventListener("click", () => {
+        closeGameModal();
+      });
+    }
+  }
+
+  // Hook iframe error message broadcaster (#728)
+  window.addEventListener("message", (event) => {
+    if (event.data && event.data.type === "ARCADEVERSE_GAME_CRASH") {
+      triggerGameCrashBoundary(activeGame, event.data.error || { message: event.data.message, stack: event.data.stack });
+    }
+  });
 
   function startIframeTimeout(gameObj) {
     resetIframeBoundary();
@@ -2271,14 +2373,39 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Modal Handlers
-  // Restore the catalog's namespaced storage URL bridge (#493, #824).
+  // Restore the catalog's namespaced storage URL bridge (#493, #824, #878).
+  // Ensures that whenever games are launched, retried from error boundaries, or
+  // opened in new tabs, the ?gameId= URL query parameter is strictly preserved.
+  // This allows SDK localStorage proxies to namespace keys correctly and prevent
+  // key collisions or shared quota consumption across different arcade games.
   function buildIsolatedGameUrl(game) {
     if (!game) return "";
-    const path = typeof game === "string" ? game : game.path;
-    if (!path) return "";
-    const url = new URL(path, document.baseURI);
-    if (typeof game === "object" && game.id) url.searchParams.set("gameId", game.id);
-    return url.href;
+    let rawPath = "";
+    let gameId = "";
+
+    if (typeof game === "string") {
+      rawPath = game;
+      try {
+        const parsed = new URL(rawPath, document.baseURI);
+        gameId = parsed.searchParams.get("gameId") || "";
+      } catch (_) {}
+    } else if (typeof game === "object") {
+      rawPath = game.path || "";
+      gameId = game.id || "";
+    }
+
+    if (!rawPath) return "";
+
+    try {
+      const url = new URL(rawPath, document.baseURI);
+      if (gameId && !url.searchParams.has("gameId")) {
+        url.searchParams.set("gameId", gameId);
+      }
+      return url.href;
+    } catch (err) {
+      console.warn("[ArcadeVerse:Isolation] Failed to format isolated game URL:", err);
+      return rawPath;
+    }
   }
 
   // The shared sound engine owns preferences; keep legacy modal/SDK callers
@@ -2547,6 +2674,78 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  /**
+   * Performs a comprehensive tear-down of child iframe resources (RAF handles, timers, and WebGL contexts).
+   * Dynamically probes active RAF ID to ensure multi-minute (or high-refresh-rate 120Hz/144Hz) sessions
+   * with >10,000 scheduled frames are safely cancelled, avoiding memory leaks and orphaned worker loops (#879).
+   */
+  function terminateChildIframeResources(iframe) {
+    if (!iframe || !iframe.contentWindow) return;
+    try {
+      const win = iframe.contentWindow;
+      // 1. Post lifecycle shutdown signals to compliant game runtimes
+      win.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
+      win.postMessage({ type: "ARCADEVERSE_TEARDOWN" }, "*");
+
+      // 2. Dynamically probe and sweep active requestAnimationFrame handles
+      if (typeof win.cancelAnimationFrame === "function") {
+        if (typeof win.requestAnimationFrame === "function") {
+          const maxFrameId = win.requestAnimationFrame(() => {});
+          win.cancelAnimationFrame(maxFrameId);
+          if (typeof maxFrameId === "number" && maxFrameId > 0) {
+            // Sweeps downward up to 60,000 frames or down to 1
+            const sweepFloor = Math.max(1, maxFrameId - 60000);
+            for (let frameId = maxFrameId; frameId >= sweepFloor; frameId--) {
+              win.cancelAnimationFrame(frameId);
+            }
+          }
+        } else {
+          for (let frameId = 1; frameId <= 1000; frameId++) {
+            win.cancelAnimationFrame(frameId);
+          }
+        }
+      }
+
+      // 3. Clear active timeouts and intervals left by runaway loops
+      if (typeof win.clearTimeout === "function" && typeof win.clearInterval === "function") {
+        const maxTimerId = win.setTimeout(() => {}, 0);
+        if (typeof maxTimerId === "number" && maxTimerId > 0) {
+          const timerFloor = Math.max(1, maxTimerId - 20000);
+          for (let timerId = maxTimerId; timerId >= timerFloor; timerId--) {
+            win.clearTimeout(timerId);
+            win.clearInterval(timerId);
+          }
+        }
+      }
+
+      // 4. Proactively probe and dispose WebGL contexts in child iframe if accessible
+      try {
+        const doc = iframe.contentDocument || win.document;
+        if (doc) {
+          const canvases = doc.querySelectorAll("canvas");
+          canvases.forEach((c) => {
+            try {
+              const gl = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl");
+              if (gl && !gl.isContextLost()) {
+                const loseExt = gl.getExtension("WEBGL_lose_context") ||
+                  gl.getExtension("WEBKIT_WEBGL_lose_context") ||
+                  gl.getExtension("MOZ_WEBGL_lose_context");
+                if (loseExt && typeof loseExt.loseContext === "function") {
+                  loseExt.loseContext();
+                }
+              }
+            } catch (_) {}
+          });
+        }
+      } catch (_) {}
+
+      // 5. Abort network or lingering worker tasks if available
+      if (typeof win.stop === "function") {
+        win.stop();
+      }
+    } catch (_) {}
+  }
+
   function closeGameModal(isFromPopState = false) {
     if (!gameModal || (!gameModal.classList.contains("active") && !activeGame)) return;
     const closedGame = activeGame;
@@ -2565,84 +2764,26 @@ document.addEventListener("DOMContentLoaded", () => {
       newTabBtn.href = "#";
     }
 
-    // Standardized Game Lifecycle Bridge: Dispatch teardown & pause events before unmounting iframe
-    try {
-      if (gameIframe && gameIframe.contentWindow) {
-        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
-        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_TEARDOWN" }, "*");
+    // Standardized Game Lifecycle Bridge: Dispatch teardown, cancel dynamic RAF handles, and prune WebGL contexts
+    terminateChildIframeResources(gameIframe);
 
-        // Aggressive RAF and Timer Leak Mitigation (#497)
-        try {
-          const win = gameIframe.contentWindow;
-          if (win) {
-            // Dynamically discover and cancel active animation frame handles (#497, #825)
-            if (typeof win.cancelAnimationFrame === "function") {
-              if (typeof win.requestAnimationFrame === "function") {
-                const maxFrameId = win.requestAnimationFrame(() => { });
-                win.cancelAnimationFrame(maxFrameId);
-                if (typeof maxFrameId === "number" && maxFrameId > 0) {
-                  const minFrameId = Math.max(1, maxFrameId - 50000);
-                  for (let frameId = maxFrameId; frameId >= minFrameId; frameId--) {
-                    win.cancelAnimationFrame(frameId);
-                  }
-                }
-              } else {
-                for (let frameId = 1; frameId <= 1000; frameId++) {
-                  win.cancelAnimationFrame(frameId);
-                }
-              }
-            }
-            // Clear any active timeouts/intervals left by rogue loops
-            if (typeof win.clearTimeout === "function" && typeof win.clearInterval === "function") {
-              const maxTimerId = win.setTimeout(() => { }, 0);
-              for (let timerId = 1; timerId <= maxTimerId; timerId++) {
-                win.clearTimeout(timerId);
-                win.clearInterval(timerId);
-              }
-            }
-          }
-        } catch (_) { }
-
-        // Proactively probe and dispose WebGL contexts in child iframe if accessible
-        try {
-          const doc = gameIframe.contentDocument || gameIframe.contentWindow.document;
-          if (doc) {
-            const canvases = doc.querySelectorAll("canvas");
-            canvases.forEach((c) => {
-              try {
-                const gl = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl");
-                if (gl && !gl.isContextLost()) {
-                  const loseExt = gl.getExtension("WEBGL_lose_context") ||
-                    gl.getExtension("WEBKIT_WEBGL_lose_context") ||
-                    gl.getExtension("MOZ_WEBGL_lose_context");
-                  if (loseExt && typeof loseExt.loseContext === "function") {
-                    loseExt.loseContext();
-                  }
-                }
-              } catch (_) { }
-            });
-          }
-        } catch (_) { }
-      }
-    } catch (_) { }
-
-    // Terminate any rogue event listeners or workers in child frame prior to blanking
-    try {
-      if (gameIframe && gameIframe.contentWindow) {
-        const win = gameIframe.contentWindow;
-        if (typeof win.stop === "function") {
-          win.stop();
-        }
-      }
-    } catch (_) { }
-
-    // Safely blank out iframe after a 100ms grace period to allow games to close AudioContexts and stop RAF loops
+    // Safely blank out iframe after a grace period to allow games to close AudioContexts and finalize teardown
     const currentFrame = gameIframe;
     setTimeout(() => {
       // Another game was opened during the grace period, leave its frame alone
       if (activeGame) return;
       try {
         if (currentFrame && currentFrame.contentWindow) {
+          const win = currentFrame.contentWindow;
+          // Final fallback sweep before replacing location
+          if (typeof win.cancelAnimationFrame === "function" && typeof win.requestAnimationFrame === "function") {
+            const probeId = win.requestAnimationFrame(() => {});
+            win.cancelAnimationFrame(probeId);
+            const floor = Math.max(1, probeId - 1000);
+            for (let id = probeId; id >= floor; id--) {
+              win.cancelAnimationFrame(id);
+            }
+          }
           currentFrame.contentWindow.location.replace("about:blank");
         } else if (currentFrame) {
           currentFrame.src = "about:blank";
