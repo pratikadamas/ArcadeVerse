@@ -166,6 +166,7 @@
               <li><a href="#scoring-engine" class="docs-nav-link"><i data-lucide="cpu"></i> Scoring & Leaderboard</a></li>
               <li><a href="#storage-manager" class="docs-nav-link"><i data-lucide="hard-drive"></i> Save Data Vault & Manager</a></li>
               <li><a href="#snapshot-studio" class="docs-nav-link"><i data-lucide="camera"></i> Retro Snapshot Studio</a></li>
+              <li><a href="#pinball-touch-controls" class="docs-nav-link"><i data-lucide="gamepad-2"></i> Virtual Pinball Touch Controls</a></li>
               <li><a href="#slot-reel" class="docs-nav-link"><i data-lucide="dices"></i> Slot Reel Roulette Picker</a></li>
               <li><a href="#playlist-system" class="docs-nav-link"><i data-lucide="list-music"></i> Custom Playlist Engine</a></li>
               <li><a href="#az-jump-bar" class="docs-nav-link"><i data-lucide="arrow-down-a-z"></i> A-Z Catalog Jump Bar</a></li>
@@ -1114,6 +1115,21 @@ arcadeverse.requestPause();
             <li><strong>Cross-Frame Canvas Capture:</strong> Safely samples <code>&lt;canvas&gt;</code> rendering contexts from same-origin game instances.</li>
             <li><strong>Stylized CRT Border Overlays:</strong> Injects dynamic game metadata, player handle, timestamp, and retro scanline vignette effects.</li>
             <li><strong>Zero External Storage:</strong> 100% rendered client-side with instant data-URL download without uploading images to any third-party server.</li>
+          </ul>
+        </section>
+
+        <!-- 15c-4. Virtual Arcade Pinball Touch Controls -->
+        <section class="docs-section" id="pinball-touch-controls">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Virtual Arcade Pinball Dual Flipper & Haptic Spring Plunger</h2>
+          <p class="docs-paragraph">
+            Implemented in <code>assets/js/pinball-touch-controller.js</code> and styled in <code>assets/css/pinball-touch-controller.css</code>, this mobile control subsystem automatically equips touch-screen smartphones and tablets with physical arcade pinball controls when launching Pinball and Physics games.
+          </p>
+          <ul>
+            <li><strong>Ergonomic Dual Flipper Zones:</strong> Splits the lower 48% of the viewport into left and right transparent touch zones with independent Set-based multi-touch tracking for simultaneous actuation and zero latency.</li>
+            <li><strong>Spring-Loaded Plunger Slider:</strong> A vertical rail plunger allowing players to drag downward to compress the internal spring ($F = -kx$). Releasing fires launch impulses proportional to pull displacement.</li>
+            <li><strong>Web Haptics Integration:</strong> Synthesizes crisp haptic pulses (<code>navigator.vibrate([15])</code>) on flipper actuations and dynamic vibration on plunger release.</li>
+            <li><strong>Universal Key Dispatch:</strong> Synthesizes both <code>KeyboardEvent</code> inputs (ArrowLeft/KeyA/KeyZ, ArrowRight/KeyD/Slash, Space) and window <code>postMessage</code> payloads directly into the game iframe.</li>
           </ul>
         </section>
 
