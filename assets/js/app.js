@@ -2674,6 +2674,78 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  /**
+   * Performs a comprehensive tear-down of child iframe resources (RAF handles, timers, and WebGL contexts).
+   * Dynamically probes active RAF ID to ensure multi-minute (or high-refresh-rate 120Hz/144Hz) sessions
+   * with >10,000 scheduled frames are safely cancelled, avoiding memory leaks and orphaned worker loops (#879).
+   */
+  function terminateChildIframeResources(iframe) {
+    if (!iframe || !iframe.contentWindow) return;
+    try {
+      const win = iframe.contentWindow;
+      // 1. Post lifecycle shutdown signals to compliant game runtimes
+      win.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
+      win.postMessage({ type: "ARCADEVERSE_TEARDOWN" }, "*");
+
+      // 2. Dynamically probe and sweep active requestAnimationFrame handles
+      if (typeof win.cancelAnimationFrame === "function") {
+        if (typeof win.requestAnimationFrame === "function") {
+          const maxFrameId = win.requestAnimationFrame(() => {});
+          win.cancelAnimationFrame(maxFrameId);
+          if (typeof maxFrameId === "number" && maxFrameId > 0) {
+            // Sweeps downward up to 60,000 frames or down to 1
+            const sweepFloor = Math.max(1, maxFrameId - 60000);
+            for (let frameId = maxFrameId; frameId >= sweepFloor; frameId--) {
+              win.cancelAnimationFrame(frameId);
+            }
+          }
+        } else {
+          for (let frameId = 1; frameId <= 1000; frameId++) {
+            win.cancelAnimationFrame(frameId);
+          }
+        }
+      }
+
+      // 3. Clear active timeouts and intervals left by runaway loops
+      if (typeof win.clearTimeout === "function" && typeof win.clearInterval === "function") {
+        const maxTimerId = win.setTimeout(() => {}, 0);
+        if (typeof maxTimerId === "number" && maxTimerId > 0) {
+          const timerFloor = Math.max(1, maxTimerId - 20000);
+          for (let timerId = maxTimerId; timerId >= timerFloor; timerId--) {
+            win.clearTimeout(timerId);
+            win.clearInterval(timerId);
+          }
+        }
+      }
+
+      // 4. Proactively probe and dispose WebGL contexts in child iframe if accessible
+      try {
+        const doc = iframe.contentDocument || win.document;
+        if (doc) {
+          const canvases = doc.querySelectorAll("canvas");
+          canvases.forEach((c) => {
+            try {
+              const gl = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl");
+              if (gl && !gl.isContextLost()) {
+                const loseExt = gl.getExtension("WEBGL_lose_context") ||
+                  gl.getExtension("WEBKIT_WEBGL_lose_context") ||
+                  gl.getExtension("MOZ_WEBGL_lose_context");
+                if (loseExt && typeof loseExt.loseContext === "function") {
+                  loseExt.loseContext();
+                }
+              }
+            } catch (_) {}
+          });
+        }
+      } catch (_) {}
+
+      // 5. Abort network or lingering worker tasks if available
+      if (typeof win.stop === "function") {
+        win.stop();
+      }
+    } catch (_) {}
+  }
+
   function closeGameModal(isFromPopState = false) {
     if (!gameModal || (!gameModal.classList.contains("active") && !activeGame)) return;
     const closedGame = activeGame;
@@ -2692,84 +2764,26 @@ document.addEventListener("DOMContentLoaded", () => {
       newTabBtn.href = "#";
     }
 
-    // Standardized Game Lifecycle Bridge: Dispatch teardown & pause events before unmounting iframe
-    try {
-      if (gameIframe && gameIframe.contentWindow) {
-        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
-        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_TEARDOWN" }, "*");
+    // Standardized Game Lifecycle Bridge: Dispatch teardown, cancel dynamic RAF handles, and prune WebGL contexts
+    terminateChildIframeResources(gameIframe);
 
-        // Aggressive RAF and Timer Leak Mitigation (#497)
-        try {
-          const win = gameIframe.contentWindow;
-          if (win) {
-            // Dynamically discover and cancel active animation frame handles (#497, #825)
-            if (typeof win.cancelAnimationFrame === "function") {
-              if (typeof win.requestAnimationFrame === "function") {
-                const maxFrameId = win.requestAnimationFrame(() => { });
-                win.cancelAnimationFrame(maxFrameId);
-                if (typeof maxFrameId === "number" && maxFrameId > 0) {
-                  const minFrameId = Math.max(1, maxFrameId - 50000);
-                  for (let frameId = maxFrameId; frameId >= minFrameId; frameId--) {
-                    win.cancelAnimationFrame(frameId);
-                  }
-                }
-              } else {
-                for (let frameId = 1; frameId <= 1000; frameId++) {
-                  win.cancelAnimationFrame(frameId);
-                }
-              }
-            }
-            // Clear any active timeouts/intervals left by rogue loops
-            if (typeof win.clearTimeout === "function" && typeof win.clearInterval === "function") {
-              const maxTimerId = win.setTimeout(() => { }, 0);
-              for (let timerId = 1; timerId <= maxTimerId; timerId++) {
-                win.clearTimeout(timerId);
-                win.clearInterval(timerId);
-              }
-            }
-          }
-        } catch (_) { }
-
-        // Proactively probe and dispose WebGL contexts in child iframe if accessible
-        try {
-          const doc = gameIframe.contentDocument || gameIframe.contentWindow.document;
-          if (doc) {
-            const canvases = doc.querySelectorAll("canvas");
-            canvases.forEach((c) => {
-              try {
-                const gl = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl");
-                if (gl && !gl.isContextLost()) {
-                  const loseExt = gl.getExtension("WEBGL_lose_context") ||
-                    gl.getExtension("WEBKIT_WEBGL_lose_context") ||
-                    gl.getExtension("MOZ_WEBGL_lose_context");
-                  if (loseExt && typeof loseExt.loseContext === "function") {
-                    loseExt.loseContext();
-                  }
-                }
-              } catch (_) { }
-            });
-          }
-        } catch (_) { }
-      }
-    } catch (_) { }
-
-    // Terminate any rogue event listeners or workers in child frame prior to blanking
-    try {
-      if (gameIframe && gameIframe.contentWindow) {
-        const win = gameIframe.contentWindow;
-        if (typeof win.stop === "function") {
-          win.stop();
-        }
-      }
-    } catch (_) { }
-
-    // Safely blank out iframe after a 100ms grace period to allow games to close AudioContexts and stop RAF loops
+    // Safely blank out iframe after a grace period to allow games to close AudioContexts and finalize teardown
     const currentFrame = gameIframe;
     setTimeout(() => {
       // Another game was opened during the grace period, leave its frame alone
       if (activeGame) return;
       try {
         if (currentFrame && currentFrame.contentWindow) {
+          const win = currentFrame.contentWindow;
+          // Final fallback sweep before replacing location
+          if (typeof win.cancelAnimationFrame === "function" && typeof win.requestAnimationFrame === "function") {
+            const probeId = win.requestAnimationFrame(() => {});
+            win.cancelAnimationFrame(probeId);
+            const floor = Math.max(1, probeId - 1000);
+            for (let id = probeId; id >= floor; id--) {
+              win.cancelAnimationFrame(id);
+            }
+          }
           currentFrame.contentWindow.location.replace("about:blank");
         } else if (currentFrame) {
           currentFrame.src = "about:blank";
