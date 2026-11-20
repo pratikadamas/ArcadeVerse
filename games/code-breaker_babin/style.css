@@ -473,3 +473,40 @@ html, body {
 .hidden {
   display: none !important;
 }
+
+@media (max-width: 640px) {
+  .hud-top {
+    height: auto;
+    padding: 0.5rem 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .hud-title {
+    font-size: 0.85rem;
+  }
+
+  .terminal-main {
+    padding: 0.5rem;
+  }
+
+  .controls-panel {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .slot {
+    width: 44px;
+    height: 44px;
+  }
+
+  .palette-glyph {
+    width: 38px;
+    height: 38px;
+  }
+
+  .btn-submit {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+}
