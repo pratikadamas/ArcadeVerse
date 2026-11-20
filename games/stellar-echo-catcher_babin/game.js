@@ -129,6 +129,8 @@
     clarity = 100;
     targetFreq = 98.0;
     currentFreq = 98.0;
+    wheelAccumulator = 0;
+    lastWheelTime = 0;
     dish.angle = -Math.PI / 2 + ((98.0 - MIN_FREQ) / FREQ_SPAN) * (Math.PI * 2);
     echoes = [];
     spawnTimer = 0;
@@ -381,7 +383,7 @@
     animId = requestAnimationFrame(loop);
   }
 
-  // Pointer dragging / canvas rotation
+  // Pointer dragging / canvas rotation (requires active drag to avoid trackpad drift)
   let isPointerDragging = false;
   function updateFromPointer(clientX, clientY) {
     const rect = canvas.getBoundingClientRect();
@@ -408,23 +410,40 @@
     isPointerDragging = false;
   });
 
-  canvas.addEventListener('mousemove', (e) => {
-    if (!isRunning || isPaused || isPointerDragging) return;
-    updateFromPointer(e.clientX, e.clientY);
-  });
-
   canvas.addEventListener('click', triggerCapture);
 
   // Normalize wheel event deltaY using Math.sign(e.deltaY) and smooth damping coefficient
+  let wheelAccumulator = 0;
+  let lastWheelTime = 0;
+  const WHEEL_DELTA_THRESHOLD = 25; // Normalized scroll delta units per 0.1 MHz step
+  const WHEEL_THROTTLE_MS = 30; // Minimum interval (ms) between wheel steps to damp trackpad bursts
+
   function handleWheel(e) {
     e.preventDefault();
     if (!isRunning || isPaused) return;
     sfx.init();
 
-    const dir = Math.sign(e.deltaY);
-    if (dir !== 0) {
+    const now = performance.now();
+    const rawDelta = e.deltaY;
+    const sign = Math.sign(rawDelta);
+    if (sign === 0) return;
+
+    // Reset accumulator on scroll direction reversal or after pause in scrolling (>200ms)
+    if (now - lastWheelTime > 200 || (wheelAccumulator !== 0 && Math.sign(wheelAccumulator) !== sign)) {
+      wheelAccumulator = 0;
+    }
+
+    // Normalize deltaMode (0: pixels, 1: lines [~16px], 2: pages [~100px])
+    const normalizedDelta = e.deltaMode === 1 ? rawDelta * 16 : (e.deltaMode === 2 ? rawDelta * 100 : rawDelta);
+    wheelAccumulator += normalizedDelta;
+
+    // Trigger step when accumulated delta reaches threshold and throttle interval has elapsed
+    if (Math.abs(wheelAccumulator) >= WHEEL_DELTA_THRESHOLD && (now - lastWheelTime) >= WHEEL_THROTTLE_MS) {
+      const dir = Math.sign(wheelAccumulator);
       // dir > 0: wheel scrolled downward -> step down 0.1 MHz; dir < 0: step up 0.1 MHz
       setTargetFrequency(targetFreq - dir * 0.1);
+      wheelAccumulator = 0;
+      lastWheelTime = now;
     }
   }
 

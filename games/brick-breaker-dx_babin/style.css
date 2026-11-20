@@ -167,6 +167,10 @@ html, body {
   height: 100%;
   display: block;
   cursor: ew-resize;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 /* SCREEN OVERLAYS */
@@ -371,4 +375,44 @@ html, body {
 
 .hidden {
   display: none !important;
+}
+
+
+/* Responsive viewports & mobile scaling (#764) */
+@media (max-width: 768px) {
+  .hud-bar {
+    height: 48px;
+    padding: 0 0.75rem;
+  }
+  .hud-item {
+    font-size: 0.75rem;
+  }
+  .hud-label {
+    font-size: 0.6rem;
+  }
+  .hud-val {
+    font-size: 0.95rem;
+  }
+  #game-canvas {
+    max-width: 100vw;
+    max-height: calc(100vh - 80px);
+    touch-action: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .hud-bar {
+    height: 42px;
+    padding: 0 0.5rem;
+  }
+  .hud-val {
+    font-size: 0.85rem;
+  }
+  .card-panel {
+    padding: 1.25rem 1rem;
+    max-width: 92vw;
+  }
+  .brand-title {
+    font-size: 1.4rem;
+  }
 }
