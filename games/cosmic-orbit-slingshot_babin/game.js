@@ -30,9 +30,24 @@
   const finalAttempts = document.getElementById('final-attempts');
   const sectorScoreDisplay = document.getElementById('sector-score');
 
+  // Storage helper
+  function getStoredSound() {
+    try {
+      return localStorage.getItem('cosmic-orbit-sound') !== 'false';
+    } catch (_) {
+      return true;
+    }
+  }
+
+  function setStoredSound(enabled) {
+    try {
+      localStorage.setItem('cosmic-orbit-sound', enabled ? 'true' : 'false');
+    } catch (_) {}
+  }
+
   // Audio Synthesizer via Web Audio API
   let audioCtx = null;
-  let soundEnabled = localStorage.getItem('cosmic-orbit-sound') !== 'false';
+  let soundEnabled = getStoredSound();
 
   function initAudio() {
     if (!audioCtx) {
@@ -196,6 +211,9 @@
   let score = 0;
   let attempts = 0;
   let gameState = 'ready'; // ready, aiming, in_flight, sector_clear
+  let lastFrameTime = performance.now();
+  let rafId = null;
+  let overlayTimer = null;
 
   // Probe entity
   let probe = {
@@ -213,6 +231,10 @@
   let dragCurrentY = 0;
 
   function loadSector(index) {
+    if (overlayTimer) {
+      clearTimeout(overlayTimer);
+      overlayTimer = null;
+    }
     currentSectorIndex = index;
     const sector = SECTORS[index];
     attempts = 0;
@@ -240,11 +262,16 @@
     probe.trail = [];
     attempts++;
     gameState = 'in_flight';
+    lastFrameTime = performance.now();
     playSound('launch');
     updateHUD();
   }
 
   function resetToStart() {
+    if (overlayTimer) {
+      clearTimeout(overlayTimer);
+      overlayTimer = null;
+    }
     const sector = SECTORS[currentSectorIndex];
     probe.x = sector.start.x;
     probe.y = sector.start.y;
@@ -256,7 +283,7 @@
     render();
   }
 
-  function simulateStep(p) {
+  function simulateStep(p, stepScale = 1.0) {
     const sector = SECTORS[currentSectorIndex];
     let totalAx = 0;
     let totalAy = 0;
@@ -275,13 +302,13 @@
       }
     }
 
-    p.vx += totalAx;
-    p.vy += totalAy;
-    p.x += p.vx;
-    p.y += p.vy;
+    p.vx += totalAx * stepScale;
+    p.vy += totalAy * stepScale;
+    p.x += p.vx * stepScale;
+    p.y += p.vy * stepScale;
   }
 
-  function update() {
+  function update(dtScale = 1.0) {
     if (gameState !== 'in_flight') return;
 
     const sector = SECTORS[currentSectorIndex];
@@ -290,8 +317,8 @@
     probe.trail.push({ x: probe.x, y: probe.y });
     if (probe.trail.length > 80) probe.trail.shift();
 
-    // Physics step
-    simulateStep(probe);
+    // Physics step scaled by dtScale
+    simulateStep(probe, dtScale);
 
     // Check Stardust collection
     for (let s of sector.stardust) {
@@ -319,7 +346,14 @@
       sectorScoreDisplay.textContent = `+${sectorScore}`;
       updateHUD();
 
-      setTimeout(() => {
+      try {
+        window.dispatchEvent(new CustomEvent('ARCADEVERSE_GAME_SCORE', {
+          detail: { gameId: 'cosmic-orbit-slingshot', score, sector: currentSectorIndex + 1 }
+        }));
+      } catch (_) {}
+
+      if (overlayTimer) clearTimeout(overlayTimer);
+      overlayTimer = setTimeout(() => {
         sectorClearOverlay.classList.remove('hidden');
       }, 400);
       return;
@@ -477,10 +511,31 @@
     scoreDisplay.textContent = score;
   }
 
-  function gameLoop() {
-    update();
+  function gameLoop(now) {
+    if (!now) now = performance.now();
+    const dt = Math.min((now - lastFrameTime) / 1000, 0.1);
+    lastFrameTime = now;
+    const dtScale = Math.min(Math.max(dt * 60, 0.2), 3.0);
+
+    update(dtScale);
     render();
-    requestAnimationFrame(gameLoop);
+    rafId = requestAnimationFrame(gameLoop);
+  }
+
+  function startLoop() {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    lastFrameTime = performance.now();
+    rafId = requestAnimationFrame(gameLoop);
+  }
+
+  function stopLoop() {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
   }
 
   // Mouse & Touch Slingshot Drag Handlers
@@ -570,7 +625,7 @@
 
   soundBtn.addEventListener('click', () => {
     soundEnabled = !soundEnabled;
-    localStorage.setItem('cosmic-orbit-sound', soundEnabled.toString());
+    setStoredSound(soundEnabled);
     updateSoundUI();
     if (soundEnabled) playSound('launch');
   });
@@ -583,8 +638,36 @@
     instructionsModal.classList.add('hidden');
   });
 
+  // Lifecycle listeners
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopLoop();
+    } else {
+      startLoop();
+    }
+  });
+
+  window.addEventListener('ARCADEVERSE_PAUSE', () => {
+    stopLoop();
+  });
+
+  window.addEventListener('ARCADEVERSE_RESUME', () => {
+    startLoop();
+  });
+
+  window.addEventListener('ARCADEVERSE_TEARDOWN', () => {
+    stopLoop();
+    if (overlayTimer) {
+      clearTimeout(overlayTimer);
+      overlayTimer = null;
+    }
+    if (audioCtx && audioCtx.state !== 'closed') {
+      try { audioCtx.close(); } catch (_) {}
+    }
+  });
+
   // Initialize
   updateSoundUI();
   loadSector(0);
-  gameLoop();
+  startLoop();
 })();

@@ -7,6 +7,22 @@
 (() => {
   'use strict';
 
+  // --- STORAGE WRAPPERS ---
+  function getStorage(key, fallback) {
+    try {
+      const val = localStorage.getItem(key);
+      return val !== null ? val : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  function setStorage(key, val) {
+    try {
+      localStorage.setItem(key, val);
+    } catch {}
+  }
+
   // --- AUDIO SYNTHESIZER ---
   class SoundSynth {
     constructor() {
@@ -88,6 +104,7 @@
   let hintsRemaining = 3;
   let strikes = 0;
   let maxStrikes = 3;
+  let isGameOver = false;
   let timerSeconds = 0;
   let timerInterval = null;
   let currentDiff = 'easy';
@@ -146,6 +163,7 @@
     generatePuzzle(diff);
     strikes = 0;
     hintsRemaining = 3;
+    isGameOver = false;
     moveHistory = [];
     selectedCell = { r: -1, c: -1 };
     isPencilMode = false;
@@ -245,6 +263,7 @@
 
   // --- USER INPUT & VALIDATION ---
   function inputDigit(num) {
+    if (isGameOver || strikes >= maxStrikes) return;
     const { r, c } = selectedCell;
     if (r === -1 || c === -1) return;
     if (initialBoard[r][c] !== 0) return; // Cannot modify given clues
@@ -260,15 +279,14 @@
       return;
     }
 
-    // Direct Placement
-    moveHistory.push({
-      r, c,
-      prevVal: currentBoard[r][c],
-      prevNotes: new Set(notesBoard[r][c])
-    });
-
     if (num === solutionBoard[r][c]) {
-      // Correct!
+      // Correct! Only push undo frame on actual state mutations
+      moveHistory.push({
+        r, c,
+        prevVal: currentBoard[r][c],
+        prevNotes: new Set(notesBoard[r][c])
+      });
+
       currentBoard[r][c] = num;
       notesBoard[r][c].clear();
       sound.playInput(440 + num * 40);
@@ -276,7 +294,7 @@
       selectCell(r, c);
       checkWin();
     } else {
-      // Error strike
+      // Error strike without pushing a corrupting no-op undo snapshot
       strikes++;
       updateStrikesHUD();
       sound.playError();
@@ -354,13 +372,29 @@
     }
 
     // Solved!
+    isGameOver = true;
     clearInterval(timerInterval);
     sound.playWin();
 
     const storageKey = STORAGE_KEY_PREFIX + currentDiff;
-    const best = parseInt(localStorage.getItem(storageKey) || '9999', 10);
+    const best = parseInt(getStorage(storageKey, '9999'), 10);
     if (timerSeconds < best) {
-      localStorage.setItem(storageKey, timerSeconds);
+      setStorage(storageKey, timerSeconds);
+    }
+
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'ARCADEVERSE_GAME_SCORE',
+        score: Math.max(100, 1000 - timerSeconds * 2),
+        difficulty: currentDiff,
+        timeSeconds: timerSeconds
+      }, '*');
+      window.parent.postMessage({
+        type: 'ARCADEVERSE_GAME_OVER',
+        score: Math.max(100, 1000 - timerSeconds * 2),
+        difficulty: currentDiff,
+        solved: true
+      }, '*');
     }
 
     setTimeout(() => {
@@ -371,7 +405,7 @@
       const s = String(timerSeconds % 60).padStart(2, '0');
       document.getElementById('res-time').textContent = `${m}:${s}`;
 
-      const rec = localStorage.getItem(storageKey);
+      const rec = getStorage(storageKey, timerSeconds.toString());
       const rm = String(Math.floor(rec / 60)).padStart(2, '0');
       const rs = String(rec % 60).padStart(2, '0');
       document.getElementById('res-best').textContent = `${rm}:${rs}`;
@@ -381,7 +415,18 @@
   }
 
   function triggerDefeat() {
+    isGameOver = true;
     clearInterval(timerInterval);
+
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'ARCADEVERSE_GAME_OVER',
+        score: 0,
+        difficulty: currentDiff,
+        solved: false
+      }, '*');
+    }
+
     document.getElementById('res-tag').className = 'modal-tag red';
     document.getElementById('res-tag').textContent = 'SECURITY LOCKOUT';
     document.getElementById('res-title').textContent = '3 STRIKES REACHED';

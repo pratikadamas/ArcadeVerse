@@ -1,7 +1,7 @@
 {
   "name": "arcadeverse",
   "version": "1.2.0",
-  "description": "The Open-Source Community Arcade Station for Nexus Spring of Code – Winter Edition 2026",
+  "description": "The Open-Source Community Arcade Station for Nexus Spring of Code \u2013 Winter Edition 2026",
   "main": "assets/js/app.js",
   "scripts": {
     "test": "node scripts/verify-catalog-syntax.js && node scripts/verify-leaderboard-highlight.js && node scripts/test-playlist-codes.js && node scripts/test-time-warp-replay.mjs && node --test scripts/test-playtime-heatmap.js && node --test scripts/test-dev-asset-auditor.js && node --test scripts/test-arcade-token-dispenser.js && node --test scripts/test-isometric-arcade-room.js && node --test scripts/test-leaderboard-spectrum.js && node --test scripts/test-arcade-ticket-dispenser.js",
@@ -9,7 +9,8 @@
     "test:leaderboard": "node scripts/verify-leaderboard-highlight.js",
     "test:playlist": "node scripts/test-playlist-codes.js",
     "test:timewarp": "node scripts/test-time-warp-replay.mjs",
-    "verify:all": "node scripts/verify-catalog-syntax.js && node scripts/verify-leaderboard-highlight.js && node scripts/test-playlist-codes.js && node scripts/test-time-warp-replay.mjs",
+    "verify:integrity": "node scripts/verify-registry-integrity.js",
+    "verify:all": "node scripts/verify-catalog-syntax.js && node scripts/verify-leaderboard-highlight.js && node scripts/test-playlist-codes.js && node scripts/test-time-warp-replay.mjs && node scripts/verify-registry-integrity.js",
     "validate": "node scripts/validate-games.js",
     "build": "node scripts/build-registry.js",
     "build:registry": "node scripts/build-registry.js",

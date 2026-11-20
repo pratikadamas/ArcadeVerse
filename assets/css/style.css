@@ -11998,43 +11998,33 @@ html.a11y-reduced-motion .search-clear-btn {
 
 
 /* ===================================================
-   WEB SHARE TARGET SCORE CARD MODAL STYLES (#748)
+   GAME IFRAME CRASH BOUNDARY & DIAGNOSTICS (#728)
    =================================================== */
 
-#modal-share-score-btn {
-  color: var(--text-secondary, #94a3b8);
-  transition: all 0.2s ease;
+.boundary-diagnostic-details {
+  margin: 1rem 0;
+  text-align: left;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 0, 85, 0.25);
+  border-radius: var(--radius-sm, 6px);
+  padding: 0.5rem 0.75rem;
 }
 
-#modal-share-score-btn:hover {
-  color: var(--accent-primary, #00f3ff);
-  background: rgba(0, 243, 255, 0.1);
-  transform: translateY(-1px);
-}
-
-.share-score-toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(0, 243, 255, 0.4);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 12px rgba(0, 243, 255, 0.2);
-  border-radius: 8px;
-  padding: 10px 18px;
-  color: #fff;
-  font-size: 0.85rem;
+.boundary-diagnostic-details summary {
+  cursor: pointer;
+  font-size: 0.8rem;
   font-weight: 600;
-  z-index: 100000;
-  opacity: 0;
-  pointer-events: none;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  color: #ff0055;
+  outline: none;
 }
 
-.share-score-toast.visible {
-  transform: translateX(-50%) translateY(0);
-  opacity: 1;
+.boundary-stack-pre {
+  margin-top: 0.5rem;
+  max-height: 120px;
+  overflow-y: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: #fca5a5;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
