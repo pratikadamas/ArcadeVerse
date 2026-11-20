@@ -46,6 +46,29 @@ document.addEventListener("DOMContentLoaded", () => {
   let pageSize = 10;
   let currentTotalPages = 1;
 
+  // Multi-Column Standings Table Sorting State (#714)
+  const SORT_STORAGE_KEY = "arcadeverse_leaderboard_sort";
+  const DEFAULT_SORT_COL = "score";
+  const DEFAULT_SORT_DIR = "desc";
+
+  let currentSortCol = DEFAULT_SORT_COL;
+  let currentSortDir = DEFAULT_SORT_DIR;
+
+  // Restore sort state from sessionStorage if available
+  try {
+    const savedSort = sessionStorage.getItem(SORT_STORAGE_KEY);
+    if (savedSort) {
+      const parsed = JSON.parse(savedSort);
+      const validCols = ["rank", "name", "handle", "games", "commits", "score"];
+      const validDirs = ["asc", "desc"];
+      if (parsed && validCols.includes(parsed.column) && validDirs.includes(parsed.direction)) {
+        currentSortCol = parsed.column;
+        currentSortDir = parsed.direction;
+      }
+    }
+  } catch (_) {}
+
+
   // Escape regex special characters safely
   function escapeRegex(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -715,10 +738,43 @@ document.addEventListener("DOMContentLoaded", () => {
     return `Games: ${games} • Feat: ${feat} • Fix: ${fix}`;
   }
 
-  // Generate reliable inline SVG letter avatar (prevents 404 network errors & recursion)
+  // Generate procedural generative monogram SVG avatar with deterministic hash-based gradient (#689)
   function getFallbackAvatarSvg(name, login) {
-    const char = ((name || login || "?").trim().charAt(0) || "?").toUpperCase();
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%236366f1"/><stop offset="100%" stop-color="%2306b6d4"/></linearGradient></defs><rect width="64" height="64" rx="32" fill="url(%23g)"/><text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" fill="%23ffffff" font-family="system-ui,-apple-system,sans-serif" font-size="26" font-weight="700">${char}</text></svg>`;
+    const raw = (name || login || "?").trim();
+    const parts = raw.split(/\s+/).filter(Boolean);
+    let monogram = "?";
+    if (parts.length >= 2) {
+      monogram = (parts[0][0] + parts[1][0]).toUpperCase();
+    } else if (raw.length >= 2) {
+      monogram = raw.slice(0, 2).toUpperCase();
+    } else if (raw.length === 1) {
+      monogram = raw.toUpperCase();
+    }
+
+    // Deterministic hash based on username/login
+    const seed = (login || name || "arcadeverse").toLowerCase();
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = (hash << 5) - hash + seed.charCodeAt(i);
+      hash |= 0;
+    }
+
+    const PALETTES = [
+      ["#6366f1", "#06b6d4"],
+      ["#ec4899", "#8b5cf6"],
+      ["#3b82f6", "#10b981"],
+      ["#f59e0b", "#ef4444"],
+      ["#8b5cf6", "#3b82f6"],
+      ["#14b8a6", "#06b6d4"],
+      ["#f43f5e", "#fb923c"],
+      ["#a855f7", "#ec4899"]
+    ];
+
+    const paletteIdx = Math.abs(hash) % PALETTES.length;
+    const [c1, c2] = PALETTES[paletteIdx];
+    const gradId = `av-grad-${Math.abs(hash)}`;
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${c1}"/><stop offset="100%" stop-color="${c2}"/></linearGradient></defs><rect width="64" height="64" rx="32" fill="url(#${gradId})"/><text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" fill="#ffffff" font-family="system-ui,-apple-system,sans-serif" font-size="${monogram.length > 1 ? 22 : 26}" font-weight="700" letter-spacing="-0.5px">${monogram}</text></svg>`;
     return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
   }
 
@@ -862,6 +918,166 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Dynamic Stable Multi-Column Sorter (#714)
+  function sortCommunityContributors(list, col, dir) {
+    const isAsc = dir === "asc";
+    const mult = isAsc ? 1 : -1;
+
+    return [...list].sort((a, b) => {
+      let diff = 0;
+      if (col === "games") {
+        diff = ((a.gamesCount || 0) - (b.gamesCount || 0)) * mult;
+      } else if (col === "commits") {
+        diff = ((a.commits || 0) - (b.commits || 0)) * mult;
+      } else if (col === "name") {
+        const nameA = (a.name || a.login || "").toLowerCase();
+        const nameB = (b.name || b.login || "").toLowerCase();
+        diff = nameA.localeCompare(nameB) * mult;
+      } else if (col === "handle") {
+        const handleA = (a.login || "").toLowerCase();
+        const handleB = (b.login || "").toLowerCase();
+        diff = handleA.localeCompare(handleB) * mult;
+      } else if (col === "rank") {
+        diff = ((a.rank || 0) - (b.rank || 0)) * mult;
+      } else {
+        // default "score"
+        const scoreA = calculateScore(a);
+        const scoreB = calculateScore(b);
+        diff = (scoreA - scoreB) * mult;
+      }
+
+      if (diff !== 0) return diff;
+
+      // Stable deterministic 4-tier tiebreaker: Score desc -> Games desc -> Commits desc -> Login asc
+      const scoreDiff = calculateScore(b) - calculateScore(a);
+      if (scoreDiff !== 0) return scoreDiff;
+
+      const gamesDiff = (b.gamesCount || 0) - (a.gamesCount || 0);
+      if (gamesDiff !== 0) return gamesDiff;
+
+      const commitsDiff = (b.commits || 0) - (a.commits || 0);
+      if (commitsDiff !== 0) return commitsDiff;
+
+      const loginA = (a.login || "").toLowerCase();
+      const loginB = (b.login || "").toLowerCase();
+      return loginA.localeCompare(loginB);
+    });
+  }
+
+  const COLUMN_SORT_CONFIG = {
+    0: "rank",
+    1: "name",
+    3: "handle",
+    4: "games",
+    6: "commits",
+    8: "score"
+  };
+
+  let isTableSortingInitialized = false;
+
+  function initTableSorting() {
+    const table = document.getElementById("leaderboard-table");
+    if (!table) return;
+
+    const headers = table.querySelectorAll("thead tr th");
+    headers.forEach((th, idx) => {
+      const sortKey = th.getAttribute("data-sort") || COLUMN_SORT_CONFIG[idx];
+      if (!sortKey) return;
+
+      th.setAttribute("data-sort", sortKey);
+      th.setAttribute("role", "columnheader");
+      th.setAttribute("tabindex", "0");
+      th.classList.add("sortable-th");
+
+      // Wrap existing text in sort-header-inner if not already wrapped
+      if (!th.querySelector(".sort-header-inner")) {
+        const text = th.textContent.trim();
+        th.innerHTML = `
+          <span class="sort-header-inner">
+            <span class="sort-header-text">${text}</span>
+            <span class="sort-icon-wrap" aria-hidden="true">
+              <i data-lucide="chevrons-up-down"></i>
+            </span>
+          </span>
+        `;
+      }
+
+      if (!isTableSortingInitialized) {
+        th.addEventListener("click", () => {
+          handleHeaderSortClick(sortKey);
+        });
+
+        th.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleHeaderSortClick(sortKey);
+          }
+        });
+      }
+    });
+
+    isTableSortingInitialized = true;
+    updateSortHeaderUI();
+  }
+
+  function handleHeaderSortClick(colKey) {
+    if (currentSortCol === colKey) {
+      currentSortDir = currentSortDir === "asc" ? "desc" : "asc";
+    } else {
+      currentSortCol = colKey;
+      if (colKey === "name" || colKey === "handle" || colKey === "rank") {
+        currentSortDir = "asc";
+      } else {
+        currentSortDir = "desc";
+      }
+    }
+
+    try {
+      sessionStorage.setItem(SORT_STORAGE_KEY, JSON.stringify({
+        column: currentSortCol,
+        direction: currentSortDir
+      }));
+    } catch (_) {}
+
+    currentPage = 1;
+    updateSortHeaderUI();
+    renderTable();
+  }
+
+  function updateSortHeaderUI() {
+    const table = document.getElementById("leaderboard-table");
+    if (!table) return;
+
+    const headers = table.querySelectorAll("thead tr th[data-sort]");
+    headers.forEach((th) => {
+      const key = th.getAttribute("data-sort");
+      const isActive = key === currentSortCol;
+      const textEl = th.querySelector(".sort-header-text");
+      const label = textEl ? textEl.textContent.trim() : key;
+      const iconWrap = th.querySelector(".sort-icon-wrap");
+
+      if (isActive) {
+        const ariaVal = currentSortDir === "asc" ? "ascending" : "descending";
+        const iconName = currentSortDir === "asc" ? "chevron-up" : "chevron-down";
+        th.setAttribute("aria-sort", ariaVal);
+        th.setAttribute("aria-label", `${label}, sorted ${ariaVal}. Activate to reverse order.`);
+        if (iconWrap) {
+          iconWrap.innerHTML = `<i data-lucide="${iconName}"></i>`;
+        }
+      } else {
+        th.setAttribute("aria-sort", "none");
+        th.setAttribute("aria-label", `${label}. Activate to sort.`);
+        if (iconWrap) {
+          iconWrap.innerHTML = `<i data-lucide="chevrons-up-down"></i>`;
+        }
+      }
+    });
+
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+  }
+
   // Render Full Contributor Standings Table (Exclusively Community Contributors)
   function renderTable() {
     if (!tableBody) return;
@@ -887,7 +1103,8 @@ document.addEventListener("DOMContentLoaded", () => {
       return nameMatch || loginMatch || roleMatch || badgeMatch;
     });
 
-    const totalItems = communityContributors.length;
+    const sortedContributors = sortCommunityContributors(communityContributors, currentSortCol, currentSortDir);
+    const totalItems = sortedContributors.length;
 
     if (totalItems === 0) {
       if (paginationBar) paginationBar.style.display = "none";
@@ -941,7 +1158,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Pagination computation
-    let itemsToRender = communityContributors;
+    let itemsToRender = sortedContributors;
     let totalPages = 1;
     let startIdx = 0;
     let endIdx = totalItems;
@@ -954,7 +1171,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       startIdx = (currentPage - 1) * limit;
       endIdx = Math.min(startIdx + limit, totalItems);
-      itemsToRender = communityContributors.slice(startIdx, endIdx);
+      itemsToRender = sortedContributors.slice(startIdx, endIdx);
     } else {
       currentPage = 1;
       totalPages = 1;
@@ -1339,7 +1556,8 @@ document.addEventListener("DOMContentLoaded", () => {
     return repoInput ? repoInput.value.trim() : "DebasmitaBose0/ArcadeVerse";
   }
 
-  // The rows exports are built from, respecting current search/filter state when requested
+  // The rows both exports are built from, so the CSV, JSON, and Markdown always list the
+  // same people in the same order as the Community Contributors table.
   function getStandingsRows(onlyFiltered = false) {
     const all = getCommunityContributors().map((item, idx) => ({
       ...item,
@@ -1352,19 +1570,21 @@ document.addEventListener("DOMContentLoaded", () => {
       score: calculateScore(item),
     }));
 
-    if (!onlyFiltered || !tableSearchQuery) {
-      return all;
-    }
+    const filtered = onlyFiltered
+      ? all.filter(item => {
+        if (!matchesTier(item, currentTierFilter)) return false;
+        if (!tableSearchQuery) return true;
+        const q = tableSearchQuery.toLowerCase().trim();
+        const nameMatch = (item.name || "").toLowerCase().includes(q);
+        const loginMatch = (item.login || "").toLowerCase().includes(q);
+        const roleMatch = (item.role || "").toLowerCase().includes(q);
+        const badges = getContributorBadges(item);
+        const badgeMatch = badges.some(b => (b.label || "").toLowerCase().includes(q));
+        return nameMatch || loginMatch || roleMatch || badgeMatch;
+      })
+      : all;
 
-    const q = tableSearchQuery.toLowerCase().trim();
-    return all.filter(item => {
-      const nameMatch = (item.name || "").toLowerCase().includes(q);
-      const loginMatch = (item.login || "").toLowerCase().includes(q);
-      const roleMatch = (item.role || "").toLowerCase().includes(q);
-      const badges = getContributorBadges(item);
-      const badgeMatch = badges.some(b => (b.label || "").toLowerCase().includes(q));
-      return nameMatch || loginMatch || roleMatch || badgeMatch;
-    });
+    return sortCommunityContributors(filtered, currentSortCol, currentSortDir);
   }
 
   function downloadTextFile(content, mimeType, filename) {
@@ -2021,8 +2241,139 @@ document.addEventListener("DOMContentLoaded", () => {
   const initialAdmin = contributorsData.find(c => c.login.toLowerCase() === "debasmitabose0");
   if (initialAdmin) updateAdminSpotlight(initialAdmin);
   renderPodium();
+  initTableSorting();
   renderTable();
   fetchLiveGitHubContributions(activeRepo, false);
+
+  // Contributor Hover Card popover logic (#688)
+  let hoverCardTimer = null;
+  let activeHoverCard = null;
+
+  function createHoverCard(user, anchorEl) {
+    removeHoverCard();
+    const score = calculateScore(user);
+    const badges = getContributorBadges(user);
+    const fallbackAvatar = getFallbackAvatarSvg(user.name, user.login);
+    const primaryBadge = badges.length > 0 ? badges[0] : { label: user.role || "Contributor", tagClass: "role-contributor" };
+
+    let userGames = user.games || [];
+    if (userGames.length === 0 && typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) {
+      const found = GAMES_REGISTRY.filter(g => g.github && g.github.toLowerCase() === (user.login || "").toLowerCase());
+      userGames = found.map(g => g.title);
+    }
+
+    const card = document.createElement("div");
+    card.className = "contributor-hover-card";
+    card.setAttribute("role", "tooltip");
+    card.innerHTML = `
+      <div class="hover-card-header">
+        <img src="${user.avatar_url || fallbackAvatar}" alt="${user.name || user.login}" class="hover-card-avatar" onerror="this.onerror=null; this.src='${fallbackAvatar}';">
+        <div class="hover-card-meta">
+          <strong class="hover-card-name">${escapeHTML(user.name || user.login)}</strong>
+          <span class="hover-card-handle">@${escapeHTML(user.login)}</span>
+          <span class="hover-card-tier-badge ${primaryBadge.tagClass || ''}">${escapeHTML(primaryBadge.label || '')}</span>
+        </div>
+      </div>
+      <div class="hover-card-stats">
+        <div class="hover-stat">
+          <span class="stat-num">${user.commits || 0}</span>
+          <span class="stat-lbl">Commits</span>
+        </div>
+        <div class="hover-stat">
+          <span class="stat-num">${userGames.length}</span>
+          <span class="stat-lbl">Games</span>
+        </div>
+        <div class="hover-stat">
+          <span class="stat-num">${score}</span>
+          <span class="stat-lbl">Points</span>
+        </div>
+      </div>
+      ${userGames.length > 0 ? `
+        <div class="hover-card-games">
+          <span class="hover-games-title">Top Authored Games</span>
+          <div class="hover-games-carousel">
+            ${userGames.slice(0, 4).map(title => `<span class="hover-game-chip">${escapeHTML(title)}</span>`).join("")}
+          </div>
+        </div>
+      ` : ''}
+      <div class="hover-card-footer">
+        <a href="https://github.com/${user.login}" target="_blank" rel="noopener noreferrer" class="hover-github-link">
+          <i data-lucide="external-link"></i> Verified GitHub Profile
+        </a>
+      </div>
+    `;
+
+    document.body.appendChild(card);
+    activeHoverCard = card;
+
+    // Viewport-aware positioning
+    const rect = anchorEl.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+    let top = rect.bottom + window.scrollY + 8;
+    let left = rect.left + window.scrollX;
+
+    if (left + cardRect.width > window.innerWidth - 16) {
+      left = window.innerWidth - cardRect.width - 16;
+    }
+    if (top + cardRect.height > window.innerHeight + window.scrollY - 16) {
+      top = rect.top + window.scrollY - cardRect.height - 8;
+    }
+
+    card.style.top = `${Math.max(8, top)}px`;
+    card.style.left = `${Math.max(8, left)}px`;
+
+    card.addEventListener("mouseenter", () => {
+      clearTimeout(hoverCardTimer);
+    });
+    card.addEventListener("mouseleave", () => {
+      removeHoverCard();
+    });
+
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+  }
+
+  function removeHoverCard() {
+    clearTimeout(hoverCardTimer);
+    if (activeHoverCard) {
+      activeHoverCard.remove();
+      activeHoverCard = null;
+    }
+  }
+
+  document.addEventListener("mouseover", (e) => {
+    const trigger = e.target.closest(".table-user-cell, .podium-name, .user-display-name, .github-handle-link");
+    if (!trigger) return;
+    const tr = trigger.closest("tr");
+    let login = null;
+    if (tr) {
+      const link = tr.querySelector(".github-handle-link");
+      if (link) login = link.textContent.replace("@", "").trim();
+    } else {
+      const handleEl = trigger.closest(".podium-card") ? trigger.closest(".podium-card").querySelector(".podium-handle") : null;
+      if (handleEl) login = handleEl.textContent.replace("@", "").trim();
+    }
+
+    if (!login) return;
+    const user = contributorsData.find(c => c.login && c.login.toLowerCase() === login.toLowerCase());
+    if (!user) return;
+
+    clearTimeout(hoverCardTimer);
+    hoverCardTimer = setTimeout(() => {
+      createHoverCard(user, trigger);
+    }, 150);
+  });
+
+  document.addEventListener("mouseout", (e) => {
+    const trigger = e.target.closest(".table-user-cell, .podium-name, .user-display-name, .github-handle-link");
+    if (!trigger) return;
+    hoverCardTimer = setTimeout(() => {
+      if (activeHoverCard && !activeHoverCard.matches(":hover")) {
+        removeHoverCard();
+      }
+    }, 150);
+  });
 
   // App Badging API clear on viewing leaderboard & trophy certificates (#557)
   if (typeof navigator !== 'undefined' && 'clearAppBadge' in navigator) {

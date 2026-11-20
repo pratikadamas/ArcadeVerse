@@ -38,7 +38,7 @@
   }
 
   /**
-   * Procedural Multi-Curve Noise Buffer Synthesizer (#724)
+   * Procedural Multi-Curve Noise Buffer Synthesizer (#701, #724)
    * Produces White, Pink (1/f), and Brownian (1/f^2) noise buffers without external audio assets.
    * Supports polymorphic signatures: (type, duration, customCtx) or (ctx, duration, type).
    * @param {string|AudioContext} type - Noise curve name ('white', 'pink', 'brownian') or AudioContext
@@ -282,7 +282,7 @@
       filter.connect(gain);
       gain.connect(masterGain || ctx.destination);
 
-      // Memory cleanup on sound node termination (#724)
+      // Memory cleanup on sound node termination (#701, #724)
       noiseSource.onended = function () {
         try {
           noiseSource.disconnect();
@@ -334,7 +334,7 @@
       filter.connect(gain);
       gain.connect(masterGain || ctx.destination);
 
-      // Memory cleanup on sound node termination (#724)
+      // Memory cleanup on sound node termination (#701, #724)
       noiseSource.onended = function () {
         try {
           noiseSource.disconnect();
@@ -787,7 +787,7 @@
     },
 
     /**
-     * Procedural Noise Buffer Factory (#724)
+     * Procedural Noise Buffer Factory (#701, #724)
      * Generates native AudioBuffer containing white, pink (1/f), or brownian (1/f^2) noise.
      * @param {string} [type='white'] - Noise spectral curve: 'white', 'pink', 'brownian' (or 'brown' / 'red')
      * @param {number} [duration=0.25] - Buffer duration in seconds
@@ -796,6 +796,124 @@
      */
     createNoiseBuffer: function (type, duration, customCtx) {
       return createNoiseBuffer(type, duration, customCtx);
+    },
+
+    /**
+     * Polyphonic 4-Channel MIDI-Like Chiptune Sequencer with BGM Loop Tracks (#694)
+     * Channels: Lead (Pulse), Harmony (Square), Bass (Triangle), Percussion (Noise)
+     */
+    _bgmInterval: null,
+    _bgmCurrentTrack: null,
+
+    playBGM: function (trackName) {
+      this.stopBGM();
+      var ctx = getContext();
+      if (!ctx || isMuted) return;
+
+      var TRACKS = {
+        action: {
+          bpm: 140,
+          lead: [440, 494, 523, 587, 659, 587, 523, 494, 440, 523, 659, 880, 784, 659, 587, 523],
+          harmony: [220, 247, 262, 294, 330, 294, 262, 247, 220, 262, 330, 440, 392, 330, 294, 262],
+          bass: [110, 110, 131, 131, 147, 147, 165, 165, 110, 110, 131, 131, 147, 147, 165, 165],
+          perc: [1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0]
+        },
+        mystery: {
+          bpm: 110,
+          lead: [330, 349, 392, 440, 392, 349, 330, 294, 330, 392, 440, 523, 494, 440, 392, 349],
+          harmony: [165, 175, 196, 220, 196, 175, 165, 147, 165, 196, 220, 262, 247, 220, 196, 175],
+          bass: [82, 82, 98, 98, 110, 110, 82, 82, 82, 82, 98, 98, 110, 110, 82, 82],
+          perc: [1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1]
+        },
+        cyberpunk: {
+          bpm: 128,
+          lead: [587, 587, 659, 698, 587, 523, 440, 523, 587, 698, 784, 880, 784, 698, 659, 587],
+          harmony: [294, 294, 330, 349, 294, 262, 220, 262, 294, 349, 392, 440, 392, 349, 330, 294],
+          bass: [73, 73, 87, 87, 73, 65, 55, 65, 73, 87, 98, 110, 98, 87, 73, 73],
+          perc: [1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1]
+        }
+      };
+
+      var track = TRACKS[trackName] || TRACKS.action;
+      this._bgmCurrentTrack = trackName;
+      var stepDuration = (60 / track.bpm) / 4; // 16th notes
+      var currentStep = 0;
+
+      var self = this;
+      this._bgmInterval = setInterval(function () {
+        if (isMuted || !audioCtx) return;
+        var now = audioCtx.currentTime;
+
+        // Channel 1: Lead (Pulse / Sawtooth)
+        var leadFreq = track.lead[currentStep];
+        if (leadFreq > 0) {
+          var osc1 = audioCtx.createOscillator();
+          var gain1 = audioCtx.createGain();
+          osc1.type = 'sawtooth';
+          osc1.frequency.setValueAtTime(leadFreq, now);
+          gain1.gain.setValueAtTime(0.08 * volume, now);
+          gain1.gain.exponentialRampToValueAtTime(0.001, now + stepDuration * 0.9);
+          osc1.connect(gain1);
+          gain1.connect(masterGain);
+          osc1.start(now);
+          osc1.stop(now + stepDuration * 0.9);
+        }
+
+        // Channel 2: Harmony (Square)
+        var harmFreq = track.harmony[currentStep];
+        if (harmFreq > 0) {
+          var osc2 = audioCtx.createOscillator();
+          var gain2 = audioCtx.createGain();
+          osc2.type = 'square';
+          osc2.frequency.setValueAtTime(harmFreq, now);
+          gain2.gain.setValueAtTime(0.05 * volume, now);
+          gain2.gain.exponentialRampToValueAtTime(0.001, now + stepDuration * 0.85);
+          osc2.connect(gain2);
+          gain2.connect(masterGain);
+          osc2.start(now);
+          osc2.stop(now + stepDuration * 0.85);
+        }
+
+        // Channel 3: Bass (Triangle)
+        var bassFreq = track.bass[currentStep];
+        if (bassFreq > 0) {
+          var osc3 = audioCtx.createOscillator();
+          var gain3 = audioCtx.createGain();
+          osc3.type = 'triangle';
+          osc3.frequency.setValueAtTime(bassFreq, now);
+          gain3.gain.setValueAtTime(0.12 * volume, now);
+          gain3.gain.exponentialRampToValueAtTime(0.001, now + stepDuration * 0.95);
+          osc3.connect(gain3);
+          gain3.connect(masterGain);
+          osc3.start(now);
+          osc3.stop(now + stepDuration * 0.95);
+        }
+
+        // Channel 4: Percussion (Noise)
+        if (track.perc[currentStep]) {
+          var noiseBuf = createNoiseBuffer('white', 0.04, audioCtx);
+          if (noiseBuf) {
+            var nSource = audioCtx.createBufferSource();
+            var nGain = audioCtx.createGain();
+            nSource.buffer = noiseBuf;
+            nGain.gain.setValueAtTime(0.07 * volume, now);
+            nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+            nSource.connect(nGain);
+            nGain.connect(masterGain);
+            nSource.start(now);
+          }
+        }
+
+        currentStep = (currentStep + 1) % 16;
+      }, stepDuration * 1000);
+    },
+
+    stopBGM: function () {
+      if (this._bgmInterval) {
+        clearInterval(this._bgmInterval);
+        this._bgmInterval = null;
+        this._bgmCurrentTrack = null;
+      }
     }
   };
 

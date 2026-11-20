@@ -206,15 +206,16 @@
 
     player.onGround = false;
 
-    // Platform collisions
+    // Platform collisions with swept vertical collision detection
+    const prevBottom = (player.y - player.vy) + player.h / 2;
+    const currBottom = player.y + player.h / 2;
+    const playerLeft = player.x - player.w / 2;
+    const playerRight = player.x + player.w / 2;
+
     for (const p of platforms) {
-      if (
-        player.x + player.w / 2 > p.x &&
-        player.x - player.w / 2 < p.x + p.w &&
-        player.y + player.h / 2 > p.y &&
-        player.y - player.h / 2 < p.y + p.h
-      ) {
-        if (player.vy > 0 && player.y < p.y + 10) {
+      if (playerRight > p.x && playerLeft < p.x + p.w) {
+        // Falling downwards and crossing or resting on the platform top edge
+        if (player.vy >= 0 && prevBottom <= p.y + 6 && currBottom >= p.y) {
           player.y = p.y - player.h / 2;
           player.vy = 0;
           player.onGround = true;
@@ -353,6 +354,23 @@
     }
   }
 
+  function startLoop() {
+    if (animId) {
+      cancelAnimationFrame(animId);
+      animId = null;
+    }
+    isRunning = true;
+    animId = requestAnimationFrame(loop);
+  }
+
+  function stopLoop() {
+    isRunning = false;
+    if (animId) {
+      cancelAnimationFrame(animId);
+      animId = null;
+    }
+  }
+
   function startChamberGame() {
     sfx.init();
     chamber = 1;
@@ -362,29 +380,73 @@
     clearScreen.classList.add('hidden');
     gameOverScreen.classList.add('hidden');
     setupChamber();
-    isRunning = true;
     isPaused = false;
-    animId = requestAnimationFrame(loop);
+    startLoop();
   }
 
   function advanceChamber() {
     chamber++;
     clearScreen.classList.add('hidden');
     setupChamber();
-    isRunning = true;
     isPaused = false;
+    startLoop();
   }
 
   window.addEventListener('keydown', (e) => {
+    if (e.repeat) return;
     sfx.init();
-    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = true;
-    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = true;
-    if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.code === 'Space') doJump();
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+      keys.left = true;
+      e.preventDefault();
+    }
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+      keys.right = true;
+      e.preventDefault();
+    }
+    if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.code === 'Space') {
+      e.preventDefault();
+      doJump();
+    }
   });
 
   window.addEventListener('keyup', (e) => {
     if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
     if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
+  });
+
+  function resetKeys() {
+    keys.left = false;
+    keys.right = false;
+  }
+
+  window.addEventListener('blur', resetKeys);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      resetKeys();
+      if (isRunning) stopLoop();
+    } else {
+      if (!isPaused && !startScreen.classList.contains('hidden') === false) {
+        startLoop();
+      }
+    }
+  });
+
+  window.addEventListener('ARCADEVERSE_PAUSE', () => {
+    isPaused = true;
+    stopLoop();
+  });
+
+  window.addEventListener('ARCADEVERSE_RESUME', () => {
+    isPaused = false;
+    startLoop();
+  });
+
+  window.addEventListener('ARCADEVERSE_TEARDOWN', () => {
+    stopLoop();
+    resetKeys();
+    if (sfx.ctx && sfx.ctx.state !== 'closed') {
+      try { sfx.ctx.close(); } catch (_) {}
+    }
   });
 
   function bindTouch(btn, prop) {
@@ -405,7 +467,10 @@
   btnStart.addEventListener('click', startChamberGame);
   btnNext.addEventListener('click', advanceChamber);
   btnRestart.addEventListener('click', startChamberGame);
-  btnRestartNav.addEventListener('click', setupChamber);
+  btnRestartNav.addEventListener('click', () => {
+    setupChamber();
+    startLoop();
+  });
 
   btnRules.addEventListener('click', () => rulesModal.classList.remove('hidden'));
   btnCloseRules.addEventListener('click', () => rulesModal.classList.add('hidden'));

@@ -8,6 +8,36 @@
 (function () {
   'use strict';
 
+  // Safe Storage
+  function getStoredBest() {
+    try {
+      const val = localStorage.getItem('cosmic_surge_hiscore');
+      return val ? parseInt(val, 10) || 0 : 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function setStoredBest(val) {
+    try {
+      localStorage.setItem('cosmic_surge_hiscore', String(val));
+    } catch (_) {}
+  }
+
+  function getStoredMuted() {
+    try {
+      return localStorage.getItem('cosmic_surge_muted') === 'true';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function setStoredMuted(muted) {
+    try {
+      localStorage.setItem('cosmic_surge_muted', muted ? 'true' : 'false');
+    } catch (_) {}
+  }
+
   // --- Web Audio Procedural Synthesizer ---
   const Sound = {
     ctx: null,
@@ -23,7 +53,7 @@
       } catch (e) {
         // AudioContext not available
       }
-      this.muted = localStorage.getItem('cosmic_surge_muted') === 'true';
+      this.muted = getStoredMuted();
     },
 
     trackNode(osc) {
@@ -207,13 +237,15 @@
   let score = 0;
   let wave = 1;
   let kills = 0;
-  let bestScore = parseInt(localStorage.getItem('cosmic_surge_hiscore') || '0', 10);
+  let bestScore = getStoredBest();
   let screenShake = 0;
 
   // Input State
   const keys = {};
   const mouse = { x: WIDTH / 2, y: HEIGHT - 60, down: false };
   let lastTouchTime = 0;
+  let rafId = null;
+  let isTicking = false;
 
   // Starfield
   const stars = [];
@@ -452,7 +484,7 @@
 
     if (score > bestScore) {
       bestScore = score;
-      localStorage.setItem('cosmic_surge_hiscore', bestScore.toString());
+      setStoredBest(bestScore);
     }
 
     overScore.textContent = score.toString();
@@ -996,16 +1028,53 @@
 
   // --- Main Animation Frame ---
   function tick() {
+    if (!isTicking) return;
     update();
     draw();
-    requestAnimationFrame(tick);
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function startLoop() {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    isTicking = true;
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function stopLoop() {
+    isTicking = false;
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+  }
+
+  function resetKeys() {
+    Object.keys(keys).forEach(k => keys[k] = false);
+    mouse.down = false;
+  }
+
+  function updateSoundIconUI() {
+    if (!soundIcon) return;
+    if (Sound.muted) {
+      soundIcon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>';
+    } else {
+      soundIcon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>';
+    }
   }
 
   // --- Event Listeners ---
   function bindInputEvents() {
     // Keyboard listeners
     window.addEventListener('keydown', e => {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
+        e.preventDefault();
+      }
       keys[e.code] = true;
+
+      if (e.repeat) return;
 
       if (e.code === 'KeyB') {
         triggerNovaEMP();
@@ -1020,6 +1089,19 @@
 
     window.addEventListener('keyup', e => {
       keys[e.code] = false;
+    });
+
+    window.addEventListener('blur', resetKeys);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        resetKeys();
+        if (mode === GameMode.PLAYING) {
+          mode = GameMode.PAUSED;
+        }
+        stopLoop();
+      } else {
+        startLoop();
+      }
     });
 
     // Mouse Tracking on Canvas
@@ -1083,23 +1165,40 @@
       if (Sound.muted) {
         Sound.stopAll();
       }
-      localStorage.setItem('cosmic_surge_muted', Sound.muted ? 'true' : 'false');
-      if (soundIcon) {
-        soundIcon.setAttribute('data-lucide', Sound.muted ? 'volume-x' : 'volume-2');
-        if (window.lucide) lucide.createIcons();
-      }
+      setStoredMuted(Sound.muted);
+      updateSoundIconUI();
     });
 
     window.addEventListener('message', (e) => {
       if (e.data && (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE')) {
         Sound.stopAll();
+        resetKeys();
+        stopLoop();
+      }
+    });
+
+    window.addEventListener('ARCADEVERSE_PAUSE', () => {
+      Sound.stopAll();
+      resetKeys();
+      stopLoop();
+    });
+
+    window.addEventListener('ARCADEVERSE_RESUME', () => {
+      startLoop();
+    });
+
+    window.addEventListener('ARCADEVERSE_TEARDOWN', () => {
+      Sound.stopAll();
+      resetKeys();
+      stopLoop();
+      if (Sound.ctx && Sound.ctx.state !== 'closed') {
+        try { Sound.ctx.close(); } catch (_) {}
       }
     });
 
     // How to Play Modal
     const showManual = () => {
       manualModal.classList.remove('hidden');
-      if (window.lucide) lucide.createIcons();
     };
 
     const hideManual = () => {
@@ -1118,9 +1217,11 @@
 
   // --- Bootstrap ---
   function init() {
+    Sound.init();
     updateHUD();
+    updateSoundIconUI();
     bindInputEvents();
-    requestAnimationFrame(tick);
+    startLoop();
   }
 
   document.addEventListener('DOMContentLoaded', init);
