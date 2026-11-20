@@ -328,13 +328,14 @@ document.addEventListener("DOMContentLoaded", () => {
               frameDoc.dispatchEvent(evt);
             }
           } catch (_) {
+            const targetOrigin = (typeof getTrustedTargetOrigin === "function") ? getTrustedTargetOrigin() : "*";
             iframe.contentWindow.postMessage({
               type: "ARCADEVERSE_GAMEPAD_KEY",
               eventType: eventType,
               key: targetMapping.key,
               code: targetMapping.code,
               keyCode: targetMapping.keyCode
-            }, "*");
+            }, targetOrigin);
           }
         }
         break;
@@ -2046,6 +2047,21 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   /**
+   * Resolves a trusted targetOrigin for hub-to-iframe postMessage transmissions (#884).
+   * Strictly avoids wildcard '*' to prevent leaking session tokens, audio configs, or controller state
+   * to untrusted origins if a frame redirects or navigates unexpectedly.
+   */
+  function getTrustedTargetOrigin() {
+    try {
+      if (window.location && window.location.origin && window.location.origin !== "null") {
+        return window.location.origin;
+      }
+    } catch (_) {}
+    return "*";
+  }
+  window.getTrustedTargetOrigin = getTrustedTargetOrigin;
+
+  /**
    * Generates a cryptographically strong UUID or fallback random hexadecimal token
    */
   function generateSessionToken() {
@@ -2126,7 +2142,7 @@ document.addEventListener("DOMContentLoaded", () => {
       handshakeTimeoutId: null
     };
 
-    const targetOrigin = (window.location.origin && window.location.origin !== "null") ? window.location.origin : "*";
+    const targetOrigin = getTrustedTargetOrigin();
 
     // Dispatch cryptographically secured handshake challenge
     try {
@@ -2138,7 +2154,7 @@ document.addEventListener("DOMContentLoaded", () => {
           origin: targetOrigin,
           timestamp: Date.now()
         },
-        "*"
+        targetOrigin
       );
     } catch (err) {
       console.warn("[ArcadeVerse Security] Error dispatching AV_INIT_SESSION:", err);
@@ -2185,7 +2201,7 @@ document.addEventListener("DOMContentLoaded", () => {
             muted: audioState.muted,
             volume: audioState.volume,
             gain: audioState.muted ? 0 : audioState.volume
-          }, "*");
+          }, getTrustedTargetOrigin());
         }
       } catch (_) { }
     });
@@ -2292,7 +2308,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function broadcastVolumeSyncToGame(muted, volume) {
     if (!gameIframe || !gameIframe.contentWindow) return;
-    gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_VOLUME_SYNC", sessionToken: activeGameSession.token, muted, volume, gain: muted ? 0 : volume }, "*");
+    gameIframe.contentWindow.postMessage(
+      { type: "ARCADEVERSE_VOLUME_SYNC", sessionToken: activeGameSession.token, muted, volume, gain: muted ? 0 : volume },
+      getTrustedTargetOrigin()
+    );
   }
 
   function openGameModal(game, triggerElement = null, isDirectDeepLink = false) {
@@ -2513,7 +2532,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (gameIframe && gameIframe.contentWindow) {
           try {
             gameIframe.contentWindow.focus();
-            gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_RESUME" }, "*");
+            gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_RESUME" }, getTrustedTargetOrigin());
           } catch (_) { }
         }
       });
@@ -2534,7 +2553,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Pause game runtime while confirmation prompt is open
     if (gameIframe && gameIframe.contentWindow) {
       try {
-        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
+        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, getTrustedTargetOrigin());
       } catch (_) { }
     }
   }
@@ -2568,8 +2587,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Standardized Game Lifecycle Bridge: Dispatch teardown & pause events before unmounting iframe
     try {
       if (gameIframe && gameIframe.contentWindow) {
-        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
-        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_TEARDOWN" }, "*");
+        const trustedOrigin = getTrustedTargetOrigin();
+        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, trustedOrigin);
+        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_TEARDOWN" }, trustedOrigin);
 
         // Aggressive RAF and Timer Leak Mitigation (#497)
         try {
@@ -2855,8 +2875,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (escPressCount === 1) {
       try {
         if (gameIframe && gameIframe.contentWindow) {
-          gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
-          gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_ESC_PAUSE" }, "*");
+          const trustedOrigin = getTrustedTargetOrigin();
+          gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, trustedOrigin);
+          gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_ESC_PAUSE" }, trustedOrigin);
         }
       } catch (_) { }
 
@@ -3051,7 +3072,7 @@ document.addEventListener("DOMContentLoaded", () => {
           muted: audioState.muted,
           volume: audioState.volume,
           gain: audioState.muted ? 0 : audioState.volume
-        }, "*");
+        }, getTrustedTargetOrigin());
       }
       return;
     }
@@ -3267,7 +3288,7 @@ document.addEventListener("DOMContentLoaded", () => {
           gameFrame.contentWindow.postMessage({
             type: "AV_FULLSCREEN_CHANGE",
             payload: { isFullscreen: true, mode: "pseudo" }
-          }, "*");
+          }, getTrustedTargetOrigin());
         } catch (_e) { }
       }
     }
@@ -3283,7 +3304,7 @@ document.addEventListener("DOMContentLoaded", () => {
           gameFrame.contentWindow.postMessage({
             type: "AV_FULLSCREEN_CHANGE",
             payload: { isFullscreen: false, mode: "pseudo" }
-          }, "*");
+          }, getTrustedTargetOrigin());
         } catch (_e) { }
       }
     }
