@@ -377,3 +377,46 @@ kbd {
   background: rgba(0, 240, 255, 0.3);
   transform: scale(0.95);
 }
+
+@media (max-width: 540px) {
+  .game-container {
+    max-width: 100%;
+    padding: 10px;
+    gap: 8px;
+    border-radius: 12px;
+  }
+
+  .canvas-wrapper {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
+
+  #game-canvas {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 75vw;
+  }
+
+  .scoreboard-bar {
+    gap: 6px;
+  }
+
+  .score-card {
+    padding: 6px 8px;
+  }
+
+  .score-card .value {
+    font-size: 1.15rem;
+  }
+
+  .dpad-btn {
+    width: 48px;
+    height: 44px;
+  }
+
+  .overlay-card {
+    padding: 18px 14px;
+    max-width: 90%;
+  }
+}
