@@ -336,3 +336,44 @@ canvas {
 .modal-body strong {
   color: var(--purple-neon);
 }
+
+/* Mobile responsive breakpoints (#765) */
+@media (max-width: 640px) {
+  body {
+    padding: 6px;
+  }
+  .game-container {
+    gap: 8px;
+  }
+  .game-header {
+    padding: 8px 10px;
+  }
+  .brand-title {
+    font-size: 0.95rem;
+  }
+  .hud-panel {
+    gap: 6px;
+  }
+  .hud-stat {
+    padding: 4px 6px;
+  }
+  .stat-label {
+    font-size: 0.65rem;
+  }
+  .stat-val {
+    font-size: 0.85rem;
+  }
+  #gameCanvas {
+    max-width: 100%;
+    height: auto;
+  }
+  .bottom-controls {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .btn-primary, .btn-secondary {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+}
+
