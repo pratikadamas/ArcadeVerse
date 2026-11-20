@@ -652,6 +652,26 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "cyber-logic-gates_hrshjswniii",
+    "title": "Cyber Logic Gates: Boolean Circuit Forge",
+    "category": "Puzzle",
+    "lucideIcon": "gamepad-2",
+    "description": "Build and test Boolean circuits by wiring logic gate chips to match target truth tables across fifteen engineering puzzles.",
+    "author": "Harsh Jaiswani",
+    "github": "hrshjswniii",
+    "role": "Arcade Contributor",
+    "path": "games/cyber-logic-gates_hrshjswniii/index.html",
+    "tags": [
+      "Puzzle",
+      "Logic",
+      "Engineering",
+      "Educational",
+      "Circuit"
+    ],
+    "stars": 0,
+    "featured": false
+  },
+  {
     "id": "cyber-maze-runner_chanchall26",
     "title": "Cyber Maze Runner",
     "category": "Arcade",
@@ -2523,7 +2543,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 721,
+    "commits": 722,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2725,8 +2745,8 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "hrshjswniii",
     "avatarInitial": "H",
     "role": "Active Contributor (NSOC '26)",
-    "commits": 32,
-    "gamesCount": 3,
+    "commits": 35,
+    "gamesCount": 4,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 1,
@@ -2734,6 +2754,7 @@ const CONTRIBUTORS_REGISTRY = [
     "contributions": [
       "Cyber Brick Breaker: Neon Velocity",
       "Cyber Grapple: Neon Chasm Swinger",
+      "Cyber Logic Gates: Boolean Circuit Forge",
       "Cyber Typer: Terminal Hacker"
     ]
   },
