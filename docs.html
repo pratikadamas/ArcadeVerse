@@ -172,6 +172,7 @@
               <li><a href="#az-jump-bar" class="docs-nav-link"><i data-lucide="arrow-down-a-z"></i> A-Z Catalog Jump Bar</a></li>
               <li><a href="#theme-sync" class="docs-nav-link"><i data-lucide="sun-moon"></i> Theme Sync & UI Guidelines</a></li>
               <li><a href="#bug-report-helper" class="docs-nav-link"><i data-lucide="bug"></i> Game Bug Report Diagnostic</a></li>
+              <li><a href="#card-flip-manual" class="docs-nav-link"><i data-lucide="layers"></i> 3D Flip Card &amp; Quick Manual</a></li>
             </ul>
           </div>
 
@@ -875,6 +876,11 @@ arcadeverse.requestPause();
           </script>
         </section>
 
+        <section class="docs-section" id="storage-inspector">
+          <h2 class="docs-section-title">Developer storage inspector</h2>
+          <p class="docs-paragraph"><a href="index.html?debug=storage">Open the catalog with the storage lab enabled</a>. Take a snapshot, close the drawer, play a game and close its modal to inspect created, modified and deleted <code>arcadeverse_*</code> keys. Expand JSON values or search keys and values. Valid plain settings are preserved. Resetting a known malformed JSON key requires confirmation and refuses a value that changed since inspection; it does not recover lost data. Close other tabs before resetting. End the developer session to discard its in-memory snapshots. Inspection is bounded and partial reads cannot produce a diff.</p>
+        </section>
+
         <!-- 9c. Interactive ArcadeVerse SDK Sandbox Playground (#726) -->
         <section class="docs-section" id="sdk-sandbox">
           <span class="docs-section-tag">04 / Platform Subsystems & Developer Tooling</span>
@@ -1294,6 +1300,24 @@ arcadeverse.requestPause();
           <p class="docs-paragraph">
             Clicking it opens a pre-filled GitHub Issue template containing the target game ID, author github username, browser user agent, viewport resolution, and active error logs, streamlining triage for community maintainers.
           </p>
+        </section>
+
+        <!-- 15i. 3D Flip Card & Quick Manual Schematic (Issue #1102) -->
+        <section class="docs-section" id="card-flip-manual">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Dynamic 3D Flip Card &amp; Vector Controls Manual</h2>
+          <p class="docs-paragraph">
+            Implemented in <code>assets/js/card-flip-manual.js</code> and styled in <code>assets/css/card-flip-manual.css</code>, every catalog game card includes an interactive 3D perspective flip button (&ldquo;Controls &amp; Manual&rdquo;).
+          </p>
+          <p class="docs-paragraph">
+            Activating the flip rotates the card 180 degrees along its Y-axis at a solid 60 FPS, presenting a retro cyberpunk blueprint layout on the reverse side:
+          </p>
+          <ul>
+            <li><strong>Vector Keyboard Diagram:</strong> Highlights WASD, Directional Arrows, Spacebar, and Mouse controls dynamically based on the game's metadata and category.</li>
+            <li><strong>2-Sentence Objective Manual:</strong> Formulates a crisp, contextual briefing outlining the game's primary mission and strategic victory rules extracted from <code>game.json</code>.</li>
+            <li><strong>Direct Launcher:</strong> A dedicated &ldquo;Launch Game&rdquo; button initiates gameplay without requiring the player to flip back first.</li>
+            <li><strong>Accessibility &amp; Touch:</strong> Keyboard accessible via Space/Enter, automatic flip-back when focus leaves the card or on Escape, and full compliance with <code>prefers-reduced-motion</code>.</li>
+          </ul>
         </section>
 
         <!-- 16. Coding Standards -->
