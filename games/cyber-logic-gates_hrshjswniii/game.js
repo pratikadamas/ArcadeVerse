@@ -55,6 +55,7 @@
   let audioContext = null;
   let previousTime = performance.now();
   let loopStarted = false;
+  let tornDown = false;
   let toastUntil = 0;
 
   try { unlocked = Math.max(0, Math.min(14, Number(localStorage.getItem('cyber_logic_unlock')) || 0)); } catch (_) { unlocked = 0; }
@@ -360,6 +361,7 @@
   }
 
   function tick(now) {
+    if (tornDown) return;
     const dt = Math.min(0.05, (now - previousTime) / 1000 || 0); previousTime = now;
     if (!ui.complete.classList.contains('visible') && timeLeft > 0) {
       timeLeft = Math.max(0, timeLeft - dt);
@@ -395,7 +397,7 @@
   canvas.addEventListener('pointerdown', boardClick);
   document.addEventListener('visibilitychange', () => { previousTime = performance.now(); });
   window.addEventListener('ARCADEVERSE_TEARDOWN', () => {
-    loopStarted = false;
+    tornDown = true; loopStarted = false;
     if (audioContext && audioContext.state !== 'closed') audioContext.close();
   });
 
