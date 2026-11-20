@@ -1,0 +1,187 @@
+/**
+ * ArcadeVerse - 16-Band Audio Frequency Spectrum Analyzer Stylesheet
+ * Retro Arcade HUD styling, discrete LED effects, and responsive layout
+ */
+
+.leaderboard-spectrum-wrap {
+  width: 100%;
+  max-width: 1200px;
+  margin: 1.5rem auto 2rem auto;
+  background: radial-gradient(120% 120% at 50% 0%, rgba(15, 23, 42, 0.85) 0%, rgba(8, 12, 22, 0.95) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem 1rem 1.5rem;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6),
+              0 0 20px -5px rgba(56, 189, 248, 0.15),
+              inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Subtle CRT Scanline overlay effect */
+.leaderboard-spectrum-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.spectrum-hud-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 2;
+}
+
+.spectrum-hud-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hud-led-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 10px #10b981, 0 0 4px #10b981;
+  animation: ledPulse 1.8s infinite ease-in-out;
+}
+
+@keyframes ledPulse {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.hud-title-text {
+  font-family: 'Press Start 2P', monospace, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #38bdf8;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+}
+
+.spectrum-hud-metrics {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.spectrum-status-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+  transition: all 0.2s ease;
+}
+
+.spectrum-status-badge.active {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.5);
+  color: #10b981;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+}
+
+.spectrum-test-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.2s ease;
+}
+
+.spectrum-test-btn:hover {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.spectrum-canvas-container {
+  width: 100%;
+  height: 110px;
+  position: relative;
+  z-index: 2;
+}
+
+.leaderboard-spectrum-canvas {
+  width: 100%;
+  height: 110px;
+  display: block;
+  border-radius: 6px;
+}
+
+.spectrum-freq-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.45rem;
+  padding: 0 4px;
+  position: relative;
+  z-index: 2;
+}
+
+.freq-tag {
+  font-size: 0.62rem;
+  font-family: monospace;
+  color: rgba(148, 163, 184, 0.7);
+  letter-spacing: 0.02em;
+  text-align: center;
+  width: calc(100% / 16);
+}
+
+/* Reduced Motion Mode */
+@media (prefers-reduced-motion: reduce) {
+  .hud-led-dot {
+    animation: none;
+    opacity: 0.8;
+  }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 640px) {
+  .leaderboard-spectrum-wrap {
+    padding: 1rem;
+    margin: 1rem auto;
+  }
+  .hud-title-text {
+    font-size: 0.62rem;
+  }
+  .freq-tag:nth-child(even) {
+    display: none;
+  }
+  .freq-tag {
+    width: calc(100% / 8);
+  }
+}
