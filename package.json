@@ -1,10 +1,10 @@
 {
   "name": "arcadeverse",
   "version": "1.2.0",
-  "description": "The Open-Source Community Arcade Station for Nexus Spring of Code – Winter Edition 2026",
+  "description": "The Open-Source Community Arcade Station for Nexus Spring of Code \u2013 Winter Edition 2026",
   "main": "assets/js/app.js",
   "scripts": {
-    "test": "node scripts/verify-catalog-syntax.js && node scripts/verify-leaderboard-highlight.js && node scripts/test-playlist-codes.js && node scripts/test-time-warp-replay.mjs && node --test scripts/test-playtime-heatmap.js && node --test scripts/test-dev-asset-auditor.js && node --test scripts/test-arcade-token-dispenser.js && node --test scripts/test-isometric-arcade-room.js && node --test scripts/test-leaderboard-spectrum.js && node --test scripts/test-card-flip-manual.js",
+    "test": "node scripts/verify-catalog-syntax.js && node scripts/verify-leaderboard-highlight.js && node scripts/test-playlist-codes.js && node scripts/test-time-warp-replay.mjs && node --test scripts/test-playtime-heatmap.js && node --test scripts/test-dev-asset-auditor.js && node --test scripts/test-arcade-token-dispenser.js && node --test scripts/test-isometric-arcade-room.js && node --test scripts/test-leaderboard-spectrum.js && node --test scripts/test-storage-inspector-lab.js && node --test scripts/test-card-flip-manual.js",
     "test:card-flip": "node --test scripts/test-card-flip-manual.js",
     "test:catalog": "node scripts/verify-catalog-syntax.js",
     "test:leaderboard": "node scripts/verify-leaderboard-highlight.js",

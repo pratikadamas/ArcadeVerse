@@ -105,11 +105,15 @@ class CyberCurlingGame {
     this.isCharging = false;
     this.sweeping = false;
 
+    this.lastFrameTime = performance.now();
+    this.rafId = null;
+    this.isMatchOver = false;
+
     this.initDOM();
     this.setupEvents();
     this.startNewEnd();
 
-    this.animate();
+    this.startLoop();
   }
 
   initDOM() {
@@ -200,6 +204,7 @@ class CyberCurlingGame {
       this.currentEnd = 1;
       this.playerScore = 0;
       this.aiScore = 0;
+      this.isMatchOver = false;
       this.startNewEnd();
     });
 
@@ -215,6 +220,30 @@ class CyberCurlingGame {
     this.rulesBtn.addEventListener('click', () => this.rulesModal.classList.remove('hidden'));
     this.closeModalBtn.addEventListener('click', () => this.rulesModal.classList.add('hidden'));
     this.modalGotItBtn.addEventListener('click', () => this.rulesModal.classList.add('hidden'));
+
+    // Visibility and Lifecycle Listeners
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        this.stopLoop();
+      } else {
+        this.startLoop();
+      }
+    });
+
+    window.addEventListener('ARCADEVERSE_PAUSE', () => {
+      this.stopLoop();
+    });
+
+    window.addEventListener('ARCADEVERSE_RESUME', () => {
+      this.startLoop();
+    });
+
+    window.addEventListener('ARCADEVERSE_TEARDOWN', () => {
+      this.stopLoop();
+      if (this.audio.ctx && this.audio.ctx.state !== 'closed') {
+        try { this.audio.ctx.close(); } catch (_) {}
+      }
+    });
   }
 
   deliverPlayerStone() {
@@ -284,16 +313,38 @@ class CyberCurlingGame {
     this.stonesLeftVal.textContent = `${remaining} / ${this.stonesPerEnd}`;
   }
 
-  animate() {
-    this.update();
+  animate(now = performance.now()) {
+    const rawDt = (now - this.lastFrameTime) / 1000;
+    const dt = Math.min(Math.max(rawDt, 0.001), 0.1);
+    this.lastFrameTime = now;
+
+    this.update(dt);
     this.render();
-    requestAnimationFrame(() => this.animate());
+    this.rafId = requestAnimationFrame((t) => this.animate(t));
   }
 
-  update() {
+  startLoop() {
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+    this.lastFrameTime = performance.now();
+    this.rafId = requestAnimationFrame((t) => this.animate(t));
+  }
+
+  stopLoop() {
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+  }
+
+  update(dt = 0.016) {
+    const dtScale = Math.min(Math.max(dt * 60, 0.2), 3.0);
+
     // Power sweep while charging
     if (this.isCharging) {
-      this.power += 0.03 * this.powerDir;
+      this.power += 0.03 * this.powerDir * dtScale;
       if (this.power >= 1) {
         this.power = 1;
         this.powerDir = -1;
@@ -310,10 +361,11 @@ class CyberCurlingGame {
       if (s.settled) return;
 
       // Friction: normal 0.985, sweeping reduces friction to 0.995 (longer glide!)
-      let friction = (this.sweeping && s.isPlayer) ? 0.994 : 0.984;
+      const baseFriction = (this.sweeping && s.isPlayer) ? 0.994 : 0.984;
+      const friction = Math.pow(baseFriction, dtScale);
 
-      s.x += s.vx;
-      s.y += s.vy;
+      s.x += s.vx * dtScale;
+      s.y += s.vy * dtScale;
       s.vx *= friction;
       s.vy *= friction;
 
@@ -348,13 +400,21 @@ class CyberCurlingGame {
       const s1 = this.stones[i];
       for (let j = i + 1; j < this.stones.length; j++) {
         const s2 = this.stones[j];
-        const dx = s2.x - s1.x;
-        const dy = s2.y - s1.y;
-        const dist = Math.hypot(dx, dy);
+        let dx = s2.x - s1.x;
+        let dy = s2.y - s1.y;
+        let dist = Math.hypot(dx, dy);
 
         if (dist < s1.r + s2.r) {
-          const nx = dx / dist;
-          const ny = dy / dist;
+          // Guard against divide-by-zero NaN if stones are coincident
+          let nx = 0;
+          let ny = -1;
+          if (dist > 1e-4) {
+            nx = dx / dist;
+            ny = dy / dist;
+          } else {
+            dist = 1e-4;
+          }
+
           const overlap = s1.r + s2.r - dist;
 
           s1.x -= nx * (overlap / 2);
@@ -425,8 +485,18 @@ class CyberCurlingGame {
         this.currentEnd++;
         this.startNewEnd();
       } else {
+        this.isMatchOver = true;
         const winner = this.playerScore > this.aiScore ? 'YOU WIN THE MATCH!' : 'AI WINS THE MATCH!';
-        alert(`Match Complete!\n${winner}\nFinal Score - You: ${this.playerScore} | AI: ${this.aiScore}`);
+        this.showToast(`MATCH COMPLETE: ${winner} (YOU ${this.playerScore} - AI ${this.aiScore})`);
+
+        try {
+          window.dispatchEvent(new CustomEvent('ARCADEVERSE_GAME_SCORE', {
+            detail: { gameId: 'cyber-curling', score: this.playerScore, aiScore: this.aiScore }
+          }));
+          window.dispatchEvent(new CustomEvent('ARCADEVERSE_GAME_OVER', {
+            detail: { gameId: 'cyber-curling', score: this.playerScore, aiScore: this.aiScore }
+          }));
+        } catch (_) {}
       }
     }, 2200);
   }
