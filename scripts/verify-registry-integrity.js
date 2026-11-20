@@ -1,5 +1,5 @@
 /**
- * ArcadeVerse Registry SHA-256 Checksum Validator
+ * ArcadeVerse Registry SHA-256 Checksum Validator (#717)
  * Verifies the integrity of game.json metadata files against the compiled games-registry.js
  * Detects tampering, corruption, or desynchronized entries.
  */
