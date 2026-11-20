@@ -1,0 +1,78 @@
+/* ========================================================
+   ARCADEVERSE DDA ENGINE - DYNAMIC BALANCING STYLESHEET (#1112)
+   In-modal Adaptive / Pure Hardcore difficulty controller
+   ======================================================== */
+
+.modal-dda-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-dda-btn.active-adaptive {
+  color: #00f0ff;
+  border-color: rgba(0, 240, 255, 0.45);
+  background: rgba(0, 240, 255, 0.08);
+}
+
+.modal-dda-btn.active-adaptive:hover,
+.modal-dda-btn.active-adaptive:focus-visible {
+  color: #67e8f9;
+  border-color: #00f0ff;
+  background: rgba(0, 240, 255, 0.16);
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.35);
+}
+
+.modal-dda-btn.active-hardcore {
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.modal-dda-btn.active-hardcore:hover,
+.modal-dda-btn.active-hardcore:focus-visible {
+  color: #fbbf24;
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.16);
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.35);
+}
+
+.modal-dda-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+  transition: transform 0.2s ease;
+}
+
+.modal-dda-btn:hover svg {
+  transform: scale(1.1);
+}
+
+/* Light Theme Overrides */
+[data-theme="light"] .modal-dda-btn.active-adaptive {
+  color: #0284c7;
+  border-color: rgba(2, 132, 199, 0.45);
+  background: rgba(2, 132, 199, 0.08);
+}
+
+[data-theme="light"] .modal-dda-btn.active-adaptive:hover {
+  color: #0369a1;
+  border-color: #0284c7;
+  background: rgba(2, 132, 199, 0.16);
+  box-shadow: 0 0 12px rgba(2, 132, 199, 0.25);
+}
+
+[data-theme="light"] .modal-dda-btn.active-hardcore {
+  color: #d97706;
+  border-color: rgba(217, 119, 6, 0.45);
+  background: rgba(217, 119, 6, 0.08);
+}
+
+[data-theme="light"] .modal-dda-btn.active-hardcore:hover {
+  color: #b45309;
+  border-color: #d97706;
+  background: rgba(217, 119, 6, 0.16);
+  box-shadow: 0 0 12px rgba(217, 119, 6, 0.25);
+}
