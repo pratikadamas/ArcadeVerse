@@ -166,6 +166,7 @@
               <li><a href="#scoring-engine" class="docs-nav-link"><i data-lucide="cpu"></i> Scoring & Leaderboard</a></li>
               <li><a href="#storage-manager" class="docs-nav-link"><i data-lucide="hard-drive"></i> Save Data Vault & Manager</a></li>
               <li><a href="#snapshot-studio" class="docs-nav-link"><i data-lucide="camera"></i> Retro Snapshot Studio</a></li>
+              <li><a href="#ascii-terminal-studio" class="docs-nav-link"><i data-lucide="terminal"></i> Retro ASCII / ANSI Converter</a></li>
               <li><a href="#slot-reel" class="docs-nav-link"><i data-lucide="dices"></i> Slot Reel Roulette Picker</a></li>
               <li><a href="#playlist-system" class="docs-nav-link"><i data-lucide="list-music"></i> Custom Playlist Engine</a></li>
               <li><a href="#az-jump-bar" class="docs-nav-link"><i data-lucide="arrow-down-a-z"></i> A-Z Catalog Jump Bar</a></li>
@@ -1114,6 +1115,22 @@ arcadeverse.requestPause();
             <li><strong>Cross-Frame Canvas Capture:</strong> Safely samples <code>&lt;canvas&gt;</code> rendering contexts from same-origin game instances.</li>
             <li><strong>Stylized CRT Border Overlays:</strong> Injects dynamic game metadata, player handle, timestamp, and retro scanline vignette effects.</li>
             <li><strong>Zero External Storage:</strong> 100% rendered client-side with instant data-URL download without uploading images to any third-party server.</li>
+          </ul>
+        </section>
+
+        <!-- 15c-2. Retro ASCII / ANSI Terminal Converter -->
+        <section class="docs-section" id="ascii-terminal-studio">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Retro ASCII & ANSI Canvas Art Terminal Converter</h2>
+          <p class="docs-paragraph">
+            Implemented in <code>assets/js/ascii-art-converter.js</code> and styled in <code>assets/css/ascii-art-converter.css</code>, this subsystem translates dynamic game canvas frames into authentic 1980s retro ASCII and ANSI text cards for sharing across Discord, Reddit, BBS forums, and terminal MOTDs.
+          </p>
+          <ul>
+            <li><strong>Luminance Quantization:</strong> Downscales active game canvas frames into an 80x40 (or 60x30, 40x20) grid using standard ITU-R BT.709 perceived photometric luminance.</li>
+            <li><strong>Character Density Ramps:</strong> Maps pixel brightness to retro ramps (<code>@%#*+=-:. </code> or block characters <code>█▓▒░ </code>) with optional contrast and inversion controls.</li>
+            <li><strong>ANSI 16-Color Sequences:</strong> Quantizes RGB pixels into retro 16-color ANSI terminal escape sequences with stateful code caching to minimize payload bloat.</li>
+            <li><strong>Discord Code Block Sharing:</strong> Generates ready-to-paste <code>```ansi</code> and monospace code blocks with a live 2,000-character safety indicator badge.</li>
+            <li><strong>1-Click Multi-Format Export:</strong> Supports instant clipboard copying for Discord, Raw ASCII, Terminal ANSI, and text file (<code>.txt</code>) download.</li>
           </ul>
         </section>
 
