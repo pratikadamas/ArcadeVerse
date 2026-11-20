@@ -23,6 +23,24 @@
     document.getElementById('btn-lane-3')
   ];
 
+  // Safe localStorage helpers
+  function getStorage(key, fallback) {
+    try {
+      const val = localStorage.getItem(key);
+      return val !== null ? val : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  function setStorage(key, val) {
+    try {
+      localStorage.setItem(key, val);
+    } catch {
+      // In-memory fallback
+    }
+  }
+
   // Web Audio Synth
   let audioCtx = null;
   function initAudio() {
@@ -55,12 +73,14 @@
 
   // State
   let isRunning = false;
+  let rafId = null;
+  let lastTime = performance.now();
   let score = 0;
   let combo = 0;
   let maxCombo = 0;
   let totalNotesSpawned = 0;
   let totalNotesHit = 0;
-  let bestScore = parseInt(localStorage.getItem('cyber_pulse_best') || '0', 10);
+  let bestScore = parseInt(getStorage('cyber_pulse_best', '0'), 10);
   bestDisplay.textContent = bestScore;
 
   // Track lanes geometry
@@ -185,16 +205,27 @@
     isRunning = false;
     if (score > bestScore) {
       bestScore = score;
-      localStorage.setItem('cyber_pulse_best', bestScore);
+      setStorage('cyber_pulse_best', bestScore);
       bestDisplay.textContent = bestScore;
     }
+
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'ARCADEVERSE_GAME_OVER',
+        score: score,
+        maxCombo: maxCombo,
+        accuracy: accuracyDisplay.textContent
+      }, '*');
+    }
+
     gameoverStats.textContent = `Score: ${score} • Max Combo: ${maxCombo}x • Accuracy: ${accuracyDisplay.textContent}`;
     gameoverOverlay.classList.add('active');
     playTone(180, 'sawtooth', 0.45, 0.3);
   }
 
-  function update() {
+  function update(deltaMs = 16.67) {
     if (!isRunning) return;
+    const dtScale = Math.min(2.0, Math.max(0.2, deltaMs / 16.667));
 
     // Rhythm beat timer
     if (performance.now() - lastBeatTime > beatInterval) {
@@ -205,7 +236,7 @@
     // Update notes
     for (let i = notes.length - 1; i >= 0; i--) {
       const n = notes[i];
-      n.y += n.speed;
+      n.y += n.speed * dtScale;
 
       // Missed note
       if (n.y > targetBaselineY + hitTolerance && !n.hit) {
@@ -224,17 +255,17 @@
     // Feedback texts
     for (let i = hitFeedbacks.length - 1; i >= 0; i--) {
       const f = hitFeedbacks[i];
-      f.y -= 0.8;
-      f.life -= 0.04;
+      f.y -= 0.8 * dtScale;
+      f.life -= 0.04 * dtScale;
       if (f.life <= 0) hitFeedbacks.splice(i, 1);
     }
 
     // Particles
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.life -= p.decay;
+      p.x += p.vx * dtScale;
+      p.y += p.vy * dtScale;
+      p.life -= p.decay * dtScale;
       if (p.life <= 0) particles.splice(i, 1);
     }
   }
@@ -301,13 +332,30 @@
       ctx.fill();
     });
     ctx.globalAlpha = 1.0;
-
-    requestAnimationFrame(render);
   }
 
-  function loop() {
-    update();
-    requestAnimationFrame(loop);
+  function gameLoop(now) {
+    const deltaMs = Math.min(64, now - lastTime);
+    lastTime = now;
+
+    update(deltaMs);
+    render();
+
+    rafId = requestAnimationFrame(gameLoop);
+  }
+
+  function startLoop() {
+    if (!rafId) {
+      lastTime = performance.now();
+      rafId = requestAnimationFrame(gameLoop);
+    }
+  }
+
+  function stopLoop() {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
   }
 
   // Keyboard Handlers (D, F, J, K)
@@ -330,6 +378,39 @@
   closeRulesBtn.addEventListener('click', () => rulesModal.classList.remove('active'));
   rulesConfirmBtn.addEventListener('click', () => rulesModal.classList.remove('active'));
 
-  render();
-  loop();
+  // Pause / Resume and Teardown Handlers
+  window.addEventListener('pagehide', () => {
+    stopLoop();
+    if (audioCtx && audioCtx.state === 'running') {
+      audioCtx.suspend();
+    }
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (audioCtx && audioCtx.state === 'running') {
+        audioCtx.suspend();
+      }
+    } else {
+      if (isRunning && audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+  });
+
+  window.addEventListener('message', (e) => {
+    if (!e.data || typeof e.data !== 'object') return;
+    if (e.data.type === 'ARCADEVERSE_PAUSE') {
+      isRunning = false;
+      if (audioCtx && audioCtx.state === 'running') audioCtx.suspend();
+    } else if (e.data.type === 'ARCADEVERSE_RESUME') {
+      isRunning = true;
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    } else if (e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      stopLoop();
+      if (audioCtx) audioCtx.close();
+    }
+  });
+
+  startLoop();
 })();

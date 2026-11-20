@@ -11995,44 +11995,36 @@ html.a11y-reduced-motion .search-clear-btn {
   white-space: nowrap;
   border-width: 0;
 }
-.dev-validator-item.pass {
-  color: #4ade80;
-}
+
 
 /* ===================================================
-   FLOATING VIRTUAL JOYSTICK (#693)
+   GAME IFRAME CRASH BOUNDARY & DIAGNOSTICS (#728)
    =================================================== */
 
-.floating-joystick-base {
-  position: fixed;
-  z-index: 99999;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: rgba(14, 23, 43, 0.45);
-  border: 2px solid rgba(0, 243, 255, 0.4);
-  box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  backdrop-filter: blur(4px);
+.boundary-diagnostic-details {
+  margin: 1rem 0;
+  text-align: left;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 0, 85, 0.25);
+  border-radius: var(--radius-sm, 6px);
+  padding: 0.5rem 0.75rem;
 }
 
-.floating-joystick-thumb {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(0, 243, 255, 0.85);
-  box-shadow: 0 0 10px rgba(0, 243, 255, 0.6);
-  transform: translate(-50%, -50%);
-  transition: transform 0.05s ease-out;
+.boundary-diagnostic-details summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ff0055;
+  outline: none;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .floating-joystick-base {
-    display: none !important;
-  }
+.boundary-stack-pre {
+  margin-top: 0.5rem;
+  max-height: 120px;
+  overflow-y: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: #fca5a5;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
-
