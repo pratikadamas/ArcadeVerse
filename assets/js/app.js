@@ -5288,93 +5288,105 @@ if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.m
 
 
 // ========================================================
-// WEB SHARE API & HIGH-SCORE SHARE CARD HANDLER (#748)
+// COMBO KEY SEQUENCE RECOGNIZER & KONAMI EASTER EGG (#696)
 // ========================================================
 (() => {
-  function getActiveGameHighScore(gameId) {
-    if (!gameId) return 0;
+  const KONAMI_CODE = [
+    'ArrowUp', 'ArrowUp',
+    'ArrowDown', 'ArrowDown',
+    'ArrowLeft', 'ArrowRight',
+    'ArrowLeft', 'ArrowRight',
+    'b', 'a'
+  ];
+  let keySequence = [];
+
+  function playKonamiFanfare() {
     try {
-      const candidates = [
-        `av_${gameId}_high_score`,
-        `av_${gameId}_highscore`,
-        `arcadeverse_${gameId}_high_score`,
-        `${gameId}_highscore`,
-        `${gameId}_high_score`
-      ];
-      for (const k of candidates) {
-        const val = localStorage.getItem(k);
-        if (val !== null) {
-          const num = parseInt(val, 10);
-          if (!isNaN(num) && num > 0) return num;
-        }
-      }
-    } catch (_) {}
-    return 0;
-  }
-
-  function showShareToast(message) {
-    let toast = document.getElementById('share-score-toast');
-    if (!toast) {
-      toast = document.createElement('div');
-      toast.id = 'share-score-toast';
-      toast.className = 'share-score-toast';
-      toast.setAttribute('role', 'status');
-      document.body.appendChild(toast);
-    }
-    toast.textContent = message;
-    toast.classList.add('visible');
-    setTimeout(() => {
-      toast.classList.remove('visible');
-    }, 2500);
-  }
-
-  async function handleShareScore() {
-    const game = window.activeGame;
-    const gameTitle = game && game.title ? game.title : 'ArcadeVerse Game';
-    const gameId = game && game.id ? game.id : '';
-    const score = getActiveGameHighScore(gameId);
-
-    const shareTitle = `${gameTitle} — ArcadeVerse High Score!`;
-    const shareText = score > 0
-      ? `I just scored ${score.toLocaleString()} points in ${gameTitle} on ArcadeVerse! Can you beat my record?`
-      : `Come play ${gameTitle} with me on ArcadeVerse!`;
-    const shareUrl = window.location.href;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: shareTitle,
-          text: shareText,
-          url: shareUrl
-        });
-        showShareToast('High score shared successfully!');
-      } catch (err) {
-        if (err.name !== 'AbortError') {
-          copyShareFallback(shareText, shareUrl);
-        }
-      }
-    } else {
-      copyShareFallback(shareText, shareUrl);
-    }
-  }
-
-  function copyShareFallback(text, url) {
-    const fullText = `${text}\n${url}`;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(fullText).then(() => {
-        showShareToast('Challenge link and score copied to clipboard!');
-      }).catch(() => {
-        showShareToast('Challenge ready to share!');
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99];
+      const now = ctx.currentTime;
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(freq, now + i * 0.1);
+        gain.gain.setValueAtTime(0.15, now + i * 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.2);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + i * 0.1);
+        osc.stop(now + i * 0.1 + 0.2);
       });
-    } else {
-      showShareToast('Challenge ready to share!');
-    }
+    } catch (_) {}
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const shareBtn = document.getElementById('modal-share-score-btn');
-    if (shareBtn) {
-      shareBtn.addEventListener('click', handleShareScore);
+  function launchConfettiShower() {
+    let canvas = document.getElementById('konami-confetti-canvas');
+    if (!canvas) {
+      canvas = document.createElement('canvas');
+      canvas.id = 'konami-confetti-canvas';
+      canvas.style.position = 'fixed';
+      canvas.style.inset = '0';
+      canvas.style.pointerEvents = 'none';
+      canvas.style.zIndex = '999999';
+      document.body.appendChild(canvas);
+    }
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles = Array.from({ length: 80 }, () => ({
+      x: Math.random() * canvas.width,
+      y: -20 - Math.random() * 50,
+      size: Math.random() * 6 + 4,
+      vx: (Math.random() - 0.5) * 4,
+      vy: Math.random() * 4 + 3,
+      color: ['#00f3ff', '#ff0055', '#ffe600', '#00ff66', '#a855f7'][Math.floor(Math.random() * 5)]
+    }));
+
+    let frames = 0;
+    function renderConfetti() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size);
+      });
+      frames++;
+      if (frames < 200) {
+        requestAnimationFrame(renderConfetti);
+      } else {
+        canvas.remove();
+      }
+    }
+    requestAnimationFrame(renderConfetti);
+  }
+
+  window.addEventListener('keydown', (e) => {
+    const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    keySequence.push(key);
+    if (keySequence.length > KONAMI_CODE.length) {
+      keySequence.shift();
+    }
+
+    const match = KONAMI_CODE.every((expected, idx) => {
+      const actual = keySequence[idx];
+      return actual && actual.toLowerCase() === expected.toLowerCase();
+    });
+
+    if (match) {
+      keySequence = [];
+      playKonamiFanfare();
+      launchConfettiShower();
+      try {
+        localStorage.setItem('av_badge_retro_enthusiast', 'unlocked');
+      } catch (_) {}
+      if (typeof showToast === 'function') {
+        showToast('Secret Konami Code Activated! Retro Enthusiast Badge Unlocked.');
+      }
     }
   });
 })();
