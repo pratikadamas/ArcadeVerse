@@ -738,10 +738,43 @@ document.addEventListener("DOMContentLoaded", () => {
     return `Games: ${games} • Feat: ${feat} • Fix: ${fix}`;
   }
 
-  // Generate reliable inline SVG letter avatar (prevents 404 network errors & recursion)
+  // Generate procedural generative monogram SVG avatar with deterministic hash-based gradient (#689)
   function getFallbackAvatarSvg(name, login) {
-    const char = ((name || login || "?").trim().charAt(0) || "?").toUpperCase();
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="%236366f1"/><stop offset="100%" stop-color="%2306b6d4"/></linearGradient></defs><rect width="64" height="64" rx="32" fill="url(%23g)"/><text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" fill="%23ffffff" font-family="system-ui,-apple-system,sans-serif" font-size="26" font-weight="700">${char}</text></svg>`;
+    const raw = (name || login || "?").trim();
+    const parts = raw.split(/\s+/).filter(Boolean);
+    let monogram = "?";
+    if (parts.length >= 2) {
+      monogram = (parts[0][0] + parts[1][0]).toUpperCase();
+    } else if (raw.length >= 2) {
+      monogram = raw.slice(0, 2).toUpperCase();
+    } else if (raw.length === 1) {
+      monogram = raw.toUpperCase();
+    }
+
+    // Deterministic hash based on username/login
+    const seed = (login || name || "arcadeverse").toLowerCase();
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = (hash << 5) - hash + seed.charCodeAt(i);
+      hash |= 0;
+    }
+
+    const PALETTES = [
+      ["#6366f1", "#06b6d4"],
+      ["#ec4899", "#8b5cf6"],
+      ["#3b82f6", "#10b981"],
+      ["#f59e0b", "#ef4444"],
+      ["#8b5cf6", "#3b82f6"],
+      ["#14b8a6", "#06b6d4"],
+      ["#f43f5e", "#fb923c"],
+      ["#a855f7", "#ec4899"]
+    ];
+
+    const paletteIdx = Math.abs(hash) % PALETTES.length;
+    const [c1, c2] = PALETTES[paletteIdx];
+    const gradId = `av-grad-${Math.abs(hash)}`;
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${c1}"/><stop offset="100%" stop-color="${c2}"/></linearGradient></defs><rect width="64" height="64" rx="32" fill="url(#${gradId})"/><text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle" fill="#ffffff" font-family="system-ui,-apple-system,sans-serif" font-size="${monogram.length > 1 ? 22 : 26}" font-weight="700" letter-spacing="-0.5px">${monogram}</text></svg>`;
     return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
   }
 
@@ -2211,6 +2244,136 @@ document.addEventListener("DOMContentLoaded", () => {
   initTableSorting();
   renderTable();
   fetchLiveGitHubContributions(activeRepo, false);
+
+  // Contributor Hover Card popover logic (#688)
+  let hoverCardTimer = null;
+  let activeHoverCard = null;
+
+  function createHoverCard(user, anchorEl) {
+    removeHoverCard();
+    const score = calculateScore(user);
+    const badges = getContributorBadges(user);
+    const fallbackAvatar = getFallbackAvatarSvg(user.name, user.login);
+    const primaryBadge = badges.length > 0 ? badges[0] : { label: user.role || "Contributor", tagClass: "role-contributor" };
+
+    let userGames = user.games || [];
+    if (userGames.length === 0 && typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) {
+      const found = GAMES_REGISTRY.filter(g => g.github && g.github.toLowerCase() === (user.login || "").toLowerCase());
+      userGames = found.map(g => g.title);
+    }
+
+    const card = document.createElement("div");
+    card.className = "contributor-hover-card";
+    card.setAttribute("role", "tooltip");
+    card.innerHTML = `
+      <div class="hover-card-header">
+        <img src="${user.avatar_url || fallbackAvatar}" alt="${user.name || user.login}" class="hover-card-avatar" onerror="this.onerror=null; this.src='${fallbackAvatar}';">
+        <div class="hover-card-meta">
+          <strong class="hover-card-name">${escapeHTML(user.name || user.login)}</strong>
+          <span class="hover-card-handle">@${escapeHTML(user.login)}</span>
+          <span class="hover-card-tier-badge ${primaryBadge.tagClass || ''}">${escapeHTML(primaryBadge.label || '')}</span>
+        </div>
+      </div>
+      <div class="hover-card-stats">
+        <div class="hover-stat">
+          <span class="stat-num">${user.commits || 0}</span>
+          <span class="stat-lbl">Commits</span>
+        </div>
+        <div class="hover-stat">
+          <span class="stat-num">${userGames.length}</span>
+          <span class="stat-lbl">Games</span>
+        </div>
+        <div class="hover-stat">
+          <span class="stat-num">${score}</span>
+          <span class="stat-lbl">Points</span>
+        </div>
+      </div>
+      ${userGames.length > 0 ? `
+        <div class="hover-card-games">
+          <span class="hover-games-title">Top Authored Games</span>
+          <div class="hover-games-carousel">
+            ${userGames.slice(0, 4).map(title => `<span class="hover-game-chip">${escapeHTML(title)}</span>`).join("")}
+          </div>
+        </div>
+      ` : ''}
+      <div class="hover-card-footer">
+        <a href="https://github.com/${user.login}" target="_blank" rel="noopener noreferrer" class="hover-github-link">
+          <i data-lucide="external-link"></i> Verified GitHub Profile
+        </a>
+      </div>
+    `;
+
+    document.body.appendChild(card);
+    activeHoverCard = card;
+
+    // Viewport-aware positioning
+    const rect = anchorEl.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+    let top = rect.bottom + window.scrollY + 8;
+    let left = rect.left + window.scrollX;
+
+    if (left + cardRect.width > window.innerWidth - 16) {
+      left = window.innerWidth - cardRect.width - 16;
+    }
+    if (top + cardRect.height > window.innerHeight + window.scrollY - 16) {
+      top = rect.top + window.scrollY - cardRect.height - 8;
+    }
+
+    card.style.top = `${Math.max(8, top)}px`;
+    card.style.left = `${Math.max(8, left)}px`;
+
+    card.addEventListener("mouseenter", () => {
+      clearTimeout(hoverCardTimer);
+    });
+    card.addEventListener("mouseleave", () => {
+      removeHoverCard();
+    });
+
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+  }
+
+  function removeHoverCard() {
+    clearTimeout(hoverCardTimer);
+    if (activeHoverCard) {
+      activeHoverCard.remove();
+      activeHoverCard = null;
+    }
+  }
+
+  document.addEventListener("mouseover", (e) => {
+    const trigger = e.target.closest(".table-user-cell, .podium-name, .user-display-name, .github-handle-link");
+    if (!trigger) return;
+    const tr = trigger.closest("tr");
+    let login = null;
+    if (tr) {
+      const link = tr.querySelector(".github-handle-link");
+      if (link) login = link.textContent.replace("@", "").trim();
+    } else {
+      const handleEl = trigger.closest(".podium-card") ? trigger.closest(".podium-card").querySelector(".podium-handle") : null;
+      if (handleEl) login = handleEl.textContent.replace("@", "").trim();
+    }
+
+    if (!login) return;
+    const user = contributorsData.find(c => c.login && c.login.toLowerCase() === login.toLowerCase());
+    if (!user) return;
+
+    clearTimeout(hoverCardTimer);
+    hoverCardTimer = setTimeout(() => {
+      createHoverCard(user, trigger);
+    }, 150);
+  });
+
+  document.addEventListener("mouseout", (e) => {
+    const trigger = e.target.closest(".table-user-cell, .podium-name, .user-display-name, .github-handle-link");
+    if (!trigger) return;
+    hoverCardTimer = setTimeout(() => {
+      if (activeHoverCard && !activeHoverCard.matches(":hover")) {
+        removeHoverCard();
+      }
+    }, 150);
+  });
 
   // App Badging API clear on viewing leaderboard & trophy certificates (#557)
   if (typeof navigator !== 'undefined' && 'clearAppBadge' in navigator) {

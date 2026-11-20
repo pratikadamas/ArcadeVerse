@@ -1,0 +1,25 @@
+.storage-lab-launch { position: fixed; bottom: 20px; right: 20px; z-index: 9990; padding: 10px 16px; border: 1px solid var(--border-focus); border-radius: 8px; background: var(--bg-surface); color: var(--text-primary, #f3f4f6); font: inherit; cursor: pointer; }
+.storage-lab-dialog { width: min(760px, calc(100vw - 24px)); max-height: 90dvh; margin: auto; padding: 24px; box-sizing: border-box; border: 1px solid var(--border-medium); border-radius: 12px; color: var(--text-primary, #f3f4f6); background: var(--bg-surface, #131722); overflow: auto; font-family: inherit; }
+.storage-lab-dialog::backdrop { background: #000b; }
+.storage-lab-dialog header { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
+.storage-lab-dialog h2 { margin: 0 0 16px; font-size: 24px; }
+.storage-lab-dialog p { margin: 8px 0; line-height: 1.6; overflow-wrap: anywhere; }
+.storage-lab-dialog header p, .storage-lab-kind, .storage-lab-dialog [data-count] { color: var(--text-secondary, #a6b1c5); font-size: 12px; }
+.storage-lab-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.storage-lab-dialog button, .storage-lab-dialog input { padding: 9px 12px; border: 1px solid var(--border-medium, #53647b); border-radius: 6px; background: var(--bg-main, #0c0e14); color: inherit; font: inherit; }
+.storage-lab-dialog button { cursor: pointer; }
+.storage-lab-dialog label { display: block; margin: 16px 0; }
+.storage-lab-dialog input { display: block; width: 100%; box-sizing: border-box; margin-top: 6px; }
+.storage-lab-dialog :focus-visible, .storage-lab-launch:focus-visible { outline: 3px solid var(--border-focus, #3b82f6); outline-offset: 3px; }
+.storage-lab-key { border-top: 1px solid var(--border-medium, #53647b); padding: 16px 0; }
+.storage-lab-key h3, .storage-lab-change strong { overflow-wrap: anywhere; font: 600 13px ui-monospace, monospace; }
+.storage-lab-dialog summary { cursor: pointer; overflow-wrap: anywhere; padding: 5px; }
+.storage-lab-children { margin-left: 12px; padding-left: 12px; border-left: 1px solid var(--border-medium, #53647b); }
+.storage-lab-value { font: 12px/1.6 ui-monospace, monospace; white-space: pre-wrap; }
+.storage-lab-change { margin: 8px 0; padding: 10px; border-left: 3px solid; background: var(--bg-main, #0c0e14); }
+.storage-lab-created { border-color: #64cba0; }
+.storage-lab-modified { border-color: #f2bd69; }
+.storage-lab-deleted { border-color: #ff8d9d; }
+.storage-lab-invalid { font-weight: 700; text-decoration: underline; text-decoration-color: #f2bd69; }
+.storage-lab-dialog [data-notice]:not(:empty) { color: inherit; border-left: 3px solid var(--accent-warm, #f59e0b); padding-left: 12px; }
+@media (max-width: 480px) { .storage-lab-dialog { padding: 16px; } .storage-lab-actions button { flex: 1 1 100%; } .storage-lab-launch { bottom: 12px; right: 12px; } }

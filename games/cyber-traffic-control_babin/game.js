@@ -13,8 +13,22 @@
   const ROAD_WIDTH = 120; // 60px lane width each way
   const HALF_ROAD = ROAD_WIDTH / 2;
 
-  // Signal States: 0: GREEN_NS (North-South Green, East-West Red), 1: GREEN_EW (East-West Green, North-South Red)
-  let signalPhase = 0; // 0: NS Green, 1: EW Green
+  // Signal States: 
+  // 0: GREEN_NS (North-South Green, East-West Red)
+  // 1: AMBER_TO_EW (North-South Amber Clearance, East-West Red)
+  // 2: GREEN_EW (East-West Green, North-South Red)
+  // 3: AMBER_TO_NS (East-West Amber Clearance, North-South Red)
+  let signalPhase = 0;
+  let amberTimerId = null;
+  let isPaused = false;
+  let lastTime = performance.now();
+
+  function clearAmberTimer() {
+    if (amberTimerId) {
+      clearTimeout(amberTimerId);
+      amberTimerId = null;
+    }
+  }
 
   // Vehicle Types
   const VEHICLE_TYPES = {
@@ -176,20 +190,58 @@
     }
   }
 
-  // Toggle Signal Lights
+  // Toggle Signal Lights with Amber Clearance Protection
   function toggleSignals() {
-    signalPhase = (signalPhase === 0) ? 1 : 0;
+    if (signalPhase === 1 || signalPhase === 3) return; // In amber clearance transit
+
     playSound('switch');
-    updateSignalDots();
-    addRadioLog(`Signals switched: ${signalPhase === 0 ? 'NORTH-SOUTH GREEN' : 'EAST-WEST GREEN'}`);
+    clearAmberTimer();
+
+    if (signalPhase === 0) {
+      signalPhase = 1; // Transition to Amber for NS
+      updateSignalDots();
+      addRadioLog('AMBER CLEARANCE: North-South stopping...');
+      amberTimerId = setTimeout(() => {
+        signalPhase = 2; // East-West Green
+        amberTimerId = null;
+        updateSignalDots();
+        addRadioLog('Signals switched: EAST-WEST GREEN');
+      }, 900);
+    } else if (signalPhase === 2) {
+      signalPhase = 3; // Transition to Amber for EW
+      updateSignalDots();
+      addRadioLog('AMBER CLEARANCE: East-West stopping...');
+      amberTimerId = setTimeout(() => {
+        signalPhase = 0; // North-South Green
+        amberTimerId = null;
+        updateSignalDots();
+        addRadioLog('Signals switched: NORTH-SOUTH GREEN');
+      }, 900);
+    }
   }
 
   function updateSignalDots() {
-    const isNsGreen = (signalPhase === 0);
-    dotN.className = `signal-dot ${isNsGreen ? 'green' : 'red'}`;
-    dotS.className = `signal-dot ${isNsGreen ? 'green' : 'red'}`;
-    dotE.className = `signal-dot ${isNsGreen ? 'red' : 'green'}`;
-    dotW.className = `signal-dot ${isNsGreen ? 'red' : 'green'}`;
+    if (signalPhase === 0) {
+      dotN.className = 'signal-dot green';
+      dotS.className = 'signal-dot green';
+      dotE.className = 'signal-dot red';
+      dotW.className = 'signal-dot red';
+    } else if (signalPhase === 1) {
+      dotN.className = 'signal-dot amber';
+      dotS.className = 'signal-dot amber';
+      dotE.className = 'signal-dot red';
+      dotW.className = 'signal-dot red';
+    } else if (signalPhase === 2) {
+      dotN.className = 'signal-dot red';
+      dotS.className = 'signal-dot red';
+      dotE.className = 'signal-dot green';
+      dotW.className = 'signal-dot green';
+    } else if (signalPhase === 3) {
+      dotN.className = 'signal-dot red';
+      dotS.className = 'signal-dot red';
+      dotE.className = 'signal-dot amber';
+      dotW.className = 'signal-dot amber';
+    }
   }
 
   // Spawn Hovercar
@@ -252,12 +304,13 @@
     return !(r1.right < r2.left || r1.left > r2.right || r1.bottom < r2.top || r1.top > r2.bottom);
   }
 
-  // Update Game Logic
-  function update() {
-    if (isGameOver) return;
+  // Update Game Logic with Delta Time
+  function update(deltaMs = 16.67) {
+    if (isGameOver || isPaused) return;
+    const dtScale = Math.min(2.0, Math.max(0.2, deltaMs / 16.667));
 
     // Spawning
-    spawnTimer++;
+    spawnTimer += dtScale;
     if (spawnTimer >= spawnInterval) {
       spawnTimer = 0;
       spawnVehicle();
@@ -276,12 +329,19 @@
         hasEmergency = true;
       }
 
-      // Check whether light is RED for this lane
-      const isRed = (v.lane.dirY !== 0 && signalPhase === 1) || (v.lane.dirX !== 0 && signalPhase === 0);
+      // Check whether light is RED or AMBER for this lane
+      let isRestricted = false;
+      if (v.lane.dirY !== 0) {
+        // North-South lanes: green only on phase 0
+        isRestricted = (signalPhase !== 0);
+      } else {
+        // East-West lanes: green only on phase 2
+        isRestricted = (signalPhase !== 2);
+      }
 
       // Check distance to stop line if before intersection
       let shouldStopAtLight = false;
-      if (isRed && !v.passedJunction && !v.isBoosted) {
+      if (isRestricted && !v.passedJunction && !v.isBoosted) {
         if (v.lane.id === 'N' && v.y > v.lane.stopLineY && v.y < v.lane.stopLineY + 60) shouldStopAtLight = true;
         if (v.lane.id === 'S' && v.y < v.lane.stopLineY && v.y > v.lane.stopLineY - 60) shouldStopAtLight = true;
         if (v.lane.id === 'E' && v.x < v.lane.stopLineX && v.x > v.lane.stopLineX - 60) shouldStopAtLight = true;
@@ -306,21 +366,22 @@
       // Stop or move
       if (shouldStopAtLight || shouldBrakeForCarAhead) {
         v.isStopped = true;
-        v.currentSpeed = Math.max(0, v.currentSpeed - 0.2);
-        v.waitTime += 1 / 60;
+        v.currentSpeed = Math.max(0, v.currentSpeed - 0.2 * dtScale);
+        v.waitTime += (deltaMs / 1000);
 
         if (v.waitTime > v.type.maxWait) {
-          currentFrustrationDelta += 0.25;
+          currentFrustrationDelta += 0.25 * dtScale;
           if (Math.random() < 0.015) playSound('horn');
         }
       } else {
         v.isStopped = false;
         const targetSpd = v.isBoosted ? v.speed * 2.2 : v.speed;
-        v.currentSpeed = Math.min(targetSpd, v.currentSpeed + 0.15);
+        v.currentSpeed = Math.min(targetSpd, v.currentSpeed + 0.15 * dtScale);
       }
 
       // Move vehicle
-      v.x += v.lane.dirX * v.currentSpeed;
+      v.x += v.lane.dirX * v.currentSpeed * dtScale;
+      v.y += v.lane.dirY * v.currentSpeed * dtScale;
       v.y += v.lane.dirY * v.currentSpeed;
 
       // Check if passed center junction
@@ -387,8 +448,24 @@
 
   function triggerCollisionGameOver(v1, v2) {
     isGameOver = true;
+    clearAmberTimer();
     stopAllAudio();
     playSound('crash');
+
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'ARCADEVERSE_GAME_SCORE',
+        score: score,
+        carsDispatched: carsDispatched
+      }, '*');
+      window.parent.postMessage({
+        type: 'ARCADEVERSE_GAME_OVER',
+        score: score,
+        carsDispatched: carsDispatched,
+        reason: 'collision'
+      }, '*');
+    }
+
     overlayHead.textContent = 'SKYWAY PILEUP!';
     overlayDetails.textContent = `Crash detected between ${v1.type.name} and ${v2.type.name} at central intersection!`;
     overlay.classList.remove('hidden');
@@ -564,18 +641,68 @@
   // Shift Reset
   function resetShift() {
     stopAllAudio();
+    clearAmberTimer();
     vehicles = [];
     carsDispatched = 0;
     score = 0;
     frustration = 0;
     isGameOver = false;
+    isPaused = false;
     spawnTimer = 0;
     spawnInterval = 110;
     signalPhase = 0;
+    amberDirection = null;
+    isAmberActive = false;
     updateSignalDots();
     overlay.classList.add('hidden');
     radioLogUl.innerHTML = '<li>Shift active. Clear traffic through Skyway 4.</li>';
   }
+
+  // Unified Game Loop
+  function gameLoop(timestamp) {
+    if (!lastTimestamp) lastTimestamp = timestamp;
+    const elapsed = timestamp - lastTimestamp;
+    lastTimestamp = timestamp;
+
+    if (!isPaused && !isGameOver) {
+      update(elapsed);
+    }
+    render();
+
+    animFrameId = requestAnimationFrame(gameLoop);
+  }
+
+  // Pause / Resume Controls
+  function togglePause() {
+    if (isGameOver) return;
+    isPaused = !isPaused;
+    if (isPaused) {
+      stopAllAudio();
+      addRadioLog('System on STANDBY. Traffic paused.');
+    } else {
+      lastTimestamp = performance.now();
+      addRadioLog('System RESUMED. Traffic running.');
+    }
+  }
+
+  // Keyboard controls for pause and signals
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      toggleSignals();
+    } else if (e.code === 'KeyP') {
+      e.preventDefault();
+      togglePause();
+    }
+  });
+
+  // Page visibility cleanup
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      isPaused = true;
+      stopAllAudio();
+    }
+  });
 
   // Event Listeners
   btnShiftRetry.addEventListener('click', resetShift);
@@ -591,14 +718,25 @@
   });
 
   window.addEventListener('message', (e) => {
-    if (e.data && (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE')) {
+    if (!e.data) return;
+    if (e.data.type === 'ARCADEVERSE_TEARDOWN') {
       stopAllAudio();
+      clearAmberTimer();
+      if (animFrameId) {
+        cancelAnimationFrame(animFrameId);
+        animFrameId = null;
+      }
+    } else if (e.data.type === 'ARCADEVERSE_PAUSE') {
+      isPaused = true;
+      stopAllAudio();
+    } else if (e.data.type === 'ARCADEVERSE_RESUME') {
+      isPaused = false;
+      lastTimestamp = performance.now();
     }
   });
 
   // Initialize
   updateSignalDots();
   resetShift();
-  animFrameId = requestAnimationFrame(render);
-  setInterval(update, 1000 / 60);
+  animFrameId = requestAnimationFrame(gameLoop);
 })();
