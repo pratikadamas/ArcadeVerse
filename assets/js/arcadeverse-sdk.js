@@ -2531,8 +2531,47 @@
      */
     enableZoomPan: function (canvas, options) {
       return this.camera.enableZoomPan(canvas, options);
+    },
+
+    /**
+     * Volume change subscriber & auto-gain scalar (#735)
+     * @param {Function} callback - Receives volume (0.0 to 1.0)
+     */
+    onVolumeChange: function (callback) {
+      if (typeof callback !== 'function') return;
+      if (!this._volumeCallbacks) this._volumeCallbacks = [];
+      this._volumeCallbacks.push(callback);
+
+      var currentVol = 1.0;
+      try {
+        var saved = localStorage.getItem('arcadeverse_master_volume');
+        if (saved !== null) {
+          var p = parseFloat(saved);
+          if (!isNaN(p)) currentVol = p;
+        }
+      } catch (_) {}
+      callback(currentVol);
     }
   };
+
+  // Wire message handler for ARCADEVERSE_SET_VOLUME (#735)
+  if (typeof window !== "undefined") {
+    window.addEventListener("message", function (event) {
+      if (event.data && event.data.type === "ARCADEVERSE_SET_VOLUME") {
+        var vol = Number(event.data.volume);
+        if (!isNaN(vol)) {
+          if (sdkInstance.audio && typeof sdkInstance.audio.setMasterVolume === "function") {
+            sdkInstance.audio.setMasterVolume(vol);
+          }
+          if (sdkInstance._volumeCallbacks) {
+            sdkInstance._volumeCallbacks.forEach(function (cb) {
+              try { cb(vol); } catch (_) {}
+            });
+          }
+        }
+      }
+    });
+  }
 
   if (typeof window !== "undefined") {
     try {
