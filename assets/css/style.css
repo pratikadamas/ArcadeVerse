@@ -11998,26 +11998,43 @@ html.a11y-reduced-motion .search-clear-btn {
 
 
 /* ===================================================
-   REAL-TIME BATTERY STATUS THROTTLING (#749)
+   WEB SHARE TARGET SCORE CARD MODAL STYLES (#748)
    =================================================== */
 
-body.battery-saver-active {
-  --transition-speed: 0s;
+#modal-share-score-btn {
+  color: var(--text-secondary, #94a3b8);
+  transition: all 0.2s ease;
 }
 
-body.battery-saver-active .ambient-canvas,
-body.battery-saver-active .grid-shimmer,
-body.battery-saver-active .glow-orb {
-  display: none !important;
+#modal-share-score-btn:hover {
+  color: var(--accent-primary, #00f3ff);
+  background: rgba(0, 243, 255, 0.1);
+  transform: translateY(-1px);
 }
 
-body.battery-saver-active * {
-  box-shadow: none !important;
-  text-shadow: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+.share-score-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(0, 243, 255, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 12px rgba(0, 243, 255, 0.2);
+  border-radius: 8px;
+  padding: 10px 18px;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  z-index: 100000;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-body.battery-saver-active .game-card:hover {
-  transform: none !important;
+.share-score-toast.visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
 }
