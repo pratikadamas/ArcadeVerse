@@ -77,6 +77,25 @@
     actionLog.innerHTML = `<p class="log-entry ${type}">> ${text}</p>`;
   }
 
+  // Demand-driven drawing
+  let needsRedraw = true;
+  let rafId = null;
+
+  function scheduleDraw() {
+    needsRedraw = true;
+    if (!rafId) {
+      rafId = requestAnimationFrame(renderLoop);
+    }
+  }
+
+  function renderLoop() {
+    if (needsRedraw) {
+      draw();
+      needsRedraw = false;
+    }
+    rafId = null;
+  }
+
   // Game State
   let floor = 1;
   let credits = 0;
@@ -141,16 +160,48 @@
     player.y = carved[0].y;
     player.hasKey = false;
 
-    // Place Exit at furthest tile
-    const exitTile = carved[carved.length - 1];
+    // True BFS shortest path distance computation from spawn
+    const distMap = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(-1));
+    const bfsQueue = [{ x: player.x, y: player.y, dist: 0 }];
+    distMap[player.y][player.x] = 0;
+
+    while (bfsQueue.length > 0) {
+      const cur = bfsQueue.shift();
+      const neighbors = [
+        { x: cur.x + 1, y: cur.y },
+        { x: cur.x - 1, y: cur.y },
+        { x: cur.x, y: cur.y + 1 },
+        { x: cur.x, y: cur.y - 1 }
+      ];
+      for (const n of neighbors) {
+        if (n.x >= 0 && n.x < GRID_SIZE && n.y >= 0 && n.y < GRID_SIZE && map[n.y][n.x] === 0) {
+          if (distMap[n.y][n.x] === -1) {
+            distMap[n.y][n.x] = cur.dist + 1;
+            bfsQueue.push({ x: n.x, y: n.y, dist: cur.dist + 1 });
+          }
+        }
+      }
+    }
+
+    // Sort carved tiles by verified BFS distance from player spawn
+    const reachableCarved = carved
+      .filter(t => !(t.x === player.x && t.y === player.y) && distMap[t.y][t.x] > 0)
+      .sort((a, b) => distMap[b.y][b.x] - distMap[a.y][a.x]);
+
+    // Place Exit at maximum BFS distance
+    const exitTile = reachableCarved.length > 0 ? reachableCarved[0] : carved[carved.length - 1];
     items.push({ x: exitTile.x, y: exitTile.y, type: 'exit' });
 
-    // Place Keycard
-    const midIdx = Math.floor(carved.length / 2);
-    items.push({ x: carved[midIdx].x, y: carved[midIdx].y, type: 'key' });
+    // Place Keycard in distinct reachable mid-deep branch
+    const midIdx = reachableCarved.length > 2 ? Math.floor(reachableCarved.length * 0.45) : 0;
+    const keyTile = reachableCarved.length > 1 ? reachableCarved[midIdx] : carved[Math.floor(carved.length / 2)];
+    items.push({ x: keyTile.x, y: keyTile.y, type: 'key' });
 
     // Place Items & Enemies on other carved tiles
-    const candidates = carved.slice(1, carved.length - 1).filter((_, i) => i !== midIdx);
+    const candidates = reachableCarved.filter(t => 
+      !(t.x === exitTile.x && t.y === exitTile.y) &&
+      !(t.x === keyTile.x && t.y === keyTile.y)
+    );
 
     // Items
     for (let i = 0; i < Math.min(3, candidates.length); i++) {
@@ -352,6 +403,7 @@
     shieldBar.style.width = `${Math.max(0, (player.shield / player.maxShield) * 100)}%`;
     shieldText.textContent = `${Math.max(0, player.shield)} / ${player.maxShield}`;
     creditsDisplay.textContent = credits;
+    scheduleDraw();
   }
 
   function draw() {
@@ -438,8 +490,6 @@
     ctx.textBaseline = 'middle';
     ctx.fillText('@', ppx, ppy);
     ctx.restore();
-
-    requestAnimationFrame(draw);
   }
 
   // Keyboard navigation
@@ -513,7 +563,39 @@
     if (e.target === helpModal) helpModal.classList.remove('active');
   });
 
+  // Touch swipe support on canvas
+  let touchStartX = 0;
+  let touchStartY = 0;
+
+  canvas.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 0) {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }
+  }, { passive: true });
+
+  canvas.addEventListener('touchend', (e) => {
+    if (e.changedTouches.length > 0) {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      if (Math.abs(dx) > Math.abs(dy)) {
+        if (dx > 25) movePlayer(1, 0);
+        else if (dx < -25) movePlayer(-1, 0);
+      } else {
+        if (dy > 25) movePlayer(0, 1);
+        else if (dy < -25) movePlayer(0, -1);
+      }
+    }
+  }, { passive: true });
+
+  window.addEventListener('pagehide', () => {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+  });
+
   generateMap();
   updateHUD();
-  requestAnimationFrame(draw);
+  scheduleDraw();
 })();
