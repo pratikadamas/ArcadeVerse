@@ -1998,6 +1998,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (frameWrap) frameWrap.appendChild(errorBoundary);
     }
 
+    const isolatedUrl = buildIsolatedGameUrl(gameObj);
+    const displayPath = (gameObj && gameObj.path) || (gameObj && gameObj.id) || "game route";
+
     errorBoundary.innerHTML = `
       <div class="boundary-content">
         <div class="boundary-icon" aria-hidden="true">
@@ -2009,13 +2012,16 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
         <h3 class="boundary-title">Game Route Offline</h3>
         <p class="boundary-desc">
-          Failed to establish connection to <code>${(gameObj && gameObj.path) || 'game route'}</code>. The game entrypoint may be undergoing maintenance, corrupted, or unreachable.
+          Failed to establish connection to <code>${displayPath}</code>. The game entrypoint may be undergoing maintenance, corrupted, or unreachable.
         </p>
         <div class="boundary-actions">
-          <button class="btn btn-primary btn-sm" id="boundary-retry-btn">
+          <button class="btn btn-primary btn-sm" id="boundary-retry-btn" aria-label="Retry loading game with storage isolation">
             <span>Retry Load</span>
           </button>
-          <a href="https://github.com/DebasmitaBose0/ArcadeVerse/issues/new" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
+          <button class="btn btn-secondary btn-sm" id="boundary-direct-btn" aria-label="Open isolated route directly">
+            <span>Direct Route</span>
+          </button>
+          <a href="https://github.com/DebasmitaBose0/ArcadeVerse/issues/new" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" aria-label="Report broken route to project issues">
             <span>Report Broken Route</span>
           </a>
         </div>
@@ -2029,8 +2035,22 @@ document.addEventListener("DOMContentLoaded", () => {
         iframeLoadSucceeded = false;
         if (gameIframe && gameObj) {
           showGameLoader();
-          gameIframe.src = gameObj.path;
+          // Ensure storage isolation query parameter is preserved across retries (#878)
+          const retryTargetUrl = buildIsolatedGameUrl(gameObj);
+          gameIframe.src = retryTargetUrl || gameObj.path;
+          if (newTabBtn) {
+            newTabBtn.href = retryTargetUrl || gameObj.path;
+          }
           startIframeTimeout(gameObj);
+        }
+      });
+    }
+
+    const directBtn = errorBoundary.querySelector("#boundary-direct-btn");
+    if (directBtn) {
+      directBtn.addEventListener("click", () => {
+        if (isolatedUrl) {
+          window.open(isolatedUrl, "_blank", "noopener,noreferrer");
         }
       });
     }
@@ -2353,14 +2373,39 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Modal Handlers
-  // Restore the catalog's namespaced storage URL bridge (#493, #824).
+  // Restore the catalog's namespaced storage URL bridge (#493, #824, #878).
+  // Ensures that whenever games are launched, retried from error boundaries, or
+  // opened in new tabs, the ?gameId= URL query parameter is strictly preserved.
+  // This allows SDK localStorage proxies to namespace keys correctly and prevent
+  // key collisions or shared quota consumption across different arcade games.
   function buildIsolatedGameUrl(game) {
     if (!game) return "";
-    const path = typeof game === "string" ? game : game.path;
-    if (!path) return "";
-    const url = new URL(path, document.baseURI);
-    if (typeof game === "object" && game.id) url.searchParams.set("gameId", game.id);
-    return url.href;
+    let rawPath = "";
+    let gameId = "";
+
+    if (typeof game === "string") {
+      rawPath = game;
+      try {
+        const parsed = new URL(rawPath, document.baseURI);
+        gameId = parsed.searchParams.get("gameId") || "";
+      } catch (_) {}
+    } else if (typeof game === "object") {
+      rawPath = game.path || "";
+      gameId = game.id || "";
+    }
+
+    if (!rawPath) return "";
+
+    try {
+      const url = new URL(rawPath, document.baseURI);
+      if (gameId && !url.searchParams.has("gameId")) {
+        url.searchParams.set("gameId", gameId);
+      }
+      return url.href;
+    } catch (err) {
+      console.warn("[ArcadeVerse:Isolation] Failed to format isolated game URL:", err);
+      return rawPath;
+    }
   }
 
   // The shared sound engine owns preferences; keep legacy modal/SDK callers
