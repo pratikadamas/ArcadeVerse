@@ -5285,3 +5285,96 @@ if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.m
   }
 
   initPwaUpdateNotifier();
+
+
+// ========================================================
+// WEB SHARE API & HIGH-SCORE SHARE CARD HANDLER (#748)
+// ========================================================
+(() => {
+  function getActiveGameHighScore(gameId) {
+    if (!gameId) return 0;
+    try {
+      const candidates = [
+        `av_${gameId}_high_score`,
+        `av_${gameId}_highscore`,
+        `arcadeverse_${gameId}_high_score`,
+        `${gameId}_highscore`,
+        `${gameId}_high_score`
+      ];
+      for (const k of candidates) {
+        const val = localStorage.getItem(k);
+        if (val !== null) {
+          const num = parseInt(val, 10);
+          if (!isNaN(num) && num > 0) return num;
+        }
+      }
+    } catch (_) {}
+    return 0;
+  }
+
+  function showShareToast(message) {
+    let toast = document.getElementById('share-score-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'share-score-toast';
+      toast.className = 'share-score-toast';
+      toast.setAttribute('role', 'status');
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add('visible');
+    setTimeout(() => {
+      toast.classList.remove('visible');
+    }, 2500);
+  }
+
+  async function handleShareScore() {
+    const game = window.activeGame;
+    const gameTitle = game && game.title ? game.title : 'ArcadeVerse Game';
+    const gameId = game && game.id ? game.id : '';
+    const score = getActiveGameHighScore(gameId);
+
+    const shareTitle = `${gameTitle} — ArcadeVerse High Score!`;
+    const shareText = score > 0
+      ? `I just scored ${score.toLocaleString()} points in ${gameTitle} on ArcadeVerse! Can you beat my record?`
+      : `Come play ${gameTitle} with me on ArcadeVerse!`;
+    const shareUrl = window.location.href;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl
+        });
+        showShareToast('High score shared successfully!');
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          copyShareFallback(shareText, shareUrl);
+        }
+      }
+    } else {
+      copyShareFallback(shareText, shareUrl);
+    }
+  }
+
+  function copyShareFallback(text, url) {
+    const fullText = `${text}\n${url}`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(fullText).then(() => {
+        showShareToast('Challenge link and score copied to clipboard!');
+      }).catch(() => {
+        showShareToast('Challenge ready to share!');
+      });
+    } else {
+      showShareToast('Challenge ready to share!');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const shareBtn = document.getElementById('modal-share-score-btn');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', handleShareScore);
+    }
+  });
+})();
