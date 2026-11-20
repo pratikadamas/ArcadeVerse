@@ -5285,3 +5285,59 @@ if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.m
   }
 
   initPwaUpdateNotifier();
+
+
+// ========================================================
+// IN-MODAL VOLUME SLIDER & CROSS-IFRAME BROADCASTER (#735)
+// ========================================================
+(() => {
+  let masterVolume = 1.0;
+  try {
+    const saved = localStorage.getItem('arcadeverse_master_volume');
+    if (saved !== null) {
+      const parsed = parseFloat(saved);
+      if (!isNaN(parsed) && parsed >= 0 && parsed <= 1) {
+        masterVolume = parsed;
+      }
+    }
+  } catch (_) {}
+
+  function broadcastMasterVolume(vol) {
+    masterVolume = vol;
+    try {
+      localStorage.setItem('arcadeverse_master_volume', vol.toString());
+    } catch (_) {}
+
+    const gameIframe = document.getElementById('game-iframe');
+    if (gameIframe && gameIframe.contentWindow) {
+      gameIframe.contentWindow.postMessage({
+        type: 'ARCADEVERSE_SET_VOLUME',
+        volume: vol
+      }, '*');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const slider = document.getElementById('modal-volume-slider');
+    const label = document.getElementById('volume-percentage-label');
+    if (slider) {
+      slider.value = Math.round(masterVolume * 100);
+      if (label) label.textContent = `${Math.round(masterVolume * 100)}%`;
+
+      slider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10);
+        const norm = Math.max(0, Math.min(100, val)) / 100;
+        if (label) label.textContent = `${val}%`;
+        broadcastMasterVolume(norm);
+      });
+    }
+
+    // Re-broadcast volume whenever a game finishes loading in iframe
+    const iframe = document.getElementById('game-iframe');
+    if (iframe) {
+      iframe.addEventListener('load', () => {
+        setTimeout(() => broadcastMasterVolume(masterVolume), 200);
+      });
+    }
+  });
+})();
