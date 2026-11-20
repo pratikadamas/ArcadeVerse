@@ -166,6 +166,7 @@
               <li><a href="#scoring-engine" class="docs-nav-link"><i data-lucide="cpu"></i> Scoring & Leaderboard</a></li>
               <li><a href="#storage-manager" class="docs-nav-link"><i data-lucide="hard-drive"></i> Save Data Vault & Manager</a></li>
               <li><a href="#snapshot-studio" class="docs-nav-link"><i data-lucide="camera"></i> Retro Snapshot Studio</a></li>
+              <li><a href="#marathon-mode" class="docs-nav-link"><i data-lucide="zap"></i> Survival Marathon Mode</a></li>
               <li><a href="#slot-reel" class="docs-nav-link"><i data-lucide="dices"></i> Slot Reel Roulette Picker</a></li>
               <li><a href="#playlist-system" class="docs-nav-link"><i data-lucide="list-music"></i> Custom Playlist Engine</a></li>
               <li><a href="#az-jump-bar" class="docs-nav-link"><i data-lucide="arrow-down-a-z"></i> A-Z Catalog Jump Bar</a></li>
@@ -1114,6 +1115,22 @@ arcadeverse.requestPause();
             <li><strong>Cross-Frame Canvas Capture:</strong> Safely samples <code>&lt;canvas&gt;</code> rendering contexts from same-origin game instances.</li>
             <li><strong>Stylized CRT Border Overlays:</strong> Injects dynamic game metadata, player handle, timestamp, and retro scanline vignette effects.</li>
             <li><strong>Zero External Storage:</strong> 100% rendered client-side with instant data-URL download without uploading images to any third-party server.</li>
+          </ul>
+        </section>
+
+        <!-- 15c-3. Arcade Survival Marathon Mode -->
+        <section class="docs-section" id="marathon-mode">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Arcade Survival Marathon Mode (Automated Timed Cross-Game Warp)</h2>
+          <p class="docs-paragraph">
+            Implemented in <code>assets/js/arcade-marathon-mode.js</code> and styled in <code>assets/css/arcade-marathon-mode.css</code>, this gamification subsystem introduces continuous cross-game tourney play directly inside the existing player modal.
+          </p>
+          <ul>
+            <li><strong>Marathon Supervisor Engine:</strong> Players start with a 60-second global countdown timer and 3 lives. Surviving each 30-second stage adds +15 seconds to the global clock.</li>
+            <li><strong>Automated Hyperspace Warp:</strong> Every 30 seconds, an animated 3-second warp countdown triggers (<code>WARPING IN 3... 2... 1...</code>) and swaps the game iframe without unmounting the modal shell.</li>
+            <li><strong>Marathon High Score Ledger:</strong> Tracks consecutive games cleared and cumulative scores in <code>localStorage</code> (<code>av_marathon_ledger</code>).</li>
+            <li><strong>Milestone Trophy Badges:</strong> Automatically awards "Marathon Champion: Contender" at 5 consecutive clears and "Marathon Champion: Legend" at 10 consecutive clears.</li>
+            <li><strong>Procedural Audio:</strong> Uses pure Web Audio synthesizer sweeps and fanfares for stage clears and warp sequences with 0 external sound files.</li>
           </ul>
         </section>
 
