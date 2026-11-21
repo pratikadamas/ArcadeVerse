@@ -500,13 +500,15 @@
   }
 
   // --- UPDATE LOOP ---
-  function update() {
+  function update(dt = 0.016) {
     if (!state.running) return;
 
+    const dtScale = dt * 60;
+
     // Laser Cooldown & Powerup Timer
-    if (state.laserCooldown > 0) state.laserCooldown--;
+    if (state.laserCooldown > 0) state.laserCooldown -= dtScale;
     if (state.activePowerup) {
-      state.powerupTimer--;
+      state.powerupTimer -= dtScale;
       if (state.powerupTimer <= 0) {
         state.activePowerup = null;
         paddle.w = paddle.baseW;
@@ -518,17 +520,17 @@
 
     // Keyboard Paddle Movement
     if (keys.ArrowLeft || keys.KeyA) {
-      paddle.x = Math.max(0, paddle.x - paddle.speed);
+      paddle.x = Math.max(0, paddle.x - paddle.speed * dtScale);
       balls.forEach(b => { if (b.stuck) b.x = paddle.x + b.stuckOffset; });
     }
     if (keys.ArrowRight || keys.KeyD) {
-      paddle.x = Math.min(canvas.width - paddle.w, paddle.x + paddle.speed);
+      paddle.x = Math.min(canvas.width - paddle.w, paddle.x + paddle.speed * dtScale);
       balls.forEach(b => { if (b.stuck) b.x = paddle.x + b.stuckOffset; });
     }
 
     // Update Laser Shots
     laserShots = laserShots.filter(ls => {
-      ls.y += ls.vy;
+      ls.y += ls.vy * dtScale;
       for (let i = 0; i < bricks.length; i++) {
         const br = bricks[i];
         if (br.alive && ls.x >= br.x && ls.x <= br.x + br.w && ls.y >= br.y && ls.y <= br.y + br.h) {
@@ -547,8 +549,8 @@
     balls = balls.filter(b => {
       if (b.stuck) return true;
 
-      b.x += b.vx;
-      b.y += b.vy;
+      b.x += b.vx * dtScale;
+      b.y += b.vy * dtScale;
 
       // Wall reflections
       if (b.x - b.radius <= 0) { b.x = b.radius; b.vx *= -1; sound.playBounce(320); }
@@ -826,21 +828,31 @@
     });
   }
 
-  function loop() {
-    update();
+  let rafId = null;
+  let lastTime = performance.now();
+
+  function loop(now = performance.now()) {
+    const rawDt = (now - lastTime) / 1000;
+    lastTime = now;
+    const dt = Math.min(rawDt, 0.05);
+
+    update(dt);
     render();
-    requestAnimationFrame(loop);
+    rafId = requestAnimationFrame(loop);
   }
 
-  requestAnimationFrame(loop);
-
-  // Clean audio on teardown (#507)
+  // Lifecycle listeners (#764)
   window.addEventListener('message', (e) => {
-    if (e.data && e.data.type === 'ARCADEVERSE_TEARDOWN') {
-      sound.stopAll();
-      if (sound.ctx && sound.ctx.state !== 'closed') {
-        try { sound.ctx.close(); } catch (_) {}
+    if (!e.data) return;
+    if (e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
       }
+      sound.stopAll();
+      if (sound.ctx && sound.ctx.state !== 'closed') sound.ctx.close().catch(() => {});
     }
   });
+
+  rafId = requestAnimationFrame(loop);
 })();

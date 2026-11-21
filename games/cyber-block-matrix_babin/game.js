@@ -151,16 +151,32 @@
       this.score = 0;
       this.lines = 0;
       this.level = 1;
-      this.highScore = parseInt(localStorage.getItem(STORAGE_KEY), 10) || 0;
+      this.highScore = this.getStoredHighScore();
       this.highscoreEl.textContent = this.highScore;
 
       this.dropCounter = 0;
       this.dropInterval = 800; // ms
       this.lastTime = 0;
       this.gameState = 'READY'; // READY, PLAYING, PAUSED, GAMEOVER
+      this.rafId = null;
 
       this.initGrid();
       this.bindInputs();
+    }
+
+    getStoredHighScore() {
+      try {
+        const val = localStorage.getItem(STORAGE_KEY);
+        return val ? parseInt(val, 10) || 0 : 0;
+      } catch (_) {
+        return 0;
+      }
+    }
+
+    setStoredHighScore(val) {
+      try {
+        localStorage.setItem(STORAGE_KEY, String(val));
+      } catch (_) {}
     }
 
     initGrid() {
@@ -185,8 +201,7 @@
       this.gameState = 'PLAYING';
       this.overlay.classList.add('hidden');
 
-      this.lastTime = performance.now();
-      requestAnimationFrame(this.gameLoop.bind(this));
+      this.startLoop();
     }
 
     getRandomPieceKey() {
@@ -367,9 +382,7 @@
       if (this.score > this.highScore) {
         this.highScore = this.score;
         this.highscoreEl.textContent = this.highScore;
-        try {
-          localStorage.setItem(STORAGE_KEY, this.highScore);
-        } catch (_) {}
+        this.setStoredHighScore(this.highScore);
       }
     }
 
@@ -380,11 +393,18 @@
       this.overlaySubtitle.textContent = `Score: ${this.score} • Lines: ${this.lines} • Level: ${this.level}`;
       this.btnStart.textContent = 'RETRY RUN';
       this.overlay.classList.remove('hidden');
+
+      try {
+        window.dispatchEvent(new CustomEvent('ARCADEVERSE_GAME_OVER', {
+          detail: { gameId: 'cyber-block-matrix', score: this.score, lines: this.lines, level: this.level }
+        }));
+      } catch (_) {}
     }
 
     togglePause() {
       if (this.gameState === 'PLAYING') {
         this.gameState = 'PAUSED';
+        this.stopLoop();
         this.overlayTitle.textContent = 'SYSTEM PAUSED';
         this.overlaySubtitle.textContent = 'Matrix simulation suspended. Press P or Resume to continue.';
         this.btnStart.textContent = 'RESUME RUN';
@@ -392,8 +412,7 @@
       } else if (this.gameState === 'PAUSED') {
         this.gameState = 'PLAYING';
         this.overlay.classList.add('hidden');
-        this.lastTime = performance.now();
-        requestAnimationFrame(this.gameLoop.bind(this));
+        this.startLoop();
       }
     }
 
@@ -494,7 +513,8 @@
 
     gameLoop(time = 0) {
       if (this.gameState !== 'PLAYING') return;
-      const deltaTime = time - this.lastTime;
+      const rawDelta = time - this.lastTime;
+      const deltaTime = Math.min(Math.max(rawDelta, 0), 100);
       this.lastTime = time;
 
       this.dropCounter += deltaTime;
@@ -504,7 +524,23 @@
       }
 
       this.render();
-      requestAnimationFrame(this.gameLoop.bind(this));
+      this.rafId = requestAnimationFrame(this.gameLoop.bind(this));
+    }
+
+    startLoop() {
+      if (this.rafId) {
+        cancelAnimationFrame(this.rafId);
+        this.rafId = null;
+      }
+      this.lastTime = performance.now();
+      this.rafId = requestAnimationFrame(this.gameLoop.bind(this));
+    }
+
+    stopLoop() {
+      if (this.rafId) {
+        cancelAnimationFrame(this.rafId);
+        this.rafId = null;
+      }
     }
 
     bindInputs() {
@@ -596,10 +632,35 @@
         modalRules.setAttribute('aria-hidden', 'true');
       });
 
-      modalRules.addEventListener('click', (e) => {
-        if (e.target === modalRules) {
-          modalRules.classList.remove('active');
-          modalRules.setAttribute('aria-hidden', 'true');
+      // Visibility and platform listeners
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          if (this.gameState === 'PLAYING') {
+            this.togglePause();
+          } else {
+            this.stopLoop();
+          }
+        }
+      });
+
+      window.addEventListener('ARCADEVERSE_PAUSE', () => {
+        if (this.gameState === 'PLAYING') {
+          this.togglePause();
+        } else {
+          this.stopLoop();
+        }
+      });
+
+      window.addEventListener('ARCADEVERSE_RESUME', () => {
+        if (this.gameState === 'PAUSED') {
+          this.togglePause();
+        }
+      });
+
+      window.addEventListener('ARCADEVERSE_TEARDOWN', () => {
+        this.stopLoop();
+        if (AudioEngine.ctx && AudioEngine.ctx.state !== 'closed') {
+          try { AudioEngine.ctx.close(); } catch (_) {}
         }
       });
     }

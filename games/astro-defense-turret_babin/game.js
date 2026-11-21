@@ -193,11 +193,33 @@
   let isPaused = false;
   let animId = null;
 
+  // Safe storage helper with ArcadeStorage support
+  function getSafeHighScore() {
+    try {
+      if (window.ArcadeVerse && window.ArcadeVerse.storage) {
+        return parseInt(window.ArcadeVerse.storage.getItem('astro_turret_highscore') || '0', 10);
+      }
+      return parseInt(localStorage.getItem('astro_turret_highscore') || '0', 10);
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function setSafeHighScore(val) {
+    try {
+      if (window.ArcadeVerse && window.ArcadeVerse.storage) {
+        window.ArcadeVerse.storage.setItem('astro_turret_highscore', String(val));
+      } else {
+        localStorage.setItem('astro_turret_highscore', String(val));
+      }
+    } catch (_) {}
+  }
+
   let score = 0;
   let wave = 1;
   let shieldHp = 100;
   let kills = 0;
-  let highScore = parseInt(localStorage.getItem('astro_turret_highscore') || '0', 10);
+  let highScore = getSafeHighScore();
   statHighEl.textContent = highScore;
 
   // Turret Center Hub
@@ -314,19 +336,22 @@
     }
   }
 
-  function update() {
+  function update(dt = 0.016) {
     if (!isRunning || isPaused) return;
 
+    // Delta-time scale factor relative to 60 FPS standard (16.67ms)
+    const dtScale = dt * 60;
+
     // Turret rotation via keys
-    const rotSpeed = 0.07;
+    const rotSpeed = 0.07 * dtScale;
     if (keys.left) hub.angle -= rotSpeed;
     if (keys.right) hub.angle += rotSpeed;
     if (keys.fire) shootLaser();
 
-    if (fireCooldown > 0) fireCooldown--;
+    if (fireCooldown > 0) fireCooldown -= dtScale;
 
     // Spawn waves
-    spawnTimer++;
+    spawnTimer += dtScale;
     const interval = Math.max(35, 90 - wave * 6);
     if (spawnTimer > interval) {
       spawnEnemy();
@@ -336,9 +361,9 @@
     // Bullets update
     for (let i = bullets.length - 1; i >= 0; i--) {
       const b = bullets[i];
-      b.x += b.vx;
-      b.y += b.vy;
-      b.life--;
+      b.x += b.vx * dtScale;
+      b.y += b.vy * dtScale;
+      b.life -= dtScale;
 
       if (b.life <= 0 || b.x < -20 || b.x > canvas.width + 20 || b.y < -20 || b.y > canvas.height + 20) {
         bullets.splice(i, 1);
@@ -348,8 +373,8 @@
     // Enemies update
     for (let i = enemies.length - 1; i >= 0; i--) {
       const e = enemies[i];
-      e.x += e.vx;
-      e.y += e.vy;
+      e.x += e.vx * dtScale;
+      e.y += e.vy * dtScale;
 
       // Check collision with bullets
       let hit = false;
@@ -414,9 +439,16 @@
 
     if (score > highScore) {
       highScore = score;
-      localStorage.setItem('astro_turret_highscore', highScore.toString());
+      setSafeHighScore(highScore);
       statHighEl.textContent = highScore;
     }
+
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'ARCADEVERSE_GAME_SCORE', score: score }, '*');
+        window.parent.postMessage({ type: 'ARCADEVERSE_GAME_OVER', score: score, wave: wave }, '*');
+      }
+    } catch (_) {}
 
     finalScoreEl.textContent = score;
     finalWaveEl.textContent = wave;
@@ -530,8 +562,15 @@
     ctx.restore();
   }
 
-  function loop() {
-    update();
+  let lastTime = performance.now();
+
+  function loop(now = performance.now()) {
+    const rawDt = (now - lastTime) / 1000;
+    lastTime = now;
+    // Clamped delta-time to normalize 60Hz, 120Hz, and 144Hz monitors
+    const dt = Math.min(rawDt, 0.05);
+
+    update(dt);
     render();
     if (isRunning) {
       animId = requestAnimationFrame(loop);
@@ -539,10 +578,15 @@
   }
 
   function startGame() {
+    if (animId) {
+      cancelAnimationFrame(animId);
+      animId = null;
+    }
     sfx.init();
     resetGame();
     isRunning = true;
     isPaused = false;
+    lastTime = performance.now();
     startScreen.classList.add('hidden');
     gameOverScreen.classList.add('hidden');
     pauseScreen.classList.add('hidden');
@@ -645,13 +689,30 @@
     btnMute.classList.toggle('active', sfx.muted);
   });
 
-  // Clean audio on teardown (#507)
+  // Visibility change auto-pause
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && isRunning && !isPaused) {
+      togglePause();
+    }
+  });
+
   window.addEventListener('message', (e) => {
-    if (e.data && e.data.type === 'ARCADEVERSE_TEARDOWN') {
+    if (!e.data) return;
+    if (e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      isRunning = false;
+      if (animId) {
+        cancelAnimationFrame(animId);
+        animId = null;
+      }
       sfx.stopAll();
       if (sfx.ctx && sfx.ctx.state !== 'closed') {
         try { sfx.ctx.close(); } catch (_) {}
       }
+    } else if (e.data.type === 'ARCADEVERSE_PAUSE') {
+      if (isRunning && !isPaused) togglePause();
+      sfx.stopAll();
+    } else if (e.data.type === 'ARCADEVERSE_RESUME') {
+      if (isRunning && isPaused) togglePause();
     }
   });
 
