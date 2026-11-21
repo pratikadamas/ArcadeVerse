@@ -1,3 +1,6 @@
+@layer base, components, themes, a11y;
+
+@layer a11y {
 /* ===================================================
    ArcadeVerse Universal Accessibility (a11y) Engine
    Styles for Settings Drawer, Triggers, & Modifiers
@@ -161,6 +164,27 @@
   flex-shrink: 0;
 }
 
+.a11y-select {
+  background: #0f172a;
+  color: #00f0ff;
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.a11y-select:hover,
+.a11y-select:focus-visible {
+  border-color: #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+}
+
 .a11y-reset-btn {
   margin-top: auto;
   background: transparent;
@@ -294,11 +318,15 @@ html.a11y-high-contrast:not([data-theme="light"]) {
   --bg-surface: #0a0a0a !important;
   --bg-surface-elevated: #111111 !important;
   --bg-card: #050505 !important;
+  --surface-main: #000000 !important;
+  --surface-card: #050505 !important;
+  --surface-elevated: #111111 !important;
   --border-subtle: #ffffff !important;
   --border-medium: #ffffff !important;
   --text-primary: #ffffff !important;
   --text-secondary: #e2e8f0 !important;
   --text-muted: #cbd5e1 !important;
+  --focus-ring: #3b82f6 !important;
 }
 
 html.a11y-high-contrast[data-theme="light"] {
@@ -306,19 +334,70 @@ html.a11y-high-contrast[data-theme="light"] {
   --bg-surface: #ffffff !important;
   --bg-surface-elevated: #f8fafc !important;
   --bg-card: #ffffff !important;
+  --surface-main: #ffffff !important;
+  --surface-card: #ffffff !important;
+  --surface-elevated: #f8fafc !important;
   --border-subtle: #000000 !important;
   --border-medium: #000000 !important;
   --text-primary: #000000 !important;
   --text-secondary: #0f172a !important;
   --text-muted: #1e293b !important;
+  --focus-ring: #2563eb !important;
 }
 
 html.a11y-high-contrast .game-card,
 html.a11y-high-contrast .stat-card,
 html.a11y-high-contrast .daily-quest-card,
 html.a11y-high-contrast .leaderboard-table th,
-html.a11y-high-contrast .leaderboard-table td {
+html.a11y-high-contrast .leaderboard-table td,
+html.a11y-high-contrast .halloween-card,
+html.a11y-high-contrast .halloween-container,
+html.a11y-high-contrast .modal-window,
+html.a11y-high-contrast .modal-topbar {
   border-width: 2px !important;
+}
+
+html.a11y-high-contrast .halloween-card {
+  background: var(--bg-card, #050505) !important;
+  border-color: var(--border-medium, #ffffff) !important;
+  box-shadow: none !important;
+}
+
+html.a11y-high-contrast .halloween-container {
+  background: var(--bg-main, #000000) !important;
+  border-color: var(--border-medium, #ffffff) !important;
+  box-shadow: none !important;
+}
+
+html.a11y-high-contrast .halloween-title,
+html.a11y-high-contrast .halloween-card-title {
+  color: var(--text-primary, #ffffff) !important;
+  text-shadow: none !important;
+}
+
+html.a11y-high-contrast .halloween-subtitle,
+html.a11y-high-contrast .halloween-card-desc {
+  color: var(--text-secondary, #e2e8f0) !important;
+  text-shadow: none !important;
+}
+
+html.a11y-high-contrast .halloween-card-category,
+html.a11y-high-contrast .halloween-author-name {
+  color: var(--text-muted, #cbd5e1) !important;
+}
+
+html.a11y-high-contrast .modal-topbar {
+  background: var(--bg-surface-elevated, #111111) !important;
+  border-bottom: 2px solid var(--border-medium, #ffffff) !important;
+}
+
+html.a11y-high-contrast .modal-game-info h3,
+html.a11y-high-contrast #modal-game-title {
+  color: var(--text-primary, #ffffff) !important;
+}
+
+html.a11y-high-contrast .modal-game-author {
+  color: var(--text-secondary, #e2e8f0) !important;
 }
 
 /* 3. Large Typography (Scales text by 118%) */
@@ -330,18 +409,35 @@ html.a11y-large-text body {
   line-height: 1.7 !important;
 }
 
-html.a11y-large-text .game-card-title {
+html.a11y-large-text .game-card-title,
+html.a11y-large-text .halloween-card-title {
   font-size: 1.35rem !important;
 }
 
-html.a11y-large-text .game-card-desc {
+html.a11y-large-text .game-card-desc,
+html.a11y-large-text .halloween-card-desc {
   font-size: 1rem !important;
+}
+
+html.a11y-large-text .modal-game-info h3,
+html.a11y-large-text #modal-game-title {
+  font-size: 1.25rem !important;
+  max-width: none !important;
+}
+
+html.a11y-large-text .halloween-title {
+  font-size: 2.8rem !important;
+}
+
+html.a11y-large-text .halloween-subtitle {
+  font-size: 1.15rem !important;
 }
 
 /* 4. Enhanced Focus Rings */
 html.a11y-focus-highlight *:focus-visible {
-  outline: 3px solid #3b82f6 !important;
+  outline: 3px solid var(--focus-ring, #3b82f6) !important;
   outline-offset: 3px !important;
   box-shadow: 0 0 12px rgba(59, 130, 246, 0.85) !important;
   border-radius: 4px;
+}
 }

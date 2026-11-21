@@ -1,7 +1,15 @@
 {
   "title": "Cryptic Code Breaker: Mastermind Terminal",
-  "category": "Puzzle / Logic",
+  "category": "Puzzle",
+  "lucideIcon": "key-round",
   "description": "Crack randomized security cipher sequences using colorblind-friendly feedback pegs in a rogue AI terminal.",
   "author": "Babin Bid",
-  "github": "Babin123456"
+  "github": "Babin123456",
+  "tags": [
+    "Puzzle",
+    "Logic",
+    "Deduction",
+    "Retro",
+    "NSOC26"
+  ]
 }

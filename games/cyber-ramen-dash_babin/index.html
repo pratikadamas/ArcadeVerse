@@ -175,6 +175,31 @@
         </div>
       </div>
     </div>
+
+    <!-- Shift Complete Summary Overlay -->
+    <div id="shiftOverlay" class="modal-backdrop hidden">
+      <div class="modal-card summary-card">
+        <div class="modal-header">
+          <h2 id="shiftTitle">Shift Complete!</h2>
+        </div>
+        <div class="modal-body text-center">
+          <p id="shiftMessage" class="shift-desc">Outstanding noodle service, chef!</p>
+          <div class="shift-stats-grid">
+            <div class="summary-stat">
+              <span class="lbl">CREDITS</span>
+              <span class="val" id="summaryScore">0</span>
+            </div>
+            <div class="summary-stat">
+              <span class="lbl">BOWLS SERVED</span>
+              <span class="val" id="summaryServed">0</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="replayBtn" class="btn btn-primary">Play Again</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="game.js"></script>

@@ -21,6 +21,8 @@
   <link rel="stylesheet" href="assets/css/keyboard-shortcuts.css">
   <link rel="stylesheet" href="assets/css/network-detector.css">
   <link rel="stylesheet" href="assets/css/trophy-card.css">
+  <link rel="stylesheet" href="assets/css/inverse-kinematics-lab.css">
+  <link rel="stylesheet" href="assets/css/split-depth-studio.css">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -157,7 +159,9 @@
             <ul class="docs-nav-list">
               <li><a href="#sound-engine" class="docs-nav-link"><i data-lucide="volume-2"></i> Sound Synthesizer</a></li>
               <li><a href="#lifecycle-bridge" class="docs-nav-link"><i data-lucide="activity"></i> Lifecycle Bridge SDK</a></li>
+              <li><a href="#sdk-sandbox" class="docs-nav-link"><i data-lucide="terminal"></i> Interactive SDK Sandbox</a></li>
               <li><a href="#a11y-hub" class="docs-nav-link"><i data-lucide="eye"></i> Accessibility Engine</a></li>
+              <li><a href="#a11y-audio-beacon" class="docs-nav-link"><i data-lucide="radio"></i> Spatial Audio Beacon</a></li>
               <li><a href="#trophy-engine" class="docs-nav-link"><i data-lucide="award"></i> Trophy Certificate Canvas</a></li>
               <li><a href="#shortcuts-engine" class="docs-nav-link"><i data-lucide="keyboard"></i> Keyboard Shortcuts</a></li>
               <li><a href="#recently-played" class="docs-nav-link"><i data-lucide="clock"></i> Quick Resume Engine</a></li>
@@ -168,8 +172,11 @@
               <li><a href="#slot-reel" class="docs-nav-link"><i data-lucide="dices"></i> Slot Reel Roulette Picker</a></li>
               <li><a href="#playlist-system" class="docs-nav-link"><i data-lucide="list-music"></i> Custom Playlist Engine</a></li>
               <li><a href="#az-jump-bar" class="docs-nav-link"><i data-lucide="arrow-down-a-z"></i> A-Z Catalog Jump Bar</a></li>
-              <li><a href="#theme-sync" class="docs-nav-link"><i data-lucide="sun-moon"></i> System Theme Sync Engine</a></li>
+              <li><a href="#inverse-kinematics-lab" class="docs-nav-link"><i data-lucide="git-branch"></i> Inverse Kinematics Lab</a></li>
+              <li><a href="#split-depth-studio" class="docs-nav-link"><i data-lucide="layers"></i> Split-Depth Cover Studio</a></li>
+              <li><a href="#theme-sync" class="docs-nav-link"><i data-lucide="sun-moon"></i> Theme Sync & UI Guidelines</a></li>
               <li><a href="#bug-report-helper" class="docs-nav-link"><i data-lucide="bug"></i> Game Bug Report Diagnostic</a></li>
+              <li><a href="#card-flip-manual" class="docs-nav-link"><i data-lucide="layers"></i> 3D Flip Card &amp; Quick Manual</a></li>
             </ul>
           </div>
 
@@ -464,17 +471,17 @@ node scripts/validate-games.js --strict-assets --summary-json audit-report.json<
    ArcadeVerse Pre-Flight Contributor Game Validator
 ========================================================
 
-Found 40 community games to audit...
+Found 118 community games to audit...
 
-  ✅ [PASS] astro-infinite-jumper_pragna7
-  ✅ [PASS] bubble-burst-arena_mistu7debnath
-  ✅ [PASS] circuit-connect_arshi
-  ✅ [PASS] cosmic-orbit-slingshot_babin
+  [PASS] astro-infinite-jumper_pragna7
+  [PASS] bubble-burst-arena_mistu7debnath
+  [PASS] circuit-connect_arshi
+  [PASS] cosmic-orbit-slingshot_babin
   ...
 ========================================================
-Audited 40 games: 0 Errors, 0 Warnings
+Audited 118 games: 0 Errors, 0 Warnings
 ========================================================
-✨ All community games pass pre-flight verification!</code></pre>
+All community games pass pre-flight verification!</code></pre>
           </div>
 
           <p class="docs-paragraph">
@@ -799,6 +806,190 @@ if (window.ArcadeVerse) {
             <li><strong>Source Window Verification:</strong> Events are validated against <code>event.source === gameIframe.contentWindow</code>, guaranteeing that messages originate exclusively from the actively mounted game iframe.</li>
             <li><strong>Cryptographic Session Token:</strong> When the iframe loads, the parent hub dispatches an <code>AV_INIT_SESSION</code> challenge with a cryptographically secure token (<code>crypto.randomUUID()</code>). The child SDK confirms with an <code>AV_SESSION_ACK</code> and signs all subsequent runtime events (such as <code>ARCADEVERSE_GAME_SCORE</code> and keyboard shortcuts) with this token.</li>
           </ul>
+
+          <h3 class="docs-subsection-title">Interactive SDK Sandbox Playground (#703)</h3>
+          <p class="docs-paragraph">
+            Test and verify ArcadeVerse SDK lifecycle events, score broadcasts, and audio controls in real time using the interactive sandbox playground below:
+          </p>
+          <div class="sdk-sandbox-container">
+            <div class="sdk-sandbox-editor">
+              <label for="sandbox-code" class="sdk-sandbox-label">Test Snippet (ES6+ Vanilla JavaScript)</label>
+              <textarea id="sandbox-code" class="sdk-sandbox-textarea" rows="6">// Dispatch high score through SDK bridge
+arcadeverse.postScore(1500);
+
+// Request pause state
+arcadeverse.requestPause();
+</textarea>
+              <div class="sdk-sandbox-actions">
+                <button type="button" id="sandbox-run-btn" class="sdk-sandbox-btn primary">Execute in Sandbox</button>
+                <button type="button" id="sandbox-clear-btn" class="sdk-sandbox-btn">Clear Output</button>
+              </div>
+            </div>
+            <div class="sdk-sandbox-output-wrap">
+              <label class="sdk-sandbox-label">SDK Event Console & Telemetry</label>
+              <div id="sandbox-console" class="sdk-sandbox-console" role="log" aria-live="polite">
+                <span class="sandbox-log-info">[System] ArcadeVerse SDK Playground ready.</span>
+              </div>
+            </div>
+          </div>
+          <script>
+            (() => {
+              const runBtn = document.getElementById('sandbox-run-btn');
+              const clearBtn = document.getElementById('sandbox-clear-btn');
+              const consoleEl = document.getElementById('sandbox-console');
+              const codeEl = document.getElementById('sandbox-code');
+
+              function logToSandbox(type, msg) {
+                if (!consoleEl) return;
+                const row = document.createElement('div');
+                row.className = 'sandbox-log-item ' + type;
+                row.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+                consoleEl.appendChild(row);
+                consoleEl.scrollTop = consoleEl.scrollHeight;
+              }
+
+              if (clearBtn && consoleEl) {
+                clearBtn.addEventListener('click', () => {
+                  consoleEl.innerHTML = '<span class="sandbox-log-info">[System] Console cleared.</span>';
+                });
+              }
+
+              if (runBtn && codeEl) {
+                runBtn.addEventListener('click', () => {
+                  const code = codeEl.value;
+                  logToSandbox('exec', 'Executing code block...');
+                  try {
+                    const mockSdk = {
+                      postScore: (score) => logToSandbox('event', `ARCADEVERSE_GAME_SCORE emitted: ${score} pts`),
+                      requestPause: () => logToSandbox('event', 'ARCADEVERSE_PAUSE dispatched to iframe'),
+                      requestResume: () => logToSandbox('event', 'ARCADEVERSE_RESUME dispatched to iframe'),
+                      audio: {
+                        playBGM: (track) => logToSandbox('event', `BGM track started: ${track}`),
+                        stopBGM: () => logToSandbox('event', 'BGM stopped')
+                      }
+                    };
+                    const fn = new Function('arcadeverse', code);
+                    fn(mockSdk);
+                    logToSandbox('success', 'Execution finished without errors.');
+                  } catch (err) {
+                    logToSandbox('error', `Error: ${err.message}`);
+                  }
+                });
+              }
+            })();
+          </script>
+        </section>
+
+        <section class="docs-section" id="storage-inspector">
+          <h2 class="docs-section-title">Developer storage inspector</h2>
+          <p class="docs-paragraph"><a href="index.html?debug=storage">Open the catalog with the storage lab enabled</a>. Take a snapshot, close the drawer, play a game and close its modal to inspect created, modified and deleted <code>arcadeverse_*</code> keys. Expand JSON values or search keys and values. Valid plain settings are preserved. Resetting a known malformed JSON key requires confirmation and refuses a value that changed since inspection; it does not recover lost data. Close other tabs before resetting. End the developer session to discard its in-memory snapshots. Inspection is bounded and partial reads cannot produce a diff.</p>
+        </section>
+
+        <!-- 9c. Interactive ArcadeVerse SDK Sandbox Playground (#726) -->
+        <section class="docs-section" id="sdk-sandbox">
+          <span class="docs-section-tag">04 / Platform Subsystems & Developer Tooling</span>
+          <h2 class="docs-section-title">Interactive ArcadeVerse SDK Sandbox Playground</h2>
+          <p class="docs-paragraph">
+            Test SDK lifecycle events, real-time message bridging, procedural Web Audio chiptune synthesis, and namespaced storage directly in your browser. Select a preset snippet below or edit the code freely to see real-time canvas feedback and live intercepted event telemetry with zero remote servers.
+          </p>
+
+          <div class="sdk-sandbox-wrapper">
+            <!-- Preset Selector Tabs -->
+            <div class="sdk-sandbox-presets" role="toolbar" aria-label="SDK Code Presets">
+              <span class="sdk-preset-label">
+                <i data-lucide="sliders"></i> Snippet Presets:
+              </span>
+              <button type="button" class="sdk-preset-btn active" data-preset="score">
+                <i data-lucide="award"></i> arcadeverse.score()
+              </button>
+              <button type="button" class="sdk-preset-btn" data-preset="audio">
+                <i data-lucide="volume-2"></i> arcadeverse.audio()
+              </button>
+              <button type="button" class="sdk-preset-btn" data-preset="storage">
+                <i data-lucide="database"></i> arcadeverse.save()
+              </button>
+              <button type="button" class="sdk-preset-btn" data-preset="gameover">
+                <i data-lucide="flag"></i> ArcadeVerse.postGameOver()
+              </button>
+              <button type="button" class="sdk-preset-btn" data-preset="canvas">
+                <i data-lucide="play"></i> Interactive Canvas Loop
+              </button>
+            </div>
+
+            <!-- Editor & Live Preview Grid -->
+            <div class="sdk-sandbox-grid">
+              <!-- Left Pane: Code Editor -->
+              <div class="sdk-editor-pane">
+                <div class="sdk-pane-header">
+                  <div class="sdk-pane-title">
+                    <i data-lucide="code"></i>
+                    <span>JavaScript (Client SDK Bridge)</span>
+                  </div>
+                  <div class="sdk-pane-actions">
+                    <button type="button" class="sdk-btn sdk-btn-reset" id="sdk-btn-reset" title="Reset snippet to default">
+                      <i data-lucide="rotate-ccw"></i> Reset
+                    </button>
+                    <button type="button" class="sdk-btn sdk-btn-run" id="sdk-btn-run" title="Execute snippet (Ctrl + Enter)">
+                      <i data-lucide="play"></i> Run Code
+                    </button>
+                  </div>
+                </div>
+
+                <div class="sdk-editor-body">
+                  <div class="sdk-line-numbers" id="sdk-line-numbers" aria-hidden="true">1</div>
+                  <textarea id="sdk-code-input" class="sdk-code-input" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Editable JavaScript Code Playground"></textarea>
+                </div>
+
+                <div class="sdk-editor-footer">
+                  <div class="sdk-quick-snippets">
+                    <span style="font-weight:600; margin-right:4px;">Insert:</span>
+                    <button type="button" class="sdk-chip-insert" data-snippet="arcadeverse.score(100);">+ score(100)</button>
+                    <button type="button" class="sdk-chip-insert" data-snippet="arcadeverse.audio('laser');">+ audio('laser')</button>
+                    <button type="button" class="sdk-chip-insert" data-snippet="arcadeverse.save('highScore', 5000);">+ save()</button>
+                    <button type="button" class="sdk-chip-insert" data-snippet="ArcadeAudio.playCoin();">+ playCoin()</button>
+                  </div>
+                  <span class="sdk-shortcut-hint">Ctrl + Enter to run</span>
+                </div>
+              </div>
+
+              <!-- Right Pane: Live Canvas Preview & Intercepted Console -->
+              <div class="sdk-preview-pane">
+                <!-- Preview Canvas -->
+                <div class="sdk-canvas-wrapper">
+                  <div class="sdk-canvas-header">
+                    <div class="sdk-hud-stats">
+                      <div class="sdk-hud-stat-item">SCORE: <span id="sdk-hud-score">000000</span></div>
+                      <div class="sdk-hud-stat-item">HIGH: <span id="sdk-hud-high">005000</span></div>
+                    </div>
+                    <div id="sdk-hud-status" style="color:#10b981; font-weight:700;">LIVE PREVIEW</div>
+                  </div>
+                  <canvas id="sdk-preview-canvas" class="sdk-preview-canvas" width="480" height="180" role="img" aria-label="Interactive Game Preview Canvas"></canvas>
+                  <div class="sdk-canvas-hint">
+                    <i data-lucide="mouse-pointer-click"></i> Click inside preview canvas to trigger interactive score & sound events!
+                  </div>
+                </div>
+
+                <!-- Intercepted SDK Events Console -->
+                <div class="sdk-console-wrapper">
+                  <div class="sdk-console-header">
+                    <div class="sdk-console-title">
+                      <i data-lucide="terminal"></i>
+                      <span>Intercepted SDK Event Stream</span>
+                      <span class="sdk-console-count" id="sdk-console-count">0 Events</span>
+                    </div>
+                    <div class="sdk-console-actions">
+                      <button type="button" class="sdk-btn-clear" id="sdk-btn-clear" title="Clear console stream">
+                        <i data-lucide="trash-2"></i> Clear
+                      </button>
+                    </div>
+                  </div>
+                  <div class="sdk-console-body" id="sdk-console-body" role="log" aria-live="polite">
+                    <!-- Event log items dynamically injected here -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         <!-- 10. Accessibility Hub -->
@@ -814,6 +1005,40 @@ if (window.ArcadeVerse) {
             <li><code>.a11y-large-text</code>: Scales base typography up by 15% across all headings, cards, and buttons.</li>
             <li><code>.a11y-focus-highlight</code>: Applies a 3px neon high-visibility outline to all keyboard-focused interactive elements.</li>
           </ul>
+        </section>
+
+        <!-- 10b. Spatial Audio Beacon -->
+        <section class="docs-section" id="a11y-audio-beacon">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Universal Spatial Audio Beacon &amp; Stereo Sonification</h2>
+          <p class="docs-paragraph">
+            Implemented in <code>assets/js/a11y-audio-beacon.js</code>, this subsystem provides real-time 3D binaural spatial sound guidance for blind and visually impaired players across 2D arcade games. Built on the native Web Audio API with zero external audio samples or dependencies:
+          </p>
+          <ul>
+            <li><strong>Stereo Panning Mapping:</strong> Translates horizontal coordinate positions into binaural stereo panning from <code>-1.0</code> (Hard Left) through <code>0.0</code> (Center) to <code>+1.0</code> (Hard Right) via <code>StereoPannerNode</code>.</li>
+            <li><strong>Vertical Frequency Sonification:</strong> Maps vertical coordinate positions to acoustic frequency pitch from <code>200 Hz</code> (bottom of screen) to <code>1200 Hz</code> (top of screen).</li>
+            <li><strong>Proximity Hazard Radar:</strong> Emits rhythmic radar pulses that dynamically accelerate in tempo (from <code>1000 ms</code> down to <code>100 ms</code>) as the player approaches screen boundaries or tracked hazards.</li>
+            <li><strong>Entity Sonification Signatures:</strong> Synthesizes unique spatial audio earcons for game elements: coins, hazards, beacons, boundary walls, portals, and powerups.</li>
+            <li><strong>Accessible Keyboard Shortcut:</strong> Rapidly toggle on or off using <kbd>Alt</kbd>+<kbd>B</kbd> (or via the Accessibility Hub drawer) with verbal screen-reader confirmation and state earcons.</li>
+          </ul>
+          <div class="code-block-wrapper">
+            <div class="code-block-header">
+              <span>ArcadeVerse SDK Spatial Sonification API</span>
+              <button class="btn-copy-code" type="button" aria-label="Copy code snippet">
+                <i data-lucide="copy"></i> Copy
+              </button>
+            </div>
+            <pre><code class="language-javascript">// In-game entity audio sonification
+ArcadeVerse.a11y.sonifyEntity(player.x, player.y, 'coin');
+
+// Continuous player position reporting for beacon and radar
+ArcadeVerse.a11y.updatePlayerPosition(player.x, player.y, 800, 600);
+
+// Query audio beacon status
+if (ArcadeVerse.a11y.isAudioBeaconEnabled()) {
+  console.log("Spatial Audio Beacon active");
+}</code></pre>
+          </div>
         </section>
 
         <!-- 11. Trophy Certificate Engine -->
@@ -902,7 +1127,7 @@ if (window.ArcadeVerse) {
           <span class="docs-section-tag">04 / Platform Subsystems</span>
           <h2 class="docs-section-title">Save Data Vault & Storage Manager Subsystem</h2>
           <p class="docs-paragraph">
-            Engineered in <code>assets/js/storage-manager.js</code>, the Storage Manager gives players full control, transparency, and portability over all client-side data generated across 104+ arcade games.
+            Engineered in <code>assets/js/storage-manager.js</code>, the Storage Manager gives players full control, transparency, and portability over all client-side data generated across 118+ arcade games.
           </p>
           <div class="arch-grid-cards">
             <div class="arch-card">
@@ -966,7 +1191,7 @@ if (window.ArcadeVerse) {
           <span class="docs-section-tag">04 / Platform Subsystems</span>
           <h2 class="docs-section-title">A-Z Catalog Jump Bar Navigation</h2>
           <p class="docs-paragraph">
-            Implemented in <code>assets/js/app.js</code>, the A-Z Jump Bar provides rapid alphabetical indexing across all 104+ registered titles.
+            Implemented in <code>assets/js/app.js</code>, the A-Z Jump Bar provides rapid alphabetical indexing across all 118+ registered titles.
           </p>
           <ul>
             <li><strong>Dynamic Availability Scanning:</strong> Buttons for letters with zero matching games are automatically dimmed, disabled, and given <code>aria-disabled</code> accessibility tags.</li>
@@ -975,16 +1200,117 @@ if (window.ArcadeVerse) {
           </ul>
         </section>
 
-        <!-- 15g. Theme Sync Engine -->
+        <!-- 15g. Theme Sync Engine & Contributor UI Guidelines -->
         <section class="docs-section" id="theme-sync">
           <span class="docs-section-tag">04 / Platform Subsystems</span>
-          <h2 class="docs-section-title">System prefers-color-scheme Live Sync Engine</h2>
+          <h2 class="docs-section-title">System prefers-color-scheme Live Sync Engine & UI Guidelines</h2>
           <p class="docs-paragraph">
             Implemented in <code>assets/js/theme-sync-engine.js</code>, this service listens for operating system color scheme changes via <code>window.matchMedia('(prefers-color-scheme: dark)')</code>.
           </p>
           <p class="docs-paragraph">
             It dynamically synchronizes CSS root tokens without requiring page reloads while respecting explicit user manual overrides saved in LocalStorage.
           </p>
+
+          <h3 id="ui-theme-preview" style="margin-top: 1.8rem; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i data-lucide="palette"></i> Contributor UI Guidelines: Live Theme Comparison Preview
+          </h3>
+          <p class="docs-paragraph">
+            All ArcadeVerse community contributions must support both Light and Dark modes with verified <strong>WCAG 2.1 AAA</strong> contrast ratios (minimum 7:1 for normal body text, 4.5:1 for large display elements). Drag the interactive split slider below to inspect component boundaries, button states, and contrast ratios in real time:
+          </p>
+
+          <!-- Interactive Split Theme Preview Widget (#706) -->
+          <div class="theme-comparison-card" id="theme-comparison-card">
+            <!-- Header Toolbar -->
+            <div class="theme-comparison-toolbar">
+              <div class="theme-comparison-toolbar-left">
+                <span class="theme-badge dark"><i data-lucide="moon"></i> Dark Theme (Left)</span>
+                <span class="theme-badge light"><i data-lucide="sun"></i> Light Theme (Right)</span>
+              </div>
+              <div class="theme-comparison-presets">
+                <button type="button" class="preset-btn" data-split="0">100% Dark</button>
+                <button type="button" class="preset-btn active" data-split="50">50 / 50 Split</button>
+                <button type="button" class="preset-btn" data-split="100">100% Light</button>
+              </div>
+            </div>
+
+            <!-- Split Preview Canvas Viewport -->
+            <div class="theme-split-viewport" id="theme-split-viewport">
+              <!-- Dark Theme Layer (Base / Underneath) -->
+              <div class="theme-layer theme-dark-layer">
+                <div class="theme-preview-content">
+                  <div class="preview-header">
+                    <span class="preview-badge wcag-aaa"><i data-lucide="check-circle-2"></i> WCAG AAA 15.9:1</span>
+                    <h4>Cyber Matrix Arena</h4>
+                    <p class="preview-subtext">Quantum particle collision simulator with retro neon aesthetics.</p>
+                  </div>
+                  <div class="preview-components">
+                    <div class="preview-btn-group">
+                      <button type="button" class="preview-btn primary"><i data-lucide="play"></i> Launch Game</button>
+                      <button type="button" class="preview-btn secondary"><i data-lucide="info"></i> Details</button>
+                      <span class="preview-pill"><i data-lucide="trophy"></i> 2,450 pts</span>
+                    </div>
+                    <div class="preview-card-sample">
+                      <div class="preview-card-top">
+                        <span class="preview-tag">Arcade / Physics</span>
+                        <span class="preview-rating"><i data-lucide="star"></i> 4.9</span>
+                      </div>
+                      <div class="preview-metric-row">
+                        <span>Background: <code>#0f172a</code></span>
+                        <span>Foreground: <code>#f8fafc</code></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Light Theme Layer (Overlay / Clipped) -->
+              <div class="theme-layer theme-light-layer" id="theme-light-layer" style="width: 50%;">
+                <div class="theme-preview-content">
+                  <div class="preview-header">
+                    <span class="preview-badge wcag-aaa light"><i data-lucide="check-circle-2"></i> WCAG AAA 16.2:1</span>
+                    <h4>Cyber Matrix Arena</h4>
+                    <p class="preview-subtext">Quantum particle collision simulator with retro neon aesthetics.</p>
+                  </div>
+                  <div class="preview-components">
+                    <div class="preview-btn-group">
+                      <button type="button" class="preview-btn primary light"><i data-lucide="play"></i> Launch Game</button>
+                      <button type="button" class="preview-btn secondary light"><i data-lucide="info"></i> Details</button>
+                      <span class="preview-pill light"><i data-lucide="trophy"></i> 2,450 pts</span>
+                    </div>
+                    <div class="preview-card-sample light">
+                      <div class="preview-card-top">
+                        <span class="preview-tag light">Arcade / Physics</span>
+                        <span class="preview-rating light"><i data-lucide="star"></i> 4.9</span>
+                      </div>
+                      <div class="preview-metric-row light">
+                        <span>Background: <code>#f8fafc</code></span>
+                        <span>Foreground: <code>#0f172a</code></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Interactive Split Handle Divider -->
+              <div class="theme-split-divider" id="theme-split-divider" style="left: 50%;">
+                <div class="theme-split-handle">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Invisible Drag Slider Overlay for Mouse, Touch, & Keyboard Navigation -->
+              <input type="range" min="0" max="100" value="50" class="theme-split-range-input" id="theme-split-range" aria-label="Slide to compare Light and Dark theme preview">
+            </div>
+
+            <!-- Footer Caption -->
+            <div class="theme-comparison-footer">
+              <span class="contrast-hint"><i data-lucide="shield-check"></i> Contrast Ratio: <strong>15.9:1 (Dark)</strong> / <strong>16.2:1 (Light)</strong> &mdash; 100% WCAG 2.1 AAA Compliant</span>
+              <span class="drag-hint"><i data-lucide="move-horizontal"></i> Drag slider or use arrow keys to inspect</span>
+            </div>
+          </div>
         </section>
 
         <!-- 15h. Report Bug Helper Diagnostic -->
@@ -997,6 +1323,24 @@ if (window.ArcadeVerse) {
           <p class="docs-paragraph">
             Clicking it opens a pre-filled GitHub Issue template containing the target game ID, author github username, browser user agent, viewport resolution, and active error logs, streamlining triage for community maintainers.
           </p>
+        </section>
+
+        <!-- 15i. 3D Flip Card & Quick Manual Schematic (Issue #1102) -->
+        <section class="docs-section" id="card-flip-manual">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Dynamic 3D Flip Card &amp; Vector Controls Manual</h2>
+          <p class="docs-paragraph">
+            Implemented in <code>assets/js/card-flip-manual.js</code> and styled in <code>assets/css/card-flip-manual.css</code>, every catalog game card includes an interactive 3D perspective flip button (&ldquo;Controls &amp; Manual&rdquo;).
+          </p>
+          <p class="docs-paragraph">
+            Activating the flip rotates the card 180 degrees along its Y-axis at a solid 60 FPS, presenting a retro cyberpunk blueprint layout on the reverse side:
+          </p>
+          <ul>
+            <li><strong>Vector Keyboard Diagram:</strong> Highlights WASD, Directional Arrows, Spacebar, and Mouse controls dynamically based on the game's metadata and category.</li>
+            <li><strong>2-Sentence Objective Manual:</strong> Formulates a crisp, contextual briefing outlining the game's primary mission and strategic victory rules extracted from <code>game.json</code>.</li>
+            <li><strong>Direct Launcher:</strong> A dedicated &ldquo;Launch Game&rdquo; button initiates gameplay without requiring the player to flip back first.</li>
+            <li><strong>Accessibility &amp; Touch:</strong> Keyboard accessible via Space/Enter, automatic flip-back when focus leaves the card or on Escape, and full compliance with <code>prefers-reduced-motion</code>.</li>
+          </ul>
         </section>
 
         <!-- 16. Coding Standards -->
@@ -1156,6 +1500,48 @@ function updateCategoryPillCounts() {
           </div>
         </section>
 
+        <section class="docs-section" id="split-depth-studio">
+          <span class="docs-section-tag">04 / Platform Subsystems</span><h2 class="docs-section-title">Split-Depth Cover Studio</h2>
+          <p class="docs-paragraph">Put animated foreground artwork in front of white occlusion bars while the background stays behind. Move the pointer, drag on touch, or focus the canvas and use arrow keys for parallax; Home centers the view.</p>
+          <div class="depth-studio" data-depth-studio>
+            <canvas data-depth-canvas width="800" height="450" tabindex="0" role="img" aria-label="Split-depth arcade cover preview. Pointer or arrow keys change parallax."></canvas>
+            <div class="depth-controls">
+              <label>Bar direction<select data-depth-axis><option value="vertical">Vertical</option><option value="horizontal">Horizontal</option></select></label>
+              <label>Quality<select data-depth-quality><option value="auto">Auto</option><option value="full">Full split depth</option><option value="flat">Flat 2D</option></select></label>
+              <label>Occlusion bars<input data-depth-bars type="range" min="2" max="6" step="1" value="2"></label>
+              <label>Bar thickness<input data-depth-thickness type="range" min="4" max="60" step="1" value="22"></label>
+              <label>Local background PNG<input data-depth-background type="file" accept="image/png"></label>
+              <label>Local foreground PNG<input data-depth-foreground type="file" accept="image/png"></label>
+            </div>
+            <p class="docs-paragraph">Use a transparent foreground for the clearest pop-out effect. Each PNG may be up to 4 MiB and 2048 × 2048 pixels. Images stay in your browser.</p>
+            <div class="depth-actions"><button data-depth-play class="btn btn-primary" type="button" aria-pressed="false">Animate preview</button><button data-depth-download class="btn btn-secondary" type="button">Download still PNG</button><button data-depth-reset class="btn btn-secondary" type="button">Reset demo</button></div>
+            <p data-depth-metrics></p><p data-depth-status role="status" aria-live="polite"></p>
+          </div>
+          <p class="docs-paragraph">Auto uses a static flat preview for low-power hints or sustained slow frame cadence. Full mode keeps the layered effect; Flat 2D removes the bars and motion. Reduced-motion settings pause animation. Downloads pause the preview and export its current 800 × 450 frame.</p>
+          <pre class="code-pre"><code>// Load the SDK, then assets/js/split-depth-3d.js.
+const renderer = new ArcadeVerse.effects.SplitDepthRenderer(canvas);
+renderer.configure({ axis: 'horizontal', count: 2, quality: 'full' });
+renderer.start(); // Stop on your game lifecycle; dispose when unmounting.</code></pre>
+          <p class="docs-paragraph"><code>renderSplitDepthFrame(ctx, options, layers)</code> supports a caller-owned 2D context. <code>setLayerImage</code> takes ownership of an ImageBitmap and closes it when replaced or disposed. The studio cleans up frames, images, listeners and download URLs on normal exit; cached page transitions can resume.</p>
+        </section>
+
+        <section class="docs-section" id="inverse-kinematics-lab">
+          <span class="docs-section-tag">04 / Platform Subsystems</span><h2 class="docs-section-title">Inverse Kinematics Lab</h2>
+          <p class="docs-paragraph">Build anchored mechanical arms, articulated limbs and multi-tentacle poses with the bounded FABRIK point solver. Each call makes at most five passes and reports its remaining target error.</p>
+          <div class="ik-lab" data-ik-lab>
+            <label for="ik-preset">Rig preset</label><select id="ik-preset"><option value="arm">Mechanical arm</option><option value="limb">Constrained limb</option><option value="tentacles">Three tentacles</option></select>
+            <canvas width="800" height="420" tabindex="0" role="img" aria-label="Interactive inverse kinematics canvas. Move the pointer or use arrow keys to change the target."></canvas>
+            <p class="docs-paragraph">Move the pointer or drag on touch. Focus the canvas and use arrow keys (Shift for larger steps), or Home to reset the target.</p>
+            <p data-ik-reading></p><p data-ik-status role="status" aria-live="polite"></p>
+          </div>
+          <p class="docs-paragraph">Load the SDK before <code>assets/js/inverse-kinematics-physics.js</code>. Joint count includes the fixed root. Angles are radians relative to the parent link; the first link is relative to the root heading. Limits default to the full circle. A target inside total reach can still be blocked by angular limits; inspect <code>converged</code> and <code>error</code>.</p>
+          <pre class="code-pre"><code>const chain = ArcadeVerse.physics.createIKChain(8, 20);
+chain.setRoot({ x: 100, y: 150 });
+const result = chain.solve({ x: 180, y: 200 }, { iterations: 5 });
+const joints = chain.getPoints(); // independent snapshot for your renderer</code></pre>
+          <p class="docs-paragraph">Use <code>createIKPreset('arm' | 'limb' | 'tentacles')</code> for ready-made constrained chains. The helper owns no game loop; call solve from your game’s existing lifecycle. The lab draws only after input and bounded settling, and releases listeners and queued frames on page exit. <a href="https://www.andreasaristidou.com/publications/papers/FABRIK.pdf">FABRIK reference</a>.</p>
+        </section>
+
       </article>
       </div> <!-- End .docs-content-pane -->
     </div> <!-- End .docs-viewport-container -->
@@ -1177,10 +1563,15 @@ function updateCategoryPillCounts() {
 
   <!-- Scripts -->
   <script src="assets/js/navbar.js"></script>
+  <script src="assets/js/a11y-audio-beacon.js"></script>
   <script src="assets/js/a11y-engine.js"></script>
   <script src="assets/js/sound-engine.js"></script>
   <script src="assets/js/keyboard-shortcuts.js"></script>
   <script src="assets/js/network-detector.js"></script>
+  <script src="assets/js/arcade-audio.js"></script>
+  <script src="assets/js/arcadeverse-sdk.js"></script>
+  <script src="assets/js/inverse-kinematics-physics.js"></script>
+  <script src="assets/js/split-depth-3d.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // Copy code snippet buttons
@@ -1344,6 +1735,533 @@ function updateCategoryPillCounts() {
             if (match) hasVisible = true;
           });
           group.style.display = hasVisible ? "" : "none";
+        });
+      });
+    });
+  </script>
+
+  <!-- Interactive ArcadeVerse SDK Sandbox Playground Controller (#726) -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const codeInput = document.getElementById("sdk-code-input");
+      const lineNumbers = document.getElementById("sdk-line-numbers");
+      const runBtn = document.getElementById("sdk-btn-run");
+      const resetBtn = document.getElementById("sdk-btn-reset");
+      const clearBtn = document.getElementById("sdk-btn-clear");
+      const consoleBody = document.getElementById("sdk-console-body");
+      const consoleCount = document.getElementById("sdk-console-count");
+      const canvas = document.getElementById("sdk-preview-canvas");
+      const hudScore = document.getElementById("sdk-hud-score");
+      const hudHigh = document.getElementById("sdk-hud-high");
+      const hudStatus = document.getElementById("sdk-hud-status");
+      const presetBtns = document.querySelectorAll(".sdk-preset-btn");
+      const snippetChips = document.querySelectorAll(".sdk-chip-insert");
+
+      if (!codeInput || !canvas || !consoleBody) return;
+
+      const ctx = canvas.getContext("2d");
+      let eventCounter = 0;
+      let currentScore = 0;
+      let targetScore = 0;
+      let highScore = parseInt(localStorage.getItem("av_sandbox_high") || "5000", 10);
+      let currentPreset = "score";
+
+      const PRESETS = {
+        score: `// 1. Post real-time score updates to ArcadeVerse shell
+const points = 250;
+arcadeverse.score(points);
+
+// Trigger chiptune coin fanfare
+arcadeverse.audio("coin");
+
+console.log("Score updated by +" + points + " pts!");`,
+
+        audio: `// 2. Synthesize authentic retro chiptune audio with Web Audio API
+arcadeverse.audio("laser");
+
+// Sequence procedural waveforms over time:
+setTimeout(() => arcadeverse.audio("coin"), 250);
+setTimeout(() => arcadeverse.audio("powerup"), 500);
+setTimeout(() => arcadeverse.audio("jump"), 750);`,
+
+        storage: `// 3. Isolated per-game storage proxy (prevents multi-game collisions)
+const profile = {
+  player: "NeonCoder",
+  stage: 4,
+  achievements: ["SpeedRunner", "FirstBlood"]
+};
+
+arcadeverse.save("player_data", profile);
+const loaded = arcadeverse.load("player_data");
+console.log("Restored state from storage:", loaded);`,
+
+        gameover: `// 4. Dispatch final match telemetry and victory state
+ArcadeVerse.postGameOver({
+  score: 4850,
+  won: true,
+  stage: 7,
+  difficulty: "Hardcore"
+});
+
+arcadeverse.audio("powerup");
+console.log("Game Over telemetry dispatched!");`,
+
+        canvas: `// 5. Direct 2D canvas drawing and animated particle burst
+ctx.fillStyle = "#00f0ff";
+ctx.font = "bold 16px monospace";
+ctx.fillText("CUSTOM RUNTIME TICK", 30, 45);
+
+arcadeverse.score(500);
+arcadeverse.audio("jump");`
+      };
+
+      // Particles & Animation State
+      const particles = [];
+      const ripples = [];
+      const orb = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        vx: 2.2,
+        vy: 1.8,
+        radius: 8,
+        trail: []
+      };
+
+      // Pad string for 6-digit arcade HUD
+      function padZero(num, size = 6) {
+        let s = String(Math.max(0, Math.floor(num)));
+        while (s.length < size) s = "0" + s;
+        return s;
+      }
+
+      function updateHud() {
+        if (hudScore) hudScore.textContent = padZero(currentScore);
+        if (hudHigh) hudHigh.textContent = padZero(highScore);
+      }
+      updateHud();
+
+      // Console Logger
+      function logEvent(tag, message) {
+        eventCounter++;
+        if (consoleCount) {
+          consoleCount.textContent = eventCounter + (eventCounter === 1 ? " Event" : " Events");
+        }
+
+        const now = new Date();
+        const timeStr = now.toTimeString().split(" ")[0] + "." + String(now.getMilliseconds()).padStart(3, "0");
+
+        const row = document.createElement("div");
+        row.className = "sdk-log-entry";
+
+        const timeSpan = document.createElement("span");
+        timeSpan.className = "sdk-log-time";
+        timeSpan.textContent = timeStr;
+
+        const tagSpan = document.createElement("span");
+        const cleanTag = String(tag || "INFO").toLowerCase();
+        tagSpan.className = "sdk-log-tag tag-" + cleanTag;
+        tagSpan.textContent = "[" + tag.toUpperCase() + "]";
+
+        const msgSpan = document.createElement("span");
+        msgSpan.className = "sdk-log-msg";
+        msgSpan.textContent = message;
+
+        row.appendChild(timeSpan);
+        row.appendChild(tagSpan);
+        row.appendChild(msgSpan);
+
+        consoleBody.appendChild(row);
+        consoleBody.scrollTop = consoleBody.scrollHeight;
+      }
+
+      function addScoreParticle(text, x, y, color = "#10b981") {
+        particles.push({
+          text: text,
+          x: x || canvas.width / 2,
+          y: y || canvas.height / 2,
+          vy: -1.2,
+          alpha: 1.0,
+          color: color
+        });
+      }
+
+      function addAudioRipple(x, y, color = "#00f0ff") {
+        ripples.push({
+          x: x || canvas.width / 2,
+          y: y || canvas.height / 2,
+          radius: 6,
+          maxRadius: 45,
+          alpha: 1.0,
+          color: color
+        });
+      }
+
+      // Sandboxed arcadeverse proxy object
+      const sandboxArcadeVerse = {
+        score: function (pts) {
+          const num = Number(pts) || 0;
+          targetScore += num;
+          if (targetScore > highScore) {
+            highScore = targetScore;
+            try { localStorage.setItem("av_sandbox_high", String(highScore)); } catch (_) {}
+          }
+          addScoreParticle("+" + num, canvas.width / 2, canvas.height / 2 - 15, "#34d399");
+          logEvent("SCORE", "Dispatched ARCADEVERSE_GAME_SCORE: +" + num + " pts (Total: " + targetScore + ")");
+          if (window.ArcadeVerse && typeof window.ArcadeVerse.postScore === "function") {
+            try { window.ArcadeVerse.postScore(targetScore); } catch (_) {}
+          }
+          return targetScore;
+        },
+        audio: function (soundName) {
+          const name = String(soundName || "coin").toLowerCase();
+          addAudioRipple(canvas.width / 2, canvas.height / 2, "#a855f7");
+          if (window.ArcadeAudio) {
+            try {
+              const methodName = "play" + name.charAt(0).toUpperCase() + name.slice(1);
+              if (typeof window.ArcadeAudio[methodName] === "function") {
+                window.ArcadeAudio[methodName]();
+              } else if (typeof window.ArcadeAudio.playLaser === "function") {
+                window.ArcadeAudio.playLaser();
+              }
+            } catch (_) {}
+          }
+          logEvent("AUDIO", 'Synthesized 8-bit procedural waveform: "' + name + '"');
+        },
+        save: function (key, value) {
+          try {
+            if (window.ArcadeStorage) {
+              window.ArcadeStorage.setJSON(key, value);
+            } else {
+              localStorage.setItem("av_sandbox_" + key, JSON.stringify(value));
+            }
+            addScoreParticle("DATA SAVED", canvas.width - 90, 30, "#3b82f6");
+            logEvent("STORAGE", 'Isolated storage write: "' + key + '" = ' + JSON.stringify(value));
+            return true;
+          } catch (err) {
+            logEvent("ERROR", "Storage write error: " + err.message);
+            return false;
+          }
+        },
+        load: function (key) {
+          try {
+            let val = null;
+            if (window.ArcadeStorage) {
+              val = window.ArcadeStorage.getJSON(key, null);
+            } else {
+              const raw = localStorage.getItem("av_sandbox_" + key);
+              val = raw ? JSON.parse(raw) : null;
+            }
+            logEvent("STORAGE", 'Isolated storage read: "' + key + '" => ' + JSON.stringify(val));
+            return val;
+          } catch (err) {
+            logEvent("ERROR", "Storage read error: " + err.message);
+            return null;
+          }
+        },
+        postGameOver: function (details) {
+          addScoreParticle("GAME OVER", canvas.width / 2, canvas.height / 2 - 20, "#f43f5e");
+          logEvent("GAMEOVER", "Dispatched ARCADEVERSE_GAME_OVER: " + JSON.stringify(details || {}));
+          if (window.ArcadeVerse && typeof window.ArcadeVerse.postGameOver === "function") {
+            try { window.ArcadeVerse.postGameOver(details); } catch (_) {}
+          }
+        }
+      };
+
+      // Custom sandbox console
+      const sandboxConsole = {
+        log: function (...args) {
+          logEvent("LOG", args.map(a => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" "));
+        },
+        info: function (...args) {
+          logEvent("INFO", args.map(a => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" "));
+        },
+        warn: function (...args) {
+          logEvent("EVENT", args.map(a => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" "));
+        },
+        error: function (...args) {
+          logEvent("ERROR", args.map(a => typeof a === "object" ? JSON.stringify(a) : String(a)).join(" "));
+        }
+      };
+
+      // Line numbers sync
+      function updateLineNumbers() {
+        const lines = codeInput.value.split("\n").length;
+        let nums = "";
+        for (let i = 1; i <= lines; i++) {
+          nums += i + "\n";
+        }
+        lineNumbers.textContent = nums;
+      }
+
+      codeInput.addEventListener("input", updateLineNumbers);
+      codeInput.addEventListener("scroll", () => {
+        lineNumbers.scrollTop = codeInput.scrollTop;
+      });
+
+      // Tab key support & Ctrl+Enter to run
+      codeInput.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+          e.preventDefault();
+          executeCode();
+        } else if (e.key === "Tab") {
+          e.preventDefault();
+          const start = codeInput.selectionStart;
+          const end = codeInput.selectionEnd;
+          codeInput.value = codeInput.value.substring(0, start) + "  " + codeInput.value.substring(end);
+          codeInput.selectionStart = codeInput.selectionEnd = start + 2;
+          updateLineNumbers();
+        }
+      });
+
+      // Code Execution Handler
+      function executeCode() {
+        const code = codeInput.value;
+        if (hudStatus) {
+          hudStatus.textContent = "EXECUTING...";
+          hudStatus.style.color = "#3b82f6";
+        }
+
+        try {
+          // If AudioContext exists and suspended, resume on user interaction
+          if (window.ArcadeAudio && typeof window.ArcadeAudio.init === "function") {
+            window.ArcadeAudio.init();
+          }
+
+          const runFn = new Function(
+            "arcadeverse",
+            "ArcadeVerse",
+            "ArcadeAudio",
+            "ArcadeStorage",
+            "canvas",
+            "ctx",
+            "console",
+            code
+          );
+
+          runFn(
+            sandboxArcadeVerse,
+            window.ArcadeVerse || sandboxArcadeVerse,
+            window.ArcadeAudio || {},
+            window.ArcadeStorage || {},
+            canvas,
+            ctx,
+            sandboxConsole
+          );
+
+          if (hudStatus) {
+            hudStatus.textContent = "LIVE PREVIEW";
+            hudStatus.style.color = "#10b981";
+          }
+        } catch (err) {
+          logEvent("ERROR", err.toString());
+          if (hudStatus) {
+            hudStatus.textContent = "RUNTIME ERROR";
+            hudStatus.style.color = "#f43f5e";
+          }
+        }
+      }
+
+      runBtn.addEventListener("click", executeCode);
+
+      // Reset Button Handler
+      resetBtn.addEventListener("click", () => {
+        codeInput.value = PRESETS[currentPreset] || PRESETS.score;
+        updateLineNumbers();
+        logEvent("INFO", 'Reset snippet to default "' + currentPreset + '" preset.');
+      });
+
+      // Clear Console Handler
+      clearBtn.addEventListener("click", () => {
+        consoleBody.innerHTML = "";
+        eventCounter = 0;
+        if (consoleCount) consoleCount.textContent = "0 Events";
+      });
+
+      // Preset Switcher
+      presetBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+          presetBtns.forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          const presetKey = btn.dataset.preset;
+          currentPreset = presetKey;
+          if (PRESETS[presetKey]) {
+            codeInput.value = PRESETS[presetKey];
+            updateLineNumbers();
+            logEvent("INFO", 'Loaded preset: "' + presetKey + '"');
+          }
+        });
+      });
+
+      // Insert Chips
+      snippetChips.forEach(chip => {
+        chip.addEventListener("click", () => {
+          const snippet = chip.dataset.snippet;
+          if (!snippet) return;
+          const start = codeInput.selectionStart;
+          const end = codeInput.selectionEnd;
+          const before = codeInput.value.substring(0, start);
+          const after = codeInput.value.substring(end);
+          codeInput.value = before + (before.endsWith("\n") || before === "" ? "" : "\n") + snippet + "\n" + after;
+          updateLineNumbers();
+          codeInput.focus();
+        });
+      });
+
+      // Interactive Canvas Click
+      canvas.addEventListener("click", (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const clickX = (e.clientX - rect.left) * scaleX;
+        const clickY = (e.clientY - rect.top) * scaleY;
+
+        addScoreParticle("+100", clickX, clickY, "#34d399");
+        addAudioRipple(clickX, clickY, "#00f0ff");
+        sandboxArcadeVerse.score(100);
+        sandboxArcadeVerse.audio("coin");
+      });
+
+      // Set initial code
+      codeInput.value = PRESETS.score;
+      updateLineNumbers();
+      logEvent("INFO", "Interactive SDK Sandbox initialized. Ready for real-time tests.");
+
+      // Canvas Animation Loop
+      function renderCanvas() {
+        ctx.fillStyle = "#080c16";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Grid Background
+        ctx.strokeStyle = "rgba(0, 240, 255, 0.05)";
+        ctx.lineWidth = 1;
+        const gridSize = 20;
+        for (let x = 0; x < canvas.width; x += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, canvas.height);
+          ctx.stroke();
+        }
+        for (let y = 0; y < canvas.height; y += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(canvas.width, y);
+          ctx.stroke();
+        }
+
+        // Smooth score increment
+        if (currentScore < targetScore) {
+          const diff = targetScore - currentScore;
+          currentScore += Math.max(1, Math.ceil(diff * 0.1));
+          updateHud();
+        }
+
+        // Update & Render Bouncing Orb
+        orb.x += orb.vx;
+        orb.y += orb.vy;
+        if (orb.x - orb.radius <= 0 || orb.x + orb.radius >= canvas.width) {
+          orb.vx *= -1;
+          addAudioRipple(orb.x, orb.y, "rgba(59, 130, 246, 0.6)");
+        }
+        if (orb.y - orb.radius <= 0 || orb.y + orb.radius >= canvas.height) {
+          orb.vy *= -1;
+          addAudioRipple(orb.x, orb.y, "rgba(59, 130, 246, 0.6)");
+        }
+
+        // Orb Trail
+        orb.trail.push({ x: orb.x, y: orb.y });
+        if (orb.trail.length > 8) orb.trail.shift();
+        for (let t = 0; t < orb.trail.length; t++) {
+          const pt = orb.trail[t];
+          const trailAlpha = (t + 1) / orb.trail.length * 0.3;
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, orb.radius * (0.5 + 0.5 * (t / orb.trail.length)), 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(0, 240, 255, " + trailAlpha + ")";
+          ctx.fill();
+        }
+
+        // Orb Body
+        ctx.beginPath();
+        ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
+        ctx.fillStyle = "#00f0ff";
+        ctx.shadowColor = "#00f0ff";
+        ctx.shadowBlur = 10;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Render Ripples
+        for (let r = ripples.length - 1; r >= 0; r--) {
+          const rip = ripples[r];
+          rip.radius += 1.8;
+          rip.alpha -= 0.035;
+          if (rip.alpha <= 0) {
+            ripples.splice(r, 1);
+            continue;
+          }
+          ctx.beginPath();
+          ctx.arc(rip.x, rip.y, rip.radius, 0, Math.PI * 2);
+          ctx.strokeStyle = rip.color.replace(")", ", " + rip.alpha + ")").replace("rgb(", "rgba(");
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        // Render Floating Score Particles
+        for (let p = particles.length - 1; p >= 0; p--) {
+          const part = particles[p];
+          part.y += part.vy;
+          part.alpha -= 0.02;
+          if (part.alpha <= 0) {
+            particles.splice(p, 1);
+            continue;
+          }
+          ctx.save();
+          ctx.font = "bold 13px 'JetBrains Mono', monospace";
+          ctx.fillStyle = part.color;
+          ctx.globalAlpha = Math.max(0, part.alpha);
+          ctx.fillText(part.text, part.x, part.y);
+          ctx.restore();
+        }
+
+        requestAnimationFrame(renderCanvas);
+      }
+
+      requestAnimationFrame(renderCanvas);
+
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+    });
+  </script>
+
+<script>
+    // Interactive Light/Dark Live Theme Comparison Preview (#706)
+    document.addEventListener("DOMContentLoaded", () => {
+      const range = document.getElementById("theme-split-range");
+      const lightLayer = document.getElementById("theme-light-layer");
+      const divider = document.getElementById("theme-split-divider");
+      const presetBtns = document.querySelectorAll(".theme-comparison-presets .preset-btn");
+
+      if (!range || !lightLayer || !divider) return;
+
+      function updateSplit(val) {
+        const clamped = Math.max(0, Math.min(100, parseFloat(val)));
+        range.value = clamped;
+        lightLayer.style.width = clamped + "%";
+        divider.style.left = clamped + "%";
+
+        presetBtns.forEach(btn => {
+          const splitVal = parseFloat(btn.getAttribute("data-split"));
+          btn.classList.toggle("active", Math.abs(splitVal - clamped) < 2);
+        });
+      }
+
+      range.addEventListener("input", (e) => {
+        updateSplit(e.target.value);
+      });
+
+      presetBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+          const targetVal = parseFloat(btn.getAttribute("data-split"));
+          updateSplit(targetVal);
         });
       });
     });

@@ -1,0 +1,24 @@
+.playtime-drawer{box-sizing:border-box;position:fixed;inset:0 0 0 auto;margin:0;width:min(780px,100%);max-width:100%;height:100dvh;max-height:100dvh;padding:28px;border:1px solid #245563;background:var(--bg-surface,#0c1824);color:var(--text-primary,#e2f5f5);overflow:auto;box-shadow:-12px 0 60px #0008}
+.playtime-drawer::backdrop{background:#020b16ba}
+.playtime-drawer p{line-height:1.65;font-size:.9rem;color:var(--text-secondary,#bbd8df);margin:16px 0}
+.playtime-heading{display:flex;justify-content:space-between;align-items:center;gap:20px}
+.playtime-heading h2{font-size:1.6rem;margin:0}
+.playtime-heading button{padding:10px 16px;border:1px solid #63decd;border-radius:7px;background:var(--bg-surface-elevated,#103c43);color:var(--text-primary,#e2fffb);font:inherit;cursor:pointer}
+.playtime-scroll{overflow-x:auto;padding:8px 0;max-width:100%;border:1px solid #245563;border-radius:8px}
+.playtime-scroll svg{display:block;width:100%;min-width:704px;height:auto}
+.playtime-scroll text{fill:var(--text-secondary,#bbd8df);font:10px system-ui,sans-serif}
+.playtime-scroll rect,.playtime-legend i{fill:#17343e;background:#17343e;stroke:#31505b;stroke-width:1}
+.playtime-scroll [data-level="1"],.playtime-legend [data-level="1"]{fill:#126348;background:#126348}
+.playtime-scroll [data-level="2"],.playtime-legend [data-level="2"]{fill:#11866a;background:#11866a}
+.playtime-scroll [data-level="3"],.playtime-legend [data-level="3"]{fill:#22bfa0;background:#22bfa0}
+.playtime-scroll [data-level="4"],.playtime-legend [data-level="4"]{fill:#67e8ef;background:#67e8ef}
+.playtime-scroll rect:hover,.playtime-scroll rect:focus{stroke:#fff;stroke-width:2;outline:none}
+.playtime-scroll [aria-disabled="true"]{opacity:.3}
+.playtime-legend{display:flex;align-items:center;justify-content:flex-end;gap:6px;color:var(--text-secondary,#bbd8df);font-size:.8rem}
+.playtime-legend i{width:12px;height:12px;display:inline-block;border:1px solid #31505b;border-radius:2px}
+.playtime-inspector{min-height:70px;padding:12px;background:var(--bg-surface-elevated,#102d38);border-radius:8px;overflow-wrap:anywhere}
+.playtime-drawer [data-activity-notice]:not(:empty){padding:12px;border:1px solid #e7bd72;color:#ffe0aa}
+.playtime-heading button:focus-visible,[data-open-playtime]:focus-visible{outline:3px solid #67e8ef;outline-offset:3px}
+@media(max-width:480px){.playtime-drawer{padding:18px}.playtime-heading h2{font-size:1.25rem}}
+
+body.playtime-activity-open{overflow:hidden}
