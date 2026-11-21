@@ -646,6 +646,7 @@
   <script src="assets/js/arcade-ticket-dispenser.js"></script>
   <script src="assets/js/isometric-arcade-room.js"></script>
   <script src="assets/js/card-flip-manual.js"></script>
+  <script src="assets/js/crt-shader-engine.js"></script>
   <script src="assets/js/app.js"></script>
   <script src="assets/js/halloween.js"></script>
   <script src="assets/js/daily-challenge.js"></script>
@@ -661,6 +662,11 @@
   <script src="assets/js/report-bug-helper.js"></script>
   <script src="assets/js/arcade-gamepad.js"></script>
   <script src="assets/js/touch-joystick.js"></script>
+  <script>
+    if (window.ArcadeCRTShaderEngine && typeof window.ArcadeCRTShaderEngine.init === "function") {
+      window.ArcadeCRTShaderEngine.init();
+    }
+  </script>
   <script>
     if (window.lucide) {
       lucide.createIcons();
