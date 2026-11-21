@@ -1,1 +1,242 @@
-[]
+[
+  {
+    "id": 1,
+    "title": "[Feature/Audio]: Multi-Channel Standard MIDI Binary File Parser & Polyphonic Chiptune Synthesizer",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "audio",
+      "chiptune"
+    ],
+    "body": "## Problem\nGame developers currently have to either write complex procedural oscillator loops in code or omit background music entirely, because external binary audio files (MP3/WAV) are prohibited in game repositories. Standard MIDI files (`.mid`), however, are tiny binary sequence files (often < 5KB) containing note instructions rather than waveforms.\n\n## Architectural Scope & Requirements\n1. **Zero-Dependency SMF Binary Parser (`assets/js/midi-chiptune-player.js`):**\n   - Parses Standard MIDI Files (Format 0 and Format 1) from an `ArrayBuffer` or Base64 string using pure JavaScript `DataView`.\n   - Extracts header chunk (`MThd`), track chunks (`MTrk`), delta times, tempo events, and MIDI messages (Note-On, Note-Off, Program Change, Pitch Bend).\n2. **Polyphonic 4-Channel Oscillator Voice Pool:**\n   - Maps MIDI channels to classic arcade chiptune sound generators: Pulse 1 (square wave with variable duty cycle), Pulse 2, Triangle (bass), and Noise (percussion/snare).\n   - Implements high-precision scheduling via `AudioContext.currentTime` with dynamic voice-stealing to prevent audio clipping.\n3. **Modular ArcadeVerse Integration & Developer API:**\n   - Exposes `ArcadeVerse.audio.loadMidi(base64MidiString)` with `.play()`, `.pause()`, `.stop()`, and `.setVolume(vol)` methods.\n   - Includes a visual BGM playback indicator in the game modal header.\n\n## Acceptance Criteria\n- [ ] Successfully parses SMF Format 0 and Format 1 files without external libraries.\n- [ ] Accurately schedules polyphonic chiptune notes at steady tempo using `AudioContext.currentTime`.\n- [ ] Consumes less than 3% CPU during playback and terminates all active oscillator nodes on modal close."
+  },
+  {
+    "id": 2,
+    "title": "[Feature/Input]: Virtual Multi-Touch Arcade Trackball & Inertial Spinner Physics Controller",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "input",
+      "touch"
+    ],
+    "body": "## Problem\nClassic arcade games like *Centipede*, *Missile Command*, *Marble Madness*, and *Arkanoid* rely on physical trackballs and weighted dial spinners. On mobile devices and touchscreens, standard directional virtual D-pads feel unresponsive and clumsy for high-precision rotational steering.\n\n## Architectural Scope & Requirements\n1. **Inertial 2D Trackball & Spinner Component (`assets/js/virtual-trackball.js`):**\n   - Renders an interactive virtual trackball/spinner orb with real-time rolling pseudo-3D grid lines and optical spin dots.\n   - Computes angular momentum, tangential flick velocity, and friction decay based on PointerEvents (`pointerdown`, `pointermove`, `pointerup`).\n2. **Configurable Physics Modes:**\n   - Supports `Trackball` mode (full 2D displacement vector accumulation) and `Rotary Spinner` mode (1D continuous rotary wheel with optional notch detents).\n3. **Automatic Screen Positioning & Custom Event Dispatch:**\n   - Automatically mounts on touch devices when a game declares `supportsTrackball: true` in its `game.json`.\n   - Dispatches continuous `'arcade-trackball-move'` custom DOM events with delta velocities `(vx, vy, rawX, rawY)`.\n\n## Acceptance Criteria\n- [ ] Smooth 60 FPS inertial spin decay with customizable friction coefficient.\n- [ ] Fully responsive on mobile touchscreens with multi-touch cancellation handling.\n- [ ] Zero memory leaks and clean event listener teardown when exiting the game."
+  },
+  {
+    "id": 3,
+    "title": "[Feature/HUD]: Dynamic Vector Glyph Radar & Minimap Projection Engine for Canvas Games",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "hud",
+      "canvas"
+    ],
+    "body": "## Problem\nTop-down space shooters, arena survival games, and maze games frequently leave players disoriented regarding off-screen enemies, power-ups, or checkpoints. Game authors currently have to rebuild custom radar minimaps from scratch for every game.\n\n## Architectural Scope & Requirements\n1. **Modular Vector Radar Engine (`assets/js/radar-minimap.js`):**\n   - A reusable radar overlay class rendering an authentic glowing circular CRT vector radar screen in the corner of the canvas.\n   - Features a sweeping 360-degree radar beam with exponential phosphorescent blip decay.\n2. **Off-Screen Edge-Clamped Target Indicators:**\n   - When tracked targets move outside the radar's inner range, directional chevron blips clamp to the perimeter ring, scaling in opacity inversely with distance.\n3. **Plug-and-Play Entity Registration API:**\n   - Simple API: `radar.registerEntity(id, { getX, getY, type: 'enemy'|'ally'|'goal', color })`.\n   - Handles world coordinate to screen-space affine transformations automatically.\n\n## Acceptance Criteria\n- [ ] Renders circular swept radar and off-screen perimeter indicators in pure Canvas 2D.\n- [ ] Handles 100+ simultaneous tracked entities with under 0.5ms per-frame overhead.\n- [ ] Provides toggleable zoom levels (`0.5x`, `1x`, `2x`) and customizable minimap opacity."
+  },
+  {
+    "id": 4,
+    "title": "[Feature/Physics]: Interactive 2D Soft-Body Jelly & Lattice Blob Mesh Physics Simulator",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "physics",
+      "canvas"
+    ],
+    "body": "## Problem\nArcade platformers and puzzle games featuring slime, jelly characters, or bouncy trampolines currently use rigid rectangular or circular hitboxes. Without soft-body deformation physics, gelatinous characters feel static and lack tactile feedback.\n\n## Architectural Scope & Requirements\n1. **Mass-Spring Lattice Mesh Engine (`assets/js/soft-body-physics.js`):**\n   - Implements a 2D mass-spring polygon or lattice model with point masses, dampening springs, and interior pressure conservation.\n   - Solves Hooke's Law and numerical integration with realistic squish, stretch, and jiggle dynamics.\n2. **Curved Bezier Canvas Spline Skinning:**\n   - Uses closed Catmull-Rom or cubic Bezier splines connecting outer perimeter vertices to render smooth jelly surfaces rather than jagged polyhedra.\n3. **Interactive Pointer Physics:**\n   - Allows players to poke, drag, flick, and toss the soft body with realistic deformation and wall rebound elasticity.\n\n## Acceptance Criteria\n- [ ] Stable 60 FPS simulation with zero numerical explosion during rapid compression.\n- [ ] Volume conservation prevents unphysical collapse under external pressure.\n- [ ] Reusable helper `ArcadeVerse.physics.createSoftBody(x, y, radius, verticesCount)` for game authors."
+  },
+  {
+    "id": 5,
+    "title": "[Feature/Graphics]: Client-Side Pixel-Art Dithering & Retro Palette Quantization Studio",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "graphics",
+      "canvas"
+    ],
+    "body": "## Problem\nCatalog preview cards and game screenshots often use modern 32-bit true-color visuals that clash with the 8-bit retro arcade identity of the platform.\n\n## Architectural Scope & Requirements\n1. **Dithering & Palette Reduction Laboratory (`assets/js/dither-quantizer.js`):**\n   - Interactive developer lab and canvas filter implementing Floyd-Steinberg, Atkinson, and Bayer 4x4/8x8 ordered matrix dithering algorithms.\n2. **Classic Hardware Color Palettes:**\n   - Pre-calibrated authentic retro palette matrices: `Game Boy 4-Shade Olive`, `CGA Mode 1 (Cyan/Magenta)`, `Commodore 64 16-Color`, and `ZX Spectrum 8-Color`.\n3. **Real-Time Canvas Processing Pipeline:**\n   - Uses fast clamped `Uint8ClampedArray` direct pixel manipulation to process full-size canvas frames in under 4ms.\n\n## Acceptance Criteria\n- [ ] Real-time dithering execution without dropping below 60 FPS.\n- [ ] 1-click preset selector and PNG export with embedded palette metadata.\n- [ ] Zero external dependencies; 100% pure Vanilla JS math."
+  },
+  {
+    "id": 6,
+    "title": "[Feature/Audio]: Web Audio Granular Synthesis Sound Scaper & Ambient Micro-Grain Lab",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "audio",
+      "synthesis"
+    ],
+    "body": "## Problem\nSci-fi arcade games requiring atmospheric soundscapes (time-warp freezes, alien nebulas, black hole portals) lack deep ambient audio tools and are restricted to repetitive tonal bleeps.\n\n## Architectural Scope & Requirements\n1. **Granular Audio Synthesis Engine (`assets/js/granular-sound-lab.js`):**\n   - Chops procedural audio buffers into micro-grains (10ms - 60ms) and schedules continuous overlapping grain clouds using `AudioContext.currentTime`.\n2. **Dynamic Granular Dispersion Controls:**\n   - Controls for Grain Size, Grain Density (grains/sec), Spray Position Jitter, Pitch Dispersal, and Stereo Pan Randomization.\n3. **Zero-Asset Procedural Audio Buffer:**\n   - Generates initial source textures via procedural FM modulators and pink noise generators, requiring zero external WAV/MP3 downloads.\n\n## Acceptance Criteria\n- [ ] Smooth real-time granular synthesis without audio buffer underruns or clicks.\n- [ ] Automated voice-budget management capping simultaneous grains at 32.\n- [ ] Exports clean JSON parameter configurations for instant integration into game engines."
+  },
+  {
+    "id": 7,
+    "title": "[Feature/Multiplayer]: Local Hotseat Turn-Based Game State Orchestrator & Transition Curtains",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "multiplayer",
+      "ui"
+    ],
+    "body": "## Problem\nLocal multiplayer games on a shared device (like Worms, Artillery duel, or retro board strategy games) require custom turn-management boilerplate, turn timers, and player hand-off curtains.\n\n## Architectural Scope & Requirements\n1. **Universal Hotseat State Manager (`assets/js/hotseat-orchestrator.js`):**\n   - Manages player rosters (2 to 4 players), turn order rotations, round counters, and active player state machines.\n2. **Animated Pass-the-Device Transition Curtain:**\n   - Displays an animated retro arcade curtain (\"Player 2 Get Ready!\") with secret move hiding, countdown timer buzzer, and keyboard focus protection.\n3. **Match Summary & Podium Screen:**\n   - Automatically computes per-round statistics (actions taken, damage dealt, time elapsed) and renders a retro winner podium.\n\n## Acceptance Criteria\n- [ ] Fully accessible via keyboard shortcuts (`Space` / `Enter` to advance turn).\n- [ ] Clean event API: `hotseat.on('turnStart', callback)` and `hotseat.nextTurn()`.\n- [ ] Zero state corruption during pause, resize, or tab switches."
+  },
+  {
+    "id": 8,
+    "title": "[Feature/A11y]: Eye-Tracking & Head-Pose Pointer Navigation via WebRTC Landmark Mesh",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "a11y",
+      "input"
+    ],
+    "body": "## Problem\nPlayers with severe motor disabilities or quadriplegia who cannot operate keyboards, mice, or gamepads are unable to enjoy ArcadeVerse games.\n\n## Architectural Scope & Requirements\n1. **Lightweight Optical Head Tracker (`assets/js/head-tracker-input.js`):**\n   - Uses browser-native `navigator.mediaDevices.getUserMedia()` to capture player webcam input locally with zero server transmissions.\n   - Computes head tilt angles and face centroid translation using high-speed optical frame-differencing algorithms.\n2. **Virtual On-Screen Cursor & Dwell Clicker:**\n   - Maps nose/centroid coordinates to smooth cursor movements on screen with configurable deadzone and sensitivity damping.\n   - Implements a dwell clicker (holding cursor still for 800ms triggers an automated click or fire action).\n3. **Privacy-Preserving Client-Side Guarantee:**\n   - All frame analysis occurs strictly in browser memory; video streams are never saved or uploaded.\n\n## Acceptance Criteria\n- [ ] Real-time head tracking running at 30+ FPS with under 5% CPU overhead.\n- [ ] Complete dwell-click indicator with animated circular progress ring.\n- [ ] Immediate camera stream shutdown and hardware release upon modal close."
+  },
+  {
+    "id": 9,
+    "title": "[Feature/Canvas]: Procedural 2D Raymarched Metaball Plasma Caustics & Water Ripple Sandbox",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "canvas",
+      "shaders"
+    ],
+    "body": "## Problem\nAquatic and underwater arcade games in the catalog often suffer from flat, static backgrounds that fail to convey the dynamic refraction and light shimmering of authentic water surfaces.\n\n## Architectural Scope & Requirements\n1. **Pure Canvas Procedural Plasma Caustics (`assets/js/plasma-caustics.js`):**\n   - Implements an analytical multi-frequency sinusoidal plasma algorithm combined with raymarching distance fields to generate underwater caustic networks.\n2. **Interactive Surface Ripple Propagation:**\n   - 2D wave equation simulation allowing mouse movement, clicks, or falling game sprites to trigger spreading circular water ripples that refract the underlying caustics.\n3. **Performance-Optimized Offscreen Buffer:**\n   - Computes caustics at a retro 160x120 sub-resolution and smoothly upsamples to the main canvas using bilinear interpolation.\n\n## Acceptance Criteria\n- [ ] Smooth 60 FPS water ripple and caustic animation with zero memory leaks.\n- [ ] Interactive parameter sandbox on `ideas.html` with wave speed and viscosity sliders.\n- [ ] 100% Vanilla JS math without WebGL shaders or external libraries."
+  },
+  {
+    "id": 10,
+    "title": "[Feature/Danmaku]: Parametric Spline Bullet Pattern Generator & Rose Curve Shmup Spawner",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "danmaku",
+      "math"
+    ],
+    "body": "## Problem\nShoot-'em-up (shmup) game creators struggle to author intricate bullet hell (Danmaku) barrage patterns, often settling for simple linear bullet spreads.\n\n## Architectural Scope & Requirements\n1. **Algorithmic Bullet Pattern Engine (`assets/js/bullet-pattern-spline.js`):**\n   - Provides mathematical parametric curve spawners: `Logarithmic Spiral`, `Rhodonea Rose Curves`, `Lissajous Knots`, and `Cubic Bezier Trajectories`.\n2. **Object-Pooled Bullet Dispatcher:**\n   - Integrates with an internal object pool to spawn and recycle 500+ simultaneous bullets without garbage collection pauses.\n3. **Interactive Danmaku Pattern Designer Tool:**\n   - A visual pattern playground on `ideas.html` with real-time controls for Petal Count, Angular Velocity, Bullet Acceleration, and Radial Spread.\n\n## Acceptance Criteria\n- [ ] Computes and renders 500+ active Danmaku bullets at steady 60 FPS.\n- [ ] Exports 1-click JSON pattern presets that game authors can embed directly.\n- [ ] Mathematical boundary checking and automatic bullet reaping outside the viewport."
+  },
+  {
+    "id": 11,
+    "title": "[Feature/UI]: CSS 3D Anamorphic Isometric Projection Room & Tilting Vanishing Perspective",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "ui",
+      "css3d"
+    ],
+    "body": "## Problem\nThe main catalog grid displays game cards in traditional 2D rows. In high-end retro arcade hubs, games were displayed in three-dimensional physical booths that drew players into an authentic arcade environment.\n\n## Architectural Scope & Requirements\n1. **Anamorphic 3D Perspective Room (`assets/js/anamorphic-room.js`):**\n   - Uses pure CSS3 3D transforms (`transform-style: preserve-3d`, `perspective: 1000px`, `rotateX`, `rotateY`) to construct an anamorphic retro arcade room with checkerboard floors and neon side walls.\n2. **Dynamic Vanishing Point Parallax:**\n   - Shifts the camera vanishing point in real time based on mouse coordinates or device gyroscope tilt, creating a striking trompe-l'\u0153il depth illusion.\n3. **Interactive Game Cabinet Displays:**\n   - Mounts live game preview canvases onto the 3D isometric cabinets with specular glare reflections.\n\n## Acceptance Criteria\n- [ ] Smooth 60 FPS 3D perspective tilt driven by CSS custom properties and `requestAnimationFrame`.\n- [ ] Gracefully falls back to standard 2D grid for users with `prefers-reduced-motion`.\n- [ ] Fully responsive and usable across mobile touch devices."
+  },
+  {
+    "id": 12,
+    "title": "[Feature/Audio]: Pure Vanilla Audio Bitcrusher & Sample-Rate Reduction Lo-Fi DSP Node",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "audio",
+      "dsp"
+    ],
+    "body": "## Problem\nStandard Web Audio oscillators produce clean, clinical digital sine and square waves that lack the grit, aliasing, and vintage lo-fi crunch of original 8-bit arcade hardware DAC chips.\n\n## Architectural Scope & Requirements\n1. **Custom Bitcrusher DSP Node (`assets/js/audio-bitcrusher.js`):**\n   - Implements discrete amplitude quantization (reducing 16-bit float audio to 1-bit through 8-bit resolution).\n   - Implements variable sample-rate reduction (subsampling frequency by holding and dropping samples) to induce authentic vintage harmonic aliasing.\n2. **AudioBus Master Insert Architecture:**\n   - Can be inserted into the master audio chain or specific SFX sub-busses with a controllable wet/dry mix.\n3. **Built-in Vintage Hardware Presets:**\n   - Presets for `NES 2A03 (4-bit)`, `Game Boy DMG (8-bit)`, `Arcade Cabinet DAC`, and `Telephone Lo-Fi`.\n\n## Acceptance Criteria\n- [ ] Zero perceptible audio latency or buffer glitches during real-time bit depth modulation.\n- [ ] Pure Web Audio API script processor/worklet implementation with zero external audio packages.\n- [ ] Clean node disconnection on game unload to prevent memory leaks."
+  },
+  {
+    "id": 13,
+    "title": "[Feature/Lighting]: Dynamic Canvas Silhouette Shadow Puppet & Soft Penumbra Lighting Engine",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "lighting",
+      "canvas"
+    ],
+    "body": "## Problem\nTop-down adventure and stealth arcade games feature hard, artificial lighting cuts or no shadows at all, diminishing suspense and visual depth.\n\n## Architectural Scope & Requirements\n1. **2D Silhouette Shadow Caster (`assets/js/shadow-puppet-lighting.js`):**\n   - Raycasts shadow volume geometry from dynamic point lights around polygon obstacles on the canvas.\n2. **Multi-Sampled Soft Penumbra Gradient:**\n   - Simulates light source radius by rendering a deep dark umbra core transitioning into a soft, alpha-blended penumbra shadow fringe.\n3. **Light Color Temperature & Flicker Modulation:**\n   - Supports colored neon light sources with procedural flicker (torches, sputtering fluorescent arcade bulbs, neon signs).\n\n## Acceptance Criteria\n- [ ] Casts dynamic soft shadows in real time from up to 4 simultaneous moving light sources.\n- [ ] Maintains solid 60 FPS with zero memory leaks.\n- [ ] Provides simple helper API `ArcadeVerse.lighting.addLight(x, y, radius, color)`."
+  },
+  {
+    "id": 14,
+    "title": "[Feature/Input]: Chorded Keystroke & Stenographic Arcade Combo Decoder with NKRO",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "input",
+      "controls"
+    ],
+    "body": "## Problem\nFighting games and rhythm games rely on simultaneous multi-button chord presses (e.g. `J + K + L` pressed in the exact same millisecond window). Standard sequential `keydown` handlers often trigger false staggered inputs due to OS key-repeat delays.\n\n## Architectural Scope & Requirements\n1. **N-Key Rollover Chord Decoder (`assets/js/chorded-keyboard.js`):**\n   - Captures multi-key chords within a configurable synchronization time window (e.g. 25ms - 40ms threshold).\n   - Resolves simultaneous key clusters into discrete composite chord events (e.g. `CHORD_PUNCH_KICK`).\n2. **Stenographic Combo Buffer & Rolling Dictionary:**\n   - Matches incoming chord sequences against a registered chord dictionary with support for wildcard modifiers.\n3. **Visual On-Screen Chord Diagnostic HUD:**\n   - Visual indicator showing pressed keys, delta timing between key arrivals, and chord resolution state in real time.\n\n## Acceptance Criteria\n- [ ] Accurately distinguishes simultaneous chords from rapid sequential taps.\n- [ ] Handles keyboard ghosting edge cases gracefully with customizable tolerance windows.\n- [ ] 100% Vanilla JS event listeners with automatic teardown on modal exit."
+  },
+  {
+    "id": 15,
+    "title": "[Feature/Haptics]: Virtual Gamepad Haptic Rhythm & Pulse Feedback Vibration Pattern Adapter",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "haptics",
+      "mobile"
+    ],
+    "body": "## Problem\nOn mobile and tablet devices, touch controls lack the tactile feedback of physical buttons. Furthermore, rhythm games miss the physical impact of musical beats and combo milestones.\n\n## Architectural Scope & Requirements\n1. **Universal Vibration Pattern Adapter (`assets/js/haptic-rhythm-adapter.js`):**\n   - Wraps `navigator.vibrate` and Gamepad Vibration Actuator APIs (`gamepad.vibrationActuator.playEffect`).\n   - Implements calibrated vibration patterns: `Soft Tap (10ms)`, `Heavy Impact (50ms)`, `Dual Heartbeat (30ms-50ms-30ms)`, and `Failure Buzz`.\n2. **Audio-Linked Beat Haptics:**\n   - Synchronizes rhythmic micro-pulses to on-screen game beats or combo multipliers.\n3. **Accessibility Safety & User Preferences:**\n   - Honors user mute/disable settings and respects system battery saver modes.\n\n## Acceptance Criteria\n- [ ] Works seamlessly across both mobile touchscreens (`navigator.vibrate`) and physical dual-rumble gamepads.\n- [ ] Gracefully falls back without throwing errors on unsupported browsers/hardware.\n- [ ] Toggle switch in the player settings modal to enable or disable tactile haptics."
+  },
+  {
+    "id": 16,
+    "title": "[Feature/Physics]: Dynamic 2D Fluid Metaball Liquid Drop & Mercury Merge Physics Engine",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "physics",
+      "canvas"
+    ],
+    "body": "## Problem\nArcade chemistry, alchemy, and liquid-pour games currently draw hard circular particles that bounce like solid marbles rather than coalescing into flowing fluids.\n\n## Architectural Scope & Requirements\n1. **Metaball Isosurface Liquid Renderer (`assets/js/metaball-fluid.js`):**\n   - Renders 2D fluid particles using radial gradient alpha fields passed through a high-contrast threshold filter (`ctx.filter` or clamped pixel thresholding) to create smoothly merging mercury droplets.\n2. **Viscous Surface Tension & Separation Physics:**\n   - Simulates surface tension attraction when droplets touch, pulling them into cohesive liquid masses and stretching droplets into necks before splitting.\n3. **Interactive Container Bounds & Tilting Gyroscope:**\n   - Droplets flow, slosh, and collide against canvas boundaries and player-drawn obstacle polygons.\n\n## Acceptance Criteria\n- [ ] Renders 100+ fluid particles merging and separating at 60 FPS.\n- [ ] Pure Canvas 2D implementation without WebGL shader requirements.\n- [ ] Tested across touch pointers and mouse dragging."
+  },
+  {
+    "id": 17,
+    "title": "[Feature/Catalog]: Client-Side Custom Game Shelf Collections & Base64 Library Exporter",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "catalog",
+      "storage"
+    ],
+    "body": "## Problem\nWith over 120 games in the catalog, players have no way to organize games into personalized shelves (e.g. 'Weekend Tournaments', 'Speedrun Challenges', 'Casual Classics') to share with friends.\n\n## Architectural Scope & Requirements\n1. **Interactive Shelf Collection Manager (`assets/js/game-shelf-collections.js`):**\n   - Allows users to create named shelves, assign custom neon color tags, and drag-and-drop games into custom order.\n2. **Serverless Base64 URL Sharing:**\n   - Compresses the player's shelf collection into a compact URL parameter string with 1-click shareable links.\n3. **Clean LocalStorage Persistence:**\n   - Stores custom user shelves under the `arcadeverse_shelves` namespace with automatic schema validation and JSON backup download.\n\n## Acceptance Criteria\n- [ ] Instant drag-and-drop shelf organization with accessible keyboard reordering alternatives.\n- [ ] Compact Base64 sharing URLs loading smoothly without database dependencies.\n- [ ] Zero interference with default catalog filters and search."
+  },
+  {
+    "id": 18,
+    "title": "[Feature/Audio]: Web Audio Dynamic Pitch-Shifting Doppler Effect Acoustic Engine",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "audio",
+      "physics"
+    ],
+    "body": "## Problem\nHigh-speed racing and space shooting games have static audio pitches regardless of vehicle speed or distance, missing the thrilling frequency drop of passing objects.\n\n## Architectural Scope & Requirements\n1. **Acoustic Doppler Simulation Engine (`assets/js/doppler-audio.js`):**\n   - Implements the physical Doppler equation calculating apparent frequency based on relative velocity vectors between moving sound emitters and the player's ear position.\n2. **Stereo Distance Panning & Air Absorption Attenuation:**\n   - Couples Doppler pitch shifting with `PannerNode` stereo panning and high-frequency roll-off (biquad low-pass filter) as distances increase.\n3. **Simple Game Developer API:**\n   - Exposes `doppler.emitSound(soundPreset, sourcePosition, sourceVelocity, listenerPosition)`.\n\n## Acceptance Criteria\n- [ ] Real-time Doppler pitch frequency shift without audio glitches or crackles.\n- [ ] Realistic stereo sweep as vehicles pass listener coordinates.\n- [ ] Fully documented with visual interactive acoustic sandbox on `ideas.html`."
+  },
+  {
+    "id": 19,
+    "title": "[Feature/Security]: Audio-Reactive Spectrum Barcode & Inaudible FSK Watermark Encoder",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "security",
+      "audio"
+    ],
+    "body": "## Problem\nScreenshot faking and score tampering in retro competitions undermine community leaderboard integrity.\n\n## Architectural Scope & Requirements\n1. **Frequency-Shift Keying (FSK) Audio Watermark (`assets/js/audio-barcode-watermark.js`):**\n   - Encodes a high-score verification hash into near-inaudible high-frequency chimes (18kHz - 20kHz) played at the game over screen.\n2. **Visual Spectral Barcode Stamp:**\n   - Encodes timestamp, game ID, and score signature into a discrete 2D barcode matrix embedded subtly in the bottom border of high-score snapshot cards.\n3. **Client-Side Verification Inspector:**\n   - A verification tool allowing maintainers to drop an exported audio clip or snapshot card to decode and verify authenticity.\n\n## Acceptance Criteria\n- [ ] Inaudible FSK encoding generated cleanly via standard Web Audio oscillators.\n- [ ] 100% client-side verification with zero external cryptography dependencies.\n- [ ] Non-intrusive to player gameplay and casual audio listening."
+  },
+  {
+    "id": 20,
+    "title": "[Feature/Shaders]: Convex CRT Glass Curvature & Spherical Barrel Distortion Lens Mapper",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "canvas",
+      "retro"
+    ],
+    "body": "## Problem\nRetro arcade cabinets possessed curved glass picture tubes (CRT bulbs) that naturally warped the image outward in a spherical convex bulge. Flat 2D screens miss this iconic physical arcade aesthetic.\n\n## Architectural Scope & Requirements\n1. **Analytical Barrel Distortion Displacement Mapper (`assets/js/crt-lens-curvature.js`):**\n   - Applies mathematical radial lens distortion math ($r' = r(1 + k r^2)$) to curve canvas pixel coordinates outward toward the screen edges.\n2. **Phosphor Vignette & Edge Glare Reflection:**\n   - Darkens the extreme curved perimeter with realistic CRT edge shadow vignettes and top-corner ambient reflections.\n3. **Toggleable Performance Modes:**\n   - Supports a high-performance CSS 3D spherical warp matrix mode for lower-end laptops, and full canvas displacement mapping for high-end systems.\n\n## Acceptance Criteria\n- [ ] Realistic vintage CRT glass curvature without external WebGL libraries.\n- [ ] Solid 60 FPS performance with zero memory leaks.\n- [ ] User setting toggle in the CRT options menu to adjust curvature intensity."
+  }
+]
