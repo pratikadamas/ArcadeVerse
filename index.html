@@ -630,6 +630,8 @@
           <span>•</span>
           <a href="faqs.html">FAQs</a>
           <span>•</span>
+          <a href="#" id="footer-synth-studio-btn">Synth Studio</a>
+          <span>•</span>
           <a href="https://github.com/DebasmitaBose0/ArcadeVerse" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
         </div>
       </div>
@@ -646,6 +648,7 @@
   <script src="assets/js/arcade-ticket-dispenser.js"></script>
   <script src="assets/js/isometric-arcade-room.js"></script>
   <script src="assets/js/card-flip-manual.js"></script>
+  <script src="assets/js/arcade-synth-studio.js"></script>
   <script src="assets/js/app.js"></script>
   <script src="assets/js/halloween.js"></script>
   <script src="assets/js/daily-challenge.js"></script>
@@ -661,6 +664,18 @@
   <script src="assets/js/report-bug-helper.js"></script>
   <script src="assets/js/arcade-gamepad.js"></script>
   <script src="assets/js/touch-joystick.js"></script>
+  <script>
+    if (window.ArcadeSynthStudio && typeof window.ArcadeSynthStudio.init === "function") {
+      window.ArcadeSynthStudio.init();
+      var synthBtn = document.getElementById("footer-synth-studio-btn");
+      if (synthBtn) {
+        synthBtn.addEventListener("click", function (e) {
+          e.preventDefault();
+          window.ArcadeSynthStudio.openStudio();
+        });
+      }
+    }
+  </script>
   <script>
     if (window.lucide) {
       lucide.createIcons();
