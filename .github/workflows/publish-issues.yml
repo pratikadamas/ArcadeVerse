@@ -38,7 +38,7 @@ jobs:
 
       - name: Execute Safe Issue Publisher
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PA_TOKEN || secrets.GITHUB_TOKEN }}
           BATCH_SIZE: ${{ inputs.batch_size }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: node scripts/publish-issues.js
