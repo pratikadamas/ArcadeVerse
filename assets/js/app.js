@@ -1772,6 +1772,10 @@ document.addEventListener("DOMContentLoaded", () => {
               <span class="game-category-tag">${safeCategory}</span>
               ${halloweenBadgeHtml}
               ${flipBtnHtml}
+              <label class="compare-card-toggle-wrap" title="Select to compare side-by-side" style="position:absolute; bottom:8px; left:8px; z-index:4; display:flex; align-items:center; gap:4px; background:rgba(15,23,42,0.85); padding:2px 6px; border-radius:12px; font-size:0.7rem; color:#fff; cursor:pointer; border:1px solid rgba(255,255,255,0.2);">
+                <input type="checkbox" class="compare-card-checkbox" data-game-id="${safeGameId}" style="cursor:pointer; accent-color:var(--accent-primary, #00f5ff);">
+                <span>Compare</span>
+              </label>
               <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
                   <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
