@@ -476,8 +476,11 @@
         var rawMuted = localStorage.getItem("av_sound_muted");
         if (rawMuted === null) rawMuted = localStorage.getItem("arcadeverse_muted");
         if (rawMuted !== null) muted = rawMuted === "true";
-        var rawVol = parseFloat(localStorage.getItem("av_master_volume") || localStorage.getItem("arcadeverse_master_volume"));
-        if (!isNaN(rawVol)) volume = Math.max(0, Math.min(1, rawVol));
+        var rawVolStr = localStorage.getItem("av_master_volume") || localStorage.getItem("arcadeverse_master_volume");
+        if (rawVolStr !== null) {
+          var rawVol = parseFloat(rawVolStr);
+          if (Number.isFinite(rawVol)) volume = Math.max(0, Math.min(1, rawVol));
+        }
       }
       if (typeof window !== "undefined" && window.location && window.location.search) {
         var p = new URLSearchParams(window.location.search);
@@ -998,13 +1001,17 @@
           isMuted = pm === "1" || pm === "true";
         }
 
-        var masterVol = parseFloat(localStorage.getItem("av_master_volume") || localStorage.getItem("arcadeverse_master_volume"));
+        var masterVolStr = localStorage.getItem("av_master_volume") || localStorage.getItem("arcadeverse_master_volume");
+        var masterVol = NaN;
+        if (masterVolStr !== null) {
+          masterVol = parseFloat(masterVolStr);
+        }
         if (params && params.has("av_vol")) {
           var pv = parseFloat(params.get("av_vol"));
           if (!isNaN(pv)) masterVol = pv;
         }
 
-        if (!isNaN(masterVol)) currentAudioConfig.volume = Math.max(0, Math.min(1, masterVol));
+        if (Number.isFinite(masterVol)) currentAudioConfig.volume = Math.max(0, Math.min(1, masterVol));
         currentAudioConfig.muted = isMuted;
       } catch (_) {}
 

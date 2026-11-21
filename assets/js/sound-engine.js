@@ -54,18 +54,27 @@
 
     loadSettings() {
       try {
-        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const saved = raw ? JSON.parse(raw) : null;
         if (saved && typeof saved.enabled === 'boolean') {
           this.enabled = saved.enabled;
-          this.volume = typeof saved.volume === 'number' ? saved.volume : 0.28;
+          this.volume = typeof saved.volume === 'number' && Number.isFinite(saved.volume)
+            ? Math.max(0, Math.min(1, saved.volume))
+            : 0.28;
         } else {
-          // Backward compatibility check with direct keys
+          // Backward compatibility check with direct keys (#887)
           const legacyMuted = localStorage.getItem(MASTER_MUTE_KEY);
           const legacyVol = localStorage.getItem(MASTER_VOL_KEY);
           if (legacyMuted !== null) this.enabled = legacyMuted !== 'true';
-          if (legacyVol !== null) this.volume = parseFloat(legacyVol) || 0.28;
+          if (legacyVol !== null) {
+            const parsed = parseFloat(legacyVol);
+            this.volume = Number.isFinite(parsed) ? Math.max(0, Math.min(1, parsed)) : 0.28;
+          }
         }
-      } catch (_) {}
+      } catch (_) {
+        this.enabled = true;
+        this.volume = 0.28;
+      }
     },
 
     saveSettings() {
