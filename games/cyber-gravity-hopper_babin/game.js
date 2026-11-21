@@ -45,12 +45,31 @@
     } catch (_) {}
   }
 
+  // Safe Storage
+  function getStoredBest() {
+    try {
+      const val = localStorage.getItem('cyber_gravity_best');
+      return val ? parseInt(val, 10) || 0 : 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function setStoredBest(val) {
+    try {
+      localStorage.setItem('cyber_gravity_best', String(val));
+    } catch (_) {}
+  }
+
   // State
   let isRunning = false;
   let score = 0;
   let orbs = 0;
-  let bestScore = parseInt(localStorage.getItem('cyber_gravity_best') || '0', 10);
+  let bestScore = getStoredBest();
   bestDisplay.textContent = bestScore;
+
+  let rafId = null;
+  let lastFrameTime = performance.now();
 
   // Physics
   const player = {
@@ -89,6 +108,7 @@
     isRunning = true;
     lastObstacle = performance.now();
     lastOrb = performance.now();
+    startLoop();
   }
 
   function updateHUD() {
@@ -152,24 +172,30 @@
     const finalScore = Math.floor(score);
     if (finalScore > bestScore) {
       bestScore = finalScore;
-      localStorage.setItem('cyber_gravity_best', bestScore);
+      setStoredBest(bestScore);
       bestDisplay.textContent = bestScore;
     }
     gameoverStats.textContent = `Score: ${finalScore} • Energy Orbs: ${orbs}`;
     gameoverOverlay.classList.add('active');
     playTone(160, 'sawtooth', 0.45, 0.3);
+
+    try {
+      window.dispatchEvent(new CustomEvent('ARCADEVERSE_GAME_OVER', {
+        detail: { gameId: 'cyber-gravity-hopper', score: finalScore, orbs: orbs }
+      }));
+    } catch (_) {}
   }
 
-  function update() {
+  function update(dtScale = 1.0) {
     if (!isRunning) return;
 
-    score += 0.15;
-    gameSpeed += 0.0008;
+    score += 0.15 * dtScale;
+    gameSpeed += 0.0008 * dtScale;
     updateHUD();
 
-    // Physics
-    player.vy += player.gravity;
-    player.y += player.vy;
+    // Physics with dtScale
+    player.vy += player.gravity * dtScale;
+    player.y += player.vy * dtScale;
 
     // Floor collision
     if (player.y >= FLOOR_Y - player.height) {
@@ -198,7 +224,7 @@
     // Update Obstacles
     for (let i = obstacles.length - 1; i >= 0; i--) {
       const o = obstacles[i];
-      o.x -= gameSpeed;
+      o.x -= gameSpeed * dtScale;
 
       // AABB Hit Detection
       if (
@@ -220,7 +246,7 @@
     // Update Orbs
     for (let i = energyOrbs.length - 1; i >= 0; i--) {
       const orb = energyOrbs[i];
-      orb.x -= gameSpeed;
+      orb.x -= gameSpeed * dtScale;
 
       const dx = (player.x + player.width / 2) - orb.x;
       const dy = (player.y + player.height / 2) - orb.y;
@@ -242,9 +268,9 @@
     // Particles
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.life -= p.decay;
+      p.x += p.vx * dtScale;
+      p.y += p.vy * dtScale;
+      p.life -= p.decay * dtScale;
       if (p.life <= 0) {
         particles.splice(i, 1);
       }
@@ -322,13 +348,33 @@
       ctx.fill();
     });
     ctx.globalAlpha = 1.0;
-
-    requestAnimationFrame(render);
   }
 
-  function loop() {
-    update();
-    requestAnimationFrame(loop);
+  function loop(now = performance.now()) {
+    const rawDt = (now - lastFrameTime) / 1000;
+    const dt = Math.min(Math.max(rawDt, 0.001), 0.1);
+    lastFrameTime = now;
+    const dtScale = Math.min(Math.max(dt * 60, 0.2), 3.0);
+
+    update(dtScale);
+    render();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function startLoop() {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    lastFrameTime = performance.now();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function stopLoop() {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
   }
 
   // Input Listeners
@@ -348,6 +394,30 @@
   closeRulesBtn.addEventListener('click', () => rulesModal.classList.remove('active'));
   rulesConfirmBtn.addEventListener('click', () => rulesModal.classList.remove('active'));
 
+  // Visibility and Platform Lifecycle
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopLoop();
+    } else {
+      if (isRunning) startLoop();
+    }
+  });
+
+  window.addEventListener('ARCADEVERSE_PAUSE', () => {
+    stopLoop();
+  });
+
+  window.addEventListener('ARCADEVERSE_RESUME', () => {
+    if (isRunning) startLoop();
+  });
+
+  window.addEventListener('ARCADEVERSE_TEARDOWN', () => {
+    stopLoop();
+    if (audioCtx && audioCtx.state !== 'closed') {
+      try { audioCtx.close(); } catch (_) {}
+    }
+  });
+
   render();
-  loop();
+  startLoop();
 })();

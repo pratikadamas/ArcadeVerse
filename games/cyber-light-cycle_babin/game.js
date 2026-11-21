@@ -34,9 +34,36 @@
   const dpadLeft = document.getElementById('dpad-left');
   const dpadRight = document.getElementById('dpad-right');
 
+  // Safe localStorage helpers
+  function getStorage(key, fallback) {
+    try {
+      const val = localStorage.getItem(key);
+      return val !== null ? val : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  function setStorage(key, val) {
+    try {
+      localStorage.setItem(key, val);
+    } catch {
+      // In-memory fallback
+    }
+  }
+
   // Audio Synthesizer via Web Audio API
   let audioCtx = null;
-  let soundEnabled = localStorage.getItem('cyber-cycle-sound') !== 'false';
+  let soundEnabled = getStorage('cyber-cycle-sound', 'true') !== 'false';
+  let roundTimeoutId = null;
+  let animRafId = null;
+
+  function clearRoundTimeout() {
+    if (roundTimeoutId) {
+      clearTimeout(roundTimeoutId);
+      roundTimeoutId = null;
+    }
+  }
 
   function initAudio() {
     if (!audioCtx) {
@@ -151,6 +178,7 @@
   }
 
   function resetRound() {
+    clearRoundTimeout();
     initGrid();
     explosionSparks = [];
 
@@ -181,6 +209,7 @@
   }
 
   function resetMatch() {
+    clearRoundTimeout();
     playerScore = 0;
     aiScore = 0;
     currentRound = 1;
@@ -280,7 +309,8 @@
 
     // Check if match won
     if (playerScore >= WIN_SCORE || aiScore >= WIN_SCORE) {
-      setTimeout(() => {
+      roundTimeoutId = setTimeout(() => {
+        roundTimeoutId = null;
         gameState = 'match_over';
         const playerWon = playerScore >= WIN_SCORE;
         document.getElementById('match-gameover-title').textContent = playerWon ? 'Grid Championship Victory!' : 'Match Defeat';
@@ -290,9 +320,20 @@
           : 'The cyber drone outmaneuvered your ribbon defenses.';
         document.getElementById('final-match-score').textContent = `${playerScore} - ${aiScore}`;
         matchGameoverOverlay.classList.remove('hidden');
+
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: 'ARCADEVERSE_GAME_OVER',
+            score: playerScore,
+            playerScore: playerScore,
+            aiScore: aiScore,
+            winner: playerWon ? 'player' : 'ai'
+          }, '*');
+        }
       }, 700);
     } else {
-      setTimeout(() => {
+      roundTimeoutId = setTimeout(() => {
+        roundTimeoutId = null;
         currentRound++;
         roundResultOverlay.classList.remove('hidden');
       }, 700);
@@ -502,9 +543,15 @@
 
   soundBtn.addEventListener('click', () => {
     soundEnabled = !soundEnabled;
-    localStorage.setItem('cyber-cycle-sound', soundEnabled.toString());
+    setStorage('cyber-cycle-sound', soundEnabled.toString());
     updateSoundUI();
     if (soundEnabled) playSound('turn');
+  });
+
+  // Teardown / cleanup on unmount
+  window.addEventListener('pagehide', () => {
+    clearRoundTimeout();
+    if (gameInterval) clearInterval(gameInterval);
   });
 
   helpBtn.addEventListener('click', () => {

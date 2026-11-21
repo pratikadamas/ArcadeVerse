@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07111c">
+  <title>Cyber Logic Gates: Boolean Circuit Forge | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <a class="hub" href="../../index.html" aria-label="Back to ArcadeVerse">AV</a>
+      <div class="brand"><div class="eyebrow">ARCADEVERSE / DIGITAL LAB</div><h1>CYBER LOGIC <span>GATES</span></h1></div>
+      <button id="sound" class="outline" type="button">SOUND ON</button>
+    </header>
+    <section class="mission">
+      <div><div class="eyebrow" id="sector">SECTOR 01 / DIGITAL BASICS</div><h2 id="level-title">Signal Inversion</h2><p id="level-description">Invert the incoming signal to match the output matrix.</p></div>
+      <div class="mission-meta"><span>LEVEL <b id="level-number">01</b> / 15</span><strong id="timer">45.0</strong></div>
+    </section>
+    <nav class="campaign" id="campaign" aria-label="Campaign levels"></nav>
+    <section class="workbench">
+      <div class="board-card">
+        <div class="board-toolbar"><span>PROTOBOARD / LIVE SIGNAL TRACE</span><button id="clock" class="clock" type="button">RUN CLOCK</button></div>
+        <canvas id="board" width="760" height="510" aria-label="Circuit breadboard. Place gates and connect terminals."></canvas>
+        <div class="board-help" id="help">Choose a chip, place it on the board. Connect output pins to gate inputs, then connect a gate output to Q.</div>
+      </div>
+      <aside class="side-panel">
+        <div class="panel-heading"><span>CHIP INVENTORY</span><button id="clear" class="link-button" type="button">RESET</button></div>
+        <div class="palette" id="palette"></div>
+        <div class="panel-heading table-heading"><span>TRUTH TABLE</span><span id="progress">0 / 2 VERIFIED</span></div>
+        <div class="truth-wrap"><table id="truth-table"></table></div>
+        <div class="hint-box"><div class="eyebrow">ENGINEERING NOTE</div><p id="hint">A NOT gate has one input. It flips high to low and low to high.</p></div>
+      </aside>
+    </section>
+    <section class="controls-row"><span>SELECT CHIP → PLACE ON GRID</span><span>CLICK OUTPUT → CLICK INPUT TO WIRE</span><span>RUN CLOCK TO STEP TEST VECTORS</span></section>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="overlay" id="complete"><div class="dialog"><div class="eyebrow">CIRCUIT ACCEPTED</div><h2>TRUTH VERIFIED</h2><p id="complete-copy">All test vectors match.</p><button id="next" class="primary" type="button">NEXT MODULE</button></div></div>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>

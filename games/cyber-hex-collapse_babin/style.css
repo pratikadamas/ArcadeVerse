@@ -333,3 +333,36 @@ kbd {
   background: rgba(0, 240, 255, 0.3);
   transform: scale(0.97);
 }
+
+@media (max-width: 520px) {
+  body {
+    padding: 6px;
+  }
+
+  .game-container {
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .game-header {
+    margin-bottom: 8px;
+  }
+
+  .scoreboard-bar {
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .score-card {
+    padding: 6px 4px;
+  }
+
+  .score-card .value {
+    font-size: 1rem;
+  }
+
+  .touch-control-btn {
+    height: 42px;
+    font-size: 0.78rem;
+  }
+}

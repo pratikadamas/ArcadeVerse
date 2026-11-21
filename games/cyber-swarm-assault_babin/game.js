@@ -32,9 +32,25 @@
   const finalWave = document.getElementById('final-wave');
   const finalKills = document.getElementById('final-kills');
 
+  // Safe storage helpers
+  function getStorage(key, fallback) {
+    try {
+      const val = localStorage.getItem(key);
+      return val !== null ? val : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  function setStorage(key, val) {
+    try {
+      localStorage.setItem(key, val);
+    } catch {}
+  }
+
   // Audio Synthesizer via Web Audio API
   let audioCtx = null;
-  let soundEnabled = localStorage.getItem('cyber-swarm-sound') !== 'false';
+  let soundEnabled = getStorage('cyber-swarm-sound', 'true') !== 'false';
 
   function initAudio() {
     if (!audioCtx) {
@@ -122,8 +138,10 @@
   const HEIGHT = canvas.height;
 
   let gameState = 'ready'; // ready, playing, gameover
+  let rafId = null;
+  let lastTime = performance.now();
   let score = 0;
-  let bestScore = parseInt(localStorage.getItem('cyber-swarm-best') || '0', 10);
+  let bestScore = parseInt(getStorage('cyber-swarm-best', '0'), 10);
   let wave = 1;
   let lives = 3;
   let totalKills = 0;
@@ -251,11 +269,28 @@
 
     if (lives <= 0) {
       gameState = 'gameover';
+      stopLoop();
       playSound('gameover');
       if (score > bestScore) {
         bestScore = score;
-        localStorage.setItem('cyber-swarm-best', bestScore.toString());
+        setStorage('cyber-swarm-best', bestScore.toString());
       }
+
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+          type: 'ARCADEVERSE_GAME_SCORE',
+          score: score,
+          wave: wave,
+          kills: totalKills
+        }, '*');
+        window.parent.postMessage({
+          type: 'ARCADEVERSE_GAME_OVER',
+          score: score,
+          wave: wave,
+          kills: totalKills
+        }, '*');
+      }
+
       finalScore.textContent = score;
       finalWave.textContent = wave;
       finalKills.textContent = totalKills;
@@ -348,10 +383,11 @@
           continue;
         }
 
-        // Return to formation if out of bottom
+        // Smoothly glide returning enemy back into formation slot
         if (e.y > HEIGHT + 20) {
-          e.y = -20;
-          e.x = e.homeX;
+          e.y = -30;
+          e.x = e.homeX + formationSwayX;
+          e.diveAngle = Math.PI / 2;
           e.isDiving = false;
         }
       } else {
@@ -516,10 +552,30 @@
     livesDisplay.textContent = lives;
   }
 
-  function gameLoop() {
-    update();
+  function gameLoop(now = performance.now()) {
+    const deltaMs = Math.min(64, now - lastTime);
+    lastTime = now;
+
+    update(deltaMs);
     render();
-    requestAnimationFrame(gameLoop);
+
+    if (gameState === 'playing') {
+      rafId = requestAnimationFrame(gameLoop);
+    }
+  }
+
+  function startLoop() {
+    if (!rafId) {
+      lastTime = performance.now();
+      rafId = requestAnimationFrame(gameLoop);
+    }
+  }
+
+  function stopLoop() {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
   }
 
   // Keyboard Event Listeners
@@ -577,22 +633,26 @@
 
   startBtn.addEventListener('click', () => {
     initAudio();
+    stopLoop();
     score = 0;
     lives = 3;
     totalKills = 0;
     initWave(1);
+    startLoop();
   });
 
   restartBtn.addEventListener('click', () => {
+    stopLoop();
     score = 0;
     lives = 3;
     totalKills = 0;
     initWave(1);
+    startLoop();
   });
 
   soundBtn.addEventListener('click', () => {
     soundEnabled = !soundEnabled;
-    localStorage.setItem('cyber-swarm-sound', soundEnabled.toString());
+    setStorage('cyber-swarm-sound', soundEnabled.toString());
     updateSoundUI();
     if (soundEnabled) playSound('laser');
   });
@@ -605,8 +665,20 @@
     instructionsModal.classList.add('hidden');
   });
 
+  window.addEventListener('pagehide', () => {
+    stopLoop();
+  });
+
+  window.addEventListener('message', (e) => {
+    if (!e.data || typeof e.data !== 'object') return;
+    if (e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      gameState = 'gameover';
+      stopLoop();
+    }
+  });
+
   // Initialize
   updateSoundUI();
   updateHUD();
-  gameLoop();
+  render();
 })();
