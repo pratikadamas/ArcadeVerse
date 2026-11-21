@@ -4,7 +4,7 @@
   "description": "The Open-Source Community Arcade Station for Nexus Spring of Code \u2013 Winter Edition 2026",
   "main": "assets/js/app.js",
   "scripts": {
-    "test": "node scripts/verify-catalog-syntax.js && node scripts/verify-leaderboard-highlight.js && node scripts/test-playlist-codes.js && node scripts/test-time-warp-replay.mjs && node --test scripts/test-playtime-heatmap.js && node --test scripts/test-dev-asset-auditor.js && node --test scripts/test-arcade-token-dispenser.js && node --test scripts/test-isometric-arcade-room.js && node --test scripts/test-leaderboard-spectrum.js && node --test scripts/test-arcade-ticket-dispenser.js && node --test scripts/test-a11y-audio-beacon.js && node --test scripts/test-inverse-kinematics.js && node --test scripts/test-arcade-wallpaper-generator.js",
+    "test": "node scripts/verify-catalog-syntax.js && node scripts/verify-leaderboard-highlight.js && node scripts/test-playlist-codes.js && node scripts/test-time-warp-replay.mjs && node --test scripts/test-playtime-heatmap.js && node --test scripts/test-dev-asset-auditor.js && node --test scripts/test-arcade-token-dispenser.js && node --test scripts/test-isometric-arcade-room.js && node --test scripts/test-leaderboard-spectrum.js && node --test scripts/test-arcade-ticket-dispenser.js && node --test scripts/test-a11y-audio-beacon.js && node --test scripts/test-inverse-kinematics.js && node --test scripts/test-split-depth-3d.js && node --test scripts/test-arcade-wallpaper-generator.js",
     "test:a11y-beacon": "node --test scripts/test-a11y-audio-beacon.js",
     "test:catalog": "node scripts/verify-catalog-syntax.js",
     "test:leaderboard": "node scripts/verify-leaderboard-highlight.js",
