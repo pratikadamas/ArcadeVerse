@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "number": 1190,
+    "title": "[Feature/Audio]: Multi-Channel Standard MIDI Binary File Parser & Polyphonic Chiptune Synthesizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1190",
+    "published_at": "2026-11-21T14:19:08.695Z"
+  },
+  {
+    "number": 1191,
+    "title": "[Feature/Input]: Virtual Multi-Touch Arcade Trackball & Inertial Spinner Physics Controller",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1191",
+    "published_at": "2026-11-21T14:19:14.268Z"
+  },
+  {
+    "number": 1192,
+    "title": "[Feature/HUD]: Dynamic Vector Glyph Radar & Minimap Projection Engine for Canvas Games",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1192",
+    "published_at": "2026-11-21T14:19:19.918Z"
+  }
+]
