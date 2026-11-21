@@ -4012,9 +4012,30 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // Determine candidate game set based on active category / favorites facet (#900)
+    let candidateGames = GAMES_REGISTRY;
+    if (typeof currentCategory === "string" && currentCategory !== "all") {
+      if (currentCategory === "favorites") {
+        const favs = typeof getFavorites === "function" ? getFavorites() : new Set();
+        candidateGames = GAMES_REGISTRY.filter((g) => favs.has(g.id));
+      } else {
+        candidateGames = GAMES_REGISTRY.filter((g) => {
+          if (typeof matchesCategoryFilter === "function") {
+            return matchesCategoryFilter(g, currentCategory);
+          }
+          const itemCat = (g.category || "").toLowerCase();
+          return itemCat.includes(currentCategory.toLowerCase());
+        });
+      }
+    }
+
+    // Author search operator support: "@author" query syntax (#900)
+    const isAuthorQuery = trimmed.startsWith("@");
+    const authorTarget = isAuthorQuery ? trimmed.slice(1).trim() : "";
+
     // Filter and score matching games
     const scoredMatches = [];
-    for (const game of GAMES_REGISTRY) {
+    for (const game of candidateGames) {
       const titleLower = (game.title || "").toLowerCase();
       const authorLower = (game.author || "").toLowerCase();
       const githubLower = (game.github || "").toLowerCase();
@@ -4023,18 +4044,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
       let score = -1;
 
-      if (titleLower.startsWith(trimmed)) {
-        score = 100;
-      } else if (titleLower.includes(trimmed)) {
-        score = 80;
-      } else if (tagsLower.some((t) => t === trimmed)) {
-        score = 60;
-      } else if (tagsLower.some((t) => t.includes(trimmed))) {
-        score = 50;
-      } else if (categoryLower.includes(trimmed)) {
-        score = 40;
-      } else if (githubLower.includes(trimmed) || authorLower.includes(trimmed)) {
-        score = 30;
+      if (isAuthorQuery) {
+        if (!authorTarget) {
+          score = 50;
+        } else if (githubLower.startsWith(authorTarget) || authorLower.startsWith(authorTarget)) {
+          score = 100;
+        } else if (githubLower.includes(authorTarget) || authorLower.includes(authorTarget)) {
+          score = 80;
+        }
+      } else {
+        if (titleLower.startsWith(trimmed)) {
+          score = 100;
+        } else if (titleLower.includes(trimmed)) {
+          score = 80;
+        } else if (tagsLower.some((t) => t === trimmed)) {
+          score = 60;
+        } else if (tagsLower.some((t) => t.includes(trimmed))) {
+          score = 50;
+        } else if (categoryLower.includes(trimmed)) {
+          score = 40;
+        } else if (githubLower.includes(trimmed) || authorLower.includes(trimmed)) {
+          score = 30;
+        }
       }
 
       if (score >= 0) {
@@ -4045,16 +4076,17 @@ document.addEventListener("DOMContentLoaded", () => {
     // Sort by relevance score descending
     scoredMatches.sort((a, b) => b.score - a.score);
 
-    // Fallback: If exact matches are empty and query length >= 3, match using fuzzy Levenshtein distance <= 2
-    if (scoredMatches.length === 0 && trimmed.length >= 3) {
-      for (const game of GAMES_REGISTRY) {
-        if (matchesFuzzyLevenshtein(game, trimmed)) {
+    // Fallback: If exact matches are empty and query length >= 3 (non-author), match using fuzzy Levenshtein
+    if (scoredMatches.length === 0 && !isAuthorQuery && trimmed.length >= 3) {
+      for (const game of candidateGames) {
+        if (typeof matchesFuzzyLevenshtein === "function" && matchesFuzzyLevenshtein(game, trimmed)) {
           scoredMatches.push({ game, score: 25 });
         }
       }
     }
 
-    currentSuggestions = scoredMatches.slice(0, 6).map((item) => item.game);
+    const totalMatchesCount = scoredMatches.length;
+    currentSuggestions = scoredMatches.slice(0, 8).map((item) => item.game);
     activeSuggestionIndex = -1;
 
     if (currentSuggestions.length === 0) {
@@ -4089,7 +4121,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
             <div class="autocomplete-content">
               <div class="autocomplete-title-row">
-                <span class="autocomplete-title">${highlightMatch(game.title, query.trim())}</span>
+                <span class="autocomplete-title">${highlightMatch(game.title, isAuthorQuery ? "" : query.trim())}</span>
               </div>
               <div class="autocomplete-meta-row">
                 <span class="autocomplete-category-badge">${escapeHTML(catBadge)}</span>
@@ -4106,7 +4138,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ${listHtml}
       </ul>
       <div class="autocomplete-footer">
-        <span class="autocomplete-footer-count">${currentSuggestions.length} result${currentSuggestions.length > 1 ? "s" : ""}</span>
+        <span class="autocomplete-footer-count">Showing ${currentSuggestions.length} of ${totalMatchesCount} match${totalMatchesCount > 1 ? "es" : ""}</span>
         <div class="autocomplete-kbd-hints">
           <span class="autocomplete-kbd">↑↓</span> to navigate
           <span class="autocomplete-kbd">↵</span> to play
