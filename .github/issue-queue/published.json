@@ -136,5 +136,65 @@
     "title": "[Feature/HUD]: Dynamic Vector Glyph Radar & Minimap Projection Engine for Canvas Games",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1219",
     "published_at": "2026-11-21T16:16:27.988Z"
+  },
+  {
+    "number": 1220,
+    "title": "[Feature/Physics]: Interactive 2D Soft-Body Jelly & Lattice Blob Mesh Physics Simulator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1220",
+    "published_at": "2026-11-21T16:17:33.738Z"
+  },
+  {
+    "number": 1221,
+    "title": "[Feature/Graphics]: Client-Side Pixel-Art Dithering & Retro Palette Quantization Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1221",
+    "published_at": "2026-11-21T16:17:39.237Z"
+  },
+  {
+    "number": 1223,
+    "title": "[Feature/Audio]: Web Audio Granular Synthesis Sound Scaper & Ambient Micro-Grain Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1223",
+    "published_at": "2026-11-21T16:17:44.876Z"
+  },
+  {
+    "number": 1225,
+    "title": "[Feature/Multiplayer]: Local Hotseat Turn-Based Game State Orchestrator & Transition Curtains",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1225",
+    "published_at": "2026-11-21T16:17:50.492Z"
+  },
+  {
+    "number": 1227,
+    "title": "[Feature/A11y]: Eye-Tracking & Head-Pose Pointer Navigation via WebRTC Landmark Mesh",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1227",
+    "published_at": "2026-11-21T16:17:56.039Z"
+  },
+  {
+    "number": 1229,
+    "title": "[Feature/Canvas]: Procedural 2D Raymarched Metaball Plasma Caustics & Water Ripple Sandbox",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1229",
+    "published_at": "2026-11-21T16:18:01.747Z"
+  },
+  {
+    "number": 1231,
+    "title": "[Feature/Danmaku]: Parametric Spline Bullet Pattern Generator & Rose Curve Shmup Spawner",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1231",
+    "published_at": "2026-11-21T16:18:07.463Z"
+  },
+  {
+    "number": 1233,
+    "title": "[Feature/UI]: CSS 3D Anamorphic Isometric Projection Room & Tilting Vanishing Perspective",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1233",
+    "published_at": "2026-11-21T16:18:13.087Z"
+  },
+  {
+    "number": 1236,
+    "title": "[Feature/Audio]: Pure Vanilla Audio Bitcrusher & Sample-Rate Reduction Lo-Fi DSP Node",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1236",
+    "published_at": "2026-11-21T16:18:18.647Z"
+  },
+  {
+    "number": 1238,
+    "title": "[Feature/Lighting]: Dynamic Canvas Silhouette Shadow Puppet & Soft Penumbra Lighting Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1238",
+    "published_at": "2026-11-21T16:18:24.297Z"
   }
 ]
