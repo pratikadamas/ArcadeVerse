@@ -5465,32 +5465,44 @@ if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.m
 
 
 // ========================================================
-// IN-MODAL VOLUME SLIDER & CROSS-IFRAME BROADCASTER (#735)
+// IN-MODAL VOLUME SLIDER & CROSS-IFRAME BROADCASTER (#735, #887)
 // ========================================================
 (() => {
-  let masterVolume = 1.0;
+  let masterVolume = 0.28;
   try {
     const saved = localStorage.getItem('arcadeverse_master_volume');
     if (saved !== null) {
       const parsed = parseFloat(saved);
-      if (!isNaN(parsed) && parsed >= 0 && parsed <= 1) {
+      if (Number.isFinite(parsed) && parsed >= 0 && parsed <= 1) {
         masterVolume = parsed;
       }
+    } else if (window.SoundEngine && typeof window.SoundEngine.volume === "number") {
+      masterVolume = window.SoundEngine.volume;
     }
-  } catch (_) {}
+  } catch (_) {
+    masterVolume = 0.28;
+  }
 
   function broadcastMasterVolume(vol) {
-    masterVolume = vol;
+    const normalized = Number.isFinite(vol) ? Math.max(0, Math.min(1, vol)) : 0.28;
+    masterVolume = normalized;
     try {
-      localStorage.setItem('arcadeverse_master_volume', vol.toString());
+      localStorage.setItem('arcadeverse_master_volume', normalized.toString());
+      if (window.SoundEngine && typeof window.SoundEngine.setVolume === "function") {
+        window.SoundEngine.setVolume(normalized);
+      }
     } catch (_) {}
 
     const gameIframe = document.getElementById('game-iframe');
     if (gameIframe && gameIframe.contentWindow) {
+      const targetOrigin = (typeof getTrustedTargetOrigin === "function")
+        ? getTrustedTargetOrigin()
+        : (window.location && window.location.origin && window.location.origin !== "null" ? window.location.origin : "*");
+
       gameIframe.contentWindow.postMessage({
         type: 'ARCADEVERSE_SET_VOLUME',
-        volume: vol
-      }, '*');
+        volume: normalized
+      }, targetOrigin);
     }
   }
 
