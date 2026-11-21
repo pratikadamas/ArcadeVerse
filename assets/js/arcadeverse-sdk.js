@@ -411,6 +411,7 @@
   var registeredAudioContexts = [];
   var registeredGainNodes = [];
   var registeredWebGLContexts = [];
+  var registeredGameLoops = [];
 
   // ========================================================
   // WEBGL CONTEXT RECOVERY & PROTECTION SUBSYSTEM
@@ -729,6 +730,16 @@
       }
     }
     registeredWebGLContexts.length = 0;
+
+    // 5. Clean and halt active game loops (#1183)
+    for (var l = 0; l < registeredGameLoops.length; l++) {
+      try {
+        if (registeredGameLoops[l] && typeof registeredGameLoops[l].destroy === "function") {
+          registeredGameLoops[l].destroy();
+        }
+      } catch (e) {}
+    }
+    registeredGameLoops.length = 0;
   }
 
   // ========================================================
@@ -1147,6 +1158,41 @@
     },
 
     /**
+     * Register a callback triggered when parent hub updates game speed multiplier (#1183)
+     * @param {Function} callback receives { speed: number, speedMultiplier: number }
+     * @returns {Object} sdkInstance for chaining
+     */
+    onSpeedChange: function (callback) {
+      if (typeof callback === "function") {
+        speedChangeHandlers.push(callback);
+        try {
+          callback({ speed: currentGameSpeed, speedMultiplier: currentGameSpeed });
+        } catch (e) {}
+      }
+      return this;
+    },
+
+    /**
+     * Get current global game speed multiplier (#1183)
+     * @returns {number}
+     */
+    getSpeed: function () {
+      return currentGameSpeed;
+    },
+
+    /**
+     * Set local game speed multiplier (bounded between 0.25 and 3.0) (#1183)
+     * @param {number} speed
+     * @returns {Object} sdkInstance for chaining
+     */
+    setSpeed: function (speed) {
+      var targetSpeed = typeof speed === "number" ? Math.max(0.25, Math.min(3.0, speed)) : 1.0;
+      currentGameSpeed = targetSpeed;
+      executeHandlers(speedChangeHandlers, { speed: targetSpeed, speedMultiplier: targetSpeed });
+      return this;
+    },
+
+    /**
      * Track an AudioContext for automatic suspension/closure on teardown and mute synchronization
      * @param {AudioContext} ctx
      */
@@ -1363,6 +1409,275 @@
       var idx = registeredAnimationFrameIds.indexOf(id);
       if (idx !== -1) registeredAnimationFrameIds.splice(idx, 1);
       cancelAnimationFrame(id);
+    },
+
+    /**
+     * Standardized Fixed-Timestep Physics Accumulator & Resilient Frame-Pacing Game Loop Engine (#1183)
+     * Implements the Glenn Fiedler semi-fixed timestep model with spiral-of-death delta clamping,
+     * sub-stepping, alpha rendering interpolation, speed regulator scaling, and automatic lifecycle management.
+     *
+     * @param {Object} options
+     * @param {Function} [options.update] - Physics/state update callback: update(fixedDt, totalTime)
+     * @param {Function} [options.render] - Render/drawing callback: render(alpha, totalTime) where alpha in [0, 1]
+     * @param {number} [options.fixedDt=16.666666666666668] - Target fixed physics step in milliseconds (default: 60Hz / 16.67ms)
+     * @param {number} [options.maxSubSteps=4] - Maximum physics sub-steps per frame to prevent the spiral of death
+     * @param {number} [options.maxFrameTime=250] - Maximum elapsed frame time clamp in milliseconds
+     * @param {boolean} [options.autoPause=true] - Automatically pause/resume with ArcadeVerse lifecycle events
+     * @param {boolean} [options.autoStart=false] - Automatically start loop on creation
+     * @returns {Object} GameLoop controller instance
+     */
+    createGameLoop: function (options) {
+      var opts = options || {};
+      var updateFn = typeof opts.update === "function" ? opts.update : function () {};
+      var renderFn = typeof opts.render === "function" ? opts.render : function () {};
+      var fixedDt = (typeof opts.fixedDt === "number" && opts.fixedDt > 0) ? opts.fixedDt : (1000 / 60);
+      var maxSubSteps = (typeof opts.maxSubSteps === "number" && opts.maxSubSteps >= 1) ? Math.floor(opts.maxSubSteps) : 4;
+      var maxFrameTime = (typeof opts.maxFrameTime === "number" && opts.maxFrameTime > 0) ? opts.maxFrameTime : 250;
+      var autoPause = opts.autoPause !== false;
+
+      var isRunning = false;
+      var isPaused = false;
+      var animFrameId = null;
+      var lastTime = 0;
+      var accumulator = 0;
+      var totalSimulatedTime = 0;
+      var frameCount = 0;
+      var tickCount = 0;
+      var localSpeedMultiplier = 1.0;
+
+      function getEffectiveSpeed() {
+        return currentGameSpeed * localSpeedMultiplier;
+      }
+
+      function step(now) {
+        if (!isRunning) return;
+
+        if (typeof now !== "number") {
+          now = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+        }
+
+        if (!lastTime) {
+          lastTime = now;
+        }
+
+        var rawDelta = now - lastTime;
+        lastTime = now;
+
+        if (!isPaused) {
+          var clampedDelta = Math.min(Math.max(0, rawDelta), maxFrameTime);
+          var effectiveDelta = clampedDelta * getEffectiveSpeed();
+          accumulator += effectiveDelta;
+
+          var TIME_EPSILON = 0.001;
+          var steps = 0;
+          while ((accumulator + TIME_EPSILON) >= fixedDt && steps < maxSubSteps) {
+            updateFn(fixedDt, totalSimulatedTime);
+            totalSimulatedTime += fixedDt;
+            accumulator -= fixedDt;
+            if (accumulator < 0) accumulator = 0;
+            tickCount++;
+            steps++;
+          }
+
+          if (steps >= maxSubSteps && accumulator > fixedDt) {
+            accumulator = 0;
+          }
+
+          var alpha = fixedDt > 0 ? (accumulator / fixedDt) : 0;
+          if (alpha > 1) alpha = 1;
+          if (alpha < 0) alpha = 0;
+
+          renderFn(alpha, totalSimulatedTime);
+          frameCount++;
+        } else {
+          lastTime = now;
+        }
+
+        if (isRunning) {
+          if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+            if (animFrameId !== null) {
+              var pIdx = registeredAnimationFrameIds.indexOf(animFrameId);
+              if (pIdx !== -1) registeredAnimationFrameIds.splice(pIdx, 1);
+            }
+            animFrameId = window.requestAnimationFrame(step);
+            registeredAnimationFrameIds.push(animFrameId);
+          }
+        }
+      }
+
+      var onPauseUnsub = null;
+      var onResumeUnsub = null;
+      var onTeardownUnsub = null;
+
+      var loop = {
+        start: function () {
+          if (isRunning) return this;
+          isRunning = true;
+          isPaused = false;
+          lastTime = 0;
+          accumulator = 0;
+
+          if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+            animFrameId = window.requestAnimationFrame(step);
+            registeredAnimationFrameIds.push(animFrameId);
+          }
+          return this;
+        },
+
+        stop: function () {
+          if (!isRunning) return this;
+          isRunning = false;
+          isPaused = false;
+          if (animFrameId !== null) {
+            if (typeof window !== "undefined" && typeof window.cancelAnimationFrame === "function") {
+              window.cancelAnimationFrame(animFrameId);
+            }
+            var cIdx = registeredAnimationFrameIds.indexOf(animFrameId);
+            if (cIdx !== -1) registeredAnimationFrameIds.splice(cIdx, 1);
+            animFrameId = null;
+          }
+          lastTime = 0;
+          accumulator = 0;
+          return this;
+        },
+
+        pause: function () {
+          if (!isRunning || isPaused) return this;
+          isPaused = true;
+          return this;
+        },
+
+        resume: function () {
+          if (!isRunning || !isPaused) return this;
+          isPaused = false;
+          lastTime = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+          accumulator = 0;
+          return this;
+        },
+
+        stepManual: function (dt) {
+          var stepDt = (typeof dt === "number" && dt > 0) ? dt : fixedDt;
+          var effectiveDelta = stepDt * getEffectiveSpeed();
+          accumulator += effectiveDelta;
+
+          var TIME_EPSILON = 0.001;
+          var steps = 0;
+          while ((accumulator + TIME_EPSILON) >= fixedDt && steps < maxSubSteps) {
+            updateFn(fixedDt, totalSimulatedTime);
+            totalSimulatedTime += fixedDt;
+            accumulator -= fixedDt;
+            if (accumulator < 0) accumulator = 0;
+            tickCount++;
+            steps++;
+          }
+          if (steps >= maxSubSteps && accumulator > fixedDt) {
+            accumulator = 0;
+          }
+          var alpha = fixedDt > 0 ? (accumulator / fixedDt) : 0;
+          if (alpha > 1) alpha = 1;
+          if (alpha < 0) alpha = 0;
+          renderFn(alpha, totalSimulatedTime);
+          frameCount++;
+          return this;
+        },
+
+        isRunning: function () {
+          return isRunning;
+        },
+
+        isPaused: function () {
+          return isPaused;
+        },
+
+        getFixedDt: function () {
+          return fixedDt;
+        },
+
+        getAccumulator: function () {
+          return accumulator;
+        },
+
+        getTickCount: function () {
+          return tickCount;
+        },
+
+        getFrameCount: function () {
+          return frameCount;
+        },
+
+        getTotalSimulatedTime: function () {
+          return totalSimulatedTime;
+        },
+
+        getSpeed: function () {
+          return getEffectiveSpeed();
+        },
+
+        setSpeedMultiplier: function (multiplier) {
+          if (typeof multiplier === "number" && multiplier > 0) {
+            localSpeedMultiplier = Math.max(0.1, Math.min(5.0, multiplier));
+          }
+          return this;
+        },
+
+        destroy: function () {
+          this.stop();
+          var loopIdx = registeredGameLoops.indexOf(loop);
+          if (loopIdx !== -1) {
+            registeredGameLoops.splice(loopIdx, 1);
+          }
+          if (onPauseUnsub) {
+            onPauseUnsub();
+            onPauseUnsub = null;
+          }
+          if (onResumeUnsub) {
+            onResumeUnsub();
+            onResumeUnsub = null;
+          }
+          if (onTeardownUnsub) {
+            onTeardownUnsub();
+            onTeardownUnsub = null;
+          }
+          return this;
+        }
+      };
+
+      if (autoPause) {
+        var pauseCb = function () {
+          loop.pause();
+        };
+        var resumeCb = function () {
+          loop.resume();
+        };
+        var teardownCb = function () {
+          loop.destroy();
+        };
+
+        pauseHandlers.push(pauseCb);
+        resumeHandlers.push(resumeCb);
+        teardownHandlers.push(teardownCb);
+
+        onPauseUnsub = function () {
+          var idx = pauseHandlers.indexOf(pauseCb);
+          if (idx !== -1) pauseHandlers.splice(idx, 1);
+        };
+        onResumeUnsub = function () {
+          var idx = resumeHandlers.indexOf(resumeCb);
+          if (idx !== -1) resumeHandlers.splice(idx, 1);
+        };
+        onTeardownUnsub = function () {
+          var idx = teardownHandlers.indexOf(teardownCb);
+          if (idx !== -1) teardownHandlers.splice(idx, 1);
+        };
+      }
+
+      registeredGameLoops.push(loop);
+
+      if (opts.autoStart) {
+        loop.start();
+      }
+
+      return loop;
     },
 
     /**
