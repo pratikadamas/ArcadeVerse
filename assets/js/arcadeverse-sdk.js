@@ -1399,14 +1399,27 @@
      * @returns {AudioContext}
      */
     /**
-     * Subscribe to standardized resize broadcasts from parent modal (#501)
-     * @param {Function} onResizeCallback
+     * Subscribe to standardized resize broadcasts from parent modal (#501, #1182)
+     * Supports both onResize(callback) and onResize({ canvas, aspectRatio }, callback)
+     * @param {Object|Function} arg1 - Optional options config { canvas, aspectRatio } or callback
+     * @param {Function} [arg2] - Callback receiving { width, height, clientWidth, clientHeight, dpr, isFullscreen, orientation }
      */
-    onResize: function (onResizeCallback) {
-      if (typeof window === 'undefined' || typeof onResizeCallback !== 'function') return;
+    onResize: function (arg1, arg2) {
+      if (typeof window === 'undefined') return;
+      var callback = typeof arg1 === 'function' ? arg1 : (typeof arg2 === 'function' ? arg2 : null);
+      var options = (arg1 && typeof arg1 === 'object') ? arg1 : ((arg2 && typeof arg2 === 'object') ? arg2 : {});
+
+      if (typeof callback !== 'function' && !options.canvas) return;
+
       window.addEventListener('message', function (e) {
         if (e && e.data && e.data.type === 'AV_RESIZE') {
-          onResizeCallback(e.data);
+          var payload = e.data.payload || e.data;
+          if (options.canvas && options.aspectRatio && typeof sdkInstance.fitCanvasAspectRatio === 'function') {
+            sdkInstance.fitCanvasAspectRatio(options.canvas, options.aspectRatio);
+          }
+          if (typeof callback === 'function') {
+            callback(payload);
+          }
         }
       });
     },

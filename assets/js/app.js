@@ -2274,6 +2274,9 @@ document.addEventListener("DOMContentLoaded", () => {
       // Establish cryptographic session handshake with child game frame
       initiateGameIframeSession(activeGame);
 
+      // Broadcast initial viewport metrics & aspect-ratio contract (#1182)
+      broadcastViewportResize(true);
+
       try {
         const audioState = syncAudioPreferences();
         broadcastVolumeSyncToGame(audioState.muted, audioState.volume);
@@ -2302,6 +2305,76 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   }
   bindGameIframeListeners();
+
+  // =========================================================================
+  // HUB-TO-GAME AV_RESIZE DISPATCH PROTOCOL & VIEWPORT SYNCHRONIZER (#1182)
+  // =========================================================================
+  let resizeDebounceTimer = null;
+  function broadcastViewportResize(immediate = false) {
+    if (!gameModal || !gameModal.classList.contains("active") || !activeGame || !gameIframe || !gameIframe.contentWindow) {
+      return;
+    }
+
+    const doBroadcast = () => {
+      try {
+        const wrapper = modalFrameWrapper || (gameIframe && gameIframe.parentElement) || gameIframe;
+        const rect = (wrapper && typeof wrapper.getBoundingClientRect === "function")
+          ? wrapper.getBoundingClientRect()
+          : { width: wrapper.clientWidth || 800, height: wrapper.clientHeight || 600 };
+
+        const width = Math.round(rect.width || (wrapper && wrapper.clientWidth) || 800);
+        const height = Math.round(rect.height || (wrapper && wrapper.clientHeight) || 600);
+        const dpr = (typeof window !== "undefined" && window.devicePixelRatio) || 1;
+        const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement || (modalWindow && (modalWindow.classList.contains("fullscreen") || modalWindow.classList.contains("pseudo-fullscreen"))));
+        const orientation = width >= height ? "landscape" : "portrait";
+
+        const payload = {
+          width: width,
+          height: height,
+          clientWidth: (wrapper && wrapper.clientWidth) || width,
+          clientHeight: (wrapper && wrapper.clientHeight) || height,
+          dpr: dpr,
+          isFullscreen: isFullscreen,
+          orientation: orientation,
+          aspectRatio: height > 0 ? (width / height) : 1
+        };
+
+        const targetOrigin = (window.location && window.location.origin && window.location.origin !== "null") ? window.location.origin : "*";
+        gameIframe.contentWindow.postMessage({
+          type: "AV_RESIZE",
+          sessionToken: (activeGameSession && activeGameSession.token) ? activeGameSession.token : null,
+          payload: payload,
+          width: width,
+          height: height,
+          dpr: dpr,
+          isFullscreen: isFullscreen,
+          orientation: orientation
+        }, targetOrigin);
+
+        window.dispatchEvent(new CustomEvent("arcadeverse:modal-resize", { detail: payload }));
+      } catch (err) {
+        console.warn("[ArcadeVerse] Error broadcasting AV_RESIZE:", err);
+      }
+    };
+
+    if (immediate) {
+      if (resizeDebounceTimer) clearTimeout(resizeDebounceTimer);
+      doBroadcast();
+    } else {
+      if (resizeDebounceTimer) clearTimeout(resizeDebounceTimer);
+      resizeDebounceTimer = setTimeout(doBroadcast, 100);
+    }
+  }
+
+  // Active ResizeObserver on modalFrameWrapper (#1182)
+  if (typeof ResizeObserver !== "undefined" && modalFrameWrapper) {
+    const modalResizeObserver = new ResizeObserver(() => {
+      if (gameModal && gameModal.classList.contains("active") && activeGame) {
+        broadcastViewportResize(false);
+      }
+    });
+    modalResizeObserver.observe(modalFrameWrapper);
+  }
 
   // =========================================================================
   // TOP-LEVEL NAVIGATION GUARD & ROGUE SCRIPT PROTECTION (#492)
@@ -3411,6 +3484,7 @@ document.addEventListener("DOMContentLoaded", () => {
           }, "*");
         } catch (_e) { }
       }
+      broadcastViewportResize(true);
     }
 
     function deactivatePseudoFullscreen() {
@@ -3427,6 +3501,7 @@ document.addEventListener("DOMContentLoaded", () => {
           }, "*");
         } catch (_e) { }
       }
+      broadcastViewportResize(true);
     }
   });
 
@@ -3445,6 +3520,7 @@ document.addEventListener("DOMContentLoaded", () => {
       fullscreenBtn.setAttribute("aria-pressed", "false");
       fullscreenBtn.title = "Fullscreen Game";
     }
+    broadcastViewportResize(true);
   };
   document.addEventListener("fullscreenchange", handleNativeFullscreenChange);
   document.addEventListener("webkitfullscreenchange", handleNativeFullscreenChange);
@@ -4480,12 +4556,14 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("resize", () => {
     if (gameModal && gameModal.classList.contains("active") && activeGame) {
       setTimeout(() => checkOrientationLandscapePrompt(activeGame), 100);
+      broadcastViewportResize(false);
     }
   });
 
   window.addEventListener("orientationchange", () => {
     if (gameModal && gameModal.classList.contains("active") && activeGame) {
       setTimeout(() => checkOrientationLandscapePrompt(activeGame), 150);
+      broadcastViewportResize(true);
     }
   });
 
