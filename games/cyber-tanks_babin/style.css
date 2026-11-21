@@ -350,3 +350,55 @@ select {
   display: flex;
   justify-content: flex-end;
 }
+
+/* Fluid Mobile Layout Breakpoints */
+@media (max-width: 680px) {
+  body {
+    padding: 6px;
+  }
+
+  .battlefield-container {
+    max-width: 100%;
+    width: 100%;
+    border-radius: 12px;
+  }
+
+  .battle-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .hud-status-bars {
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .hp-gauge {
+    flex: 1;
+    min-width: 90px;
+  }
+
+  .controls-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .slider-box {
+    width: 100%;
+  }
+
+  .btn-fire {
+    width: 100%;
+    padding: 10px 14px;
+  }
+
+  #battleCanvas {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 680 / 360;
+  }
+}

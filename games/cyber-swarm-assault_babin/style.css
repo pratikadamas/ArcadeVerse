@@ -346,3 +346,40 @@ kbd {
 .touch-ctrl-btn.fire-btn:active {
   background: rgba(255, 0, 119, 0.35);
 }
+
+/* Fluid Mobile Layout Breakpoints */
+@media (max-width: 500px) {
+  .game-container {
+    max-width: 100%;
+    padding: 8px;
+    border-radius: 12px;
+  }
+
+  .canvas-wrapper {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 440 / 520;
+  }
+
+  #game-canvas {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 70vh;
+  }
+
+  .scoreboard-bar {
+    gap: 4px;
+  }
+
+  .score-card {
+    padding: 6px 8px;
+  }
+
+  .touch-controls {
+    gap: 6px;
+  }
+
+  .touch-ctrl-btn {
+    height: 42px;
+  }
+}

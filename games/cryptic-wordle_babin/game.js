@@ -38,6 +38,8 @@
   let currentRow = 0;
   let currentTile = 0;
   let isGameOver = false;
+  let isRevealing = false;
+  let revealTimers = [];
   let rows = [];
 
   // LocalStorage Stats
@@ -97,11 +99,18 @@
     });
   }
 
+  function clearRevealTimers() {
+    revealTimers.forEach(t => clearTimeout(t));
+    revealTimers = [];
+  }
+
   function initGame() {
+    clearRevealTimers();
     secretWord = WORD_BANK[Math.floor(Math.random() * WORD_BANK.length)];
     currentRow = 0;
     currentTile = 0;
     isGameOver = false;
+    isRevealing = false;
 
     initGrid();
     resetKeyboardKeys();
@@ -109,7 +118,7 @@
   }
 
   function addLetter(letter) {
-    if (isGameOver || currentTile >= 5) return;
+    if (isGameOver || isRevealing || currentTile >= 5) return;
     const tile = rows[currentRow][currentTile];
     tile.textContent = letter;
     tile.classList.add("filled");
@@ -117,7 +126,7 @@
   }
 
   function removeLetter() {
-    if (isGameOver || currentTile <= 0) return;
+    if (isGameOver || isRevealing || currentTile <= 0) return;
     currentTile--;
     const tile = rows[currentRow][currentTile];
     tile.textContent = "";
@@ -125,7 +134,7 @@
   }
 
   function submitGuess() {
-    if (isGameOver) return;
+    if (isGameOver || isRevealing) return;
 
     if (currentTile < 5) {
       showToast("Keyword requires 5 letters");
@@ -134,6 +143,9 @@
       setTimeout(() => rowEl.classList.remove("shake"), 400);
       return;
     }
+
+    isRevealing = true;
+    clearRevealTimers();
 
     const rowTiles = rows[currentRow];
     let guess = "";
@@ -171,7 +183,7 @@
       const status = result[i];
       const letter = guessLetters[i];
 
-      setTimeout(() => {
+      const timerId = setTimeout(() => {
         tile.classList.add("flip", status);
 
         // Update virtual keyboard key
@@ -188,10 +200,12 @@
           }
         }
       }, i * 200);
+      revealTimers.push(timerId);
     }
 
     // Check game outcome after flip animation
-    setTimeout(() => {
+    const outcomeTimerId = setTimeout(() => {
+      isRevealing = false;
       if (guess === secretWord) {
         // Victory!
         isGameOver = true;
@@ -201,10 +215,23 @@
         if (stats.streak > stats.maxStreak) stats.maxStreak = stats.streak;
         saveStats();
 
+        const rowScore = (6 - currentRow) * 150;
+        currentScore += rowScore;
+        currentScoreEl.textContent = currentScore;
+        currentLevel++;
+        currentLevelEl.textContent = currentLevel;
+
+        try {
+          window.dispatchEvent(new CustomEvent('ARCADEVERSE_GAME_SCORE', {
+            detail: { gameId: 'cryptic-wordle', score: currentScore, level: currentLevel }
+          }));
+        } catch (_) {}
+
         showToast("DECRYPTION SUCCESSFUL!");
         revealedWordEl.textContent = secretWord;
         updateStatsDisplay();
-        setTimeout(() => statsModal.classList.add("active"), 1200);
+        const modalTimerId = setTimeout(() => statsModal.classList.add("active"), 1200);
+        revealTimers.push(modalTimerId);
       } else if (currentRow === 5) {
         // Defeat!
         isGameOver = true;
@@ -212,15 +239,23 @@
         stats.streak = 0;
         saveStats();
 
+        try {
+          window.dispatchEvent(new CustomEvent('ARCADEVERSE_GAME_OVER', {
+            detail: { gameId: 'cryptic-wordle', score: currentScore, level: currentLevel }
+          }));
+        } catch (_) {}
+
         showToast("SYSTEM LOCKED - ACCESS DENIED");
         revealedWordEl.textContent = secretWord;
         updateStatsDisplay();
-        setTimeout(() => statsModal.classList.add("active"), 1200);
+        const modalTimerId = setTimeout(() => statsModal.classList.add("active"), 1200);
+        revealTimers.push(modalTimerId);
       } else {
         currentRow++;
         currentTile = 0;
       }
     }, 5 * 200 + 100);
+    revealTimers.push(outcomeTimerId);
   }
 
   // Keyboard Event Listeners
@@ -257,6 +292,14 @@
 
   rulesBtn.addEventListener("click", () => rulesModal.classList.add("active"));
   closeRulesBtn.addEventListener("click", () => rulesModal.classList.remove("active"));
+
+  window.addEventListener('ARCADEVERSE_TEARDOWN', () => {
+    clearRevealTimers();
+  });
+
+  window.addEventListener('ARCADEVERSE_PAUSE', () => {
+    // Keep paused state
+  });
 
   initGame();
   updateStatsDisplay();
