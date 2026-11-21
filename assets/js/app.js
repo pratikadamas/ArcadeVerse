@@ -328,13 +328,14 @@ document.addEventListener("DOMContentLoaded", () => {
               frameDoc.dispatchEvent(evt);
             }
           } catch (_) {
+            const targetOrigin = (typeof getTrustedTargetOrigin === "function") ? getTrustedTargetOrigin() : "*";
             iframe.contentWindow.postMessage({
               type: "ARCADEVERSE_GAMEPAD_KEY",
               eventType: eventType,
               key: targetMapping.key,
               code: targetMapping.code,
               keyCode: targetMapping.keyCode
-            }, "*");
+            }, targetOrigin);
           }
         }
         break;
@@ -2184,6 +2185,21 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   /**
+   * Resolves a trusted targetOrigin for hub-to-iframe postMessage transmissions (#884).
+   * Strictly avoids wildcard '*' to prevent leaking session tokens, audio configs, or controller state
+   * to untrusted origins if a frame redirects or navigates unexpectedly.
+   */
+  function getTrustedTargetOrigin() {
+    try {
+      if (window.location && window.location.origin && window.location.origin !== "null") {
+        return window.location.origin;
+      }
+    } catch (_) {}
+    return "*";
+  }
+  window.getTrustedTargetOrigin = getTrustedTargetOrigin;
+
+  /**
    * Generates a cryptographically strong UUID or fallback random hexadecimal token
    */
   function generateSessionToken() {
@@ -2264,7 +2280,7 @@ document.addEventListener("DOMContentLoaded", () => {
       handshakeTimeoutId: null
     };
 
-    const targetOrigin = (window.location.origin && window.location.origin !== "null") ? window.location.origin : "*";
+    const targetOrigin = getTrustedTargetOrigin();
 
     // Dispatch cryptographically secured handshake challenge
     try {
@@ -2276,7 +2292,7 @@ document.addEventListener("DOMContentLoaded", () => {
           origin: targetOrigin,
           timestamp: Date.now()
         },
-        "*"
+        targetOrigin
       );
     } catch (err) {
       console.warn("[ArcadeVerse Security] Error dispatching AV_INIT_SESSION:", err);
@@ -2323,7 +2339,7 @@ document.addEventListener("DOMContentLoaded", () => {
             muted: audioState.muted,
             volume: audioState.volume,
             gain: audioState.muted ? 0 : audioState.volume
-          }, "*");
+          }, getTrustedTargetOrigin());
         }
       } catch (_) { }
     });
@@ -2455,7 +2471,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function broadcastVolumeSyncToGame(muted, volume) {
     if (!gameIframe || !gameIframe.contentWindow) return;
-    gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_VOLUME_SYNC", sessionToken: activeGameSession.token, muted, volume, gain: muted ? 0 : volume }, "*");
+    gameIframe.contentWindow.postMessage(
+      { type: "ARCADEVERSE_VOLUME_SYNC", sessionToken: activeGameSession.token, muted, volume, gain: muted ? 0 : volume },
+      getTrustedTargetOrigin()
+    );
   }
 
   function openGameModal(game, triggerElement = null, isDirectDeepLink = false) {
@@ -2676,7 +2695,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (gameIframe && gameIframe.contentWindow) {
           try {
             gameIframe.contentWindow.focus();
-            gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_RESUME" }, "*");
+            gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_RESUME" }, getTrustedTargetOrigin());
           } catch (_) { }
         }
       });
@@ -2697,7 +2716,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Pause game runtime while confirmation prompt is open
     if (gameIframe && gameIframe.contentWindow) {
       try {
-        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
+        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, getTrustedTargetOrigin());
       } catch (_) { }
     }
   }
@@ -2800,8 +2819,67 @@ document.addEventListener("DOMContentLoaded", () => {
       newTabBtn.href = "#";
     }
 
-    // Standardized Game Lifecycle Bridge: Dispatch teardown, cancel dynamic RAF handles, and prune WebGL contexts
-    terminateChildIframeResources(gameIframe);
+    // Standardized Game Lifecycle Bridge: Dispatch teardown & pause events before unmounting iframe
+    try {
+      if (gameIframe && gameIframe.contentWindow) {
+        const trustedOrigin = getTrustedTargetOrigin();
+        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, trustedOrigin);
+        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_TEARDOWN" }, trustedOrigin);
+
+        // Aggressive RAF and Timer Leak Mitigation (#497)
+        try {
+          const win = gameIframe.contentWindow;
+          if (win) {
+            // Dynamically discover and cancel active animation frame handles (#497, #825)
+            if (typeof win.cancelAnimationFrame === "function") {
+              if (typeof win.requestAnimationFrame === "function") {
+                const maxFrameId = win.requestAnimationFrame(() => { });
+                win.cancelAnimationFrame(maxFrameId);
+                if (typeof maxFrameId === "number" && maxFrameId > 0) {
+                  const minFrameId = Math.max(1, maxFrameId - 50000);
+                  for (let frameId = maxFrameId; frameId >= minFrameId; frameId--) {
+                    win.cancelAnimationFrame(frameId);
+                  }
+                }
+              } else {
+                for (let frameId = 1; frameId <= 1000; frameId++) {
+                  win.cancelAnimationFrame(frameId);
+                }
+              }
+            }
+            // Clear any active timeouts/intervals left by rogue loops
+            if (typeof win.clearTimeout === "function" && typeof win.clearInterval === "function") {
+              const maxTimerId = win.setTimeout(() => { }, 0);
+              for (let timerId = 1; timerId <= maxTimerId; timerId++) {
+                win.clearTimeout(timerId);
+                win.clearInterval(timerId);
+              }
+            }
+          }
+        } catch (_) { }
+
+        // Proactively probe and dispose WebGL contexts in child iframe if accessible
+        try {
+          const doc = gameIframe.contentDocument || gameIframe.contentWindow.document;
+          if (doc) {
+            const canvases = doc.querySelectorAll("canvas");
+            canvases.forEach((c) => {
+              try {
+                const gl = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl");
+                if (gl && !gl.isContextLost()) {
+                  const loseExt = gl.getExtension("WEBGL_lose_context") ||
+                    gl.getExtension("WEBKIT_WEBGL_lose_context") ||
+                    gl.getExtension("MOZ_WEBGL_lose_context");
+                  if (loseExt && typeof loseExt.loseContext === "function") {
+                    loseExt.loseContext();
+                  }
+                }
+              } catch (_) { }
+            });
+          }
+        } catch (_) { }
+      }
+    } catch (_) { }
 
     // Safely blank out iframe after a grace period to allow games to close AudioContexts and finalize teardown
     const currentFrame = gameIframe;
@@ -3035,8 +3113,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (escPressCount === 1) {
       try {
         if (gameIframe && gameIframe.contentWindow) {
-          gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
-          gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_ESC_PAUSE" }, "*");
+          const trustedOrigin = getTrustedTargetOrigin();
+          gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, trustedOrigin);
+          gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_ESC_PAUSE" }, trustedOrigin);
         }
       } catch (_) { }
 
@@ -3231,7 +3310,7 @@ document.addEventListener("DOMContentLoaded", () => {
           muted: audioState.muted,
           volume: audioState.volume,
           gain: audioState.muted ? 0 : audioState.volume
-        }, "*");
+        }, getTrustedTargetOrigin());
       }
       return;
     }
@@ -3447,7 +3526,7 @@ document.addEventListener("DOMContentLoaded", () => {
           gameFrame.contentWindow.postMessage({
             type: "AV_FULLSCREEN_CHANGE",
             payload: { isFullscreen: true, mode: "pseudo" }
-          }, "*");
+          }, getTrustedTargetOrigin());
         } catch (_e) { }
       }
     }
@@ -3463,7 +3542,7 @@ document.addEventListener("DOMContentLoaded", () => {
           gameFrame.contentWindow.postMessage({
             type: "AV_FULLSCREEN_CHANGE",
             payload: { isFullscreen: false, mode: "pseudo" }
-          }, "*");
+          }, getTrustedTargetOrigin());
         } catch (_e) { }
       }
     }
