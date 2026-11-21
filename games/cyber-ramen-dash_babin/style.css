@@ -474,3 +474,97 @@ body {
   display: flex;
   justify-content: flex-end;
 }
+
+/* Shift Summary Card Styles */
+.summary-card {
+  max-width: 440px;
+  text-align: center;
+}
+
+.shift-stats-grid {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.summary-stat {
+  background: rgba(13, 21, 56, 0.85);
+  border: 1px solid #1e294b;
+  border-radius: 10px;
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.summary-stat .lbl {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.summary-stat .val {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #f59e0b;
+}
+
+/* Fluid Mobile Layout Breakpoints */
+@media (max-width: 600px) {
+  body {
+    padding: 6px;
+  }
+
+  .shop-container {
+    max-width: 100%;
+    width: 100%;
+    border-radius: 12px;
+  }
+
+  .brand-title h1 {
+    font-size: 1rem;
+  }
+
+  .hud-stats {
+    gap: 4px;
+  }
+
+  .stat-badge {
+    padding: 3px 6px;
+  }
+
+  .stat-badge .val {
+    font-size: 0.85rem;
+  }
+
+  .customer-ticket {
+    min-width: 140px;
+    padding: 6px 8px;
+  }
+
+  .kitchen-station {
+    padding: 8px;
+  }
+
+  .ingredients-row {
+    gap: 6px;
+  }
+
+  .ing-btn {
+    padding: 6px 8px;
+    font-size: 0.75rem;
+  }
+
+  .serve-slot-group {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .btn-serve {
+    flex: 1 1 30%;
+    padding: 8px 6px;
+    font-size: 0.75rem;
+  }
+}

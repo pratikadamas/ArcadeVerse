@@ -110,6 +110,31 @@ document.addEventListener("DOMContentLoaded", () => {
       .replace(/'/g, "&#039;");
   }
 
+  /**
+   * Safely sanitize and validate avatar URLs against an HTTPS-only allowlist (#882).
+   * Prevents javascript: or data: URI execution and falls back gracefully to standard SVG data URI avatars.
+   */
+  function sanitizeAvatarUrl(url, fallback) {
+    if (!url || typeof url !== "string") return fallback;
+    const trimmed = url.trim();
+    if (trimmed.startsWith("https://") || trimmed.startsWith("data:image/svg+xml")) {
+      return trimmed;
+    }
+    return fallback;
+  }
+
+  /**
+   * Programmatically attach a robust error fallback listener to avatar images (#882).
+   * Eliminates CSP-violating inline onerror="..." HTML attributes.
+   */
+  function attachAvatarFallback(imgElem, fallbackSrc) {
+    if (!imgElem) return;
+    imgElem.addEventListener("error", function handleError() {
+      imgElem.removeEventListener("error", handleError);
+      imgElem.src = fallbackSrc;
+    });
+  }
+
   function renderBadgeHtml(b) {
     const name = escapeHTML(b.label || b.role);
     const cat = escapeHTML(b.category || "Badge");
@@ -866,28 +891,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const tierInfo = getTierProgress(score);
 
+      const safeAvatarUrl = sanitizeAvatarUrl(item.avatar_url, fallbackAvatar);
+
       const card = document.createElement("div");
       card.className = `podium-card ${slot.cardClass}`;
       // Clean, uncluttered card: Rank badge, avatar, name, handle, primary badges, score, milestone progress bar, and profile link.
       card.innerHTML = `
         <div class="podium-badge podium-badge-${slot.badgeType}">
-          <i data-lucide="${slot.badgeIcon}"></i> ${slot.badgeLabel}
+          <i data-lucide="${slot.badgeIcon}"></i> ${escapeHTML(slot.badgeLabel)}
         </div>
-        <img src="${item.avatar_url || fallbackAvatar}" alt="${item.name}" class="podium-avatar" onerror="this.onerror=null; this.src='${fallbackAvatar}';">
-        <h3 class="podium-name">${item.name}</h3>
-        <a href="https://github.com/${item.login}" target="_blank" rel="noopener noreferrer" class="podium-handle">@${item.login}</a>
+        <img src="${escapeAttr(safeAvatarUrl)}" alt="${escapeAttr(item.name || item.login)}" class="podium-avatar">
+        <h3 class="podium-name">${escapeHTML(item.name)}</h3>
+        <a href="https://github.com/${escapeAttr(item.login)}" target="_blank" rel="noopener noreferrer" class="podium-handle">@${escapeHTML(item.login)}</a>
         
         <div class="podium-badges-container">
           ${badges.map(renderBadgeHtml).join("")}
         </div>
 
         <div class="podium-score-pill">
-          <strong>${score}</strong> pts <span class="podium-multiplier-tag" title="Tier Multiplier">${tierInfo.multiplier}</span>
+          <strong>${score}</strong> pts <span class="podium-multiplier-tag" title="Tier Multiplier">${escapeHTML(tierInfo.multiplier)}</span>
         </div>
 
-        <div class="podium-milestone-wrap" title="${tierInfo.needed > 0 ? tierInfo.needed + ' pts to ' + tierInfo.nextTier : 'Max Tier Reached'}">
+        <div class="podium-milestone-wrap" title="${tierInfo.needed > 0 ? tierInfo.needed + ' pts to ' + escapeAttr(tierInfo.nextTier) : 'Max Tier Reached'}">
           <div class="podium-milestone-labels">
-            <span>${tierInfo.currentTier}</span>
+            <span>${escapeHTML(tierInfo.currentTier)}</span>
             <span>${tierInfo.progressPct}%</span>
           </div>
           <div class="podium-milestone-track">
@@ -909,6 +936,11 @@ document.addEventListener("DOMContentLoaded", () => {
           </button>
         </div>
       `;
+
+      const podiumImg = card.querySelector(".podium-avatar");
+      if (podiumImg) {
+        attachAvatarFallback(podiumImg, fallbackAvatar);
+      }
 
       podiumContainer.appendChild(card);
     });
@@ -1193,12 +1225,14 @@ document.addEventListener("DOMContentLoaded", () => {
         rankBadgeHtml = `<span class="rank-tag rank-3"><i data-lucide="medal"></i> #3</span>`;
       }
 
+      const safeAvatarUrl = sanitizeAvatarUrl(item.avatar_url, fallbackAvatar);
+
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${rankBadgeHtml}</td>
         <td>
           <div class="table-user-cell">
-            <img src="${item.avatar_url || fallbackAvatar}" alt="${item.name}" class="table-user-avatar" onerror="this.onerror=null; this.src='${fallbackAvatar}';">
+            <img src="${escapeAttr(safeAvatarUrl)}" alt="${escapeAttr(item.name || item.login)}" class="table-user-avatar">
             <div>
               <strong class="user-display-name">${highlightMatch(item.name, tableSearchQuery)}</strong>
               <span class="user-handle-sub">@${highlightMatch(item.login, tableSearchQuery)}</span>
@@ -1211,7 +1245,7 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         </td>
         <td>
-          <a href="https://github.com/${item.login}" target="_blank" class="github-handle-link">@${highlightMatch(item.login, tableSearchQuery)}</a>
+          <a href="https://github.com/${escapeAttr(item.login)}" target="_blank" rel="noopener noreferrer" class="github-handle-link">@${highlightMatch(item.login, tableSearchQuery)}</a>
         </td>
         <td style="text-align: center;">
           ${(item.gamesCount || 0) > 0 ? `
@@ -1232,10 +1266,10 @@ document.addEventListener("DOMContentLoaded", () => {
         </td>
         <td style="text-align: center;">
           <div class="activity-links-group">
-            <a href="https://github.com/DebasmitaBose0/ArcadeVerse/issues?q=author%3A${item.login}" target="_blank" rel="noopener noreferrer" class="activity-link-btn" title="View Issues authored by @${item.login}">
+            <a href="https://github.com/DebasmitaBose0/ArcadeVerse/issues?q=author%3A${escapeAttr(item.login)}" target="_blank" rel="noopener noreferrer" class="activity-link-btn" title="View Issues authored by @${escapeAttr(item.login)}">
               <i data-lucide="circle-dot"></i> Issues
             </a>
-            <a href="https://github.com/DebasmitaBose0/ArcadeVerse/pulls?q=author%3A${item.login}" target="_blank" rel="noopener noreferrer" class="activity-link-btn" title="View Pull Requests by @${item.login}">
+            <a href="https://github.com/DebasmitaBose0/ArcadeVerse/pulls?q=author%3A${escapeAttr(item.login)}" target="_blank" rel="noopener noreferrer" class="activity-link-btn" title="View Pull Requests by @${escapeAttr(item.login)}">
               <i data-lucide="git-pull-request"></i> PRs
             </a>
             <button type="button" class="activity-link-btn table-trophy-btn" data-action="open-trophy-card" data-player="${escapeAttr(item.name || item.login)}" data-handle="${escapeAttr(item.login)}" data-avatar="${escapeAttr(item.avatar_url || '')}" data-score="${score} PTS" data-game="Contributor Milestone" data-rank="#${rank} Contributor" data-badge="NSOC 2026" title="Generate Verified Achievement Certificate">
@@ -1247,6 +1281,12 @@ document.addEventListener("DOMContentLoaded", () => {
           <strong class="score-highlight">${score} pts</strong>
         </td>
       `;
+
+      const userImg = tr.querySelector(".table-user-avatar");
+      if (userImg) {
+        attachAvatarFallback(userImg, fallbackAvatar);
+      }
+
       tableBody.appendChild(tr);
     });
 
@@ -1922,7 +1962,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <aside class="author-drawer" id="author-drawer" role="dialog" aria-modal="true" aria-labelledby="author-drawer-title">
           <div class="author-drawer-header">
             <div class="author-drawer-user-info">
-              <img class="author-drawer-avatar" id="author-drawer-avatar" src="" alt="" onerror="this.style.display='none';">
+              <img class="author-drawer-avatar" id="author-drawer-avatar" src="" alt="">
               <div>
                 <h3 class="author-drawer-title" id="author-drawer-title">Authored Games</h3>
                 <span class="author-drawer-subtitle" id="author-drawer-subtitle">@contributor</span>
@@ -2014,8 +2054,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (subtitleEl) subtitleEl.textContent = `@${handle}`;
     if (avatarEl) {
       avatarEl.style.display = "block";
-      avatarEl.src = `https://github.com/${handle}.png`;
+      const fallbackDrawerSvg = getFallbackAvatarSvg(authorName || handle, handle);
+      const targetAvatarUrl = `https://github.com/${encodeURIComponent(handle)}.png`;
+      avatarEl.src = targetAvatarUrl;
       avatarEl.alt = authorName || handle;
+      attachAvatarFallback(avatarEl, fallbackDrawerSvg);
     }
     if (searchInput) {
       searchInput.value = "";
@@ -2262,16 +2305,18 @@ document.addEventListener("DOMContentLoaded", () => {
       userGames = found.map(g => g.title);
     }
 
+    const safeAvatarUrl = sanitizeAvatarUrl(user.avatar_url, fallbackAvatar);
+
     const card = document.createElement("div");
     card.className = "contributor-hover-card";
     card.setAttribute("role", "tooltip");
     card.innerHTML = `
       <div class="hover-card-header">
-        <img src="${user.avatar_url || fallbackAvatar}" alt="${user.name || user.login}" class="hover-card-avatar" onerror="this.onerror=null; this.src='${fallbackAvatar}';">
+        <img src="${escapeAttr(safeAvatarUrl)}" alt="${escapeAttr(user.name || user.login)}" class="hover-card-avatar">
         <div class="hover-card-meta">
           <strong class="hover-card-name">${escapeHTML(user.name || user.login)}</strong>
           <span class="hover-card-handle">@${escapeHTML(user.login)}</span>
-          <span class="hover-card-tier-badge ${primaryBadge.tagClass || ''}">${escapeHTML(primaryBadge.label || '')}</span>
+          <span class="hover-card-tier-badge ${escapeAttr(primaryBadge.tagClass || '')}">${escapeHTML(primaryBadge.label || '')}</span>
         </div>
       </div>
       <div class="hover-card-stats">
@@ -2297,11 +2342,16 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       ` : ''}
       <div class="hover-card-footer">
-        <a href="https://github.com/${user.login}" target="_blank" rel="noopener noreferrer" class="hover-github-link">
+        <a href="https://github.com/${escapeAttr(user.login)}" target="_blank" rel="noopener noreferrer" class="hover-github-link">
           <i data-lucide="external-link"></i> Verified GitHub Profile
         </a>
       </div>
     `;
+
+    const hoverImg = card.querySelector(".hover-card-avatar");
+    if (hoverImg) {
+      attachAvatarFallback(hoverImg, fallbackAvatar);
+    }
 
     document.body.appendChild(card);
     activeHoverCard = card;

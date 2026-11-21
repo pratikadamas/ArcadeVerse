@@ -1,0 +1,12 @@
+{
+  "title": "Cyber Logic Gates: Boolean Circuit Forge",
+  "category": "Puzzle",
+  "lucideIcon": "circuit-board",
+  "description": "Build and test Boolean circuits by wiring logic gate chips to match target truth tables across fifteen engineering puzzles.",
+  "author": "Harsh",
+  "github": "hrshjswniii",
+  "role": "Arcade Contributor",
+  "tags": ["Puzzle", "Logic", "Engineering", "Educational", "Circuit"],
+  "stars": 0,
+  "featured": false
+}
