@@ -335,11 +335,33 @@
   var speedChangeHandlers = [];
   var currentGameSpeed = 1.0;
 
-  // Cryptographic Session Handshake Subsystem (Issue #489)
+  // Cryptographic Session Handshake Subsystem (Issue #489, #886)
   var sessionToken = null;
   var handshakeComplete = false;
   var handshakePendingCallbacks = [];
-  var parentOrigin = "*";
+
+  /**
+   * Determine trusted default parent origin based on window.location.origin or document.referrer
+   * Strictly avoids default wildcard '*' fallback to prevent token leaks (#886)
+   */
+  function resolveInitialParentOrigin() {
+    try {
+      if (typeof window !== "undefined" && window.location && window.location.origin && window.location.origin !== "null") {
+        return window.location.origin;
+      }
+    } catch (_) {}
+    try {
+      if (typeof document !== "undefined" && document.referrer) {
+        var refUrl = new URL(document.referrer);
+        if (refUrl.origin && refUrl.origin !== "null") {
+          return refUrl.origin;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  var parentOrigin = resolveInitialParentOrigin();
   var securityTelemetry = {
     messagesReceived: 0,
     messagesValidated: 0,
@@ -349,17 +371,37 @@
   };
 
   /**
-   * Safe origin comparator for sandboxed iframes & cross-origin verification
-   * Allows parent origin matching while tolerating file:// or null origins in local dev
+   * Safe origin comparator for sandboxed iframes & cross-origin verification (#886)
+   * Validates exact match with window.location.origin, document.referrer, or explicit allowlisted origins
    */
   function isTrustedParentOrigin(origin) {
-    if (!origin || origin === "null") return true;
+    if (!origin || origin === "null") {
+      // Tolerate file: or local direct execution
+      return true;
+    }
+
     try {
       if (window.location && window.location.origin && window.location.origin !== "null") {
-        return origin === window.location.origin;
+        if (origin === window.location.origin) return true;
       }
     } catch (_) {}
-    return true;
+
+    try {
+      if (document.referrer) {
+        var ref = new URL(document.referrer);
+        if (ref.origin === origin) return true;
+      }
+    } catch (_) {}
+
+    // Allow known local development hosts
+    if (origin.indexOf("http://localhost:") === 0 ||
+        origin.indexOf("http://127.0.0.1:") === 0 ||
+        origin === "http://localhost" ||
+        origin === "http://127.0.0.1") {
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -385,7 +427,7 @@
   }
 
   /**
-   * Internal secure dispatch to parent with cryptographic session authentication
+   * Internal secure dispatch to parent with cryptographic session authentication (#886)
    */
   function securePostToParent(messageType, payload) {
     if (!window.parent || window.parent === window) return;
@@ -397,11 +439,18 @@
       protocolVersion: "2.0.0"
     });
 
-    var target = (parentOrigin && parentOrigin !== "null" && parentOrigin !== "*") ? parentOrigin : "*";
+    var target = parentOrigin || resolveInitialParentOrigin();
+    if (!target || target === "null") {
+      // In standalone / unhosted local file testing fallback
+      target = "*";
+    }
+
     try {
       window.parent.postMessage(message, target);
+      securityTelemetry.messagesValidated++;
     } catch (err) {
       console.warn("[ArcadeVerse SDK] Secure postMessage failed:", err);
+      securityTelemetry.messagesRejected++;
     }
   }
 
@@ -516,7 +565,12 @@
       if (typeof data.sessionToken === "string" && data.sessionToken.trim().length > 0) {
         sessionToken = data.sessionToken.trim();
         handshakeComplete = true;
-        parentOrigin = event.origin || "*";
+        // Latch verified handshake origin rather than permissive wildcard (#886)
+        if (event.origin && event.origin !== "null" && event.origin !== "*") {
+          parentOrigin = event.origin;
+        } else {
+          parentOrigin = resolveInitialParentOrigin();
+        }
 
         // Reply with immediate ACK handshake confirmation
         securePostToParent("AV_SESSION_ACK", {
@@ -1609,7 +1663,8 @@
       // Query initial configuration from parent window
       try {
         if (window.parent && window.parent !== window) {
-          window.parent.postMessage({ type: 'ARCADEVERSE_REQUEST_AUDIO_CONFIG' }, '*');
+          var audioReqTarget = parentOrigin || resolveInitialParentOrigin() || "*";
+          window.parent.postMessage({ type: 'ARCADEVERSE_REQUEST_AUDIO_CONFIG' }, audioReqTarget);
         }
       } catch (_e) {}
 
