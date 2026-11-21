@@ -2516,6 +2516,82 @@
        */
       filterShake: function (shakeIntensity) {
         return this.prefersReducedMotion() ? 0 : (Number(shakeIntensity) || 0);
+      },
+
+      /**
+       * Emits an auditory spatial cue for 2D entities (coins, hazards, portals, beacons)
+       * to guide blind and visually impaired players (#1101).
+       * @param {number} x - Horizontal position
+       * @param {number} y - Vertical position
+       * @param {string} type - Entity type ('coin', 'hazard', 'beacon', 'wall', 'portal')
+       * @param {Object} [options] - Custom sound overrides
+       * @returns {Object|null}
+       */
+      sonifyEntity: function (x, y, type, options) {
+        if (typeof window !== "undefined" && window.ArcadeAudioBeacon) {
+          return window.ArcadeAudioBeacon.sonifyEntity(x, y, type, options);
+        }
+        try {
+          if (typeof window !== "undefined" && window.parent && window.parent !== window) {
+            window.parent.postMessage({
+              type: "ARCADEVERSE_A11Y_SONIFY",
+              x: Number(x) || 0,
+              y: Number(y) || 0,
+              entityType: String(type || "beacon"),
+              options: options || {}
+            }, "*");
+          }
+        } catch (_) {}
+        return null;
+      },
+
+      /**
+       * Updates the player's 2D position for spatial audio beacon and proximity hazard radar.
+       * @param {number} x - Player X coordinate
+       * @param {number} y - Player Y coordinate
+       * @param {number} [w] - Viewport/Canvas width
+       * @param {number} [h] - Viewport/Canvas height
+       */
+      updatePlayerPosition: function (x, y, w, h) {
+        if (typeof window !== "undefined" && window.ArcadeAudioBeacon) {
+          return window.ArcadeAudioBeacon.updatePlayerPosition(x, y, w, h);
+        }
+        try {
+          if (typeof window !== "undefined" && window.parent && window.parent !== window) {
+            window.parent.postMessage({
+              type: "ARCADEVERSE_A11Y_PLAYER_POS",
+              x: Number(x) || 0,
+              y: Number(y) || 0,
+              width: Number(w) || 800,
+              height: Number(h) || 600
+            }, "*");
+          }
+        } catch (_) {}
+      },
+
+      /**
+       * Checks whether spatial audio beacon sonification is enabled.
+       * @returns {boolean}
+       */
+      isAudioBeaconEnabled: function () {
+        if (typeof window !== "undefined") {
+          if (window.ArcadeAudioBeacon) return window.ArcadeAudioBeacon.isEnabled();
+          try {
+            return localStorage.getItem("arcadeverse_a11y_audio_beacon") === "true";
+          } catch (_) {}
+        }
+        return false;
+      },
+
+      /**
+       * Toggles spatial audio beacon sonification on/off.
+       * @returns {boolean} New enabled state
+       */
+      toggleAudioBeacon: function () {
+        if (typeof window !== "undefined" && window.ArcadeAudioBeacon) {
+          return window.ArcadeAudioBeacon.toggle();
+        }
+        return false;
       }
     },
 
