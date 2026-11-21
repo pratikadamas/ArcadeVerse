@@ -10,6 +10,37 @@
 
   const STORAGE_KEY = 'arcadeverse_a11y_prefs';
 
+  // In-memory storage fallback for private-browsing or restricted iframe contexts
+  const memoryFallback = new Map();
+
+  function safeStorageGet(key) {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem(key);
+      }
+    } catch (_) {}
+    return memoryFallback.has(key) ? memoryFallback.get(key) : null;
+  }
+
+  function safeStorageSet(key, value) {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(key, String(value));
+        return;
+      }
+    } catch (_) {}
+    memoryFallback.set(key, String(value));
+  }
+
+  function safeStorageHas(key) {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem(key) !== null;
+      }
+    } catch (_) {}
+    return memoryFallback.has(key);
+  }
+
   const A11yEngine = {
     prefs: {
       reducedMotion: false,
@@ -30,35 +61,42 @@
 
     detectSystemMotionPreference() {
       // Synchronize with system prefers-reduced-motion media query
-      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-      if (localStorage.getItem(STORAGE_KEY) === null && mediaQuery.matches) {
-        this.prefs.reducedMotion = true;
-      }
-
-      if (typeof mediaQuery.addEventListener === 'function') {
-        mediaQuery.addEventListener('change', (e) => {
-          if (localStorage.getItem(STORAGE_KEY) === null) {
-            this.prefs.reducedMotion = e.matches;
-            this.applyPrefs();
-            const checkbox = document.getElementById('a11y-opt-motion');
-            if (checkbox) checkbox.checked = e.matches;
+      try {
+        if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+          const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+          if (!safeStorageHas(STORAGE_KEY) && mediaQuery.matches) {
+            this.prefs.reducedMotion = true;
           }
-        });
-      }
+
+          if (typeof mediaQuery.addEventListener === 'function') {
+            mediaQuery.addEventListener('change', (e) => {
+              if (!safeStorageHas(STORAGE_KEY)) {
+                this.prefs.reducedMotion = e.matches;
+                this.applyPrefs();
+                const checkbox = document.getElementById('a11y-opt-motion');
+                if (checkbox) checkbox.checked = e.matches;
+              }
+            });
+          }
+        }
+      } catch (_) {}
     },
 
     loadPrefs() {
       try {
-        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        if (saved && typeof saved === 'object') {
-          Object.assign(this.prefs, saved);
+        const raw = safeStorageGet(STORAGE_KEY);
+        if (raw) {
+          const saved = JSON.parse(raw);
+          if (saved && typeof saved === 'object') {
+            Object.assign(this.prefs, saved);
+          }
         }
       } catch (_) {}
     },
 
     savePrefs() {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.prefs));
+        safeStorageSet(STORAGE_KEY, JSON.stringify(this.prefs));
       } catch (_) {}
     },
 
