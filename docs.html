@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="assets/css/network-detector.css">
   <link rel="stylesheet" href="assets/css/trophy-card.css">
   <link rel="stylesheet" href="assets/css/inverse-kinematics-lab.css">
+  <link rel="stylesheet" href="assets/css/split-depth-studio.css">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -172,6 +173,7 @@
               <li><a href="#playlist-system" class="docs-nav-link"><i data-lucide="list-music"></i> Custom Playlist Engine</a></li>
               <li><a href="#az-jump-bar" class="docs-nav-link"><i data-lucide="arrow-down-a-z"></i> A-Z Catalog Jump Bar</a></li>
               <li><a href="#inverse-kinematics-lab" class="docs-nav-link"><i data-lucide="git-branch"></i> Inverse Kinematics Lab</a></li>
+              <li><a href="#split-depth-studio" class="docs-nav-link"><i data-lucide="layers"></i> Split-Depth Cover Studio</a></li>
               <li><a href="#theme-sync" class="docs-nav-link"><i data-lucide="sun-moon"></i> Theme Sync & UI Guidelines</a></li>
               <li><a href="#bug-report-helper" class="docs-nav-link"><i data-lucide="bug"></i> Game Bug Report Diagnostic</a></li>
               <li><a href="#card-flip-manual" class="docs-nav-link"><i data-lucide="layers"></i> 3D Flip Card &amp; Quick Manual</a></li>
@@ -1498,6 +1500,31 @@ function updateCategoryPillCounts() {
           </div>
         </section>
 
+        <section class="docs-section" id="split-depth-studio">
+          <span class="docs-section-tag">04 / Platform Subsystems</span><h2 class="docs-section-title">Split-Depth Cover Studio</h2>
+          <p class="docs-paragraph">Put animated foreground artwork in front of white occlusion bars while the background stays behind. Move the pointer, drag on touch, or focus the canvas and use arrow keys for parallax; Home centers the view.</p>
+          <div class="depth-studio" data-depth-studio>
+            <canvas data-depth-canvas width="800" height="450" tabindex="0" role="img" aria-label="Split-depth arcade cover preview. Pointer or arrow keys change parallax."></canvas>
+            <div class="depth-controls">
+              <label>Bar direction<select data-depth-axis><option value="vertical">Vertical</option><option value="horizontal">Horizontal</option></select></label>
+              <label>Quality<select data-depth-quality><option value="auto">Auto</option><option value="full">Full split depth</option><option value="flat">Flat 2D</option></select></label>
+              <label>Occlusion bars<input data-depth-bars type="range" min="2" max="6" step="1" value="2"></label>
+              <label>Bar thickness<input data-depth-thickness type="range" min="4" max="60" step="1" value="22"></label>
+              <label>Local background PNG<input data-depth-background type="file" accept="image/png"></label>
+              <label>Local foreground PNG<input data-depth-foreground type="file" accept="image/png"></label>
+            </div>
+            <p class="docs-paragraph">Use a transparent foreground for the clearest pop-out effect. Each PNG may be up to 4 MiB and 2048 × 2048 pixels. Images stay in your browser.</p>
+            <div class="depth-actions"><button data-depth-play class="btn btn-primary" type="button" aria-pressed="false">Animate preview</button><button data-depth-download class="btn btn-secondary" type="button">Download still PNG</button><button data-depth-reset class="btn btn-secondary" type="button">Reset demo</button></div>
+            <p data-depth-metrics></p><p data-depth-status role="status" aria-live="polite"></p>
+          </div>
+          <p class="docs-paragraph">Auto uses a static flat preview for low-power hints or sustained slow frame cadence. Full mode keeps the layered effect; Flat 2D removes the bars and motion. Reduced-motion settings pause animation. Downloads pause the preview and export its current 800 × 450 frame.</p>
+          <pre class="code-pre"><code>// Load the SDK, then assets/js/split-depth-3d.js.
+const renderer = new ArcadeVerse.effects.SplitDepthRenderer(canvas);
+renderer.configure({ axis: 'horizontal', count: 2, quality: 'full' });
+renderer.start(); // Stop on your game lifecycle; dispose when unmounting.</code></pre>
+          <p class="docs-paragraph"><code>renderSplitDepthFrame(ctx, options, layers)</code> supports a caller-owned 2D context. <code>setLayerImage</code> takes ownership of an ImageBitmap and closes it when replaced or disposed. The studio cleans up frames, images, listeners and download URLs on normal exit; cached page transitions can resume.</p>
+        </section>
+
         <section class="docs-section" id="inverse-kinematics-lab">
           <span class="docs-section-tag">04 / Platform Subsystems</span><h2 class="docs-section-title">Inverse Kinematics Lab</h2>
           <p class="docs-paragraph">Build anchored mechanical arms, articulated limbs and multi-tentacle poses with the bounded FABRIK point solver. Each call makes at most five passes and reports its remaining target error.</p>
@@ -1544,6 +1571,7 @@ const joints = chain.getPoints(); // independent snapshot for your renderer</cod
   <script src="assets/js/arcade-audio.js"></script>
   <script src="assets/js/arcadeverse-sdk.js"></script>
   <script src="assets/js/inverse-kinematics-physics.js"></script>
+  <script src="assets/js/split-depth-3d.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // Copy code snippet buttons
