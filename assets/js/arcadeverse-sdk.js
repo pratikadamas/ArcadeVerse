@@ -24,6 +24,24 @@
   "use strict";
 
   // ========================================================
+  // LOCALSTORAGE VOLUME & MUTE CROSS-IFRAME SYNCHRONIZER (#697)
+  // Ensures av_master_volume & av_sound_muted persist and propagate across iframes
+  // ========================================================
+  try {
+    if (typeof window !== "undefined") {
+      window.addEventListener("storage", function (e) {
+        if (e.key === "av_master_volume" || e.key === "av_sound_muted" || e.key === "arcadeverse_audio_settings") {
+          var isMuted = localStorage.getItem("av_sound_muted") === "true";
+          var vol = parseFloat(localStorage.getItem("av_master_volume"));
+          if (!isNaN(vol)) currentAudioConfig.volume = Math.max(0, Math.min(1, vol));
+          currentAudioConfig.muted = isMuted;
+          executeHandlers(audioConfigHandlers, currentAudioConfig);
+        }
+      });
+    }
+  } catch (_) {}
+
+  // ========================================================
   // IN-IFRAME STORAGE NAMESPACE PROXY SUBSYSTEM (#493)
   // ========================================================
   var detectedGameId = (function () {
@@ -317,11 +335,33 @@
   var speedChangeHandlers = [];
   var currentGameSpeed = 1.0;
 
-  // Cryptographic Session Handshake Subsystem (Issue #489)
+  // Cryptographic Session Handshake Subsystem (Issue #489, #886)
   var sessionToken = null;
   var handshakeComplete = false;
   var handshakePendingCallbacks = [];
-  var parentOrigin = "*";
+
+  /**
+   * Determine trusted default parent origin based on window.location.origin or document.referrer
+   * Strictly avoids default wildcard '*' fallback to prevent token leaks (#886)
+   */
+  function resolveInitialParentOrigin() {
+    try {
+      if (typeof window !== "undefined" && window.location && window.location.origin && window.location.origin !== "null") {
+        return window.location.origin;
+      }
+    } catch (_) {}
+    try {
+      if (typeof document !== "undefined" && document.referrer) {
+        var refUrl = new URL(document.referrer);
+        if (refUrl.origin && refUrl.origin !== "null") {
+          return refUrl.origin;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  var parentOrigin = resolveInitialParentOrigin();
   var securityTelemetry = {
     messagesReceived: 0,
     messagesValidated: 0,
@@ -331,17 +371,37 @@
   };
 
   /**
-   * Safe origin comparator for sandboxed iframes & cross-origin verification
-   * Allows parent origin matching while tolerating file:// or null origins in local dev
+   * Safe origin comparator for sandboxed iframes & cross-origin verification (#886)
+   * Validates exact match with window.location.origin, document.referrer, or explicit allowlisted origins
    */
   function isTrustedParentOrigin(origin) {
-    if (!origin || origin === "null") return true;
+    if (!origin || origin === "null") {
+      // Tolerate file: or local direct execution
+      return true;
+    }
+
     try {
       if (window.location && window.location.origin && window.location.origin !== "null") {
-        return origin === window.location.origin;
+        if (origin === window.location.origin) return true;
       }
     } catch (_) {}
-    return true;
+
+    try {
+      if (document.referrer) {
+        var ref = new URL(document.referrer);
+        if (ref.origin === origin) return true;
+      }
+    } catch (_) {}
+
+    // Allow known local development hosts
+    if (origin.indexOf("http://localhost:") === 0 ||
+        origin.indexOf("http://127.0.0.1:") === 0 ||
+        origin === "http://localhost" ||
+        origin === "http://127.0.0.1") {
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -367,7 +427,7 @@
   }
 
   /**
-   * Internal secure dispatch to parent with cryptographic session authentication
+   * Internal secure dispatch to parent with cryptographic session authentication (#886)
    */
   function securePostToParent(messageType, payload) {
     if (!window.parent || window.parent === window) return;
@@ -379,11 +439,18 @@
       protocolVersion: "2.0.0"
     });
 
-    var target = (parentOrigin && parentOrigin !== "null" && parentOrigin !== "*") ? parentOrigin : "*";
+    var target = parentOrigin || resolveInitialParentOrigin();
+    if (!target || target === "null") {
+      // In standalone / unhosted local file testing fallback
+      target = "*";
+    }
+
     try {
       window.parent.postMessage(message, target);
+      securityTelemetry.messagesValidated++;
     } catch (err) {
       console.warn("[ArcadeVerse SDK] Secure postMessage failed:", err);
+      securityTelemetry.messagesRejected++;
     }
   }
 
@@ -458,8 +525,11 @@
         var rawMuted = localStorage.getItem("av_sound_muted");
         if (rawMuted === null) rawMuted = localStorage.getItem("arcadeverse_muted");
         if (rawMuted !== null) muted = rawMuted === "true";
-        var rawVol = parseFloat(localStorage.getItem("av_master_volume") || localStorage.getItem("arcadeverse_master_volume"));
-        if (!isNaN(rawVol)) volume = Math.max(0, Math.min(1, rawVol));
+        var rawVolStr = localStorage.getItem("av_master_volume") || localStorage.getItem("arcadeverse_master_volume");
+        if (rawVolStr !== null) {
+          var rawVol = parseFloat(rawVolStr);
+          if (Number.isFinite(rawVol)) volume = Math.max(0, Math.min(1, rawVol));
+        }
       }
       if (typeof window !== "undefined" && window.location && window.location.search) {
         var p = new URLSearchParams(window.location.search);
@@ -495,7 +565,12 @@
       if (typeof data.sessionToken === "string" && data.sessionToken.trim().length > 0) {
         sessionToken = data.sessionToken.trim();
         handshakeComplete = true;
-        parentOrigin = event.origin || "*";
+        // Latch verified handshake origin rather than permissive wildcard (#886)
+        if (event.origin && event.origin !== "null" && event.origin !== "*") {
+          parentOrigin = event.origin;
+        } else {
+          parentOrigin = resolveInitialParentOrigin();
+        }
 
         // Reply with immediate ACK handshake confirmation
         securePostToParent("AV_SESSION_ACK", {
@@ -980,13 +1055,17 @@
           isMuted = pm === "1" || pm === "true";
         }
 
-        var masterVol = parseFloat(localStorage.getItem("av_master_volume") || localStorage.getItem("arcadeverse_master_volume"));
+        var masterVolStr = localStorage.getItem("av_master_volume") || localStorage.getItem("arcadeverse_master_volume");
+        var masterVol = NaN;
+        if (masterVolStr !== null) {
+          masterVol = parseFloat(masterVolStr);
+        }
         if (params && params.has("av_vol")) {
           var pv = parseFloat(params.get("av_vol"));
           if (!isNaN(pv)) masterVol = pv;
         }
 
-        if (!isNaN(masterVol)) currentAudioConfig.volume = Math.max(0, Math.min(1, masterVol));
+        if (Number.isFinite(masterVol)) currentAudioConfig.volume = Math.max(0, Math.min(1, masterVol));
         currentAudioConfig.muted = isMuted;
       } catch (_) {}
 
@@ -1584,7 +1663,8 @@
       // Query initial configuration from parent window
       try {
         if (window.parent && window.parent !== window) {
-          window.parent.postMessage({ type: 'ARCADEVERSE_REQUEST_AUDIO_CONFIG' }, '*');
+          var audioReqTarget = parentOrigin || resolveInitialParentOrigin() || "*";
+          window.parent.postMessage({ type: 'ARCADEVERSE_REQUEST_AUDIO_CONFIG' }, audioReqTarget);
         }
       } catch (_e) {}
 
@@ -1727,13 +1807,26 @@
     },
 
     /**
-     * Expose or connect ArcadeAudio sound synthesizer to SDK instance (#510)
+     * Expose or connect ArcadeAudio sound synthesizer to SDK instance (#510, #694)
      */
     getSoundSynthesizer: function () {
       if (typeof window !== 'undefined' && window.ArcadeAudio) {
         return window.ArcadeAudio;
       }
       return null;
+    },
+
+    audio: {
+      playBGM: function (trackName) {
+        if (typeof window !== 'undefined' && window.ArcadeAudio && typeof window.ArcadeAudio.playBGM === 'function') {
+          window.ArcadeAudio.playBGM(trackName);
+        }
+      },
+      stopBGM: function () {
+        if (typeof window !== 'undefined' && window.ArcadeAudio && typeof window.ArcadeAudio.stopBGM === 'function') {
+          window.ArcadeAudio.stopBGM();
+        }
+      }
     },
 
     // ========================================================
@@ -2485,6 +2578,82 @@
        */
       filterShake: function (shakeIntensity) {
         return this.prefersReducedMotion() ? 0 : (Number(shakeIntensity) || 0);
+      },
+
+      /**
+       * Emits an auditory spatial cue for 2D entities (coins, hazards, portals, beacons)
+       * to guide blind and visually impaired players (#1101).
+       * @param {number} x - Horizontal position
+       * @param {number} y - Vertical position
+       * @param {string} type - Entity type ('coin', 'hazard', 'beacon', 'wall', 'portal')
+       * @param {Object} [options] - Custom sound overrides
+       * @returns {Object|null}
+       */
+      sonifyEntity: function (x, y, type, options) {
+        if (typeof window !== "undefined" && window.ArcadeAudioBeacon) {
+          return window.ArcadeAudioBeacon.sonifyEntity(x, y, type, options);
+        }
+        try {
+          if (typeof window !== "undefined" && window.parent && window.parent !== window) {
+            window.parent.postMessage({
+              type: "ARCADEVERSE_A11Y_SONIFY",
+              x: Number(x) || 0,
+              y: Number(y) || 0,
+              entityType: String(type || "beacon"),
+              options: options || {}
+            }, "*");
+          }
+        } catch (_) {}
+        return null;
+      },
+
+      /**
+       * Updates the player's 2D position for spatial audio beacon and proximity hazard radar.
+       * @param {number} x - Player X coordinate
+       * @param {number} y - Player Y coordinate
+       * @param {number} [w] - Viewport/Canvas width
+       * @param {number} [h] - Viewport/Canvas height
+       */
+      updatePlayerPosition: function (x, y, w, h) {
+        if (typeof window !== "undefined" && window.ArcadeAudioBeacon) {
+          return window.ArcadeAudioBeacon.updatePlayerPosition(x, y, w, h);
+        }
+        try {
+          if (typeof window !== "undefined" && window.parent && window.parent !== window) {
+            window.parent.postMessage({
+              type: "ARCADEVERSE_A11Y_PLAYER_POS",
+              x: Number(x) || 0,
+              y: Number(y) || 0,
+              width: Number(w) || 800,
+              height: Number(h) || 600
+            }, "*");
+          }
+        } catch (_) {}
+      },
+
+      /**
+       * Checks whether spatial audio beacon sonification is enabled.
+       * @returns {boolean}
+       */
+      isAudioBeaconEnabled: function () {
+        if (typeof window !== "undefined") {
+          if (window.ArcadeAudioBeacon) return window.ArcadeAudioBeacon.isEnabled();
+          try {
+            return localStorage.getItem("arcadeverse_a11y_audio_beacon") === "true";
+          } catch (_) {}
+        }
+        return false;
+      },
+
+      /**
+       * Toggles spatial audio beacon sonification on/off.
+       * @returns {boolean} New enabled state
+       */
+      toggleAudioBeacon: function () {
+        if (typeof window !== "undefined" && window.ArcadeAudioBeacon) {
+          return window.ArcadeAudioBeacon.toggle();
+        }
+        return false;
       }
     },
 
@@ -2500,8 +2669,47 @@
      */
     enableZoomPan: function (canvas, options) {
       return this.camera.enableZoomPan(canvas, options);
+    },
+
+    /**
+     * Volume change subscriber & auto-gain scalar (#735)
+     * @param {Function} callback - Receives volume (0.0 to 1.0)
+     */
+    onVolumeChange: function (callback) {
+      if (typeof callback !== 'function') return;
+      if (!this._volumeCallbacks) this._volumeCallbacks = [];
+      this._volumeCallbacks.push(callback);
+
+      var currentVol = 1.0;
+      try {
+        var saved = localStorage.getItem('arcadeverse_master_volume');
+        if (saved !== null) {
+          var p = parseFloat(saved);
+          if (!isNaN(p)) currentVol = p;
+        }
+      } catch (_) {}
+      callback(currentVol);
     }
   };
+
+  // Wire message handler for ARCADEVERSE_SET_VOLUME (#735)
+  if (typeof window !== "undefined") {
+    window.addEventListener("message", function (event) {
+      if (event.data && event.data.type === "ARCADEVERSE_SET_VOLUME") {
+        var vol = Number(event.data.volume);
+        if (!isNaN(vol)) {
+          if (sdkInstance.audio && typeof sdkInstance.audio.setMasterVolume === "function") {
+            sdkInstance.audio.setMasterVolume(vol);
+          }
+          if (sdkInstance._volumeCallbacks) {
+            sdkInstance._volumeCallbacks.forEach(function (cb) {
+              try { cb(vol); } catch (_) {}
+            });
+          }
+        }
+      }
+    });
+  }
 
   if (typeof window !== "undefined") {
     try {

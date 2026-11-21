@@ -105,14 +105,30 @@
   const sound = new SoundSynth();
   const STORAGE_KEY_STREAK = 'arcadeverse_code_breaker_streak';
 
+  // Storage helpers
+  function getStoredStreak() {
+    try {
+      const val = localStorage.getItem(STORAGE_KEY_STREAK);
+      return val ? parseInt(val, 10) || 0 : 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function setStoredStreak(val) {
+    try {
+      localStorage.setItem(STORAGE_KEY_STREAK, String(val));
+    } catch (_) {}
+  }
+
   let currentMode = 'standard'; // 'standard' (4 glyphs, 10 turns) or 'hardcore' (5 glyphs, 8 turns)
   let codeLength = 4;
   let maxTurns = 10;
 
   let secretCode = [];
-  let currentGuess = [];
+  let currentGuess = [null, null, null, null];
   let currentTurn = 1;
-  let winStreak = parseInt(localStorage.getItem(STORAGE_KEY_STREAK) || '0', 10);
+  let winStreak = getStoredStreak();
   let isGameOver = false;
 
   // --- INIT GAME ---
@@ -122,7 +138,7 @@
     maxTurns = mode === 'standard' ? 10 : 8;
 
     currentTurn = 1;
-    currentGuess = [];
+    currentGuess = new Array(codeLength).fill(null);
     isGameOver = false;
 
     // Generate Secret Sequence
@@ -151,14 +167,14 @@
       slot.className = 'slot';
 
       const val = currentGuess[i];
-      if (val) {
+      if (val !== null && val !== undefined) {
         slot.appendChild(createGlyphElement(val));
       }
 
       slot.addEventListener('click', () => {
         sound.init();
-        if (currentGuess[i]) {
-          currentGuess.splice(i, 1);
+        if (currentGuess[i] !== null && currentGuess[i] !== undefined) {
+          currentGuess[i] = null;
           renderSlots();
         }
       });
@@ -195,7 +211,8 @@
   // --- SUBMIT GUESS & FEEDBACK LOGIC ---
   function submitGuess() {
     if (isGameOver) return;
-    if (currentGuess.length < codeLength) {
+    const filledCount = currentGuess.filter(v => v !== null && v !== undefined).length;
+    if (filledCount < codeLength) {
       sound.playClick(1);
       return;
     }
@@ -246,7 +263,7 @@
     }
 
     currentTurn++;
-    currentGuess = [];
+    currentGuess = new Array(codeLength).fill(null);
     document.getElementById('turn-counter').textContent = `${currentTurn} / ${maxTurns}`;
     renderSlots();
   }
@@ -295,7 +312,7 @@
   function triggerVictory() {
     isGameOver = true;
     winStreak++;
-    localStorage.setItem(STORAGE_KEY_STREAK, winStreak);
+    setStoredStreak(winStreak);
     document.getElementById('streak-val').textContent = winStreak;
     sound.playWin();
 
@@ -305,12 +322,18 @@
     document.getElementById('res-title').textContent = 'ACCESS GRANTED';
     document.getElementById('res-desc').textContent = `Decoded secret cipher in ${currentTurn} attempt${currentTurn > 1 ? 's' : ''}! Current win streak: ${winStreak}.`;
     document.getElementById('result-modal').classList.remove('hidden');
+
+    try {
+      window.dispatchEvent(new CustomEvent('ARCADEVERSE_GAME_SCORE', {
+        detail: { gameId: 'code-breaker', score: (maxTurns - currentTurn + 1) * 200, streak: winStreak }
+      }));
+    } catch (_) {}
   }
 
   function triggerDefeat() {
     isGameOver = true;
     winStreak = 0;
-    localStorage.setItem(STORAGE_KEY_STREAK, 0);
+    setStoredStreak(0);
     document.getElementById('streak-val').textContent = 0;
     sound.playDefeat();
 
@@ -320,6 +343,12 @@
     document.getElementById('res-title').textContent = 'SYSTEM PURGED';
     document.getElementById('res-desc').textContent = `Exhausted ${maxTurns} decryption attempts. The rogue AI locked down the system core.`;
     document.getElementById('result-modal').classList.remove('hidden');
+
+    try {
+      window.dispatchEvent(new CustomEvent('ARCADEVERSE_GAME_OVER', {
+        detail: { gameId: 'code-breaker', score: 0, streak: 0 }
+      }));
+    } catch (_) {}
   }
 
   function renderRevealedCode() {
@@ -333,9 +362,10 @@
     btn.addEventListener('click', () => {
       sound.init();
       if (isGameOver) return;
-      if (currentGuess.length < codeLength) {
+      const firstEmptyIndex = currentGuess.findIndex(v => v === null || v === undefined);
+      if (firstEmptyIndex !== -1 && firstEmptyIndex < codeLength) {
         const id = parseInt(btn.dataset.id, 10);
-        currentGuess.push(id);
+        currentGuess[firstEmptyIndex] = id;
         sound.playClick(id);
         renderSlots();
       }
@@ -344,7 +374,7 @@
 
   document.getElementById('btn-clear').addEventListener('click', () => {
     sound.init();
-    currentGuess = [];
+    currentGuess = new Array(codeLength).fill(null);
     renderSlots();
   });
 
@@ -372,6 +402,12 @@
     sound.enabled = !sound.enabled;
     document.getElementById('sound-on').classList.toggle('hidden', !sound.enabled);
     document.getElementById('sound-off').classList.toggle('hidden', sound.enabled);
+  });
+
+  window.addEventListener('ARCADEVERSE_TEARDOWN', () => {
+    if (sound.ctx && sound.ctx.state !== 'closed') {
+      try { sound.ctx.close(); } catch (_) {}
+    }
   });
 
   // Launch initial game
