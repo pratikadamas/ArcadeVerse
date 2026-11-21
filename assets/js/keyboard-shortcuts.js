@@ -110,6 +110,10 @@
                   <span>Cycle Game Velocity (Slow-Mo / Turbo)</span>
                   <div class="shortcut-keys"><kbd>[</kbd> / <kbd>]</kbd></div>
                 </div>
+                <div class="shortcut-row">
+                  <span>Spatial Audio Beacon (Blind A11y)</span>
+                  <div class="shortcut-keys"><kbd>Alt</kbd>+<kbd>B</kbd></div>
+                </div>
               </div>
             </div>
           </div>
