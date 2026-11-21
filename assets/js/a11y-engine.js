@@ -47,6 +47,7 @@
       highContrast: false,
       largeText: false,
       focusHighlight: false,
+      audioBeacon: false,
       defaultGameSpeed: 1.0
     },
     lastFocusedElement: null,
@@ -91,6 +92,10 @@
             Object.assign(this.prefs, saved);
           }
         }
+        const beaconStored = localStorage.getItem('arcadeverse_a11y_audio_beacon');
+        if (beaconStored !== null) {
+          this.prefs.audioBeacon = beaconStored === 'true';
+        }
       } catch (_) {}
     },
 
@@ -106,6 +111,10 @@
       root.classList.toggle('a11y-high-contrast', Boolean(this.prefs.highContrast));
       root.classList.toggle('a11y-large-text', Boolean(this.prefs.largeText));
       root.classList.toggle('a11y-focus-highlight', Boolean(this.prefs.focusHighlight));
+      root.classList.toggle('a11y-audio-beacon-active', Boolean(this.prefs.audioBeacon));
+      if (window.ArcadeAudioBeacon && typeof window.ArcadeAudioBeacon.setEnabled === 'function') {
+        window.ArcadeAudioBeacon.setEnabled(this.prefs.audioBeacon, true);
+      }
       window.dispatchEvent(new CustomEvent('arcadeverse:a11y-motion-changed', { detail: { reducedMotion: this.prefs.reducedMotion } }));
     },
 
@@ -180,6 +189,13 @@
               </div>
               <input type="checkbox" id="a11y-opt-focus" class="a11y-checkbox" ${this.prefs.focusHighlight ? 'checked' : ''}>
             </label>
+            <label class="a11y-toggle-row" for="a11y-opt-beacon">
+              <div>
+                <strong class="a11y-toggle-title">Spatial Audio Beacon (Alt + B)</strong>
+                <span class="a11y-toggle-sub">Stereo binaural sonification &amp; proximity radar for blind players</span>
+              </div>
+              <input type="checkbox" id="a11y-opt-beacon" class="a11y-checkbox" ${this.prefs.audioBeacon ? 'checked' : ''}>
+            </label>
             <div class="a11y-toggle-row a11y-select-row">
               <div>
                 <strong class="a11y-toggle-title">Default Game Velocity</strong>
@@ -238,6 +254,13 @@
           this.prefs.focusHighlight = e.target.checked;
           this.savePrefs();
           this.applyPrefs();
+        } else if (e.target.id === 'a11y-opt-beacon') {
+          this.prefs.audioBeacon = e.target.checked;
+          this.savePrefs();
+          this.applyPrefs();
+          if (window.ArcadeAudioBeacon && typeof window.ArcadeAudioBeacon.setEnabled === 'function') {
+            window.ArcadeAudioBeacon.setEnabled(this.prefs.audioBeacon);
+          }
         } else if (e.target.id === 'a11y-opt-speed') {
           const spd = parseFloat(e.target.value);
           this.prefs.defaultGameSpeed = !isNaN(spd) ? spd : 1.0;
@@ -245,6 +268,16 @@
           if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.setSpeed === 'function') {
             window.GameSpeedRegulator.setSpeed(this.prefs.defaultGameSpeed);
           }
+        }
+      });
+
+      // Synchronize with external keyboard shortcut (Alt + B) toggle
+      window.addEventListener('arcadeverse:a11y-audio-beacon-changed', (e) => {
+        if (e.detail && typeof e.detail.enabled === 'boolean') {
+          this.prefs.audioBeacon = e.detail.enabled;
+          this.savePrefs();
+          const cb = document.getElementById('a11y-opt-beacon');
+          if (cb) cb.checked = this.prefs.audioBeacon;
         }
       });
 
@@ -301,10 +334,14 @@
         highContrast: false,
         largeText: false,
         focusHighlight: false,
+        audioBeacon: false,
         defaultGameSpeed: 1.0
       };
       this.savePrefs();
       this.applyPrefs();
+      if (window.ArcadeAudioBeacon && typeof window.ArcadeAudioBeacon.setEnabled === 'function') {
+        window.ArcadeAudioBeacon.setEnabled(false, true);
+      }
       document.querySelectorAll('.a11y-checkbox').forEach(cb => { cb.checked = false; });
       const speedSelect = document.getElementById('a11y-opt-speed');
       if (speedSelect) speedSelect.value = '1.0';

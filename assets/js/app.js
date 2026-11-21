@@ -2850,6 +2850,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 100);
 
     cancelPlayTimer();
+    if (window.ArcadeAudioBeacon && typeof window.ArcadeAudioBeacon.stopRadar === 'function') {
+      window.ArcadeAudioBeacon.stopRadar();
+    }
     document.body.style.overflow = "";
     document.body.style.overscrollBehavior = "";
     if (gameIframe) gameIframe.style.touchAction = "";
