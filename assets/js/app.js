@@ -45,6 +45,43 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalFavBtn = document.getElementById("modal-fav-btn");
   const modalSoundBtn = document.getElementById("modal-sound-btn");
 
+  // Safe Storage Fallback Engine (#889)
+  // Provides memory storage resilience when third-party cookies or private browsing throw SecurityError
+  const memoryStorage = new Map();
+
+  function safeGetStorage(key, fallback = null) {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        const val = window.localStorage.getItem(key);
+        return val !== null ? val : fallback;
+      }
+    } catch (_) {}
+    return memoryStorage.has(key) ? memoryStorage.get(key) : fallback;
+  }
+
+  function safeSetStorage(key, val) {
+    try {
+      if (window.ArcadeStorageResilience && typeof window.ArcadeStorageResilience.safeSetItem === "function") {
+        return window.ArcadeStorageResilience.safeSetItem(key, String(val));
+      }
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.setItem(key, String(val));
+        return true;
+      }
+    } catch (_) {}
+    memoryStorage.set(key, String(val));
+    return true;
+  }
+
+  function safeRemoveStorage(key) {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.removeItem(key);
+      }
+    } catch (_) {}
+    memoryStorage.delete(key);
+  }
+
   let currentCategory = "all";
   let currentDurationFacet = "all";
   let currentControlsFacet = "all";
@@ -57,18 +94,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const CATALOG_SORT_STORAGE_KEY = "arcadeverse_catalog_sort";
   const CATALOG_VIEW_STORAGE_KEY = "arcadeverse_catalog_view";
   let currentCatalogView = "grid";
-  try {
-    const savedView = localStorage.getItem(CATALOG_VIEW_STORAGE_KEY);
-    if (savedView === "list" || savedView === "grid" || savedView === "floor") {
-      currentCatalogView = savedView;
-    }
-  } catch (_) {}
-  try {
-    const savedSort = localStorage.getItem(CATALOG_SORT_STORAGE_KEY);
-    if (savedSort && sortSelect && Array.from(sortSelect.options).some((o) => o.value === savedSort)) {
-      currentSort = savedSort;
-    }
-  } catch (_) {}
+
+  const savedView = safeGetStorage(CATALOG_VIEW_STORAGE_KEY);
+  if (savedView === "list" || savedView === "grid" || savedView === "floor") {
+    currentCatalogView = savedView;
+  }
+
+  const savedSort = safeGetStorage(CATALOG_SORT_STORAGE_KEY);
+  if (savedSort && sortSelect && Array.from(sortSelect.options).some((o) => o.value === savedSort)) {
+    currentSort = savedSort;
+  }
   let lastFocusedElement = null;
 
   // Persistent screen reader live region announcer (#702)
@@ -123,7 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let activeKeybindings = Object.assign({}, DEFAULT_KEYBINDINGS);
 
   try {
-    const savedBindings = localStorage.getItem(KEYBINDINGS_STORAGE_KEY);
+    const savedBindings = safeGetStorage(KEYBINDINGS_STORAGE_KEY, null);
     if (savedBindings) {
       activeKeybindings = Object.assign({}, DEFAULT_KEYBINDINGS, JSON.parse(savedBindings));
     }
@@ -223,18 +258,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (resetControlsBtn) {
       resetControlsBtn.addEventListener("click", () => {
         activeKeybindings = Object.assign({}, DEFAULT_KEYBINDINGS);
-        try {
-          localStorage.removeItem(KEYBINDINGS_STORAGE_KEY);
-        } catch (_) { }
+        safeRemoveStorage(KEYBINDINGS_STORAGE_KEY);
         cancelRebinding();
       });
     }
 
     if (saveControlsBtn) {
       saveControlsBtn.addEventListener("click", () => {
-        try {
-          localStorage.setItem(KEYBINDINGS_STORAGE_KEY, JSON.stringify(activeKeybindings));
-        } catch (_) { }
+        safeSetStorage(KEYBINDINGS_STORAGE_KEY, JSON.stringify(activeKeybindings));
         cancelRebinding();
         if (typeof controlsDialog.close === "function") controlsDialog.close();
         else controlsDialog.removeAttribute("open");
@@ -664,8 +695,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Migrate legacy favorite storage keys to primary av_favorites key if needed
   try {
-    if (!localStorage.getItem(FAVORITES_STORAGE_KEY)) {
-      const legacy = localStorage.getItem(LEGACY_FAVORITES_STORAGE_KEY) || localStorage.getItem(PREFERENCES_FAVORITES_KEY);
+    if (!safeGetStorage(FAVORITES_STORAGE_KEY, null)) {
+      const legacy = safeGetStorage(LEGACY_FAVORITES_STORAGE_KEY, null) || safeGetStorage(PREFERENCES_FAVORITES_KEY, null);
       if (legacy) {
         ArcadeStorageResilience.safeSetItem(FAVORITES_STORAGE_KEY, legacy);
       }
@@ -674,12 +705,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function getFavorites() {
     try {
-      let raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
+      let raw = safeGetStorage(FAVORITES_STORAGE_KEY, null);
       if (!raw) {
-        raw = localStorage.getItem(LEGACY_FAVORITES_STORAGE_KEY);
+        raw = safeGetStorage(LEGACY_FAVORITES_STORAGE_KEY, null);
       }
       if (!raw) {
-        raw = localStorage.getItem(PREFERENCES_FAVORITES_KEY);
+        raw = safeGetStorage(PREFERENCES_FAVORITES_KEY, null);
       }
       const parsed = raw ? JSON.parse(raw) : [];
       return Array.isArray(parsed) ? new Set(parsed) : new Set();
@@ -716,7 +747,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function getPlayCounts() {
     try {
-      const parsed = JSON.parse(localStorage.getItem(PLAY_COUNTS_STORAGE_KEY) || "{}");
+      const parsed = JSON.parse(safeGetStorage(PLAY_COUNTS_STORAGE_KEY, "{}"));
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
       const counts = {};
       Object.keys(parsed).forEach((id) => {
@@ -2893,7 +2924,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (window.SoundEngine && typeof window.SoundEngine.toggleMute === "function") {
         window.SoundEngine.toggleMute();
       } else {
-        const currentMuted = localStorage.getItem("av_sound_muted") === "true";
+        const currentMuted = safeGetStorage("av_sound_muted", "false") === "true";
         syncAudioPreferences(!currentMuted);
       }
       const audioState = syncAudioPreferences();
@@ -3270,11 +3301,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (typeof announceToScreenReader === "function") {
         if (finalScore > currentSessionHighScore && finalScore > 0) {
           currentSessionHighScore = finalScore;
-          try {
-            if (activeGame) {
-              localStorage.setItem(`av_${activeGame.id}_highScore`, String(finalScore));
-            }
-          } catch (_) { }
+          if (activeGame) {
+            safeSetStorage(`av_${activeGame.id}_highScore`, String(finalScore));
+          }
           announceToScreenReader(`Game over. New high score: ${finalScore} points!`, "assertive");
         } else {
           announceToScreenReader(`Game over. Final score: ${finalScore}.`);
@@ -5434,7 +5463,7 @@ if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.m
 (() => {
   let masterVolume = 1.0;
   try {
-    const saved = localStorage.getItem('arcadeverse_master_volume');
+    const saved = safeGetStorage('arcadeverse_master_volume', null);
     if (saved !== null) {
       const parsed = parseFloat(saved);
       if (!isNaN(parsed) && parsed >= 0 && parsed <= 1) {
@@ -5445,9 +5474,7 @@ if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.m
 
   function broadcastMasterVolume(vol) {
     masterVolume = vol;
-    try {
-      localStorage.setItem('arcadeverse_master_volume', vol.toString());
-    } catch (_) {}
+    safeSetStorage('arcadeverse_master_volume', vol.toString());
 
     const gameIframe = document.getElementById('game-iframe');
     if (gameIframe && gameIframe.contentWindow) {
