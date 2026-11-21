@@ -22,6 +22,16 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function cleanIssueBody(body) {
+  if (!body) return '';
+  // Strip duplicate check results or internal metadata if present, start directly from ## Problem
+  const problemIndex = body.indexOf('## Problem');
+  if (problemIndex !== -1) {
+    return body.slice(problemIndex).trim();
+  }
+  return body.trim();
+}
+
 async function main() {
   console.log('=== ArcadeVerse Safe Issue Publisher ===');
   console.log(`Repository : ${REPO}`);
@@ -90,7 +100,7 @@ async function main() {
         },
         body: JSON.stringify({
           title: issue.title,
-          body: issue.body,
+          body: cleanIssueBody(issue.body),
           labels: issue.labels || ['nsoc26', 'level3', 'feature']
         })
       });
