@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="assets/css/keyboard-shortcuts.css">
   <link rel="stylesheet" href="assets/css/network-detector.css">
   <link rel="stylesheet" href="assets/css/trophy-card.css">
+  <link rel="stylesheet" href="assets/css/inverse-kinematics-lab.css">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -170,6 +171,7 @@
               <li><a href="#slot-reel" class="docs-nav-link"><i data-lucide="dices"></i> Slot Reel Roulette Picker</a></li>
               <li><a href="#playlist-system" class="docs-nav-link"><i data-lucide="list-music"></i> Custom Playlist Engine</a></li>
               <li><a href="#az-jump-bar" class="docs-nav-link"><i data-lucide="arrow-down-a-z"></i> A-Z Catalog Jump Bar</a></li>
+              <li><a href="#inverse-kinematics-lab" class="docs-nav-link"><i data-lucide="git-branch"></i> Inverse Kinematics Lab</a></li>
               <li><a href="#theme-sync" class="docs-nav-link"><i data-lucide="sun-moon"></i> Theme Sync & UI Guidelines</a></li>
               <li><a href="#bug-report-helper" class="docs-nav-link"><i data-lucide="bug"></i> Game Bug Report Diagnostic</a></li>
               <li><a href="#card-flip-manual" class="docs-nav-link"><i data-lucide="layers"></i> 3D Flip Card &amp; Quick Manual</a></li>
@@ -1496,6 +1498,23 @@ function updateCategoryPillCounts() {
           </div>
         </section>
 
+        <section class="docs-section" id="inverse-kinematics-lab">
+          <span class="docs-section-tag">04 / Platform Subsystems</span><h2 class="docs-section-title">Inverse Kinematics Lab</h2>
+          <p class="docs-paragraph">Build anchored mechanical arms, articulated limbs and multi-tentacle poses with the bounded FABRIK point solver. Each call makes at most five passes and reports its remaining target error.</p>
+          <div class="ik-lab" data-ik-lab>
+            <label for="ik-preset">Rig preset</label><select id="ik-preset"><option value="arm">Mechanical arm</option><option value="limb">Constrained limb</option><option value="tentacles">Three tentacles</option></select>
+            <canvas width="800" height="420" tabindex="0" role="img" aria-label="Interactive inverse kinematics canvas. Move the pointer or use arrow keys to change the target."></canvas>
+            <p class="docs-paragraph">Move the pointer or drag on touch. Focus the canvas and use arrow keys (Shift for larger steps), or Home to reset the target.</p>
+            <p data-ik-reading></p><p data-ik-status role="status" aria-live="polite"></p>
+          </div>
+          <p class="docs-paragraph">Load the SDK before <code>assets/js/inverse-kinematics-physics.js</code>. Joint count includes the fixed root. Angles are radians relative to the parent link; the first link is relative to the root heading. Limits default to the full circle. A target inside total reach can still be blocked by angular limits; inspect <code>converged</code> and <code>error</code>.</p>
+          <pre class="code-pre"><code>const chain = ArcadeVerse.physics.createIKChain(8, 20);
+chain.setRoot({ x: 100, y: 150 });
+const result = chain.solve({ x: 180, y: 200 }, { iterations: 5 });
+const joints = chain.getPoints(); // independent snapshot for your renderer</code></pre>
+          <p class="docs-paragraph">Use <code>createIKPreset('arm' | 'limb' | 'tentacles')</code> for ready-made constrained chains. The helper owns no game loop; call solve from your game’s existing lifecycle. The lab draws only after input and bounded settling, and releases listeners and queued frames on page exit. <a href="https://www.andreasaristidou.com/publications/papers/FABRIK.pdf">FABRIK reference</a>.</p>
+        </section>
+
       </article>
       </div> <!-- End .docs-content-pane -->
     </div> <!-- End .docs-viewport-container -->
@@ -1524,6 +1543,7 @@ function updateCategoryPillCounts() {
   <script src="assets/js/network-detector.js"></script>
   <script src="assets/js/arcade-audio.js"></script>
   <script src="assets/js/arcadeverse-sdk.js"></script>
+  <script src="assets/js/inverse-kinematics-physics.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // Copy code snippet buttons
