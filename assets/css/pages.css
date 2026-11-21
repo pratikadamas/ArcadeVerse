@@ -5,8 +5,153 @@
  */
 
 /* ===================================================
-   COMMON PAGE LAYOUT & HERO COMPONENTS
+   CONTRIBUTOR HOVER CARD POPOVER (#688)
    =================================================== */
+
+.contributor-hover-card {
+  position: absolute;
+  z-index: 10000;
+  width: 280px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(0, 243, 255, 0.15);
+  padding: 1rem;
+  backdrop-filter: blur(16px);
+  animation: hoverCardFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto;
+}
+
+@keyframes hoverCardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.hover-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.hover-card-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-primary);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.hover-card-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.hover-card-name {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hover-card-handle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.hover-card-tier-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  margin-top: 0.25rem;
+  display: inline-block;
+  width: fit-content;
+}
+
+.hover-card-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+
+.hover-stat .stat-num {
+  display: block;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--accent-primary);
+}
+
+.hover-stat .stat-lbl {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.hover-card-games {
+  margin-bottom: 0.75rem;
+}
+
+.hover-games-title {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
+
+.hover-games-carousel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.hover-game-chip {
+  font-size: 0.68rem;
+  padding: 0.2rem 0.5rem;
+  background: rgba(0, 243, 255, 0.08);
+  border: 1px solid rgba(0, 243, 255, 0.2);
+  border-radius: 9999px;
+  color: var(--text-secondary);
+}
+
+.hover-card-footer {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 0.6rem;
+  text-align: right;
+}
+
+.hover-github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--accent-primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.hover-github-link:hover {
+  opacity: 0.85;
+}
+
 
 .page-hero {
   padding: 5.5rem 1.5rem 2.5rem;
@@ -3599,7 +3744,6 @@ html.a11y-reduced-motion .btn-export-markdown:hover {
   transform: none !important;
 }
 
-
 /* ===================================================
    CONTRIBUTOR HOVER CARD POPOVER (#716)
    =================================================== */
@@ -3746,4 +3890,114 @@ html.a11y-reduced-motion .btn-export-markdown:hover {
 
 .hover-github-link:hover {
   opacity: 0.85;
+}
+
+/* ===================================================
+   SDK INTERACTIVE SANDBOX PLAYGROUND (#703)
+   =================================================== */
+
+.sdk-sandbox-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin: 1.5rem 0 2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .sdk-sandbox-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sdk-sandbox-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5rem;
+}
+
+.sdk-sandbox-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: #060c18;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: #00f3ff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  padding: 0.75rem;
+  resize: vertical;
+}
+
+.sdk-sandbox-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.sdk-sandbox-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.2s;
+}
+
+.sdk-sandbox-btn.primary {
+  background: var(--accent-primary);
+  color: #080d1c;
+  border-color: var(--accent-primary);
+}
+
+.sdk-sandbox-btn:hover {
+  opacity: 0.9;
+}
+
+.sdk-sandbox-console {
+  height: 180px;
+  overflow-y: auto;
+  background: #060c18;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+}
+
+.sandbox-log-item {
+  margin-bottom: 0.35rem;
+  line-height: 1.4;
+}
+
+.sandbox-log-item.exec {
+  color: #94a3b8;
+}
+
+.sandbox-log-item.event {
+  color: #00f3ff;
+}
+
+.sandbox-log-item.success {
+  color: #10b981;
+}
+
+.sandbox-log-item.error {
+  color: #ef4444;
+}
+
+.sandbox-log-info {
+  color: #64748b;
+  font-style: italic;
+}
 }
