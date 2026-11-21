@@ -16,5 +16,35 @@
     "title": "[Feature/HUD]: Dynamic Vector Glyph Radar & Minimap Projection Engine for Canvas Games",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1192",
     "published_at": "2026-11-21T14:19:19.918Z"
+  },
+  {
+    "number": 1193,
+    "title": "[Feature/Audio]: Custom Chiptune SFX Step-Sequencer & Parameter Preset Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1193",
+    "published_at": "2026-11-21T14:30:18.075Z"
+  },
+  {
+    "number": 1194,
+    "title": "[Feature/VFX]: Pure Vanilla Object-Pooled 2D Particle VFX Emitter Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1194",
+    "published_at": "2026-11-21T14:30:23.621Z"
+  },
+  {
+    "number": 1195,
+    "title": "[Feature/Gameplay]: Ghost Car & Speedrunner Silhouette Delta-Encoded Replay Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1195",
+    "published_at": "2026-11-21T14:30:29.112Z"
+  },
+  {
+    "number": 1196,
+    "title": "[Feature/Canvas]: Procedural Pixel-Art Parallax Starfield & Space Nebula Canvas Generator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1196",
+    "published_at": "2026-11-21T14:30:34.646Z"
+  },
+  {
+    "number": 1197,
+    "title": "[Feature/A11y]: Accessibility Input Macro Sequence Recorder & Assisted Playback Bot",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1197",
+    "published_at": "2026-11-21T14:30:40.038Z"
   }
 ]
