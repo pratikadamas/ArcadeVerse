@@ -697,6 +697,30 @@ soundNode.connect(masterGain);</code></pre>
                 </div>
               </div>
 
+              <!-- Zero-Dependency ArcadeFX Particle & Screen Shake Engine (#899) -->
+              <div class="docs-callout note" style="margin-top: 24px;">
+                <div class="docs-callout-icon"><i data-lucide="sparkles"></i></div>
+                <div>
+                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Zero-Dependency ArcadeFX Particle & Camera Trauma Engine (#899)</h4>
+                  <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
+                    Game contributors can trigger high-performance object-pooled particle explosions, floating combat text, and screen shake trauma at 60 FPS without external libraries:
+                  </p>
+                  <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
+                    <li><strong>Pre-Allocated Object Pools:</strong> Zero runtime memory allocations or GC stalls during explosive action sequences.</li>
+                    <li><strong>Accessibility-First Reduced Motion:</strong> Automatically integrates with <code>prefers-reduced-motion</code> and <code>A11yEngine</code> to suppress camera trauma and scale back particle velocity.</li>
+                    <li><strong>Dynamic Trauma Falloff:</strong> Uses polynomial camera decay for cinematic, punchy screen shake feedback.</li>
+                  </ul>
+                  <h5 style="color: var(--text-primary); margin-top: 14px; margin-bottom: 6px; font-size: 0.95rem;">Usage in Game Projects</h5>
+                  <div class="code-block-wrapper" style="margin-top: 10px; margin-bottom: 10px;">
+                    <pre class="code-pre"><code class="language-javascript">// Spawn particle burst and camera trauma
+ArcadeFX.explode(x, y, { count: 32, shake: 0.5 });
+// Render pooled particles to game canvas
+ArcadeFX.update();
+ArcadeFX.render(ctx);</code></pre>
+                  </div>
+                </div>
+              </div>
+
               <h5 style="color: var(--text-primary); margin-top: 16px; margin-bottom: 6px; font-size: 0.95rem;">Implementation Guide for Game Contributors</h5>
               <p style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 10px;">
                 When developing WebGL games for ArcadeVerse, always bind the context recovery handler. When a mobile or laptop GPU sleeps or switches display adapters, the browser triggers a synthetic context loss. With the ArcadeVerse lifecycle bridge, your game avoids black screens:

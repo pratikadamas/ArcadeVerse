@@ -78,9 +78,31 @@
   };
 
   /**
+   * Helper to inspect reduced motion preference from CSS media query or A11yEngine
+   * @returns {boolean}
+   */
+  function isReducedMotionActive() {
+    try {
+      if (typeof window !== 'undefined' && window.ArcadeVerseA11y && typeof window.ArcadeVerseA11y.isReducedMotion === 'function') {
+        return window.ArcadeVerseA11y.isReducedMotion();
+      }
+      if (typeof window !== 'undefined' && window.A11yEngine && window.A11yEngine.prefs && window.A11yEngine.prefs.reducedMotion) {
+        return true;
+      }
+      if (typeof window !== 'undefined' && window.matchMedia) {
+        return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  /**
    * Acquire an inactive particle from the memory pool
    */
   function obtainParticle() {
+    if (isReducedMotionActive() && activeParticles.length > 25) {
+      return null; // Cap particles when reduced motion is preferred
+    }
     for (var p = 0; p < MAX_PARTICLES; p++) {
       if (!particlePool[p].active) {
         particlePool[p].active = true;
@@ -93,10 +115,18 @@
 
   /**
    * Add camera trauma (shakes dynamically based on trauma^2)
+   * Suppresses or scales down trauma when reduced motion is requested
    * @param {number} amount - Trauma value between 0.0 and 1.0
    * @param {number} [maxDisplacement=24]
    */
   function addTrauma(amount, maxDisplacement) {
+    if (isReducedMotionActive()) {
+      cameraShake.trauma = 0;
+      cameraShake.offsetX = 0;
+      cameraShake.offsetY = 0;
+      cameraShake.angle = 0;
+      return;
+    }
     cameraShake.trauma = Math.min(1.0, cameraShake.trauma + amount);
     if (typeof maxDisplacement === 'number') {
       cameraShake.maxOffset = maxDisplacement;
@@ -154,8 +184,14 @@
   function explode(x, y, options) {
     var opts = options || {};
     var count = opts.count || 24;
+    if (isReducedMotionActive()) {
+      count = Math.min(count, 6); // Drastically scale down explosive particle bursts
+    }
     var colors = opts.colors || ['#ff0055', '#ff9900', '#ffff00', '#00f5ff'];
     var speed = opts.speed || 6;
+    if (isReducedMotionActive()) {
+      speed = speed * 0.4;
+    }
     var shape = opts.shape || 'circle';
     var gravity = typeof opts.gravity === 'number' ? opts.gravity : 0.12;
 
@@ -181,7 +217,7 @@
       p.vRot = (Math.random() - 0.5) * 0.2;
     }
 
-    if (opts.shake) {
+    if (opts.shake && !isReducedMotionActive()) {
       addTrauma(opts.shake);
     }
   }
