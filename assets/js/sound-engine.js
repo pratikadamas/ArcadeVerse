@@ -37,19 +37,48 @@
       return this.unlocked || !!(ua && ua.hasBeenActive);
     },
 
+    /**
+     * Resolves or instantiates the global AudioContext safely (#888).
+     * Strictly wraps constructor inside try/catch to protect against strict privacy sandboxes,
+     * restricted iframe permissions, exhausted AudioContext hardware limits, or disabled Web Audio backends.
+     */
     getAudioContext() {
       if (!this.ctx) {
         if (!this.hasUserGesture()) return null;
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (AudioContextClass) {
-          this.ctx = new AudioContextClass();
-          this.ctx.onstatechange = () => this.updateAudioStatus();
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) {
+            this.ctx = new AudioContextClass();
+            this.ctx.onstatechange = () => {
+              try {
+                this.updateAudioStatus();
+              } catch (_) {}
+            };
+          }
+        } catch (err) {
+          console.warn("[SoundEngine] AudioContext creation blocked or unavailable in this environment:", err);
+          this.ctx = null;
+          return null;
         }
       }
       if (this.ctx && this.ctx.state === 'suspended' && this.hasUserGesture()) {
-        this.ctx.resume().catch(() => {});
+        try {
+          this.ctx.resume().catch(() => {});
+        } catch (_) {}
       }
       return this.ctx;
+    },
+
+    /**
+     * Degrades gracefully to silent no-op when Web Audio hardware is inaccessible (#888)
+     */
+    isAudioAvailable() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        return typeof AudioContextClass === "function";
+      } catch (_) {
+        return false;
+      }
     },
 
     loadSettings() {
@@ -300,7 +329,6 @@
       });
       const ctx = this.getAudioContext();
       const done = () => {
-        console.log('AudioContext active');
         this.removeUnlockBanner();
         this.updateAudioStatus();
         this.notifyGameUnlocked();
@@ -309,11 +337,15 @@
         done();
         return;
       }
-      ctx.resume().then(done).catch(() => {
-        this.unlocked = false;
-        this.armUnlockListeners();
-        this.updateAudioStatus();
-      });
+      try {
+        ctx.resume().then(done).catch(() => {
+          this.unlocked = false;
+          this.armUnlockListeners();
+          this.updateAudioStatus();
+        });
+      } catch (_) {
+        done();
+      }
     },
 
     /**
@@ -421,7 +453,7 @@
       if (banner) banner.remove();
     },
 
-    /** Syncs the modal audio indicator: locked (waiting for a gesture), on, or muted */
+    /** Syncs the modal audio indicator: locked (waiting for a gesture), on, muted, or unavailable (#888) */
     updateAudioStatus() {
       const btn = document.getElementById('modal-audio-indicator');
       if (!btn) return;
@@ -430,12 +462,16 @@
       if (!this.enabled) {
         state = 'sound-muted';
         text = 'MUTED';
+      } else if (!this.isAudioAvailable()) {
+        state = 'sound-muted';
+        text = 'AUDIO OFF';
       } else if (!this.ctx || this.ctx.state !== 'running') {
         state = 'sound-locked';
         text = 'AUDIO LOCKED';
       }
       btn.className = `sound-toggle-btn modal-audio-indicator ${state}`;
-      btn.querySelector('.sound-label').textContent = text;
+      const labelEl = btn.querySelector('.sound-label');
+      if (labelEl) labelEl.textContent = text;
       btn.setAttribute('aria-label', `Game audio: ${text.toLowerCase()}. Click to ${this.enabled ? 'mute' : 'unmute'}`);
       btn.title = this.enabled ? 'Mute arcade audio' : 'Unmute arcade audio';
     },
