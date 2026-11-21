@@ -1,0 +1,242 @@
+[
+  {
+    "id": 1,
+    "title": "[Feature/Audio]: Multi-Channel Standard MIDI Binary File Parser & Polyphonic Chiptune Synthesizer",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "audio",
+      "chiptune"
+    ],
+    "body": "#### Duplicate Check Results\n- **Open Issues Checked:** None Found *(Searched: midi parser, standard midi file, smf format, chiptune midi, binary midi, midi synthesizer)*\n- **Closed Issues Checked:** None Found\n- **Open PRs Checked:** None Found\n- **Merged PRs Checked:** None Found\n- **Discussions Checked:** None Found\n- **Roadmap Checked:** None Found\n- **Uniqueness Verdict:** **UNIQUE**\n\n#### Issue Specification\n- **Level:** `level3` (10 points)\n- **Labels:** `nsoc26, level3, feature, audio, chiptune`\n\n## Problem\nGame developers currently have to either write complex procedural oscillator loops in code or omit background music entirely, because external binary audio files (MP3/WAV) are prohibited in game repositories. Standard MIDI files (`.mid`), however, are tiny binary sequence files (often < 5KB) containing note instructions rather than waveforms.\n\n## Architectural Scope & Requirements\n1. **Zero-Dependency SMF Binary Parser (`assets/js/midi-chiptune-player.js`):**\n   - Parses Standard MIDI Files (Format 0 and Format 1) from an `ArrayBuffer` or Base64 string using pure JavaScript `DataView`.\n   - Extracts header chunk (`MThd`), track chunks (`MTrk`), delta times, tempo events, and MIDI messages (Note-On, Note-Off, Program Change, Pitch Bend).\n2. **Polyphonic 4-Channel Oscillator Voice Pool:**\n   - Maps MIDI channels to classic arcade chiptune sound generators: Pulse 1 (square wave with variable duty cycle), Pulse 2, Triangle (bass), and Noise (percussion/snare).\n   - Implements high-precision scheduling via `AudioContext.currentTime` with dynamic voice-stealing to prevent audio clipping.\n3. **Modular ArcadeVerse Integration & Developer API:**\n   - Exposes `ArcadeVerse.audio.loadMidi(base64MidiString)` with `.play()`, `.pause()`, `.stop()`, and `.setVolume(vol)` methods.\n   - Includes a visual BGM playback indicator in the game modal header.\n\n## Acceptance Criteria\n- [ ] Successfully parses SMF Format 0 and Format 1 files without external libraries.\n- [ ] Accurately schedules polyphonic chiptune notes at steady tempo using `AudioContext.currentTime`.\n- [ ] Consumes less than 3% CPU during playback and terminates all active oscillator nodes on modal close."
+  },
+  {
+    "id": 2,
+    "title": "[Feature/Input]: Virtual Multi-Touch Arcade Trackball & Inertial Spinner Physics Controller",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "input",
+      "touch"
+    ],
+    "body": "#### Duplicate Check Results\n- **Open Issues Checked:** None Found *(Searched: virtual trackball, arcade trackball, inertial spinner, momentum spinner, trackball physics)*\n- **Closed Issues Checked:** None Found\n- **Open PRs Checked:** None Found\n- **Merged PRs Checked:** None Found\n- **Discussions Checked:** None Found\n- **Roadmap Checked:** None Found\n- **Uniqueness Verdict:** **UNIQUE**\n\n#### Issue Specification\n- **Level:** `level3` (10 points)\n- **Labels:** `nsoc26, level3, feature, input, touch`\n\n## Problem\nClassic arcade games like *Centipede*, *Missile Command*, *Marble Madness*, and *Arkanoid* rely on physical trackballs and weighted dial spinners. On mobile devices and touchscreens, standard directional virtual D-pads feel unresponsive and clumsy for high-precision rotational steering.\n\n## Architectural Scope & Requirements\n1. **Inertial 2D Trackball & Spinner Component (`assets/js/virtual-trackball.js`):**\n   - Renders an interactive virtual trackball/spinner orb with real-time rolling pseudo-3D grid lines and optical spin dots.\n   - Computes angular momentum, tangential flick velocity, and friction decay based on PointerEvents (`pointerdown`, `pointermove`, `pointerup`).\n2. **Configurable Physics Modes:**\n   - Supports `Trackball` mode (full 2D $(dx, dy)$ displacement vector accumulation) and `Rotary Spinner` mode (1D continuous rotary wheel with optional notch detents).\n3. **Automatic Screen Positioning & Custom Event Dispatch:**\n   - Automatically mounts on touch devices when a game declares `supportsTrackball: true` in its `game.json`.\n   - Dispatches continuous `'arcade-trackball-move'` custom DOM events with delta velocities `(vx, vy, rawX, rawY)`.\n\n## Acceptance Criteria\n- [ ] Smooth 60 FPS inertial spin decay with customizable friction coefficient.\n- [ ] Fully responsive on mobile touchscreens with multi-touch cancellation handling.\n- [ ] Zero memory leaks and clean event listener teardown when exiting the game."
+  },
+  {
+    "id": 3,
+    "title": "[Feature/HUD]: Dynamic Vector Glyph Radar & Minimap Projection Engine for Canvas Games",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "hud",
+      "canvas"
+    ],
+    "body": "#### Duplicate Check Results\n- **Open Issues Checked:** None Found *(Searched: radar minimap, swept radar, minimap projection, directional radar blip, offscreen indicator)*\n- **Closed Issues Checked:** None Found\n- **Open PRs Checked:** None Found\n- **Merged PRs Checked:** None Found\n- **Discussions Checked:** None Found\n- **Roadmap Checked:** None Found\n- **Uniqueness Verdict:** **UNIQUE**\n\n#### Issue Specification\n- **Level:** `level3` (10 points)\n- **Labels:** `nsoc26, level3, feature, hud, canvas`\n\n## Problem\nTop-down space shooters, arena survival games, and maze games frequently leave players disoriented regarding off-screen enemies, power-ups, or checkpoints. Game authors currently have to rebuild custom radar minimaps from scratch for every game.\n\n## Architectural Scope & Requirements\n1. **Modular Vector Radar Engine (`assets/js/radar-minimap.js`):**\n   - A reusable radar overlay class rendering an authentic glowing circular CRT vector radar screen in the corner of the canvas.\n   - Features a sweeping 360-degree radar beam with exponential phosphorescent blip decay.\n2. **Off-Screen Edge-Clamped Target Indicators:**\n   - When tracked targets move outside the radar's inner range, directional chevron blips clamp to the perimeter ring, scaling in opacity inversely with distance.\n3. **Plug-and-Play Entity Registration API:**\n   - Simple API: `radar.registerEntity(id, { getX, getY, type: 'enemy'|'ally'|'goal', color })`.\n   - Handles world coordinate to screen-space affine transformations automatically.\n\n## Acceptance Criteria\n- [ ] Renders circular swept radar and off-screen perimeter indicators in pure Canvas 2D.\n- [ ] Handles 100+ simultaneous tracked entities with under 0.5ms per-frame overhead.\n- [ ] Provides toggleable zoom levels (`0.5x`, `1x`, `2x`) and customizable minimap opacity."
+  },
+  {
+    "id": 4,
+    "title": "[Feature/Audio]: Custom Chiptune SFX Step-Sequencer & Parameter Preset Studio",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "audio",
+      "devtools"
+    ],
+    "body": "#### Duplicate Check Results\n- **Open Issues Checked:** None Found *(Searched: sfx step-sequencer, sfxr, bfxr, sound effect creator, sfx preset studio)*\n- **Closed Issues Checked:** None Found\n- **Open PRs Checked:** None Found\n- **Merged PRs Checked:** None Found\n- **Discussions Checked:** None Found\n- **Roadmap Checked:** None Found\n- **Uniqueness Verdict:** **UNIQUE**\n\n#### Issue Specification\n- **Level:** `level3` (10 points)\n- **Labels:** `nsoc26, level3, feature, audio, devtools`\n\n## Problem\nGame contributors need varied, custom 8-bit sound effects (coin clinks, laser blasts, jump chirps, explosions) but are constrained to a few hardcoded sound triggers in `audio.js` because external audio samples are forbidden.\n\n## Architectural Scope & Requirements\n1. **In-Browser Retro SFX Synthesizer Studio (`assets/js/sfx-studio.js`):**\n   - A standalone developer laboratory accessible via `ideas.html` or developer mode modal.\n   - Provides sliders for Envelope (Attack, Sustain, Decay), Frequency (Base, Minimum, Slide, Delta Slide), Vibrato (Depth, Speed), and Modulation (Duty Cycle, Flanger, Bitcrush).\n2. **Algorithmic One-Click Quick Presets:**\n   - Quick generation buttons for retro archetypes: `Laser`, `Explosion`, `Coin`, `Power-Up`, `Hit/Hurt`, and `Jump`.\n   - Real-time oscilloscope visualization showing the active waveform.\n3. **Zero-Dependency JSON Preset Export & Runtime Playback:**\n   - Exports pure JSON parameter objects that contributors can paste directly into their game code.\n   - Exposes `ArcadeVerse.audio.playSfx(presetJson)` for instantaneous playback in any game.\n\n## Acceptance Criteria\n- [ ] Generates authentic 8-bit sound effects using pure Web Audio API oscillator/gain/biquad nodes.\n- [ ] Instant one-click copy of JSON parameters to clipboard with visual toast feedback.\n- [ ] Verified zero external dependencies and responsive layout across desktop and mobile screens."
+  },
+  {
+    "id": 5,
+    "title": "[Feature/VFX]: Pure Vanilla Object-Pooled 2D Particle VFX Emitter Engine",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "vfx",
+      "performance"
+    ],
+    "body": "#### Duplicate Check Results\n- **Open Issues Checked:** None Found *(Searched: object-pooled particle, particle vfx emitter, arcade particles library, vfx particle sandbox)*\n- **Closed Issues Checked:** None Found\n- **Open PRs Checked:** None Found\n- **Merged PRs Checked:** None Found\n- **Discussions Checked:** None Found\n- **Roadmap Checked:** None Found\n- **Uniqueness Verdict:** **UNIQUE**\n\n#### Issue Specification\n- **Level:** `level3` (10 points)\n- **Labels:** `nsoc26, level3, feature, vfx, performance`\n\n## Problem\nMany arcade games in the catalog generate garbage collection spikes and micro-stutters during intense action sequences because they instantiate and discard hundreds of temporary particle objects `new Particle()` every frame, causing garbage collection frame drops.\n\n## Architectural Scope & Requirements\n1. **Pre-Allocated Object-Pooled Particle Engine (`assets/js/arcade-particles.js`):**\n   - Allocates a fixed buffer pool of 1,000 reusable particle structs upon initialization, recycling dead particles with zero per-frame heap allocations.\n2. **Versatile Preset Emitter Types:**\n   - Includes built-in emitter configurations: `Sparks`, `Fireball`, `Smoke Puff`, `Neon Confetti`, `Shockwave Ring`, and `Pixel Explosion`.\n   - Supports velocity damping, gravity vectors, alpha fading, color gradients, and size interpolation.\n3. **Unified Game API:**\n   - Simple global helper: `ArcadeVerse.vfx.burst(x, y, presetName, { count, color, speed })`.\n   - Auto-bounds rendering to the active game canvas context.\n\n## Acceptance Criteria\n- [ ] Zero allocations during continuous active particle emission (confirmed via memory timeline).\n- [ ] Maintains steady 60 FPS even when simultaneously rendering 500+ active particles.\n- [ ] Automatically halts and recycles all particles if user switches tabs or closes the game modal."
+  },
+  {
+    "id": 6,
+    "title": "[Feature/Gameplay]: Ghost Car & Speedrunner Silhouette Delta-Encoded Replay Engine",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "gameplay",
+      "performance"
+    ],
+    "body": "#### Duplicate Check Results\n- **Open Issues Checked:** None Found *(Searched: ghost car, speedrunner silhouette, delta-encoded ghost, ghost replay engine, time trial ghost)*\n- **Closed Issues Checked:** None Found\n- **Open PRs Checked:** None Found\n- **Merged PRs Checked:** None Found\n- **Discussions Checked:** None Found\n- **Roadmap Checked:** None Found\n- **Uniqueness Verdict:** **UNIQUE**\n\n#### Issue Specification\n- **Level:** `level3` (10 points)\n- **Labels:** `nsoc26, level3, feature, gameplay, performance`\n\n## Problem\nArcade racing, runner, and time-trial games lack a visual benchmark for players to improve their personal bests. Simply showing a static high score number does not provide the dynamic thrill of racing against a visible competitor.\n\n## Architectural Scope & Requirements\n1. **Compact Delta-Encoded Position Recorder (`assets/js/ghost-replay.js`):**\n   - Samples player coordinates `(x, y, angle, frameAction)` at 20 Hz, compressing coordinates into delta-encoded run-length strings stored in `localStorage`.\n2. **Semi-Transparent Ghost Playback Silhouette:**\n   - When restarting a level, loads the player's personal best ghost and renders a pulsing neon semi-transparent silhouette with smooth cubic spline interpolation between keyframes.\n3. **Ghost Split-Time Comparison HUD:**\n   - Real-time split time indicator (+0.42s behind, -0.18s ahead) displaying distance and time delta relative to the ghost in real time.\n\n## Acceptance Criteria\n- [ ] Ghost recording of a 2-minute run compresses to under 15 KB of serialized data.\n- [ ] Smooth 60 FPS ghost playback using hermite/cubic spline interpolation.\n- [ ] Robust handling of incomplete runs, window resizing, and corrupted storage keys."
+  },
+  {
+    "id": 7,
+    "title": "[Feature/Canvas]: Procedural Pixel-Art Parallax Starfield & Space Nebula Canvas Generator",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "canvas",
+      "procedural"
+    ],
+    "body": "#### Duplicate Check Results\n- **Open Issues Checked:** None Found *(Searched: procedural nebula, parallax starfield, space starfield generator, pixel-art nebula, starfield canvas)*\n- **Closed Issues Checked:** None Found\n- **Open PRs Checked:** None Found\n- **Merged PRs Checked:** None Found\n- **Discussions Checked:** None Found\n- **Roadmap Checked:** None Found\n- **Uniqueness Verdict:** **UNIQUE**\n\n#### Issue Specification\n- **Level:** `level3` (10 points)\n- **Labels:** `nsoc26, level3, feature, canvas, procedural`\n\n## Problem\nMultiple space-themed and sci-fi arcade games in the repository currently feature flat, solid black backgrounds or static CSS gradients, missing the rich atmosphere of classic arcade cabinet space backgrounds like *Galaga* or *R-Type*.\n\n## Architectural Scope & Requirements\n1. **Multi-Layer Procedural Starfield (`assets/js/parallax-nebula.js`):**\n   - Generates 3 independent parallax depth layers with varied star densities, twinkling twinkle rates, and retro cross-glint flares.\n   - Reacts smoothly to mouse velocity, player movement, or device gyroscope tilt.\n2. **Procedural Cellular/Perlin Space Nebula Cloud Synthesizer:**\n   - Renders procedural cosmic dust clouds and nebulae using pure 2D Canvas math (Simplex/Perlin gradient noise or value noise matrices) without static image assets.\n3. **Lightweight Standalone Module:**\n   - Can be embedded as a background inside game canvases or mounted behind the arcade hub catalog cards.\n\n## Acceptance Criteria\n- [ ] 100% procedural generation without a single external image or texture file.\n- [ ] Runs at 60 FPS on integrated GPUs with under 2ms draw call execution time.\n- [ ] Respects `prefers-reduced-motion` media queries by freezing parallax scroll."
+  },
+  {
+    "id": 8,
+    "title": "[Feature/A11y]: Accessibility Input Macro Sequence Recorder & Assisted Playback Bot",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "a11y",
+      "input"
+    ],
+    "body": "#### Duplicate Check Results\n- **Open Issues Checked:** None Found *(Searched: input macro, macro sequence recorder, assisted playback bot, accessibility macro, input macro recorder)*\n- **Closed Issues Checked:** None Found\n- **Open PRs Checked:** None Found\n- **Merged PRs Checked:** None Found\n- **Discussions Checked:** None Found\n- **Roadmap Checked:** None Found\n- **Uniqueness Verdict:** **UNIQUE**\n\n#### Issue Specification\n- **Level:** `level3` (10 points)\n- **Labels:** `nsoc26, level3, feature, a11y, input`\n\n## Problem\nFast-paced arcade games requiring rapid button mashing or complex multi-key combinations are inaccessible to players with motor disabilities, arthritis, or repetitive strain injuries.\n\n## Architectural Scope & Requirements\n1. **Assistive Macro Recorder Studio (`assets/js/input-macro-recorder.js`):**\n   - An accessible drawer in the game modal allowing players to record a sequence of keypresses with precise timing intervals or custom repeat loops.\n2. **One-Key Playback Trigger Mapping:**\n   - Allows binding the recorded macro sequence to any single accessible key (e.g. `Space`, `Enter`, or an assistive switch controller).\n3. **Virtual Event Dispatcher with Sanitization:**\n   - Dispatches synthetic `KeyboardEvent` instances to the active game frame while enforcing maximum rate caps (e.g. max 20 inputs/sec) to avoid browser event queue overload.\n\n## Acceptance Criteria\n- [ ] Accurately records and reproduces multi-step key sequences with millisecond precision.\n- [ ] Fully navigable via keyboard and screen readers with ARIA live announcements.\n- [ ] Safely persists custom macro profiles per game in `localStorage`."
+  },
+  {
+    "id": 9,
+    "title": "[Feature/Audio]: Spectral Flux Onset Beat-Detector & Canvas Pulse Synchronizer",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "audio",
+      "canvas"
+    ],
+    "body": "#### Duplicate Check Results\n- **Open Issues Checked:** None Found *(Searched: spectral flux onset, beat-detector, rhythm pulse synchronizer, canvas pulse beat, audio beat detection)*\n- **Closed Issues Checked:** None Found\n- **Open PRs Checked:** None Found\n- **Merged PRs Checked:** None Found\n- **Discussions Checked:** None Found\n- **Roadmap Checked:** None Found\n- **Uniqueness Verdict:** **UNIQUE**\n\n#### Issue Specification\n- **Level:** `level3` (10 points)\n- **Labels:** `nsoc26, level3, feature, audio, canvas`\n\n## Problem\nMusic and rhythmic game mechanics in ArcadeVerse are currently decoupled from real-time audio playback, relying on rigid static timers (`setInterval`) that drift out of sync with actual audio playback during frame drops.\n\n## Architectural Scope & Requirements\n1. **Spectral Flux Onset Detection Engine (`assets/js/rhythm-beat-detector.js`):**\n   - Connects an `AnalyserNode` to the Web Audio master output.\n   - Calculates real-time spectral flux (positive rate of change in spectral energy across sub-bands) to detect authentic rhythmic transients (kicks, snares, chiptune pulses).\n2. **Dynamic Thresholding & Peak Pick:**\n   - Implements adaptive median filtering over a rolling 1-second window to prevent false-positive beat triggers during noisy gameplay.\n3. **Custom Event Bus for Visual Pulsing:**\n   - Fires `'arcade-beat'` DOM events with peak intensity values $(0.0 - 1.0)$, allowing UI borders, particle emitters, and game backgrounds to pulse in lockstep with the rhythm.\n\n## Acceptance Criteria\n- [ ] Accurately detects rhythm peaks across various chiptune tempos (80 - 160 BPM).\n- [ ] Under 1ms CPU processing time per audio buffer frame.\n- [ ] Cleanly disconnects audio nodes without leaking audio memory when games terminate."
+  },
+  {
+    "id": 10,
+    "title": "[Feature/Docs]: Classic Mode 7 Affine Texture Projection & Horizon Curvature Sandbox",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "canvas",
+      "docs"
+    ],
+    "body": "#### Duplicate Check Results\n- **Open Issues Checked:** None Found *(Searched: mode 7, mode7 projection, affine ground plane, affine texture projection, pseudo 3d ground)*\n- **Closed Issues Checked:** None Found\n- **Open PRs Checked:** None Found\n- **Merged PRs Checked:** None Found\n- **Discussions Checked:** None Found\n- **Roadmap Checked:** None Found\n- **Uniqueness Verdict:** **UNIQUE**\n\n#### Issue Specification\n- **Level:** `level3` (10 points)\n- **Labels:** `nsoc26, level3, feature, canvas, docs`\n\n## Problem\nClassic 16-bit arcade racers and flight games (*F-Zero*, *Super Mario Kart*, *Pilotwings*) achieved revolutionary pseudo-3D perspective through hardware Mode 7 affine transformations. ArcadeVerse lacks an interactive educational showcase explaining how to implement affine ground projection in pure 2D Canvas without 3D WebGL libraries.\n\n## Architectural Scope & Requirements\n1. **Mode 7 Affine Projection Engine (`assets/js/mode7-projection.js`):**\n   - Implements scanline-by-scanline perspective projection mapping a 2D tilemap or texture matrix onto a trapezoidal receding ground plane.\n   - Computes horizon angle, camera elevation, scale factors, and rotational affine coordinates $(A, B, C, D)$.\n2. **Interactive Parameter Sandbox on `ideas.html`:**\n   - Real-time parameter controls for Field of View, Camera Pitch, Horizon Altitude, and Texture Tiling.\n   - Displays a dual view: top-down source map on the left, rendered pseudo-3D perspective plane on the right.\n3. **Reusable Helper Module for Game Creators:**\n   - Exposes `ArcadeVerse.math.createMode7Renderer(ctx, tilemapData)` so contributors can build retro kart racers or flight sims.\n\n## Acceptance Criteria\n- [ ] Pure 2D Canvas scanline affine rendering without Three.js or WebGL.\n- [ ] Achieves rock-solid 60 FPS at $320 \\times 240$ retro rendering resolution.\n- [ ] Complete inline mathematical documentation explaining projection formulas."
+  },
+  {
+    "id": 11,
+    "title": "[Feature/Audio]: Web Audio ConvolverNode Procedural Impulse Response (IR) Reverb Space Simulator",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "audio",
+      "dsp"
+    ],
+    "body": "#### Duplicate Check Results\n- **Open Issues Checked:** None Found *(Searched: convolvernode, impulse response, reverb space, schroeder reverb, room impulse)*\n- **Closed Issues Checked:** None Found\n- **Open PRs Checked:** None Found\n- **Merged PRs Checked:** None Found\n- **Discussions Checked:** None Found\n- **Roadmap Checked:** None Found\n- **Uniqueness Verdict:** **UNIQUE**\n\n#### Issue Specification\n- **Level:** `level3` (10 points)\n- **Labels:** `nsoc26, level3, feature, audio, dsp`\n\n## Problem\nAudio effects across the catalog currently sound flat and dry because there is no acoustic room simulation. Retro games set in caverns, neon arcade halls, or metallic space stations feel disconnected from their visual environments.\n\n## Architectural Scope & Requirements\n1. **Procedural Impulse Response (IR) Synthesizer (`assets/js/arcade-reverb-acoustic.js`):**\n   - Synthesizes synthetic acoustic Impulse Response audio buffers programmatically (decay curves, early reflections, Gaussian noise distribution) using pure Web Audio API without downloading heavy WAV audio files.\n2. **Authentic Retro Acoustic Presets:**\n   - Built-in acoustic environments: `1980s Neon Arcade Hall` (spacious reflections, bright flutter), `Dungeon Cavern` (long dark decay), `Metallic Spaceship Corridor` (comb filtered resonance), and `Concrete Tournament Basement`.\n3. **Wet/Dry Mix Routing Bus:**\n   - Connects a master `ConvolverNode` with a dual-gain wet/dry crossfader that games can dial up with `ArcadeVerse.audio.setReverbSpace('arcade_hall', 0.4)`.\n\n## Acceptance Criteria\n- [ ] Synthesizes custom impulse responses in under 20ms on startup with zero external assets.\n- [ ] Seamless wet/dry mix modulation without audio popping or crackle.\n- [ ] Tested and validated across Chrome, Firefox, and Safari Web Audio implementations."
+  },
+  {
+    "id": 12,
+    "title": "[Feature/UI]: Client-Side Animated Matrix LED Marquee Signage & 5x7 Dot-Font Banner Studio",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "ui",
+      "canvas"
+    ],
+    "body": "#### Duplicate Check Results\n- **Open Issues Checked:** None Found *(Searched: led marquee, matrix led sign, pixel marquee banner, dot matrix 5x7, marquee signage)*\n- **Closed Issues Checked:** None Found\n- **Open PRs Checked:** None Found\n- **Merged PRs Checked:** None Found\n- **Discussions Checked:** None Found\n- **Roadmap Checked:** None Found\n- **Uniqueness Verdict:** **UNIQUE**\n\n#### Issue Specification\n- **Level:** `level3` (10 points)\n- **Labels:** `nsoc26, level3, feature, ui, canvas`\n\n## Problem\nTop announcements, tournament alerts, and high-score tickers on the hub currently use standard HTML text which lacks the authentic, nostalgic feel of classic physical arcade cabinet dot-matrix LED scoreboards.\n\n## Architectural Scope & Requirements\n1. **Dot-Matrix LED Marquee Canvas (`assets/js/led-marquee-signage.js`):**\n   - Renders a multi-color retro LED dot grid (e.g. $128 \\times 16$ circular LED pixels) with authentic phosphor glow, sub-pixel grid masks, and off-state dim diode textures.\n2. **Built-in 5x7 Retro Dot-Matrix Font Glyphs:**\n   - Encodes a complete ASCII character set into 5x7 bitmask matrices in pure JavaScript, rendering scrolling ticker text with variable scroll speed.\n3. **Configurable Diode Color Schemes:**\n   - Preset LED colorways: `Amber Gold`, `Ruby Red`, `Emerald Green`, and `Cyan Neon` with realistic diode fade/persistence decay.\n\n## Acceptance Criteria\n- [ ] Renders silky-smooth horizontal marquee scrolling at 60 FPS.\n- [ ] Complete ASCII character set supported including numbers, punctuation, and uppercase glyphs.\n- [ ] Auto-pauses animation when off-screen using `IntersectionObserver`."
+  },
+  {
+    "id": 13,
+    "title": "[Feature/Input]: Retro CRT Light Gun Calibration & Screen-Flash Optical Target Tracker",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "input",
+      "canvas"
+    ],
+    "body": "#### Duplicate Check Results\n- **Open Issues Checked:** None Found *(Searched: light gun, nes zapper, optical light gun, screen flash target, lightgun calibration)*\n- **Closed Issues Checked:** None Found\n- **Open PRs Checked:** None Found\n- **Merged PRs Checked:** None Found\n- **Discussions Checked:** None Found\n- **Roadmap Checked:** None Found\n- **Uniqueness Verdict:** **UNIQUE**\n\n#### Issue Specification\n- **Level:** `level3` (10 points)\n- **Labels:** `nsoc26, level3, feature, input, canvas`\n\n## Problem\nArcade shooting games (*Duck Hunt*, *Time Crisis*, *Virtua Cop*) lack the physical excitement of classic optical light guns. Existing mouse-clicking shooting games feel like generic cursor clicking rather than optical gun detection.\n\n## Architectural Scope & Requirements\n1. **Optical Screen-Flash Detection Engine (`assets/js/light-gun-optical.js`):**\n   - Simulates the authentic optical light-sensor timing of classic CRT light guns: upon trigger pull, renders a single black frame followed by white target bounding boxes to calculate optical hit detection via `ctx.getImageData()`.\n2. **Crosshair Calibration & Recoil Shake System:**\n   - Provides an authentic 2-point calibration screen (Top-Left, Bottom-Right) with optional procedural screen recoil kick and muzzle flash particle flare.\n3. **Off-Screen Shot Detection (Reload Mechanism):**\n   - Detects shooting outside the viewport or off-screen to trigger automatic arcade gun reloads with authentic shotgun pump / revolver cylinder audio.\n\n## Acceptance Criteria\n- [ ] Optical single-frame flash target calculation executes in under 2ms without visible screen flicker.\n- [ ] Supports touch taps, mouse clicks, and keyboard trigger pulls.\n- [ ] Cleanly unmounts without interfering with standard browser pointer events."
+  },
+  {
+    "id": 14,
+    "title": "[Feature/Social]: High-Resolution Retro Arcade Trading Card & Polaroid Trophy Compositor",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "social",
+      "canvas"
+    ],
+    "body": "#### Duplicate Check Results\n- **Open Issues Checked:** None Found *(Searched: trading card compositor, polaroid card generator, trophy card compositor, score card canvas)*\n- **Closed Issues Checked:** None Found\n- **Open PRs Checked:** None Found\n- **Merged PRs Checked:** None Found\n- **Discussions Checked:** None Found\n- **Roadmap Checked:** None Found\n- **Uniqueness Verdict:** **UNIQUE**\n\n#### Issue Specification\n- **Level:** `level3` (10 points)\n- **Labels:** `nsoc26, level3, feature, social, canvas`\n\n## Problem\nWhen players achieve high scores or unlock rare badges, they have no attractive, shareable graphic asset to celebrate their victory on Discord, Twitter/X, or GitHub discussions beyond raw screenshots.\n\n## Architectural Scope & Requirements\n1. **Canvas Trading Card Compositor (`assets/js/screenshot-card-compositor.js`):**\n   - Composites an in-game snapshot onto an authentic physical retro trading card or Polaroid frame with metallic holographic border foil effects.\n2. **Dynamic Trophy Data Typography:**\n   - Automatically embeds player handle, game title, final score, duration, date, and a scannable dynamic QR code linking directly to the game.\n3. **One-Click Instant PNG Download & Web Share API:**\n   - Provides a 1-click 'Download Trophy Card' button and integrates `navigator.share()` on supported mobile devices.\n\n## Acceptance Criteria\n- [ ] Generates crisp high-resolution 1080p ($1200 \\times 1600$) PNG cards directly in the browser.\n- [ ] Zero external fonts or image assets required; all borders and holographic foils drawn via Canvas 2D.\n- [ ] Handles game canvas permissions and CORS securely without tainted canvas errors."
+  },
+  {
+    "id": 15,
+    "title": "[Feature/Canvas]: Dynamic Canvas Sprite Sheet Atlas Slicer & Multi-Track Frame Sequence Animator",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "canvas",
+      "animation"
+    ],
+    "body": "#### Duplicate Check Results\n- **Open Issues Checked:** None Found *(Searched: sprite sheet animator, atlas slicer, sprite atlas, frame sequence animator, sub-rectangle atlas)*\n- **Closed Issues Checked:** None Found\n- **Open PRs Checked:** None Found\n- **Merged PRs Checked:** None Found\n- **Discussions Checked:** None Found\n- **Roadmap Checked:** None Found\n- **Uniqueness Verdict:** **UNIQUE**\n\n#### Issue Specification\n- **Level:** `level3` (10 points)\n- **Labels:** `nsoc26, level3, feature, canvas, animation`\n\n## Problem\nGame developers frequently struggle with manual frame-by-frame slice math `drawImage(img, sx, sy, sWidth, sHeight, ...)` when animating complex character sprites, leading to redundant boilerplate code across game repositories.\n\n## Architectural Scope & Requirements\n1. **Reusable Sprite Sheet Atlas Slicer (`assets/js/sprite-atlas-animator.js`):**\n   - A lightweight, zero-dependency sprite manager that accepts a grid configuration (columns, rows, frame widths, padding) or JSON slice coordinates.\n2. **Multi-Track Named Animation State Machine:**\n   - Allows defining named animation tracks (`idle`, `run`, `jump`, `attack`, `death`) with customizable frame durations, looping flags, and animation event callbacks (`onFrame`, `onComplete`).\n3. **Dynamic Canvas Rendering Helper:**\n   - Exposes `sprite.render(ctx, x, y, { flipX, flipY, scale, rotation })` with automatic delta-time frame progression.\n\n## Acceptance Criteria\n- [ ] Handles irregular sprite sheets and uniform grid matrices seamlessly.\n- [ ] Rock-solid 60 FPS animation updates decoupled from monitor refresh rates using delta time.\n- [ ] Thorough unit tests validating animation state transitions and boundary clamping."
+  },
+  {
+    "id": 16,
+    "title": "[Feature/UI]: Dynamic Virtual Arcade Coin Door & Credit Counter Mechanism with Physics SFX",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "ui",
+      "gamification"
+    ],
+    "body": "#### Duplicate Check Results\n- **Open Issues Checked:** None Found *(Searched: coin door, insert coin mechanism, credit counter, arcade coin drop, coin reject button)*\n- **Closed Issues Checked:** None Found\n- **Open PRs Checked:** None Found\n- **Merged PRs Checked:** None Found\n- **Discussions Checked:** None Found\n- **Roadmap Checked:** None Found\n- **Uniqueness Verdict:** **UNIQUE**\n\n#### Issue Specification\n- **Level:** `level3` (10 points)\n- **Labels:** `nsoc26, level3, feature, ui, gamification`\n\n## Problem\nPhysical arcade cabinets possess a tactile charm through their illuminated coin reject doors, metallic drop chutes, and satisfying coin-drop sounds. ArcadeVerse games currently launch instantly, lacking the iconic 'Insert Coin' arcade ceremony.\n\n## Architectural Scope & Requirements\n1. **Interactive Virtual Coin Door Drawer (`assets/js/virtual-coin-door.js`):**\n   - A beautifully styled retro dual-slot coin door (25\u00a2 orange illuminated reject buttons, coin return cups, keyhole plate) rendered with pure CSS3 and SVG.\n2. **Tactile Coin Insertion Mechanics & Audio:**\n   - Clicking the coin slots or pressing `5` / `C` plays procedural Web Audio mechanical coin drop, chute rattle, and microswitch click sounds.\n3. **Credit Ledger & Free-Play Mode Switch:**\n   - Displays a 7-segment LED credit counter (`CREDITS: 02`). Supports toggling between `Arcade Quarters Mode` (spend credits to play) and `Free Play Mode` with settings stored in `localStorage`.\n\n## Acceptance Criteria\n- [ ] 100% pure CSS3/SVG styling with realistic retro plastic illumination and bevels.\n- [ ] Procedural sound synthesis for coin drops with zero audio files.\n- [ ] Fully accessible with keyboard shortcuts and screen reader announcements."
+  },
+  {
+    "id": 17,
+    "title": "[Feature/Input]: Interactive Gamepad Stick Deadzone Visualizer & Trigger Response Curve Studio",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "input",
+      "devtools"
+    ],
+    "body": "#### Duplicate Check Results\n- **Open Issues Checked:** None Found *(Searched: deadzone visualizer, trigger response curve, gamepad deadzone, stick calibration matrix, trigger sensitivity curve)*\n- **Closed Issues Checked:** None Found\n- **Open PRs Checked:** None Found\n- **Merged PRs Checked:** None Found\n- **Discussions Checked:** None Found\n- **Roadmap Checked:** None Found\n- **Uniqueness Verdict:** **UNIQUE**\n\n#### Issue Specification\n- **Level:** `level3` (10 points)\n- **Labels:** `nsoc26, level3, feature, input, devtools`\n\n## Problem\nAnalog thumbsticks on modern controllers often suffer from stick drift or non-linear response curves. Players and developers currently have no way within ArcadeVerse to test, visualize, or calibrate gamepad stick deadzones and trigger thresholds.\n\n## Architectural Scope & Requirements\n1. **Live Dual-Stick Deadzone Canvas Visualizer (`assets/js/gamepad-calibration-matrix.js`):**\n   - Real-time 2D polar coordinate circular visualizer plotting live thumbstick coordinates with inner radial deadzone, outer anti-deadzone, and axial deadzone boundaries.\n2. **Trigger Response Curve Customizer:**\n   - Interactive curve editor supporting `Linear`, `Aggressive Exponential`, and `Smooth S-Curve` sensitivity profiles for analog triggers and thumbsticks.\n3. **Profile Persistence & Global Input Hook:**\n   - Automatically applies calibrated deadzone filters to `navigator.getGamepads()` queries across all catalog games and persists profiles in `localStorage`.\n\n## Acceptance Criteria\n- [ ] Real-time 60 FPS circular stick plotting with sub-pixel resolution.\n- [ ] Eliminates analog drift on worn controllers through configurable deadzone radius $(0.05 - 0.35)$.\n- [ ] Zero overhead when no gamepads are connected."
+  },
+  {
+    "id": 18,
+    "title": "[Feature/Leaderboard]: Client-Side Leaderboard Score Distribution Analytics & Percentile Histogram Suite",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "leaderboard",
+      "canvas"
+    ],
+    "body": "#### Duplicate Check Results\n- **Open Issues Checked:** None Found *(Searched: score percentile, leaderboard analytics, play frequency histogram, score distribution chart, score histogram)*\n- **Closed Issues Checked:** None Found\n- **Open PRs Checked:** None Found\n- **Merged PRs Checked:** None Found\n- **Discussions Checked:** None Found\n- **Roadmap Checked:** None Found\n- **Uniqueness Verdict:** **UNIQUE**\n\n#### Issue Specification\n- **Level:** `level3` (10 points)\n- **Labels:** `nsoc26, level3, feature, leaderboard, canvas`\n\n## Problem\nThe Hall of Fame (`leaderboard.html`) lists ranked scores sequentially in tables, but offers no high-level statistical insights into score distributions, skill curves, or score clustering across difficulty tiers.\n\n## Architectural Scope & Requirements\n1. **Client-Side Score Distribution Histogram (`assets/js/leaderboard-analytics.js`):**\n   - Renders a retro-styled interactive neon frequency distribution histogram on `leaderboard.html` using Canvas 2D.\n   - Calculates standard deviation, median, 90th percentile threshold, and interquartile range.\n2. **Interactive Score Percentile Calculator:**\n   - Lets players enter any arbitrary score to calculate exactly what percentile of players they outperform (e.g. 'Top 4.2% of all players').\n3. **Data Export Suite:**\n   - 1-click buttons to export filtered leaderboard data in both sanitized JSON and CSV formats.\n\n## Acceptance Criteria\n- [ ] Pure Vanilla JS/Canvas statistical calculations without external charting libraries.\n- [ ] Responsive canvas rendering adapting smoothly across desktop, tablet, and mobile displays.\n- [ ] Accurately computes mathematical percentiles across any score array."
+  },
+  {
+    "id": 19,
+    "title": "[Feature/Canvas]: Canvas Split-Depth 3D Pop-Out Illusion & Parallax Occlusion Bar Generator",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "canvas",
+      "fx"
+    ],
+    "body": "#### Duplicate Check Results\n- **Open Issues Checked:** None Found *(Searched: split-depth 3d, lenticular pop-out, stereogram illusion, occlusion bar 3d, split depth 3d)*\n- **Closed Issues Checked:** None Found\n- **Open PRs Checked:** None Found\n- **Merged PRs Checked:** None Found\n- **Discussions Checked:** None Found\n- **Roadmap Checked:** None Found\n- **Uniqueness Verdict:** **UNIQUE**\n\n#### Issue Specification\n- **Level:** `level3` (10 points)\n- **Labels:** `nsoc26, level3, feature, canvas, fx`\n\n## Problem\nArcade promo banners and game previews on the homepage are flat 2D cards. Physical arcade promotional posters and hologram cards frequently utilized lenticular lenses to create striking 3D pop-out illusions without 3D glasses.\n\n## Architectural Scope & Requirements\n1. **Split-Depth 3D Canvas Compositor (`assets/js/split-depth-3d.js`):**\n   - Generates dynamic vertical or horizontal white occlusion depth bars over game animations.\n   - By selectively layering foreground game elements (e.g. projectiles, character heads, flying coins) *in front* of the bars while keeping the background *behind*, creates a stunning optical brain illusion of 3D depth pop-out.\n2. **Interactive Parallax Cursor Tilt:**\n   - Tilts the depth bars and parallax layers in reaction to mouse pointer movement or mobile gyroscope orientation.\n3. **Interactive Visual Studio for Game Covers:**\n   - Provides an interactive tool allowing game creators to test split-depth 3D overlays for their games.\n\n## Acceptance Criteria\n- [ ] Convincing optical 3D pop-out effect in pure 2D Canvas without WebGL or VR glasses.\n- [ ] Solid 60 FPS performance with zero memory leaks.\n- [ ] Graceful fallback to flat 2D on low-power devices."
+  },
+  {
+    "id": 20,
+    "title": "[Feature/Physics]: 2D Inverse Kinematics (IK) FABRIK Multi-Joint Tentacle & Ragdoll Physics Engine",
+    "labels": [
+      "nsoc26",
+      "level3",
+      "feature",
+      "physics",
+      "algorithms"
+    ],
+    "body": "#### Duplicate Check Results\n- **Open Issues Checked:** None Found *(Searched: inverse kinematics, fabrik, cyclic coordinate descent, tentacle physics, ragdoll limp, ik solver)*\n- **Closed Issues Checked:** None Found\n- **Open PRs Checked:** None Found\n- **Merged PRs Checked:** None Found\n- **Discussions Checked:** None Found\n- **Roadmap Checked:** None Found\n- **Uniqueness Verdict:** **UNIQUE**\n\n#### Issue Specification\n- **Level:** `level3` (10 points)\n- **Labels:** `nsoc26, level3, feature, physics, algorithms`\n\n## Problem\nBoss monsters, alien tentacles, grappling ropes, and robotic arms in arcade games are notoriously difficult to animate naturally using manual frame-by-frame sprites, often leading to stiff and repetitive enemy animations.\n\n## Architectural Scope & Requirements\n1. **Pure Vanilla FABRIK / CCD 2D IK Solver (`assets/js/inverse-kinematics-physics.js`):**\n   - Implements the Forward And Backward Reaching Inverse Kinematics (FABRIK) algorithm for n-joint kinematic chains in 2D space.\n   - Solves target reach positions iteratively within 3-5 iterations per frame with joint angle constraints (min/max angle limits).\n2. **Procedural Multi-Tentacle & Mechanical Arm Generators:**\n   - Built-in generators for segmented robotic arms, alien boss tentacles, and dynamic character limbs that automatically reach toward mouse/player targets.\n3. **Modular Helper for Game Creators:**\n   - Exposes `ArcadeVerse.physics.createIKChain(jointsCount, segmentLength, constraints)` for instant integration into boss fights and physics games.\n\n## Acceptance Criteria\n- [ ] Solves multi-segment kinematic chains in under 0.1ms per frame using FABRIK math.\n- [ ] Realistic joint angular constraints preventing unnatural backward bending.\n- [ ] Comprehensive unit tests verifying solver convergence and boundary clamping."
+  }
+]
