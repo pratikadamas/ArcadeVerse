@@ -118,5 +118,23 @@
     "title": "[Feature/Physics]: 2D Inverse Kinematics (IK) FABRIK Multi-Joint Tentacle & Ragdoll Physics Engine",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1215",
     "published_at": "2026-11-21T14:51:40.226Z"
+  },
+  {
+    "number": 1217,
+    "title": "[Feature/Audio]: Multi-Channel Standard MIDI Binary File Parser & Polyphonic Chiptune Synthesizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1217",
+    "published_at": "2026-11-21T16:16:17.116Z"
+  },
+  {
+    "number": 1218,
+    "title": "[Feature/Input]: Virtual Multi-Touch Arcade Trackball & Inertial Spinner Physics Controller",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1218",
+    "published_at": "2026-11-21T16:16:22.557Z"
+  },
+  {
+    "number": 1219,
+    "title": "[Feature/HUD]: Dynamic Vector Glyph Radar & Minimap Projection Engine for Canvas Games",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1219",
+    "published_at": "2026-11-21T16:16:27.988Z"
   }
 ]

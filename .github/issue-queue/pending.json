@@ -1,41 +1,5 @@
 [
   {
-    "id": 1,
-    "title": "[Feature/Audio]: Multi-Channel Standard MIDI Binary File Parser & Polyphonic Chiptune Synthesizer",
-    "labels": [
-      "nsoc26",
-      "level3",
-      "feature",
-      "audio",
-      "chiptune"
-    ],
-    "body": "## Problem\nGame developers currently have to either write complex procedural oscillator loops in code or omit background music entirely, because external binary audio files (MP3/WAV) are prohibited in game repositories. Standard MIDI files (`.mid`), however, are tiny binary sequence files (often < 5KB) containing note instructions rather than waveforms.\n\n## Architectural Scope & Requirements\n1. **Zero-Dependency SMF Binary Parser (`assets/js/midi-chiptune-player.js`):**\n   - Parses Standard MIDI Files (Format 0 and Format 1) from an `ArrayBuffer` or Base64 string using pure JavaScript `DataView`.\n   - Extracts header chunk (`MThd`), track chunks (`MTrk`), delta times, tempo events, and MIDI messages (Note-On, Note-Off, Program Change, Pitch Bend).\n2. **Polyphonic 4-Channel Oscillator Voice Pool:**\n   - Maps MIDI channels to classic arcade chiptune sound generators: Pulse 1 (square wave with variable duty cycle), Pulse 2, Triangle (bass), and Noise (percussion/snare).\n   - Implements high-precision scheduling via `AudioContext.currentTime` with dynamic voice-stealing to prevent audio clipping.\n3. **Modular ArcadeVerse Integration & Developer API:**\n   - Exposes `ArcadeVerse.audio.loadMidi(base64MidiString)` with `.play()`, `.pause()`, `.stop()`, and `.setVolume(vol)` methods.\n   - Includes a visual BGM playback indicator in the game modal header.\n\n## Acceptance Criteria\n- [ ] Successfully parses SMF Format 0 and Format 1 files without external libraries.\n- [ ] Accurately schedules polyphonic chiptune notes at steady tempo using `AudioContext.currentTime`.\n- [ ] Consumes less than 3% CPU during playback and terminates all active oscillator nodes on modal close."
-  },
-  {
-    "id": 2,
-    "title": "[Feature/Input]: Virtual Multi-Touch Arcade Trackball & Inertial Spinner Physics Controller",
-    "labels": [
-      "nsoc26",
-      "level3",
-      "feature",
-      "input",
-      "touch"
-    ],
-    "body": "## Problem\nClassic arcade games like *Centipede*, *Missile Command*, *Marble Madness*, and *Arkanoid* rely on physical trackballs and weighted dial spinners. On mobile devices and touchscreens, standard directional virtual D-pads feel unresponsive and clumsy for high-precision rotational steering.\n\n## Architectural Scope & Requirements\n1. **Inertial 2D Trackball & Spinner Component (`assets/js/virtual-trackball.js`):**\n   - Renders an interactive virtual trackball/spinner orb with real-time rolling pseudo-3D grid lines and optical spin dots.\n   - Computes angular momentum, tangential flick velocity, and friction decay based on PointerEvents (`pointerdown`, `pointermove`, `pointerup`).\n2. **Configurable Physics Modes:**\n   - Supports `Trackball` mode (full 2D displacement vector accumulation) and `Rotary Spinner` mode (1D continuous rotary wheel with optional notch detents).\n3. **Automatic Screen Positioning & Custom Event Dispatch:**\n   - Automatically mounts on touch devices when a game declares `supportsTrackball: true` in its `game.json`.\n   - Dispatches continuous `'arcade-trackball-move'` custom DOM events with delta velocities `(vx, vy, rawX, rawY)`.\n\n## Acceptance Criteria\n- [ ] Smooth 60 FPS inertial spin decay with customizable friction coefficient.\n- [ ] Fully responsive on mobile touchscreens with multi-touch cancellation handling.\n- [ ] Zero memory leaks and clean event listener teardown when exiting the game."
-  },
-  {
-    "id": 3,
-    "title": "[Feature/HUD]: Dynamic Vector Glyph Radar & Minimap Projection Engine for Canvas Games",
-    "labels": [
-      "nsoc26",
-      "level3",
-      "feature",
-      "hud",
-      "canvas"
-    ],
-    "body": "## Problem\nTop-down space shooters, arena survival games, and maze games frequently leave players disoriented regarding off-screen enemies, power-ups, or checkpoints. Game authors currently have to rebuild custom radar minimaps from scratch for every game.\n\n## Architectural Scope & Requirements\n1. **Modular Vector Radar Engine (`assets/js/radar-minimap.js`):**\n   - A reusable radar overlay class rendering an authentic glowing circular CRT vector radar screen in the corner of the canvas.\n   - Features a sweeping 360-degree radar beam with exponential phosphorescent blip decay.\n2. **Off-Screen Edge-Clamped Target Indicators:**\n   - When tracked targets move outside the radar's inner range, directional chevron blips clamp to the perimeter ring, scaling in opacity inversely with distance.\n3. **Plug-and-Play Entity Registration API:**\n   - Simple API: `radar.registerEntity(id, { getX, getY, type: 'enemy'|'ally'|'goal', color })`.\n   - Handles world coordinate to screen-space affine transformations automatically.\n\n## Acceptance Criteria\n- [ ] Renders circular swept radar and off-screen perimeter indicators in pure Canvas 2D.\n- [ ] Handles 100+ simultaneous tracked entities with under 0.5ms per-frame overhead.\n- [ ] Provides toggleable zoom levels (`0.5x`, `1x`, `2x`) and customizable minimap opacity."
-  },
-  {
     "id": 4,
     "title": "[Feature/Physics]: Interactive 2D Soft-Body Jelly & Lattice Blob Mesh Physics Simulator",
     "labels": [
@@ -129,7 +93,7 @@
       "ui",
       "css3d"
     ],
-    "body": "## Problem\nThe main catalog grid displays game cards in traditional 2D rows. In high-end retro arcade hubs, games were displayed in three-dimensional physical booths that drew players into an authentic arcade environment.\n\n## Architectural Scope & Requirements\n1. **Anamorphic 3D Perspective Room (`assets/js/anamorphic-room.js`):**\n   - Uses pure CSS3 3D transforms (`transform-style: preserve-3d`, `perspective: 1000px`, `rotateX`, `rotateY`) to construct an anamorphic retro arcade room with checkerboard floors and neon side walls.\n2. **Dynamic Vanishing Point Parallax:**\n   - Shifts the camera vanishing point in real time based on mouse coordinates or device gyroscope tilt, creating a striking trompe-l'\u0153il depth illusion.\n3. **Interactive Game Cabinet Displays:**\n   - Mounts live game preview canvases onto the 3D isometric cabinets with specular glare reflections.\n\n## Acceptance Criteria\n- [ ] Smooth 60 FPS 3D perspective tilt driven by CSS custom properties and `requestAnimationFrame`.\n- [ ] Gracefully falls back to standard 2D grid for users with `prefers-reduced-motion`.\n- [ ] Fully responsive and usable across mobile touch devices."
+    "body": "## Problem\nThe main catalog grid displays game cards in traditional 2D rows. In high-end retro arcade hubs, games were displayed in three-dimensional physical booths that drew players into an authentic arcade environment.\n\n## Architectural Scope & Requirements\n1. **Anamorphic 3D Perspective Room (`assets/js/anamorphic-room.js`):**\n   - Uses pure CSS3 3D transforms (`transform-style: preserve-3d`, `perspective: 1000px`, `rotateX`, `rotateY`) to construct an anamorphic retro arcade room with checkerboard floors and neon side walls.\n2. **Dynamic Vanishing Point Parallax:**\n   - Shifts the camera vanishing point in real time based on mouse coordinates or device gyroscope tilt, creating a striking trompe-l'œil depth illusion.\n3. **Interactive Game Cabinet Displays:**\n   - Mounts live game preview canvases onto the 3D isometric cabinets with specular glare reflections.\n\n## Acceptance Criteria\n- [ ] Smooth 60 FPS 3D perspective tilt driven by CSS custom properties and `requestAnimationFrame`.\n- [ ] Gracefully falls back to standard 2D grid for users with `prefers-reduced-motion`.\n- [ ] Fully responsive and usable across mobile touch devices."
   },
   {
     "id": 12,
