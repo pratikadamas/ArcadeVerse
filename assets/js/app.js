@@ -657,31 +657,61 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchTagsRow = document.getElementById("search-tags-row");
   const resetFacetsBtn = document.getElementById("btn-reset-facets");
 
-  // Favorites LocalStorage Engine (Issue #533)
+  // Favorites Storage Engine (Issue #533 & Issue #890)
+  // Consolidate on single canonical storage key 'av_favorites'
   const FAVORITES_STORAGE_KEY = "av_favorites";
   const LEGACY_FAVORITES_STORAGE_KEY = "arcadeverse_favorite_games";
   const PREFERENCES_FAVORITES_KEY = "arcadeverse:preferences:favorites";
 
-  // Migrate legacy favorite storage keys to primary av_favorites key if needed
-  try {
-    if (!localStorage.getItem(FAVORITES_STORAGE_KEY)) {
-      const legacy = localStorage.getItem(LEGACY_FAVORITES_STORAGE_KEY) || localStorage.getItem(PREFERENCES_FAVORITES_KEY);
-      if (legacy) {
-        ArcadeStorageResilience.safeSetItem(FAVORITES_STORAGE_KEY, legacy);
+  // Perform one-time migration from legacy storage keys to canonical av_favorites key
+  function reconcileFavoritesStorage() {
+    try {
+      const canonicalRaw = ArcadeStorageResilience.safeGetItem(FAVORITES_STORAGE_KEY, null);
+      let mergedSet = new Set();
+      if (canonicalRaw) {
+        try {
+          const list = JSON.parse(canonicalRaw);
+          if (Array.isArray(list)) list.forEach(id => mergedSet.add(id));
+        } catch (_) { }
       }
-    }
-  } catch (_) { }
+      
+      const legacyRaw = ArcadeStorageResilience.safeGetItem(LEGACY_FAVORITES_STORAGE_KEY, null);
+      if (legacyRaw) {
+        try {
+          const list = JSON.parse(legacyRaw);
+          if (Array.isArray(list)) list.forEach(id => mergedSet.add(id));
+        } catch (_) { }
+      }
+
+      const prefRaw = ArcadeStorageResilience.safeGetItem(PREFERENCES_FAVORITES_KEY, null);
+      if (prefRaw) {
+        try {
+          const list = JSON.parse(prefRaw);
+          if (Array.isArray(list)) list.forEach(id => mergedSet.add(id));
+        } catch (_) { }
+      }
+
+      if (mergedSet.size > 0 && !canonicalRaw) {
+        ArcadeStorageResilience.safeSetItem(FAVORITES_STORAGE_KEY, JSON.stringify(Array.from(mergedSet)));
+      }
+
+      // Purge legacy split storage keys to eliminate split-brain synchronization
+      if (typeof window !== "undefined" && window.localStorage) {
+        try {
+          window.localStorage.removeItem(LEGACY_FAVORITES_STORAGE_KEY);
+          window.localStorage.removeItem(PREFERENCES_FAVORITES_KEY);
+        } catch (_) { }
+      }
+    } catch (_) { }
+  }
+
+  reconcileFavoritesStorage();
 
   function getFavorites() {
     try {
-      let raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
-      if (!raw) {
-        raw = localStorage.getItem(LEGACY_FAVORITES_STORAGE_KEY);
-      }
-      if (!raw) {
-        raw = localStorage.getItem(PREFERENCES_FAVORITES_KEY);
-      }
-      const parsed = raw ? JSON.parse(raw) : [];
+      const raw = ArcadeStorageResilience.safeGetItem(FAVORITES_STORAGE_KEY, null);
+      if (!raw) return new Set();
+      const parsed = JSON.parse(raw);
       return Array.isArray(parsed) ? new Set(parsed) : new Set();
     } catch (e) {
       return new Set();
@@ -691,8 +721,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function saveFavorites(favSet) {
     const list = Array.from(favSet);
     const serialized = JSON.stringify(list);
+    // Write solely to single canonical storage key
     ArcadeStorageResilience.safeSetItem(FAVORITES_STORAGE_KEY, serialized);
-    ArcadeStorageResilience.safeSetItem(LEGACY_FAVORITES_STORAGE_KEY, serialized);
     updateFavoritesBadge();
 
     // Offline dispatch queue integration (#554)
@@ -927,9 +957,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }));
   }
 
-  // Cross-tab real-time favorites synchronization
+  // Cross-tab real-time favorites synchronization (canonical av_favorites with legacy migration fallback)
   window.addEventListener("storage", (e) => {
     if (e.key === FAVORITES_STORAGE_KEY || e.key === LEGACY_FAVORITES_STORAGE_KEY || e.key === PREFERENCES_FAVORITES_KEY) {
+      if (e.key !== FAVORITES_STORAGE_KEY && e.newValue) {
+        // If an older tab writes to legacy key, reconcile into canonical storage key
+        try {
+          ArcadeStorageResilience.safeSetItem(FAVORITES_STORAGE_KEY, e.newValue);
+        } catch (_) { }
+      }
       updateFavoritesBadge();
       if (currentCategory === "favorites") {
         renderGames();
