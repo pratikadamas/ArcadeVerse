@@ -118,6 +118,7 @@ class CyberRamenDash {
     this.maxStrikes = 3;
     this.shiftTime = 180; // 3-minute shift
     this.isShiftActive = true;
+    this.totalServed = 0;
 
     // Up to 3 active customer slots
     this.slots = [null, null, null];
@@ -158,9 +159,21 @@ class CyberRamenDash {
     this.guideModal = document.getElementById('guideModal');
     this.closeGuideBtn = document.getElementById('closeGuideBtn');
     this.modalStartBtn = document.getElementById('modalStartBtn');
+
+    // Shift summary overlay
+    this.shiftOverlay = document.getElementById('shiftOverlay');
+    this.shiftTitle = document.getElementById('shiftTitle');
+    this.shiftMessage = document.getElementById('shiftMessage');
+    this.summaryScore = document.getElementById('summaryScore');
+    this.summaryServed = document.getElementById('summaryServed');
+    this.replayBtn = document.getElementById('replayBtn');
   }
 
   setupEvents() {
+    this.replayBtn.addEventListener('click', () => {
+      this.shiftOverlay.classList.add('hidden');
+      this.restartGame();
+    });
     // Broth buttons
     document.querySelectorAll('.ing-btn.broth').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -327,6 +340,7 @@ class CyberRamenDash {
       const rushBonus = Math.floor(target.patience * 15);
       const earned = (100 + rushBonus) * this.combo;
       this.score += earned;
+      this.totalServed++;
       this.combo = Math.min(5, this.combo + 1);
       this.slots[slotIdx] = null;
       this.audio.playOrderSuccess();
@@ -350,8 +364,48 @@ class CyberRamenDash {
   endShift(cleared) {
     this.isShiftActive = false;
     clearInterval(this.gameInterval);
+
     const title = cleared ? 'Shift Complete!' : 'Health Inspection Shutdown!';
-    alert(`${title}\nFinal Credits Earned: ${this.score}`);
+    const msg = cleared 
+      ? 'Exceptional culinary service, Cyber Chef! All patrons departed fully fueled.'
+      : 'Too many customer complaints or expired orders closed down the kitchen.';
+
+    this.shiftTitle.textContent = title;
+    this.shiftTitle.style.color = cleared ? '#f59e0b' : '#ef4444';
+    this.shiftMessage.textContent = msg;
+    this.summaryScore.textContent = this.score;
+    this.summaryServed.textContent = this.totalServed;
+    this.shiftOverlay.classList.remove('hidden');
+
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'ARCADEVERSE_GAME_SCORE',
+        score: this.score,
+        ordersServed: this.totalServed
+      }, '*');
+      window.parent.postMessage({
+        type: 'ARCADEVERSE_GAME_OVER',
+        score: this.score,
+        ordersServed: this.totalServed,
+        cleared: cleared
+      }, '*');
+    }
+  }
+
+  restartGame() {
+    this.score = 0;
+    this.combo = 1;
+    this.strikes = 0;
+    this.shiftTime = 180;
+    this.totalServed = 0;
+    this.slots = [null, null, null];
+    this.nextSpawnTimer = 1.5;
+    this.trashBowl();
+    this.isShiftActive = true;
+    if (this.gameInterval) clearInterval(this.gameInterval);
+    this.gameInterval = setInterval(() => this.tick(), 100);
+    this.updateHUD();
+    this.renderCustomerTickets();
   }
 
   renderCustomerTickets() {

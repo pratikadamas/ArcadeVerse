@@ -1,0 +1,642 @@
+/**
+ * ArcadeVerse - 3D Flip Card & Vector Controls Blueprint Stylesheet
+ * Issue #1102 - Dynamic 3D Flip Card with Vector Controls Schematic & Quick Manual
+ *
+ * Implements GPU-accelerated 60 FPS 3D perspective flip along Y-axis,
+ * high-contrast retro cyberpunk blueprint layout, vector keyboard schematic,
+ * and WCAG-compliant accessible controls.
+ */
+
+/* =========================================================================
+   3D PERSPECTIVE CONTAINER & FLIP MECHANISM
+   ========================================================================= */
+
+.game-card {
+  perspective: 1200px;
+  -webkit-perspective: 1200px;
+  position: relative;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.game-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  border-radius: var(--radius-lg, 12px);
+  will-change: transform;
+}
+
+.game-card.is-flipped .game-card-inner {
+  transform: rotateY(180deg);
+  -webkit-transform: rotateY(180deg);
+}
+
+.game-card-front,
+.game-card-back {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: var(--radius-lg, 12px);
+  box-sizing: border-box;
+}
+
+/* Front Face Base */
+.game-card-front {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface, #111625);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  box-shadow: var(--shadow-card, 0 4px 16px rgba(0, 0, 0, 0.4));
+  transform: rotateY(0deg);
+  -webkit-transform: rotateY(0deg);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+  overflow: hidden;
+}
+
+.game-card:hover .game-card-front {
+  border-color: var(--border-medium, rgba(255, 255, 255, 0.18));
+  box-shadow: var(--shadow-lg, 0 10px 25px -5px rgba(0, 0, 0, 0.5));
+  background: var(--bg-surface-elevated, #161c2e);
+}
+
+/* =========================================================================
+   CARD FRONT: "CONTROLS & MANUAL" FLIP BUTTON
+   ========================================================================= */
+
+.btn-card-manual-flip {
+  position: absolute;
+  top: 0.85rem;
+  right: 3.55rem;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm, 6px);
+  background: rgba(12, 14, 20, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s var(--ease-smooth, cubic-bezier(0.4, 0, 0.2, 1));
+  z-index: 5;
+  padding: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.btn-card-manual-flip:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: rgba(56, 189, 248, 0.6);
+  color: #7dd3fc;
+  transform: scale(1.08);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+}
+
+.btn-card-manual-flip:active {
+  transform: scale(0.96);
+}
+
+.btn-card-manual-flip:focus-visible {
+  outline: 2px solid #06b6d4;
+  outline-offset: 2px;
+}
+
+.manual-flip-icon {
+  pointer-events: none;
+  stroke: currentColor;
+}
+
+/* =========================================================================
+   CARD REVERSE FACE: CYBERPUNK BLUEPRINT LAYOUT
+   ========================================================================= */
+
+.game-card-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: rotateY(180deg);
+  -webkit-transform: rotateY(180deg);
+  background: linear-gradient(160deg, #090e1a 0%, #060a12 100%);
+  background-image:
+    linear-gradient(rgba(6, 182, 212, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6, 182, 212, 0.07) 1px, transparent 1px),
+    linear-gradient(160deg, #090e1a 0%, #060a12 100%);
+  background-size: 20px 20px, 20px 20px, 100% 100%;
+  border: 1px solid #06b6d4;
+  box-shadow: 0 0 24px rgba(6, 182, 212, 0.25), var(--shadow-card, 0 4px 16px rgba(0, 0, 0, 0.4));
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.1rem;
+  color: #e2e8f0;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.schematic-body-scroll {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 2px;
+  margin-bottom: 0.6rem;
+}
+
+/* Custom Sleek Scrollbar for Blueprint Body */
+.schematic-body-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.schematic-body-scroll::-webkit-scrollbar-track {
+  background: rgba(6, 182, 212, 0.08);
+}
+.schematic-body-scroll::-webkit-scrollbar-thumb {
+  background: rgba(6, 182, 212, 0.4);
+  border-radius: 2px;
+}
+
+/* Blueprint Header */
+.schematic-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-bottom: 1px dashed rgba(6, 182, 212, 0.35);
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.schematic-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.schematic-badge {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #22d3ee;
+  letter-spacing: 1px;
+  background: rgba(6, 182, 212, 0.15);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  padding: 0.15rem 0.45rem;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.schematic-game-cat {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-card-flip-back {
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  color: #22d3ee;
+  border-radius: 4px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-card-flip-back:hover {
+  background: rgba(6, 182, 212, 0.25);
+  border-color: #22d3ee;
+  color: #ffffff;
+  transform: translateX(-2px);
+}
+
+.btn-card-flip-back:focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 1px;
+}
+
+.schematic-game-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.3;
+  letter-spacing: 0.2px;
+}
+
+.schematic-section-label {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
+
+/* =========================================================================
+   VECTOR KEYBOARD SCHEMATIC DIAGRAM
+   ========================================================================= */
+
+.schematic-diagram {
+  background: rgba(4, 7, 13, 0.8);
+  border: 1px solid rgba(6, 182, 212, 0.28);
+  border-radius: 6px;
+  padding: 0.65rem;
+  margin-bottom: 0.65rem;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.6);
+}
+
+.key-clusters-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.key-cluster {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.key-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.keycap-spacer {
+  width: 26px;
+  height: 26px;
+}
+
+.keycap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 4px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(15, 23, 42, 0.85);
+  color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
+  transition: all 0.25s ease;
+  user-select: none;
+}
+
+/* Active Highlighted Keycap */
+.keycap.keycap-active {
+  border-color: #22d3ee;
+  background: rgba(6, 182, 212, 0.22);
+  color: #22d3ee;
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.45), 0 2px 0 #0891b2;
+  text-shadow: 0 0 6px rgba(34, 211, 238, 0.8);
+}
+
+/* Dim Inactive Keycap */
+.keycap.keycap-dim {
+  opacity: 0.35;
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(10, 15, 26, 0.5);
+  color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+}
+
+.action-keys-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+
+.keycap.keycap-space {
+  min-width: 100px;
+  font-size: 0.65rem;
+  letter-spacing: 0.8px;
+}
+
+.keycap.keycap-mouse {
+  min-width: 82px;
+  font-size: 0.65rem;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  gap: 4px;
+}
+
+.schematic-legend {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 0.45rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 0.4rem;
+  text-align: left;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  line-height: 1.3;
+}
+
+.legend-key {
+  color: #22d3ee;
+  font-weight: 700;
+  min-width: 76px;
+}
+
+.legend-sep {
+  color: #64748b;
+}
+
+.legend-desc {
+  color: #cbd5e1;
+}
+
+/* =========================================================================
+   2-SENTENCE OBJECTIVE & RULES MANUAL
+   ========================================================================= */
+
+.schematic-manual-box {
+  background: rgba(15, 23, 42, 0.65);
+  border-left: 3px solid #06b6d4;
+  border-radius: 0 4px 4px 0;
+  padding: 0.55rem 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.manual-sentence-1 {
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #f1f5f9;
+  margin: 0 0 0.35rem 0;
+  font-weight: 500;
+}
+
+.manual-sentence-2 {
+  font-size: 0.76rem;
+  line-height: 1.35;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* =========================================================================
+   BLUEPRINT FOOTER & LAUNCH TRIGGER
+   ========================================================================= */
+
+.schematic-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: auto;
+  border-top: 1px dashed rgba(6, 182, 212, 0.3);
+  padding-top: 0.55rem;
+}
+
+.schematic-meta-chip {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.66rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.meta-label {
+  color: #64748b;
+}
+
+.meta-value {
+  color: #38bdf8;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.btn-blueprint-launch {
+  padding: 0.5rem 0.95rem;
+  border-radius: var(--radius-sm, 6px);
+  background: linear-gradient(135deg, #06b6d4, #0284c7);
+  color: #ffffff;
+  border: none;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 12px rgba(6, 182, 212, 0.35);
+}
+
+.btn-blueprint-launch:hover {
+  background: linear-gradient(135deg, #22d3ee, #0ea5e9);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 16px rgba(6, 182, 212, 0.5);
+}
+
+.btn-blueprint-launch:active {
+  transform: translateY(0);
+}
+
+.btn-blueprint-launch:focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 2px;
+}
+
+/* =========================================================================
+   ACCESSIBILITY: REDUCED MOTION PREFERENCES
+   ========================================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .game-card-inner {
+    transition: transform 0.01ms !important;
+  }
+  .btn-card-manual-flip {
+    transition: none !important;
+  }
+}
+
+html.a11y-reduced-motion .game-card-inner {
+  transition: transform 0.01ms !important;
+}
+
+html.a11y-reduced-motion .btn-card-manual-flip {
+  transition: none !important;
+}
+
+/* =========================================================================
+   LIGHT THEME OVERRIDES
+   ========================================================================= */
+
+[data-theme="light"] .game-card-front {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .game-card:hover .game-card-front {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .btn-card-manual-flip {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: #cbd5e1;
+  color: #0284c7;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .btn-card-manual-flip:hover {
+  background: #f0f9ff;
+  border-color: #0284c7;
+  color: #0369a1;
+}
+
+[data-theme="light"] .game-card-back {
+  background: linear-gradient(160deg, #f8fafc 0%, #f1f5f9 100%);
+  background-image:
+    linear-gradient(rgba(2, 132, 199, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(2, 132, 199, 0.08) 1px, transparent 1px),
+    linear-gradient(160deg, #f8fafc 0%, #f1f5f9 100%);
+  border-color: #0284c7;
+  box-shadow: 0 0 20px rgba(2, 132, 199, 0.2), 0 4px 16px rgba(0, 0, 0, 0.08);
+  color: #0f172a;
+}
+
+[data-theme="light"] .schematic-header {
+  border-bottom-color: rgba(2, 132, 199, 0.3);
+}
+
+[data-theme="light"] .schematic-badge {
+  background: rgba(2, 132, 199, 0.12);
+  border-color: rgba(2, 132, 199, 0.35);
+  color: #0369a1;
+}
+
+[data-theme="light"] .btn-card-flip-back {
+  background: rgba(2, 132, 199, 0.1);
+  border-color: rgba(2, 132, 199, 0.3);
+  color: #0284c7;
+}
+
+[data-theme="light"] .schematic-game-title {
+  color: #0f172a;
+}
+
+[data-theme="light"] .schematic-section-label {
+  color: #0284c7;
+}
+
+[data-theme="light"] .schematic-diagram {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .keycap {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #64748b;
+  box-shadow: 0 2px 0 #cbd5e1;
+}
+
+[data-theme="light"] .keycap.keycap-active {
+  background: #e0f2fe;
+  border-color: #0284c7;
+  color: #0369a1;
+  box-shadow: 0 0 8px rgba(2, 132, 199, 0.35), 0 2px 0 #0284c7;
+  text-shadow: none;
+}
+
+[data-theme="light"] .keycap.keycap-dim {
+  opacity: 0.45;
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+}
+
+[data-theme="light"] .legend-key {
+  color: #0284c7;
+}
+
+[data-theme="light"] .legend-desc {
+  color: #334155;
+}
+
+[data-theme="light"] .schematic-manual-box {
+  background: #f8fafc;
+  border-left-color: #0284c7;
+}
+
+[data-theme="light"] .manual-sentence-1 {
+  color: #0f172a;
+}
+
+[data-theme="light"] .manual-sentence-2 {
+  color: #475569;
+}
+
+[data-theme="light"] .schematic-footer {
+  border-top-color: rgba(2, 132, 199, 0.3);
+}
+
+/* =========================================================================
+   LIST VIEW COMPATIBILITY (#games-grid.view-list)
+   ========================================================================= */
+
+#games-grid.view-list .game-card {
+  perspective: none;
+  min-height: auto;
+}
+
+#games-grid.view-list .game-card-inner {
+  transform: none !important;
+  flex-direction: row;
+}
+
+#games-grid.view-list .game-card.is-flipped .game-card-front {
+  display: none;
+}
+
+#games-grid.view-list .game-card.is-flipped .game-card-back {
+  position: static;
+  transform: none;
+  width: 100%;
+}
+
+#games-grid.view-list .btn-card-manual-flip {
+  position: static;
+  margin-left: 0.35rem;
+}

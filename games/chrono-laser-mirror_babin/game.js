@@ -42,12 +42,32 @@
     } catch (_) {}
   }
 
+  // Storage helpers
+  function getStoredBest() {
+    try {
+      const val = localStorage.getItem('chrono_laser_best');
+      return val ? parseInt(val, 10) || 1 : 1;
+    } catch (_) {
+      return 1;
+    }
+  }
+
+  function setStoredBest(val) {
+    try {
+      localStorage.setItem('chrono_laser_best', String(val));
+    } catch (_) {}
+  }
+
   // State
   let currentLevel = 1;
   let rotations = 0;
   let isLevelComplete = false;
-  let bestLevel = parseInt(localStorage.getItem('chrono_laser_best') || '1', 10);
+  let bestLevel = getStoredBest();
   bestDisplay.textContent = `LEVEL ${bestLevel}`;
+
+  let rafId = null;
+  let isRunning = true;
+  let overlayTimer = null;
 
   const GRID_SIZE = 5;
   const CELL_SIZE = 600 / GRID_SIZE; // 120px
@@ -91,6 +111,10 @@
   let beamPath = [];
 
   function loadLevel(lvlNum) {
+    if (overlayTimer) {
+      clearTimeout(overlayTimer);
+      overlayTimer = null;
+    }
     const configIndex = (lvlNum - 1) % LEVELS.length;
     currentLevelData = LEVELS[configIndex];
     mirrorsState = currentLevelData.mirrors.map(m => ({ ...m }));
@@ -99,6 +123,7 @@
     completeOverlay.classList.remove('active');
     updateHUD();
     computeBeam();
+    startLoop();
   }
 
   function updateHUD() {
@@ -120,7 +145,8 @@
     beamPath.push({ x: startX, y: startY });
 
     let steps = 0;
-    const maxSteps = 24;
+    const maxSteps = 40;
+    const visitedMirrors = new Set();
 
     while (steps < maxSteps) {
       steps++;
@@ -150,6 +176,13 @@
       // Check mirror reflection
       const mirror = mirrorsState.find(m => m.r === currR && m.c === currC);
       if (mirror) {
+        const visitKey = `${currR},${currC},${dir}`;
+        if (visitedMirrors.has(visitKey)) {
+          // Closed cycle detected: beam forms a loop between mirrors
+          break;
+        }
+        visitedMirrors.add(visitKey);
+
         // angle 0: '/'
         if (mirror.angle === 0) {
           if (dir === 'right') dir = 'up';
@@ -173,15 +206,23 @@
     isLevelComplete = true;
     updateHUD();
     playTone(880, 'triangle', 0.35, 0.25);
-    setTimeout(() => {
+
+    if (overlayTimer) clearTimeout(overlayTimer);
+    overlayTimer = setTimeout(() => {
       completeOverlay.classList.add('active');
     }, 300);
 
     if (currentLevel >= bestLevel) {
       bestLevel = currentLevel + 1;
-      localStorage.setItem('chrono_laser_best', bestLevel);
+      setStoredBest(bestLevel);
       bestDisplay.textContent = `LEVEL ${bestLevel}`;
     }
+
+    try {
+      window.dispatchEvent(new CustomEvent('ARCADEVERSE_GAME_SCORE', {
+        detail: { gameId: 'chrono-laser-mirror', score: currentLevel * 100, level: currentLevel }
+      }));
+    } catch (_) {}
   }
 
   function handleCanvasClick(e) {
@@ -281,8 +322,29 @@
       ctx.stroke();
       ctx.shadowBlur = 0;
     }
+  }
 
-    requestAnimationFrame(render);
+  function loop() {
+    if (!isRunning) return;
+    render();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function startLoop() {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    isRunning = true;
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function stopLoop() {
+    isRunning = false;
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
   }
 
   canvas.addEventListener('click', handleCanvasClick);
@@ -302,6 +364,33 @@
   closeRulesBtn.addEventListener('click', () => rulesModal.classList.remove('active'));
   rulesConfirmBtn.addEventListener('click', () => rulesModal.classList.remove('active'));
 
+  // Window blur and visibility change handlers
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopLoop();
+    } else {
+      startLoop();
+    }
+  });
+
+  window.addEventListener('ARCADEVERSE_PAUSE', () => {
+    stopLoop();
+  });
+
+  window.addEventListener('ARCADEVERSE_RESUME', () => {
+    startLoop();
+  });
+
+  window.addEventListener('ARCADEVERSE_TEARDOWN', () => {
+    stopLoop();
+    if (overlayTimer) {
+      clearTimeout(overlayTimer);
+      overlayTimer = null;
+    }
+    if (audioCtx && audioCtx.state !== 'closed') {
+      try { audioCtx.close(); } catch (_) {}
+    }
+  });
+
   loadLevel(currentLevel);
-  render();
 })();
