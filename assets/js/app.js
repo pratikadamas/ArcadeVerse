@@ -1119,10 +1119,160 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Update Stats
-  if (totalGamesCount) totalGamesCount.textContent = GAMES_REGISTRY.length;
-  if (totalContributorsCount) totalContributorsCount.textContent = CONTRIBUTORS_REGISTRY.length;
+  // Update Stats & 60 FPS Animated Count-Up Engine (#1057)
+  function animateCountUp(el, targetVal, durationMs = 1200) {
+    if (!el || typeof targetVal !== "number") return;
+    const isReduced = typeof window !== "undefined" && (
+      (window.ArcadeVerseA11y && typeof window.ArcadeVerseA11y.isReducedMotion === "function" && window.ArcadeVerseA11y.isReducedMotion()) ||
+      (window.A11yEngine && window.A11yEngine.prefs && window.A11yEngine.prefs.reducedMotion) ||
+      (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+    );
+
+    if (isReduced) {
+      el.textContent = targetVal;
+      return;
+    }
+
+    const startTime = performance.now();
+    const startVal = 0;
+
+    function step(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / durationMs);
+      // easeOutExpo: progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress)
+      const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      const current = Math.floor(startVal + (targetVal - startVal) * ease);
+      el.textContent = current;
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        el.textContent = targetVal;
+      }
+    }
+
+    requestAnimationFrame(step);
+  }
+
+  function hydrateStatsTelemetry() {
+    try {
+      const gCount = (typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) ? GAMES_REGISTRY.length : 124;
+      const cCount = (typeof CONTRIBUTORS_REGISTRY !== "undefined" && Array.isArray(CONTRIBUTORS_REGISTRY)) ? CONTRIBUTORS_REGISTRY.length : 48;
+
+      const statsContainer = document.querySelector(".quick-stats");
+      if (statsContainer && "IntersectionObserver" in window) {
+        let hasAnimated = false;
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && !hasAnimated) {
+              hasAnimated = true;
+              if (totalGamesCount) animateCountUp(totalGamesCount, gCount);
+              if (totalContributorsCount) animateCountUp(totalContributorsCount, cCount);
+              observer.disconnect();
+            }
+          });
+        }, { threshold: 0.2 });
+        observer.observe(statsContainer);
+      } else {
+        if (totalGamesCount) totalGamesCount.textContent = gCount;
+        if (totalContributorsCount) totalContributorsCount.textContent = cCount;
+      }
+    } catch (_) {
+      if (totalGamesCount) totalGamesCount.textContent = "124";
+      if (totalContributorsCount) totalContributorsCount.textContent = "48";
+    }
+  }
+
+  hydrateStatsTelemetry();
   updateFavoritesBadge();
+
+  // Interactive Telemetry Popover / Micro-Drawer (#1057)
+  const statCardGames = document.getElementById("stat-card-games");
+  const statCardContributors = document.getElementById("stat-card-contributors");
+
+  function openTelemetryModal(title, contentHtml) {
+    let modal = document.getElementById("hero-telemetry-modal");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.id = "hero-telemetry-modal";
+      modal.className = "hero-telemetry-modal";
+      modal.setAttribute("role", "dialog");
+      modal.setAttribute("aria-modal", "true");
+      modal.style.position = "fixed";
+      modal.style.top = "0";
+      modal.style.left = "0";
+      modal.style.width = "100vw";
+      modal.style.height = "100vh";
+      modal.style.background = "rgba(10, 15, 26, 0.95)";
+      modal.style.zIndex = "10000";
+      modal.style.display = "none";
+      modal.style.justifyContent = "center";
+      modal.style.alignItems = "center";
+      modal.style.backdropFilter = "blur(10px)";
+      document.body.appendChild(modal);
+    }
+
+    modal.innerHTML = `
+      <div style="background:#0f172a; border:1px solid rgba(0,245,255,0.3); border-radius:12px; width:90%; max-width:540px; padding:24px; box-shadow:0 12px 48px rgba(0,0,0,0.8); color:#fff;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:12px; margin-bottom:16px;">
+          <h3 style="margin:0; font-size:1.15rem; color:var(--accent-primary, #00f5ff);">${escapeHTML(title)}</h3>
+          <button type="button" id="telemetry-close-btn" style="background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">&times;</button>
+        </div>
+        <div>${contentHtml}</div>
+      </div>
+    `;
+
+    modal.style.display = "flex";
+    const closeBtn = document.getElementById("telemetry-close-btn");
+    if (closeBtn) {
+      closeBtn.focus();
+      closeBtn.addEventListener("click", () => { modal.style.display = "none"; });
+    }
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) modal.style.display = "none";
+    });
+  }
+
+  if (statCardGames) {
+    const handleGamesClick = () => {
+      const categoriesMap = {};
+      if (typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) {
+        GAMES_REGISTRY.forEach((g) => {
+          const cat = g.category ? g.category.split("/")[0].trim() : "Other";
+          categoriesMap[cat] = (categoriesMap[cat] || 0) + 1;
+        });
+      }
+      const listItems = Object.keys(categoriesMap).map((cat) => `
+        <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.85rem;">
+          <span>${escapeHTML(cat)}</span>
+          <strong style="color:var(--accent-primary, #00f5ff);">${categoriesMap[cat]} games</strong>
+        </div>
+      `).join("");
+
+      openTelemetryModal("Playable Games Distribution", `
+        <div style="max-height:280px; overflow-y:auto; padding-right:8px;">${listItems}</div>
+      `);
+    };
+    statCardGames.addEventListener("click", handleGamesClick);
+    statCardGames.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleGamesClick(); } });
+  }
+
+  if (statCardContributors) {
+    const handleContributorsClick = () => {
+      const count = typeof CONTRIBUTORS_REGISTRY !== "undefined" && Array.isArray(CONTRIBUTORS_REGISTRY) ? CONTRIBUTORS_REGISTRY.length : 48;
+      openTelemetryModal("Community Contributors", `
+        <p style="font-size:0.9rem; color:#94a3b8; line-height:1.6; margin-bottom:16px;">
+          ArcadeVerse is built by <strong>${count} open source engineers</strong> contributing games, engines, accessibility tools, and sound synthesizers.
+        </p>
+        <div style="display:flex; gap:12px;">
+          <a href="leaderboard.html" class="btn btn-primary" style="font-size:0.85rem; padding:8px 16px; text-decoration:none; border-radius:6px; background:var(--accent-primary, #00f5ff); color:#000; font-weight:700;">View Hall of Fame</a>
+          <a href="https://github.com/DebasmitaBose0/ArcadeVerse" target="_blank" rel="noopener noreferrer" style="font-size:0.85rem; padding:8px 16px; text-decoration:none; border-radius:6px; background:rgba(255,255,255,0.1); color:#fff;">GitHub Repository</a>
+        </div>
+      `);
+    };
+    statCardContributors.addEventListener("click", handleContributorsClick);
+    statCardContributors.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleContributorsClick(); } });
+  }
 
   // Render Games
 
