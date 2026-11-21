@@ -106,5 +106,17 @@
     "title": "[Feature/Leaderboard]: Client-Side Leaderboard Score Distribution Analytics & Percentile Histogram Suite",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1207",
     "published_at": "2026-11-21T14:37:25.282Z"
+  },
+  {
+    "number": 1214,
+    "title": "[Feature/Canvas]: Canvas Split-Depth 3D Pop-Out Illusion & Parallax Occlusion Bar Generator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1214",
+    "published_at": "2026-11-21T14:51:34.654Z"
+  },
+  {
+    "number": 1215,
+    "title": "[Feature/Physics]: 2D Inverse Kinematics (IK) FABRIK Multi-Joint Tentacle & Ragdoll Physics Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1215",
+    "published_at": "2026-11-21T14:51:40.226Z"
   }
 ]
