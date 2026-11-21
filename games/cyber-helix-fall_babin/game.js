@@ -31,9 +31,39 @@
   const finalFloors = document.getElementById('final-floors');
   const finalCombo = document.getElementById('final-combo');
 
+  // Safe Storage
+  function getStoredBestScore() {
+    try {
+      const val = localStorage.getItem('cyber-helix-best-score');
+      return val ? parseInt(val, 10) || 0 : 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function setStoredBestScore(scoreVal) {
+    try {
+      localStorage.setItem('cyber-helix-best-score', String(scoreVal));
+    } catch (_) {}
+  }
+
+  function getStoredSound() {
+    try {
+      return localStorage.getItem('cyber-helix-sound') !== 'false';
+    } catch (_) {
+      return true;
+    }
+  }
+
+  function setStoredSound(soundVal) {
+    try {
+      localStorage.setItem('cyber-helix-sound', soundVal ? 'true' : 'false');
+    } catch (_) {}
+  }
+
   // Audio System via Web Audio API
   let audioCtx = null;
-  let soundEnabled = localStorage.getItem('cyber-helix-sound') !== 'false';
+  let soundEnabled = getStoredSound();
 
   function initAudio() {
     if (!audioCtx) {
@@ -128,7 +158,7 @@
 
   let gameState = 'ready'; // ready, playing, gameover
   let score = 0;
-  let bestScore = parseInt(localStorage.getItem('cyber-helix-best-score') || '0', 10);
+  let bestScore = getStoredBestScore();
   let floor = 1;
   let combo = 0;
   let maxCombo = 0;
@@ -142,6 +172,9 @@
   let cameraY = 0;
   let consecutiveDrops = 0;
   let isFireball = false;
+
+  let rafId = null;
+  let lastFrameTime = performance.now();
 
   // Input Handling
   const keys = { left: false, right: false };
@@ -211,6 +244,7 @@
     gameState = 'playing';
     startOverlay.classList.add('hidden');
     gameoverOverlay.classList.add('hidden');
+    startLoop();
   }
 
   function spawnParticles(x, y, color, count = 16) {
@@ -230,15 +264,16 @@
     }
   }
 
-  function checkPlatformCollisions() {
+  function checkPlatformCollisions(dtScale = 1.0) {
     const ballWorldY = ballY;
 
     for (let p of platforms) {
       if (p.smashed) continue;
       const dist = ballWorldY - p.y;
+      const collisionPad = Math.max(4, Math.abs(ballVy) * dtScale);
 
-      // Check if ball hits platform surface going downward
-      if (dist >= -BALL_RADIUS && dist <= BALL_RADIUS + 4 && ballVy >= 0) {
+      // Check if ball hits platform surface going downward with swept distance
+      if (dist >= -BALL_RADIUS && dist <= BALL_RADIUS + collisionPad && ballVy >= 0) {
         // Determine which sector the ball lands on
         // Ball is at X = TOWER_X, top edge of disk
         // Calculate sector angle relative to cylinder
@@ -311,9 +346,15 @@
     gameState = 'gameover';
     if (score > bestScore) {
       bestScore = score;
-      localStorage.setItem('cyber-helix-best-score', bestScore.toString());
+      setStoredBestScore(bestScore);
     }
     updateHUD();
+
+    try {
+      window.dispatchEvent(new CustomEvent('ARCADEVERSE_GAME_OVER', {
+        detail: { gameId: 'cyber-helix-fall', score: score, floor: floor, combo: maxCombo }
+      }));
+    } catch (_) {}
 
     finalScore.textContent = score;
     finalFloors.textContent = floor;
@@ -334,26 +375,26 @@
     }
   }
 
-  function update() {
+  function update(dtScale = 1.0) {
     if (gameState !== 'playing') return;
 
     // Cylinder rotation input
     if (keys.left) cylinderAngularVelocity = -0.065;
     else if (keys.right) cylinderAngularVelocity = 0.065;
-    else cylinderAngularVelocity *= 0.86;
+    else cylinderAngularVelocity *= Math.pow(0.86, dtScale);
 
-    cylinderAngle += cylinderAngularVelocity;
+    cylinderAngle += cylinderAngularVelocity * dtScale;
 
-    // Ball physics
-    ballVy += GRAVITY;
-    ballY += ballVy;
+    // Ball physics with dtScale
+    ballVy += GRAVITY * dtScale;
+    ballY += ballVy * dtScale;
 
     // Smooth camera tracking ball
     const targetCameraY = ballY - BALL_SCREEN_Y;
-    cameraY += (targetCameraY - cameraY) * 0.18;
+    cameraY += (targetCameraY - cameraY) * Math.min(1.0, 0.18 * dtScale);
 
     // Collision detection
-    checkPlatformCollisions();
+    checkPlatformCollisions(dtScale);
 
     // Recycle platforms as player descends
     const highestPlatform = platforms[platforms.length - 1];
@@ -369,9 +410,9 @@
     // Update particles
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.alpha -= p.decay;
+      p.x += p.vx * dtScale;
+      p.y += p.vy * dtScale;
+      p.alpha -= p.decay * dtScale;
       if (p.alpha <= 0) particles.splice(i, 1);
     }
   }
@@ -472,10 +513,31 @@
     }
   }
 
-  function gameLoop() {
-    update();
+  function gameLoop(now = performance.now()) {
+    const rawDt = (now - lastFrameTime) / 1000;
+    const dt = Math.min(Math.max(rawDt, 0.001), 0.1);
+    lastFrameTime = now;
+    const dtScale = Math.min(Math.max(dt * 60, 0.2), 3.0);
+
+    update(dtScale);
     render();
-    requestAnimationFrame(gameLoop);
+    rafId = requestAnimationFrame(gameLoop);
+  }
+
+  function startLoop() {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    lastFrameTime = performance.now();
+    rafId = requestAnimationFrame(gameLoop);
+  }
+
+  function stopLoop() {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
   }
 
   // Event Listeners
@@ -538,7 +600,7 @@
   // Sound Toggle
   soundBtn.addEventListener('click', () => {
     soundEnabled = !soundEnabled;
-    localStorage.setItem('cyber-helix-sound', soundEnabled.toString());
+    setStoredSound(soundEnabled);
     updateSoundUI();
     if (soundEnabled) playSound('bounce');
   });
@@ -562,8 +624,32 @@
     resetGame();
   });
 
+  // Visibility and Lifecycle
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopLoop();
+    } else {
+      if (gameState === 'playing') startLoop();
+    }
+  });
+
+  window.addEventListener('ARCADEVERSE_PAUSE', () => {
+    stopLoop();
+  });
+
+  window.addEventListener('ARCADEVERSE_RESUME', () => {
+    if (gameState === 'playing') startLoop();
+  });
+
+  window.addEventListener('ARCADEVERSE_TEARDOWN', () => {
+    stopLoop();
+    if (audioCtx && audioCtx.state !== 'closed') {
+      try { audioCtx.close(); } catch (_) {}
+    }
+  });
+
   // Initialize
   updateSoundUI();
   updateHUD();
-  gameLoop();
+  startLoop();
 })();

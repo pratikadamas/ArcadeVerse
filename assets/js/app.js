@@ -328,13 +328,14 @@ document.addEventListener("DOMContentLoaded", () => {
               frameDoc.dispatchEvent(evt);
             }
           } catch (_) {
+            const targetOrigin = (typeof getTrustedTargetOrigin === "function") ? getTrustedTargetOrigin() : "*";
             iframe.contentWindow.postMessage({
               type: "ARCADEVERSE_GAMEPAD_KEY",
               eventType: eventType,
               key: targetMapping.key,
               code: targetMapping.code,
               keyCode: targetMapping.keyCode
-            }, "*");
+            }, targetOrigin);
           }
         }
         break;
@@ -657,31 +658,61 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchTagsRow = document.getElementById("search-tags-row");
   const resetFacetsBtn = document.getElementById("btn-reset-facets");
 
-  // Favorites LocalStorage Engine (Issue #533)
+  // Favorites Storage Engine (Issue #533 & Issue #890)
+  // Consolidate on single canonical storage key 'av_favorites'
   const FAVORITES_STORAGE_KEY = "av_favorites";
   const LEGACY_FAVORITES_STORAGE_KEY = "arcadeverse_favorite_games";
   const PREFERENCES_FAVORITES_KEY = "arcadeverse:preferences:favorites";
 
-  // Migrate legacy favorite storage keys to primary av_favorites key if needed
-  try {
-    if (!localStorage.getItem(FAVORITES_STORAGE_KEY)) {
-      const legacy = localStorage.getItem(LEGACY_FAVORITES_STORAGE_KEY) || localStorage.getItem(PREFERENCES_FAVORITES_KEY);
-      if (legacy) {
-        ArcadeStorageResilience.safeSetItem(FAVORITES_STORAGE_KEY, legacy);
+  // Perform one-time migration from legacy storage keys to canonical av_favorites key
+  function reconcileFavoritesStorage() {
+    try {
+      const canonicalRaw = ArcadeStorageResilience.safeGetItem(FAVORITES_STORAGE_KEY, null);
+      let mergedSet = new Set();
+      if (canonicalRaw) {
+        try {
+          const list = JSON.parse(canonicalRaw);
+          if (Array.isArray(list)) list.forEach(id => mergedSet.add(id));
+        } catch (_) { }
       }
-    }
-  } catch (_) { }
+      
+      const legacyRaw = ArcadeStorageResilience.safeGetItem(LEGACY_FAVORITES_STORAGE_KEY, null);
+      if (legacyRaw) {
+        try {
+          const list = JSON.parse(legacyRaw);
+          if (Array.isArray(list)) list.forEach(id => mergedSet.add(id));
+        } catch (_) { }
+      }
+
+      const prefRaw = ArcadeStorageResilience.safeGetItem(PREFERENCES_FAVORITES_KEY, null);
+      if (prefRaw) {
+        try {
+          const list = JSON.parse(prefRaw);
+          if (Array.isArray(list)) list.forEach(id => mergedSet.add(id));
+        } catch (_) { }
+      }
+
+      if (mergedSet.size > 0 && !canonicalRaw) {
+        ArcadeStorageResilience.safeSetItem(FAVORITES_STORAGE_KEY, JSON.stringify(Array.from(mergedSet)));
+      }
+
+      // Purge legacy split storage keys to eliminate split-brain synchronization
+      if (typeof window !== "undefined" && window.localStorage) {
+        try {
+          window.localStorage.removeItem(LEGACY_FAVORITES_STORAGE_KEY);
+          window.localStorage.removeItem(PREFERENCES_FAVORITES_KEY);
+        } catch (_) { }
+      }
+    } catch (_) { }
+  }
+
+  reconcileFavoritesStorage();
 
   function getFavorites() {
     try {
-      let raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
-      if (!raw) {
-        raw = localStorage.getItem(LEGACY_FAVORITES_STORAGE_KEY);
-      }
-      if (!raw) {
-        raw = localStorage.getItem(PREFERENCES_FAVORITES_KEY);
-      }
-      const parsed = raw ? JSON.parse(raw) : [];
+      const raw = ArcadeStorageResilience.safeGetItem(FAVORITES_STORAGE_KEY, null);
+      if (!raw) return new Set();
+      const parsed = JSON.parse(raw);
       return Array.isArray(parsed) ? new Set(parsed) : new Set();
     } catch (e) {
       return new Set();
@@ -691,8 +722,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function saveFavorites(favSet) {
     const list = Array.from(favSet);
     const serialized = JSON.stringify(list);
+    // Write solely to single canonical storage key
     ArcadeStorageResilience.safeSetItem(FAVORITES_STORAGE_KEY, serialized);
-    ArcadeStorageResilience.safeSetItem(LEGACY_FAVORITES_STORAGE_KEY, serialized);
     updateFavoritesBadge();
 
     // Offline dispatch queue integration (#554)
@@ -927,9 +958,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }));
   }
 
-  // Cross-tab real-time favorites synchronization
+  // Cross-tab real-time favorites synchronization (canonical av_favorites with legacy migration fallback)
   window.addEventListener("storage", (e) => {
     if (e.key === FAVORITES_STORAGE_KEY || e.key === LEGACY_FAVORITES_STORAGE_KEY || e.key === PREFERENCES_FAVORITES_KEY) {
+      if (e.key !== FAVORITES_STORAGE_KEY && e.newValue) {
+        // If an older tab writes to legacy key, reconcile into canonical storage key
+        try {
+          ArcadeStorageResilience.safeSetItem(FAVORITES_STORAGE_KEY, e.newValue);
+        } catch (_) { }
+      }
       updateFavoritesBadge();
       if (currentCategory === "favorites") {
         renderGames();
@@ -1724,42 +1761,55 @@ document.addEventListener("DOMContentLoaded", () => {
       ` : "";
       const halloweenTitleBadge = isHalloween ? `<span class="halloween-title-badge" title="Halloween Special Games">Halloween Special Games</span>` : "";
 
+      const flipBtnHtml = window.ArcadeCardFlipManual ? window.ArcadeCardFlipManual.renderFlipButtonHtml(game) : "";
+      const cardBackHtml = window.ArcadeCardFlipManual ? window.ArcadeCardFlipManual.renderCardBackHtml(game) : "";
+
       card.innerHTML = `
-        <div class="game-card-preview">
-          <canvas class="card-micro-preview-canvas" width="280" height="140"></canvas>
-          <span class="game-category-tag">${safeCategory}</span>
-          ${halloweenBadgeHtml}
-          <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
-              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-            </svg>
-          </button>
-          <div class="game-icon">${iconHtml}</div>${playsBadgeHtml}
-        </div>
-        <div class="game-card-body">
-          <h3 class="game-card-title">${safeTitle}${halloweenTitleBadge}</h3>
-          <p class="game-card-desc">${safeDesc}</p>
-          <div class="game-card-rating-row">
-            <div class="game-rating-stars" data-game-id="${safeGameId}" aria-label="Rating for ${escapeAttr(game.title)}">
-              ${[1, 2, 3, 4, 5].map(starNum => `
-                <button type="button" class="rate-star-btn ${currentStar >= starNum ? 'voted' : ''}" data-game="${safeGameId}" data-star="${starNum}" title="Rate ${starNum} star${starNum > 1 ? 's' : ''}" aria-label="Rate ${starNum} stars">
-                  <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                </button>
-              `).join('')}
-              <span class="rating-badge">${escapeHTML(displayScore)}</span>
+        <div class="game-card-inner">
+          <div class="game-card-front">
+            <div class="game-card-preview">
+              <canvas class="card-micro-preview-canvas" width="280" height="140"></canvas>
+              <span class="game-category-tag">${safeCategory}</span>
+              ${halloweenBadgeHtml}
+              ${flipBtnHtml}
+              <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
+                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                </svg>
+              </button>
+              <div class="game-icon">${iconHtml}</div>${playsBadgeHtml}
             </div>
-          </div>
-          <div class="game-card-footer">
-            <div class="contributor-meta">
-              <div class="contributor-avatar">${escapeHTML((game.author || game.github || "A").charAt(0).toUpperCase())}</div>
-              <div class="contributor-name">
-                <button type="button" class="author-filter-btn" data-author="${safeAuthorAttr}" title="Filter games by ${safeAuthorAttr}" aria-label="Filter games by author ${safeAuthorAttr}">by @${safeGithub}</button>
+            <div class="game-card-body">
+              <h3 class="game-card-title">${safeTitle}${halloweenTitleBadge}</h3>
+              <p class="game-card-desc">${safeDesc}</p>
+              <div class="game-card-rating-row">
+                <div class="game-rating-stars" data-game-id="${safeGameId}" aria-label="Rating for ${escapeAttr(game.title)}">
+                  ${[1, 2, 3, 4, 5].map(starNum => `
+                    <button type="button" class="rate-star-btn ${currentStar >= starNum ? 'voted' : ''}" data-game="${safeGameId}" data-star="${starNum}" title="Rate ${starNum} star${starNum > 1 ? 's' : ''}" aria-label="Rate ${starNum} stars">
+                      <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </button>
+                  `).join('')}
+                  <span class="rating-badge">${escapeHTML(displayScore)}</span>
+                </div>
+              </div>
+              <div class="game-card-footer">
+                <div class="contributor-meta">
+                  <div class="contributor-avatar">${escapeHTML((game.author || game.github || "A").charAt(0).toUpperCase())}</div>
+                  <div class="contributor-name">
+                    <button type="button" class="author-filter-btn" data-author="${safeAuthorAttr}" title="Filter games by ${safeAuthorAttr}" aria-label="Filter games by author ${safeAuthorAttr}">by @${safeGithub}</button>
+                  </div>
+                </div>
+                <button class="btn-play-trigger" data-id="${safeGameId}">${actionText}</button>
               </div>
             </div>
-            <button class="btn-play-trigger" data-id="${safeGameId}">${actionText}</button>
           </div>
+          ${cardBackHtml}
         </div>
       `;
+
+      if (window.ArcadeCardFlipManual) {
+        window.ArcadeCardFlipManual.bindCard(card, game);
+      }
 
       const favBtn = card.querySelector(".btn-card-favorite");
       favBtn.addEventListener("click", (e) => {
@@ -1985,6 +2035,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (frameWrap) frameWrap.appendChild(errorBoundary);
     }
 
+    const isolatedUrl = buildIsolatedGameUrl(gameObj);
+    const displayPath = (gameObj && gameObj.path) || (gameObj && gameObj.id) || "game route";
+
     errorBoundary.innerHTML = `
       <div class="boundary-content">
         <div class="boundary-icon" aria-hidden="true">
@@ -1996,13 +2049,16 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
         <h3 class="boundary-title">Game Route Offline</h3>
         <p class="boundary-desc">
-          Failed to establish connection to <code>${(gameObj && gameObj.path) || 'game route'}</code>. The game entrypoint may be undergoing maintenance, corrupted, or unreachable.
+          Failed to establish connection to <code>${displayPath}</code>. The game entrypoint may be undergoing maintenance, corrupted, or unreachable.
         </p>
         <div class="boundary-actions">
-          <button class="btn btn-primary btn-sm" id="boundary-retry-btn">
+          <button class="btn btn-primary btn-sm" id="boundary-retry-btn" aria-label="Retry loading game with storage isolation">
             <span>Retry Load</span>
           </button>
-          <a href="https://github.com/DebasmitaBose0/ArcadeVerse/issues/new" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
+          <button class="btn btn-secondary btn-sm" id="boundary-direct-btn" aria-label="Open isolated route directly">
+            <span>Direct Route</span>
+          </button>
+          <a href="https://github.com/DebasmitaBose0/ArcadeVerse/issues/new" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" aria-label="Report broken route to project issues">
             <span>Report Broken Route</span>
           </a>
         </div>
@@ -2016,12 +2072,95 @@ document.addEventListener("DOMContentLoaded", () => {
         iframeLoadSucceeded = false;
         if (gameIframe && gameObj) {
           showGameLoader();
-          gameIframe.src = gameObj.path;
+          // Ensure storage isolation query parameter is preserved across retries (#878)
+          const retryTargetUrl = buildIsolatedGameUrl(gameObj);
+          gameIframe.src = retryTargetUrl || gameObj.path;
+          if (newTabBtn) {
+            newTabBtn.href = retryTargetUrl || gameObj.path;
+          }
           startIframeTimeout(gameObj);
         }
       });
     }
+
+    const directBtn = errorBoundary.querySelector("#boundary-direct-btn");
+    if (directBtn) {
+      directBtn.addEventListener("click", () => {
+        if (isolatedUrl) {
+          window.open(isolatedUrl, "_blank", "noopener,noreferrer");
+        }
+      });
+    }
   }
+
+  function triggerGameCrashBoundary(gameObj, errorDetails) {
+    if (gameIframe) gameIframe.style.display = "none";
+    let errorBoundary = document.getElementById("modal-error-boundary");
+    if (!errorBoundary) {
+      errorBoundary = document.createElement("div");
+      errorBoundary.id = "modal-error-boundary";
+      errorBoundary.className = "modal-error-boundary";
+      const frameWrap = document.querySelector(".modal-frame-wrapper");
+      if (frameWrap) frameWrap.appendChild(errorBoundary);
+    }
+
+    const errMessage = (errorDetails && errorDetails.message) || "Runtime execution halted.";
+    const errStack = (errorDetails && errorDetails.stack) || "No diagnostic stack trace available.";
+
+    errorBoundary.innerHTML = `
+      <div class="boundary-content">
+        <div class="boundary-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#ff0055" stroke-width="2">
+            <polygon points="12 2 2 22 22 22"></polygon>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <circle cx="12" cy="17" r="1" fill="#ff0055"></circle>
+          </svg>
+        </div>
+        <h3 class="boundary-title">Game Runtime Crash Detected</h3>
+        <p class="boundary-desc">
+          An unhandled error occurred in <strong>${(gameObj && gameObj.title) || 'the game'}</strong>: <code>${escapeHTML(errMessage)}</code>
+        </p>
+        <details class="boundary-diagnostic-details">
+          <summary>Diagnostic Error Dump</summary>
+          <pre class="boundary-stack-pre"><code>${escapeHTML(errStack)}</code></pre>
+        </details>
+        <div class="boundary-actions">
+          <button class="btn btn-primary btn-sm" id="boundary-restart-btn">
+            <span>Restart Game</span>
+          </button>
+          <button class="btn btn-secondary btn-sm" id="boundary-catalog-btn">
+            <span>Return to Catalog</span>
+          </button>
+        </div>
+      </div>
+    `;
+
+    const restartBtn = errorBoundary.querySelector("#boundary-restart-btn");
+    if (restartBtn) {
+      restartBtn.addEventListener("click", () => {
+        resetIframeBoundary();
+        iframeLoadSucceeded = false;
+        if (gameIframe && gameObj) {
+          gameIframe.src = buildIsolatedGameUrl(gameObj);
+          startIframeTimeout(gameObj);
+        }
+      });
+    }
+
+    const catalogBtn = errorBoundary.querySelector("#boundary-catalog-btn");
+    if (catalogBtn) {
+      catalogBtn.addEventListener("click", () => {
+        closeGameModal();
+      });
+    }
+  }
+
+  // Hook iframe error message broadcaster (#728)
+  window.addEventListener("message", (event) => {
+    if (event.data && event.data.type === "ARCADEVERSE_GAME_CRASH") {
+      triggerGameCrashBoundary(activeGame, event.data.error || { message: event.data.message, stack: event.data.stack });
+    }
+  });
 
   function startIframeTimeout(gameObj) {
     resetIframeBoundary();
@@ -2044,6 +2183,21 @@ document.addEventListener("DOMContentLoaded", () => {
     handshakeConfirmed: false,
     handshakeTimeoutId: null
   };
+
+  /**
+   * Resolves a trusted targetOrigin for hub-to-iframe postMessage transmissions (#884).
+   * Strictly avoids wildcard '*' to prevent leaking session tokens, audio configs, or controller state
+   * to untrusted origins if a frame redirects or navigates unexpectedly.
+   */
+  function getTrustedTargetOrigin() {
+    try {
+      if (window.location && window.location.origin && window.location.origin !== "null") {
+        return window.location.origin;
+      }
+    } catch (_) {}
+    return "*";
+  }
+  window.getTrustedTargetOrigin = getTrustedTargetOrigin;
 
   /**
    * Generates a cryptographically strong UUID or fallback random hexadecimal token
@@ -2126,7 +2280,7 @@ document.addEventListener("DOMContentLoaded", () => {
       handshakeTimeoutId: null
     };
 
-    const targetOrigin = (window.location.origin && window.location.origin !== "null") ? window.location.origin : "*";
+    const targetOrigin = getTrustedTargetOrigin();
 
     // Dispatch cryptographically secured handshake challenge
     try {
@@ -2138,7 +2292,7 @@ document.addEventListener("DOMContentLoaded", () => {
           origin: targetOrigin,
           timestamp: Date.now()
         },
-        "*"
+        targetOrigin
       );
     } catch (err) {
       console.warn("[ArcadeVerse Security] Error dispatching AV_INIT_SESSION:", err);
@@ -2185,7 +2339,7 @@ document.addEventListener("DOMContentLoaded", () => {
             muted: audioState.muted,
             volume: audioState.volume,
             gain: audioState.muted ? 0 : audioState.volume
-          }, "*");
+          }, getTrustedTargetOrigin());
         }
       } catch (_) { }
     });
@@ -2271,14 +2425,39 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Modal Handlers
-  // Restore the catalog's namespaced storage URL bridge (#493, #824).
+  // Restore the catalog's namespaced storage URL bridge (#493, #824, #878).
+  // Ensures that whenever games are launched, retried from error boundaries, or
+  // opened in new tabs, the ?gameId= URL query parameter is strictly preserved.
+  // This allows SDK localStorage proxies to namespace keys correctly and prevent
+  // key collisions or shared quota consumption across different arcade games.
   function buildIsolatedGameUrl(game) {
     if (!game) return "";
-    const path = typeof game === "string" ? game : game.path;
-    if (!path) return "";
-    const url = new URL(path, document.baseURI);
-    if (typeof game === "object" && game.id) url.searchParams.set("gameId", game.id);
-    return url.href;
+    let rawPath = "";
+    let gameId = "";
+
+    if (typeof game === "string") {
+      rawPath = game;
+      try {
+        const parsed = new URL(rawPath, document.baseURI);
+        gameId = parsed.searchParams.get("gameId") || "";
+      } catch (_) {}
+    } else if (typeof game === "object") {
+      rawPath = game.path || "";
+      gameId = game.id || "";
+    }
+
+    if (!rawPath) return "";
+
+    try {
+      const url = new URL(rawPath, document.baseURI);
+      if (gameId && !url.searchParams.has("gameId")) {
+        url.searchParams.set("gameId", gameId);
+      }
+      return url.href;
+    } catch (err) {
+      console.warn("[ArcadeVerse:Isolation] Failed to format isolated game URL:", err);
+      return rawPath;
+    }
   }
 
   // The shared sound engine owns preferences; keep legacy modal/SDK callers
@@ -2292,7 +2471,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function broadcastVolumeSyncToGame(muted, volume) {
     if (!gameIframe || !gameIframe.contentWindow) return;
-    gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_VOLUME_SYNC", sessionToken: activeGameSession.token, muted, volume, gain: muted ? 0 : volume }, "*");
+    gameIframe.contentWindow.postMessage(
+      { type: "ARCADEVERSE_VOLUME_SYNC", sessionToken: activeGameSession.token, muted, volume, gain: muted ? 0 : volume },
+      getTrustedTargetOrigin()
+    );
   }
 
   function openGameModal(game, triggerElement = null, isDirectDeepLink = false) {
@@ -2513,7 +2695,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (gameIframe && gameIframe.contentWindow) {
           try {
             gameIframe.contentWindow.focus();
-            gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_RESUME" }, "*");
+            gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_RESUME" }, getTrustedTargetOrigin());
           } catch (_) { }
         }
       });
@@ -2534,7 +2716,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Pause game runtime while confirmation prompt is open
     if (gameIframe && gameIframe.contentWindow) {
       try {
-        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
+        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, getTrustedTargetOrigin());
       } catch (_) { }
     }
   }
@@ -2545,6 +2727,78 @@ document.addEventListener("DOMContentLoaded", () => {
     if (quitDialog) {
       quitDialog.classList.remove("active");
     }
+  }
+
+  /**
+   * Performs a comprehensive tear-down of child iframe resources (RAF handles, timers, and WebGL contexts).
+   * Dynamically probes active RAF ID to ensure multi-minute (or high-refresh-rate 120Hz/144Hz) sessions
+   * with >10,000 scheduled frames are safely cancelled, avoiding memory leaks and orphaned worker loops (#879).
+   */
+  function terminateChildIframeResources(iframe) {
+    if (!iframe || !iframe.contentWindow) return;
+    try {
+      const win = iframe.contentWindow;
+      // 1. Post lifecycle shutdown signals to compliant game runtimes
+      win.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
+      win.postMessage({ type: "ARCADEVERSE_TEARDOWN" }, "*");
+
+      // 2. Dynamically probe and sweep active requestAnimationFrame handles
+      if (typeof win.cancelAnimationFrame === "function") {
+        if (typeof win.requestAnimationFrame === "function") {
+          const maxFrameId = win.requestAnimationFrame(() => {});
+          win.cancelAnimationFrame(maxFrameId);
+          if (typeof maxFrameId === "number" && maxFrameId > 0) {
+            // Sweeps downward up to 60,000 frames or down to 1
+            const sweepFloor = Math.max(1, maxFrameId - 60000);
+            for (let frameId = maxFrameId; frameId >= sweepFloor; frameId--) {
+              win.cancelAnimationFrame(frameId);
+            }
+          }
+        } else {
+          for (let frameId = 1; frameId <= 1000; frameId++) {
+            win.cancelAnimationFrame(frameId);
+          }
+        }
+      }
+
+      // 3. Clear active timeouts and intervals left by runaway loops
+      if (typeof win.clearTimeout === "function" && typeof win.clearInterval === "function") {
+        const maxTimerId = win.setTimeout(() => {}, 0);
+        if (typeof maxTimerId === "number" && maxTimerId > 0) {
+          const timerFloor = Math.max(1, maxTimerId - 20000);
+          for (let timerId = maxTimerId; timerId >= timerFloor; timerId--) {
+            win.clearTimeout(timerId);
+            win.clearInterval(timerId);
+          }
+        }
+      }
+
+      // 4. Proactively probe and dispose WebGL contexts in child iframe if accessible
+      try {
+        const doc = iframe.contentDocument || win.document;
+        if (doc) {
+          const canvases = doc.querySelectorAll("canvas");
+          canvases.forEach((c) => {
+            try {
+              const gl = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl");
+              if (gl && !gl.isContextLost()) {
+                const loseExt = gl.getExtension("WEBGL_lose_context") ||
+                  gl.getExtension("WEBKIT_WEBGL_lose_context") ||
+                  gl.getExtension("MOZ_WEBGL_lose_context");
+                if (loseExt && typeof loseExt.loseContext === "function") {
+                  loseExt.loseContext();
+                }
+              }
+            } catch (_) {}
+          });
+        }
+      } catch (_) {}
+
+      // 5. Abort network or lingering worker tasks if available
+      if (typeof win.stop === "function") {
+        win.stop();
+      }
+    } catch (_) {}
   }
 
   function closeGameModal(isFromPopState = false) {
@@ -2568,8 +2822,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Standardized Game Lifecycle Bridge: Dispatch teardown & pause events before unmounting iframe
     try {
       if (gameIframe && gameIframe.contentWindow) {
-        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
-        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_TEARDOWN" }, "*");
+        const trustedOrigin = getTrustedTargetOrigin();
+        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, trustedOrigin);
+        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_TEARDOWN" }, trustedOrigin);
 
         // Aggressive RAF and Timer Leak Mitigation (#497)
         try {
@@ -2626,23 +2881,23 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     } catch (_) { }
 
-    // Terminate any rogue event listeners or workers in child frame prior to blanking
-    try {
-      if (gameIframe && gameIframe.contentWindow) {
-        const win = gameIframe.contentWindow;
-        if (typeof win.stop === "function") {
-          win.stop();
-        }
-      }
-    } catch (_) { }
-
-    // Safely blank out iframe after a 100ms grace period to allow games to close AudioContexts and stop RAF loops
+    // Safely blank out iframe after a grace period to allow games to close AudioContexts and finalize teardown
     const currentFrame = gameIframe;
     setTimeout(() => {
       // Another game was opened during the grace period, leave its frame alone
       if (activeGame) return;
       try {
         if (currentFrame && currentFrame.contentWindow) {
+          const win = currentFrame.contentWindow;
+          // Final fallback sweep before replacing location
+          if (typeof win.cancelAnimationFrame === "function" && typeof win.requestAnimationFrame === "function") {
+            const probeId = win.requestAnimationFrame(() => {});
+            win.cancelAnimationFrame(probeId);
+            const floor = Math.max(1, probeId - 1000);
+            for (let id = probeId; id >= floor; id--) {
+              win.cancelAnimationFrame(id);
+            }
+          }
           currentFrame.contentWindow.location.replace("about:blank");
         } else if (currentFrame) {
           currentFrame.src = "about:blank";
@@ -2673,6 +2928,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 100);
 
     cancelPlayTimer();
+    if (window.ArcadeAudioBeacon && typeof window.ArcadeAudioBeacon.stopRadar === 'function') {
+      window.ArcadeAudioBeacon.stopRadar();
+    }
     document.body.style.overflow = "";
     document.body.style.overscrollBehavior = "";
     if (gameIframe) gameIframe.style.touchAction = "";
@@ -2855,8 +3113,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (escPressCount === 1) {
       try {
         if (gameIframe && gameIframe.contentWindow) {
-          gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
-          gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_ESC_PAUSE" }, "*");
+          const trustedOrigin = getTrustedTargetOrigin();
+          gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, trustedOrigin);
+          gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_ESC_PAUSE" }, trustedOrigin);
         }
       } catch (_) { }
 
@@ -3051,7 +3310,7 @@ document.addEventListener("DOMContentLoaded", () => {
           muted: audioState.muted,
           volume: audioState.volume,
           gain: audioState.muted ? 0 : audioState.volume
-        }, "*");
+        }, getTrustedTargetOrigin());
       }
       return;
     }
@@ -3267,7 +3526,7 @@ document.addEventListener("DOMContentLoaded", () => {
           gameFrame.contentWindow.postMessage({
             type: "AV_FULLSCREEN_CHANGE",
             payload: { isFullscreen: true, mode: "pseudo" }
-          }, "*");
+          }, getTrustedTargetOrigin());
         } catch (_e) { }
       }
     }
@@ -3283,7 +3542,7 @@ document.addEventListener("DOMContentLoaded", () => {
           gameFrame.contentWindow.postMessage({
             type: "AV_FULLSCREEN_CHANGE",
             payload: { isFullscreen: false, mode: "pseudo" }
-          }, "*");
+          }, getTrustedTargetOrigin());
         } catch (_e) { }
       }
     }
@@ -5288,6 +5547,7 @@ if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.m
 
 
 // ========================================================
+// ========================================================
 // PERIODIC HEAP MEMORY MONITOR & IN-MODAL ALERT (#707)
 // ========================================================
 (() => {
@@ -5442,6 +5702,76 @@ if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.m
     const modal = document.getElementById('game-modal');
     if (modal) {
       observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+    }
+  });
+})();
+
+// ========================================================
+// IN-MODAL VOLUME SLIDER & CROSS-IFRAME BROADCASTER (#735, #887)
+// ========================================================
+(() => {
+  let masterVolume = 0.28;
+  try {
+    const saved = localStorage.getItem('arcadeverse_master_volume');
+    if (saved !== null) {
+      const parsed = parseFloat(saved);
+      if (Number.isFinite(parsed) && parsed >= 0 && parsed <= 1) {
+        masterVolume = parsed;
+      }
+    } else if (window.SoundEngine && typeof window.SoundEngine.volume === "number") {
+      masterVolume = window.SoundEngine.volume;
+    }
+  } catch (_) {
+    masterVolume = 0.28;
+  }
+
+  function broadcastMasterVolume(vol) {
+    const normalized = Number.isFinite(vol) ? Math.max(0, Math.min(1, vol)) : 0.28;
+    masterVolume = normalized;
+    try {
+      localStorage.setItem('arcadeverse_master_volume', normalized.toString());
+      if (window.SoundEngine && typeof window.SoundEngine.setVolume === "function") {
+        window.SoundEngine.setVolume(normalized);
+      }
+    } catch (_) {}
+
+    const gameIframe = document.getElementById('game-iframe');
+    if (gameIframe && gameIframe.contentWindow) {
+      const targetOrigin = (typeof getTrustedTargetOrigin === "function")
+        ? getTrustedTargetOrigin()
+        : (window.location && window.location.origin && window.location.origin !== "null" ? window.location.origin : "*");
+
+      gameIframe.contentWindow.postMessage({
+        type: 'ARCADEVERSE_SET_VOLUME',
+        volume: normalized
+      }, targetOrigin);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const slider = document.getElementById('modal-volume-slider');
+    const label = document.getElementById('volume-percentage-label');
+    if (slider) {
+      slider.value = Math.round(masterVolume * 100);
+      if (label) label.textContent = `${Math.round(masterVolume * 100)}%`;
+
+      slider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10);
+        const norm = Math.max(0, Math.min(100, val)) / 100;
+        if (label) label.textContent = `${val}%`;
+        broadcastMasterVolume(norm);
+      });
+    }
+
+    // Re-broadcast volume whenever a game finishes loading in iframe
+    const iframe = document.getElementById('game-iframe');
+    if (iframe) {
+      iframe.addEventListener('load', () => {
+        setTimeout(() => broadcastMasterVolume(masterVolume), 200);
+      });
+    }
+  });
+})();
     }
   });
 })();

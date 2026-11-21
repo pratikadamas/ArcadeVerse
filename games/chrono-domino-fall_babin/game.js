@@ -96,14 +96,28 @@
   let availableDominoes = 3;
   let isToppling = false;
   let toppleIndex = 0;
-  let toppleTimer = 0;
+  let toppleAccumulator = 0; // Milliseconds accumulator for dt-based toppling (#765)
+  const TOPPLE_INTERVAL_MS = 83; // Fixed 83ms (~12 steps/sec) wall-clock propagation
+  let screenTimerId = null;
+  let rafId = null;
+  let lastTime = performance.now();
 
   let dominoSlots = [];
 
+  function clearPendingScreenTimers() {
+    if (screenTimerId) {
+      clearTimeout(screenTimerId);
+      screenTimerId = null;
+    }
+  }
+
   function setupLevel() {
+    clearPendingScreenTimers();
+    if (winScreen) winScreen.classList.add('hidden');
+    if (failScreen) failScreen.classList.add('hidden');
     isToppling = false;
     toppleIndex = 0;
-    toppleTimer = 0;
+    toppleAccumulator = 0;
     availableDominoes = 3 + Math.floor(level / 2);
 
     dominoSlots = [];
@@ -140,17 +154,20 @@
 
   function startTopple() {
     if (isToppling) return;
+    clearPendingScreenTimers();
     sfx.init();
     isToppling = true;
     toppleIndex = 0;
-    toppleTimer = 0;
+    toppleAccumulator = 0;
   }
 
-  function update() {
+  function update(dt = 0.016) {
     if (!isToppling) return;
 
-    toppleTimer++;
-    if (toppleTimer % 5 === 0) {
+    toppleAccumulator += dt * 1000;
+    while (toppleAccumulator >= TOPPLE_INTERVAL_MS && isToppling) {
+      toppleAccumulator -= TOPPLE_INTERVAL_MS;
+
       if (toppleIndex < dominoSlots.length) {
         const cur = dominoSlots[toppleIndex];
         if (cur.hasDomino) {
@@ -163,9 +180,17 @@
         } else {
           // Chain broke!
           isToppling = false;
-          setTimeout(() => {
+          clearPendingScreenTimers();
+          screenTimerId = setTimeout(() => {
             failScreen.classList.remove('hidden');
+            screenTimerId = null;
           }, 400);
+
+          try {
+            if (window.parent && window.parent !== window) {
+              window.parent.postMessage({ type: 'ARCADEVERSE_GAME_OVER', score: score, level: level }, '*');
+            }
+          } catch (_) {}
           return;
         }
       } else {
@@ -174,9 +199,18 @@
         sfx.victory();
         score += level * 250;
         updateUI();
-        setTimeout(() => {
+        clearPendingScreenTimers();
+        screenTimerId = setTimeout(() => {
           winScreen.classList.remove('hidden');
+          screenTimerId = null;
         }, 500);
+
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'ARCADEVERSE_GAME_SCORE', score: score }, '*');
+          }
+        } catch (_) {}
+        return;
       }
     }
   }
@@ -240,10 +274,23 @@
     }
   }
 
-  function loop() {
-    update();
+  function startLoop() {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    lastTime = performance.now();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function loop(now = performance.now()) {
+    const rawDt = (now - lastTime) / 1000;
+    lastTime = now;
+    const dt = Math.min(rawDt, 0.05);
+
+    update(dt);
     render();
-    requestAnimationFrame(loop);
+    rafId = requestAnimationFrame(loop);
   }
 
   canvas.addEventListener('click', (e) => {
@@ -297,12 +344,15 @@
   });
 
   btnRetry.addEventListener('click', () => {
+    clearPendingScreenTimers();
     failScreen.classList.add('hidden');
     for (const s of dominoSlots) {
       s.fallen = false;
       s.angle = 0;
     }
     isToppling = false;
+    toppleAccumulator = 0;
+    toppleIndex = 0;
     updateUI();
   });
 
@@ -315,6 +365,30 @@
     btnMute.classList.toggle('active', sfx.muted);
   });
 
+  // Cross-frame lifecycle teardown & pause
+  window.addEventListener('message', (e) => {
+    if (!e.data) return;
+    if (e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      isToppling = false;
+      clearPendingScreenTimers();
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      if (sfx.ctx && typeof sfx.ctx.close === 'function') {
+        sfx.ctx.close().catch(() => {});
+      }
+    } else if (e.data.type === 'ARCADEVERSE_PAUSE') {
+      isToppling = false;
+    }
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      isToppling = false;
+    }
+  });
+
   setupLevel();
-  requestAnimationFrame(loop);
+  startLoop();
 })();
