@@ -19,6 +19,21 @@
     volume: 0.28,
     unlocked: false,
 
+    /**
+     * Resolves trusted targetOrigin for child frame postMessage transmissions (#884).
+     */
+    getTargetOrigin() {
+      if (typeof window.getTrustedTargetOrigin === 'function') {
+        return window.getTrustedTargetOrigin();
+      }
+      try {
+        if (window.location && window.location.origin && window.location.origin !== 'null') {
+          return window.location.origin;
+        }
+      } catch (_) {}
+      return '*';
+    },
+
     init() {
       this.loadSettings();
       this.renderControls();
@@ -130,16 +145,17 @@
             gain: this.enabled ? this.volume : 0,
             timestamp: Date.now()
           };
-          // Broadcast standardized ARCADEVERSE_AUDIO_CONFIG & AV_MUTE_CHANGE bridges (#506)
+          // Broadcast standardized ARCADEVERSE_AUDIO_CONFIG & AV_MUTE_CHANGE bridges (#506, #884)
+          const targetOrigin = this.getTargetOrigin();
           gameIframe.contentWindow.postMessage({
             type: 'ARCADEVERSE_AUDIO_CONFIG',
             ...configPayload
-          }, '*');
+          }, targetOrigin);
 
           gameIframe.contentWindow.postMessage({
             type: 'AV_MUTE_CHANGE',
             payload: configPayload
-          }, '*');
+          }, targetOrigin);
         }
       } catch (_) {}
     },
@@ -389,7 +405,7 @@
               state: this.ctx ? this.ctx.state : 'uninitialized',
               timestamp: Date.now()
             }
-          }, '*');
+          }, this.getTargetOrigin());
         }
       } catch (_) {}
     },
@@ -403,7 +419,7 @@
             state: this.ctx ? this.ctx.state : 'running',
             muted: !this.enabled,
             volume: this.volume
-          }, '*');
+          }, this.getTargetOrigin());
         }
       } catch (_) {}
     },
@@ -449,7 +465,7 @@
           if (frame) {
             try {
               frame.focus();
-              frame.contentWindow.postMessage({ type: 'ARCADEVERSE_AUDIO_UNLOCKED' }, '*');
+              frame.contentWindow.postMessage({ type: 'ARCADEVERSE_AUDIO_UNLOCKED' }, this.getTargetOrigin());
             } catch (_) {}
           }
         });
