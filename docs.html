@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="assets/css/trophy-card.css">
   <link rel="stylesheet" href="assets/css/inverse-kinematics-lab.css">
   <link rel="stylesheet" href="assets/css/split-depth-studio.css">
+  <link rel="stylesheet" href="assets/css/arcade-wallpaper-generator.css">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -169,6 +170,7 @@
               <li><a href="#scoring-engine" class="docs-nav-link"><i data-lucide="cpu"></i> Scoring & Leaderboard</a></li>
               <li><a href="#storage-manager" class="docs-nav-link"><i data-lucide="hard-drive"></i> Save Data Vault & Manager</a></li>
               <li><a href="#snapshot-studio" class="docs-nav-link"><i data-lucide="camera"></i> Retro Snapshot Studio</a></li>
+              <li><a href="#wallpaper-studio" class="docs-nav-link"><i data-lucide="image"></i> Wallpaper Studio</a></li>
               <li><a href="#slot-reel" class="docs-nav-link"><i data-lucide="dices"></i> Slot Reel Roulette Picker</a></li>
               <li><a href="#playlist-system" class="docs-nav-link"><i data-lucide="list-music"></i> Custom Playlist Engine</a></li>
               <li><a href="#az-jump-bar" class="docs-nav-link"><i data-lucide="arrow-down-a-z"></i> A-Z Catalog Jump Bar</a></li>
@@ -1330,6 +1332,24 @@ if (ArcadeVerse.a11y.isAudioBeaconEnabled()) {
           </p>
         </section>
 
+        <section class="docs-section" id="wallpaper-studio" data-wallpaper-studio>
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Wallpaper Studio</h2>
+          <p class="docs-paragraph">Turn 24 distinct games from the community catalog into a retro wallpaper. Choose your screen size, tint and CRT texture, then download a lossless PNG. Everything is composed in your browser.</p>
+          <form class="av-wallpaper-form">
+            <label>Wallpaper size<select name="size"><option value="desktop">Desktop Full HD · 1920 × 1080</option><option value="uhd">4K UHD · 3840 × 2160</option><option value="phone">Mobile Phone · 1080 × 1920</option></select></label>
+            <label>Color tint<select name="tint"><option value="synthwave">Synthwave Cyan / Pink</option><option value="matrix">Matrix Green</option><option value="amber">Classic Amber</option></select></label>
+            <label for="wallpaper-scanlines">CRT scanline intensity <output for="wallpaper-scanlines">35%</output><input id="wallpaper-scanlines" name="scanlines" type="range" min="0" max="100" value="35"></label>
+            <label class="av-wallpaper-check"><input name="logo" type="checkbox" checked> Glowing center logo</label>
+            <div class="av-wallpaper-actions"><button type="submit" class="btn btn-primary">Generate new mix</button><button type="button" class="btn btn-secondary" data-wallpaper-cancel disabled>Cancel</button><button type="button" class="btn btn-secondary" data-wallpaper-download disabled>Download PNG</button></div>
+          </form>
+          <progress class="av-wallpaper-progress" max="24" value="0" aria-label="Game cards composed"></progress>
+          <p class="av-wallpaper-status" data-wallpaper-status role="status" aria-live="polite">Choose Generate new mix to preview your wallpaper. No image is generated until you ask.</p>
+          <div class="av-wallpaper-preview" data-wallpaper-preview><p>Your wallpaper preview appears here.</p></div>
+          <p class="av-wallpaper-caption" data-wallpaper-caption></p>
+          <details><summary>Games in the completed mix</summary><ol class="av-wallpaper-games" data-wallpaper-games></ol></details>
+        </section>
+
         <!-- 15i. 3D Flip Card & Quick Manual Schematic (Issue #1102) -->
         <section class="docs-section" id="card-flip-manual">
           <span class="docs-section-tag">04 / Platform Subsystems</span>
@@ -1568,6 +1588,8 @@ const joints = chain.getPoints(); // independent snapshot for your renderer</cod
 
   <!-- Scripts -->
   <script src="assets/js/navbar.js"></script>
+  <script src="assets/js/games-registry.js"></script>
+  <script src="assets/js/arcade-wallpaper-generator.js"></script>
   <script src="assets/js/a11y-audio-beacon.js"></script>
   <script src="assets/js/a11y-engine.js"></script>
   <script src="assets/js/sound-engine.js"></script>
