@@ -106,28 +106,56 @@
     },
 
     updateStarUI(gameId, score) {
-      const card = document.querySelector(`[data-game-id="${gameId}"]`);
-      if (card) {
-        const starContainer = card.querySelector('.game-rating-stars');
-        if (starContainer) {
-          const stars = starContainer.querySelectorAll('.rate-star-btn');
-          stars.forEach((s, idx) => {
-            s.classList.remove('hover-active');
-            if (idx < score) s.classList.add('voted');
-            else s.classList.remove('voted');
-          });
-        }
-        const badge = card.querySelector('.rating-badge');
-        if (badge) {
-          badge.textContent = Number(score).toFixed(1);
-          badge.classList.remove('rating-pop');
-          void badge.offsetWidth;
-          badge.classList.add('rating-pop');
-        }
+      const cards = document.querySelectorAll(`[data-game-id="${gameId}"]`);
+      if (cards && cards.length > 0) {
+        cards.forEach((card) => {
+          const starContainer = card.querySelector('.game-rating-stars');
+          if (starContainer) {
+            const stars = starContainer.querySelectorAll('.rate-star-btn');
+            stars.forEach((s, idx) => {
+              s.classList.remove('hover-active');
+              if (idx < score) s.classList.add('voted');
+              else s.classList.remove('voted');
+            });
+          }
+          const badge = card.querySelector('.rating-badge');
+          if (badge) {
+            badge.textContent = Number(score).toFixed(1);
+            badge.classList.remove('rating-pop');
+            void badge.offsetWidth;
+            badge.classList.add('rating-pop');
+          }
+        });
         if (window.SoundEngine && typeof window.SoundEngine.playClick === 'function') {
           window.SoundEngine.playClick();
         }
       }
+    },
+
+    /**
+     * Refresh all rendered card star states across duplicate sections
+     */
+    refreshAllCards() {
+      Object.keys(this.ratings).forEach((gameId) => {
+        const score = this.ratings[gameId];
+        if (score) {
+          const cards = document.querySelectorAll(`[data-game-id="${gameId}"]`);
+          cards.forEach((card) => {
+            const starContainer = card.querySelector('.game-rating-stars');
+            if (starContainer) {
+              const stars = starContainer.querySelectorAll('.rate-star-btn');
+              stars.forEach((s, idx) => {
+                if (idx < score) s.classList.add('voted');
+                else s.classList.remove('voted');
+              });
+            }
+            const badge = card.querySelector('.rating-badge');
+            if (badge) {
+              badge.textContent = Number(score).toFixed(1);
+            }
+          });
+        }
+      });
     }
   };
 
