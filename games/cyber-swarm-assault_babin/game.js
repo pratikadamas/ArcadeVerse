@@ -32,6 +32,12 @@
   const finalWave = document.getElementById('final-wave');
   const finalKills = document.getElementById('final-kills');
 
+  // Audio Synthesizer via Web Audio API (#507)
+  let audioCtx = null;
+  let masterGain = null;
+  let limiterNode = null;
+  const activeVoices = new Set();
+  const MAX_VOICES = 6;
   // Safe storage helpers
   function getStorage(key, fallback) {
     try {
@@ -49,7 +55,6 @@
   }
 
   // Audio Synthesizer via Web Audio API
-  let audioCtx = null;
   let soundEnabled = getStorage('cyber-swarm-sound', 'true') !== 'false';
 
   function initAudio() {
@@ -57,9 +62,62 @@
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (AudioContextClass) audioCtx = new AudioContextClass();
     }
+    if (audioCtx && !masterGain) {
+      masterGain = audioCtx.createGain();
+      masterGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+      try {
+        const comp = audioCtx.createDynamicsCompressor();
+        comp.threshold.setValueAtTime(-0.5, audioCtx.currentTime);
+        comp.knee.setValueAtTime(0, audioCtx.currentTime);
+        comp.ratio.setValueAtTime(20.0, audioCtx.currentTime);
+        comp.attack.setValueAtTime(0.001, audioCtx.currentTime);
+        comp.release.setValueAtTime(0.05, audioCtx.currentTime);
+        limiterNode = comp;
+        masterGain.connect(limiterNode);
+        limiterNode.connect(audioCtx.destination);
+      } catch (_) {
+        masterGain.connect(audioCtx.destination);
+      }
+    }
     if (audioCtx && audioCtx.state === 'suspended') {
       audioCtx.resume();
     }
+  }
+
+  function trackVoice(node) {
+    if (!node) return node;
+    while (activeVoices.size >= MAX_VOICES) {
+      const oldest = activeVoices.values().next().value;
+      if (oldest) {
+        try {
+          if (typeof oldest.stop === 'function') oldest.stop();
+          if (typeof oldest.disconnect === 'function') oldest.disconnect();
+        } catch (_) {}
+        activeVoices.delete(oldest);
+      } else {
+        break;
+      }
+    }
+    activeVoices.add(node);
+    const onEnded = () => {
+      activeVoices.delete(node);
+    };
+    if (typeof node.addEventListener === 'function') {
+      node.addEventListener('ended', onEnded, { once: true });
+    } else {
+      node.onended = onEnded;
+    }
+    return node;
+  }
+
+  function stopAllAudio() {
+    activeVoices.forEach((node) => {
+      try {
+        if (typeof node.stop === 'function') node.stop();
+        if (typeof node.disconnect === 'function') node.disconnect();
+      } catch (_) {}
+    });
+    activeVoices.clear();
   }
 
   function updateSoundUI() {
@@ -90,7 +148,8 @@
         gain.gain.setValueAtTime(0.12, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
         osc.connect(gain);
-        gain.connect(audioCtx.destination);
+        gain.connect(masterGain || audioCtx.destination);
+        trackVoice(osc);
         osc.start(now);
         osc.stop(now + 0.08);
       } else if (type === 'explode') {
@@ -102,7 +161,8 @@
         gain.gain.setValueAtTime(0.25, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
         osc.connect(gain);
-        gain.connect(audioCtx.destination);
+        gain.connect(masterGain || audioCtx.destination);
+        trackVoice(osc);
         osc.start(now);
         osc.stop(now + 0.24);
       } else if (type === 'dive') {
@@ -114,7 +174,8 @@
         gain.gain.setValueAtTime(0.1, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
         osc.connect(gain);
-        gain.connect(audioCtx.destination);
+        gain.connect(masterGain || audioCtx.destination);
+        trackVoice(osc);
         osc.start(now);
         osc.stop(now + 0.28);
       } else if (type === 'gameover') {
@@ -126,7 +187,8 @@
         gain.gain.setValueAtTime(0.35, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.52);
         osc.connect(gain);
-        gain.connect(audioCtx.destination);
+        gain.connect(masterGain || audioCtx.destination);
+        trackVoice(osc);
         osc.start(now);
         osc.stop(now + 0.52);
       }
@@ -632,6 +694,7 @@
   }, { passive: true });
 
   startBtn.addEventListener('click', () => {
+    stopAllAudio();
     initAudio();
     stopLoop();
     score = 0;
@@ -642,6 +705,7 @@
   });
 
   restartBtn.addEventListener('click', () => {
+    stopAllAudio();
     stopLoop();
     score = 0;
     lives = 3;
@@ -680,5 +744,14 @@
   // Initialize
   updateSoundUI();
   updateHUD();
+  gameLoop();
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      stopAllAudio();
+      if (audioCtx && audioCtx.state !== 'closed') {
+        try { audioCtx.close(); } catch (_) {}
+      }
+    }
+  });
   render();
 })();
