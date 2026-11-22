@@ -118,8 +118,66 @@
   let hasEcho = false;
   let echoFrameIdx = 0;
 
+  // High-performance fixed-capacity circular ring buffer for entity delta coordinates
+  class CircularRewindBuffer {
+    constructor(capacity = MAX_BUFFER_FRAMES) {
+      this.capacity = capacity;
+      this.buffer = new Array(capacity);
+      this.head = 0;
+      this.size = 0;
+    }
+
+    push(item) {
+      // Free old slot object proactively to assist garbage collection
+      if (this.buffer[this.head]) {
+        this.buffer[this.head] = null;
+      }
+      this.buffer[this.head] = item;
+      this.head = (this.head + 1) % this.capacity;
+      if (this.size < this.capacity) {
+        this.size++;
+      }
+    }
+
+    pop() {
+      if (this.size === 0) return null;
+      this.head = (this.head - 1 + this.capacity) % this.capacity;
+      const item = this.buffer[this.head];
+      this.buffer[this.head] = null;
+      this.size--;
+      return item;
+    }
+
+    peek() {
+      if (this.size === 0) return null;
+      const lastIdx = (this.head - 1 + this.capacity) % this.capacity;
+      return this.buffer[lastIdx];
+    }
+
+    toArray() {
+      const arr = new Array(this.size);
+      const start = (this.head - this.size + this.capacity) % this.capacity;
+      for (let i = 0; i < this.size; i++) {
+        arr[i] = this.buffer[(start + i) % this.capacity];
+      }
+      return arr;
+    }
+
+    clear() {
+      for (let i = 0; i < this.capacity; i++) {
+        this.buffer[i] = null;
+      }
+      this.head = 0;
+      this.size = 0;
+    }
+
+    get length() {
+      return this.size;
+    }
+  }
+
   // Circular State Buffer
-  let stateHistory = [];
+  const stateHistory = new CircularRewindBuffer(MAX_BUFFER_FRAMES);
   let echoSequence = [];
 
   const player = {
@@ -435,7 +493,7 @@
     player.vy = 0;
     player.grounded = false;
 
-    stateHistory = [];
+    stateHistory.clear();
     echoSequence = [];
     hasEcho = false;
     echoFrameIdx = 0;
@@ -452,7 +510,7 @@
     if (stateHistory.length > 30) {
       rewindsUsed++;
       document.getElementById('rewind-count').textContent = rewindsUsed;
-      echoSequence = [...stateHistory];
+      echoSequence = stateHistory.toArray();
       hasEcho = true;
       echoFrameIdx = 0;
       sound.playSwitch();
@@ -539,16 +597,13 @@
       }
     });
 
-    // Record State Buffer
+    // Record State Buffer (clamped delta coordinates inside circular buffer)
     stateHistory.push({
       x: player.x,
       y: player.y,
       vx: player.vx,
       vy: player.vy
     });
-    if (stateHistory.length > MAX_BUFFER_FRAMES) {
-      stateHistory.shift();
-    }
     updateTimelineUI();
 
     // Echo Clone Playback

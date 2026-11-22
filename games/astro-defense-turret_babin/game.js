@@ -6,39 +6,79 @@
   class SoundFX {
     constructor() {
       this.ctx = null;
+      this.masterGain = null;
+      this.limiter = null;
       this.muted = false;
-      this.activeNodes = new Set();
+      this.activeVoices = new Set();
+      this.maxVoices = 6;
     }
     init() {
       if (!this.ctx) {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         if (AudioCtx) this.ctx = new AudioCtx();
       }
+      if (this.ctx && !this.masterGain) {
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+        try {
+          const comp = this.ctx.createDynamicsCompressor();
+          comp.threshold.setValueAtTime(-0.5, this.ctx.currentTime);
+          comp.knee.setValueAtTime(0, this.ctx.currentTime);
+          comp.ratio.setValueAtTime(20.0, this.ctx.currentTime);
+          comp.attack.setValueAtTime(0.001, this.ctx.currentTime);
+          comp.release.setValueAtTime(0.05, this.ctx.currentTime);
+          this.limiter = comp;
+          this.masterGain.connect(this.limiter);
+          this.limiter.connect(this.ctx.destination);
+        } catch (_) {
+          this.masterGain.connect(this.ctx.destination);
+        }
+      }
       if (this.ctx && this.ctx.state === 'suspended') {
         this.ctx.resume();
       }
     }
-    trackNode(osc) {
-      if (!this.activeNodes) this.activeNodes = new Set();
-      this.activeNodes.add(osc);
-      osc.onended = () => {
-        if (this.activeNodes) this.activeNodes.delete(osc);
+    trackVoice(node) {
+      if (!node) return node;
+      if (!this.activeVoices) this.activeVoices = new Set();
+      while (this.activeVoices.size >= this.maxVoices) {
+        const oldest = this.activeVoices.values().next().value;
+        if (oldest) {
+          try {
+            if (typeof oldest.stop === 'function') oldest.stop();
+            if (typeof oldest.disconnect === 'function') oldest.disconnect();
+          } catch (_) {}
+          this.activeVoices.delete(oldest);
+        } else {
+          break;
+        }
+      }
+      this.activeVoices.add(node);
+      const onEnded = () => {
+        if (this.activeVoices) this.activeVoices.delete(node);
       };
-      return osc;
+      if (typeof node.addEventListener === 'function') {
+        node.addEventListener('ended', onEnded, { once: true });
+      } else {
+        node.onended = onEnded;
+      }
+      return node;
     }
     stopAll() {
-      if (this.activeNodes) {
-        this.activeNodes.forEach(node => {
+      if (this.activeVoices) {
+        this.activeVoices.forEach((node) => {
           try {
-            node.stop();
-            node.disconnect();
+            if (typeof node.stop === 'function') node.stop();
+            if (typeof node.disconnect === 'function') node.disconnect();
           } catch (_) {}
         });
-        this.activeNodes.clear();
+        this.activeVoices.clear();
       }
     }
     laser() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       try {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
@@ -48,14 +88,16 @@
         gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        this.trackNode(osc);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
         osc.start();
         osc.stop(this.ctx.currentTime + 0.12);
       } catch (e) {}
     }
     boom() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       try {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
@@ -65,14 +107,16 @@
         gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.25);
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        this.trackNode(osc);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
         osc.start();
         osc.stop(this.ctx.currentTime + 0.25);
       } catch (e) {}
     }
     shieldHit() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       try {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
@@ -82,14 +126,16 @@
         gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.2);
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        this.trackNode(osc);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
         osc.start();
         osc.stop(this.ctx.currentTime + 0.2);
       } catch (e) {}
     }
     gameOver() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       try {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
@@ -99,8 +145,8 @@
         gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.6);
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        this.trackNode(osc);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
         osc.start();
         osc.stop(this.ctx.currentTime + 0.6);
       } catch (e) {}
@@ -147,11 +193,33 @@
   let isPaused = false;
   let animId = null;
 
+  // Safe storage helper with ArcadeStorage support
+  function getSafeHighScore() {
+    try {
+      if (window.ArcadeVerse && window.ArcadeVerse.storage) {
+        return parseInt(window.ArcadeVerse.storage.getItem('astro_turret_highscore') || '0', 10);
+      }
+      return parseInt(localStorage.getItem('astro_turret_highscore') || '0', 10);
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function setSafeHighScore(val) {
+    try {
+      if (window.ArcadeVerse && window.ArcadeVerse.storage) {
+        window.ArcadeVerse.storage.setItem('astro_turret_highscore', String(val));
+      } else {
+        localStorage.setItem('astro_turret_highscore', String(val));
+      }
+    } catch (_) {}
+  }
+
   let score = 0;
   let wave = 1;
   let shieldHp = 100;
   let kills = 0;
-  let highScore = parseInt(localStorage.getItem('astro_turret_highscore') || '0', 10);
+  let highScore = getSafeHighScore();
   statHighEl.textContent = highScore;
 
   // Turret Center Hub
@@ -190,6 +258,7 @@
   }
 
   function resetGame() {
+    sfx.stopAll();
     score = 0;
     wave = 1;
     shieldHp = 100;
@@ -267,19 +336,22 @@
     }
   }
 
-  function update() {
+  function update(dt = 0.016) {
     if (!isRunning || isPaused) return;
 
+    // Delta-time scale factor relative to 60 FPS standard (16.67ms)
+    const dtScale = dt * 60;
+
     // Turret rotation via keys
-    const rotSpeed = 0.07;
+    const rotSpeed = 0.07 * dtScale;
     if (keys.left) hub.angle -= rotSpeed;
     if (keys.right) hub.angle += rotSpeed;
     if (keys.fire) shootLaser();
 
-    if (fireCooldown > 0) fireCooldown--;
+    if (fireCooldown > 0) fireCooldown -= dtScale;
 
     // Spawn waves
-    spawnTimer++;
+    spawnTimer += dtScale;
     const interval = Math.max(35, 90 - wave * 6);
     if (spawnTimer > interval) {
       spawnEnemy();
@@ -289,9 +361,9 @@
     // Bullets update
     for (let i = bullets.length - 1; i >= 0; i--) {
       const b = bullets[i];
-      b.x += b.vx;
-      b.y += b.vy;
-      b.life--;
+      b.x += b.vx * dtScale;
+      b.y += b.vy * dtScale;
+      b.life -= dtScale;
 
       if (b.life <= 0 || b.x < -20 || b.x > canvas.width + 20 || b.y < -20 || b.y > canvas.height + 20) {
         bullets.splice(i, 1);
@@ -301,8 +373,8 @@
     // Enemies update
     for (let i = enemies.length - 1; i >= 0; i--) {
       const e = enemies[i];
-      e.x += e.vx;
-      e.y += e.vy;
+      e.x += e.vx * dtScale;
+      e.y += e.vy * dtScale;
 
       // Check collision with bullets
       let hit = false;
@@ -362,15 +434,21 @@
 
   function endGame() {
     isRunning = false;
-    sfx.stopAll();
     sfx.gameOver();
     if (animId) cancelAnimationFrame(animId);
 
     if (score > highScore) {
       highScore = score;
-      localStorage.setItem('astro_turret_highscore', highScore.toString());
+      setSafeHighScore(highScore);
       statHighEl.textContent = highScore;
     }
+
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'ARCADEVERSE_GAME_SCORE', score: score }, '*');
+        window.parent.postMessage({ type: 'ARCADEVERSE_GAME_OVER', score: score, wave: wave }, '*');
+      }
+    } catch (_) {}
 
     finalScoreEl.textContent = score;
     finalWaveEl.textContent = wave;
@@ -484,8 +562,15 @@
     ctx.restore();
   }
 
-  function loop() {
-    update();
+  let lastTime = performance.now();
+
+  function loop(now = performance.now()) {
+    const rawDt = (now - lastTime) / 1000;
+    lastTime = now;
+    // Clamped delta-time to normalize 60Hz, 120Hz, and 144Hz monitors
+    const dt = Math.min(rawDt, 0.05);
+
+    update(dt);
     render();
     if (isRunning) {
       animId = requestAnimationFrame(loop);
@@ -493,11 +578,15 @@
   }
 
   function startGame() {
+    if (animId) {
+      cancelAnimationFrame(animId);
+      animId = null;
+    }
     sfx.init();
-    sfx.stopAll();
     resetGame();
     isRunning = true;
     isPaused = false;
+    lastTime = performance.now();
     startScreen.classList.add('hidden');
     gameOverScreen.classList.add('hidden');
     pauseScreen.classList.add('hidden');
@@ -514,42 +603,18 @@
     }
   }
 
-  // Pointer Lock API precision aiming (#573)
-  let isPointerLocked = false;
-  let virtualCrosshair = { x: hub.x + 80, y: hub.y };
-
-  if (window.ArcadeVerse && typeof window.ArcadeVerse.initPointerLock === 'function') {
-    window.ArcadeVerse.initPointerLock(canvas, {
-      sensitivity: 1.2,
-      onMove: (movementX, movementY) => {
-        if (!isRunning || isPaused) return;
-        virtualCrosshair.x = Math.max(20, Math.min(canvas.width - 20, virtualCrosshair.x + movementX));
-        virtualCrosshair.y = Math.max(20, Math.min(canvas.height - 20, virtualCrosshair.y + movementY));
-        hub.angle = Math.atan2(virtualCrosshair.y - hub.y, virtualCrosshair.x - hub.x);
-      },
-      onLockChange: (locked) => {
-        isPointerLocked = locked;
-      }
-    });
-  }
-
   // Mouse & Touch aiming on canvas
   canvas.addEventListener('mousemove', (e) => {
-    if (!isRunning || isPaused || isPointerLocked) return;
+    if (!isRunning || isPaused) return;
     const rect = canvas.getBoundingClientRect();
     const mouseX = ((e.clientX - rect.left) / rect.width) * canvas.width;
     const mouseY = ((e.clientY - rect.top) / rect.height) * canvas.height;
-    virtualCrosshair.x = mouseX;
-    virtualCrosshair.y = mouseY;
     hub.angle = Math.atan2(mouseY - hub.y, mouseX - hub.x);
   });
 
   canvas.addEventListener('mousedown', () => {
     sfx.init();
     if (isRunning && !isPaused) {
-      if (window.ArcadeVerse && typeof window.ArcadeVerse.initPointerLock === 'function' && !isPointerLocked) {
-        try { canvas.requestPointerLock(); } catch (_) {}
-      }
       shootLaser();
     }
   });
@@ -621,15 +686,33 @@
 
   btnMute.addEventListener('click', () => {
     sfx.muted = !sfx.muted;
-    if (sfx.muted) {
-      sfx.stopAll();
-    }
     btnMute.classList.toggle('active', sfx.muted);
   });
 
+  // Visibility change auto-pause
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && isRunning && !isPaused) {
+      togglePause();
+    }
+  });
+
   window.addEventListener('message', (e) => {
-    if (e.data && (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE')) {
+    if (!e.data) return;
+    if (e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      isRunning = false;
+      if (animId) {
+        cancelAnimationFrame(animId);
+        animId = null;
+      }
       sfx.stopAll();
+      if (sfx.ctx && sfx.ctx.state !== 'closed') {
+        try { sfx.ctx.close(); } catch (_) {}
+      }
+    } else if (e.data.type === 'ARCADEVERSE_PAUSE') {
+      if (isRunning && !isPaused) togglePause();
+      sfx.stopAll();
+    } else if (e.data.type === 'ARCADEVERSE_RESUME') {
+      if (isRunning && isPaused) togglePause();
     }
   });
 

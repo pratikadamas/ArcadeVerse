@@ -35,6 +35,7 @@
   let snake = [];
   let dir = { x: 1, y: 0 };
   let nextDir = { x: 1, y: 0 };
+  let dirQueue = []; // FIFO input buffer to prevent 180-deg reversal suicide
   let food = null;
   let goldenFood = null;
   let goldenTimer = 0;
@@ -105,6 +106,7 @@
 
     dir = { x: 1, y: 0 };
     nextDir = { x: 1, y: 0 };
+    dirQueue = [];
     score = 0;
     tickSpeed = 120;
     goldenFood = null;
@@ -124,7 +126,12 @@
   }
 
   function update() {
-    dir = { ...nextDir };
+    if (dirQueue.length > 0) {
+      dir = dirQueue.shift();
+      nextDir = { ...dir };
+    } else {
+      dir = { ...nextDir };
+    }
 
     // Calculate new head coordinates (with boundary wrap-around portals)
     let newX = snake[0].x + dir.x;
@@ -136,8 +143,13 @@
     if (newY < 0) newY = GRID_SIZE - 1;
     else if (newY >= GRID_SIZE) newY = 0;
 
-    // Check self-collision
-    for (let i = 0; i < snake.length; i++) {
+    // Check whether snake will grow on this tick
+    const willEat = (food && newX === food.x && newY === food.y) ||
+                    (goldenFood && newX === goldenFood.x && newY === goldenFood.y);
+
+    // Check self-collision (exclude departing tail segment when not eating/growing)
+    const collisionLimit = willEat ? snake.length : snake.length - 1;
+    for (let i = 0; i < collisionLimit; i++) {
       if (snake[i].x === newX && snake[i].y === newY) {
         gameOver();
         return;
@@ -267,7 +279,23 @@
 
   function gameOver() {
     isPlaying = false;
-    if (gameLoopTimeout) clearTimeout(gameLoopTimeout);
+    if (gameLoopTimeout) {
+      clearTimeout(gameLoopTimeout);
+      gameLoopTimeout = null;
+    }
+
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'ARCADEVERSE_GAME_SCORE',
+        score: score,
+        length: snake.length
+      }, '*');
+      window.parent.postMessage({
+        type: 'ARCADEVERSE_GAME_OVER',
+        score: score,
+        length: snake.length
+      }, '*');
+    }
 
     finalScoreEl.textContent = score;
     finalLengthEl.textContent = snake.length;
@@ -280,10 +308,15 @@
 
   function setDirection(dx, dy) {
     if (!isPlaying) return;
-    // Prevent 180-degree reversing
-    if (dir.x !== 0 && dx === -dir.x) return;
-    if (dir.y !== 0 && dy === -dir.y) return;
-    nextDir = { x: dx, y: dy };
+    const lastPending = dirQueue.length > 0 ? dirQueue[dirQueue.length - 1] : dir;
+    // Disallow exact reverse or no-op against latest queued move
+    if (lastPending.x !== 0 && dx === -lastPending.x) return;
+    if (lastPending.y !== 0 && dy === -lastPending.y) return;
+    if (lastPending.x === dx && lastPending.y === dy) return;
+
+    if (dirQueue.length < 2) {
+      dirQueue.push({ x: dx, y: dy });
+    }
   }
 
   // Keyboard navigation
