@@ -3,9 +3,7 @@
  * Author: Babin123456
  *
  * Implements real-time synchronization between browser/OS color preferences (prefers-color-scheme)
- * and ArcadeVerse hub theme modes. Honors manual overrides through localStorage flags:
- * - arcadeverse_theme_mode / arcadeverse_theme
- * - arcadeverse_theme_manual
+ * and ArcadeVerse hub theme modes. Integrates seamlessly with navbar.js theme controllers.
  */
 
 (function () {
@@ -18,9 +16,6 @@
   let darkMedia = null;
   let lightMedia = null;
 
-  /**
-   * Determine whether the user has explicitly set a manual theme override
-   */
   function hasManualOverride() {
     try {
       if (localStorage.getItem(STORAGE_KEY_MANUAL) === 'true') {
@@ -28,16 +23,12 @@
       }
       const themeVal = localStorage.getItem(STORAGE_KEY_THEME) || localStorage.getItem(STORAGE_KEY_ALT);
       if (themeVal === 'light' || themeVal === 'dark') {
-        // If theme key is present and flagged as manual, return true
         return localStorage.getItem(STORAGE_KEY_MANUAL) !== 'false';
       }
     } catch (_) {}
     return false;
   }
 
-  /**
-   * Queries operating system preference
-   */
   function getSystemPreferredTheme() {
     if (typeof window !== 'undefined' && window.matchMedia) {
       if (window.matchMedia('(prefers-color-scheme: light)').matches) {
@@ -47,9 +38,6 @@
     return 'dark';
   }
 
-  /**
-   * Resolves the active theme on boot
-   */
   function resolveEffectiveTheme() {
     try {
       const isManual = localStorage.getItem(STORAGE_KEY_MANUAL) === 'true';
@@ -63,12 +51,17 @@
     return getSystemPreferredTheme();
   }
 
-  /**
-   * Applies the theme to DOM and synchronizes UI toggle buttons
-   * @param {string} mode - 'light' | 'dark'
-   * @param {boolean} isManualAction - whether triggered by direct user click
-   */
   function applyTheme(mode, isManualAction = false) {
+    if (window.ArcadeTheme && typeof window.ArcadeTheme.setTheme === 'function') {
+      window.ArcadeTheme.setTheme(mode);
+      if (isManualAction) {
+        try {
+          localStorage.setItem(STORAGE_KEY_MANUAL, 'true');
+        } catch (_) {}
+      }
+      return;
+    }
+
     const root = document.documentElement;
     root.setAttribute('data-theme', mode);
 
@@ -80,12 +73,11 @@
       }
     } catch (_) {}
 
-    // Update Theme Toggle Buttons
     document.querySelectorAll('.theme-toggle-btn').forEach((btn) => {
       const nextLabel = mode === 'light' ? 'Switch to dark theme' : 'Switch to light theme';
       btn.setAttribute('aria-label', nextLabel);
       btn.setAttribute('title', nextLabel);
-      const iconWrap = btn.querySelector('.theme-icon-wrap');
+      const iconWrap = btn.querySelector('.theme-icon-wrap') || btn.querySelector('.mobile-nav-icon');
       if (iconWrap) {
         iconWrap.innerHTML = mode === 'light' ? '<i data-lucide="moon"></i>' : '<i data-lucide="sun"></i>';
       }
@@ -99,7 +91,6 @@
       lucide.createIcons();
     }
 
-    // Broadcast theme change event
     window.dispatchEvent(new CustomEvent('arcadeverse:theme-mode-changed', {
       detail: {
         mode: mode,
@@ -109,9 +100,6 @@
     }));
   }
 
-  /**
-   * Initializes Live System Media Query Listeners
-   */
   function setupLiveMediaListeners() {
     if (typeof window === 'undefined' || !window.matchMedia) return;
 
@@ -121,11 +109,9 @@
     const handleSystemChange = (e) => {
       try {
         const manualSaved = localStorage.getItem(STORAGE_KEY_MANUAL);
-        // Only react automatically if user has not explicitly set a manual preference
         if (manualSaved !== 'true') {
           const newSystemTheme = e.matches ? (e.media.includes('dark') ? 'dark' : 'light') : (e.media.includes('dark') ? 'light' : 'dark');
           applyTheme(newSystemTheme, false);
-          console.log(`[ThemeSync] System prefers-color-scheme changed: applied "${newSystemTheme}".`);
         }
       } catch (err) {
         console.warn('[ThemeSync] Media change handler error:', err);
@@ -145,34 +131,13 @@
     }
   }
 
-  /**
-   * Bind Theme Toggle Button clicks to record manual override
-   */
-  function bindManualToggleInterceptors() {
-    document.querySelectorAll('.theme-toggle-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const current = document.documentElement.getAttribute('data-theme') || 'dark';
-        const next = current === 'light' ? 'dark' : 'light';
-        applyTheme(next, true);
-      });
-    });
-  }
-
-  // Initial Boot Execution: Apply immediately to prevent FOUC
-  const initialTheme = resolveEffectiveTheme();
-  document.documentElement.setAttribute('data-theme', initialTheme);
-
-  // Setup DOM and listeners
+  // Setup DOM and listeners safely without duplicate click interception
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      applyTheme(initialTheme, false);
       setupLiveMediaListeners();
-      bindManualToggleInterceptors();
     });
   } else {
-    applyTheme(initialTheme, false);
     setupLiveMediaListeners();
-    bindManualToggleInterceptors();
   }
 
   // Global Export

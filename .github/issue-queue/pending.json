@@ -1,1 +1,137 @@
-[]
+[
+  {
+    "id": 11,
+    "title": "[Feature/Gamification]: In-Browser Retro Stamp Card & Daily Play Loyalty Punchcard",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nWhile ArcadeVerse tracks daily streaks, players lack a tactile, visual collection mechanism celebrating daily visits in a retro physical format.\n\n## Architectural Scope & Requirements\n1. **Retro Paper Loyalty Punchcard UI (`assets/js/arcade-punchcard.js`):**\n   - An interactive physical-styled 7-day loyalty punchcard drawer rendered with vintage textured paper borders and stamped ink slots.\n2. **Animated Ink Stamping Ceremony:**\n   - When completing the daily play goal, plays a satisfying mechanical stamp sound (`thump!`) with a randomized ink rotation angle and slight smudge imperfection.\n3. **Day 7 Holographic Completion Badge:**\n   - Completing a full 7-day punchcard unlocks an exclusive local holographic punchcard badge and resets the card for the following week.\n\n## Acceptance Criteria\n- [ ] 100% client-side persistence in `localStorage` under `arcadeverse_punchcard`.\n- [ ] Procedural Web Audio mechanical stamp sound effect with zero audio files.\n- [ ] Responsive drawer accessible from the daily streak counter in the header."
+  },
+  {
+    "id": 12,
+    "title": "[Enhancement/UI]: Interactive Mini-Game Card Hover Quick-Peek Micro-Canvases",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nBrowsing games requires clicking open the full game modal to see what gameplay looks like, as game cards currently display only static screenshots or category icons.\n\n## Architectural Scope & Requirements\n1. **Lightweight Hover Micro-Canvas (`assets/js/card-quickpeek.js`):**\n   - When hovering over a game card for more than 400ms on desktop, replaces the static thumbnail with a lightweight procedural micro-canvas animation depicting core game mechanics (e.g. bouncing paddle/ball for brick breaker, moving neon worm for snake, falling blocks for puzzle).\n2. **Instant Micro-Animation Generators:**\n   - Implements 6 archetypal procedural micro-animations mapped to game categories (`Action/Shooter`, `Brick Breaker`, `Snake/Runner`, `Puzzle`, `Maze/Dungeon`, `Sports/Racing`).\n3. **Zero Resource Overhead when Not Hovered:**\n   - Micro-canvases are created and destroyed on demand with `cancelAnimationFrame` upon `pointerleave` to preserve battery life and CPU.\n\n## Acceptance Criteria\n- [ ] Micro-animations start smoothly after 400ms hover delay with zero memory leaks.\n- [ ] Completely disabled on mobile/touchscreen devices to preserve mobile performance.\n- [ ] Respects `prefers-reduced-motion` by displaying static preview only."
+  },
+  {
+    "id": 13,
+    "title": "[Theme/UI]: Solarized Cyber Dark & Cyber Light Dual Thematic Mode Studio",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nPlayers who use laptops outdoors or in brightly lit rooms struggle with dark cyber themes. Furthermore, existing light themes often produce harsh glare without carefully calibrated contrast ratios.\n\n## Architectural Scope & Requirements\n1. **Scientifically Calibrated Solarized Palette (`assets/css/theme-solarized-cyber.css`):**\n   - Adapts Ethan Schoonover's precision Solarized color system for cyber arcade UI:\n     - Dark Mode: Base03 `#002b36`, Base02 `#073642`, Cyan `#2aa198`, Yellow `#b58900`.\n     - Light Mode: Base3 `#fdf6e3`, Base2 `#eee8d5`, Cyan `#2aa198`, Orange `#cb4b16`.\n2. **Dual Mode Sub-Toggle:**\n   - Provides a dedicated Solarized Dark / Solarized Light toggle within the theme customizer.\n3. **Mathematically Guaranteed Contrast:**\n   - Guarantees strict WCAG 2.1 AAA contrast compliance across all text labels, badges, and button states in both lighting conditions.\n\n## Acceptance Criteria\n- [ ] Flawless visual clarity under direct ambient daylight and in dark rooms.\n- [ ] Smooth color transitions with zero component layout shifts.\n- [ ] Fully integrated with `theme-customizer.js`."
+  },
+  {
+    "id": 14,
+    "title": "[Feature/UX]: Fullscreen Arcade Theater Immersion Mode with Darkened Backdrop & Spotlight",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nWhen playing a game inside the modal, background navbar buttons, search bars, and colorful catalog elements remain visible in the peripheral vision, distracting the player from fast-paced action.\n\n## Architectural Scope & Requirements\n1. **Theater Immersion Controller (`assets/js/theater-mode.js`):**\n   - Adds an \"Arcade Theater Mode\" toggle button to the game modal header.\n   - When activated, dims the entire browser viewport behind the game to 96% deep black opacity with a soft CSS backdrop blur (`backdrop-filter: blur(16px)`).\n2. **Cabinet Spotlight Overhead Projection:**\n   - Casts an authentic radial spotlight gradient centered on the active game canvas, simulating the overhead marquee light of an authentic arcade cabinet.\n3. **Keyboard Quick-Toggle & Escape Handling:**\n   - Quick toggle via `T` key; automatically exits theater mode cleanly upon `Escape` or modal close.\n\n## Acceptance Criteria\n- [ ] Seamless transition into darkened theater immersion mode with zero frame drops.\n- [ ] Game controls and audio continue uninterrupted during mode toggling.\n- [ ] Persistent setting in `localStorage` remember player preference."
+  },
+  {
+    "id": 15,
+    "title": "[Enhancement/UI]: Floating Glassmorphic Quick-Action Bottom Dock for Mobile Viewports",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nOn modern tall smartphones, reaching the top navbar buttons (Search, Favorites, Daily Streak, Theme Settings) with one hand is ergonomically difficult, leading to awkward thumb stretching.\n\n## Architectural Scope & Requirements\n1. **Ergonomic Floating Bottom Navigation Dock (`assets/js/mobile-dock.js`):**\n   - Automatically appears on screen widths under 768px.\n   - Fixed at the bottom of the viewport with safe-area padding for mobile home-bar swipe indicators (`env(safe-area-inset-bottom)`).\n2. **Frosted Glassmorphic Styling:**\n   - Styled with frosted glassmorphism (`backdrop-filter: blur(14px)`, `background: rgba(18, 18, 30, 0.75)`, neon border accents).\n3. **Thumb-Friendly Action Buttons:**\n   - 5 essential thumb buttons: `Home`, `Search`, `Favorites`, `Streak`, and `Theme Studio` with animated micro-bounce icons on tap.\n\n## Acceptance Criteria\n- [ ] Automatically hides on desktop (> 768px) and mounts cleanly on mobile.\n- [ ] Seamless integration with existing search inputs and favorites drawers.\n- [ ] Respects device safe-area insets on iOS and Android devices."
+  },
+  {
+    "id": 16,
+    "title": "[Theme/UI]: Retro Vaporwave Pastel Aesthetics & Windows 95 Vintage OS Theme",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nRetro aesthetics encompass multiple eras. The mid-90s Vaporwave and Windows 95 aesthetic (classic beveled windows, teal desktops, pastel pinks) is widely beloved in retrogaming culture but missing from ArcadeVerse.\n\n## Architectural Scope & Requirements\n1. **Vaporwave / Win95 Palette (`assets/css/theme-vaporwave-win95.css`):**\n   - Classic Windows 95 Teal desktop: `#008080`.\n   - Vintage 3D Beveled Grey: `#c0c0c0` with `#ffffff` top-left highlights and `#808080` bottom-right shadow borders.\n   - Vaporwave Pastel Accents: Lavender `#b57bee`, Pastel Pink `#ff94c2`, and Sky Blue `#70d6ff`.\n2. **Authentic 3D Inset / Outset Buttons:**\n   - Re-styles buttons and cards with classic 2px 3D bevels that physically depress on click.\n3. **Retro Title Bars with Close Box:**\n   - Renders classic navy gradient title bars with pixelated `X` close buttons on modal windows.\n\n## Acceptance Criteria\n- [ ] Distinctive, charming 90s vintage OS aesthetic across all hub components.\n- [ ] Tactile 3D button press animations in pure CSS.\n- [ ] Clean integration into `theme-customizer.js` with instant switching."
+  },
+  {
+    "id": 17,
+    "title": "[Feature/Audio]: Customizable UI Interaction Click Sound Packs with Zero-Asset Synthesis",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nUI interactions (button clicks, tab switches, favorite toggles) currently play the same hardcoded sound effect or remain silent, offering players no choice in auditory feedback.\n\n## Architectural Scope & Requirements\n1. **Synthesized UI Click Sound Packs (`assets/js/ui-click-packs.js`):**\n   - Synthesizes 4 distinct tactile sound packs programmatically via Web Audio API:\n     - `Mechanical Keyboard`: Authentic Cherry MX Blue tactile switch clicks.\n     - `Arcade Microswitch`: Crisp physical joystick microswitch snaps.\n     - `Bubble Pop`: Playful hollow aquatic popping bubble sounds.\n     - `Sci-Fi Hologram`: Subtle futuristic high-frequency chimes.\n2. **Debounced Global Event Listener:**\n   - Attaches a single delegated click listener to `data-sound-trigger` and button elements with a 50ms debounce to prevent audio stacking during fast clicking.\n3. **Theme Settings Selector:**\n   - Sound pack selection dropdown in the theme customizer with instant preview button and volume slider.\n\n## Acceptance Criteria\n- [ ] 100% procedural sound synthesis without a single external audio file.\n- [ ] Under 0.1ms execution time per click with zero UI thread freezing.\n- [ ] Respects global sound mute settings in `localStorage`."
+  },
+  {
+    "id": 18,
+    "title": "[Enhancement/Catalog]: Multi-Criteria Game Comparison Drawer with Side-by-Side Spec Matrix",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nWith over 120 games across diverse categories, players and developers often struggle to decide which games to play or analyze without launching them individually.\n\n## Architectural Scope & Requirements\n1. **Interactive Comparison Drawer (`assets/js/game-comparator-drawer.js`):**\n   - Allows users to select up to 3 games (via a new \"Compare\" button on cards) and open a slide-up comparison drawer.\n2. **Side-by-Side Metric Matrix:**\n   - Compares key attributes side-by-side: Category, Difficulty Rating, Input Controls (Keyboard, Mouse, Touch, Gamepad), High Score records, Author credits, and Tech Stack details.\n3. **1-Click Launch from Matrix:**\n   - Direct launch buttons for each compared game and 1-click \"Clear Comparison\" reset.\n\n## Acceptance Criteria\n- [ ] Smooth slide-up drawer animation on both desktop and mobile viewports.\n- [ ] Clean keyboard accessibility with `Escape` key dismissal.\n- [ ] Zero interference with default game launch modals."
+  },
+  {
+    "id": 19,
+    "title": "[Theme/UI]: Pitch Black OLED Pure Dark Mode for Battery Saving on Mobile Displays",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nStandard dark modes use dark charcoal or grey backgrounds (`#121212` or `#1a1a2e`). On modern OLED/AMOLED mobile screens, pixels only truly turn off when displaying true pitch black (`#000000`). Using true black significantly cuts display battery consumption during extended mobile gaming sessions.\n\n## Architectural Scope & Requirements\n1. **Pure OLED Black Stylesheet (`assets/css/theme-oled-black.css`):**\n   - Enforces true `#000000` on body, containers, card backgrounds, and modals.\n2. **Crisp 1px Neon Wireframe Accents:**\n   - Uses razor-sharp 1px high-contrast borders (Electric Lime `#39ff14`, Cyan `#00ffff`) so elements remain distinct without requiring grey background fill blocks.\n3. **Battery Saving Verification:**\n   - Maximizes the percentage of turned-off pixels (> 85% of total screen area is true `#000000`).\n\n## Acceptance Criteria\n- [ ] 100% pure black `#000000` backgrounds across the entire platform.\n- [ ] Maximum visual clarity with vibrant neon contrast lines.\n- [ ] Seamless integration into `theme-customizer.js` with zero layout shifts."
+  },
+  {
+    "id": 20,
+    "title": "[Feature/Social]: Shareable Game Challenge Deep-Link URL Generator with Target Score Badges",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nWhen a player scores a great run, sharing a generic game link only opens the game at score 0. There is no built-in way to challenge a friend to beat a specific score target.\n\n## Architectural Scope & Requirements\n1. **Challenge Link Generator (`assets/js/challenge-deep-link.js`):**\n   - Adds a \"Challenge a Friend\" button on game over screens and game cards.\n   - Encodes target score and challenger name into a shareable URL: `?game=cyber-runner&target=3500&challenger=Debasmita`.\n2. **In-Game Challenge Banner HUD:**\n   - When opened via a challenge link, displays an animated banner at the top of the game: `\"CHALLENGE: Beat Debasmita's 3,500 pts!\"` with real-time target distance tracking.\n3. **Victory Celebration Overlay:**\n   - If the player surpasses the target score during the run, immediately triggers a celebratory neon banner (\"TARGET SURPASSED!\") with confetti VFX.\n\n## Acceptance Criteria\n- [ ] Seamlessly parses challenge URL query parameters on game launch.\n- [ ] Generates instant shareable links with 1-click clipboard copy.\n- [ ] Clean fallback to standard game play if query parameters are missing or invalid."
+  },
+  {
+    "id": 21,
+    "title": "[Theme/UI]: Authentic 1984 Macintosh Classic Platinum Gray 1-Bit Stipple Pattern Theme Studio",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nRetro computing enthusiasts revere the minimalist, clean aesthetics of the early GUI era, particularly the 1984 original Macintosh System 1 desktop. ArcadeVerse currently features neon, synthwave, dark, and CRT themes, but lacks an authentic vintage 1-bit monochrome desktop computing aesthetic.\n\n## Architectural Scope & Requirements\n1. **1-Bit Stipple CSS Engine (`assets/css/theme-macintosh-classic.css`):**\n   - Implement an authentic 2x2 pixel stipple checkerboard desktop background using CSS SVG data URI pattern fills (`#ffffff` and `#808080`).\n   - Clean Chicago-inspired bitmap typography styling, flat 1px black borders with sharp 1px drop-shadows, and retro window title bars with horizontal hairline stripes.\n2. **Component Reskinning:**\n   - Style all arcade cards, search facets, filter buttons, and dialog modals with classic vintage desktop window bevels and monochrome scrollbar tracks.\n3. **Theme Customizer Integration:**\n   - Register `macintosh-classic` in `theme-customizer.js` with instant live switching and `localStorage` persistence.\n\n## Acceptance Criteria\n- [ ] Authentic 1-bit monochrome stipple wallpaper and retro window chrome styling across all pages.\n- [ ] High-contrast, sharp 1px border aesthetic with zero fuzzy gradient bleeds.\n- [ ] Seamless integration into the theme selector with full state persistence.\n- [ ] 100% Pure Vanilla CSS/JS without external fonts or dependencies."
+  },
+  {
+    "id": 22,
+    "title": "[Feature/Audio]: Dynamic Interactive Morse Code Audio Keyer & Telegraph SFX Studio",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nAudio accessibility and vintage communications enthusiasts often enjoy retro auditory signaling. The platform currently provides chiptune and synthesizer tools, but lacks a dedicated interactive Morse code telegraph studio for synthesizing international Morse code soundscapes and decoding real-time key taps.\n\n## Architectural Scope & Requirements\n1. **Pure Web Audio Morse Keyer (`assets/js/morse-code-audio-keyer.js`):**\n   - Implement international Morse standard timing: dit (1 unit), dah (3 units), intra-character gap (1 unit), inter-letter gap (3 units), and inter-word gap (7 units).\n   - Use clean sine-wave synthesis with rapid exponential ramp envelopes (5ms attack/decay) to eliminate speaker clicks.\n2. **Interactive Telegraph Interface:**\n   - Virtual brass straight-key button supporting both mouse clicks and Spacebar tapping with live pitch and tone generation.\n   - Real-time text-to-Morse audio converter and live audio frequency visualizer.\n3. **Customization Controls:**\n   - WPM speed slider (5 to 35 WPM), tone frequency tuner (400 Hz to 1000 Hz), and volume master governor.\n\n## Acceptance Criteria\n- [ ] Accurate international Morse code timing and clean click-free Web Audio sound synthesis.\n- [ ] Interactive virtual telegraph key with responsive keyboard and touch triggers.\n- [ ] Bi-directional text translation and audio generation with real-time waveform feedback.\n- [ ] 100% Pure Vanilla Web Audio API without external audio samples."
+  },
+  {
+    "id": 23,
+    "title": "[Feature/VFX]: Interactive Canvas Holographic Diffraction Grating & Rainbow Iridescence Studio",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nPhysical arcade trading cards, collector foils, and high-end cabinet marquees frequently feature holographic diffraction grating foil that shimmers into rainbow caustics under changing lighting angles. ArcadeVerse currently relies on static flat images for game cards, lacking dynamic optical iridescence.\n\n## Architectural Scope & Requirements\n1. **Optical Shader & Diffraction Simulation (`assets/js/holographic-diffraction-studio.js`):**\n   - Implement real-time thin-film interference simulation using an HTML5 Canvas overlay.\n   - Calculate surface normal vectors relative to cursor coordinates and mobile device gyroscope tilt angles (`DeviceOrientationEvent`).\n2. **Prismatic Rainbow Dispersion:**\n   - Map incident light angles to spectral wavelength color ramps (violet to red) with realistic specular glare highlights.\n3. **Card & Modal Mounting:**\n   - Overlay on featured showcase cards and achievement modals with `mix-blend-mode: color-dodge` and reduced motion safeguards (`prefers-reduced-motion`).\n\n## Acceptance Criteria\n- [ ] Realistic rainbow prismatic color dispersion shifting with mouse position and device orientation.\n- [ ] Smooth 60 FPS canvas rendering with low memory overhead and zero DOM thrashing.\n- [ ] Respects `prefers-reduced-motion` by gracefully disabling dynamic angular animations.\n- [ ] 100% Pure Vanilla JS and Canvas 2D context."
+  },
+  {
+    "id": 24,
+    "title": "[Enhancement/UI]: Interactive Dual-Spool Retro Audio Cassette Tape Rewind & Fast-Forward Animation HUD",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse features ambient background chiptune audio, but the player UI is a simple minimal button. Players lack a tactile, visually engaging retro audio playback mechanism reminiscent of 1980s boomboxes and cassette Walkmans.\n\n## Architectural Scope & Requirements\n1. **Cassette HUD Architecture (`assets/js/cassette-tape-hud.js`):**\n   - Render a detailed retro compact audio cassette enclosure with transparent plastic center window.\n   - Dual rotating spools with dynamically transferring magnetic tape radius (left spool shrinks as right spool grows during playback).\n2. **Tactile Mechanical Controls:**\n   - Interactive Play, Pause, Fast-Forward (4x speed spool rotation), and Rewind buttons.\n   - Procedural mechanical latching and gear-whir click SFX synthesized via Web Audio API.\n3. **Integration with Hub Audio:**\n   - Synchronize spool rotation state directly with background audio playback events.\n\n## Acceptance Criteria\n- [ ] Dynamic dual-spool tape rotation with accurate tape radius transfer calculation.\n- [ ] Responsive mechanical button controls with synthesized tactile click effects.\n- [ ] Compact floating or docked HUD widget with collapse and drag capabilities.\n- [ ] 100% Pure Vanilla JS and Canvas/SVG rendering with zero external images."
+  },
+  {
+    "id": 25,
+    "title": "[Feature/Social]: Global Arcade Activity Feed Ticker & Live Event Notification Stream",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nWhile browsing the extensive game catalog, the platform feels static and solitary. Players do not have an immediate sense of platform vitality, recent high-score breakthroughs, or achievement unlocks across the arcade ecosystem.\n\n## Architectural Scope & Requirements\n1. **Marquee Activity Ticker (`assets/js/arcade-activity-ticker.js`):**\n   - Implement a lightweight, smooth continuous horizontal ticker docked at the bottom of the catalog.\n   - Stream recent local gameplay achievements, high-score records, and daily challenge completions.\n2. **Event Dispatcher & Privacy:**\n   - Listen to internal game lifecycle events (`ARCADEVERSE_HIGH_SCORE`, `AV_ACHIEVEMENT_UNLOCKED`) via standard `window.addEventListener`.\n   - Store recent event telemetry locally in `localStorage` without collecting personally identifiable information.\n3. **User Controls:**\n   - Hover-to-pause functionality, toggle mute, and a collapsible compact mode for small viewports.\n\n## Acceptance Criteria\n- [ ] Smooth continuous 60 FPS scrolling ticker with zero layout jank.\n- [ ] Real-time event ingestion and dynamic notification pill generation.\n- [ ] Hover-to-pause and mobile-responsive collapse toggle.\n- [ ] 100% Pure Vanilla JavaScript and CSS animations."
+  }
+]
