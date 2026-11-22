@@ -460,6 +460,8 @@
   var registeredAudioContexts = [];
   var registeredGainNodes = [];
   var registeredWebGLContexts = [];
+  var registeredGameLoops = [];
+  var registeredReplayPlayers = [];
 
   // ========================================================
   // WEBGL CONTEXT RECOVERY & PROTECTION SUBSYSTEM
@@ -786,6 +788,26 @@
       }
     }
     registeredWebGLContexts.length = 0;
+
+    // 5. Clean and halt active game loops (#1183)
+    for (var l = 0; l < registeredGameLoops.length; l++) {
+      try {
+        if (registeredGameLoops[l] && typeof registeredGameLoops[l].destroy === "function") {
+          registeredGameLoops[l].destroy();
+        }
+      } catch (e) {}
+    }
+    registeredGameLoops.length = 0;
+
+    // 6. Clean and halt active replay players (#1184)
+    for (var p = 0; p < registeredReplayPlayers.length; p++) {
+      try {
+        if (registeredReplayPlayers[p] && typeof registeredReplayPlayers[p].destroy === "function") {
+          registeredReplayPlayers[p].destroy();
+        }
+      } catch (e) {}
+    }
+    registeredReplayPlayers.length = 0;
   }
 
   // ========================================================
@@ -1208,6 +1230,41 @@
     },
 
     /**
+     * Register a callback triggered when parent hub updates game speed multiplier (#1183)
+     * @param {Function} callback receives { speed: number, speedMultiplier: number }
+     * @returns {Object} sdkInstance for chaining
+     */
+    onSpeedChange: function (callback) {
+      if (typeof callback === "function") {
+        speedChangeHandlers.push(callback);
+        try {
+          callback({ speed: currentGameSpeed, speedMultiplier: currentGameSpeed });
+        } catch (e) {}
+      }
+      return this;
+    },
+
+    /**
+     * Get current global game speed multiplier (#1183)
+     * @returns {number}
+     */
+    getSpeed: function () {
+      return currentGameSpeed;
+    },
+
+    /**
+     * Set local game speed multiplier (bounded between 0.25 and 3.0) (#1183)
+     * @param {number} speed
+     * @returns {Object} sdkInstance for chaining
+     */
+    setSpeed: function (speed) {
+      var targetSpeed = typeof speed === "number" ? Math.max(0.25, Math.min(3.0, speed)) : 1.0;
+      currentGameSpeed = targetSpeed;
+      executeHandlers(speedChangeHandlers, { speed: targetSpeed, speedMultiplier: targetSpeed });
+      return this;
+    },
+
+    /**
      * Track an AudioContext for automatic suspension/closure on teardown and mute synchronization
      * @param {AudioContext} ctx
      */
@@ -1424,6 +1481,788 @@
       var idx = registeredAnimationFrameIds.indexOf(id);
       if (idx !== -1) registeredAnimationFrameIds.splice(idx, 1);
       cancelAnimationFrame(id);
+    },
+
+    /**
+     * Standardized Fixed-Timestep Physics Accumulator & Resilient Frame-Pacing Game Loop Engine (#1183)
+     * Implements the Glenn Fiedler semi-fixed timestep model with spiral-of-death delta clamping,
+     * sub-stepping, alpha rendering interpolation, speed regulator scaling, and automatic lifecycle management.
+     *
+     * @param {Object} options
+     * @param {Function} [options.update] - Physics/state update callback: update(fixedDt, totalTime)
+     * @param {Function} [options.render] - Render/drawing callback: render(alpha, totalTime) where alpha in [0, 1]
+     * @param {number} [options.fixedDt=16.666666666666668] - Target fixed physics step in milliseconds (default: 60Hz / 16.67ms)
+     * @param {number} [options.maxSubSteps=4] - Maximum physics sub-steps per frame to prevent the spiral of death
+     * @param {number} [options.maxFrameTime=250] - Maximum elapsed frame time clamp in milliseconds
+     * @param {boolean} [options.autoPause=true] - Automatically pause/resume with ArcadeVerse lifecycle events
+     * @param {boolean} [options.autoStart=false] - Automatically start loop on creation
+     * @returns {Object} GameLoop controller instance
+     */
+    createGameLoop: function (options) {
+      var opts = options || {};
+      var updateFn = typeof opts.update === "function" ? opts.update : function () {};
+      var renderFn = typeof opts.render === "function" ? opts.render : function () {};
+      var fixedDt = (typeof opts.fixedDt === "number" && opts.fixedDt > 0) ? opts.fixedDt : (1000 / 60);
+      var maxSubSteps = (typeof opts.maxSubSteps === "number" && opts.maxSubSteps >= 1) ? Math.floor(opts.maxSubSteps) : 4;
+      var maxFrameTime = (typeof opts.maxFrameTime === "number" && opts.maxFrameTime > 0) ? opts.maxFrameTime : 250;
+      var autoPause = opts.autoPause !== false;
+
+      var isRunning = false;
+      var isPaused = false;
+      var animFrameId = null;
+      var lastTime = 0;
+      var accumulator = 0;
+      var totalSimulatedTime = 0;
+      var frameCount = 0;
+      var tickCount = 0;
+      var localSpeedMultiplier = 1.0;
+
+      function getEffectiveSpeed() {
+        return currentGameSpeed * localSpeedMultiplier;
+      }
+
+      function step(now) {
+        if (!isRunning) return;
+
+        if (typeof now !== "number") {
+          now = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+        }
+
+        if (!lastTime) {
+          lastTime = now;
+        }
+
+        var rawDelta = now - lastTime;
+        lastTime = now;
+
+        if (!isPaused) {
+          var clampedDelta = Math.min(Math.max(0, rawDelta), maxFrameTime);
+          var effectiveDelta = clampedDelta * getEffectiveSpeed();
+          accumulator += effectiveDelta;
+
+          var TIME_EPSILON = 0.001;
+          var steps = 0;
+          while ((accumulator + TIME_EPSILON) >= fixedDt && steps < maxSubSteps) {
+            updateFn(fixedDt, totalSimulatedTime);
+            totalSimulatedTime += fixedDt;
+            accumulator -= fixedDt;
+            if (accumulator < 0) accumulator = 0;
+            tickCount++;
+            steps++;
+          }
+
+          if (steps >= maxSubSteps && accumulator > fixedDt) {
+            accumulator = 0;
+          }
+
+          var alpha = fixedDt > 0 ? (accumulator / fixedDt) : 0;
+          if (alpha > 1) alpha = 1;
+          if (alpha < 0) alpha = 0;
+
+          renderFn(alpha, totalSimulatedTime);
+          frameCount++;
+        } else {
+          lastTime = now;
+        }
+
+        if (isRunning) {
+          if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+            if (animFrameId !== null) {
+              var pIdx = registeredAnimationFrameIds.indexOf(animFrameId);
+              if (pIdx !== -1) registeredAnimationFrameIds.splice(pIdx, 1);
+            }
+            animFrameId = window.requestAnimationFrame(step);
+            registeredAnimationFrameIds.push(animFrameId);
+          }
+        }
+      }
+
+      var onPauseUnsub = null;
+      var onResumeUnsub = null;
+      var onTeardownUnsub = null;
+
+      var loop = {
+        start: function () {
+          if (isRunning) return this;
+          isRunning = true;
+          isPaused = false;
+          lastTime = 0;
+          accumulator = 0;
+
+          if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+            animFrameId = window.requestAnimationFrame(step);
+            registeredAnimationFrameIds.push(animFrameId);
+          }
+          return this;
+        },
+
+        stop: function () {
+          if (!isRunning) return this;
+          isRunning = false;
+          isPaused = false;
+          if (animFrameId !== null) {
+            if (typeof window !== "undefined" && typeof window.cancelAnimationFrame === "function") {
+              window.cancelAnimationFrame(animFrameId);
+            }
+            var cIdx = registeredAnimationFrameIds.indexOf(animFrameId);
+            if (cIdx !== -1) registeredAnimationFrameIds.splice(cIdx, 1);
+            animFrameId = null;
+          }
+          lastTime = 0;
+          accumulator = 0;
+          return this;
+        },
+
+        pause: function () {
+          if (!isRunning || isPaused) return this;
+          isPaused = true;
+          return this;
+        },
+
+        resume: function () {
+          if (!isRunning || !isPaused) return this;
+          isPaused = false;
+          lastTime = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+          accumulator = 0;
+          return this;
+        },
+
+        stepManual: function (dt) {
+          var stepDt = (typeof dt === "number" && dt > 0) ? dt : fixedDt;
+          var effectiveDelta = stepDt * getEffectiveSpeed();
+          accumulator += effectiveDelta;
+
+          var TIME_EPSILON = 0.001;
+          var steps = 0;
+          while ((accumulator + TIME_EPSILON) >= fixedDt && steps < maxSubSteps) {
+            updateFn(fixedDt, totalSimulatedTime);
+            totalSimulatedTime += fixedDt;
+            accumulator -= fixedDt;
+            if (accumulator < 0) accumulator = 0;
+            tickCount++;
+            steps++;
+          }
+          if (steps >= maxSubSteps && accumulator > fixedDt) {
+            accumulator = 0;
+          }
+          var alpha = fixedDt > 0 ? (accumulator / fixedDt) : 0;
+          if (alpha > 1) alpha = 1;
+          if (alpha < 0) alpha = 0;
+          renderFn(alpha, totalSimulatedTime);
+          frameCount++;
+          return this;
+        },
+
+        isRunning: function () {
+          return isRunning;
+        },
+
+        isPaused: function () {
+          return isPaused;
+        },
+
+        getFixedDt: function () {
+          return fixedDt;
+        },
+
+        getAccumulator: function () {
+          return accumulator;
+        },
+
+        getTickCount: function () {
+          return tickCount;
+        },
+
+        getFrameCount: function () {
+          return frameCount;
+        },
+
+        getTotalSimulatedTime: function () {
+          return totalSimulatedTime;
+        },
+
+        getSpeed: function () {
+          return getEffectiveSpeed();
+        },
+
+        setSpeedMultiplier: function (multiplier) {
+          if (typeof multiplier === "number" && multiplier > 0) {
+            localSpeedMultiplier = Math.max(0.1, Math.min(5.0, multiplier));
+          }
+          return this;
+        },
+
+        destroy: function () {
+          this.stop();
+          var loopIdx = registeredGameLoops.indexOf(loop);
+          if (loopIdx !== -1) {
+            registeredGameLoops.splice(loopIdx, 1);
+          }
+          if (onPauseUnsub) {
+            onPauseUnsub();
+            onPauseUnsub = null;
+          }
+          if (onResumeUnsub) {
+            onResumeUnsub();
+            onResumeUnsub = null;
+          }
+          if (onTeardownUnsub) {
+            onTeardownUnsub();
+            onTeardownUnsub = null;
+          }
+          return this;
+        }
+      };
+
+      if (autoPause) {
+        var pauseCb = function () {
+          loop.pause();
+        };
+        var resumeCb = function () {
+          loop.resume();
+        };
+        var teardownCb = function () {
+          loop.destroy();
+        };
+
+        pauseHandlers.push(pauseCb);
+        resumeHandlers.push(resumeCb);
+        teardownHandlers.push(teardownCb);
+
+        onPauseUnsub = function () {
+          var idx = pauseHandlers.indexOf(pauseCb);
+          if (idx !== -1) pauseHandlers.splice(idx, 1);
+        };
+        onResumeUnsub = function () {
+          var idx = resumeHandlers.indexOf(resumeCb);
+          if (idx !== -1) resumeHandlers.splice(idx, 1);
+        };
+        onTeardownUnsub = function () {
+          var idx = teardownHandlers.indexOf(teardownCb);
+          if (idx !== -1) teardownHandlers.splice(idx, 1);
+        };
+      }
+
+      registeredGameLoops.push(loop);
+
+      if (opts.autoStart) {
+        loop.start();
+      }
+
+      return loop;
+    },
+
+    /**
+     * Mulberry32 Seeded Pseudo-Random Number Generator (PRNG) (#1184)
+     * Deterministic 32-bit state generator for reproducible game simulation runs.
+     * @param {number} [seed=1337]
+     * @returns {Object} Seeded RNG instance
+     */
+    createSeededRNG: function (seed) {
+      var s = (typeof seed === "number" && !isNaN(seed)) ? (seed >>> 0) : 1337;
+      if (s === 0) s = 1337;
+      var initialSeed = s;
+
+      return {
+        next: function () {
+          s |= 0;
+          s = (s + 0x6D2B79F5) | 0;
+          var t = Math.imul(s ^ (s >>> 15), 1 | s);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        },
+        nextInt: function (min, max) {
+          var low = Math.min(min, max);
+          var high = Math.max(min, max);
+          return Math.floor(this.next() * (high - low + 1)) + low;
+        },
+        nextFloat: function (min, max) {
+          var low = Math.min(min, max);
+          var high = Math.max(min, max);
+          return this.next() * (high - low) + low;
+        },
+        getSeed: function () {
+          return initialSeed;
+        },
+        getCurrentState: function () {
+          return s;
+        },
+        setSeed: function (newSeed) {
+          s = (typeof newSeed === "number" && !isNaN(newSeed)) ? (newSeed >>> 0) : 1337;
+          if (s === 0) s = 1337;
+          initialSeed = s;
+          return this;
+        }
+      };
+    },
+
+    /**
+     * 32-bit FNV-1a Hash Function with Canonical Object Key Sorting (#1184)
+     * Generates deterministic hexadecimal state hashes for checkpoint divergence detection.
+     * @param {*} state
+     * @returns {string} 8-character hex hash string
+     */
+    hashState: function (state) {
+      var str;
+      if (typeof state === "string") {
+        str = state;
+      } else {
+        try {
+          str = JSON.stringify(state, function (key, value) {
+            if (value && typeof value === "object" && !Array.isArray(value)) {
+              var sorted = {};
+              var keys = Object.keys(value).sort();
+              for (var k = 0; k < keys.length; k++) {
+                sorted[keys[k]] = value[keys[k]];
+              }
+              return sorted;
+            }
+            return value;
+          });
+        } catch (_) {
+          str = String(state);
+        }
+      }
+
+      var hash = 2166136261;
+      for (var i = 0; i < str.length; i++) {
+        hash ^= str.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+      }
+      return ("00000000" + (hash >>> 0).toString(16)).slice(-8);
+    },
+
+    /**
+     * Replay Envelope Validator & Integrity Checker (#1184)
+     * Validates versioning, structure, and enforces bounds against excessive/malformed inputs.
+     * @param {Object|string} envelope
+     * @param {string} [expectedGameId]
+     * @returns {Object} { valid: boolean, error: string|null, envelope: Object|null }
+     */
+    validateReplayEnvelope: function (envelope, expectedGameId) {
+      if (!envelope) {
+        return { valid: false, error: "Envelope is null or undefined", envelope: null };
+      }
+
+      var env = envelope;
+      if (typeof envelope === "string") {
+        try {
+          env = JSON.parse(envelope);
+        } catch (e) {
+          return { valid: false, error: "Malformed JSON envelope: " + e.message, envelope: null };
+        }
+      }
+
+      if (typeof env !== "object" || env === null) {
+        return { valid: false, error: "Envelope must be a non-null object", envelope: null };
+      }
+
+      if (env.magic !== "AVREP") {
+        return { valid: false, error: "Invalid magic identifier: expected 'AVREP'", envelope: null };
+      }
+
+      if (env.version !== 1) {
+        return { valid: false, error: "Unsupported envelope version: expected 1, got " + env.version, envelope: null };
+      }
+
+      if (expectedGameId && env.gameId && env.gameId !== expectedGameId) {
+        return { valid: false, error: "Game ID mismatch: expected '" + expectedGameId + "', got '" + env.gameId + "'", envelope: null };
+      }
+
+      if (typeof env.seed !== "number" || isNaN(env.seed)) {
+        return { valid: false, error: "Missing or invalid simulation seed", envelope: null };
+      }
+
+      if (!Array.isArray(env.inputs)) {
+        return { valid: false, error: "Inputs must be an array", envelope: null };
+      }
+
+      var MAX_INPUTS = 100000;
+      if (env.inputs.length > MAX_INPUTS) {
+        return { valid: false, error: "Input stream exceeds maximum allowed bounds (" + MAX_INPUTS + ")", envelope: null };
+      }
+
+      var lastTick = -1;
+      for (var i = 0; i < env.inputs.length; i++) {
+        var item = env.inputs[i];
+        if (!item || typeof item.tick !== "number" || item.tick < 0) {
+          return { valid: false, error: "Malformed input at index " + i + ": invalid tick", envelope: null };
+        }
+        if (item.tick < lastTick) {
+          return { valid: false, error: "Non-monotonic input tick sequence at index " + i, envelope: null };
+        }
+        lastTick = item.tick;
+      }
+
+      if (env.checkpoints && !Array.isArray(env.checkpoints)) {
+        return { valid: false, error: "Checkpoints must be an array if provided", envelope: null };
+      }
+
+      var MAX_CHECKPOINTS = 5000;
+      if (env.checkpoints && env.checkpoints.length > MAX_CHECKPOINTS) {
+        return { valid: false, error: "Checkpoint list exceeds maximum allowed bounds (" + MAX_CHECKPOINTS + ")", envelope: null };
+      }
+
+      return { valid: true, error: null, envelope: env };
+    },
+
+    /**
+     * Create an opt-in Replay Recorder for deterministic simulations (#1184)
+     * @param {Object} [options]
+     * @param {string} [options.gameId]
+     * @param {number} [options.seed]
+     * @param {Object} [options.initialState]
+     * @param {number} [options.fixedDt=16.666666666666668]
+     * @param {number} [options.maxInputs=50000]
+     * @returns {Object} Recorder instance
+     */
+    createReplayRecorder: function (options) {
+      var self = this;
+      var opts = options || {};
+      var gameId = opts.gameId || "unknown-game";
+      var seed = (typeof opts.seed === "number") ? (opts.seed >>> 0) : Math.floor(Math.random() * 2147483647);
+      var fixedDt = (typeof opts.fixedDt === "number" && opts.fixedDt > 0) ? opts.fixedDt : (1000 / 60);
+      var maxInputs = (typeof opts.maxInputs === "number" && opts.maxInputs > 0) ? opts.maxInputs : 50000;
+      var initialState = opts.initialState ? JSON.parse(JSON.stringify(opts.initialState)) : null;
+
+      var rng = self.createSeededRNG(seed);
+      var currentTick = 0;
+      var inputs = [];
+      var checkpoints = [];
+      var isRecording = true;
+
+      return {
+        getRNG: function () {
+          return rng;
+        },
+        getSeed: function () {
+          return seed;
+        },
+        getTick: function () {
+          return currentTick;
+        },
+        tick: function () {
+          currentTick++;
+          return currentTick;
+        },
+        recordInput: function (type, data, customTick) {
+          if (!isRecording) return this;
+          if (inputs.length >= maxInputs) return this;
+          var t = (typeof customTick === "number") ? customTick : currentTick;
+          inputs.push({
+            tick: t,
+            type: String(type || "action"),
+            data: (data && typeof data === "object") ? JSON.parse(JSON.stringify(data)) : data
+          });
+          return this;
+        },
+        recordCheckpoint: function (state, customTick) {
+          if (!isRecording) return this;
+          if (checkpoints.length >= 5000) return this;
+          var t = (typeof customTick === "number") ? customTick : currentTick;
+          var hash = self.hashState(state);
+          checkpoints.push({
+            tick: t,
+            hash: hash,
+            state: (state && typeof state === "object") ? JSON.parse(JSON.stringify(state)) : state
+          });
+          return hash;
+        },
+        exportEnvelope: function (metadata) {
+          return {
+            magic: "AVREP",
+            version: 1,
+            gameId: gameId,
+            seed: seed,
+            fixedDt: fixedDt,
+            createdAt: Date.now(),
+            initialState: initialState,
+            inputs: inputs.slice(),
+            checkpoints: checkpoints.slice(),
+            metadata: metadata || { durationTicks: currentTick }
+          };
+        },
+        exportJSON: function (metadata) {
+          return JSON.stringify(this.exportEnvelope(metadata));
+        },
+        stop: function () {
+          isRecording = false;
+          return this;
+        },
+        reset: function (newSeed, newInitialState) {
+          currentTick = 0;
+          inputs = [];
+          checkpoints = [];
+          isRecording = true;
+          if (typeof newSeed === "number") seed = newSeed >>> 0;
+          rng = self.createSeededRNG(seed);
+          if (newInitialState !== undefined) initialState = JSON.parse(JSON.stringify(newInitialState));
+          return this;
+        }
+      };
+    },
+
+    /**
+     * Create an opt-in Replay Player with divergence verification (#1184)
+     * @param {Object|string} envelope - Validated replay envelope
+     * @param {Object} options
+     * @returns {Object} Player instance
+     */
+    createReplayPlayer: function (envelope, options) {
+      var self = this;
+      var opts = options || {};
+      var validation = self.validateReplayEnvelope(envelope, opts.gameId);
+      if (!validation.valid) {
+        throw new Error("[ArcadeVerse Replay] Invalid envelope: " + validation.error);
+      }
+      var env = validation.envelope;
+      var onInput = typeof opts.onInput === "function" ? opts.onInput : function () {};
+      var getState = typeof opts.getState === "function" ? opts.getState : null;
+      var onDivergence = typeof opts.onDivergence === "function" ? opts.onDivergence : function () {};
+      var onCheckpoint = typeof opts.onCheckpoint === "function" ? opts.onCheckpoint : function () {};
+      var onFinish = typeof opts.onFinish === "function" ? opts.onFinish : function () {};
+      var onTick = typeof opts.onTick === "function" ? opts.onTick : function () {};
+      var autoPause = opts.autoPause !== false;
+
+      var rng = self.createSeededRNG(env.seed);
+      var currentTick = 0;
+      var inputIndex = 0;
+      var checkpointIndex = 0;
+      var isRunning = false;
+      var isPaused = false;
+      var isFinished = false;
+      var divergenceError = null;
+      var loopInstance = null;
+
+      var maxTick = (env.metadata && typeof env.metadata.durationTicks === "number") ? env.metadata.durationTicks : 0;
+      if (env.inputs.length > 0) {
+        maxTick = Math.max(maxTick, env.inputs[env.inputs.length - 1].tick);
+      }
+      if (env.checkpoints && env.checkpoints.length > 0) {
+        maxTick = Math.max(maxTick, env.checkpoints[env.checkpoints.length - 1].tick);
+      }
+
+      function stepTick() {
+        if (isFinished) return false;
+
+        while (inputIndex < env.inputs.length && env.inputs[inputIndex].tick === currentTick) {
+          var inputItem = env.inputs[inputIndex];
+          try {
+            onInput(inputItem, currentTick);
+          } catch (e) {
+            console.warn("[ArcadeVerse Replay] Error executing input at tick " + currentTick, e);
+          }
+          inputIndex++;
+        }
+
+        if (env.checkpoints && checkpointIndex < env.checkpoints.length && env.checkpoints[checkpointIndex].tick === currentTick) {
+          var cp = env.checkpoints[checkpointIndex];
+          if (getState) {
+            try {
+              var currentState = getState();
+              var currentHash = self.hashState(currentState);
+              if (currentHash !== cp.hash) {
+                divergenceError = {
+                  tick: currentTick,
+                  expectedHash: cp.hash,
+                  actualHash: currentHash,
+                  expectedState: cp.state,
+                  actualState: currentState
+                };
+                onDivergence(divergenceError);
+              } else {
+                onCheckpoint(cp);
+              }
+            } catch (e) {
+              console.warn("[ArcadeVerse Replay] Error verifying checkpoint at tick " + currentTick, e);
+            }
+          }
+          checkpointIndex++;
+        }
+
+        onTick(currentTick, maxTick);
+
+        if (currentTick >= maxTick && inputIndex >= env.inputs.length) {
+          isFinished = true;
+          isRunning = false;
+          if (loopInstance) loopInstance.stop();
+          onFinish({
+            totalTicks: currentTick,
+            divergence: divergenceError,
+            success: !divergenceError
+          });
+          return false;
+        }
+
+        currentTick++;
+        return true;
+      }
+
+      var player = {
+        getRNG: function () {
+          return rng;
+        },
+        getTick: function () {
+          return currentTick;
+        },
+        getMaxTick: function () {
+          return maxTick;
+        },
+        getEnvelope: function () {
+          return env;
+        },
+        getDivergence: function () {
+          return divergenceError;
+        },
+        isRunning: function () {
+          return isRunning;
+        },
+        isPaused: function () {
+          return isPaused;
+        },
+        isFinished: function () {
+          return isFinished;
+        },
+        step: function () {
+          return stepTick();
+        },
+        seek: function (targetTick) {
+          var target = Math.min(targetTick, maxTick);
+          while (currentTick <= target && !isFinished && !divergenceError) {
+            stepTick();
+          }
+          return this;
+        },
+        start: function () {
+          if (isRunning || isFinished) return this;
+          isRunning = true;
+          isPaused = false;
+
+          loopInstance = self.createGameLoop({
+            fixedDt: env.fixedDt || (1000 / 60),
+            autoPause: autoPause,
+            update: function () {
+              if (!isPaused && isRunning) {
+                stepTick();
+              }
+            }
+          });
+          loopInstance.start();
+          return this;
+        },
+        pause: function () {
+          isPaused = true;
+          if (loopInstance) loopInstance.pause();
+          return this;
+        },
+        resume: function () {
+          isPaused = false;
+          if (loopInstance) loopInstance.resume();
+          return this;
+        },
+        stop: function () {
+          isRunning = false;
+          if (loopInstance) {
+            loopInstance.stop();
+            loopInstance.destroy();
+            loopInstance = null;
+          }
+          return this;
+        },
+        destroy: function () {
+          this.stop();
+          var pIdx = registeredReplayPlayers.indexOf(player);
+          if (pIdx !== -1) registeredReplayPlayers.splice(pIdx, 1);
+          return this;
+        }
+      };
+
+      registeredReplayPlayers.push(player);
+      return player;
+    },
+
+    /**
+     * Hub Replay Inspector for validation, metadata extraction, and headless divergence auditing (#1184)
+     */
+    replayInspector: {
+      validate: function (envelope, expectedGameId) {
+        return sdkInstance.validateReplayEnvelope(envelope, expectedGameId);
+      },
+      inspect: function (envelope) {
+        var validation = sdkInstance.validateReplayEnvelope(envelope);
+        if (!validation.valid) {
+          return { valid: false, error: validation.error };
+        }
+        var env = validation.envelope;
+        var durationTicks = (env.metadata && typeof env.metadata.durationTicks === "number") ? env.metadata.durationTicks : 0;
+        if (env.inputs.length > 0) {
+          durationTicks = Math.max(durationTicks, env.inputs[env.inputs.length - 1].tick);
+        }
+        return {
+          valid: true,
+          gameId: env.gameId,
+          version: env.version,
+          seed: env.seed,
+          durationTicks: durationTicks,
+          inputCount: env.inputs.length,
+          checkpointCount: env.checkpoints ? env.checkpoints.length : 0,
+          createdAt: env.createdAt,
+          fixedDt: env.fixedDt,
+          metadata: env.metadata || {}
+        };
+      },
+      findFirstDivergence: function (envelope, simulationStepFn, initialSimulationState) {
+        var validation = sdkInstance.validateReplayEnvelope(envelope);
+        if (!validation.valid) {
+          return { valid: false, error: validation.error, match: false, firstMismatch: null };
+        }
+        var env = validation.envelope;
+        if (typeof simulationStepFn !== "function") {
+          return { valid: false, error: "simulationStepFn must be a function", match: false, firstMismatch: null };
+        }
+
+        var state = initialSimulationState !== undefined
+          ? JSON.parse(JSON.stringify(initialSimulationState))
+          : (env.initialState ? JSON.parse(JSON.stringify(env.initialState)) : {});
+
+        var rng = sdkInstance.createSeededRNG(env.seed);
+        var inputIdx = 0;
+        var cpIdx = 0;
+        var maxTick = (env.metadata && typeof env.metadata.durationTicks === "number") ? env.metadata.durationTicks : 0;
+        if (env.inputs.length > 0) maxTick = Math.max(maxTick, env.inputs[env.inputs.length - 1].tick);
+        if (env.checkpoints && env.checkpoints.length > 0) maxTick = Math.max(maxTick, env.checkpoints[env.checkpoints.length - 1].tick);
+
+        for (var t = 0; t <= maxTick; t++) {
+          var tickInputs = [];
+          while (inputIdx < env.inputs.length && env.inputs[inputIdx].tick === t) {
+            tickInputs.push(env.inputs[inputIdx]);
+            inputIdx++;
+          }
+
+          state = simulationStepFn(state, tickInputs, rng, t) || state;
+
+          if (env.checkpoints && cpIdx < env.checkpoints.length && env.checkpoints[cpIdx].tick === t) {
+            var expectedCp = env.checkpoints[cpIdx];
+            var actualHash = sdkInstance.hashState(state);
+            if (actualHash !== expectedCp.hash) {
+              return {
+                valid: true,
+                match: false,
+                firstMismatch: {
+                  tick: t,
+                  expectedHash: expectedCp.hash,
+                  actualHash: actualHash,
+                  expectedState: expectedCp.state,
+                  actualState: state
+                }
+              };
+            }
+            cpIdx++;
+          }
+        }
+
+        return { valid: true, match: true, firstMismatch: null, totalTicks: maxTick };
+      }
     },
 
     /**
