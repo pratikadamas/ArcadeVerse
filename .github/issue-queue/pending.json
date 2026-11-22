@@ -88,5 +88,50 @@
       "level3"
     ],
     "body": "## Problem\nWhen a player scores a great run, sharing a generic game link only opens the game at score 0. There is no built-in way to challenge a friend to beat a specific score target.\n\n## Architectural Scope & Requirements\n1. **Challenge Link Generator (`assets/js/challenge-deep-link.js`):**\n   - Adds a \"Challenge a Friend\" button on game over screens and game cards.\n   - Encodes target score and challenger name into a shareable URL: `?game=cyber-runner&target=3500&challenger=Debasmita`.\n2. **In-Game Challenge Banner HUD:**\n   - When opened via a challenge link, displays an animated banner at the top of the game: `\"CHALLENGE: Beat Debasmita's 3,500 pts!\"` with real-time target distance tracking.\n3. **Victory Celebration Overlay:**\n   - If the player surpasses the target score during the run, immediately triggers a celebratory neon banner (\"TARGET SURPASSED!\") with confetti VFX.\n\n## Acceptance Criteria\n- [ ] Seamlessly parses challenge URL query parameters on game launch.\n- [ ] Generates instant shareable links with 1-click clipboard copy.\n- [ ] Clean fallback to standard game play if query parameters are missing or invalid."
+  },
+  {
+    "id": 21,
+    "title": "[Theme/UI]: Authentic 1984 Macintosh Classic Platinum Gray 1-Bit Stipple Pattern Theme Studio",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nRetro computing enthusiasts revere the minimalist, clean aesthetics of the early GUI era, particularly the 1984 original Macintosh System 1 desktop. ArcadeVerse currently features neon, synthwave, dark, and CRT themes, but lacks an authentic vintage 1-bit monochrome desktop computing aesthetic.\n\n## Architectural Scope & Requirements\n1. **1-Bit Stipple CSS Engine (`assets/css/theme-macintosh-classic.css`):**\n   - Implement an authentic 2x2 pixel stipple checkerboard desktop background using CSS SVG data URI pattern fills (`#ffffff` and `#808080`).\n   - Clean Chicago-inspired bitmap typography styling, flat 1px black borders with sharp 1px drop-shadows, and retro window title bars with horizontal hairline stripes.\n2. **Component Reskinning:**\n   - Style all arcade cards, search facets, filter buttons, and dialog modals with classic vintage desktop window bevels and monochrome scrollbar tracks.\n3. **Theme Customizer Integration:**\n   - Register `macintosh-classic` in `theme-customizer.js` with instant live switching and `localStorage` persistence.\n\n## Acceptance Criteria\n- [ ] Authentic 1-bit monochrome stipple wallpaper and retro window chrome styling across all pages.\n- [ ] High-contrast, sharp 1px border aesthetic with zero fuzzy gradient bleeds.\n- [ ] Seamless integration into the theme selector with full state persistence.\n- [ ] 100% Pure Vanilla CSS/JS without external fonts or dependencies."
+  },
+  {
+    "id": 22,
+    "title": "[Feature/Audio]: Dynamic Interactive Morse Code Audio Keyer & Telegraph SFX Studio",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nAudio accessibility and vintage communications enthusiasts often enjoy retro auditory signaling. The platform currently provides chiptune and synthesizer tools, but lacks a dedicated interactive Morse code telegraph studio for synthesizing international Morse code soundscapes and decoding real-time key taps.\n\n## Architectural Scope & Requirements\n1. **Pure Web Audio Morse Keyer (`assets/js/morse-code-audio-keyer.js`):**\n   - Implement international Morse standard timing: dit (1 unit), dah (3 units), intra-character gap (1 unit), inter-letter gap (3 units), and inter-word gap (7 units).\n   - Use clean sine-wave synthesis with rapid exponential ramp envelopes (5ms attack/decay) to eliminate speaker clicks.\n2. **Interactive Telegraph Interface:**\n   - Virtual brass straight-key button supporting both mouse clicks and Spacebar tapping with live pitch and tone generation.\n   - Real-time text-to-Morse audio converter and live audio frequency visualizer.\n3. **Customization Controls:**\n   - WPM speed slider (5 to 35 WPM), tone frequency tuner (400 Hz to 1000 Hz), and volume master governor.\n\n## Acceptance Criteria\n- [ ] Accurate international Morse code timing and clean click-free Web Audio sound synthesis.\n- [ ] Interactive virtual telegraph key with responsive keyboard and touch triggers.\n- [ ] Bi-directional text translation and audio generation with real-time waveform feedback.\n- [ ] 100% Pure Vanilla Web Audio API without external audio samples."
+  },
+  {
+    "id": 23,
+    "title": "[Feature/VFX]: Interactive Canvas Holographic Diffraction Grating & Rainbow Iridescence Studio",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nPhysical arcade trading cards, collector foils, and high-end cabinet marquees frequently feature holographic diffraction grating foil that shimmers into rainbow caustics under changing lighting angles. ArcadeVerse currently relies on static flat images for game cards, lacking dynamic optical iridescence.\n\n## Architectural Scope & Requirements\n1. **Optical Shader & Diffraction Simulation (`assets/js/holographic-diffraction-studio.js`):**\n   - Implement real-time thin-film interference simulation using an HTML5 Canvas overlay.\n   - Calculate surface normal vectors relative to cursor coordinates and mobile device gyroscope tilt angles (`DeviceOrientationEvent`).\n2. **Prismatic Rainbow Dispersion:**\n   - Map incident light angles to spectral wavelength color ramps (violet to red) with realistic specular glare highlights.\n3. **Card & Modal Mounting:**\n   - Overlay on featured showcase cards and achievement modals with `mix-blend-mode: color-dodge` and reduced motion safeguards (`prefers-reduced-motion`).\n\n## Acceptance Criteria\n- [ ] Realistic rainbow prismatic color dispersion shifting with mouse position and device orientation.\n- [ ] Smooth 60 FPS canvas rendering with low memory overhead and zero DOM thrashing.\n- [ ] Respects `prefers-reduced-motion` by gracefully disabling dynamic angular animations.\n- [ ] 100% Pure Vanilla JS and Canvas 2D context."
+  },
+  {
+    "id": 24,
+    "title": "[Enhancement/UI]: Interactive Dual-Spool Retro Audio Cassette Tape Rewind & Fast-Forward Animation HUD",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse features ambient background chiptune audio, but the player UI is a simple minimal button. Players lack a tactile, visually engaging retro audio playback mechanism reminiscent of 1980s boomboxes and cassette Walkmans.\n\n## Architectural Scope & Requirements\n1. **Cassette HUD Architecture (`assets/js/cassette-tape-hud.js`):**\n   - Render a detailed retro compact audio cassette enclosure with transparent plastic center window.\n   - Dual rotating spools with dynamically transferring magnetic tape radius (left spool shrinks as right spool grows during playback).\n2. **Tactile Mechanical Controls:**\n   - Interactive Play, Pause, Fast-Forward (4x speed spool rotation), and Rewind buttons.\n   - Procedural mechanical latching and gear-whir click SFX synthesized via Web Audio API.\n3. **Integration with Hub Audio:**\n   - Synchronize spool rotation state directly with background audio playback events.\n\n## Acceptance Criteria\n- [ ] Dynamic dual-spool tape rotation with accurate tape radius transfer calculation.\n- [ ] Responsive mechanical button controls with synthesized tactile click effects.\n- [ ] Compact floating or docked HUD widget with collapse and drag capabilities.\n- [ ] 100% Pure Vanilla JS and Canvas/SVG rendering with zero external images."
+  },
+  {
+    "id": 25,
+    "title": "[Feature/Social]: Global Arcade Activity Feed Ticker & Live Event Notification Stream",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nWhile browsing the extensive game catalog, the platform feels static and solitary. Players do not have an immediate sense of platform vitality, recent high-score breakthroughs, or achievement unlocks across the arcade ecosystem.\n\n## Architectural Scope & Requirements\n1. **Marquee Activity Ticker (`assets/js/arcade-activity-ticker.js`):**\n   - Implement a lightweight, smooth continuous horizontal ticker docked at the bottom of the catalog.\n   - Stream recent local gameplay achievements, high-score records, and daily challenge completions.\n2. **Event Dispatcher & Privacy:**\n   - Listen to internal game lifecycle events (`ARCADEVERSE_HIGH_SCORE`, `AV_ACHIEVEMENT_UNLOCKED`) via standard `window.addEventListener`.\n   - Store recent event telemetry locally in `localStorage` without collecting personally identifiable information.\n3. **User Controls:**\n   - Hover-to-pause functionality, toggle mute, and a collapsible compact mode for small viewports.\n\n## Acceptance Criteria\n- [ ] Smooth continuous 60 FPS scrolling ticker with zero layout jank.\n- [ ] Real-time event ingestion and dynamic notification pill generation.\n- [ ] Hover-to-pause and mobile-responsive collapse toggle.\n- [ ] 100% Pure Vanilla JavaScript and CSS animations."
   }
 ]
