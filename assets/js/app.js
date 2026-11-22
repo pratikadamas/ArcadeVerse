@@ -1964,8 +1964,14 @@ document.addEventListener("DOMContentLoaded", () => {
         window.ArcadeCardFlipManual.bindCard(card, game);
       }
 
-      if (window.CardRadarChart) {
-        window.CardRadarChart.attachToCard(card, game);
+      const ratingBadge = card.querySelector(".rating-badge");
+      if (ratingBadge) {
+        ratingBadge.style.cursor = "pointer";
+        ratingBadge.title = "View ratings breakdown";
+        ratingBadge.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (window.RatingHistogram) window.RatingHistogram.openForGame(game);
+        });
       }
 
       const favBtn = card.querySelector(".btn-card-favorite");
