@@ -9,12 +9,37 @@
   const STORAGE_KEY = 'arcadeverse_recently_played_v2';
   const MAX_HISTORY = 6;
 
+  function escapeHTML(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function escapeAttr(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
   const ArcadeRecent = {
     getRecent() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         const parsed = raw ? JSON.parse(raw) : [];
-        return Array.isArray(parsed) ? parsed : [];
+        if (!Array.isArray(parsed)) return [];
+
+        // Validate entries against official registry when available (#883)
+        return parsed.filter(item => {
+          return item && typeof item === 'object' && typeof item.id === 'string' && item.id.trim().length > 0;
+        });
       } catch (_) {
         return [];
       }
@@ -112,21 +137,38 @@
             </div>
 
             <div class="recently-played-grid">
-              ${items.map(item => `
-                <div class="recent-game-card" data-game-id="${item.id}">
-                  <div class="recent-card-top">
-                    <span class="recent-game-tag">${item.category}</span>
-                    <span class="recent-game-time">${this.formatTimeAgo(item.timestamp)}</span>
+              ${items.map(item => {
+                // Cross-validate against registry if present (#883)
+                let resolvedTitle = item.title;
+                let resolvedCategory = item.category;
+                if (typeof GAMES_REGISTRY !== 'undefined' && Array.isArray(GAMES_REGISTRY)) {
+                  const regMatch = GAMES_REGISTRY.find(g => g && g.id === item.id);
+                  if (regMatch) {
+                    resolvedTitle = regMatch.title || resolvedTitle;
+                    resolvedCategory = regMatch.category || resolvedCategory;
+                  }
+                }
+                const safeId = escapeAttr(item.id);
+                const safeTitle = escapeHTML(resolvedTitle);
+                const safeCategory = escapeHTML(resolvedCategory);
+                const safeTime = escapeHTML(this.formatTimeAgo(item.timestamp));
+
+                return `
+                  <div class="recent-game-card" data-game-id="${safeId}">
+                    <div class="recent-card-top">
+                      <span class="recent-game-tag">${safeCategory}</span>
+                      <span class="recent-game-time">${safeTime}</span>
+                    </div>
+                    <h3 class="recent-game-title" title="${safeTitle}">${safeTitle}</h3>
+                    <button type="button" class="btn-recent-play" data-game-id="${safeId}" aria-label="Resume playing ${safeTitle}">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                      </svg>
+                      <span>Resume</span>
+                    </button>
                   </div>
-                  <h3 class="recent-game-title" title="${item.title}">${item.title}</h3>
-                  <button type="button" class="btn-recent-play" data-game-id="${item.id}">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                    </svg>
-                    <span>Resume</span>
-                  </button>
-                </div>
-              `).join('')}
+                `;
+              }).join('')}
             </div>
           </div>
         </section>

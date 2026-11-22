@@ -270,7 +270,7 @@ const GAMES_REGISTRY = [
     "id": "code-breaker_babin",
     "title": "Cryptic Code Breaker: Mastermind Terminal",
     "category": "Puzzle",
-    "lucideIcon": "terminal",
+    "lucideIcon": "gamepad-2",
     "description": "Crack randomized security cipher sequences using colorblind-friendly feedback pegs in a rogue AI terminal.",
     "author": "Babin Bid",
     "github": "Babin123456",
@@ -652,6 +652,26 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "cyber-logic-gates_hrshjswniii",
+    "title": "Cyber Logic Gates: Boolean Circuit Forge",
+    "category": "Puzzle",
+    "lucideIcon": "gamepad-2",
+    "description": "Build and test Boolean circuits by wiring logic gate chips to match target truth tables across fifteen engineering puzzles.",
+    "author": "Harsh Jaiswani",
+    "github": "hrshjswniii",
+    "role": "Arcade Contributor",
+    "path": "games/cyber-logic-gates_hrshjswniii/index.html",
+    "tags": [
+      "Puzzle",
+      "Logic",
+      "Engineering",
+      "Educational",
+      "Circuit"
+    ],
+    "stars": 0,
+    "featured": false
+  },
+  {
     "id": "cyber-maze-runner_chanchall26",
     "title": "Cyber Maze Runner",
     "category": "Arcade",
@@ -897,7 +917,7 @@ const GAMES_REGISTRY = [
     "id": "cyber-sudoku_babin",
     "title": "Cyber-Sudoku: Neon Matrix 9x9",
     "category": "Puzzle",
-    "lucideIcon": "hash",
+    "lucideIcon": "gamepad-2",
     "description": "Restore corrupted cyber sector arrays by arranging matrix digits 1-9 without row, column, or sector collisions.",
     "author": "Babin Bid",
     "github": "Babin123456",
@@ -1207,6 +1227,27 @@ const GAMES_REGISTRY = [
     "featured": false
   },
   {
+    "id": "fruit-fury_mistu7debnath",
+    "title": "Fruit Fury",
+    "category": "Arcade",
+    "lucideIcon": "gamepad-2",
+    "description": "Slice juicy flying fruits, trigger massive combo multipliers, and dodge explosive bombs in this fast-paced neon arcade slicer.",
+    "author": "Manisha Debnath",
+    "github": "mistu7debnath",
+    "role": "Arcade Developer",
+    "path": "games/fruit-fury_mistu7debnath/index.html",
+    "tags": [
+      "Arcade",
+      "Casual",
+      "Action",
+      "Reflex",
+      "Fruit",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "gravity-well_babin",
     "title": "Gravity Well: Singularity Slingshot",
     "category": "Puzzle",
@@ -1498,6 +1539,27 @@ const GAMES_REGISTRY = [
     "featured": false,
     "difficulty": "Intermediate",
     "releaseDate": "2026-10-22"
+  },
+  {
+    "id": "neon-blaster_mistu7debnath",
+    "title": "Neon Blaster",
+    "category": "Action",
+    "lucideIcon": "crosshair",
+    "description": "Futuristic cyberpunk space-shooter arcade game with fluid combat, weapon upgrades, wave progression, and intense boss battles.",
+    "author": "Manisha Debnath",
+    "github": "mistu7debnath",
+    "role": "Arcade Developer",
+    "path": "games/neon-blaster_mistu7debnath/index.html",
+    "tags": [
+      "Action",
+      "Shooter",
+      "Cyberpunk",
+      "Space",
+      "Arcade",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false
   },
   {
     "id": "neon-bowling_babin",
@@ -1984,6 +2046,26 @@ const GAMES_REGISTRY = [
     "stars": 0,
     "featured": false,
     "difficulty": "Intermediate"
+  },
+  {
+    "id": "protocol-rogue_hrshjswniii",
+    "title": "Protocol Rogue: Cyberdeck Tactics",
+    "category": "Strategy",
+    "lucideIcon": "gamepad-2",
+    "description": "Build a cyber command deck, read enemy intent, and breach a branching corporate network in a tactical roguelike.",
+    "author": "Harsh Jaiswani",
+    "github": "hrshjswniii",
+    "role": "Arcade Contributor",
+    "path": "games/protocol-rogue_hrshjswniii/index.html",
+    "tags": [
+      "Strategy",
+      "Deckbuilding",
+      "Roguelike",
+      "Cards",
+      "Cyberpunk"
+    ],
+    "stars": 0,
+    "featured": false
   },
   {
     "id": "pumpkin-express_joitapaul",
@@ -2523,7 +2605,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 676,
+    "commits": 842,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2543,7 +2625,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 389,
+    "commits": 516,
     "gamesCount": 76,
     "mechanicsBonus": 2,
     "platformPRs": 29,
@@ -2664,8 +2746,8 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "mistu7debnath",
     "avatarInitial": "M",
     "role": "Contributor (NSOC '26)",
-    "commits": 22,
-    "gamesCount": 11,
+    "commits": 24,
+    "gamesCount": 13,
     "mechanicsBonus": 1,
     "platformPRs": 0,
     "qualityPRs": 0,
@@ -2677,7 +2759,9 @@ const CONTRIBUTORS_REGISTRY = [
       "Dino Dig",
       "Fishing Frenzy",
       "Flappy Cyber Jet",
+      "Fruit Fury",
       "Kingdom Maker",
+      "Neon Blaster",
       "Neon Grid Defense: Core Protocol",
       "Potion Maker",
       "Robo Factory",
@@ -2710,7 +2794,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "pratikadamas",
     "avatarInitial": "P",
     "role": "Contributor (NSOC '26)",
-    "commits": 99,
+    "commits": 115,
     "gamesCount": 1,
     "mechanicsBonus": 0,
     "platformPRs": 1,
@@ -2725,8 +2809,8 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "hrshjswniii",
     "avatarInitial": "H",
     "role": "Active Contributor (NSOC '26)",
-    "commits": 32,
-    "gamesCount": 3,
+    "commits": 37,
+    "gamesCount": 5,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 1,
@@ -2734,7 +2818,9 @@ const CONTRIBUTORS_REGISTRY = [
     "contributions": [
       "Cyber Brick Breaker: Neon Velocity",
       "Cyber Grapple: Neon Chasm Swinger",
-      "Cyber Typer: Terminal Hacker"
+      "Cyber Logic Gates: Boolean Circuit Forge",
+      "Cyber Typer: Terminal Hacker",
+      "Protocol Rogue: Cyberdeck Tactics"
     ]
   },
   {
@@ -2750,6 +2836,21 @@ const CONTRIBUTORS_REGISTRY = [
     "bonusPts": 0,
     "contributions": [
       "Circuit Connect"
+    ]
+  },
+  {
+    "name": "divyanshagarwal123",
+    "github": "divyanshagarwal123",
+    "avatarInitial": "D",
+    "role": "Contributor (NSOC '26)",
+    "commits": 22,
+    "gamesCount": 0,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Quality & Platform Contribution"
     ]
   },
   {
@@ -2783,11 +2884,11 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "divyanshagarwal123",
-    "github": "divyanshagarwal123",
-    "avatarInitial": "D",
+    "name": "nilesh0199",
+    "github": "nilesh0199",
+    "avatarInitial": "N",
     "role": "Contributor (NSOC '26)",
-    "commits": 5,
+    "commits": 4,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,
@@ -2798,11 +2899,26 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "nilesh0199",
-    "github": "nilesh0199",
-    "avatarInitial": "N",
+    "name": "trunal2005",
+    "github": "trunal2005",
+    "avatarInitial": "T",
     "role": "Contributor (NSOC '26)",
-    "commits": 3,
+    "commits": 2,
+    "gamesCount": 0,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Quality & Platform Contribution"
+    ]
+  },
+  {
+    "name": "trunalpatil",
+    "github": "trunalpatil",
+    "avatarInitial": "T",
+    "role": "Contributor (NSOC '26)",
+    "commits": 2,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,

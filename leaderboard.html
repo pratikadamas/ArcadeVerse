@@ -49,6 +49,7 @@
   <link rel="stylesheet" href="assets/css/sound-engine.css">
   <link rel="stylesheet" href="assets/css/network-detector.css">
   <link rel="stylesheet" href="assets/css/leaderboard.css">
+  <link rel="stylesheet" href="assets/css/leaderboard-spectrum.css">
   <link rel="stylesheet" href="assets/css/playtime-heatmap.css">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -237,15 +238,15 @@
           <table class="leaderboard-table" id="leaderboard-table">
             <thead>
               <tr>
-                <th style="width: 75px;">Rank</th>
-                <th>Contributor</th>
+                <th class="sortable-th" data-sort="rank" aria-sort="none" style="width: 75px;" tabindex="0" role="columnheader" aria-label="Sort by Rank"><span class="th-content">Rank <span class="sort-icon-wrap"><i data-lucide="chevrons-up-down" class="sort-icon"></i></span></span></th>
+                <th class="sortable-th" data-sort="name" aria-sort="none" tabindex="0" role="columnheader" aria-label="Sort by Contributor"><span class="th-content">Contributor <span class="sort-icon-wrap"><i data-lucide="chevrons-up-down" class="sort-icon"></i></span></span></th>
                 <th>Badge</th>
                 <th>GitHub Handle</th>
-                <th style="text-align: center;">Verified Game(s)</th>
+                <th class="sortable-th" data-sort="games" aria-sort="none" style="text-align: center;" tabindex="0" role="columnheader" aria-label="Sort by Verified Games"><span class="th-content center">Verified Game(s) <span class="sort-icon-wrap"><i data-lucide="chevrons-up-down" class="sort-icon"></i></span></span></th>
                 <th style="text-align: center;">Effort / Requirement</th>
-                <th style="text-align: center; min-width: 95px; white-space: nowrap;">Commits</th>
+                <th class="sortable-th" data-sort="commits" aria-sort="none" style="text-align: center; min-width: 95px; white-space: nowrap;" tabindex="0" role="columnheader" aria-label="Sort by Commits"><span class="th-content center">Commits <span class="sort-icon-wrap"><i data-lucide="chevrons-up-down" class="sort-icon"></i></span></span></th>
                 <th style="text-align: center;">GitHub Activity</th>
-                <th style="text-align: right;">Arcade Score</th>
+                <th class="sortable-th sort-active" data-sort="score" aria-sort="descending" style="text-align: right;" tabindex="0" role="columnheader" aria-label="Sort by Arcade Score"><span class="th-content right">Arcade Score <span class="sort-icon-wrap"><i data-lucide="chevron-down" class="sort-icon"></i></span></span></th>
               </tr>
             </thead>
             <tbody id="leaderboard-table-body">
@@ -716,8 +717,10 @@
   <script src="assets/js/sound-engine.js"></script>
   <script src="assets/js/keyboard-shortcuts.js"></script>
   <script src="assets/js/leaderboard.js"></script>
+  <script src="assets/js/leaderboard-spectrum.js"></script>
   <script src="assets/js/playtime-heatmap.js"></script>
   <script src="assets/js/arcade-token-dispenser.js"></script>
+  <script src="assets/js/arcade-ticket-dispenser.js"></script>
   <script src="assets/js/network-detector.js"></script>
   <script>
     if (window.lucide) {

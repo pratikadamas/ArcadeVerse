@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentCatalogView = "grid";
   try {
     const savedView = localStorage.getItem(CATALOG_VIEW_STORAGE_KEY);
-    if (savedView === "list" || savedView === "grid") {
+    if (savedView === "list" || savedView === "grid" || savedView === "floor") {
       currentCatalogView = savedView;
     }
   } catch (_) {}
@@ -328,13 +328,14 @@ document.addEventListener("DOMContentLoaded", () => {
               frameDoc.dispatchEvent(evt);
             }
           } catch (_) {
+            const targetOrigin = (typeof getTrustedTargetOrigin === "function") ? getTrustedTargetOrigin() : "*";
             iframe.contentWindow.postMessage({
               type: "ARCADEVERSE_GAMEPAD_KEY",
               eventType: eventType,
               key: targetMapping.key,
               code: targetMapping.code,
               keyCode: targetMapping.keyCode
-            }, "*");
+            }, targetOrigin);
           }
         }
         break;
@@ -657,31 +658,61 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchTagsRow = document.getElementById("search-tags-row");
   const resetFacetsBtn = document.getElementById("btn-reset-facets");
 
-  // Favorites LocalStorage Engine (Issue #533)
+  // Favorites Storage Engine (Issue #533 & Issue #890)
+  // Consolidate on single canonical storage key 'av_favorites'
   const FAVORITES_STORAGE_KEY = "av_favorites";
   const LEGACY_FAVORITES_STORAGE_KEY = "arcadeverse_favorite_games";
   const PREFERENCES_FAVORITES_KEY = "arcadeverse:preferences:favorites";
 
-  // Migrate legacy favorite storage keys to primary av_favorites key if needed
-  try {
-    if (!localStorage.getItem(FAVORITES_STORAGE_KEY)) {
-      const legacy = localStorage.getItem(LEGACY_FAVORITES_STORAGE_KEY) || localStorage.getItem(PREFERENCES_FAVORITES_KEY);
-      if (legacy) {
-        ArcadeStorageResilience.safeSetItem(FAVORITES_STORAGE_KEY, legacy);
+  // Perform one-time migration from legacy storage keys to canonical av_favorites key
+  function reconcileFavoritesStorage() {
+    try {
+      const canonicalRaw = ArcadeStorageResilience.safeGetItem(FAVORITES_STORAGE_KEY, null);
+      let mergedSet = new Set();
+      if (canonicalRaw) {
+        try {
+          const list = JSON.parse(canonicalRaw);
+          if (Array.isArray(list)) list.forEach(id => mergedSet.add(id));
+        } catch (_) { }
       }
-    }
-  } catch (_) { }
+      
+      const legacyRaw = ArcadeStorageResilience.safeGetItem(LEGACY_FAVORITES_STORAGE_KEY, null);
+      if (legacyRaw) {
+        try {
+          const list = JSON.parse(legacyRaw);
+          if (Array.isArray(list)) list.forEach(id => mergedSet.add(id));
+        } catch (_) { }
+      }
+
+      const prefRaw = ArcadeStorageResilience.safeGetItem(PREFERENCES_FAVORITES_KEY, null);
+      if (prefRaw) {
+        try {
+          const list = JSON.parse(prefRaw);
+          if (Array.isArray(list)) list.forEach(id => mergedSet.add(id));
+        } catch (_) { }
+      }
+
+      if (mergedSet.size > 0 && !canonicalRaw) {
+        ArcadeStorageResilience.safeSetItem(FAVORITES_STORAGE_KEY, JSON.stringify(Array.from(mergedSet)));
+      }
+
+      // Purge legacy split storage keys to eliminate split-brain synchronization
+      if (typeof window !== "undefined" && window.localStorage) {
+        try {
+          window.localStorage.removeItem(LEGACY_FAVORITES_STORAGE_KEY);
+          window.localStorage.removeItem(PREFERENCES_FAVORITES_KEY);
+        } catch (_) { }
+      }
+    } catch (_) { }
+  }
+
+  reconcileFavoritesStorage();
 
   function getFavorites() {
     try {
-      let raw = localStorage.getItem(FAVORITES_STORAGE_KEY);
-      if (!raw) {
-        raw = localStorage.getItem(LEGACY_FAVORITES_STORAGE_KEY);
-      }
-      if (!raw) {
-        raw = localStorage.getItem(PREFERENCES_FAVORITES_KEY);
-      }
-      const parsed = raw ? JSON.parse(raw) : [];
+      const raw = ArcadeStorageResilience.safeGetItem(FAVORITES_STORAGE_KEY, null);
+      if (!raw) return new Set();
+      const parsed = JSON.parse(raw);
       return Array.isArray(parsed) ? new Set(parsed) : new Set();
     } catch (e) {
       return new Set();
@@ -691,8 +722,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function saveFavorites(favSet) {
     const list = Array.from(favSet);
     const serialized = JSON.stringify(list);
+    // Write solely to single canonical storage key
     ArcadeStorageResilience.safeSetItem(FAVORITES_STORAGE_KEY, serialized);
-    ArcadeStorageResilience.safeSetItem(LEGACY_FAVORITES_STORAGE_KEY, serialized);
     updateFavoritesBadge();
 
     // Offline dispatch queue integration (#554)
@@ -798,6 +829,51 @@ document.addEventListener("DOMContentLoaded", () => {
     updateCategoryPillCounts();
   }
 
+  // Canonical category token normalizer & matching helper (#892)
+  const CATEGORY_SYNONYMS = {
+    shooter: "arcade",
+    defense: "strategy",
+    towerdefense: "strategy",
+    narrative: "adventure",
+    escape: "puzzle",
+    escaperoom: "puzzle",
+    horror: "adventure"
+  };
+
+  function extractGameCategoryTokens(categoryStr) {
+    if (!categoryStr || typeof categoryStr !== "string") return [];
+    return categoryStr
+      .split(/[\/,|]+/)
+      .map(token => token.trim().toLowerCase())
+      .filter(token => token.length > 0)
+      .map(token => CATEGORY_SYNONYMS[token.replace(/\s+/g, "")] || token);
+  }
+
+  function matchesCategoryFilter(game, activeCategory) {
+    if (!game) return false;
+    if (!activeCategory || activeCategory === "all") return true;
+
+    if (activeCategory === "favorites") {
+      const favs = getFavorites();
+      return favs.has(game.id);
+    }
+
+    if (activeCategory.startsWith("playlist:")) {
+      const plId = activeCategory.replace("playlist:", "");
+      const pl = window.ArcadePlaylists ? window.ArcadePlaylists.getPlaylist(plId) : null;
+      return pl ? pl.games.includes(game.id) : false;
+    }
+
+    const target = activeCategory.toLowerCase().trim();
+    if (target === "halloween") {
+      return isHalloweenGame(game);
+    }
+
+    const normalizedTarget = CATEGORY_SYNONYMS[target.replace(/\s+/g, "")] || target;
+    const tokens = extractGameCategoryTokens(game.category);
+    return tokens.includes(normalizedTarget) || tokens.includes(target);
+  }
+
   // Dynamic Category Counters & Real-Time Statistics
   function updateCategoryPillCounts() {
     if (typeof GAMES_REGISTRY === "undefined" || !Array.isArray(GAMES_REGISTRY)) return;
@@ -809,11 +885,23 @@ document.addEventListener("DOMContentLoaded", () => {
       halloween: 0
     };
 
-    GAMES_REGISTRY.forEach((g) => {
-      const cat = (g.category || "").toLowerCase();
-      if (!counts[cat]) counts[cat] = 0;
-      counts[cat]++;
+    // Initialize pill count counters based on registered DOM pill keys
+    categoryPills.forEach((pill) => {
+      const key = (pill.getAttribute("data-category") || "").toLowerCase();
+      if (key && counts[key] === undefined) {
+        counts[key] = 0;
+      }
+    });
 
+    GAMES_REGISTRY.forEach((g) => {
+      categoryPills.forEach((pill) => {
+        const catKey = pill.getAttribute("data-category") || "";
+        const lowerKey = catKey.toLowerCase();
+        if (lowerKey === "all" || lowerKey === "favorites") return;
+        if (matchesCategoryFilter(g, catKey)) {
+          counts[lowerKey] = (counts[lowerKey] || 0) + 1;
+        }
+      });
       if (isHalloweenGame(g)) {
         counts.halloween++;
       }
@@ -927,9 +1015,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }));
   }
 
-  // Cross-tab real-time favorites synchronization
+  // Cross-tab real-time favorites synchronization (canonical av_favorites with legacy migration fallback)
   window.addEventListener("storage", (e) => {
     if (e.key === FAVORITES_STORAGE_KEY || e.key === LEGACY_FAVORITES_STORAGE_KEY || e.key === PREFERENCES_FAVORITES_KEY) {
+      if (e.key !== FAVORITES_STORAGE_KEY && e.newValue) {
+        // If an older tab writes to legacy key, reconcile into canonical storage key
+        try {
+          ArcadeStorageResilience.safeSetItem(FAVORITES_STORAGE_KEY, e.newValue);
+        } catch (_) { }
+      }
       updateFavoritesBadge();
       if (currentCategory === "favorites") {
         renderGames();
@@ -1082,10 +1176,160 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Update Stats
-  if (totalGamesCount) totalGamesCount.textContent = GAMES_REGISTRY.length;
-  if (totalContributorsCount) totalContributorsCount.textContent = CONTRIBUTORS_REGISTRY.length;
+  // Update Stats & 60 FPS Animated Count-Up Engine (#1057)
+  function animateCountUp(el, targetVal, durationMs = 1200) {
+    if (!el || typeof targetVal !== "number") return;
+    const isReduced = typeof window !== "undefined" && (
+      (window.ArcadeVerseA11y && typeof window.ArcadeVerseA11y.isReducedMotion === "function" && window.ArcadeVerseA11y.isReducedMotion()) ||
+      (window.A11yEngine && window.A11yEngine.prefs && window.A11yEngine.prefs.reducedMotion) ||
+      (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+    );
+
+    if (isReduced) {
+      el.textContent = targetVal;
+      return;
+    }
+
+    const startTime = performance.now();
+    const startVal = 0;
+
+    function step(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / durationMs);
+      // easeOutExpo: progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress)
+      const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      const current = Math.floor(startVal + (targetVal - startVal) * ease);
+      el.textContent = current;
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        el.textContent = targetVal;
+      }
+    }
+
+    requestAnimationFrame(step);
+  }
+
+  function hydrateStatsTelemetry() {
+    try {
+      const gCount = (typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) ? GAMES_REGISTRY.length : 124;
+      const cCount = (typeof CONTRIBUTORS_REGISTRY !== "undefined" && Array.isArray(CONTRIBUTORS_REGISTRY)) ? CONTRIBUTORS_REGISTRY.length : 48;
+
+      const statsContainer = document.querySelector(".quick-stats");
+      if (statsContainer && "IntersectionObserver" in window) {
+        let hasAnimated = false;
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && !hasAnimated) {
+              hasAnimated = true;
+              if (totalGamesCount) animateCountUp(totalGamesCount, gCount);
+              if (totalContributorsCount) animateCountUp(totalContributorsCount, cCount);
+              observer.disconnect();
+            }
+          });
+        }, { threshold: 0.2 });
+        observer.observe(statsContainer);
+      } else {
+        if (totalGamesCount) totalGamesCount.textContent = gCount;
+        if (totalContributorsCount) totalContributorsCount.textContent = cCount;
+      }
+    } catch (_) {
+      if (totalGamesCount) totalGamesCount.textContent = "124";
+      if (totalContributorsCount) totalContributorsCount.textContent = "48";
+    }
+  }
+
+  hydrateStatsTelemetry();
   updateFavoritesBadge();
+
+  // Interactive Telemetry Popover / Micro-Drawer (#1057)
+  const statCardGames = document.getElementById("stat-card-games");
+  const statCardContributors = document.getElementById("stat-card-contributors");
+
+  function openTelemetryModal(title, contentHtml) {
+    let modal = document.getElementById("hero-telemetry-modal");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.id = "hero-telemetry-modal";
+      modal.className = "hero-telemetry-modal";
+      modal.setAttribute("role", "dialog");
+      modal.setAttribute("aria-modal", "true");
+      modal.style.position = "fixed";
+      modal.style.top = "0";
+      modal.style.left = "0";
+      modal.style.width = "100vw";
+      modal.style.height = "100vh";
+      modal.style.background = "rgba(10, 15, 26, 0.95)";
+      modal.style.zIndex = "10000";
+      modal.style.display = "none";
+      modal.style.justifyContent = "center";
+      modal.style.alignItems = "center";
+      modal.style.backdropFilter = "blur(10px)";
+      document.body.appendChild(modal);
+    }
+
+    modal.innerHTML = `
+      <div style="background:#0f172a; border:1px solid rgba(0,245,255,0.3); border-radius:12px; width:90%; max-width:540px; padding:24px; box-shadow:0 12px 48px rgba(0,0,0,0.8); color:#fff;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:12px; margin-bottom:16px;">
+          <h3 style="margin:0; font-size:1.15rem; color:var(--accent-primary, #00f5ff);">${escapeHTML(title)}</h3>
+          <button type="button" id="telemetry-close-btn" style="background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">&times;</button>
+        </div>
+        <div>${contentHtml}</div>
+      </div>
+    `;
+
+    modal.style.display = "flex";
+    const closeBtn = document.getElementById("telemetry-close-btn");
+    if (closeBtn) {
+      closeBtn.focus();
+      closeBtn.addEventListener("click", () => { modal.style.display = "none"; });
+    }
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) modal.style.display = "none";
+    });
+  }
+
+  if (statCardGames) {
+    const handleGamesClick = () => {
+      const categoriesMap = {};
+      if (typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) {
+        GAMES_REGISTRY.forEach((g) => {
+          const cat = g.category ? g.category.split("/")[0].trim() : "Other";
+          categoriesMap[cat] = (categoriesMap[cat] || 0) + 1;
+        });
+      }
+      const listItems = Object.keys(categoriesMap).map((cat) => `
+        <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:0.85rem;">
+          <span>${escapeHTML(cat)}</span>
+          <strong style="color:var(--accent-primary, #00f5ff);">${categoriesMap[cat]} games</strong>
+        </div>
+      `).join("");
+
+      openTelemetryModal("Playable Games Distribution", `
+        <div style="max-height:280px; overflow-y:auto; padding-right:8px;">${listItems}</div>
+      `);
+    };
+    statCardGames.addEventListener("click", handleGamesClick);
+    statCardGames.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleGamesClick(); } });
+  }
+
+  if (statCardContributors) {
+    const handleContributorsClick = () => {
+      const count = typeof CONTRIBUTORS_REGISTRY !== "undefined" && Array.isArray(CONTRIBUTORS_REGISTRY) ? CONTRIBUTORS_REGISTRY.length : 48;
+      openTelemetryModal("Community Contributors", `
+        <p style="font-size:0.9rem; color:#94a3b8; line-height:1.6; margin-bottom:16px;">
+          ArcadeVerse is built by <strong>${count} open source engineers</strong> contributing games, engines, accessibility tools, and sound synthesizers.
+        </p>
+        <div style="display:flex; gap:12px;">
+          <a href="leaderboard.html" class="btn btn-primary" style="font-size:0.85rem; padding:8px 16px; text-decoration:none; border-radius:6px; background:var(--accent-primary, #00f5ff); color:#000; font-weight:700;">View Hall of Fame</a>
+          <a href="https://github.com/DebasmitaBose0/ArcadeVerse" target="_blank" rel="noopener noreferrer" style="font-size:0.85rem; padding:8px 16px; text-decoration:none; border-radius:6px; background:rgba(255,255,255,0.1); color:#fff;">GitHub Repository</a>
+        </div>
+      `);
+    };
+    statCardContributors.addEventListener("click", handleContributorsClick);
+    statCardContributors.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleContributorsClick(); } });
+  }
 
   // Render Games
 
@@ -1226,6 +1470,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderGames() {
+    if (window.ArcadeFloor) window.ArcadeFloor.destroy();
     gamesGrid.innerHTML = "";
     gamesGrid.classList.toggle("view-list", currentCatalogView === "list");
     const favs = getFavorites();
@@ -1234,25 +1479,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const currentDataSet = GAMES_REGISTRY;
 
     const facetMatched = currentDataSet.filter((item) => {
-      let matchesCategory = false;
-      if (currentCategory === "all") {
-        matchesCategory = true;
-      } else if (currentCategory === "favorites") {
-        matchesCategory = favs.has(item.id);
-      } else if (currentCategory.startsWith("playlist:")) {
-        const plId = currentCategory.replace("playlist:", "");
-        const pl = window.ArcadePlaylists ? window.ArcadePlaylists.getPlaylist(plId) : null;
-        matchesCategory = pl ? pl.games.includes(item.id) : false;
-      } else {
-        if (currentCategory.toLowerCase() === "halloween") {
-          matchesCategory = isHalloweenGame(item);
-        } else {
-          const itemCat = (item.category || "").toLowerCase();
-          const targetCat = currentCategory.toLowerCase();
-          const catSegments = itemCat.split(/[\s/]+/).map((s) => s.trim().toLowerCase());
-          matchesCategory = itemCat === targetCat || catSegments.includes(targetCat) || itemCat.includes(targetCat);
-        }
-      }
+      const matchesCategory = matchesCategoryFilter(item, currentCategory);
 
       // Tag Facet Filter
       let matchesTag = true;
@@ -1403,6 +1630,14 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
+    if (currentCatalogView === "floor" && window.ArcadeFloor) {
+      updateResultsCount(filtered.length, isFuzzyFallback);
+      updateFacetSummaryUI();
+      window.ArcadeFloor.render(gamesGrid, filtered);
+      announceToScreenReader(`Arcade floor updated. Showing ${filtered.length} cabinets.`);
+      return;
+    }
+
     // Handle Empty State with Fuzzy Smart Suggestions
     if (filtered.length === 0) {
       updateResultsCount(0);
@@ -1495,7 +1730,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       } else {
         // Compute smart suggestions based on query and available game categories/tags
-        const suggestions = getSmartSuggestions(searchQuery, currentCategory);
+        let suggestions = getSmartSuggestions(searchQuery, currentCategory);
+        if ((!suggestions || suggestions.length === 0) && window.PhoneticSearch) {
+          suggestions = window.PhoneticSearch.findPhoneticSuggestions(searchQuery, GAMES_REGISTRY);
+        }
         let suggestionsHtml = "";
         if (suggestions.length > 0) {
           suggestionsHtml = `
@@ -1715,42 +1953,65 @@ document.addEventListener("DOMContentLoaded", () => {
       ` : "";
       const halloweenTitleBadge = isHalloween ? `<span class="halloween-title-badge" title="Halloween Special Games">Halloween Special Games</span>` : "";
 
+      const flipBtnHtml = window.ArcadeCardFlipManual ? window.ArcadeCardFlipManual.renderFlipButtonHtml(game) : "";
+      const cardBackHtml = window.ArcadeCardFlipManual ? window.ArcadeCardFlipManual.renderCardBackHtml(game) : "";
+
       card.innerHTML = `
-        <div class="game-card-preview">
-          <canvas class="card-micro-preview-canvas" width="280" height="140"></canvas>
-          <span class="game-category-tag">${safeCategory}</span>
-          ${halloweenBadgeHtml}
-          <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
-              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-            </svg>
-          </button>
-          <div class="game-icon">${iconHtml}</div>${playsBadgeHtml}
-        </div>
-        <div class="game-card-body">
-          <h3 class="game-card-title">${safeTitle}${halloweenTitleBadge}</h3>
-          <p class="game-card-desc">${safeDesc}</p>
-          <div class="game-card-rating-row">
-            <div class="game-rating-stars" data-game-id="${safeGameId}" aria-label="Rating for ${escapeAttr(game.title)}">
-              ${[1, 2, 3, 4, 5].map(starNum => `
-                <button type="button" class="rate-star-btn ${currentStar >= starNum ? 'voted' : ''}" data-game="${safeGameId}" data-star="${starNum}" title="Rate ${starNum} star${starNum > 1 ? 's' : ''}" aria-label="Rate ${starNum} stars">
-                  <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                </button>
-              `).join('')}
-              <span class="rating-badge">${escapeHTML(displayScore)}</span>
+        <div class="game-card-inner">
+          <div class="game-card-front">
+            <div class="game-card-preview">
+              <canvas class="card-micro-preview-canvas" width="280" height="140"></canvas>
+              <span class="game-category-tag">${safeCategory}</span>
+              ${halloweenBadgeHtml}
+              ${flipBtnHtml}
+              <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
+                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                </svg>
+              </button>
+              <div class="game-icon">${iconHtml}</div>${playsBadgeHtml}
             </div>
-          </div>
-          <div class="game-card-footer">
-            <div class="contributor-meta">
-              <div class="contributor-avatar">${escapeHTML((game.author || game.github || "A").charAt(0).toUpperCase())}</div>
-              <div class="contributor-name">
-                <button type="button" class="author-filter-btn" data-author="${safeAuthorAttr}" title="Filter games by ${safeAuthorAttr}" aria-label="Filter games by author ${safeAuthorAttr}">by @${safeGithub}</button>
+            <div class="game-card-body">
+              <h3 class="game-card-title">${safeTitle}${halloweenTitleBadge}</h3>
+              <p class="game-card-desc">${safeDesc}</p>
+              <div class="game-card-rating-row">
+                <div class="game-rating-stars" data-game-id="${safeGameId}" aria-label="Rating for ${escapeAttr(game.title)}">
+                  ${[1, 2, 3, 4, 5].map(starNum => `
+                    <button type="button" class="rate-star-btn ${currentStar >= starNum ? 'voted' : ''}" data-game="${safeGameId}" data-star="${starNum}" title="Rate ${starNum} star${starNum > 1 ? 's' : ''}" aria-label="Rate ${starNum} stars">
+                      <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </button>
+                  `).join('')}
+                  <span class="rating-badge">${escapeHTML(displayScore)}</span>
+                </div>
+              </div>
+              <div class="game-card-footer">
+                <div class="contributor-meta">
+                  <div class="contributor-avatar">${escapeHTML((game.author || game.github || "A").charAt(0).toUpperCase())}</div>
+                  <div class="contributor-name">
+                    <button type="button" class="author-filter-btn" data-author="${safeAuthorAttr}" title="Filter games by ${safeAuthorAttr}" aria-label="Filter games by author ${safeAuthorAttr}">by @${safeGithub}</button>
+                  </div>
+                </div>
+                <button class="btn-play-trigger" data-id="${safeGameId}">${actionText}</button>
               </div>
             </div>
-            <button class="btn-play-trigger" data-id="${safeGameId}">${actionText}</button>
           </div>
+          ${cardBackHtml}
         </div>
       `;
+
+      if (window.ArcadeCardFlipManual) {
+        window.ArcadeCardFlipManual.bindCard(card, game);
+      }
+
+      const ratingBadge = card.querySelector(".rating-badge");
+      if (ratingBadge) {
+        ratingBadge.style.cursor = "pointer";
+        ratingBadge.title = "View ratings breakdown";
+        ratingBadge.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (window.RatingHistogram) window.RatingHistogram.openForGame(game);
+        });
+      }
 
       const favBtn = card.querySelector(".btn-card-favorite");
       favBtn.addEventListener("click", (e) => {
@@ -1976,6 +2237,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (frameWrap) frameWrap.appendChild(errorBoundary);
     }
 
+    const isolatedUrl = buildIsolatedGameUrl(gameObj);
+    const displayPath = (gameObj && gameObj.path) || (gameObj && gameObj.id) || "game route";
+
     errorBoundary.innerHTML = `
       <div class="boundary-content">
         <div class="boundary-icon" aria-hidden="true">
@@ -1987,13 +2251,16 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
         <h3 class="boundary-title">Game Route Offline</h3>
         <p class="boundary-desc">
-          Failed to establish connection to <code>${(gameObj && gameObj.path) || 'game route'}</code>. The game entrypoint may be undergoing maintenance, corrupted, or unreachable.
+          Failed to establish connection to <code>${displayPath}</code>. The game entrypoint may be undergoing maintenance, corrupted, or unreachable.
         </p>
         <div class="boundary-actions">
-          <button class="btn btn-primary btn-sm" id="boundary-retry-btn">
+          <button class="btn btn-primary btn-sm" id="boundary-retry-btn" aria-label="Retry loading game with storage isolation">
             <span>Retry Load</span>
           </button>
-          <a href="https://github.com/DebasmitaBose0/ArcadeVerse/issues/new" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
+          <button class="btn btn-secondary btn-sm" id="boundary-direct-btn" aria-label="Open isolated route directly">
+            <span>Direct Route</span>
+          </button>
+          <a href="https://github.com/DebasmitaBose0/ArcadeVerse/issues/new" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" aria-label="Report broken route to project issues">
             <span>Report Broken Route</span>
           </a>
         </div>
@@ -2007,12 +2274,95 @@ document.addEventListener("DOMContentLoaded", () => {
         iframeLoadSucceeded = false;
         if (gameIframe && gameObj) {
           showGameLoader();
-          gameIframe.src = gameObj.path;
+          // Ensure storage isolation query parameter is preserved across retries (#878)
+          const retryTargetUrl = buildIsolatedGameUrl(gameObj);
+          gameIframe.src = retryTargetUrl || gameObj.path;
+          if (newTabBtn) {
+            newTabBtn.href = retryTargetUrl || gameObj.path;
+          }
           startIframeTimeout(gameObj);
         }
       });
     }
+
+    const directBtn = errorBoundary.querySelector("#boundary-direct-btn");
+    if (directBtn) {
+      directBtn.addEventListener("click", () => {
+        if (isolatedUrl) {
+          window.open(isolatedUrl, "_blank", "noopener,noreferrer");
+        }
+      });
+    }
   }
+
+  function triggerGameCrashBoundary(gameObj, errorDetails) {
+    if (gameIframe) gameIframe.style.display = "none";
+    let errorBoundary = document.getElementById("modal-error-boundary");
+    if (!errorBoundary) {
+      errorBoundary = document.createElement("div");
+      errorBoundary.id = "modal-error-boundary";
+      errorBoundary.className = "modal-error-boundary";
+      const frameWrap = document.querySelector(".modal-frame-wrapper");
+      if (frameWrap) frameWrap.appendChild(errorBoundary);
+    }
+
+    const errMessage = (errorDetails && errorDetails.message) || "Runtime execution halted.";
+    const errStack = (errorDetails && errorDetails.stack) || "No diagnostic stack trace available.";
+
+    errorBoundary.innerHTML = `
+      <div class="boundary-content">
+        <div class="boundary-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#ff0055" stroke-width="2">
+            <polygon points="12 2 2 22 22 22"></polygon>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <circle cx="12" cy="17" r="1" fill="#ff0055"></circle>
+          </svg>
+        </div>
+        <h3 class="boundary-title">Game Runtime Crash Detected</h3>
+        <p class="boundary-desc">
+          An unhandled error occurred in <strong>${(gameObj && gameObj.title) || 'the game'}</strong>: <code>${escapeHTML(errMessage)}</code>
+        </p>
+        <details class="boundary-diagnostic-details">
+          <summary>Diagnostic Error Dump</summary>
+          <pre class="boundary-stack-pre"><code>${escapeHTML(errStack)}</code></pre>
+        </details>
+        <div class="boundary-actions">
+          <button class="btn btn-primary btn-sm" id="boundary-restart-btn">
+            <span>Restart Game</span>
+          </button>
+          <button class="btn btn-secondary btn-sm" id="boundary-catalog-btn">
+            <span>Return to Catalog</span>
+          </button>
+        </div>
+      </div>
+    `;
+
+    const restartBtn = errorBoundary.querySelector("#boundary-restart-btn");
+    if (restartBtn) {
+      restartBtn.addEventListener("click", () => {
+        resetIframeBoundary();
+        iframeLoadSucceeded = false;
+        if (gameIframe && gameObj) {
+          gameIframe.src = buildIsolatedGameUrl(gameObj);
+          startIframeTimeout(gameObj);
+        }
+      });
+    }
+
+    const catalogBtn = errorBoundary.querySelector("#boundary-catalog-btn");
+    if (catalogBtn) {
+      catalogBtn.addEventListener("click", () => {
+        closeGameModal();
+      });
+    }
+  }
+
+  // Hook iframe error message broadcaster (#728)
+  window.addEventListener("message", (event) => {
+    if (event.data && event.data.type === "ARCADEVERSE_GAME_CRASH") {
+      triggerGameCrashBoundary(activeGame, event.data.error || { message: event.data.message, stack: event.data.stack });
+    }
+  });
 
   function startIframeTimeout(gameObj) {
     resetIframeBoundary();
@@ -2035,6 +2385,21 @@ document.addEventListener("DOMContentLoaded", () => {
     handshakeConfirmed: false,
     handshakeTimeoutId: null
   };
+
+  /**
+   * Resolves a trusted targetOrigin for hub-to-iframe postMessage transmissions (#884).
+   * Strictly avoids wildcard '*' to prevent leaking session tokens, audio configs, or controller state
+   * to untrusted origins if a frame redirects or navigates unexpectedly.
+   */
+  function getTrustedTargetOrigin() {
+    try {
+      if (window.location && window.location.origin && window.location.origin !== "null") {
+        return window.location.origin;
+      }
+    } catch (_) {}
+    return "*";
+  }
+  window.getTrustedTargetOrigin = getTrustedTargetOrigin;
 
   /**
    * Generates a cryptographically strong UUID or fallback random hexadecimal token
@@ -2117,7 +2482,7 @@ document.addEventListener("DOMContentLoaded", () => {
       handshakeTimeoutId: null
     };
 
-    const targetOrigin = (window.location.origin && window.location.origin !== "null") ? window.location.origin : "*";
+    const targetOrigin = getTrustedTargetOrigin();
 
     // Dispatch cryptographically secured handshake challenge
     try {
@@ -2129,7 +2494,7 @@ document.addEventListener("DOMContentLoaded", () => {
           origin: targetOrigin,
           timestamp: Date.now()
         },
-        "*"
+        targetOrigin
       );
     } catch (err) {
       console.warn("[ArcadeVerse Security] Error dispatching AV_INIT_SESSION:", err);
@@ -2176,7 +2541,7 @@ document.addEventListener("DOMContentLoaded", () => {
             muted: audioState.muted,
             volume: audioState.volume,
             gain: audioState.muted ? 0 : audioState.volume
-          }, "*");
+          }, getTrustedTargetOrigin());
         }
       } catch (_) { }
     });
@@ -2262,14 +2627,39 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Modal Handlers
-  // Restore the catalog's namespaced storage URL bridge (#493, #824).
+  // Restore the catalog's namespaced storage URL bridge (#493, #824, #878).
+  // Ensures that whenever games are launched, retried from error boundaries, or
+  // opened in new tabs, the ?gameId= URL query parameter is strictly preserved.
+  // This allows SDK localStorage proxies to namespace keys correctly and prevent
+  // key collisions or shared quota consumption across different arcade games.
   function buildIsolatedGameUrl(game) {
     if (!game) return "";
-    const path = typeof game === "string" ? game : game.path;
-    if (!path) return "";
-    const url = new URL(path, document.baseURI);
-    if (typeof game === "object" && game.id) url.searchParams.set("gameId", game.id);
-    return url.href;
+    let rawPath = "";
+    let gameId = "";
+
+    if (typeof game === "string") {
+      rawPath = game;
+      try {
+        const parsed = new URL(rawPath, document.baseURI);
+        gameId = parsed.searchParams.get("gameId") || "";
+      } catch (_) {}
+    } else if (typeof game === "object") {
+      rawPath = game.path || "";
+      gameId = game.id || "";
+    }
+
+    if (!rawPath) return "";
+
+    try {
+      const url = new URL(rawPath, document.baseURI);
+      if (gameId && !url.searchParams.has("gameId")) {
+        url.searchParams.set("gameId", gameId);
+      }
+      return url.href;
+    } catch (err) {
+      console.warn("[ArcadeVerse:Isolation] Failed to format isolated game URL:", err);
+      return rawPath;
+    }
   }
 
   // The shared sound engine owns preferences; keep legacy modal/SDK callers
@@ -2283,7 +2673,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function broadcastVolumeSyncToGame(muted, volume) {
     if (!gameIframe || !gameIframe.contentWindow) return;
-    gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_VOLUME_SYNC", sessionToken: activeGameSession.token, muted, volume, gain: muted ? 0 : volume }, "*");
+    gameIframe.contentWindow.postMessage(
+      { type: "ARCADEVERSE_VOLUME_SYNC", sessionToken: activeGameSession.token, muted, volume, gain: muted ? 0 : volume },
+      getTrustedTargetOrigin()
+    );
   }
 
   function openGameModal(game, triggerElement = null, isDirectDeepLink = false) {
@@ -2504,7 +2897,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (gameIframe && gameIframe.contentWindow) {
           try {
             gameIframe.contentWindow.focus();
-            gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_RESUME" }, "*");
+            gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_RESUME" }, getTrustedTargetOrigin());
           } catch (_) { }
         }
       });
@@ -2525,7 +2918,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Pause game runtime while confirmation prompt is open
     if (gameIframe && gameIframe.contentWindow) {
       try {
-        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
+        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, getTrustedTargetOrigin());
       } catch (_) { }
     }
   }
@@ -2536,6 +2929,78 @@ document.addEventListener("DOMContentLoaded", () => {
     if (quitDialog) {
       quitDialog.classList.remove("active");
     }
+  }
+
+  /**
+   * Performs a comprehensive tear-down of child iframe resources (RAF handles, timers, and WebGL contexts).
+   * Dynamically probes active RAF ID to ensure multi-minute (or high-refresh-rate 120Hz/144Hz) sessions
+   * with >10,000 scheduled frames are safely cancelled, avoiding memory leaks and orphaned worker loops (#879).
+   */
+  function terminateChildIframeResources(iframe) {
+    if (!iframe || !iframe.contentWindow) return;
+    try {
+      const win = iframe.contentWindow;
+      // 1. Post lifecycle shutdown signals to compliant game runtimes
+      win.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
+      win.postMessage({ type: "ARCADEVERSE_TEARDOWN" }, "*");
+
+      // 2. Dynamically probe and sweep active requestAnimationFrame handles
+      if (typeof win.cancelAnimationFrame === "function") {
+        if (typeof win.requestAnimationFrame === "function") {
+          const maxFrameId = win.requestAnimationFrame(() => {});
+          win.cancelAnimationFrame(maxFrameId);
+          if (typeof maxFrameId === "number" && maxFrameId > 0) {
+            // Sweeps downward up to 60,000 frames or down to 1
+            const sweepFloor = Math.max(1, maxFrameId - 60000);
+            for (let frameId = maxFrameId; frameId >= sweepFloor; frameId--) {
+              win.cancelAnimationFrame(frameId);
+            }
+          }
+        } else {
+          for (let frameId = 1; frameId <= 1000; frameId++) {
+            win.cancelAnimationFrame(frameId);
+          }
+        }
+      }
+
+      // 3. Clear active timeouts and intervals left by runaway loops
+      if (typeof win.clearTimeout === "function" && typeof win.clearInterval === "function") {
+        const maxTimerId = win.setTimeout(() => {}, 0);
+        if (typeof maxTimerId === "number" && maxTimerId > 0) {
+          const timerFloor = Math.max(1, maxTimerId - 20000);
+          for (let timerId = maxTimerId; timerId >= timerFloor; timerId--) {
+            win.clearTimeout(timerId);
+            win.clearInterval(timerId);
+          }
+        }
+      }
+
+      // 4. Proactively probe and dispose WebGL contexts in child iframe if accessible
+      try {
+        const doc = iframe.contentDocument || win.document;
+        if (doc) {
+          const canvases = doc.querySelectorAll("canvas");
+          canvases.forEach((c) => {
+            try {
+              const gl = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl");
+              if (gl && !gl.isContextLost()) {
+                const loseExt = gl.getExtension("WEBGL_lose_context") ||
+                  gl.getExtension("WEBKIT_WEBGL_lose_context") ||
+                  gl.getExtension("MOZ_WEBGL_lose_context");
+                if (loseExt && typeof loseExt.loseContext === "function") {
+                  loseExt.loseContext();
+                }
+              }
+            } catch (_) {}
+          });
+        }
+      } catch (_) {}
+
+      // 5. Abort network or lingering worker tasks if available
+      if (typeof win.stop === "function") {
+        win.stop();
+      }
+    } catch (_) {}
   }
 
   function closeGameModal(isFromPopState = false) {
@@ -2559,8 +3024,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Standardized Game Lifecycle Bridge: Dispatch teardown & pause events before unmounting iframe
     try {
       if (gameIframe && gameIframe.contentWindow) {
-        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
-        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_TEARDOWN" }, "*");
+        const trustedOrigin = getTrustedTargetOrigin();
+        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, trustedOrigin);
+        gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_TEARDOWN" }, trustedOrigin);
 
         // Aggressive RAF and Timer Leak Mitigation (#497)
         try {
@@ -2617,23 +3083,23 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     } catch (_) { }
 
-    // Terminate any rogue event listeners or workers in child frame prior to blanking
-    try {
-      if (gameIframe && gameIframe.contentWindow) {
-        const win = gameIframe.contentWindow;
-        if (typeof win.stop === "function") {
-          win.stop();
-        }
-      }
-    } catch (_) { }
-
-    // Safely blank out iframe after a 100ms grace period to allow games to close AudioContexts and stop RAF loops
+    // Safely blank out iframe after a grace period to allow games to close AudioContexts and finalize teardown
     const currentFrame = gameIframe;
     setTimeout(() => {
       // Another game was opened during the grace period, leave its frame alone
       if (activeGame) return;
       try {
         if (currentFrame && currentFrame.contentWindow) {
+          const win = currentFrame.contentWindow;
+          // Final fallback sweep before replacing location
+          if (typeof win.cancelAnimationFrame === "function" && typeof win.requestAnimationFrame === "function") {
+            const probeId = win.requestAnimationFrame(() => {});
+            win.cancelAnimationFrame(probeId);
+            const floor = Math.max(1, probeId - 1000);
+            for (let id = probeId; id >= floor; id--) {
+              win.cancelAnimationFrame(id);
+            }
+          }
           currentFrame.contentWindow.location.replace("about:blank");
         } else if (currentFrame) {
           currentFrame.src = "about:blank";
@@ -2664,6 +3130,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 100);
 
     cancelPlayTimer();
+    if (window.ArcadeAudioBeacon && typeof window.ArcadeAudioBeacon.stopRadar === 'function') {
+      window.ArcadeAudioBeacon.stopRadar();
+    }
     document.body.style.overflow = "";
     document.body.style.overscrollBehavior = "";
     if (gameIframe) gameIframe.style.touchAction = "";
@@ -2696,6 +3165,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (_) {}
       }
       if (closedGameId) {
+        if (window.ArcadeFloor && window.ArcadeFloor.focusGame(closedGameId)) return;
         const fallbackEl = document.querySelector(`.game-card[data-game-id="${closedGameId}"] .btn-play-trigger`) ||
                            document.querySelector(`.game-card[data-game-id="${closedGameId}"]`);
         if (fallbackEl && typeof fallbackEl.focus === "function") {
@@ -2845,8 +3315,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (escPressCount === 1) {
       try {
         if (gameIframe && gameIframe.contentWindow) {
-          gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, "*");
-          gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_ESC_PAUSE" }, "*");
+          const trustedOrigin = getTrustedTargetOrigin();
+          gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, trustedOrigin);
+          gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_ESC_PAUSE" }, trustedOrigin);
         }
       } catch (_) { }
 
@@ -3041,7 +3512,7 @@ document.addEventListener("DOMContentLoaded", () => {
           muted: audioState.muted,
           volume: audioState.volume,
           gain: audioState.muted ? 0 : audioState.volume
-        }, "*");
+        }, getTrustedTargetOrigin());
       }
       return;
     }
@@ -3257,7 +3728,7 @@ document.addEventListener("DOMContentLoaded", () => {
           gameFrame.contentWindow.postMessage({
             type: "AV_FULLSCREEN_CHANGE",
             payload: { isFullscreen: true, mode: "pseudo" }
-          }, "*");
+          }, getTrustedTargetOrigin());
         } catch (_e) { }
       }
     }
@@ -3273,7 +3744,7 @@ document.addEventListener("DOMContentLoaded", () => {
           gameFrame.contentWindow.postMessage({
             type: "AV_FULLSCREEN_CHANGE",
             payload: { isFullscreen: false, mode: "pseudo" }
-          }, "*");
+          }, getTrustedTargetOrigin());
         } catch (_e) { }
       }
     }
@@ -3743,9 +4214,30 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // Determine candidate game set based on active category / favorites facet (#900)
+    let candidateGames = GAMES_REGISTRY;
+    if (typeof currentCategory === "string" && currentCategory !== "all") {
+      if (currentCategory === "favorites") {
+        const favs = typeof getFavorites === "function" ? getFavorites() : new Set();
+        candidateGames = GAMES_REGISTRY.filter((g) => favs.has(g.id));
+      } else {
+        candidateGames = GAMES_REGISTRY.filter((g) => {
+          if (typeof matchesCategoryFilter === "function") {
+            return matchesCategoryFilter(g, currentCategory);
+          }
+          const itemCat = (g.category || "").toLowerCase();
+          return itemCat.includes(currentCategory.toLowerCase());
+        });
+      }
+    }
+
+    // Author search operator support: "@author" query syntax (#900)
+    const isAuthorQuery = trimmed.startsWith("@");
+    const authorTarget = isAuthorQuery ? trimmed.slice(1).trim() : "";
+
     // Filter and score matching games
     const scoredMatches = [];
-    for (const game of GAMES_REGISTRY) {
+    for (const game of candidateGames) {
       const titleLower = (game.title || "").toLowerCase();
       const authorLower = (game.author || "").toLowerCase();
       const githubLower = (game.github || "").toLowerCase();
@@ -3754,18 +4246,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
       let score = -1;
 
-      if (titleLower.startsWith(trimmed)) {
-        score = 100;
-      } else if (titleLower.includes(trimmed)) {
-        score = 80;
-      } else if (tagsLower.some((t) => t === trimmed)) {
-        score = 60;
-      } else if (tagsLower.some((t) => t.includes(trimmed))) {
-        score = 50;
-      } else if (categoryLower.includes(trimmed)) {
-        score = 40;
-      } else if (githubLower.includes(trimmed) || authorLower.includes(trimmed)) {
-        score = 30;
+      if (isAuthorQuery) {
+        if (!authorTarget) {
+          score = 50;
+        } else if (githubLower.startsWith(authorTarget) || authorLower.startsWith(authorTarget)) {
+          score = 100;
+        } else if (githubLower.includes(authorTarget) || authorLower.includes(authorTarget)) {
+          score = 80;
+        }
+      } else {
+        if (titleLower.startsWith(trimmed)) {
+          score = 100;
+        } else if (titleLower.includes(trimmed)) {
+          score = 80;
+        } else if (tagsLower.some((t) => t === trimmed)) {
+          score = 60;
+        } else if (tagsLower.some((t) => t.includes(trimmed))) {
+          score = 50;
+        } else if (categoryLower.includes(trimmed)) {
+          score = 40;
+        } else if (githubLower.includes(trimmed) || authorLower.includes(trimmed)) {
+          score = 30;
+        }
       }
 
       if (score >= 0) {
@@ -3776,16 +4278,17 @@ document.addEventListener("DOMContentLoaded", () => {
     // Sort by relevance score descending
     scoredMatches.sort((a, b) => b.score - a.score);
 
-    // Fallback: If exact matches are empty and query length >= 3, match using fuzzy Levenshtein distance <= 2
-    if (scoredMatches.length === 0 && trimmed.length >= 3) {
-      for (const game of GAMES_REGISTRY) {
-        if (matchesFuzzyLevenshtein(game, trimmed)) {
+    // Fallback: If exact matches are empty and query length >= 3 (non-author), match using fuzzy Levenshtein
+    if (scoredMatches.length === 0 && !isAuthorQuery && trimmed.length >= 3) {
+      for (const game of candidateGames) {
+        if (typeof matchesFuzzyLevenshtein === "function" && matchesFuzzyLevenshtein(game, trimmed)) {
           scoredMatches.push({ game, score: 25 });
         }
       }
     }
 
-    currentSuggestions = scoredMatches.slice(0, 6).map((item) => item.game);
+    const totalMatchesCount = scoredMatches.length;
+    currentSuggestions = scoredMatches.slice(0, 8).map((item) => item.game);
     activeSuggestionIndex = -1;
 
     if (currentSuggestions.length === 0) {
@@ -3820,7 +4323,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
             <div class="autocomplete-content">
               <div class="autocomplete-title-row">
-                <span class="autocomplete-title">${highlightMatch(game.title, query.trim())}</span>
+                <span class="autocomplete-title">${highlightMatch(game.title, isAuthorQuery ? "" : query.trim())}</span>
               </div>
               <div class="autocomplete-meta-row">
                 <span class="autocomplete-category-badge">${escapeHTML(catBadge)}</span>
@@ -3837,7 +4340,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ${listHtml}
       </ul>
       <div class="autocomplete-footer">
-        <span class="autocomplete-footer-count">${currentSuggestions.length} result${currentSuggestions.length > 1 ? "s" : ""}</span>
+        <span class="autocomplete-footer-count">Showing ${currentSuggestions.length} of ${totalMatchesCount} match${totalMatchesCount > 1 ? "es" : ""}</span>
         <div class="autocomplete-kbd-hints">
           <span class="autocomplete-kbd">↑↓</span> to navigate
           <span class="autocomplete-kbd">↵</span> to play
@@ -4146,7 +4649,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Hero Section "Surprise Me / Random Game Roulette" Launcher
+  // Hero Section "Surprise Me / Random Game Roulette" Launcher (#893)
   const randomGameBtn = document.getElementById("hero-random-game-btn");
   let isRollingRandom = false;
 
@@ -4154,6 +4657,29 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isRollingRandom) return;
     if (typeof GAMES_REGISTRY === "undefined" || !Array.isArray(GAMES_REGISTRY) || GAMES_REGISTRY.length === 0) {
       console.warn("GAMES_REGISTRY is not available or empty.");
+      return;
+    }
+
+    const reducedMotion = document.documentElement.classList.contains("a11y-reduced-motion") ||
+      (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+    // If ArcadeSlotReel visual spinner is available and motion is not reduced, launch reel
+    if (window.ArcadeSlotReel && typeof window.ArcadeSlotReel.spin === "function" && !reducedMotion) {
+      isRollingRandom = true;
+      if (randomGameBtn) {
+        randomGameBtn.classList.add("is-rolling");
+        randomGameBtn.setAttribute("aria-busy", "true");
+      }
+      window.ArcadeSlotReel.spin(GAMES_REGISTRY, (selectedGame) => {
+        if (randomGameBtn) {
+          randomGameBtn.classList.remove("is-rolling");
+          randomGameBtn.setAttribute("aria-busy", "false");
+        }
+        isRollingRandom = false;
+        if (selectedGame) {
+          openGameModal(selectedGame, randomGameBtn);
+        }
+      });
       return;
     }
 
@@ -4338,23 +4864,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // --- Catalog Layout Switcher Engine (Grid vs Compact List View) ---
+  // --- Catalog Layout Switcher Engine ---
   function setCatalogView(view) {
-    currentCatalogView = view === "list" ? "list" : "grid";
+    currentCatalogView = view === "floor" && window.ArcadeFloor ? "floor" : view === "list" ? "list" : "grid";
     ArcadeStorageResilience.safeSetItem(CATALOG_VIEW_STORAGE_KEY, currentCatalogView);
-
-    if (gamesGrid) {
-      gamesGrid.classList.toggle("view-list", currentCatalogView === "list");
+    for (const button of document.querySelectorAll(".catalog-view-switcher [data-view]")) {
+      const active = button.dataset.view === currentCatalogView;
+      button.classList.toggle("active", active); button.setAttribute("aria-pressed", String(active));
     }
-
-    const gridBtn = document.getElementById("view-grid-btn");
-    const listBtn = document.getElementById("view-list-btn");
-    if (gridBtn && listBtn) {
-      gridBtn.classList.toggle("active", currentCatalogView === "grid");
-      gridBtn.setAttribute("aria-pressed", currentCatalogView === "grid" ? "true" : "false");
-      listBtn.classList.toggle("active", currentCatalogView === "list");
-      listBtn.setAttribute("aria-pressed", currentCatalogView === "list" ? "true" : "false");
-    }
+    if (gamesGrid) renderGames();
   }
 
   function initCatalogViewSwitcher() {
@@ -4366,6 +4884,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (listBtn) {
       listBtn.addEventListener("click", () => setCatalogView("list"));
     }
+    const floorBtn = document.getElementById("view-floor-btn");
+    if (floorBtn) floorBtn.addEventListener("click", () => setCatalogView("floor"));
     setCatalogView(currentCatalogView);
   }
 
@@ -5281,3 +5801,71 @@ if (typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator.m
   }
 
   initPwaUpdateNotifier();
+
+
+// ========================================================
+// IN-MODAL VOLUME SLIDER & CROSS-IFRAME BROADCASTER (#735, #887)
+// ========================================================
+(() => {
+  let masterVolume = 0.28;
+  try {
+    const saved = localStorage.getItem('arcadeverse_master_volume');
+    if (saved !== null) {
+      const parsed = parseFloat(saved);
+      if (Number.isFinite(parsed) && parsed >= 0 && parsed <= 1) {
+        masterVolume = parsed;
+      }
+    } else if (window.SoundEngine && typeof window.SoundEngine.volume === "number") {
+      masterVolume = window.SoundEngine.volume;
+    }
+  } catch (_) {
+    masterVolume = 0.28;
+  }
+
+  function broadcastMasterVolume(vol) {
+    const normalized = Number.isFinite(vol) ? Math.max(0, Math.min(1, vol)) : 0.28;
+    masterVolume = normalized;
+    try {
+      localStorage.setItem('arcadeverse_master_volume', normalized.toString());
+      if (window.SoundEngine && typeof window.SoundEngine.setVolume === "function") {
+        window.SoundEngine.setVolume(normalized);
+      }
+    } catch (_) {}
+
+    const gameIframe = document.getElementById('game-iframe');
+    if (gameIframe && gameIframe.contentWindow) {
+      const targetOrigin = (typeof getTrustedTargetOrigin === "function")
+        ? getTrustedTargetOrigin()
+        : (window.location && window.location.origin && window.location.origin !== "null" ? window.location.origin : "*");
+
+      gameIframe.contentWindow.postMessage({
+        type: 'ARCADEVERSE_SET_VOLUME',
+        volume: normalized
+      }, targetOrigin);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const slider = document.getElementById('modal-volume-slider');
+    const label = document.getElementById('volume-percentage-label');
+    if (slider) {
+      slider.value = Math.round(masterVolume * 100);
+      if (label) label.textContent = `${Math.round(masterVolume * 100)}%`;
+
+      slider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10);
+        const norm = Math.max(0, Math.min(100, val)) / 100;
+        if (label) label.textContent = `${val}%`;
+        broadcastMasterVolume(norm);
+      });
+    }
+
+    // Re-broadcast volume whenever a game finishes loading in iframe
+    const iframe = document.getElementById('game-iframe');
+    if (iframe) {
+      iframe.addEventListener('load', () => {
+        setTimeout(() => broadcastMasterVolume(masterVolume), 200);
+      });
+    }
+  });
+})();

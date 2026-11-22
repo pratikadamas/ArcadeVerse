@@ -11,7 +11,11 @@
   class SoundSynth {
     constructor() {
       this.ctx = null;
+      this.masterGain = null;
+      this.limiter = null;
       this.enabled = true;
+      this.activeVoices = new Set();
+      this.maxVoices = 6;
     }
 
     init() {
@@ -19,13 +23,76 @@
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         if (AudioCtx) this.ctx = new AudioCtx();
       }
+      if (this.ctx && !this.masterGain) {
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+
+        // Brickwall micro-limiter to prevent digital clipping above 0dB (#507)
+        try {
+          const comp = this.ctx.createDynamicsCompressor();
+          comp.threshold.setValueAtTime(-0.5, this.ctx.currentTime);
+          comp.knee.setValueAtTime(0, this.ctx.currentTime);
+          comp.ratio.setValueAtTime(20.0, this.ctx.currentTime);
+          comp.attack.setValueAtTime(0.001, this.ctx.currentTime);
+          comp.release.setValueAtTime(0.05, this.ctx.currentTime);
+          this.limiter = comp;
+          this.masterGain.connect(this.limiter);
+          this.limiter.connect(this.ctx.destination);
+        } catch (_) {
+          this.masterGain.connect(this.ctx.destination);
+        }
+      }
       if (this.ctx && this.ctx.state === 'suspended') {
         this.ctx.resume();
       }
     }
 
+    trackVoice(node) {
+      if (!node) return node;
+      if (!this.activeVoices) this.activeVoices = new Set();
+
+      // Voice stealing: enforce max 6 concurrent voices (#507)
+      while (this.activeVoices.size >= this.maxVoices) {
+        const oldest = this.activeVoices.values().next().value;
+        if (oldest) {
+          try {
+            if (typeof oldest.stop === 'function') oldest.stop();
+            if (typeof oldest.disconnect === 'function') oldest.disconnect();
+          } catch (_) {}
+          this.activeVoices.delete(oldest);
+        } else {
+          break;
+        }
+      }
+
+      this.activeVoices.add(node);
+      const onEnded = () => {
+        if (this.activeVoices) this.activeVoices.delete(node);
+      };
+      if (typeof node.addEventListener === 'function') {
+        node.addEventListener('ended', onEnded, { once: true });
+      } else {
+        node.onended = onEnded;
+      }
+      return node;
+    }
+
+    stopAll() {
+      if (this.activeVoices) {
+        this.activeVoices.forEach(node => {
+          try {
+            if (typeof node.stop === 'function') node.stop();
+            if (typeof node.disconnect === 'function') node.disconnect();
+          } catch (_) {}
+        });
+        this.activeVoices.clear();
+      }
+    }
+
     playBounce(freq = 440) {
-      if (!this.enabled || !this.ctx) return;
+      if (!this.enabled) return;
+      this.init();
+      if (!this.ctx) return;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       const now = this.ctx.currentTime;
@@ -35,13 +102,16 @@
       gain.gain.setValueAtTime(0.2, now);
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(osc);
       osc.start(now);
       osc.stop(now + 0.08);
     }
 
     playShatter() {
-      if (!this.enabled || !this.ctx) return;
+      if (!this.enabled) return;
+      this.init();
+      if (!this.ctx) return;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       const now = this.ctx.currentTime;
@@ -51,15 +121,18 @@
       gain.gain.setValueAtTime(0.25, now);
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(osc);
       osc.start(now);
       osc.stop(now + 0.15);
     }
 
     playExplosion() {
-      if (!this.enabled || !this.ctx) return;
+      if (!this.enabled) return;
+      this.init();
+      if (!this.ctx) return;
       const now = this.ctx.currentTime;
-      const bufferSize = this.ctx.sampleRate * 0.25;
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.25);
       const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
       const data = buffer.getChannelData(0);
       for (let i = 0; i < bufferSize; i++) {
@@ -71,12 +144,16 @@
       gain.gain.setValueAtTime(0.35, now);
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
       noise.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(noise);
       noise.start(now);
+      noise.stop(now + 0.25);
     }
 
     playPowerup() {
-      if (!this.enabled || !this.ctx) return;
+      if (!this.enabled) return;
+      this.init();
+      if (!this.ctx) return;
       const now = this.ctx.currentTime;
       [400, 600, 800, 1200].forEach((f, i) => {
         const osc = this.ctx.createOscillator();
@@ -86,14 +163,17 @@
         gain.gain.setValueAtTime(0.2, now + i * 0.04);
         gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.04 + 0.1);
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
         osc.start(now + i * 0.04);
         osc.stop(now + i * 0.04 + 0.1);
       });
     }
 
     playLaser() {
-      if (!this.enabled || !this.ctx) return;
+      if (!this.enabled) return;
+      this.init();
+      if (!this.ctx) return;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       const now = this.ctx.currentTime;
@@ -103,7 +183,8 @@
       gain.gain.setValueAtTime(0.18, now);
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(osc);
       osc.start(now);
       osc.stop(now + 0.1);
     }
@@ -307,6 +388,7 @@
 
   // --- GAME LIFECYCLE ---
   function startGame() {
+    sound.stopAll();
     sound.init();
     state.running = true;
     state.score = 0;
@@ -337,6 +419,7 @@
   }
 
   function gameOver() {
+    sound.stopAll();
     state.running = false;
     if (state.score > bestScore) {
       bestScore = state.score;
@@ -349,6 +432,7 @@
   }
 
   function victory() {
+    sound.stopAll();
     state.running = false;
     if (state.score > bestScore) {
       bestScore = state.score;
@@ -416,13 +500,15 @@
   }
 
   // --- UPDATE LOOP ---
-  function update() {
+  function update(dt = 0.016) {
     if (!state.running) return;
 
+    const dtScale = dt * 60;
+
     // Laser Cooldown & Powerup Timer
-    if (state.laserCooldown > 0) state.laserCooldown--;
+    if (state.laserCooldown > 0) state.laserCooldown -= dtScale;
     if (state.activePowerup) {
-      state.powerupTimer--;
+      state.powerupTimer -= dtScale;
       if (state.powerupTimer <= 0) {
         state.activePowerup = null;
         paddle.w = paddle.baseW;
@@ -434,17 +520,17 @@
 
     // Keyboard Paddle Movement
     if (keys.ArrowLeft || keys.KeyA) {
-      paddle.x = Math.max(0, paddle.x - paddle.speed);
+      paddle.x = Math.max(0, paddle.x - paddle.speed * dtScale);
       balls.forEach(b => { if (b.stuck) b.x = paddle.x + b.stuckOffset; });
     }
     if (keys.ArrowRight || keys.KeyD) {
-      paddle.x = Math.min(canvas.width - paddle.w, paddle.x + paddle.speed);
+      paddle.x = Math.min(canvas.width - paddle.w, paddle.x + paddle.speed * dtScale);
       balls.forEach(b => { if (b.stuck) b.x = paddle.x + b.stuckOffset; });
     }
 
     // Update Laser Shots
     laserShots = laserShots.filter(ls => {
-      ls.y += ls.vy;
+      ls.y += ls.vy * dtScale;
       for (let i = 0; i < bricks.length; i++) {
         const br = bricks[i];
         if (br.alive && ls.x >= br.x && ls.x <= br.x + br.w && ls.y >= br.y && ls.y <= br.y + br.h) {
@@ -463,8 +549,8 @@
     balls = balls.filter(b => {
       if (b.stuck) return true;
 
-      b.x += b.vx;
-      b.y += b.vy;
+      b.x += b.vx * dtScale;
+      b.y += b.vy * dtScale;
 
       // Wall reflections
       if (b.x - b.radius <= 0) { b.x = b.radius; b.vx *= -1; sound.playBounce(320); }
@@ -742,11 +828,31 @@
     });
   }
 
-  function loop() {
-    update();
+  let rafId = null;
+  let lastTime = performance.now();
+
+  function loop(now = performance.now()) {
+    const rawDt = (now - lastTime) / 1000;
+    lastTime = now;
+    const dt = Math.min(rawDt, 0.05);
+
+    update(dt);
     render();
-    requestAnimationFrame(loop);
+    rafId = requestAnimationFrame(loop);
   }
 
-  requestAnimationFrame(loop);
+  // Lifecycle listeners (#764)
+  window.addEventListener('message', (e) => {
+    if (!e.data) return;
+    if (e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      sound.stopAll();
+      if (sound.ctx && sound.ctx.state !== 'closed') sound.ctx.close().catch(() => {});
+    }
+  });
+
+  rafId = requestAnimationFrame(loop);
 })();
