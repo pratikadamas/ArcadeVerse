@@ -83,6 +83,46 @@
   /* ------------------------------------------------------------------ */
   let audio = null;
   let soundOn = storeGet(MUTE_KEY) !== '1';
+  let masterGain = null;
+  let limiterNode = null;
+  const activeVoices = new Set();
+  const MAX_VOICES = 6;
+
+  function trackVoice(node) {
+    if (!node) return node;
+    while (activeVoices.size >= MAX_VOICES) {
+      const oldest = activeVoices.values().next().value;
+      if (oldest) {
+        try {
+          if (typeof oldest.stop === 'function') oldest.stop();
+          if (typeof oldest.disconnect === 'function') oldest.disconnect();
+        } catch (_) {}
+        activeVoices.delete(oldest);
+      } else {
+        break;
+      }
+    }
+    activeVoices.add(node);
+    const onEnded = () => {
+      activeVoices.delete(node);
+    };
+    if (typeof node.addEventListener === 'function') {
+      node.addEventListener('ended', onEnded, { once: true });
+    } else {
+      node.onended = onEnded;
+    }
+    return node;
+  }
+
+  function stopAllAudio() {
+    activeVoices.forEach((node) => {
+      try {
+        if (typeof node.stop === 'function') node.stop();
+        if (typeof node.disconnect === 'function') node.disconnect();
+      } catch (_) {}
+    });
+    activeVoices.clear();
+  }
 
   function unlockAudio() {
     if (!audio) {
@@ -90,6 +130,23 @@
         const AC = window.AudioContext || window.webkitAudioContext;
         if (AC) audio = new AC();
       } catch (e) { audio = null; }
+    }
+    if (audio && !masterGain) {
+      masterGain = audio.createGain();
+      masterGain.gain.setValueAtTime(0.5, audio.currentTime);
+      try {
+        const comp = audio.createDynamicsCompressor();
+        comp.threshold.setValueAtTime(-0.5, audio.currentTime);
+        comp.knee.setValueAtTime(0, audio.currentTime);
+        comp.ratio.setValueAtTime(20.0, audio.currentTime);
+        comp.attack.setValueAtTime(0.001, audio.currentTime);
+        comp.release.setValueAtTime(0.05, audio.currentTime);
+        limiterNode = comp;
+        masterGain.connect(limiterNode);
+        limiterNode.connect(audio.destination);
+      } catch (_) {
+        masterGain.connect(audio.destination);
+      }
     }
     if (audio && audio.state === 'suspended') {
       try { audio.resume(); } catch (e) { /* ignore */ }
@@ -109,7 +166,8 @@
       gain.gain.exponentialRampToValueAtTime(vol || 0.08, t0 + 0.01);
       gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
       osc.connect(gain);
-      gain.connect(audio.destination);
+      gain.connect(masterGain || audio.destination);
+      trackVoice(osc);
       osc.start(t0);
       osc.stop(t0 + dur + 0.03);
     } catch (e) { /* ignore audio failures */ }
@@ -131,8 +189,10 @@
       src.buffer = buf;
       src.connect(filter);
       filter.connect(gain);
-      gain.connect(audio.destination);
+      gain.connect(masterGain || audio.destination);
+      trackVoice(src);
       src.start();
+      src.stop(audio.currentTime + dur + 0.03);
     } catch (e) { /* ignore audio failures */ }
   }
 
@@ -405,6 +465,7 @@
 
   function startGame() {
     if (state !== 'ready') return;
+    stopAllAudio();
     unlockAudio();
     newGame();
     state = 'playing';
@@ -414,6 +475,7 @@
 
   function restartGame() {
     if (state !== 'over' && state !== 'paused') return;
+    stopAllAudio();
     unlockAudio();
     newGame();
     state = 'playing';
@@ -1349,4 +1411,14 @@
   newGame();
   setOverlay('start');
   window.requestAnimationFrame(frame);
+
+  // Clean audio on teardown (#507)
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      stopAllAudio();
+      if (audio && audio.state !== 'closed') {
+        try { audio.close(); } catch (_) {}
+      }
+    }
+  });
 })();

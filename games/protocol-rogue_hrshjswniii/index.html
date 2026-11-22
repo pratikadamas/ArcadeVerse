@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#071019">
+  <title>Protocol Rogue: Cyberdeck Tactics | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <a class="hub" href="../../index.html" aria-label="Back to ArcadeVerse">AV</a>
+      <div class="brand"><div class="eyebrow">ARCADEVERSE / NETWORK OPERATIONS</div><h1>PROTOCOL <span>ROGUE</span></h1></div>
+      <button id="sound" class="outline" type="button" aria-label="Toggle sound">SOUND ON</button>
+    </header>
+    <section class="run-strip">
+      <div><small>SECTOR</small><strong id="sector">01 / PERIPHERAL ACCESS</strong></div>
+      <div><small>NODE</small><strong id="node-count">01 / 05</strong></div>
+      <div><small>INTEGRITY</small><strong id="player-hp">60 / 60</strong></div>
+      <div><small>CREDITS</small><strong id="credits">0</strong></div>
+      <div class="run-metrics"><small>BEST SECTOR</small><strong id="record">0</strong></div>
+    </section>
+    <section class="network-track" id="network-track" aria-label="Run progress"></section>
+    <section class="battle-layout">
+      <div class="encounter panel">
+        <div class="encounter-top"><div><div class="eyebrow" id="encounter-label">HOSTILE PROCESS</div><h2 id="enemy-name">Trace Worm</h2></div><div class="intent" id="intent"><span class="intent-icon">!</span><span id="intent-text">Preparing attack</span></div></div>
+        <div class="enemy-art" id="enemy-art" aria-hidden="true"><div class="core-ring"></div><div class="core"></div><div class="scan-line"></div></div>
+        <div class="enemy-vitals"><div class="vital-label"><span>PROGRAM INTEGRITY</span><b id="enemy-hp">30 / 30</b></div><div class="bar"><i id="enemy-hp-bar"></i></div><div class="shield-line"><span id="enemy-status">No status effects</span><b id="enemy-shield"></b></div></div>
+        <div class="combat-log" id="combat-log" aria-live="polite"></div>
+      </div>
+      <aside class="side-column">
+        <div class="panel operator-panel"><div class="panel-heading"><span>OPERATOR STATUS</span><span id="turn-label">YOUR TURN</span></div><div class="operator-vitals"><div><small>INTEGRITY</small><strong id="hp-small">60 / 60</strong></div><div><small>GUARD</small><strong id="block">0</strong></div></div><div class="hp-bar"><i id="player-hp-bar"></i></div><div class="energy-row"><span>ENERGY CELLS</span><div id="energy-pips"></div><b id="energy-count">3 / 3</b></div><div class="status-row"><span id="player-status">No active status</span><span>TRACE <b id="trace">0 / 3</b></span></div></div>
+        <div class="panel quick-panel"><div class="panel-heading"><span>DECK TELEMETRY</span></div><div class="deck-stats"><span>DRAW <b id="draw-count">0</b></span><span>DISCARD <b id="discard-count">0</b></span><span>EXILE <b id="exile-count">0</b></span></div><button id="deck-button" class="small-button" type="button">VIEW DECK</button></div>
+        <button id="end-turn" class="end-turn" type="button">END TURN <span>↵</span></button>
+      </aside>
+    </section>
+    <section class="hand-section"><div class="hand-heading"><div><div class="eyebrow">COMMAND HAND</div><h2>Choose your protocol</h2></div><span id="hand-count">0 CARDS</span></div><div class="hand" id="hand"></div></section>
+    <footer>READ THE TELEMETRY <span>·</span> BREAK THE TRACE <span>·</span> REACH THE MAINFRAME</footer>
+
+    <div class="overlay visible" id="start-overlay"><div class="dialog start-dialog"><div class="eyebrow">INTRUSION RUN / BUILD 01</div><h2>BREACH THE<br><span>NETWORK.</span></h2><p>Security programs reveal their next move. Build a command deck, manage energy, and choose your route through three hostile sectors.</p><div class="start-record"><span>BEST SECTOR</span><b id="start-record">0</b></div><div class="start-record"><span>RUNS COMPLETED</span><b id="runs-record">0</b></div><div class="start-record"><span>PROTOCOLS UNLOCKED</span><b id="unlocks-record">0</b></div><button id="start-run" class="primary" type="button">INITIALIZE RUN</button><p class="fine-print">A new run resets health, deck, and route. Best records persist on this device.</p></div></div>
+    <div class="overlay" id="map-overlay"><div class="dialog wide-dialog"><div class="eyebrow" id="map-sector">ROUTE SELECTION</div><h2 id="map-title">Choose your next node</h2><p id="map-copy">Each route has a different risk and reward.</p><div class="route-options" id="route-options"></div></div></div>
+    <div class="overlay" id="choice-overlay"><div class="dialog wide-dialog"><div class="eyebrow" id="choice-eyebrow">DATA CACHE</div><h2 id="choice-title">Choose a reward</h2><p id="choice-copy">Select one protocol to add to your deck.</p><div class="choice-options" id="choice-options"></div><button id="choice-skip" class="text-button" type="button">SKIP REWARD</button></div></div>
+    <div class="overlay" id="deck-overlay"><div class="dialog wide-dialog"><div class="eyebrow">CURRENT LOADOUT</div><h2>Command Deck</h2><div id="deck-list" class="deck-list"></div><button id="deck-close" class="primary" type="button">RETURN TO RUN</button></div></div>
+    <div class="overlay" id="end-overlay"><div class="dialog"><div class="eyebrow" id="end-eyebrow">RUN TERMINATED</div><h2 id="end-title">CONNECTION LOST</h2><p id="end-copy">Your intrusion has ended.</p><button id="new-run" class="primary" type="button">RUN AGAIN</button></div></div>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
