@@ -372,18 +372,79 @@
     cameraShake.angle = 0;
   }
 
+  /**
+   * Generates a circular blast wave of custom particle sparks
+   * with configurable spark count, min/max velocity, and color spectrum.
+   */
+  function burstRing(x, y, options) {
+    if (prefersReducedMotion()) return;
+    options = options || {};
+    var count = options.count || 24;
+    var color = options.color || '#00f5ff';
+    var speed = options.speed || 4;
+    var size = options.size || 2.5;
+
+    for (var i = 0; i < count; i++) {
+      var angle = (i / count) * Math.PI * 2;
+      var vx = Math.cos(angle) * speed;
+      var vy = Math.sin(angle) * speed;
+      var p = getFreeParticle();
+      if (!p) break;
+
+      p.active = true;
+      p.x = x;
+      p.y = y;
+      p.vx = vx;
+      p.vy = vy;
+      p.size = size;
+      p.color = color;
+      p.alpha = 1;
+      p.decay = 0.025;
+      p.drag = 0.96;
+      p.gravity = 0;
+      p.shape = 'circle';
+      activeParticles.push(p);
+    }
+  }
+
+  /**
+   * Spawns dynamic trailing spark embers behind moving entities
+   */
+  function sparkTrail(x, y, vx, vy, color) {
+    if (prefersReducedMotion()) return;
+    var p = getFreeParticle();
+    if (!p) return;
+
+    p.active = true;
+    p.x = x;
+    p.y = y;
+    p.vx = (Math.random() - 0.5) * 1.5 - (vx || 0) * 0.2;
+    p.vy = (Math.random() - 0.5) * 1.5 - (vy || 0) * 0.2;
+    p.size = 1.5 + Math.random();
+    p.color = color || '#ffbd39';
+    p.alpha = 0.9;
+    p.decay = 0.04;
+    p.drag = 0.94;
+    p.gravity = 0.05;
+    p.shape = 'circle';
+    activeParticles.push(p);
+  }
+
   return {
     shake: shake,
     addTrauma: addTrauma,
     applyCamera: applyCamera,
     explode: explode,
     shockwave: shockwave,
+    burstRing: burstRing,
+    sparkTrail: sparkTrail,
     spawnFloatingText: spawnFloatingText,
     update: updateParticles,
     render: renderParticles,
     reset: reset,
     getTrauma: function () {
       return cameraShake.trauma;
-    }
+    },
+    isReducedMotion: prefersReducedMotion
   };
 });
