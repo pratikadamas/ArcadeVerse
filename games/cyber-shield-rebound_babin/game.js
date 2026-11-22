@@ -98,6 +98,7 @@
   let isRunning = false;
   let isPaused = false;
   let animId = null;
+  let lastTime = performance.now();
 
   let score = 0;
   let wave = 1;
@@ -155,13 +156,14 @@
     });
   }
 
-  function update() {
+  function update(deltaMs = 16.67) {
     if (!isRunning || isPaused) return;
+    const dtScale = Math.min(2.0, Math.max(0.2, deltaMs / 16.667));
 
-    if (keys.left) shield.angle -= 0.08;
-    if (keys.right) shield.angle += 0.08;
+    if (keys.left) shield.angle -= 0.08 * dtScale;
+    if (keys.right) shield.angle += 0.08 * dtScale;
 
-    spawnCooldown++;
+    spawnCooldown += dtScale;
     if (spawnCooldown > Math.max(40, 100 - wave * 8)) {
       if (drones.length < 5 + wave) {
         spawnDrone();
@@ -171,7 +173,7 @@
 
     // Update drones
     for (const d of drones) {
-      d.shootTimer--;
+      d.shootTimer -= dtScale;
       if (d.shootTimer <= 0) {
         // Fire bullet toward core
         const bulletAngle = Math.atan2(core.y - d.y, core.x - d.x);
@@ -190,13 +192,24 @@
     // Update bullets
     for (let i = bullets.length - 1; i >= 0; i--) {
       const b = bullets[i];
-      b.x += b.vx;
-      b.y += b.vy;
+      const prevX = b.x;
+      const prevY = b.y;
+      const prevDist = Math.hypot(prevX - core.x, prevY - core.y);
 
-      const distToCore = Math.hypot(b.x - core.x, b.y - core.y);
+      b.x += b.vx * dtScale;
+      b.y += b.vy * dtScale;
 
-      // Collision with shield arc
-      if (!b.isRebounded && Math.abs(distToCore - shield.radius) < 10) {
+      const currDist = Math.hypot(b.x - core.x, b.y - core.y);
+
+      // Swept radial crossing check with shield arc
+      const pad = 10 * Math.max(1, dtScale);
+      const crossedShield = (!b.isRebounded) && (
+        (prevDist >= shield.radius - pad && currDist <= shield.radius + pad) ||
+        (currDist >= shield.radius - pad && prevDist <= shield.radius + pad) ||
+        Math.abs(currDist - shield.radius) < pad
+      );
+
+      if (crossedShield) {
         const bulletAngle = Math.atan2(b.y - core.y, b.x - core.x);
         let diff = Math.abs(bulletAngle - shield.angle);
         diff = Math.atan2(Math.sin(diff), Math.cos(diff));
@@ -213,7 +226,7 @@
       }
 
       // Hit Central Core
-      if (!b.isRebounded && distToCore < core.radius) {
+      if (!b.isRebounded && currDist < core.radius) {
         shieldHp -= 10;
         sfx.coreHit();
         bullets.splice(i, 1);
@@ -254,7 +267,25 @@
 
   function endGame() {
     isRunning = false;
-    if (animId) cancelAnimationFrame(animId);
+    if (animId) {
+      cancelAnimationFrame(animId);
+      animId = null;
+    }
+
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'ARCADEVERSE_GAME_SCORE',
+        score: score,
+        wave: wave,
+        dronesKilled: dronesKilled
+      }, '*');
+      window.parent.postMessage({
+        type: 'ARCADEVERSE_GAME_OVER',
+        score: score,
+        wave: wave,
+        dronesKilled: dronesKilled
+      }, '*');
+    }
 
     finalWaveEl.textContent = wave;
     finalDronesEl.textContent = dronesKilled;
@@ -329,8 +360,11 @@
     }
   }
 
-  function loop() {
-    update();
+  function loop(now = performance.now()) {
+    const deltaMs = Math.min(64, now - lastTime);
+    lastTime = now;
+
+    update(deltaMs);
     render();
     if (isRunning) {
       animId = requestAnimationFrame(loop);
@@ -338,10 +372,15 @@
   }
 
   function startGame() {
+    if (animId) {
+      cancelAnimationFrame(animId);
+      animId = null;
+    }
     sfx.init();
     resetGame();
     isRunning = true;
     isPaused = false;
+    lastTime = performance.now();
     startScreen.classList.add('hidden');
     gameOverScreen.classList.add('hidden');
     animId = requestAnimationFrame(loop);
@@ -390,5 +429,37 @@
   btnMute.addEventListener('click', () => {
     sfx.muted = !sfx.muted;
     btnMute.classList.toggle('active', sfx.muted);
+  });
+
+  // Modal lifecycle hooks
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      isPaused = true;
+    } else {
+      lastTime = performance.now();
+    }
+  });
+
+  window.addEventListener('message', (e) => {
+    if (!e.data || typeof e.data !== 'object') return;
+    if (e.data.type === 'ARCADEVERSE_PAUSE') {
+      isPaused = true;
+    } else if (e.data.type === 'ARCADEVERSE_RESUME') {
+      isPaused = false;
+      lastTime = performance.now();
+    } else if (e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      isRunning = false;
+      if (animId) {
+        cancelAnimationFrame(animId);
+        animId = null;
+      }
+    }
+  });
+
+  window.addEventListener('pagehide', () => {
+    if (animId) {
+      cancelAnimationFrame(animId);
+      animId = null;
+    }
   });
 })();

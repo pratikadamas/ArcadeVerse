@@ -31,9 +31,39 @@
   const finalLines = document.getElementById('final-lines');
   const finalCombo = document.getElementById('final-combo');
 
+  // Safe Storage
+  function getStoredBestScore() {
+    try {
+      const val = localStorage.getItem('cyber-hex-best');
+      return val ? parseInt(val, 10) || 0 : 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  function setStoredBestScore(scoreVal) {
+    try {
+      localStorage.setItem('cyber-hex-best', String(scoreVal));
+    } catch (_) {}
+  }
+
+  function getStoredSound() {
+    try {
+      return localStorage.getItem('cyber-hex-sound') !== 'false';
+    } catch (_) {
+      return true;
+    }
+  }
+
+  function setStoredSound(soundVal) {
+    try {
+      localStorage.setItem('cyber-hex-sound', soundVal ? 'true' : 'false');
+    } catch (_) {}
+  }
+
   // Audio Synthesizer via Web Audio API
   let audioCtx = null;
-  let soundEnabled = localStorage.getItem('cyber-hex-sound') !== 'false';
+  let soundEnabled = getStoredSound();
 
   function initAudio() {
     if (!audioCtx) {
@@ -134,7 +164,7 @@
 
   let gameState = 'ready'; // ready, playing, gameover
   let score = 0;
-  let bestScore = parseInt(localStorage.getItem('cyber-hex-best') || '0', 10);
+  let bestScore = getStoredBestScore();
   let level = 1;
   let combo = 0;
   let maxCombo = 0;
@@ -151,7 +181,19 @@
   let spawnTimer = 0;
   let particles = [];
 
+  let cascadeTimerId = null;
+  let rafId = null;
+  let lastFrameTime = performance.now();
+
+  function clearCascadeTimer() {
+    if (cascadeTimerId) {
+      clearTimeout(cascadeTimerId);
+      cascadeTimerId = null;
+    }
+  }
+
   function resetGame() {
+    clearCascadeTimer();
     score = 0;
     level = 1;
     combo = 0;
@@ -168,6 +210,7 @@
     startOverlay.classList.add('hidden');
     gameoverOverlay.classList.add('hidden');
     updateHUD();
+    startLoop();
   }
 
   function rotateHex(direction) {
@@ -190,40 +233,48 @@
   }
 
   function checkMatches() {
+    clearCascadeTimer();
     let matchedAny = false;
+    let matchBatchCount = 0;
 
-    // Check vertical 3+ matches in each stack
+    // Set of "side:tier" indices to clear in this cascade step
+    const toClear = new Set();
+
+    // 1. Check vertical 3+ runs in each stack
     for (let s = 0; s < 6; s++) {
       const stack = stacks[s];
       if (stack.length < 3) continue;
 
       let runColor = stack[0];
-      let runCount = 1;
+      let runStart = 0;
+      let runLength = 1;
 
       for (let i = 1; i < stack.length; i++) {
         if (stack[i] === runColor) {
-          runCount++;
-          if (runCount >= 3) {
-            // Remove matched blocks
-            const removeStart = i - runCount + 1;
-            stack.splice(removeStart, runCount);
-            matchedAny = true;
-            linesCleared++;
-            combo++;
-            maxCombo = Math.max(maxCombo, combo);
-            score += runCount * 50 * combo;
-            playSound('clear');
-            spawnExplosionSparks(s, removeStart);
-            break;
-          }
+          runLength++;
         } else {
+          if (runLength >= 3) {
+            for (let k = runStart; k < runStart + runLength; k++) {
+              toClear.add(`${s}:${k}`);
+            }
+            matchBatchCount++;
+            spawnExplosionSparks(s, runStart);
+          }
           runColor = stack[i];
-          runCount = 1;
+          runStart = i;
+          runLength = 1;
         }
+      }
+      if (runLength >= 3) {
+        for (let k = runStart; k < runStart + runLength; k++) {
+          toClear.add(`${s}:${k}`);
+        }
+        matchBatchCount++;
+        spawnExplosionSparks(s, runStart);
       }
     }
 
-    // Check horizontal ring matches (adjacent facets with same color at same tier)
+    // 2. Check horizontal ring matches (3 adjacent sides with matching color at identical tier)
     for (let tier = 0; tier < MAX_STACK; tier++) {
       for (let s = 0; s < 6; s++) {
         const s1 = s;
@@ -234,30 +285,38 @@
             stacks[s1][tier] === stacks[s2][tier] &&
             stacks[s2][tier] === stacks[s3][tier]) {
 
-          delete stacks[s1][tier];
-          delete stacks[s2][tier];
-          delete stacks[s3][tier];
-
-          // Compact stacks
-          stacks[s1] = stacks[s1].filter(v => v !== undefined);
-          stacks[s2] = stacks[s2].filter(v => v !== undefined);
-          stacks[s3] = stacks[s3].filter(v => v !== undefined);
-
-          matchedAny = true;
-          linesCleared++;
-          combo++;
-          maxCombo = Math.max(maxCombo, combo);
-          score += 180 * combo;
-          playSound('clear');
-          break;
+          toClear.add(`${s1}:${tier}`);
+          toClear.add(`${s2}:${tier}`);
+          toClear.add(`${s3}:${tier}`);
+          matchBatchCount++;
         }
       }
     }
 
-    if (matchedAny) {
+    if (toClear.size > 0) {
+      matchedAny = true;
+      // Mark blocks for deletion across stacks
+      toClear.forEach(coord => {
+        const [s, t] = coord.split(':').map(Number);
+        if (stacks[s] && stacks[s][t] !== undefined) {
+          stacks[s][t] = null;
+        }
+      });
+
+      // Compact all 6 stacks
+      for (let s = 0; s < 6; s++) {
+        stacks[s] = stacks[s].filter(v => v !== null && v !== undefined);
+      }
+
+      combo++;
+      maxCombo = Math.max(maxCombo, combo);
+      linesCleared += matchBatchCount;
+      score += (toClear.size * 40 + matchBatchCount * 60) * combo;
+      playSound('clear');
       updateHUD();
-      // Recurse to handle cascades
-      setTimeout(checkMatches, 160);
+
+      // Schedule next cascade step and track ID
+      cascadeTimerId = setTimeout(checkMatches, 160);
     } else {
       combo = 0;
       updateHUD();
@@ -286,13 +345,24 @@
   }
 
   function triggerGameOver() {
+    clearCascadeTimer();
+    stopLoop();
     gameState = 'gameover';
     playSound('gameover');
     if (score > bestScore) {
       bestScore = score;
-      localStorage.setItem('cyber-hex-best', bestScore.toString());
+      setStorage('cyber-hex-best', bestScore.toString());
     }
     updateHUD();
+
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'ARCADEVERSE_GAME_OVER',
+        score: score,
+        lines: linesCleared,
+        combo: maxCombo
+      }, '*');
+    }
 
     finalScore.textContent = score;
     finalLines.textContent = linesCleared;
