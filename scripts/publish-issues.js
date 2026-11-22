@@ -32,6 +32,18 @@ function cleanIssueBody(body) {
   return body.trim();
 }
 
+function filterAllowedLabels(labels) {
+  if (!Array.isArray(labels)) return ['nsoc26', 'level3'];
+  // Keep strictly ONLY nsoc and level labels (e.g. nsoc26, level3)
+  const allowed = labels
+    .map(l => String(l).trim())
+    .filter(l => /^nsoc\d*$/i.test(l) || /^level\d+$/i.test(l));
+
+  if (!allowed.some(l => /^nsoc/i.test(l))) allowed.unshift('nsoc26');
+  if (!allowed.some(l => /^level/i.test(l))) allowed.push('level3');
+  return allowed;
+}
+
 async function main() {
   console.log('=== ArcadeVerse Safe Issue Publisher ===');
   console.log(`Repository : ${REPO}`);
@@ -80,7 +92,8 @@ async function main() {
     const issue = toPublish[i];
     console.log(`\n----------------------------------------`);
     console.log(`[${i + 1}/${toPublish.length}] Preparing: "${issue.title}"`);
-    console.log(`Labels : ${(issue.labels || []).join(', ')}`);
+    const finalLabels = filterAllowedLabels(issue.labels);
+    console.log(`Labels : ${finalLabels.join(', ')}`);
 
     if (DRY_RUN) {
       console.log(`[DRY-RUN] Would create issue. Body preview:`);
@@ -101,7 +114,7 @@ async function main() {
         body: JSON.stringify({
           title: issue.title,
           body: cleanIssueBody(issue.body),
-          labels: issue.labels || ['nsoc26', 'level3', 'feature']
+          labels: finalLabels
         })
       });
 
