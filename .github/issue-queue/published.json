@@ -358,5 +358,11 @@
     "title": "[Feature/Shaders]: Dynamic Canvas Heat Distortion & Thermal Mirage Air Shimmer Filter",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1313",
     "published_at": "2026-11-22T07:04:53.784Z"
+  },
+  {
+    "number": 1315,
+    "title": "[Refactor/UI]: Decommission and Remove 16-Band Audio Equalizer Widget from Hall of Fame Leaderboard",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1315",
+    "published_at": "2026-11-22T10:51:56.097Z"
   }
 ]
