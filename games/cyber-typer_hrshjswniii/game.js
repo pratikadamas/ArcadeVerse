@@ -11,9 +11,13 @@
   'use strict';
 
   // ---------------------------------------------------------------------------
-  // 1. Procedural Web Audio API Sound Synthesizer (Zero External Assets)
+  // 1. Procedural Web Audio API Sound Synthesizer (#507)
   // ---------------------------------------------------------------------------
   let audioCtx = null;
+  let masterGain = null;
+  let limiterNode = null;
+  const activeVoices = new Set();
+  const MAX_VOICES = 6;
   let isMuted = false;
 
   function initAudio() {
@@ -23,9 +27,62 @@
         audioCtx = new AudioContextClass();
       }
     }
+    if (audioCtx && !masterGain) {
+      masterGain = audioCtx.createGain();
+      masterGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+      try {
+        const comp = audioCtx.createDynamicsCompressor();
+        comp.threshold.setValueAtTime(-0.5, audioCtx.currentTime);
+        comp.knee.setValueAtTime(0, audioCtx.currentTime);
+        comp.ratio.setValueAtTime(20.0, audioCtx.currentTime);
+        comp.attack.setValueAtTime(0.001, audioCtx.currentTime);
+        comp.release.setValueAtTime(0.05, audioCtx.currentTime);
+        limiterNode = comp;
+        masterGain.connect(limiterNode);
+        limiterNode.connect(audioCtx.destination);
+      } catch (_) {
+        masterGain.connect(audioCtx.destination);
+      }
+    }
     if (audioCtx && audioCtx.state === 'suspended') {
       audioCtx.resume();
     }
+  }
+
+  function trackVoice(node) {
+    if (!node) return node;
+    while (activeVoices.size >= MAX_VOICES) {
+      const oldest = activeVoices.values().next().value;
+      if (oldest) {
+        try {
+          if (typeof oldest.stop === 'function') oldest.stop();
+          if (typeof oldest.disconnect === 'function') oldest.disconnect();
+        } catch (_) {}
+        activeVoices.delete(oldest);
+      } else {
+        break;
+      }
+    }
+    activeVoices.add(node);
+    const onEnded = () => {
+      activeVoices.delete(node);
+    };
+    if (typeof node.addEventListener === 'function') {
+      node.addEventListener('ended', onEnded, { once: true });
+    } else {
+      node.onended = onEnded;
+    }
+    return node;
+  }
+
+  function stopAllAudio() {
+    activeVoices.forEach((node) => {
+      try {
+        if (typeof node.stop === 'function') node.stop();
+        if (typeof node.disconnect === 'function') node.disconnect();
+      } catch (_) {}
+    });
+    activeVoices.clear();
   }
 
   // Load mute state from localStorage
@@ -52,7 +109,8 @@
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
 
       osc.connect(gain);
-      gain.connect(audioCtx.destination);
+      gain.connect(masterGain || audioCtx.destination);
+      trackVoice(osc);
 
       osc.start(now);
       osc.stop(now + 0.045);
@@ -78,7 +136,8 @@
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
 
       osc.connect(gain);
-      gain.connect(audioCtx.destination);
+      gain.connect(masterGain || audioCtx.destination);
+      trackVoice(osc);
 
       osc.start(now);
       osc.stop(now + 0.085);
@@ -94,7 +153,7 @@
       if (!audioCtx) return;
 
       // Noise buffer for blast
-      const bufferSize = audioCtx.sampleRate * 0.2;
+      const bufferSize = Math.floor(audioCtx.sampleRate * 0.2);
       const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
       const data = buffer.getChannelData(0);
       for (let i = 0; i < bufferSize; i++) {
@@ -115,9 +174,11 @@
 
       noise.connect(filter);
       filter.connect(gain);
-      gain.connect(audioCtx.destination);
+      gain.connect(masterGain || audioCtx.destination);
+      trackVoice(noise);
 
       noise.start();
+      noise.stop(audioCtx.currentTime + 0.2);
     } catch {
       // Audio playback unavailable
     }
@@ -140,7 +201,8 @@
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
 
       osc.connect(gain);
-      gain.connect(audioCtx.destination);
+      gain.connect(masterGain || audioCtx.destination);
+      trackVoice(osc);
 
       osc.start(now);
       osc.stop(now + 0.13);
@@ -166,7 +228,8 @@
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
 
       osc.connect(gain);
-      gain.connect(audioCtx.destination);
+      gain.connect(masterGain || audioCtx.destination);
+      trackVoice(osc);
 
       osc.start(now);
       osc.stop(now + 0.21);
@@ -192,7 +255,8 @@
         gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.1);
 
         osc.connect(gain);
-        gain.connect(audioCtx.destination);
+        gain.connect(masterGain || audioCtx.destination);
+        trackVoice(osc);
 
         osc.start(now + idx * 0.08);
         osc.stop(now + idx * 0.08 + 0.11);
@@ -231,7 +295,7 @@
   // ---------------------------------------------------------------------------
   // 3. Game State & Telemetry Variables
   // ---------------------------------------------------------------------------
-  let gameState = 'START'; // 'START' | 'PLAYING' | 'PAUSED' | 'GAMEOVER'
+  let gameState = 'START'; // 'START' | 'PLAYING' | 'GAMEOVER'
   let difficulty = 'easy'; // 'easy' | 'normal' | 'hard'
 
   let score = 0;
@@ -242,8 +306,6 @@
   let correctKeystrokes = 0;
   let totalWordsEliminated = 0;
   let gameStartTime = 0;
-  let activeElapsedSeconds = 0;
-  let lastLoopTime = 0;
   let peakWPM = 0;
 
   // Active Target Word Management
@@ -548,9 +610,8 @@
     hudScore.textContent = score.toLocaleString();
 
     // Calculate WPM: (characters / 5) / elapsedMinutes
-    // Accumulate active gameplay seconds from clamped dt rather than raw wall-clock time
-    if (activeElapsedSeconds > 0) {
-      const elapsedMinutes = activeElapsedSeconds / 60;
+    if (gameStartTime > 0) {
+      const elapsedMinutes = (Date.now() - gameStartTime) / 60000;
       if (elapsedMinutes > 0.05) {
         const currentWPM = Math.floor((correctKeystrokes / 5) / elapsedMinutes);
         hudWpm.textContent = currentWPM;
@@ -558,19 +619,7 @@
       } else {
         hudWpm.textContent = '0';
       }
-    } else {
-      hudWpm.textContent = '0';
     }
-
-    // Telemetry bridge to parent hub
-    try {
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({
-          type: 'ARCADEVERSE_GAME_SCORE',
-          score: score
-        }, '*');
-      }
-    } catch (_) {}
 
     // Accuracy
     const acc = totalKeystrokes > 0 ? Math.round((correctKeystrokes / totalKeystrokes) * 100) : 100;
@@ -648,38 +697,13 @@
     if (gameOverScreen) {
       gameOverScreen.style.display = 'flex';
     }
-
-    // Telemetry game over event
-    try {
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({
-          type: 'ARCADEVERSE_GAME_OVER',
-          score: score,
-          details: {
-            score: score,
-            peakWPM: peakWPM,
-            accuracy: acc,
-            wordsEliminated: totalWordsEliminated,
-            difficulty: difficulty
-          }
-        }, '*');
-      }
-    } catch (_) {}
   }
 
   // ---------------------------------------------------------------------------
   // 9. 60 FPS Canvas Render Loop
   // ---------------------------------------------------------------------------
   function gameLoop(timestamp) {
-    if (!lastLoopTime) lastLoopTime = timestamp;
-    const deltaMs = Math.min(100, Math.max(0, timestamp - lastLoopTime));
-    lastLoopTime = timestamp;
-    const dt = deltaMs / 1000;
-    const dtScale = deltaMs / 16.667;
-
     if (gameState === 'PLAYING') {
-      activeElapsedSeconds += dt;
-
       // 1. Spawn threats
       if (timestamp - lastSpawnTime > spawnInterval) {
         createThreat();
@@ -731,7 +755,7 @@
         ctx.stroke();
         ctx.restore();
 
-        beam.alpha -= 0.08 * dtScale;
+        beam.alpha -= 0.08;
         if (beam.alpha <= 0) {
           laserBeams.splice(i, 1);
         }
@@ -740,8 +764,8 @@
       // 4. Update and Draw Threats
       for (let i = threats.length - 1; i >= 0; i--) {
         const t = threats[i];
-        t.y += t.speed * dtScale;
-        t.glowPulse += 0.05 * dtScale;
+        t.y += t.speed;
+        t.glowPulse += 0.05;
 
         const isLocked = activeTarget && activeTarget.id === t.id;
 
@@ -827,9 +851,9 @@
       // 5. Update and Draw Particles
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
-        p.x += p.vx * dtScale;
-        p.y += p.vy * dtScale;
-        p.alpha -= 0.025 * dtScale;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 0.025;
 
         if (p.alpha <= 0) {
           particles.splice(i, 1);
@@ -876,6 +900,7 @@
   // 10. Game Flow & State Transitions
   // ---------------------------------------------------------------------------
   function startGame() {
+    stopAllAudio();
     initAudio();
     resizeCanvas();
 
@@ -888,8 +913,6 @@
     correctKeystrokes = 0;
     totalWordsEliminated = 0;
     gameStartTime = Date.now();
-    activeElapsedSeconds = 0;
-    lastLoopTime = performance.now();
     peakWPM = 0;
 
     threats = [];
@@ -905,7 +928,6 @@
 
     updatePromptDisplay();
     updateTelemetryHUD();
-    startRenderLoop();
   }
 
   // ---------------------------------------------------------------------------
@@ -1024,62 +1046,19 @@
     });
   }
 
-  function startRenderLoop() {
-    if (animationFrameId !== null) {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
-    }
-    lastLoopTime = performance.now();
-    animationFrameId = requestAnimationFrame(gameLoop);
-  }
-
-  function pauseGame() {
-    if (gameState === 'PLAYING') {
-      gameState = 'PAUSED';
-      lastLoopTime = 0;
-    }
-  }
-
-  function resumeGame() {
-    if (gameState === 'PAUSED') {
-      gameState = 'PLAYING';
-      lastLoopTime = performance.now();
-      startRenderLoop();
-    }
-  }
-
-  // Lifecycle listeners
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-      pauseGame();
-    } else {
-      if (gameState === 'PAUSED') {
-        resumeGame();
-      }
-    }
-  });
-
-  window.addEventListener('message', (e) => {
-    if (!e.data || typeof e.data !== 'object') return;
-    const type = e.data.type;
-    if (type === 'ARCADEVERSE_PAUSE') {
-      pauseGame();
-    } else if (type === 'ARCADEVERSE_RESUME') {
-      resumeGame();
-    } else if (type === 'ARCADEVERSE_TEARDOWN') {
-      pauseGame();
-      if (animationFrameId !== null) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
-      }
-    } else if (type === 'AV_RESIZE') {
-      resizeCanvas();
-    }
-  });
-
   // ---------------------------------------------------------------------------
   // 12. Initialization
   // ---------------------------------------------------------------------------
   resizeCanvas();
-  startRenderLoop();
+  animationFrameId = requestAnimationFrame(gameLoop);
+
+  // Clean audio on teardown (#507)
+  window.addEventListener('message', (e) => {
+    if (e.data && (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE')) {
+      stopAllAudio();
+      if (e.data.type === 'ARCADEVERSE_TEARDOWN' && audioCtx && audioCtx.state !== 'closed') {
+        try { audioCtx.close(); } catch (_) {}
+      }
+    }
+  });
 })();

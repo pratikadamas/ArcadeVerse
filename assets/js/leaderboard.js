@@ -407,8 +407,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) {
         userGames = GAMES_REGISTRY.filter(g => g && g.github && g.github.toLowerCase() === (regUser.github || "").toLowerCase());
       }
-      const gamesCount = userGames.length > 0 ? userGames.length : (regUser.gamesCount || 0);
-      const gamesList = userGames.length > 0 ? userGames.map(g => g.title) : (regUser.contributions || []);
+      const registeredTitles = userGames.map(g => g.title);
+      const fallbackTitles = (regUser.contributions || []).filter(c => c && c !== "Quality & Platform Contribution");
+      const gamesList = Array.from(new Set([...registeredTitles, ...fallbackTitles]));
+      const gamesCount = gamesList.length > 0 ? gamesList.length : (regUser.gamesCount || 0);
 
       const candidate = {
         login: regUser.github,
@@ -423,9 +425,38 @@ document.addEventListener("DOMContentLoaded", () => {
         bonusPts: regUser.bonusPts || 0,
         games: gamesList
       };
-
       return validateAndHealContributor(candidate);
     }).filter(Boolean);
+
+    // Also index any developers present in GAMES_REGISTRY who may not be in CONTRIBUTORS_REGISTRY
+    if (typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) {
+      GAMES_REGISTRY.forEach(game => {
+        if (!game || !game.github) return;
+        const ghLower = game.github.toLowerCase();
+        const existing = contributorsData.find(c => c.login && c.login.toLowerCase() === ghLower);
+        if (existing) {
+          if (!existing.games.includes(game.title)) {
+            existing.games.push(game.title);
+          }
+          existing.gamesCount = Math.max(existing.games.length, existing.gamesCount || 0);
+        } else {
+          const candidate = validateAndHealContributor({
+            login: game.github,
+            name: game.author || game.github,
+            role: game.role || "Arcade Developer",
+            avatar_url: `https://github.com/${game.github}.png`,
+            commits: 1,
+            gamesCount: 1,
+            mechanicsBonus: 0,
+            platformPRs: 0,
+            qualityPRs: 0,
+            bonusPts: 0,
+            games: [game.title]
+          });
+          if (candidate) contributorsData.push(candidate);
+        }
+      });
+    }
   }
 
   // Universal In-App Arcade Point System:
@@ -1132,7 +1163,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const roleMatch = (item.role || "").toLowerCase().includes(q);
       const badges = getContributorBadges(item);
       const badgeMatch = badges.some(b => (b.label || "").toLowerCase().includes(q));
-      return nameMatch || loginMatch || roleMatch || badgeMatch;
+      const gamesList = Array.isArray(item.games) ? item.games : [];
+      const gameMatch = gamesList.some(g => typeof g === "string" && g.toLowerCase().includes(q));
+      return nameMatch || loginMatch || roleMatch || badgeMatch || gameMatch;
     });
 
     const sortedContributors = sortCommunityContributors(communityContributors, currentSortCol, currentSortDir);
@@ -1225,6 +1258,38 @@ document.addEventListener("DOMContentLoaded", () => {
         rankBadgeHtml = `<span class="rank-tag rank-3"><i data-lucide="medal"></i> #3</span>`;
       }
 
+      const gamesList = Array.isArray(item.games) ? item.games : [];
+      const matchingGames = tableSearchQuery
+        ? gamesList.filter(g => typeof g === "string" && g.toLowerCase().includes(tableSearchQuery))
+        : [];
+
+      const userMatchingGameHint = matchingGames.length > 0
+        ? `<div class="user-matching-game-hint" style="margin-top: 0.25rem;">
+            <span style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.72rem; color: #00f0ff; background: rgba(0, 240, 255, 0.1); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 4px; padding: 0.1rem 0.4rem;" title="${escapeAttr(matchingGames.join(', '))}">
+              <i data-lucide="gamepad-2" style="width: 10px; height: 10px; flex-shrink: 0;"></i>
+              <span>${highlightMatch(matchingGames[0], tableSearchQuery)}</span>
+              ${matchingGames.length > 1 ? `<span style="font-size: 0.68rem; opacity: 0.8;">+${matchingGames.length - 1}</span>` : ""}
+            </span>
+          </div>`
+        : "";
+
+      const displayedChips = matchingGames.slice(0, 2);
+      const remainingCount = matchingGames.length - displayedChips.length;
+      const matchingChipsHtml = matchingGames.length > 0
+        ? `<div class="matching-games-chips" style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem; margin-top: 0.35rem;">
+            ${displayedChips.map(g => `
+              <span class="matching-game-chip" title="${escapeAttr(g)}" style="display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.18rem 0.55rem; font-size: 0.72rem; font-weight: 600; background: rgba(0, 240, 255, 0.12); border: 1px solid rgba(0, 240, 255, 0.4); border-radius: 999px; color: #38bdf8; max-width: 175px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-shadow: 0 0 8px rgba(0, 240, 255, 0.18);">
+                <i data-lucide="gamepad-2" style="width: 11px; height: 11px; flex-shrink: 0;"></i>
+                <span>${highlightMatch(g, tableSearchQuery)}</span>
+              </span>
+            `).join("")}
+            ${remainingCount > 0 ? `
+              <span class="matching-game-chip-more" title="${escapeAttr(matchingGames.slice(2).join(', '))}" style="display: inline-flex; align-items: center; gap: 0.2rem; font-size: 0.68rem; color: var(--text-muted); padding: 0.05rem 0.4rem;">
+                +${remainingCount} more matching
+              </span>
+            ` : ""}
+          </div>`
+        : "";
       const safeAvatarUrl = sanitizeAvatarUrl(item.avatar_url, fallbackAvatar);
 
       const tr = document.createElement("tr");
@@ -1236,6 +1301,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <div>
               <strong class="user-display-name">${highlightMatch(item.name, tableSearchQuery)}</strong>
               <span class="user-handle-sub">@${highlightMatch(item.login, tableSearchQuery)}</span>
+              ${userMatchingGameHint}
             </div>
           </div>
         </td>
@@ -1257,6 +1323,7 @@ document.addEventListener("DOMContentLoaded", () => {
               <i data-lucide="gamepad-2"></i> 0 Games
             </span>
           `}
+          ${matchingChipsHtml}
         </td>
         <td style="text-align: center;">
           <span class="files-count-pill" title="Universal Score: ${(item.gamesCount || 0) * 100}p (Games) + ${(item.mechanicsBonus || 0) * 25}p (Mechanics) + ${(item.platformPRs || 0) * 50}p (Feat) + ${(item.qualityPRs || 0) * 25}p (Fix) + ${(item.commits || 0) * 5}p (Commits)"><i data-lucide="git-pull-request"></i> ${getWorkBreakdown(item)}</span>
@@ -1291,6 +1358,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     renderPaginationUI(totalItems, totalPages, startIdx, endIdx);
+    updateSortHeaderUI();
 
     if (window.lucide) {
       lucide.createIcons();
@@ -1425,31 +1493,73 @@ document.addEventListener("DOMContentLoaded", () => {
           const isFresh = (Date.now() - cached.timestamp) < CACHE_TTL;
           if (isFresh && Array.isArray(cached.data) && cached.data.length > 0) {
             contributorsData = cached.data.map(user => {
+              const uLower = (user.login || "").toLowerCase();
+              let regTitles = [];
               if (typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) {
-                const uGames = GAMES_REGISTRY.filter(g => g.github && g.github.toLowerCase() === (user.login || "").toLowerCase());
-                if (uGames.length > 0) {
-                  user.gamesCount = uGames.length;
-                  user.games = uGames.map(g => g.title);
+                regTitles = GAMES_REGISTRY.filter(g => g.github && g.github.toLowerCase() === uLower).map(g => g.title);
+              }
+              let contribFallback = [];
+              if (typeof CONTRIBUTORS_REGISTRY !== "undefined" && Array.isArray(CONTRIBUTORS_REGISTRY)) {
+                const regContrib = CONTRIBUTORS_REGISTRY.find(c => c.github && c.github.toLowerCase() === uLower);
+                if (regContrib && Array.isArray(regContrib.contributions)) {
+                  contribFallback = regContrib.contributions.filter(c => c && c !== "Quality & Platform Contribution");
                 }
               }
+              const existingGames = Array.isArray(user.games) ? user.games : [];
+              const combinedGames = Array.from(new Set([...regTitles, ...contribFallback, ...existingGames]));
+              user.games = combinedGames;
+              user.gamesCount = Math.max(regTitles.length, combinedGames.length, user.gamesCount || 0);
               return user;
             });
             // Merge any missing registry contributors into cached list
             if (typeof CONTRIBUTORS_REGISTRY !== "undefined" && Array.isArray(CONTRIBUTORS_REGISTRY)) {
               CONTRIBUTORS_REGISTRY.forEach(reg => {
                 if (!contributorsData.some(c => c.login && c.login.toLowerCase() === reg.github.toLowerCase())) {
+                  let regGames = (reg.contributions || []).filter(c => c && c !== "Quality & Platform Contribution");
+                  if (typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) {
+                    const uGames = GAMES_REGISTRY.filter(g => g.github && g.github.toLowerCase() === reg.github.toLowerCase()).map(g => g.title);
+                    regGames = Array.from(new Set([...uGames, ...regGames]));
+                  }
                   contributorsData.push({
                     login: reg.github,
                     name: reg.name,
                     role: reg.role || "Community Contributor",
                     avatar_url: `https://github.com/${reg.github}.png`,
                     commits: reg.commits || 1,
-                    gamesCount: reg.gamesCount || 0,
+                    gamesCount: Math.max(regGames.length, reg.gamesCount || 0),
                     mechanicsBonus: reg.mechanicsBonus || 0,
                     platformPRs: reg.platformPRs || 0,
                     qualityPRs: reg.qualityPRs || 0,
                     bonusPts: reg.bonusPts || 0,
-                    games: reg.contributions || []
+                    games: regGames
+                  });
+                }
+              });
+            }
+            // Also merge any developers from GAMES_REGISTRY missing in cached data
+            if (typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) {
+              GAMES_REGISTRY.forEach(game => {
+                if (!game.github) return;
+                const ghLower = game.github.toLowerCase();
+                const existing = contributorsData.find(c => c.login && c.login.toLowerCase() === ghLower);
+                if (existing) {
+                  if (!existing.games.includes(game.title)) {
+                    existing.games.push(game.title);
+                  }
+                  existing.gamesCount = Math.max(existing.games.length, existing.gamesCount || 0);
+                } else {
+                  contributorsData.push({
+                    login: game.github,
+                    name: game.author || game.github,
+                    role: game.role || "Arcade Developer",
+                    avatar_url: `https://github.com/${game.github}.png`,
+                    commits: 1,
+                    gamesCount: 1,
+                    mechanicsBonus: 0,
+                    platformPRs: 0,
+                    qualityPRs: 0,
+                    bonusPts: 0,
+                    games: [game.title]
                   });
                 }
               });
@@ -1509,9 +1619,18 @@ document.addEventListener("DOMContentLoaded", () => {
           if (typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) {
             userGames = GAMES_REGISTRY.filter(g => g.github && g.github.toLowerCase() === user.login.toLowerCase());
           }
-          const gamesCount = userGames.length > 0 
-            ? userGames.length 
-            : (registryEntry ? (registryEntry.gamesCount || 0) : (localEntry ? (localEntry.gamesCount || 0) : (isAdmin ? 3 : 0)));
+          const regTitles = userGames.map(g => g.title);
+          const fallbackReg = (registryEntry?.contributions || []).filter(c => c && c !== "Quality & Platform Contribution");
+          const localGames = Array.isArray(localEntry?.games) ? localEntry.games : [];
+          const adminDefaultGames = isAdmin ? ["Cosmic Surge: Galaxy Defender", "Cyber Neon Pong", "Quantum Memory Matrix"] : [];
+          const allUserGames = Array.from(new Set([...regTitles, ...fallbackReg, ...localGames, ...adminDefaultGames]));
+          const gamesCount = Math.max(
+            userGames.length,
+            allUserGames.length,
+            registryEntry ? (registryEntry.gamesCount || 0) : 0,
+            localEntry ? (localEntry.gamesCount || 0) : 0,
+            isAdmin ? 3 : 0
+          );
 
           const mechanicsBonus = registryEntry?.mechanicsBonus ?? localEntry?.mechanicsBonus ?? (isAdmin ? 2 : 0);
           const platformPRs = registryEntry?.platformPRs ?? localEntry?.platformPRs ?? (isAdmin ? 2 : 0);
@@ -1530,9 +1649,7 @@ document.addEventListener("DOMContentLoaded", () => {
             platformPRs: platformPRs,
             qualityPRs: qualityPRs,
             bonusPts: bonusPts,
-            games: userGames.length > 0 
-              ? userGames.map(g => g.title) 
-              : (localEntry?.games && localEntry.games.length > 0 ? localEntry.games : (isAdmin ? ["Cosmic Surge: Galaxy Defender", "Cyber Neon Pong", "Quantum Memory Matrix"] : []))
+            games: allUserGames
           };
         });
 
@@ -2434,4 +2551,134 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem('av_daily_streak_date', today);
     localStorage.setItem('av_unclaimed_streak_count', '0');
   } catch (_) {}
+
+  // Contributor Hover Card popover logic (#716)
+  let hoverCardTimer = null;
+  let activeHoverCard = null;
+
+  function createHoverCard(user, anchorEl) {
+    removeHoverCard();
+    const score = calculateScore(user);
+    const badges = getContributorBadges(user);
+    const fallbackAvatar = getFallbackAvatarSvg(user.name, user.login);
+    const primaryBadge = badges.length > 0 ? badges[0] : { label: user.role || "Contributor", tagClass: "role-contributor" };
+
+    let userGames = user.games || [];
+    if (userGames.length === 0 && typeof GAMES_REGISTRY !== "undefined" && Array.isArray(GAMES_REGISTRY)) {
+      const found = GAMES_REGISTRY.filter(g => g.github && g.github.toLowerCase() === (user.login || "").toLowerCase());
+      userGames = found.map(g => g.title);
+    }
+
+    const card = document.createElement("div");
+    card.className = "contributor-hover-card";
+    card.setAttribute("role", "tooltip");
+    card.innerHTML = `
+      <div class="hover-card-header">
+        <img src="${user.avatar_url || fallbackAvatar}" alt="${user.name || user.login}" class="hover-card-avatar" onerror="this.onerror=null; this.src='${fallbackAvatar}';">
+        <div class="hover-card-meta">
+          <strong class="hover-card-name">${escapeHTML(user.name || user.login)}</strong>
+          <span class="hover-card-handle">@${escapeHTML(user.login)}</span>
+          <span class="hover-card-tier-badge ${primaryBadge.tagClass || ''}">${escapeHTML(primaryBadge.label || '')}</span>
+        </div>
+      </div>
+      <div class="hover-card-stats">
+        <div class="hover-stat">
+          <span class="stat-num">${user.commits || 0}</span>
+          <span class="stat-lbl">Commits</span>
+        </div>
+        <div class="hover-stat">
+          <span class="stat-num">${userGames.length}</span>
+          <span class="stat-lbl">Games</span>
+        </div>
+        <div class="hover-stat">
+          <span class="stat-num">${score}</span>
+          <span class="stat-lbl">Points</span>
+        </div>
+      </div>
+      ${userGames.length > 0 ? `
+        <div class="hover-card-games">
+          <span class="hover-games-title">Top Authored Games</span>
+          <div class="hover-games-carousel">
+            ${userGames.slice(0, 4).map(title => `<span class="hover-game-chip">${escapeHTML(title)}</span>`).join("")}
+          </div>
+        </div>
+      ` : ''}
+      <div class="hover-card-footer">
+        <a href="https://github.com/${user.login}" target="_blank" rel="noopener noreferrer" class="hover-github-link">
+          <i data-lucide="external-link"></i> Verified GitHub Profile
+        </a>
+      </div>
+    `;
+
+    document.body.appendChild(card);
+    activeHoverCard = card;
+
+    // Viewport-aware positioning
+    const rect = anchorEl.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+    let top = rect.bottom + window.scrollY + 8;
+    let left = rect.left + window.scrollX;
+
+    if (left + cardRect.width > window.innerWidth - 16) {
+      left = window.innerWidth - cardRect.width - 16;
+    }
+    if (top + cardRect.height > window.innerHeight + window.scrollY - 16) {
+      top = rect.top + window.scrollY - cardRect.height - 8;
+    }
+
+    card.style.top = `${Math.max(8, top)}px`;
+    card.style.left = `${Math.max(8, left)}px`;
+
+    card.addEventListener("mouseenter", () => {
+      clearTimeout(hoverCardTimer);
+    });
+    card.addEventListener("mouseleave", () => {
+      removeHoverCard();
+    });
+
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+  }
+
+  function removeHoverCard() {
+    clearTimeout(hoverCardTimer);
+    if (activeHoverCard) {
+      activeHoverCard.remove();
+      activeHoverCard = null;
+    }
+  }
+
+  document.addEventListener("mouseover", (e) => {
+    const trigger = e.target.closest(".table-user-cell, .podium-name, .user-display-name, .github-handle-link");
+    if (!trigger) return;
+    const tr = trigger.closest("tr");
+    let login = null;
+    if (tr) {
+      const link = tr.querySelector(".github-handle-link");
+      if (link) login = link.textContent.replace("@", "").trim();
+    } else {
+      const handleEl = trigger.closest(".podium-card") ? trigger.closest(".podium-card").querySelector(".podium-handle") : null;
+      if (handleEl) login = handleEl.textContent.replace("@", "").trim();
+    }
+
+    if (!login) return;
+    const user = contributorsData.find(c => c.login && c.login.toLowerCase() === login.toLowerCase());
+    if (!user) return;
+
+    clearTimeout(hoverCardTimer);
+    hoverCardTimer = setTimeout(() => {
+      createHoverCard(user, trigger);
+    }, 150);
+  });
+
+  document.addEventListener("mouseout", (e) => {
+    const trigger = e.target.closest(".table-user-cell, .podium-name, .user-display-name, .github-handle-link");
+    if (!trigger) return;
+    hoverCardTimer = setTimeout(() => {
+      if (activeHoverCard && !activeHoverCard.matches(":hover")) {
+        removeHoverCard();
+      }
+    }, 150);
+  });
 });
