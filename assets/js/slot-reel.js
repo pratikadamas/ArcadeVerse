@@ -13,23 +13,61 @@
   let reelAudioCtx = null;
   let isSpinning = false;
   let currentAnimationId = null;
+  let activeTickInterval = null;
+  let chosenTargetGame = null;
+
+  // Sound Engine Mute & Gain Synchronizer
+  function isSoundMuted() {
+    try {
+      if (window.SoundEngine && typeof window.SoundEngine.muted !== 'undefined') {
+        return Boolean(window.SoundEngine.muted);
+      }
+      return localStorage.getItem('av_sound_muted') === 'true';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function getEffectiveVolume() {
+    try {
+      if (window.SoundEngine && typeof window.SoundEngine.volume === 'number') {
+        return Math.max(0, Math.min(1, window.SoundEngine.volume));
+      }
+      const saved = localStorage.getItem('arcadeverse_master_volume');
+      if (saved !== null) {
+        const val = parseFloat(saved);
+        if (Number.isFinite(val) && val >= 0 && val <= 1) return val;
+      }
+    } catch (_) {}
+    return 0.28;
+  }
 
   // Web Audio Sound Generator
   function getAudioContext() {
     if (!reelAudioCtx) {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (AudioContext) reelAudioCtx = new AudioContext();
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) reelAudioCtx = new AudioContext();
+      } catch (_) {
+        reelAudioCtx = null;
+      }
     }
     if (reelAudioCtx && reelAudioCtx.state === 'suspended') {
-      reelAudioCtx.resume();
+      try {
+        reelAudioCtx.resume();
+      } catch (_) {}
     }
     return reelAudioCtx;
   }
 
   function playTickSound(frequency = 600) {
+    if (isSoundMuted()) return;
     try {
       const actx = getAudioContext();
       if (!actx) return;
+      const vol = getEffectiveVolume();
+      if (vol <= 0) return;
+
       const now = actx.currentTime;
       const osc = actx.createOscillator();
       const gain = actx.createGain();
@@ -39,7 +77,7 @@
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(frequency, now);
       osc.frequency.exponentialRampToValueAtTime(180, now + 0.04);
-      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.setValueAtTime(0.08 * vol, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
 
       osc.start(now);
@@ -48,9 +86,13 @@
   }
 
   function playWinFanfare() {
+    if (isSoundMuted()) return;
     try {
       const actx = getAudioContext();
       if (!actx) return;
+      const vol = getEffectiveVolume();
+      if (vol <= 0) return;
+
       const now = actx.currentTime;
       const freqs = [440, 554.37, 659.25, 880];
 
@@ -62,7 +104,7 @@
 
         osc.type = 'sine';
         osc.frequency.setValueAtTime(f, now + idx * 0.1);
-        gain.gain.setValueAtTime(0.18, now + idx * 0.1);
+        gain.gain.setValueAtTime(0.18 * vol, now + idx * 0.1);
         gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.35);
 
         osc.start(now + idx * 0.1);
@@ -191,14 +233,26 @@
 
     // Audio tick player synchronized with speed
     let tickCount = 0;
-    const tickInterval = setInterval(() => {
+    if (activeTickInterval) {
+      clearInterval(activeTickInterval);
+      activeTickInterval = null;
+    }
+    activeTickInterval = setInterval(() => {
       if (!isSpinning) {
-        clearInterval(tickInterval);
+        if (activeTickInterval) {
+          clearInterval(activeTickInterval);
+          activeTickInterval = null;
+        }
         return;
       }
       playTickSound(500 + (tickCount % 10) * 40);
       tickCount++;
-      if (tickCount > 24) clearInterval(tickInterval);
+      if (tickCount > 24) {
+        if (activeTickInterval) {
+          clearInterval(activeTickInterval);
+          activeTickInterval = null;
+        }
+      }
     }, 110);
 
     // Start CSS transition with cubic-bezier easing deceleration
@@ -217,6 +271,10 @@
     if (!isSpinning) return;
     isSpinning = false;
     clearTimeout(currentAnimationId);
+    if (activeTickInterval) {
+      clearInterval(activeTickInterval);
+      activeTickInterval = null;
+    }
 
     const titleDisplay = document.getElementById('slot-chosen-title');
     if (chosenTargetGame) {
@@ -237,6 +295,10 @@
     if (!isSpinning) return;
     isSpinning = false;
     clearTimeout(currentAnimationId);
+    if (activeTickInterval) {
+      clearInterval(activeTickInterval);
+      activeTickInterval = null;
+    }
 
     if (slotModal) slotModal.classList.add('hidden');
     if (chosenTargetGame && window.openGameModal) {
@@ -256,21 +318,11 @@
 
   // Intercept default random button
   function hookRandomGameButton() {
-    const randomGameBtn = document.getElementById('random-game-btn');
+    const randomGameBtn = document.getElementById('hero-random-game-btn') || document.getElementById('random-game-btn');
     if (randomGameBtn) {
-      // Clone button to wipe old single-timeout listeners cleanly
-      const newBtn = randomGameBtn.cloneNode(true);
-      randomGameBtn.parentNode.replaceChild(newBtn, randomGameBtn);
-
-      newBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (typeof GAMES_REGISTRY !== 'undefined' && Array.isArray(GAMES_REGISTRY) && GAMES_REGISTRY.length > 0) {
-          launchSlotPicker(GAMES_REGISTRY, (game) => {
-            if (typeof window.openGameModal === 'function') {
-              window.openGameModal(game, newBtn);
-            }
-          });
-        }
+      // Do not replace node if already wired by app.js, attach progressive enhancement
+      randomGameBtn.addEventListener('click', (e) => {
+        // Handled in app.js integration
       });
     }
   }
