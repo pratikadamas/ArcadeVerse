@@ -4604,7 +4604,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Hero Section "Surprise Me / Random Game Roulette" Launcher
+  // Hero Section "Surprise Me / Random Game Roulette" Launcher (#893)
   const randomGameBtn = document.getElementById("hero-random-game-btn");
   let isRollingRandom = false;
 
@@ -4612,6 +4612,29 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isRollingRandom) return;
     if (typeof GAMES_REGISTRY === "undefined" || !Array.isArray(GAMES_REGISTRY) || GAMES_REGISTRY.length === 0) {
       console.warn("GAMES_REGISTRY is not available or empty.");
+      return;
+    }
+
+    const reducedMotion = document.documentElement.classList.contains("a11y-reduced-motion") ||
+      (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+    // If ArcadeSlotReel visual spinner is available and motion is not reduced, launch reel
+    if (window.ArcadeSlotReel && typeof window.ArcadeSlotReel.spin === "function" && !reducedMotion) {
+      isRollingRandom = true;
+      if (randomGameBtn) {
+        randomGameBtn.classList.add("is-rolling");
+        randomGameBtn.setAttribute("aria-busy", "true");
+      }
+      window.ArcadeSlotReel.spin(GAMES_REGISTRY, (selectedGame) => {
+        if (randomGameBtn) {
+          randomGameBtn.classList.remove("is-rolling");
+          randomGameBtn.setAttribute("aria-busy", "false");
+        }
+        isRollingRandom = false;
+        if (selectedGame) {
+          openGameModal(selectedGame, randomGameBtn);
+        }
+      });
       return;
     }
 
