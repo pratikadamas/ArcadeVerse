@@ -1541,7 +1541,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       } else {
         // Compute smart suggestions based on query and available game categories/tags
-        const suggestions = getSmartSuggestions(searchQuery, currentCategory);
+        let suggestions = getSmartSuggestions(searchQuery, currentCategory);
+        if ((!suggestions || suggestions.length === 0) && window.PhoneticSearch) {
+          suggestions = window.PhoneticSearch.findPhoneticSuggestions(searchQuery, GAMES_REGISTRY);
+        }
         let suggestionsHtml = "";
         if (suggestions.length > 0) {
           suggestionsHtml = `
