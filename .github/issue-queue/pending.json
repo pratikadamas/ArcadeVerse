@@ -1,1 +1,182 @@
-[]
+[
+  {
+    "id": 1,
+    "title": "[Feature/Algorithms]: Procedural Cellular Automata Cave & Organic Maze Generator",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nDungeon crawlers, mining games, and survival arcades in the catalog currently rely on static, hardcoded level layouts. Contributors who want procedural cave environments lack a standardized, zero-dependency organic map generator.\n\n## Architectural Scope & Requirements\n1. **4-5 Rule Cellular Automata Engine (`assets/js/procedural-cave-automata.js`):**\n   - Implements 2D grid cellular automata with configurable initial wall fill percentages (e.g. 45% - 48%) and iterative birth/survival rules (B5678/S45678) over 4 to 6 simulation steps.\n2. **Flood-Fill Connectivity Guarantee:**\n   - Implements a flood-fill algorithm identifying disconnected subterranean pockets and automatically carves minimal corridor tunnels between isolated cavern rooms.\n3. **Canvas 2D Auto-Tiling Mask:**\n   - Automatically computes 16-bit bitmask neighborhood values for each cave cell to select smooth rounded corner tiles and wall edges without manual tile placement.\n\n## Acceptance Criteria\n- [ ] Generates connected, playable cave layouts in under 10ms for 100x100 tile grids.\n- [ ] Guaranteed 100% connectivity between spawn point and exit portal.\n- [ ] Includes interactive visual generator playground on `ideas.html` with seed controls."
+  },
+  {
+    "id": 2,
+    "title": "[Feature/Audio]: Web Audio Adaptive Dynamic Music Stem Layering & Cross-Fading Engine",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nBackground music in games remains static regardless of high-stakes gameplay moments (such as low health, boss encounters, or sudden danger), creating an emotional disconnect between visual intensity and audio atmosphere.\n\n## Architectural Scope & Requirements\n1. **Synchronized 4-Track Stem Mixer (`assets/js/adaptive-stems.js`):**\n   - Synchronizes 4 parallel procedural audio loop channels: `Bass Groove`, `Percussion/Drums`, `Lead Arpeggio`, and `Atmospheric Ambience`.\n   - Uses precise sample-accurate scheduling via `AudioContext.currentTime` so all stems remain in perfect lockstep phase alignment without tempo drift.\n2. **Dynamic Intensity State Controller:**\n   - Smoothly ramps individual stem gain nodes using `gain.setTargetAtTime()` based on game state events (`calm`, `combat`, `critical_health`, `boss`).\n3. **Developer API Integration:**\n   - Simple declarative helper: `ArcadeVerse.audio.setMusicIntensity(0.85)` or `ArcadeVerse.audio.setMusicState('combat')`.\n\n## Acceptance Criteria\n- [ ] Zero perceptible phase cancellation or tempo drift across looping tracks.\n- [ ] Silky-smooth cross-fading over 0.5s to 1.5s time constants without audible popping.\n- [ ] Automatic teardown and oscillator disconnect when exiting game modals."
+  },
+  {
+    "id": 3,
+    "title": "[Feature/Input]: Virtual Arcade Trackpad Multi-Gesture Macro Swipe Controller",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nFighting games and high-action retro arcades requiring complex circular motions (like Hadouken quarter-circle forward or 360-degree grapple inputs) are nearly impossible to execute on mobile touchscreens using conventional flat D-pads.\n\n## Architectural Scope & Requirements\n1. **Continuous Touch Gesture Tracker (`assets/js/trackpad-gestures.js`):**\n   - High-frequency pointer event analyzer tracking touch drag vectors, angular velocities, and stroke arcs on an on-screen circular trackpad.\n2. **Gesture Recognition Engine:**\n   - Recognizes discrete motion archetypes: `Quarter-Circle Forward`, `Dragon Punch Z-Motion`, `Full 360 Rotation`, `Double Tap Dash`, and `Flick Release`.\n3. **Tactile Particle HUD Trail:**\n   - Renders a glowing neon particle trail on a Canvas 2D overlay following the player's finger path, changing color when a valid combo motion is successfully registered.\n\n## Acceptance Criteria\n- [ ] Accurately classifies quarter-circle and directional swipe motions within 150ms windows.\n- [ ] Fires custom DOM events `arcade-gesture` with detected motion name and confidence score.\n- [ ] Fully responsive and touch-optimized across mobile and tablet browsers."
+  },
+  {
+    "id": 4,
+    "title": "[Feature/Graphics]: Pure Vanilla Canvas Isometric 2.5D Tilemap Stacking & Heightmap Renderer",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nExisting isometric games in ArcadeVerse rely on pre-rendered 2D sprite tiles or flat diamond grids. Game authors who want multi-layered 3D elevation, cliffs, and stepped terrain have no lightweight heightmap stacking tool.\n\n## Architectural Scope & Requirements\n1. **2.5D Voxel Block Stacking Engine (`assets/js/iso-heightmap.js`):**\n   - Parses a 2D integer matrix representing tile elevations (0 to 16 blocks tall) and renders true diamond isometric projected blocks with top, left, and right directional shading.\n2. **Painter's Algorithm Depth Sorting:**\n   - Implements back-to-front sorting $(x + y)$ ensuring foreground pillars and characters correctly occlude background terrain without visual sorting artifacts.\n3. **Cursor Screen-to-World Affine Inversion:**\n   - Computes reverse affine transformation from 2D screen coordinates $(mouseX, mouseY)$ to the exact $(gridX, gridY, height)$ isometric voxel block beneath the pointer.\n\n## Acceptance Criteria\n- [ ] Renders a 50x50 multi-elevation isometric map at solid 60 FPS in pure Canvas 2D.\n- [ ] Accurate pointer picking and block highlight hovering.\n- [ ] Zero external dependencies; 100% Vanilla JS isometric projection math."
+  },
+  {
+    "id": 5,
+    "title": "[Feature/A11y]: Client-Side Live Web Speech Recognition (ASR) Voice Command Controller",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcade games requiring rapid keyboard or gamepad interactions remain inaccessible to players with motor impairments who cannot use physical controllers.\n\n## Architectural Scope & Requirements\n1. **Zero-Dependency Voice Controller (`assets/js/voice-command-controller.js`):**\n   - Wraps browser-native `SpeechRecognition` / `webkitSpeechRecognition` APIs with continuous listening mode.\n   - Maps recognized phrases to virtual arcade inputs (`\"jump\"`, `\"fire\"`, `\"left\"`, `\"right\"`, `\"shield\"`, `\"pause\"`).\n2. **Fuzzy Grammar Matcher & Confidence Filter:**\n   - Uses Levenshtein distance matching against the command dictionary to tolerate accents and pronunciation variations while filtering background noise.\n3. **On-Screen Audio Reactive HUD:**\n   - Displays an animated microphone indicator with real-time recognized word feedback and simulated input dispatch.\n\n## Acceptance Criteria\n- [ ] Dispatches simulated keyboard/action events within 200ms of spoken commands.\n- [ ] Handles microphone permission denials gracefully with informative UI alerts.\n- [ ] Automatically terminates audio recognition sessions when closing the game modal."
+  },
+  {
+    "id": 6,
+    "title": "[Feature/Physics]: Canvas Dynamic 2D Liquid Splash & Surface Tension Wave Equation",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nWater bodies in retro platformers, fishing games, and submarine arcades are drawn as static blue rectangles or flat scrolling textures with no physical reaction to falling characters, torpedoes, or floating crates.\n\n## Architectural Scope & Requirements\n1. **1D Spring Mass Surface Wave Simulator (`assets/js/water-surface-tension.js`):**\n   - Simulates a continuous water surface using an array of 60 to 120 interconnected spring masses governed by Hooke's Law, tension constants, and dampening factors.\n2. **Interactive Splash & Wave Propagation:**\n   - When game entities impact the water line, downward momentum triggers wave propagation that spreads outward across the pool and bounces realistically off pool boundaries.\n3. **Buoyancy Physics & Particle Droplet Sprays:**\n   - Computes upward Archimedes buoyant forces for floating game items and spawns dynamic droplet splash particles upon violent impacts.\n\n## Acceptance Criteria\n- [ ] 60 FPS wave simulation running alongside active canvas games.\n- [ ] Smooth Bezier spline water surface rendering with gradient depths.\n- [ ] Simple API `ArcadeVerse.physics.createWaterBody(x, y, width, height)`."
+  },
+  {
+    "id": 7,
+    "title": "[Feature/Audio]: Multi-Channel Retro Chiptune Pitch-Bend & Vibrato LFO Envelope Generator",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nSound effects in ArcadeVerse games are mostly static single-tone beeps. Authentic vintage arcade hardware (Yamaha YM2151, Commodore SID, NES APU) relied heavily on continuous Low-Frequency Oscillators (LFO) for laser pitch slides, alien sirens, and weapon charging warbles.\n\n## Architectural Scope & Requirements\n1. **Multi-Waveform LFO Synthesizer (`assets/js/chiptune-lfo.js`):**\n   - Provides selectable LFO modulators: `Triangle`, `Sine`, `Square (Tremolo)`, and `Sample-and-Hold Random (Computer Chatter)`.\n2. **Bipolar Frequency & Gain Modulation Routing:**\n   - Connects LFO output to audio rate oscillator frequency inputs (`osc.frequency`) for pitch vibrato and gain nodes for amplitude tremolo.\n3. **Attack-Decay-Sustain-Release (ADSR) Modulation Envelopes:**\n   - Envelopes allow modulation depth and speed to ramp dynamically over time (e.g., slow start vibrato or accelerating sci-fi power charging).\n\n## Acceptance Criteria\n- [ ] Generates rich, authentic vintage arcade sirens and laser warbles with zero audio dropouts.\n- [ ] Full parameter playground on `ideas.html` with real-time waveform visualizers.\n- [ ] Clean node disconnection preventing lingering audio thread consumption."
+  },
+  {
+    "id": 8,
+    "title": "[Feature/Algorithms]: Procedural 2D Voronoi Diagram Biome Sharding & Territory Conquest Map",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nStrategy, territory conquest, and space colonization arcade games currently feature repetitive grid-based or uniform random maps that lack natural organic geopolitical borders.\n\n## Architectural Scope & Requirements\n1. **Pure Vanilla 2D Voronoi / Delaunay Generator (`assets/js/voronoi-biome-sharding.js`):**\n   - Implements Fortune's sweep-line algorithm or high-speed Jump Flooding to partition a 2D canvas into organic Voronoi territory cells from random or distributed seed points.\n2. **Biome Assignment & Relaxed Lloyd Iterations:**\n   - Applies 2-3 passes of Lloyd centroid relaxation for balanced territory distribution and assigns custom neon biome palettes (Cyber City, Volcanic Waste, Neon Tundra).\n3. **Interactive Territory Ownership State:**\n   - Each Voronoi polygon tracks owner player, fortification level, and borders, rendering smooth highlighted perimeter borders when clicked.\n\n## Acceptance Criteria\n- [ ] Generates 50+ balanced Voronoi territory cells in under 15ms in pure JavaScript.\n- [ ] Accurate point-in-polygon detection for mouse clicks and cursor selection.\n- [ ] Zero external geometry or spatial libraries required."
+  },
+  {
+    "id": 9,
+    "title": "[Feature/Audio]: Web Audio Dynamic Stereo Haas Effect Spatial Widener & Psychoacoustic Delay",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcade sound effects often sound thin, centered, and boxed-in when played through headphones. Adding heavy reverb muddies retro chiptune clarity, while plain mono sound lacks spatial immersion.\n\n## Architectural Scope & Requirements\n1. **Psychoacoustic Haas Widener (`assets/js/stereo-haas-widener.js`):**\n   - Implements the Haas precedence effect: splits mono audio into left and right channels and applies a micro-delay (10ms to 30ms) to one channel.\n   - The human brain perceives a sound source of immense spatial width without perceiving a distinct echo.\n2. **Dynamic Stereo Width & Phase Alignment Control:**\n   - Allows dialing spatial width from 0% (pure mono) to 200% (super-wide stereophonic field) with mono-compatibility phase checking to prevent comb filtering cancellation.\n3. **Master Insert & Per-Sound Routing:**\n   - Can be toggled in the master sound options or applied selectively to boss explosions, level warp gateways, and victory stingers.\n\n## Acceptance Criteria\n- [ ] Expansive 3D stereo widening without phase cancellation artifacts when summed to mono.\n- [ ] Under 0.2ms processing overhead using native Web Audio `DelayNode` and `ChannelSplitterNode`.\n- [ ] Interactive listening comparison sandbox with A/B testing toggle."
+  },
+  {
+    "id": 10,
+    "title": "[Feature/Physics]: Interactive 2D Spring-Damper Ragdoll Dismemberment & Skeletal Bone Hierarchy",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nAction arcade games currently represent player deaths and enemy defeats with simple disappearing sprites or static explosion animations, missing the chaotic, hilarious physical fun of retro floppy ragdoll physics.\n\n## Architectural Scope & Requirements\n1. **2D Skeletal Hierarchy & Spring Joints (`assets/js/ragdoll-bones.js`):**\n   - Implements a connected kinematic hierarchy of rigid limb segments (head, torso, upper/lower arms, legs) connected by angular limit springs.\n2. **Velocity Threshold Dismemberment Physics:**\n   - When joints experience extreme impulse shocks or slicing weapon impacts, joint constraints snap, detaching limbs into independent spinning physics debris with particle blood/sparks.\n3. **Verlet Numerical Integration & Obstacle Bouncing:**\n   - Solves body collisions against platforms and walls with realistic tumbling, bouncing, and friction settling.\n\n## Acceptance Criteria\n- [ ] Real-time 60 FPS ragdoll tumbling across multi-segment skeletons.\n- [ ] Realistic angular joint constraints preventing unnatural backward bending before break.\n- [ ] Reusable generator `ArcadeVerse.physics.createRagdoll(x, y, scale)`."
+  },
+  {
+    "id": 11,
+    "title": "[Feature/UI]: CSS Glassmorphism & Neon HUD Reticle Customizer for Arcade Cabinets",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nFirst-person and top-down shooter games in ArcadeVerse currently use basic browser mouse cursors or static PNG crosshairs that cannot be customized for visibility, color contrast, or playstyle.\n\n## Architectural Scope & Requirements\n1. **Interactive Reticle Studio (`assets/js/glassmorphism-reticle.js`):**\n   - A standalone developer and player studio modal for authoring custom animated neon HUD aiming reticles.\n   - Reticle components: center dot, dynamic spreading crossbars, rotating radial dial rings, and distance telemetry notches.\n2. **Dynamic Recoil Spread & Firing Bloom:**\n   - Reticle crossbars dynamically expand on mouse fire/movement and recover with spring damping based on custom game events.\n3. **CSS Backdrop Blur Glassmorphic Frames:**\n   - Surrounds HUD widgets with frosted glassmorphism containers (`backdrop-filter: blur(12px)`) with neon border glows.\n\n## Acceptance Criteria\n- [ ] Smooth 60 FPS reticle tracking with sub-pixel canvas rendering.\n- [ ] 1-click JSON reticle preset export and persistence in `localStorage`.\n- [ ] Fully accessible with high-contrast color accessibility options."
+  },
+  {
+    "id": 12,
+    "title": "[Feature/Audio]: Web Audio Dynamic Comb Filter & Flanger/Phaser Effect DSP Node",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nSci-fi lasers, jet thrusters, and hyperspace warp moments sound generic when restricted to basic oscillator tones. Vintage arcade sound chips created signature swooshing sounds by passing audio through analogue bucket-brigade delay lines.\n\n## Architectural Scope & Requirements\n1. **Variable Delay-Line Flanger & Comb Filter (`assets/js/audio-flanger-comb.js`):**\n   - Implements modulated short delay lines (0.5ms to 15ms) using `DelayNode` and feedback gain loops with an integrated LFO.\n   - Induces destructive and constructive interference, creating sweeping harmonic notches (the iconic 'jet plane' flanging effect).\n2. **Multi-Stage Phaser All-Pass Filter Bank:**\n   - 4-stage and 8-stage cascaded `BiquadFilterNode` all-pass filters sweeping phase relationships across the spectrum.\n3. **Audio Subsystem Insertion:**\n   - Exposes `ArcadeVerse.audio.applyFlanger(sourceNode, { depth, speed, feedback })`.\n\n## Acceptance Criteria\n- [ ] Authentic retro flanging and comb filtering with zero audio crackling.\n- [ ] Clean parameter automation using Web Audio `AudioParam` timeline events.\n- [ ] Tested and verified across Chrome, Firefox, and Safari audio backends."
+  },
+  {
+    "id": 13,
+    "title": "[Feature/Canvas]: Dynamic Canvas Procedural Lightning & Electric Arc Plasma Discharger",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nElectricity, Tesla coils, and plasma weapon effects in arcade games are currently drawn as straight colored lines or pre-baked sprite loops that repeat predictably without dynamic crackle.\n\n## Architectural Scope & Requirements\n1. **Midpoint-Displacement Fractal Lightning (`assets/js/plasma-lightning.js`):**\n   - Implements recursive midpoint displacement with randomized perpendicular offsets to generate chaotic, branching electric arcs between arbitrary endpoints $(x_1, y_1) \to (x_2, y_2)$.\n2. **Sub-Branch Forking & Pulsating Alpha Glows:**\n   - Generates secondary fork branches that taper in width and intensity, flickering with randomized frame life and multi-layered neon glow shadows.\n3. **Interactive Target Zapping:**\n   - Electric arcs automatically seek and leap between nearby interactive canvas game entities (enemies, metal obstacles, power coils).\n\n## Acceptance Criteria\n- [ ] Generates and renders 10+ active branching lightning bolts at solid 60 FPS.\n- [ ] Pure Canvas 2D path rendering without static image assets.\n- [ ] Helper method `ArcadeVerse.vfx.zap(startX, startY, targetX, targetY, options)`."
+  },
+  {
+    "id": 14,
+    "title": "[Feature/Gameplay]: Client-Side Bookmarkable Challenge Run Modifier Engine",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nReplaying arcade games can become repetitive once a player masters the base difficulty. Players have no built-in way to create custom challenge runs (like 'Sudden Death', 'Inverted Controls', or 'Turbo Speed') to challenge friends.\n\n## Architectural Scope & Requirements\n1. **Universal Game Modifier System (`assets/js/challenge-modifiers.js`):**\n   - An accessible drawer in the game modal offering standardized gameplay mutators: `Sudden Death (1 HP)`, `Low Gravity (0.5x)`, `Turbo Clock (1.5x)`, `Inverted Steer`, and `Foggy Darkness`.\n2. **Deterministic Mutator Bitmask & Base64 URL Encoding:**\n   - Encodes active challenge modifiers into a compact URL parameter string with 1-click shareable links.\n3. **Challenge Run Leaderboard Verification Tag:**\n   - Submits game scores with verified challenge badges so high scores achieved under extreme handicaps are highlighted on the podium.\n\n## Acceptance Criteria\n- [ ] Seamlessly applies global input/speed modifiers to games via the client SDK.\n- [ ] Generates instant shareable URLs with 1-click copy to clipboard.\n- [ ] Non-intrusive modal UI that stays hidden during standard play."
+  },
+  {
+    "id": 15,
+    "title": "[Feature/Algorithms]: Canvas 2D Convex Hull & Minimum Bounding Box Collision Calculator",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nMany arcade games in the catalog use rough rectangular bounding boxes `(x, y, w, h)` for irregularly shaped polygon sprites (spaceships, asteroids, curved swords), resulting in frustrating 'phantom hits' where bullets register hits on empty air.\n\n## Architectural Scope & Requirements\n1. **Convex Hull Point-Set Reducer (`assets/js/convex-hull-collision.js`):**\n   - Implements Graham Scan or Monotone Chain algorithms to automatically compute tight convex polygon boundaries around arbitrary vertex clusters in $O(n \\log n)$ time.\n2. **Separating Axis Theorem (SAT) Collision Solver:**\n   - Implements SAT projection calculations for arbitrary convex polygons, computing exact intersection booleans, minimum translation vectors (MTV), and collision contact normals.\n3. **Visual Debug Collision Overlay:**\n   - Developer mode toggle rendering brightly colored wireframe convex hulls and penetration normal vectors in real time.\n\n## Acceptance Criteria\n- [ ] Sub-millisecond SAT collision resolution for 50+ simultaneous moving polygon pairs.\n- [ ] Accurate calculation of Minimum Translation Vectors for realistic physics bounces.\n- [ ] Fully tested against edge cases (parallel edges, overlapping vertices)."
+  },
+  {
+    "id": 16,
+    "title": "[Feature/Graphics]: Interactive Pixel-Art Glyph Matrix & Custom Bitmap Font Renderer",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nLoading web fonts (TTF/WOFF) inside game canvas elements causes Flash of Unstyled Text (FOUT), blurriness when scaled at integer pixel ratios, and external network dependency issues.\n\n## Architectural Scope & Requirements\n1. **64-Bit Bitmask Micro-Font Engine (`assets/js/bitmap-font-renderer.js`):**\n   - Encodes complete ASCII and retro symbol sets into high-density 3x5 and 5x5 binary bitmasks stored directly in pure JavaScript arrays.\n2. **Sub-Pixel Integer Canvas Blitter:**\n   - Renders razor-sharp pixel text onto game canvases with customizable integer scaling factors (1x, 2x, 4x), custom drop shadows, and neon rainbow gradient fills.\n3. **Specialty Arcade Glyphs & Icons:**\n   - Includes built-in retro arcade icon glyphs: heart icons, coins, skulls, arrows, and gamepad buttons mapped to ASCII escape sequences.\n\n## Acceptance Criteria\n- [ ] 100% offline, zero-dependency pixel typography with zero font loading delays.\n- [ ] Renders thousands of characters per frame with under 0.5ms draw call overhead.\n- [ ] Simple API `ArcadeVerse.ui.drawPixelText(ctx, \"HIGH SCORE: 9999\", x, y, options)`."
+  },
+  {
+    "id": 17,
+    "title": "[Feature/VFX]: Dynamic Canvas Particle Text Dissolve & Matrix Digit Rain Transition",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nGame Over, Stage Clear, and Victory banners currently appear and disappear with abrupt CSS opacity cuts or static text displays, missing the visual drama of physical retro arcade transition effects.\n\n## Architectural Scope & Requirements\n1. **Canvas Raster Text Particle Slicer (`assets/js/particle-text-dissolve.js`):**\n   - Renders text offscreen, extracts active non-transparent pixels via `ctx.getImageData()`, and instantiates an object-pooled swarm of physical pixel particles.\n2. **Configurable Transition Physics Modes:**\n   - `Vortex Dissolve` (particles swirl outward in radial turbulent vortexes), `Gravitational Fall` (letters crumble like breaking sandstone bricks), and `Matrix Code Rain` (vertical glowing glyph cascades).\n3. **Reversible Assembly Animation:**\n   - Supports reversing the particle animation to assemble glowing text out of floating cosmic dust.\n\n## Acceptance Criteria\n- [ ] Smooth 60 FPS particle transition without frame drops or memory leaks.\n- [ ] Reusable transition trigger `ArcadeVerse.vfx.dissolveText(text, x, y, options)`.\n- [ ] Automatic fallback to simple fade when `prefers-reduced-motion` is active."
+  },
+  {
+    "id": 18,
+    "title": "[Feature/Audio]: Web Audio Binaural Beat & Isochronic Tone Brainwave Synchronizer",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nDuring long arcade marathon sessions and competitive tournament play, players can experience fatigue or tension. Retro arcade hubs historically used hypnotic ambient drones to induce a flow state.\n\n## Architectural Scope & Requirements\n1. **Binaural Frequency Offset Synthesizer (`assets/js/binaural-brainwave.js`):**\n   - Generates precision frequency pairs through separate left and right stereo channels using Web Audio oscillators (e.g. 432 Hz Left, 442 Hz Right $\to$ 10 Hz Alpha wave).\n2. **Isochronic Pulse Modulation:**\n   - For speaker listening (where stereo binaural separation is absent), provides isochronic tones using sharp rhythmic gain pulsing at target brainwave frequencies (Alpha: 8-12Hz for calm focus, Beta: 13-30Hz for high alertness).\n3. **Subtle Background Ambience Blending:**\n   - Blends beneath game music at a customizable low volume (-24dB) so it remains relaxing without overpowering sound effects.\n\n## Acceptance Criteria\n- [ ] High-precision frequency accuracy within 0.1 Hz using Web Audio native nodes.\n- [ ] User toggle switch in hub audio settings with volume fader.\n- [ ] Complete documentation explaining psychoacoustic principles on `ideas.html`."
+  },
+  {
+    "id": 19,
+    "title": "[Feature/Physics]: Dynamic 2D Cloth & Cape Verlet Physics Drape Simulation Engine",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nCharacters in platformers, wizard duels, and superhero arcade games currently have rigid rectangular capes or static sprites that remain stiff while jumping, falling, or running.\n\n## Architectural Scope & Requirements\n1. **Verlet Numerical Particle Cloth Grid (`assets/js/verlet-chainmail.js`):**\n   - Implements a 2D particle constraint grid (e.g. 8x12 linked particles) governed by Verlet integration, gravity vectors, and distance relaxation constraints.\n2. **Dynamic Aerodynamic Drag & Wind Turbulence:**\n   - Applies aerodynamic drag based on character horizontal velocity so capes billow backward when sprinting, flap upwards during falls, and ripple in ambient breeze.\n3. **Textured Bezier Quad Skinning:**\n   - Renders the cloth using smooth curved Bezier ribbons with dynamic neon edge stitching and shading highlights.\n\n## Acceptance Criteria\n- [ ] Stable 60 FPS cape simulation without constraint snapping or knotting.\n- [ ] Interactive wind and mouse interaction testing sandbox.\n- [ ] Lightweight helper `ArcadeVerse.physics.createCape(anchorEntity, options)`."
+  },
+  {
+    "id": 20,
+    "title": "[Feature/Shaders]: Dynamic Canvas Heat Distortion & Thermal Mirage Air Shimmer Filter",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nLava worlds, desert tracks, and rocket thruster exhausts in arcade games lack the intense physical sensation of extreme heat because scenes remain static without optical air shimmering.\n\n## Architectural Scope & Requirements\n1. **Sinusoidal Scanline Displacement Mapper (`assets/js/thermal-heat-shimmer.js`):**\n   - Implements an analytical thermal mirage algorithm displacing canvas horizontal scanlines with phase-offset sinusoidal waves $(dx = A \\cdot \\sin(\\omega y + \\phi t))$.\n2. **Localized Heat Emitter Bounds:**\n   - Allows confining the shimmer effect to localized bounding boxes (above a lava pit, behind a jet spaceship engine, or over a campfire) rather than distorting the entire screen.\n3. **High-Performance Clamped Buffer Processing:**\n   - Uses direct `Uint32Array` scanline pointer shifts on a temporary canvas frame to ensure zero performance overhead on mobile and low-end hardware.\n\n## Acceptance Criteria\n- [ ] Convincing thermal heat shimmer effect executing in under 2ms per frame.\n- [ ] Pure Canvas 2D math without WebGL or shader extensions.\n- [ ] Clean API `ArcadeVerse.vfx.createHeatZone(x, y, width, height, intensity)`."
+  }
+]
