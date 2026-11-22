@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Neon Blaster | ArcadeVerse</title>
+  <meta name="description" content="Futuristic cyberpunk space-shooter arcade game with fluid combat, weapon upgrades, wave progression, and intense boss battles.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="nb-container" id="nb-container">
+
+    <!-- Screen Reader Announcer for Accessibility -->
+    <div id="nb-announcer" class="nb-sr-only" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- MAIN GAME CANVAS -->
+    <canvas id="nb-canvas"></canvas>
+
+    <!-- TOP NAVIGATION HUD -->
+    <header class="nb-top-bar" id="nb-top-bar">
+      <div class="nb-top-left">
+        <a href="../../index.html" class="nb-icon-btn" id="nb-btn-back" title="Return to ArcadeVerse Hub">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span class="nb-btn-text">Arcade</span>
+        </a>
+        <div class="nb-brand">
+          <svg class="nb-brand-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00f3ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 19 21 12 17 5 21 12 2"></polygon>
+          </svg>
+          <span class="nb-brand-title">NEON BLASTER</span>
+        </div>
+      </div>
+
+      <!-- Live Game Header Stats -->
+      <div class="nb-top-center" id="nb-hud-center">
+        <!-- Boss Bar (Shown during Boss Wave) -->
+        <div class="nb-boss-container nb-hidden" id="nb-boss-container">
+          <div class="nb-boss-header">
+            <span class="nb-boss-name" id="nb-boss-name">VOID DESTROYER</span>
+            <span class="nb-boss-phase" id="nb-boss-phase">PHASE 1</span>
+            <span class="nb-boss-hp-text" id="nb-boss-hp-text">100%</span>
+          </div>
+          <div class="nb-boss-bar-track">
+            <div class="nb-boss-bar-fill" id="nb-boss-bar-fill" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Normal Wave / Mode Header -->
+        <div class="nb-wave-banner" id="nb-wave-banner">
+          <span class="nb-wave-label" id="nb-wave-label">WAVE 1</span>
+          <span class="nb-mode-badge" id="nb-mode-badge">SURVIVAL</span>
+          <span class="nb-timer-badge nb-hidden" id="nb-timer-badge">03:00</span>
+        </div>
+      </div>
+
+      <div class="nb-top-right">
+        <!-- Score Counter -->
+        <div class="nb-stat-badge nb-stat-score">
+          <span class="nb-stat-label">SCORE</span>
+          <span class="nb-stat-val" id="nb-hud-score">0</span>
+        </div>
+
+        <!-- High Score -->
+        <div class="nb-stat-badge nb-stat-best">
+          <span class="nb-stat-label">BEST</span>
+          <span class="nb-stat-val" id="nb-hud-best">0</span>
+        </div>
+
+        <!-- Audio Toggle Button -->
+        <button type="button" class="nb-icon-btn" id="nb-btn-audio" title="Toggle Sound">
+          <svg class="nb-icon-sound-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+          <svg class="nb-icon-sound-off nb-hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+        </button>
+
+        <!-- Pause Button -->
+        <button type="button" class="nb-icon-btn" id="nb-btn-pause" title="Pause Game (P or Esc)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="4" width="4" height="16"></rect>
+            <rect x="14" y="4" width="4" height="16"></rect>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- IN-GAME HUD OVERLAY -->
+    <div class="nb-hud" id="nb-hud">
+      <!-- Player Status (Health, Shield, Energy) -->
+      <div class="nb-hud-status-panel">
+        <!-- Health Bar -->
+        <div class="nb-meter-group">
+          <div class="nb-meter-meta">
+            <span class="nb-meter-title">HULL INTEGRITY</span>
+            <span class="nb-meter-num" id="nb-hud-hp-num">100 / 100</span>
+          </div>
+          <div class="nb-meter-track nb-track-hp">
+            <div class="nb-meter-fill nb-fill-hp" id="nb-hud-hp-fill" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- Shield Bar -->
+        <div class="nb-meter-group" id="nb-group-shield">
+          <div class="nb-meter-meta">
+            <span class="nb-meter-title">NEON SHIELD</span>
+            <span class="nb-meter-num" id="nb-hud-shield-num">0%</span>
+          </div>
+          <div class="nb-meter-track nb-track-shield">
+            <div class="nb-meter-fill nb-fill-shield" id="nb-hud-shield-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Overdrive Meter -->
+        <div class="nb-meter-group">
+          <div class="nb-meter-meta">
+            <span class="nb-meter-title">OVERDRIVE CHARGE</span>
+            <span class="nb-meter-num nb-text-overdrive" id="nb-hud-od-num">0%</span>
+          </div>
+          <div class="nb-meter-track nb-track-od">
+            <div class="nb-meter-fill nb-fill-od" id="nb-hud-od-fill" style="width: 0%;"></div>
+          </div>
+          <div class="nb-od-prompt nb-hidden" id="nb-od-prompt">
+            <span>PRESS SHIFT FOR OVERDRIVE!</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weapon & Active Buffs Panel -->
+      <div class="nb-hud-weapon-panel">
+        <div class="nb-weapon-card">
+          <span class="nb-weapon-label">PRIMARY WEAPON</span>
+          <span class="nb-weapon-name" id="nb-hud-weapon-name">BASIC LASER</span>
+          <span class="nb-weapon-tier" id="nb-hud-weapon-tier">MK I</span>
+        </div>
+
+        <!-- Active Buff Icons Tray -->
+        <div class="nb-buffs-tray" id="nb-buffs-tray"></div>
+      </div>
+
+      <!-- Combo Indicator -->
+      <div class="nb-hud-combo-panel" id="nb-hud-combo-panel">
+        <div class="nb-combo-box nb-hidden" id="nb-combo-box">
+          <span class="nb-combo-num" id="nb-combo-num">x1</span>
+          <span class="nb-combo-text">COMBO</span>
+          <div class="nb-combo-timer-track">
+            <div class="nb-combo-timer-fill" id="nb-combo-timer-fill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WAVE NOTIFICATION BANNER (In-Game Animated) -->
+    <div class="nb-announcement-overlay nb-hidden" id="nb-announcement-overlay">
+      <div class="nb-announcement-card" id="nb-announcement-card">
+        <h2 class="nb-announcement-title" id="nb-announcement-title">WAVE 1</h2>
+        <p class="nb-announcement-subtitle" id="nb-announcement-subtitle">SCOUT INTRUSION DETECTED</p>
+      </div>
+    </div>
+
+    <!-- MAIN MENU OVERLAY -->
+    <div class="nb-modal-overlay" id="nb-modal-menu">
+      <div class="nb-modal-card nb-menu-card">
+        <div class="nb-logo-wrap">
+          <div class="nb-hero-shield-glow"></div>
+          <svg class="nb-hero-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#00f3ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 19 21 12 17 5 21 12 2"></polygon>
+            <line x1="12" y1="17" x2="12" y2="22"></line>
+          </svg>
+          <h1 class="nb-title-glitch" data-text="NEON BLASTER">NEON BLASTER</h1>
+          <p class="nb-tagline">CYBERPUNK SPACE SHOOTER • NSOC '26</p>
+        </div>
+
+        <!-- Mode Select Tabs -->
+        <div class="nb-mode-selector">
+          <span class="nb-selector-label">SELECT MISSION PROTOCOL</span>
+          <div class="nb-mode-cards">
+            <button type="button" class="nb-mode-card nb-mode-active" data-mode="survival">
+              <span class="nb-mode-name">SURVIVAL</span>
+              <span class="nb-mode-desc">Survive 5 escalating waves and defeat the Void Destroyer</span>
+            </button>
+            <button type="button" class="nb-mode-card" data-mode="timeattack">
+              <span class="nb-mode-name">TIME ATTACK</span>
+              <span class="nb-mode-desc">Score maximum eliminations in a 3-minute blitz</span>
+            </button>
+            <button type="button" class="nb-mode-card" data-mode="bossrush">
+              <span class="nb-mode-name">BOSS RUSH</span>
+              <span class="nb-mode-desc">Direct battle against armored elites and the flagship</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- High Score Preview -->
+        <div class="nb-stats-strip">
+          <div class="nb-strip-stat">
+            <span class="nb-stat-tag">HIGH SCORE</span>
+            <span class="nb-stat-val-lg" id="nb-menu-high-score">0</span>
+          </div>
+          <div class="nb-strip-stat">
+            <span class="nb-stat-tag">ENEMIES PURGED</span>
+            <span class="nb-stat-val-lg" id="nb-menu-enemies-purged">0</span>
+          </div>
+          <div class="nb-strip-stat">
+            <span class="nb-stat-tag">MAX COMBO</span>
+            <span class="nb-stat-val-lg" id="nb-menu-max-combo">1x</span>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="nb-actions-row">
+          <button type="button" class="nb-btn nb-btn-primary" id="nb-btn-start">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span>LAUNCH MISSION</span>
+          </button>
+          <button type="button" class="nb-btn nb-btn-secondary" id="nb-btn-how-to-play">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <span>TACTICAL BRIEFING</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOW TO PLAY / TACTICAL BRIEFING MODAL -->
+    <div class="nb-modal-overlay nb-hidden" id="nb-modal-briefing">
+      <div class="nb-modal-card nb-briefing-card">
+        <div class="nb-modal-header">
+          <h2 class="nb-modal-title">TACTICAL BRIEFING</h2>
+          <button type="button" class="nb-close-btn" id="nb-btn-close-briefing" title="Close Briefing">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="nb-briefing-scroll">
+          <!-- Controls Section -->
+          <section class="nb-briefing-section">
+            <h3 class="nb-sec-title">PILOT FLIGHT CONTROLS</h3>
+            <div class="nb-controls-grid">
+              <div class="nb-ctrl-item"><kbd>W A S D</kbd> / <kbd>Arrows</kbd><span>Thruster Maneuvering</span></div>
+              <div class="nb-ctrl-item"><kbd>Mouse</kbd><span>360° Weapon Aiming</span></div>
+              <div class="nb-ctrl-item"><kbd>Left Click</kbd> / <kbd>Space</kbd><span>Fire Primary Weapons</span></div>
+              <div class="nb-ctrl-item"><kbd>Shift</kbd> / <kbd>Right Click</kbd><span>Activate NEON OVERDRIVE</span></div>
+              <div class="nb-ctrl-item"><kbd>P</kbd> / <kbd>Esc</kbd><span>Tactical Pause Menu</span></div>
+            </div>
+          </section>
+
+          <!-- Hostile Units -->
+          <section class="nb-briefing-section">
+            <h3 class="nb-sec-title">HOSTILE SIGNATURES</h3>
+            <div class="nb-info-grid">
+              <div class="nb-info-card">
+                <span class="nb-info-name nb-cyan">SCOUT</span>
+                <span class="nb-info-desc">Nimble interceptor that charges rapidly toward player hull.</span>
+              </div>
+              <div class="nb-info-card">
+                <span class="nb-info-name nb-yellow">SWARM</span>
+                <span class="nb-info-desc">Coordinated cluster drone units moving in erratic waveforms.</span>
+              </div>
+              <div class="nb-info-card">
+                <span class="nb-info-name nb-purple">HEAVY CRUISER</span>
+                <span class="nb-info-desc">Armored dreadnought firing spread energy bursts.</span>
+              </div>
+              <div class="nb-info-card">
+                <span class="nb-info-name nb-magenta">SNIPER DRONE</span>
+                <span class="nb-info-desc">Keeps perimeter distance and aims high-velocity laser slugs.</span>
+              </div>
+              <div class="nb-info-card">
+                <span class="nb-info-name nb-red">ELITE GUNSHIP</span>
+                <span class="nb-info-desc">Shielded command unit with rapid thrusters and homing barrages.</span>
+              </div>
+              <div class="nb-info-card">
+                <span class="nb-info-name nb-gold">VOID DESTROYER</span>
+                <span class="nb-info-desc">3-Phase flagship with laser sweeps, bullet spirals, and EMP pulses.</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Power-ups -->
+          <section class="nb-briefing-section">
+            <h3 class="nb-sec-title">TACTICAL POWER-UPS</h3>
+            <div class="nb-info-grid">
+              <div class="nb-info-card"><span class="nb-info-name nb-green">HEALTH RECHARGE</span><span class="nb-info-desc">Restores +35 ship hull integrity.</span></div>
+              <div class="nb-info-card"><span class="nb-info-name nb-cyan">NEON SHIELD</span><span class="nb-info-desc">Absorbs incoming kinetic and laser damage.</span></div>
+              <div class="nb-info-card"><span class="nb-info-name nb-yellow">RAPID BLASTER</span><span class="nb-info-desc">Doubles weapon cyclic rate of fire.</span></div>
+              <div class="nb-info-card"><span class="nb-info-name nb-red">DOUBLE DAMAGE</span><span class="nb-info-desc">Amplifies all projectile damage output x2.</span></div>
+              <div class="nb-info-card"><span class="nb-info-name nb-purple">WEAPON UPGRADE</span><span class="nb-info-desc">Upgrades weapon tier (Plasma, Triple, Rail Beam).</span></div>
+              <div class="nb-info-card"><span class="nb-info-name nb-blue">CHRONO DILATION</span><span class="nb-info-desc">Slows enemy movement and projectiles by 50%.</span></div>
+              <div class="nb-info-card"><span class="nb-info-name nb-magenta">ENERGY CAPACITOR</span><span class="nb-info-desc">Fully recharges the NEON OVERDRIVE core.</span></div>
+            </div>
+          </section>
+        </div>
+
+        <div class="nb-modal-footer">
+          <button type="button" class="nb-btn nb-btn-primary" id="nb-btn-briefing-ok">
+            <span>READY FOR ENGAGEMENT</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAUSE MODAL -->
+    <div class="nb-modal-overlay nb-hidden" id="nb-modal-pause">
+      <div class="nb-modal-card nb-pause-card">
+        <h2 class="nb-modal-title">MISSION PAUSED</h2>
+        <p class="nb-pause-status" id="nb-pause-status">TACTICAL SYSTEM SUSPENDED</p>
+
+        <div class="nb-modal-actions">
+          <button type="button" class="nb-btn nb-btn-primary" id="nb-btn-resume">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span>RESUME MISSION</span>
+          </button>
+          <button type="button" class="nb-btn nb-btn-secondary" id="nb-btn-restart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <path d="M3.51 15a9 9 0 1 0 .49-3.1"></path>
+            </svg>
+            <span>RESTART SECTOR</span>
+          </button>
+          <button type="button" class="nb-btn nb-btn-outline" id="nb-btn-menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <span>ABANDON TO MENU</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME OVER MODAL -->
+    <div class="nb-modal-overlay nb-hidden" id="nb-modal-gameover">
+      <div class="nb-modal-card nb-gameover-card">
+        <div class="nb-header-badge nb-badge-red">CRITICAL FAILURE</div>
+        <h2 class="nb-modal-title nb-title-red">HULL DESTROYED</h2>
+        <p class="nb-modal-sub" id="nb-gameover-reason">Ship lost in Sector 4 to enemy fire.</p>
+
+        <div class="nb-result-grid">
+          <div class="nb-result-card">
+            <span class="nb-res-label">FINAL SCORE</span>
+            <span class="nb-res-val nb-cyan" id="nb-go-score">0</span>
+          </div>
+          <div class="nb-result-card">
+            <span class="nb-res-label">ENEMIES ELIMINATED</span>
+            <span class="nb-res-val" id="nb-go-kills">0</span>
+          </div>
+          <div class="nb-result-card">
+            <span class="nb-res-label">SECTOR SURVIVED</span>
+            <span class="nb-res-val" id="nb-go-waves">0</span>
+          </div>
+          <div class="nb-result-card">
+            <span class="nb-res-label">MAX COMBO</span>
+            <span class="nb-res-val nb-magenta" id="nb-go-combo">x1</span>
+          </div>
+        </div>
+
+        <div class="nb-new-high-badge nb-hidden" id="nb-go-new-high">
+          <span>NEW HIGH SCORE REGISTERED!</span>
+        </div>
+
+        <div class="nb-modal-actions">
+          <button type="button" class="nb-btn nb-btn-primary" id="nb-btn-go-retry">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <path d="M3.51 15a9 9 0 1 0 .49-3.1"></path>
+            </svg>
+            <span>TRY AGAIN</span>
+          </button>
+          <button type="button" class="nb-btn nb-btn-secondary" id="nb-btn-go-menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <span>RETURN TO MENU</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VICTORY MODAL -->
+    <div class="nb-modal-overlay nb-hidden" id="nb-modal-victory">
+      <div class="nb-modal-card nb-victory-card">
+        <div class="nb-header-badge nb-badge-green">MISSION ACCOMPLISHED</div>
+        <h2 class="nb-modal-title nb-title-gold">VOID DESTROYER PURGED</h2>
+        <p class="nb-modal-sub">You shattered the alien flagship and liberated the neon sector!</p>
+
+        <div class="nb-result-grid">
+          <div class="nb-result-card">
+            <span class="nb-res-label">FINAL VICTORY SCORE</span>
+            <span class="nb-res-val nb-gold" id="nb-vic-score">0</span>
+          </div>
+          <div class="nb-result-card">
+            <span class="nb-res-label">ENEMIES PURGED</span>
+            <span class="nb-res-val nb-cyan" id="nb-vic-kills">0</span>
+          </div>
+          <div class="nb-result-card">
+            <span class="nb-res-label">TIME COMPLETED</span>
+            <span class="nb-res-val" id="nb-vic-time">00:00</span>
+          </div>
+          <div class="nb-result-card">
+            <span class="nb-res-label">PILOT COMBAT RATING</span>
+            <span class="nb-res-val nb-magenta" id="nb-vic-rank">S-RANK</span>
+          </div>
+        </div>
+
+        <div class="nb-modal-actions">
+          <button type="button" class="nb-btn nb-btn-primary" id="nb-btn-vic-restart">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span>PLAY AGAIN</span>
+          </button>
+          <button type="button" class="nb-btn nb-btn-secondary" id="nb-btn-vic-menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <span>MAIN MENU</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOBILE TOUCH CONTROLS -->
+    <div class="nb-mobile-controls" id="nb-mobile-controls">
+      <!-- Virtual Joystick Touch Area -->
+      <div class="nb-touch-joystick-zone" id="nb-touch-joystick-zone">
+        <div class="nb-joystick-base" id="nb-joystick-base">
+          <div class="nb-joystick-thumb" id="nb-joystick-thumb"></div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="nb-touch-actions">
+        <button type="button" class="nb-touch-btn nb-touch-od" id="nb-touch-od" title="Overdrive">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          <span>OD</span>
+        </button>
+        <button type="button" class="nb-touch-btn nb-touch-fire" id="nb-touch-fire" title="Fire">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="22" y1="12" x2="18" y2="12"></line>
+            <line x1="6" y1="12" x2="2" y2="12"></line>
+            <line x1="12" y1="6" x2="12" y2="2"></line>
+            <line x1="12" y1="22" x2="12" y2="18"></line>
+          </svg>
+          <span>FIRE</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
+
