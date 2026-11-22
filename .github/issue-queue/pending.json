@@ -1,1 +1,11 @@
-[]
+[
+  {
+    "id": 1,
+    "title": "[Refactor/UI]: Decommission and Remove 16-Band Audio Equalizer Widget from Hall of Fame Leaderboard",
+    "labels": [
+      "nsoc26",
+      "level2"
+    ],
+    "body": "## Problem\nThe Hall of Fame leaderboard (`leaderboard.html`) currently loads and embeds an interactive 16-band audio spectrum analyzer (`assets/js/leaderboard-spectrum.js`, `assets/css/leaderboard-spectrum.css`). While visually vibrant, the widget takes up significant vertical screen real estate directly above the contributor podium, clutters mobile viewports, and runs continuous ambient canvas rendering cycles that cause unnecessary battery drain and DOM overhead on the rankings page.\n\n## Architectural Scope & Requirements\n1. **Remove Equalizer Inclusions from `leaderboard.html`:**\n   - Remove `<link rel=\"stylesheet\" href=\"assets/css/leaderboard-spectrum.css\">` from `<head>`.\n   - Remove `<script src=\"assets/js/leaderboard-spectrum.js\"></script>` from the bottom script inclusions.\n   - Clean up any residual HTML container or mount point dedicated to the spectrum visualizer.\n2. **Decommission Component Assets:**\n   - Safely remove or decommission `assets/js/leaderboard-spectrum.js` and `assets/css/leaderboard-spectrum.css`.\n3. **Test Suite & Build Pipeline Cleanup:**\n   - Remove `node --test scripts/test-leaderboard-spectrum.js` from the `test` script in `package.json`.\n   - Safely remove `scripts/test-leaderboard-spectrum.js`.\n   - Ensure `npm test` runs and passes with 0 errors across all remaining test suites.\n\n## Acceptance Criteria\n- [ ] Hall of Fame leaderboard (`leaderboard.html`) loads cleanly without the 16-band spectrum widget.\n- [ ] Zero 404 network errors or missing asset console warnings in DevTools.\n- [ ] `npm test` passes cleanly with all remaining test suites green.\n- [ ] Zero regression to leaderboard rankings, filter tabs, or contributor highlight modals."
+  }
+]
