@@ -112,6 +112,7 @@ function verifyLucideIconIntegrity(iconName, issues) {
 }
 
 const FORBIDDEN_ROOT_FILES = ['assets/js/games-registry.js', 'index.html', 'leaderboard.html'];
+const touchedGameFolders = new Set();
 const touchedFilesSet = new Set();
 let isPrBranch = false;
 
@@ -122,9 +123,10 @@ try {
   if (isCiPr || (currentBranch !== 'main' && currentBranch !== 'HEAD')) {
     isPrBranch = true;
     let baseRef = 'main';
-    for (const ref of ['upstream/main', 'origin/main', 'main']) {
+    for (const ref of [process.env.GITHUB_BASE_REF, 'upstream/main', 'origin/main', 'main']) {
+      if (!ref) continue;
       try {
-        execSync(`git rev-parse --verify ${ref}`, { stdio: 'ignore' });
+        execSync(`git rev-parse --verify ${ref}`, { stdio: 'ignore', cwd: ROOT_DIR });
         baseRef = ref;
         break;
       } catch (_) {}
@@ -133,14 +135,19 @@ try {
     try {
       const diffOutput = execSync(`git diff --name-only ${baseRef}...HEAD`, { encoding: 'utf8', cwd: ROOT_DIR });
       const touchedList = diffOutput.split('\n').map(s => s.trim().replace(/\\/g, '/')).filter(Boolean);
-      touchedList.forEach(f => touchedFilesSet.add(f));
+      touchedList.forEach(f => {
+        touchedFilesSet.add(f);
+        const parts = f.split('/');
+        if (parts[0] === 'games' && parts[1]) {
+          touchedGameFolders.add(parts[1]);
+        }
+      });
 
       const isGamePr = touchedList.some(f => f.startsWith('games/'));
       const activeForbiddenFiles = isGamePr
         ? FORBIDDEN_ROOT_FILES
         : ['assets/js/games-registry.js'];
       const illegalFiles = touchedList.filter(f => activeForbiddenFiles.includes(f));
-
       if (illegalFiles.length > 0) {
         console.log('[ALERT] ====================================================');
         console.log('   Strict File Protection Check (CONTRIBUTING.md Compliance)');
@@ -163,7 +170,12 @@ try {
     const statusOutput = execSync('git status --porcelain', { encoding: 'utf8', cwd: ROOT_DIR });
     statusOutput.split('\n').forEach(line => {
       const f = line.slice(3).trim().replace(/\\/g, '/');
-      if (f) touchedFilesSet.add(f);
+      if (!f) return;
+      touchedFilesSet.add(f);
+      const parts = f.split('/');
+      if (parts[0] === 'games' && parts[1]) {
+        touchedGameFolders.add(parts[1]);
+      }
     });
   } catch (_) {}
 } catch {
@@ -628,6 +640,177 @@ function auditConsolePollution(gamePath, folder, issues) {
   });
 }
 
+// External CDN & Third-Party Asset Scanner (#922)
+const BANNED_CDN_HOSTS = [
+  'unpkg.com',
+  'cdn.jsdelivr.net',
+  'cdnjs.cloudflare.com',
+  'fonts.googleapis.com',
+  'fonts.gstatic.com',
+  'cdn.skypack.dev',
+  'esm.sh',
+  'ajax.googleapis.com',
+  'cdn.bootcdn.net',
+  'stackpath.bootstrapcdn.com',
+  'maxcdn.bootstrapcdn.com',
+  'code.jquery.com'
+];
+
+// Pre-existing historical games with external CDN links (#922)
+const LEGACY_CDN_GAMES = new Set([
+  'chrono-laser-mirror_babin',
+  'circuit-connect_arshi',
+  'cosmic-orbit-slingshot_babin',
+  'cosmic-surge_debasmita',
+  'cryptic-wordle_babin',
+  'cyber-brick-breaker_babin',
+  'cyber-brick-breaker_hrshjswniii',
+  'cyber-gravity-hopper_babin',
+  'cyber-helix-fall_babin',
+  'cyber-hex-collapse_babin',
+  'cyber-light-cycle_babin',
+  'cyber-maze-runner_chanchall26',
+  'cyber-neon-pong_debasmita',
+  'cyber-orbit-defense_babin',
+  'cyber-pulse-rhythm_babin',
+  'cyber-rogue_babin',
+  'cyber-runner_mistu7debnath',
+  'cyber-snake_babin',
+  'cyber-stacker_babin',
+  'cyber-sub-abyss_babin',
+  'cyber-swarm-assault_babin',
+  'math-blitz_pratikadamas',
+  'memory-matrix_debasmita',
+  'neon-highway-hopper_chanchall26',
+  'neon-precision-target_babin',
+  'neon-runner_babin',
+  'neon-wave-matcher_babin',
+  'quantum-lunar-lander_chanchall26',
+  'quantum-minesweeper_babin',
+  'quantum-sokoban_babin',
+  'synth-says_babin',
+  'tactical-fleet_babin',
+  'whack-a-bug_babin'
+]);
+
+function isCdnHost(url) {
+  if (!url || typeof url !== 'string') return false;
+  const lower = url.toLowerCase();
+  return BANNED_CDN_HOSTS.some(host => lower.includes(host));
+}
+
+function auditCdnAssetCompliance(gamePath, folder, issues) {
+  const violations = [];
+
+  // 1. Audit index.html
+  const htmlPath = path.join(gamePath, 'index.html');
+  if (fs.existsSync(htmlPath)) {
+    const htmlContent = fs.readFileSync(htmlPath, 'utf8');
+
+    // Detect external script tags: <script src="http... or //..."
+    const scriptRegex = /<script\s+[^>]*?src=["']((?:https?:)?\/\/[^"']+)["']/gi;
+    let match;
+    while ((match = scriptRegex.exec(htmlContent)) !== null) {
+      violations.push({
+        file: 'index.html',
+        type: 'External script src',
+        url: match[1]
+      });
+    }
+
+    // Detect external link hrefs (Google Fonts, CDN stylesheets, etc.)
+    const linkRegex = /<link\s+[^>]*?href=["']((?:https?:)?\/\/[^"']+)["']/gi;
+    while ((match = linkRegex.exec(htmlContent)) !== null) {
+      if (isCdnHost(match[1])) {
+        violations.push({
+          file: 'index.html',
+          type: 'External CDN link href',
+          url: match[1]
+        });
+      }
+    }
+
+    // Detect inline style @import
+    const importRegex = /@import\s+(?:url\()?["']?((?:https?:)?\/\/[^"')]+)["']?\)?/gi;
+    while ((match = importRegex.exec(htmlContent)) !== null) {
+      if (isCdnHost(match[1])) {
+        violations.push({
+          file: 'index.html',
+          type: 'Inline style @import CDN',
+          url: match[1]
+        });
+      }
+    }
+  }
+
+  // 2. Audit style.css
+  const cssPath = path.join(gamePath, 'style.css');
+  if (fs.existsSync(cssPath)) {
+    const cssContent = fs.readFileSync(cssPath, 'utf8');
+
+    // Detect @import in CSS
+    const importRegex = /@import\s+(?:url\()?["']?((?:https?:)?\/\/[^"')]+)["']?\)?/gi;
+    let match;
+    while ((match = importRegex.exec(cssContent)) !== null) {
+      if (isCdnHost(match[1])) {
+        violations.push({
+          file: 'style.css',
+          type: 'CSS @import CDN',
+          url: match[1]
+        });
+      }
+    }
+
+    // Detect external font/asset url() in CSS
+    const urlRegex = /url\(["']?((?:https?:)?\/\/[^"')]+)["']?\)/gi;
+    while ((match = urlRegex.exec(cssContent)) !== null) {
+      if (isCdnHost(match[1])) {
+        violations.push({
+          file: 'style.css',
+          type: 'CSS url() CDN',
+          url: match[1]
+        });
+      }
+    }
+  }
+
+  // 3. Audit game.js
+  const jsPath = path.join(gamePath, 'game.js');
+  if (fs.existsSync(jsPath)) {
+    const jsContent = fs.readFileSync(jsPath, 'utf8');
+    const cdnRegex = /(?:https?:)?\/\/(?:[a-z0-9-]+\.)*(?:unpkg\.com|cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|fonts\.gstatic\.com|cdn\.skypack\.dev|esm\.sh)[^\s"';)`]+/gi;
+    let match;
+    while ((match = cdnRegex.exec(jsContent)) !== null) {
+      violations.push({
+        file: 'game.js',
+        type: 'JS CDN Reference',
+        url: match[0]
+      });
+    }
+  }
+
+  if (violations.length === 0) return;
+
+  const isLegacy = LEGACY_CDN_GAMES.has(folder);
+  const isTouchedInPR = touchedGameFolders.has(folder);
+
+  // Hard failure if:
+  // - Game is modified/new in this PR/branch, OR
+  // - Game is not in legacy grandfathered list, OR
+  // - Explicit --strict-cdn flag is set
+  const isFatal = IS_STRICT_CDN || isTouchedInPR || !isLegacy;
+
+  violations.forEach(v => {
+    if (isFatal) {
+      issues.push(`❌ Prohibited external CDN asset in ${v.file}: "${v.url}" (${v.type}). Games must be 100% self-contained pure vanilla.`);
+      totalErrors++;
+    } else {
+      issues.push(`⚠️ [Legacy CDN Warning] Pre-existing external asset in ${v.file}: "${v.url}" (${v.type}). Grandfathered legacy asset; avoid in new/changed PRs.`);
+      totalWarnings++;
+    }
+  });
+}
+
 const folders = fs.readdirSync(GAMES_DIR, { withFileTypes: true })
   .filter(d => d.isDirectory())
   .map(d => d.name);
@@ -810,16 +993,11 @@ folders.forEach(folder => {
   // 8. Game Resource Bounds & Sub-Directory Audit
   auditGameResourceBounds(gamePath, issues);
 
+  // 9. External CDN & Third-Party Asset Compliance Audit (#922)
+  auditCdnAssetCompliance(gamePath, folder, issues);
+
   // 9. Static Code Smell & Console Pollution Linter (#684)
   auditConsolePollution(gamePath, folder, issues);
-
-  if (SUMMARY_JSON_PATH) {
-    auditTelemetry.gameReports.push({
-      folder,
-      passed: issues.length === 0,
-      issues
-    });
-  }
 
   // Print Report for this game
   if (issues.length === 0) {
@@ -870,6 +1048,7 @@ function printTelemetryRecommendations(auditData) {
   console.log('----------------------------------------------------');
   console.log(`• Verified ${auditData.gamesAudited} games against 4-file structure (index.html, style.css, game.js, game.json).`);
   console.log('• Monitored relative asset URLs against disk targets for zero 404 network request drops.');
+  console.log('• Audited zero-CDN compliance across HTML, CSS, and JS against external hosts.');
   console.log('• Enforced zero-CDN policy against external script bundles and Google Fonts.');
   console.log('• Validated SVG icon standards across stylesheets and templates (zero unicode emojis).');
   console.log('• Inspected AudioContext instances and lifecycle hooks for graceful teardown compliance.');
