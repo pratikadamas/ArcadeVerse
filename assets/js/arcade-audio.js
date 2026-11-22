@@ -22,16 +22,76 @@
   var isMuted = false;
   var volume = 0.3;
 
+  // Synchronize initial mute and volume from persistent storage or parent SoundEngine (#898)
+  try {
+    if (typeof localStorage !== 'undefined') {
+      var savedMute = localStorage.getItem('arcadeverse_muted') || localStorage.getItem('av_sound_muted');
+      if (savedMute !== null) {
+        isMuted = savedMute === 'true';
+      }
+      var savedVol = localStorage.getItem('arcadeverse_master_volume') || localStorage.getItem('av_master_volume');
+      if (savedVol !== null) {
+        var parsedVol = parseFloat(savedVol);
+        if (!isNaN(parsedVol)) {
+          volume = Math.max(0, Math.min(1, parsedVol));
+        }
+      }
+    }
+  } catch (_) {}
+
+  // Listen to storage events and cross-frame postMessages for instant volume/mute synchronization (#898)
+  if (typeof window !== 'undefined') {
+    try {
+      window.addEventListener('storage', function (e) {
+        if (e.key === 'arcadeverse_muted' || e.key === 'av_sound_muted') {
+          isMuted = e.newValue === 'true';
+          if (masterGain && audioCtx) {
+            masterGain.gain.setValueAtTime(isMuted ? 0 : volume, audioCtx.currentTime);
+          }
+        } else if (e.key === 'arcadeverse_master_volume' || e.key === 'av_master_volume') {
+          var v = parseFloat(e.newValue);
+          if (!isNaN(v)) {
+            volume = Math.max(0, Math.min(1, v));
+            if (masterGain && audioCtx && !isMuted) {
+              masterGain.gain.setValueAtTime(volume, audioCtx.currentTime);
+            }
+          }
+        }
+      });
+    } catch (_) {}
+
+    try {
+      window.addEventListener('message', function (event) {
+        if (!event.data || typeof event.data !== 'object') return;
+        if (event.data.type === 'ARCADEVERSE_AUDIO_CONFIG' || event.data.type === 'ARCADEVERSE_SET_VOLUME') {
+          if (typeof event.data.muted === 'boolean') {
+            isMuted = event.data.muted;
+          }
+          if (typeof event.data.volume === 'number' && !isNaN(event.data.volume)) {
+            volume = Math.max(0, Math.min(1, event.data.volume));
+          }
+          if (masterGain && audioCtx) {
+            masterGain.gain.setValueAtTime(isMuted ? 0 : volume, audioCtx.currentTime);
+          }
+        }
+      });
+    } catch (_) {}
+  }
+
   function getContext() {
     if (!audioCtx) {
-      var AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContextClass) return null;
-      audioCtx = new AudioContextClass();
-      masterGain = audioCtx.createGain();
-      masterGain.gain.setValueAtTime(isMuted ? 0 : volume, audioCtx.currentTime);
-      masterGain.connect(audioCtx.destination);
+      try {
+        var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return null;
+        audioCtx = new AudioContextClass();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(isMuted ? 0 : volume, audioCtx.currentTime);
+        masterGain.connect(audioCtx.destination);
+      } catch (err) {
+        return null;
+      }
     }
-    if (audioCtx.state === 'suspended') {
+    if (audioCtx && audioCtx.state === 'suspended') {
       audioCtx.resume().catch(function () {});
     }
     return audioCtx;
