@@ -2563,7 +2563,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 776,
+    "commits": 802,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2583,7 +2583,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 462,
+    "commits": 487,
     "gamesCount": 76,
     "mechanicsBonus": 2,
     "platformPRs": 29,
@@ -2795,6 +2795,21 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
+    "name": "divyanshagarwal123",
+    "github": "divyanshagarwal123",
+    "avatarInitial": "D",
+    "role": "Contributor (NSOC '26)",
+    "commits": 22,
+    "gamesCount": 0,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Quality & Platform Contribution"
+    ]
+  },
+  {
     "name": "Pragna Seetha",
     "github": "pragna7",
     "avatarInitial": "P",
@@ -2815,21 +2830,6 @@ const CONTRIBUTORS_REGISTRY = [
     "avatarInitial": "A",
     "role": "Contributor (NSOC '26)",
     "commits": 19,
-    "gamesCount": 0,
-    "mechanicsBonus": 0,
-    "platformPRs": 0,
-    "qualityPRs": 0,
-    "bonusPts": 0,
-    "contributions": [
-      "Quality & Platform Contribution"
-    ]
-  },
-  {
-    "name": "divyanshagarwal123",
-    "github": "divyanshagarwal123",
-    "avatarInitial": "D",
-    "role": "Contributor (NSOC '26)",
-    "commits": 15,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,
