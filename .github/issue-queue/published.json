@@ -238,5 +238,65 @@
     "title": "[Feature/Shaders]: Convex CRT Glass Curvature & Spherical Barrel Distortion Lens Mapper",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1246",
     "published_at": "2026-11-21T16:20:18.794Z"
+  },
+  {
+    "number": 1294,
+    "title": "[Feature/Algorithms]: Procedural Cellular Automata Cave & Organic Maze Generator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1294",
+    "published_at": "2026-11-22T06:36:46.103Z"
+  },
+  {
+    "number": 1295,
+    "title": "[Feature/Audio]: Web Audio Adaptive Dynamic Music Stem Layering & Cross-Fading Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1295",
+    "published_at": "2026-11-22T06:36:51.642Z"
+  },
+  {
+    "number": 1296,
+    "title": "[Feature/Input]: Virtual Arcade Trackpad Multi-Gesture Macro Swipe Controller",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1296",
+    "published_at": "2026-11-22T06:36:57.047Z"
+  },
+  {
+    "number": 1297,
+    "title": "[Feature/Graphics]: Pure Vanilla Canvas Isometric 2.5D Tilemap Stacking & Heightmap Renderer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1297",
+    "published_at": "2026-11-22T06:37:02.418Z"
+  },
+  {
+    "number": 1298,
+    "title": "[Feature/A11y]: Client-Side Live Web Speech Recognition (ASR) Voice Command Controller",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1298",
+    "published_at": "2026-11-22T06:37:07.885Z"
+  },
+  {
+    "number": 1299,
+    "title": "[Feature/Physics]: Canvas Dynamic 2D Liquid Splash & Surface Tension Wave Equation",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1299",
+    "published_at": "2026-11-22T06:37:13.388Z"
+  },
+  {
+    "number": 1300,
+    "title": "[Feature/Audio]: Multi-Channel Retro Chiptune Pitch-Bend & Vibrato LFO Envelope Generator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1300",
+    "published_at": "2026-11-22T06:37:18.701Z"
+  },
+  {
+    "number": 1301,
+    "title": "[Feature/Algorithms]: Procedural 2D Voronoi Diagram Biome Sharding & Territory Conquest Map",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1301",
+    "published_at": "2026-11-22T06:37:24.063Z"
+  },
+  {
+    "number": 1302,
+    "title": "[Feature/Audio]: Web Audio Dynamic Stereo Haas Effect Spatial Widener & Psychoacoustic Delay",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1302",
+    "published_at": "2026-11-22T06:37:29.476Z"
+  },
+  {
+    "number": 1303,
+    "title": "[Feature/Physics]: Interactive 2D Spring-Damper Ragdoll Dismemberment & Skeletal Bone Hierarchy",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1303",
+    "published_at": "2026-11-22T06:37:34.864Z"
   }
 ]
