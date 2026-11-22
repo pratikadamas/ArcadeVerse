@@ -2773,7 +2773,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "pratikadamas",
     "avatarInitial": "P",
     "role": "Contributor (NSOC '26)",
-    "commits": 125,
+    "commits": 129,
     "gamesCount": 1,
     "mechanicsBonus": 0,
     "platformPRs": 1,

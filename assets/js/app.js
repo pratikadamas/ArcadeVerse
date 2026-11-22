@@ -17,6 +17,64 @@ document.addEventListener("DOMContentLoaded", () => {
     metaViewport.content += ", viewport-fit=cover";
   }
 
+  // ========================================================
+  // ACCESSIBILITY (A11Y) LIVE REGION ANNOUNCER ENGINE (#725)
+  // Dynamic aria-live status announcer for NVDA, VoiceOver, and JAWS
+  // WCAG 4.1.3 (Status Messages) compliant
+  // ========================================================
+  function getOrCreateA11yAnnouncer() {
+    let announcer = document.getElementById("a11y-announcer");
+    if (!announcer) {
+      announcer = document.createElement("div");
+      announcer.id = "a11y-announcer";
+      announcer.className = "sr-only";
+      announcer.setAttribute("aria-live", "polite");
+      announcer.setAttribute("aria-atomic", "true");
+      announcer.style.position = "absolute";
+      announcer.style.width = "1px";
+      announcer.style.height = "1px";
+      announcer.style.padding = "0";
+      announcer.style.margin = "-1px";
+      announcer.style.overflow = "hidden";
+      announcer.style.clip = "rect(0, 0, 0, 0)";
+      announcer.style.whiteSpace = "nowrap";
+      announcer.style.border = "0";
+      if (document.body) {
+        document.body.appendChild(announcer);
+      } else {
+        document.addEventListener("DOMContentLoaded", () => {
+          if (!document.getElementById("a11y-announcer")) {
+            document.body.appendChild(announcer);
+          }
+        });
+      }
+    }
+    return announcer;
+  }
+
+  function announceToScreenReader(message, priority = "polite") {
+    if (!message || typeof message !== "string") return;
+    const announcer = getOrCreateA11yAnnouncer();
+    if (!announcer) return;
+
+    if (priority === "assertive") {
+      announcer.setAttribute("aria-live", "assertive");
+    } else {
+      announcer.setAttribute("aria-live", "polite");
+    }
+
+    // Clear prior content to guarantee mutation trigger across VoiceOver & NVDA
+    announcer.textContent = "";
+    setTimeout(() => {
+      announcer.textContent = message;
+    }, 50);
+  }
+
+  // Mount persistent announcer element immediately
+  getOrCreateA11yAnnouncer();
+  window.announceToScreenReader = announceToScreenReader;
+
+
   const gamesGrid = document.getElementById("games-grid");
   const totalGamesCount = document.getElementById("total-games-count");
   const totalContributorsCount = document.getElementById("total-contributors-count");
@@ -2609,7 +2667,7 @@ document.addEventListener("DOMContentLoaded", () => {
     lastAnnouncedScore = 0;
     lastScoreAnnouncementTime = Date.now();
     if (typeof announceToScreenReader === "function") {
-      announceToScreenReader(`Launching ${game.title}. Category: ${game.category}. Built by ${game.author}.`);
+      announceToScreenReader(`Now playing ${game.title}. Category: ${game.category}. Built by ${game.author}. Press Escape to pause or exit.`);
     }
     if (window.ArcadeAnnouncer && typeof window.ArcadeAnnouncer.announce === "function") {
       window.ArcadeAnnouncer.announce("Ready Player One");
@@ -2792,6 +2850,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Pause game runtime while confirmation prompt is open
+    announceToScreenReader("Game paused.");
     if (gameIframe && gameIframe.contentWindow) {
       try {
         gameIframe.contentWindow.postMessage({ type: "ARCADEVERSE_PAUSE" }, getTrustedTargetOrigin());
@@ -2881,6 +2940,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeGameModal(isFromPopState = false) {
     if (!gameModal || (!gameModal.classList.contains("active") && !activeGame)) return;
+    announceToScreenReader("Game closed. Returned to game catalog.");
     if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.closeMenu === "function") {
       window.GameSpeedRegulator.closeMenu();
     }
@@ -3621,7 +3681,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const details = e.data.details || {};
       const finalScore = details.score != null ? Number(details.score) : lastAnnouncedScore;
       if (typeof announceToScreenReader === "function") {
-        if (finalScore > currentSessionHighScore && finalScore > 0) {
+        if (details.isHighScore || (finalScore > currentSessionHighScore && finalScore > 0)) {
           currentSessionHighScore = finalScore;
           try {
             if (activeGame) {
