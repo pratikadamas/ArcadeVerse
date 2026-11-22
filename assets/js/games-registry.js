@@ -2605,7 +2605,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 838,
+    "commits": 842,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2790,6 +2790,21 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
+    "name": "Pratik Giri",
+    "github": "pratikadamas",
+    "avatarInitial": "P",
+    "role": "Contributor (NSOC '26)",
+    "commits": 115,
+    "gamesCount": 1,
+    "mechanicsBonus": 0,
+    "platformPRs": 1,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Math Blitz: 60s Arithmetic Sprint"
+    ]
+  },
+  {
     "name": "Harsh Jaiswani",
     "github": "hrshjswniii",
     "avatarInitial": "H",
@@ -2806,21 +2821,6 @@ const CONTRIBUTORS_REGISTRY = [
       "Cyber Logic Gates: Boolean Circuit Forge",
       "Cyber Typer: Terminal Hacker",
       "Protocol Rogue: Cyberdeck Tactics"
-    ]
-  },
-  {
-    "name": "Pratik Giri",
-    "github": "pratikadamas",
-    "avatarInitial": "P",
-    "role": "Contributor (NSOC '26)",
-    "commits": 105,
-    "gamesCount": 1,
-    "mechanicsBonus": 0,
-    "platformPRs": 1,
-    "qualityPRs": 0,
-    "bonusPts": 0,
-    "contributions": [
-      "Math Blitz: 60s Arithmetic Sprint"
     ]
   },
   {
