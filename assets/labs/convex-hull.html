@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Convex collision lab · ArcadeVerse</title>
+  <link rel="stylesheet" href="../css/convex-hull-lab.css">
+  <script src="../js/convex-hull-collision.js" defer></script>
+  <script src="../js/convex-hull-lab.js" defer></script>
+</head>
+<body>
+  <main>
+    <a href="../../docs.html">← ArcadeVerse developer docs</a>
+    <header>
+      <h1>Convex collision lab</h1>
+      <p>Watch 60 pairs move through contact. Turn on the wireframes to see the convex hulls and the direction that separates an overlapping pair.</p>
+    </header>
+    <section aria-label="Collision preview">
+      <div class="controls">
+        <button id="motion" type="button">Pause</button>
+        <button id="step" type="button" disabled>Step frame</button>
+        <label><input id="wireframes" type="checkbox"> Hulls and normals</label>
+        <label><input id="boxes" type="checkbox"> Minimum boxes</label>
+      </div>
+      <canvas id="scene" width="1000" height="600" role="img" aria-label="Sixty pairs of moving convex shapes"></canvas>
+      <div class="readout">
+        <p id="summary">Preparing pairs…</p>
+        <p id="legend">Cyan and violet: hulls. Amber arrow: minimum translation for the violet shape.</p>
+      </div>
+    </section>
+    <section class="benchmark" aria-labelledby="benchmark-title">
+      <div>
+        <h2 id="benchmark-title">SAT timing</h2>
+        <p>Measure fresh 60-pair batches on this device. Timings average 12 batches at a time and exclude hull preparation, position updates and drawing.</p>
+      </div>
+      <button id="benchmark" type="button">Measure 60 pairs</button>
+      <p id="timings" role="status"></p>
+    </section>
+    <details>
+      <summary>Use in a game</summary>
+      <p>Load <code>assets/js/convex-hull-collision.js</code> and use <code>ArcadeVerse.physics</code>. Prepare local vertices once. Re-prepare when they rotate or deform. Pass B’s translation relative to A, and add the result’s MTV to B to resolve penetration.</p>
+      <pre><code>const a = ArcadeVerse.physics.prepareConvexPolygon(pointsA);
+const b = ArcadeVerse.physics.prepareConvexPolygon(pointsB);
+const result = ArcadeVerse.physics.collideConvexPolygons(a, b, bx - ax, by - ay);
+if (result.intersects &amp;&amp; !result.touching) {
+  bx += result.mtvX;
+  by += result.mtvY;
+}</code></pre>
+      <p>Boundary contact intersects with zero depth. Hulls with fewer than three vertices have no solid area. <code>minimumBoundingBox</code> returns local corners and area for a prepared polygon.</p>
+    </details>
+  </main>
+</body>
+</html>
