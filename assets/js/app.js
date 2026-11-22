@@ -1811,6 +1811,10 @@ document.addEventListener("DOMContentLoaded", () => {
         window.ArcadeCardFlipManual.bindCard(card, game);
       }
 
+      if (window.CardRadarChart) {
+        window.CardRadarChart.attachToCard(card, game);
+      }
+
       const favBtn = card.querySelector(".btn-card-favorite");
       favBtn.addEventListener("click", (e) => {
         e.stopPropagation();
