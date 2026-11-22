@@ -1840,6 +1840,83 @@ body.docs-viewport-body {
   }
 }
 
+/* ===================================================
+   LEADERBOARD MULTI-COLUMN DYNAMIC SORTING (#683)
+   =================================================== */
+
+.leaderboard-table th.sortable-th {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.18s ease, background-color 0.18s ease;
+  white-space: nowrap;
+}
+
+.leaderboard-table th.sortable-th:hover {
+  color: var(--text-primary, #ffffff);
+  background-color: rgba(0, 240, 255, 0.04);
+}
+
+.leaderboard-table th.sortable-th:focus-visible {
+  outline: 2px solid var(--accent-cyan, #00f0ff);
+  outline-offset: -2px;
+}
+
+.leaderboard-table th.sortable-th .th-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.leaderboard-table th.sortable-th .th-content.center {
+  justify-content: center;
+}
+
+.leaderboard-table th.sortable-th .th-content.right {
+  justify-content: flex-end;
+}
+
+.leaderboard-table th.sortable-th .sort-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.leaderboard-table th.sortable-th .sort-icon {
+  width: 14px;
+  height: 14px;
+  opacity: 0.45;
+  transition: opacity 0.18s ease, transform 0.18s ease, color 0.18s ease;
+  flex-shrink: 0;
+}
+
+.leaderboard-table th.sortable-th:hover .sort-icon {
+  opacity: 0.85;
+  color: var(--accent-cyan, #00f0ff);
+}
+
+.leaderboard-table th.sortable-th.sort-active {
+  color: var(--accent-cyan, #00f0ff);
+  background-color: rgba(0, 240, 255, 0.06);
+}
+
+.leaderboard-table th.sortable-th.sort-active .sort-icon {
+  opacity: 1;
+  color: var(--accent-cyan, #00f0ff);
+}
+
+[data-theme="light"] .leaderboard-table th.sortable-th:hover {
+  color: #0f172a;
+  background-color: rgba(14, 165, 233, 0.08);
+}
+
+[data-theme="light"] .leaderboard-table th.sortable-th.sort-active {
+  color: #0284c7;
+  background-color: rgba(14, 165, 233, 0.12);
+}
+
+[data-theme="light"] .leaderboard-table th.sortable-th.sort-active .sort-icon {
+  color: #0284c7;
+}
 /* ========================================================
    INTERACTIVE SDK SANDBOX PLAYGROUND (#726)
    Live in-browser code editor, preview canvas, and event logger

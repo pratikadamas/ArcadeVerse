@@ -1358,6 +1358,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     renderPaginationUI(totalItems, totalPages, startIdx, endIdx);
+    updateSortHeaderUI();
 
     if (window.lucide) {
       lucide.createIcons();
