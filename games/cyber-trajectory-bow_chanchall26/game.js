@@ -170,10 +170,11 @@
   const audio = {
     ctx: null,
     master: null,
+    limiter: null,
+    activeVoices: [],
     noiseBuf: null,
     muted: false,
     bow: null,
-    activeNodes: new Set(),
 
     ensure: function () {
       if (!this.ctx) {
@@ -183,7 +184,19 @@
           this.ctx = new AC();
           this.master = this.ctx.createGain();
           this.master.gain.value = this.muted ? 0 : 0.7;
-          this.master.connect(this.ctx.destination);
+          try {
+            const comp = this.ctx.createDynamicsCompressor();
+            comp.threshold.setValueAtTime(-0.5, this.ctx.currentTime);
+            comp.knee.setValueAtTime(0, this.ctx.currentTime);
+            comp.ratio.setValueAtTime(20.0, this.ctx.currentTime);
+            comp.attack.setValueAtTime(0.001, this.ctx.currentTime);
+            comp.release.setValueAtTime(0.05, this.ctx.currentTime);
+            this.limiter = comp;
+            this.master.connect(this.limiter);
+            this.limiter.connect(this.ctx.destination);
+          } catch (_) {
+            this.master.connect(this.ctx.destination);
+          }
           const len = Math.floor(this.ctx.sampleRate * 1.5);
           this.noiseBuf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
           const d = this.noiseBuf.getChannelData(0);
@@ -199,30 +212,47 @@
       return true;
     },
 
-    ok: function () {
-      return !!this.ctx && !this.muted;
-    },
-
-    trackNode: function (node) {
-      if (!this.activeNodes) this.activeNodes = new Set();
-      this.activeNodes.add(node);
-      node.onended = () => {
-        if (this.activeNodes) this.activeNodes.delete(node);
+    trackVoice: function (node) {
+      if (!node) return node;
+      if (!this.activeVoices) this.activeVoices = [];
+      while (this.activeVoices.length >= 6) {
+        const oldest = this.activeVoices.shift();
+        if (oldest) {
+          try {
+            if (typeof oldest.stop === 'function') oldest.stop();
+            if (typeof oldest.disconnect === 'function') oldest.disconnect();
+          } catch (_) {}
+        }
+      }
+      this.activeVoices.push(node);
+      const self = this;
+      const onEnded = function () {
+        if (!self.activeVoices) return;
+        const idx = self.activeVoices.indexOf(node);
+        if (idx !== -1) self.activeVoices.splice(idx, 1);
       };
+      if (typeof node.addEventListener === 'function') {
+        node.addEventListener('ended', onEnded, { once: true });
+      } else {
+        node.onended = onEnded;
+      }
       return node;
     },
 
     stopAll: function () {
-      this.drawStop();
-      if (this.activeNodes) {
-        this.activeNodes.forEach(node => {
+      if (this.activeVoices) {
+        while (this.activeVoices.length > 0) {
+          const v = this.activeVoices.pop();
           try {
-            node.stop();
-            node.disconnect();
+            if (typeof v.stop === 'function') v.stop();
+            if (typeof v.disconnect === 'function') v.disconnect();
           } catch (_) {}
-        });
-        this.activeNodes.clear();
+        }
       }
+    },
+
+    ok: function () {
+      return !!this.ctx && !this.muted;
     },
 
     setMuted: function (m) {
@@ -230,7 +260,7 @@
       if (this.master) {
         this.master.gain.setTargetAtTime(m ? 0 : 0.7, this.ctx.currentTime, 0.02);
       }
-      if (m) this.stopAll();
+      if (m) this.drawStop();
     },
 
     tone: function (o) {
@@ -247,7 +277,7 @@
       g.gain.exponentialRampToValueAtTime(0.0001, t + o.dur);
       osc.connect(g);
       g.connect(this.master);
-      this.trackNode(osc);
+      this.trackVoice(osc);
       osc.start(t);
       osc.stop(t + o.dur + 0.05);
     },
@@ -270,7 +300,7 @@
       src.connect(f);
       f.connect(g);
       g.connect(this.master);
-      this.trackNode(src);
+      this.trackVoice(src);
       src.start(t, Math.random() * 0.3);
       src.stop(t + o.dur + 0.05);
     },
@@ -291,8 +321,6 @@
       o2.connect(f);
       f.connect(g);
       g.connect(this.master);
-      this.trackNode(o1);
-      this.trackNode(o2);
       o1.start();
       o2.start();
       this.bow = { o1: o1, o2: o2, f: f, g: g };
@@ -320,8 +348,6 @@
       try {
         b.o1.stop(t + 0.15);
         b.o2.stop(t + 0.15);
-        b.o1.disconnect();
-        b.o2.disconnect();
       } catch (e) { /* ignore */ }
     },
 
@@ -635,39 +661,9 @@
     return 1 + 0.25 * Math.min(Math.max(S.streak - 1, 0), 8);
   }
 
-  function emitTelemetryScore() {
-    try {
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({
-          type: 'ARCADEVERSE_GAME_SCORE',
-          score: S.score,
-          level: S.stageIdx + 1
-        }, '*');
-      }
-    } catch (_) {}
-  }
-
-  function emitTelemetryGameOver(cleared) {
-    try {
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({
-          type: 'ARCADEVERSE_GAME_OVER',
-          score: S.score,
-          details: {
-            score: S.score,
-            stage: S.stageIdx + 1,
-            cleared: !!cleared,
-            accuracy: S.shots > 0 ? Math.round((S.hits / S.shots) * 100) : 0
-          }
-        }, '*');
-      }
-    } catch (_) {}
-  }
-
   function addScore(n) {
     S.score += n;
     if (S.score > save.best) save.best = S.score;
-    emitTelemetryScore();
   }
 
   /* ======================================================================
@@ -733,8 +729,8 @@
   }
 
   function restartStage() {
-    audio.ensure();
     audio.stopAll();
+    audio.ensure();
     beginStage(S.stageIdx, S.stageStartScore);
   }
 
@@ -755,6 +751,7 @@
   }
 
   function startRun(idx) {
+    audio.stopAll();
     audio.ensure();
     audio.click();
     beginStage(idx, 0);
@@ -1147,7 +1144,6 @@
     const last = S.stageIdx >= STAGES.length - 1;
     if (!last) save.unlocked = Math.max(save.unlocked, S.stageIdx + 2);
     persist();
-    audio.stopAll();
     audio.clear();
     S.mode = last ? 'victory' : 'clear';
 
@@ -1167,7 +1163,6 @@
       $('victory-star-count').textContent = total + ' / ' + STAGES.length * 3;
       $('victory-stars').innerHTML = starRow(Math.round(total / STAGES.length), true);
       showOverlay('victory');
-      emitTelemetryGameOver(true);
     } else {
       showOverlay('clear');
     }
@@ -1177,7 +1172,6 @@
   function stageFail() {
     cancelAim();
     persist();
-    audio.stopAll();
     audio.fail();
     S.mode = 'fail';
     const left = countAlive();
@@ -1185,7 +1179,6 @@
     $('fail-score').textContent = String(S.score);
     $('fail-best').textContent = String(save.best);
     showOverlay('fail');
-    emitTelemetryGameOver(false);
   }
 
   /* ======================================================================
@@ -2118,23 +2111,6 @@
     if (e.target === overlays.help) closeHelp();
   });
 
-  window.addEventListener('message', function (e) {
-    if (!e.data || typeof e.data !== 'object') return;
-    const type = e.data.type;
-    if (type === 'AV_RESIZE') {
-      fitCanvas();
-    } else if (type === 'ARCADEVERSE_PAUSE') {
-      audio.stopAll();
-      if (S.mode === 'playing') pauseGame();
-    } else if (type === 'ARCADEVERSE_RESUME') {
-      if (S.mode === 'playing' && S.paused) resumeGame();
-    } else if (type === 'ARCADEVERSE_TEARDOWN') {
-      audio.stopAll();
-      cancelAim();
-      if (S.mode === 'playing') pauseGame();
-    }
-  });
-
   /* ======================================================================
      Boot
      ====================================================================== */
@@ -2145,4 +2121,14 @@
   fitCanvas();
   showMenu();
   requestAnimationFrame(frame);
+
+  // Clean audio on teardown (#507)
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      audio.stopAll();
+      if (audio.ctx && audio.ctx.state !== 'closed') {
+        try { audio.ctx.close(); } catch (_) {}
+      }
+    }
+  });
 })();

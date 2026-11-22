@@ -1,0 +1,11 @@
+.av-wallpaper-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:24px 0}
+.av-wallpaper-form label{display:flex;flex-direction:column;gap:7px;min-width:0;font-size:.88rem;color:var(--text-primary)}
+.av-wallpaper-form select{max-width:100%;width:100%;border:1px solid var(--border-medium);border-radius:6px;padding:11px;background:var(--bg-surface);color:var(--text-primary);font:inherit}
+.av-wallpaper-form input[type=range]{width:100%;accent-color:#22d3ee}.av-wallpaper-form .av-wallpaper-check{flex-direction:row;align-items:center;align-self:center;min-height:44px}
+.av-wallpaper-actions{display:flex;flex-wrap:wrap;gap:10px;grid-column:1/-1}.av-wallpaper-actions button{min-height:44px}.av-wallpaper-actions button:disabled{opacity:.55;cursor:default}
+.av-wallpaper-form :is(button,select,input):focus-visible{outline:3px solid #22d3ee;outline-offset:3px}
+.av-wallpaper-preview{background:#030712;border:1px solid var(--border-medium);min-height:120px;display:grid;place-items:center;border-radius:8px;overflow:hidden;margin-top:15px;color:#cbd5e1}
+.av-wallpaper-preview canvas{display:block;max-width:100%;width:100%;height:auto}.av-wallpaper-preview canvas[width="1080"]{width:auto;max-height:650px}
+.av-wallpaper-progress{width:100%;height:10px;accent-color:#22d3ee}.av-wallpaper-caption,.av-wallpaper-status{font-size:.85rem;line-height:1.6;color:var(--text-secondary);overflow-wrap:anywhere}
+.av-wallpaper-games{font-size:.85rem;line-height:1.7;padding-left:24px;columns:2}.av-wallpaper-games li{break-inside:avoid;overflow-wrap:anywhere}
+@media(max-width:600px){.av-wallpaper-form{grid-template-columns:1fr}.av-wallpaper-actions button{flex:1 1 140px}.av-wallpaper-games{columns:1}}
