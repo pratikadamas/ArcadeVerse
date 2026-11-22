@@ -184,6 +184,10 @@
   class DinoAudio {
     constructor() {
       this.ctx = null;
+      this.masterGain = null;
+      this.limiter = null;
+      this.activeVoices = new Set();
+      this.maxVoices = 6;
       this.isMuted = false;
       this.loadMuteState();
     }
@@ -205,6 +209,42 @@
       return this.isMuted;
     }
 
+    trackVoice(node) {
+      if (!node) return node;
+      while (this.activeVoices.size >= this.maxVoices) {
+        const oldest = this.activeVoices.values().next().value;
+        if (oldest) {
+          try {
+            if (typeof oldest.stop === 'function') oldest.stop();
+            if (typeof oldest.disconnect === 'function') oldest.disconnect();
+          } catch (_) {}
+          this.activeVoices.delete(oldest);
+        } else {
+          break;
+        }
+      }
+      this.activeVoices.add(node);
+      const onEnded = () => {
+        this.activeVoices.delete(node);
+      };
+      if (typeof node.addEventListener === 'function') {
+        node.addEventListener('ended', onEnded, { once: true });
+      } else {
+        node.onended = onEnded;
+      }
+      return node;
+    }
+
+    stopAll() {
+      this.activeVoices.forEach((node) => {
+        try {
+          if (typeof node.stop === 'function') node.stop();
+          if (typeof node.disconnect === 'function') node.disconnect();
+        } catch (_) {}
+      });
+      this.activeVoices.clear();
+    }
+
     ensureContext() {
       if (this.ctx) {
         if (this.ctx.state === 'suspended') {
@@ -216,6 +256,21 @@
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         if (!AudioCtx) return false;
         this.ctx = new AudioCtx();
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+        try {
+          const comp = this.ctx.createDynamicsCompressor();
+          comp.threshold.setValueAtTime(-0.5, this.ctx.currentTime);
+          comp.knee.setValueAtTime(0, this.ctx.currentTime);
+          comp.ratio.setValueAtTime(20.0, this.ctx.currentTime);
+          comp.attack.setValueAtTime(0.001, this.ctx.currentTime);
+          comp.release.setValueAtTime(0.05, this.ctx.currentTime);
+          this.limiter = comp;
+          this.masterGain.connect(this.limiter);
+          this.limiter.connect(this.ctx.destination);
+        } catch (_) {
+          this.masterGain.connect(this.ctx.destination);
+        }
         return true;
       } catch (e) {
         return false;
@@ -235,7 +290,8 @@
       gain.gain.exponentialRampToValueAtTime(Math.max(gainEnd, 0.0001), now + duration);
 
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(osc);
 
       osc.start(now);
       osc.stop(now + duration);
@@ -265,9 +321,11 @@
 
       noise.connect(filter);
       filter.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(noise);
 
       noise.start(now);
+      noise.stop(now + duration);
     }
 
     playBrush() {
@@ -295,7 +353,8 @@
         gain.gain.setValueAtTime(0.12, now + idx * 0.06);
         gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.14);
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
         osc.start(now + idx * 0.06);
         osc.stop(now + idx * 0.06 + 0.14);
       });
@@ -313,7 +372,8 @@
         gain.gain.setValueAtTime(0.16, now + i * 0.07);
         gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.07 + 0.28);
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
         osc.start(now + i * 0.07);
         osc.stop(now + i * 0.07 + 0.28);
       });
@@ -346,7 +406,8 @@
         gain.gain.setValueAtTime(0.12, now + i * 0.08);
         gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.35);
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
         osc.start(now + i * 0.08);
         osc.stop(now + i * 0.08 + 0.35);
       });
@@ -1192,6 +1253,7 @@
     // -----------------------------------------------------------------------
 
     startSite(siteIdx) {
+      if (this.audio) this.audio.stopAll();
       this.currentSiteIndex = siteIdx;
       const site = SITES[siteIdx];
 
@@ -2237,6 +2299,18 @@
 
   window.addEventListener('DOMContentLoaded', () => {
     window.dinoDig = new DinoDigGame();
+  });
+
+  // Clean audio on teardown (#507)
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      if (window.dinoDig && window.dinoDig.audio) {
+        window.dinoDig.audio.stopAll();
+        if (window.dinoDig.audio.ctx && window.dinoDig.audio.ctx.state !== 'closed') {
+          try { window.dinoDig.audio.ctx.close(); } catch (_) {}
+        }
+      }
+    }
   });
 
 })();

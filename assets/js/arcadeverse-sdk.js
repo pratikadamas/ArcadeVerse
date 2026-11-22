@@ -1281,6 +1281,74 @@
     },
 
     /**
+     * Micro-Limiter for Master Audio Bus (#507)
+     * Creates a brickwall limiter for safe bus-level peak control.
+     */
+    createMicroLimiter: function (audioCtx) {
+      if (!audioCtx) return null;
+      try {
+        var comp = audioCtx.createDynamicsCompressor();
+        comp.threshold.setValueAtTime(-0.5, audioCtx.currentTime);
+        comp.knee.setValueAtTime(0, audioCtx.currentTime);
+        comp.ratio.setValueAtTime(20.0, audioCtx.currentTime);
+        comp.attack.setValueAtTime(0.001, audioCtx.currentTime);
+        comp.release.setValueAtTime(0.05, audioCtx.currentTime);
+        return comp;
+      } catch (_e) {
+        return null;
+      }
+    },
+
+    /**
+     * Voice-Stealing Audio Pool (#507)
+     * Limits concurrent audio voices and stops the oldest voice when full.
+     */
+    createVoicePool: function (options) {
+      var opts = options || {};
+      var maxVoices = typeof opts.maxVoices === "number" && opts.maxVoices > 0 ? opts.maxVoices : 6;
+      var activeVoices = [];
+
+      return {
+        maxVoices: maxVoices,
+        getActiveVoiceCount: function () {
+          return activeVoices.length;
+        },
+        addVoice: function (node, onStop) {
+          if (!node) return null;
+          while (activeVoices.length >= maxVoices) {
+            var oldest = activeVoices.shift();
+            if (oldest) {
+              try {
+                if (typeof oldest.onStop === "function") oldest.onStop();
+                else if (typeof oldest.node.stop === "function") oldest.node.stop();
+                if (typeof oldest.node.disconnect === "function") oldest.node.disconnect();
+              } catch (_) {}
+            }
+          }
+          var voiceEntry = { node: node, onStop: onStop };
+          activeVoices.push(voiceEntry);
+          var origOnEnded = node.onended;
+          node.onended = function (e) {
+            var idx = activeVoices.indexOf(voiceEntry);
+            if (idx !== -1) activeVoices.splice(idx, 1);
+            if (typeof origOnEnded === "function") origOnEnded.call(node, e);
+          };
+          return voiceEntry;
+        },
+        stopAll: function () {
+          while (activeVoices.length > 0) {
+            var voice = activeVoices.pop();
+            try {
+              if (typeof voice.onStop === "function") voice.onStop();
+              else if (typeof voice.node.stop === "function") voice.node.stop();
+              if (typeof voice.node.disconnect === "function") voice.node.disconnect();
+            } catch (_) {}
+          }
+        }
+      };
+    },
+
+    /**
      * Registers and scales any master GainNode to match the hub volume and mute state
      * @param {GainNode} gainNode
      * @returns {GainNode}
