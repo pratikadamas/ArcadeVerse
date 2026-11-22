@@ -829,6 +829,51 @@ document.addEventListener("DOMContentLoaded", () => {
     updateCategoryPillCounts();
   }
 
+  // Canonical category token normalizer & matching helper (#892)
+  const CATEGORY_SYNONYMS = {
+    shooter: "arcade",
+    defense: "strategy",
+    towerdefense: "strategy",
+    narrative: "adventure",
+    escape: "puzzle",
+    escaperoom: "puzzle",
+    horror: "adventure"
+  };
+
+  function extractGameCategoryTokens(categoryStr) {
+    if (!categoryStr || typeof categoryStr !== "string") return [];
+    return categoryStr
+      .split(/[\/,|]+/)
+      .map(token => token.trim().toLowerCase())
+      .filter(token => token.length > 0)
+      .map(token => CATEGORY_SYNONYMS[token.replace(/\s+/g, "")] || token);
+  }
+
+  function matchesCategoryFilter(game, activeCategory) {
+    if (!game) return false;
+    if (!activeCategory || activeCategory === "all") return true;
+
+    if (activeCategory === "favorites") {
+      const favs = getFavorites();
+      return favs.has(game.id);
+    }
+
+    if (activeCategory.startsWith("playlist:")) {
+      const plId = activeCategory.replace("playlist:", "");
+      const pl = window.ArcadePlaylists ? window.ArcadePlaylists.getPlaylist(plId) : null;
+      return pl ? pl.games.includes(game.id) : false;
+    }
+
+    const target = activeCategory.toLowerCase().trim();
+    if (target === "halloween") {
+      return isHalloweenGame(game);
+    }
+
+    const normalizedTarget = CATEGORY_SYNONYMS[target.replace(/\s+/g, "")] || target;
+    const tokens = extractGameCategoryTokens(game.category);
+    return tokens.includes(normalizedTarget) || tokens.includes(target);
+  }
+
   // Dynamic Category Counters & Real-Time Statistics
   function updateCategoryPillCounts() {
     if (typeof GAMES_REGISTRY === "undefined" || !Array.isArray(GAMES_REGISTRY)) return;
@@ -840,11 +885,23 @@ document.addEventListener("DOMContentLoaded", () => {
       halloween: 0
     };
 
-    GAMES_REGISTRY.forEach((g) => {
-      const cat = (g.category || "").toLowerCase();
-      if (!counts[cat]) counts[cat] = 0;
-      counts[cat]++;
+    // Initialize pill count counters based on registered DOM pill keys
+    categoryPills.forEach((pill) => {
+      const key = (pill.getAttribute("data-category") || "").toLowerCase();
+      if (key && counts[key] === undefined) {
+        counts[key] = 0;
+      }
+    });
 
+    GAMES_REGISTRY.forEach((g) => {
+      categoryPills.forEach((pill) => {
+        const catKey = pill.getAttribute("data-category") || "";
+        const lowerKey = catKey.toLowerCase();
+        if (lowerKey === "all" || lowerKey === "favorites") return;
+        if (matchesCategoryFilter(g, catKey)) {
+          counts[lowerKey] = (counts[lowerKey] || 0) + 1;
+        }
+      });
       if (isHalloweenGame(g)) {
         counts.halloween++;
       }
@@ -1422,25 +1479,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const currentDataSet = GAMES_REGISTRY;
 
     const facetMatched = currentDataSet.filter((item) => {
-      let matchesCategory = false;
-      if (currentCategory === "all") {
-        matchesCategory = true;
-      } else if (currentCategory === "favorites") {
-        matchesCategory = favs.has(item.id);
-      } else if (currentCategory.startsWith("playlist:")) {
-        const plId = currentCategory.replace("playlist:", "");
-        const pl = window.ArcadePlaylists ? window.ArcadePlaylists.getPlaylist(plId) : null;
-        matchesCategory = pl ? pl.games.includes(item.id) : false;
-      } else {
-        if (currentCategory.toLowerCase() === "halloween") {
-          matchesCategory = isHalloweenGame(item);
-        } else {
-          const itemCat = (item.category || "").toLowerCase();
-          const targetCat = currentCategory.toLowerCase();
-          const catSegments = itemCat.split(/[\s/]+/).map((s) => s.trim().toLowerCase());
-          matchesCategory = itemCat === targetCat || catSegments.includes(targetCat) || itemCat.includes(targetCat);
-        }
-      }
+      const matchesCategory = matchesCategoryFilter(item, currentCategory);
 
       // Tag Facet Filter
       let matchesTag = true;
