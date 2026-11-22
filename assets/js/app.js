@@ -2275,7 +2275,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Hook iframe error message broadcaster (#728)
+  // Hook iframe error message broadcaster (#705 / #728)
   window.addEventListener("message", (event) => {
     if (event.data && event.data.type === "ARCADEVERSE_GAME_CRASH") {
       triggerGameCrashBoundary(activeGame, event.data.error || { message: event.data.message, stack: event.data.stack });
