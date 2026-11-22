@@ -16,9 +16,15 @@
     streak: 0,
     completed: false,
 
-    init() {
+    countdownInterval: null,
+
+    getUTCDayKey() {
       const now = new Date();
-      this.todayKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
+      return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
+    },
+
+    init() {
+      this.todayKey = this.getUTCDayKey();
       this.loadState();
       this.generateTodayChallenge();
       this.renderBanner();
@@ -31,24 +37,60 @@
         const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
         if (saved.lastCompletedDate === this.todayKey) {
           this.completed = true;
+        } else {
+          this.completed = false;
         }
-        this.streak = saved.streak || 0;
+        this.streak = typeof saved.streak === 'number' ? saved.streak : 0;
       } catch (_) {
+        this.completed = false;
         this.streak = 0;
       }
     },
 
     saveState() {
-      const payload = JSON.stringify({
-        lastCompletedDate: this.completed ? this.todayKey : '',
-        streak: this.streak
-      });
-      if (window.ArcadeStorageResilience && typeof window.ArcadeStorageResilience.safeSetItem === 'function') {
-        window.ArcadeStorageResilience.safeSetItem(STORAGE_KEY, payload);
-      } else {
-        try {
+      try {
+        const payload = JSON.stringify({
+          lastCompletedDate: this.completed ? this.todayKey : '',
+          streak: this.streak
+        });
+        if (window.ArcadeStorageResilience && typeof window.ArcadeStorageResilience.safeSetItem === 'function') {
+          window.ArcadeStorageResilience.safeSetItem(STORAGE_KEY, payload);
+        } else {
           localStorage.setItem(STORAGE_KEY, payload);
-        } catch (_) {}
+        }
+      } catch (_) {}
+    },
+
+    markChallengeComplete() {
+      if (this.completed) return;
+      this.completed = true;
+      this.streak += 1;
+      this.saveState();
+      this.renderBanner();
+
+      if (window.SoundEngine && typeof window.SoundEngine.playSuccess === 'function') {
+        window.SoundEngine.playSuccess();
+      }
+
+      window.dispatchEvent(
+        new CustomEvent('arcadeverse:daily-quest-completed', {
+          detail: {
+            date: this.todayKey,
+            streak: this.streak,
+            gameId: this.challenge && this.challenge.game ? this.challenge.game.id : null
+          }
+        })
+      );
+    },
+
+    checkUTCRollover() {
+      const currentUTC = this.getUTCDayKey();
+      if (currentUTC !== this.todayKey) {
+        this.todayKey = currentUTC;
+        this.completed = false;
+        this.loadState();
+        this.generateTodayChallenge();
+        this.renderBanner();
       }
     },
 
@@ -122,7 +164,14 @@
     },
 
     startCountdown() {
+      if (this.countdownInterval) {
+        clearInterval(this.countdownInterval);
+        this.countdownInterval = null;
+      }
+
       const updateClock = () => {
+        this.checkUTCRollover();
+
         const now = new Date();
         const tomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
         const diff = Math.max(0, tomorrow - now);
@@ -138,7 +187,7 @@
       };
 
       updateClock();
-      setInterval(updateClock, 1000);
+      this.countdownInterval = setInterval(updateClock, 1000);
     },
 
     bindEvents() {
@@ -151,6 +200,53 @@
           if (game && typeof window.openGameModal === 'function') {
             window.openGameModal(game);
           }
+        }
+      });
+
+      // Listen for window visibility changes to detect sleep/wake and UTC date transitions (#902)
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+          this.checkUTCRollover();
+        }
+      });
+
+      // Score and game over listener to automatically mark daily quest completed (#902)
+      const handlePotentialScore = (targetGameId, score) => {
+        if (!this.challenge || !this.challenge.game || this.completed) return;
+        if (targetGameId && targetGameId === this.challenge.game.id) {
+          if (typeof score === 'number' && score >= this.challenge.targetScore) {
+            this.markChallengeComplete();
+          }
+        }
+      };
+
+      // Custom events dispatched by app.js (#902)
+      window.addEventListener('arcadeverse:score-update', (e) => {
+        if (e && e.detail) {
+          handlePotentialScore(e.detail.gameId, e.detail.score);
+        }
+      });
+
+      window.addEventListener('arcadeverse:game-over', (e) => {
+        if (e && e.detail) {
+          const finalScore = e.detail.details ? Number(e.detail.details.score) : null;
+          handlePotentialScore(e.detail.gameId, finalScore);
+        }
+      });
+
+      // Direct iframe postMessage subscription matching trusted payload (#902)
+      window.addEventListener('message', (e) => {
+        if (!e.data || typeof e.data !== 'object') return;
+        const type = e.data.type;
+        if (type === 'ARCADEVERSE_GAME_SCORE') {
+          const score = Number(e.data.score);
+          const activeId = this.challenge && this.challenge.game ? this.challenge.game.id : null;
+          handlePotentialScore(activeId, score);
+        } else if (type === 'ARCADEVERSE_GAME_OVER') {
+          const details = e.data.details || {};
+          const score = Number(details.score != null ? details.score : e.data.score);
+          const activeId = this.challenge && this.challenge.game ? this.challenge.game.id : null;
+          handlePotentialScore(activeId, score);
         }
       });
     }
