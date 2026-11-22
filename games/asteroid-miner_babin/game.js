@@ -25,8 +25,49 @@
   let cargo = 0;
   let fuel = 100;
 
-  // Web Audio Synth
+  // Web Audio Synth (#507)
   let audioCtx = null;
+  let masterGain = null;
+  let limiterNode = null;
+  const activeVoices = new Set();
+  const MAX_VOICES = 6;
+
+  function trackVoice(node) {
+    if (!node) return node;
+    while (activeVoices.size >= MAX_VOICES) {
+      const oldest = activeVoices.values().next().value;
+      if (oldest) {
+        try {
+          if (typeof oldest.stop === 'function') oldest.stop();
+          if (typeof oldest.disconnect === 'function') oldest.disconnect();
+        } catch (_) {}
+        activeVoices.delete(oldest);
+      } else {
+        break;
+      }
+    }
+    activeVoices.add(node);
+    const onEnded = () => {
+      activeVoices.delete(node);
+    };
+    if (typeof node.addEventListener === 'function') {
+      node.addEventListener('ended', onEnded, { once: true });
+    } else {
+      node.onended = onEnded;
+    }
+    return node;
+  }
+
+  function stopAllAudio() {
+    activeVoices.forEach((node) => {
+      try {
+        if (typeof node.stop === 'function') node.stop();
+        if (typeof node.disconnect === 'function') node.disconnect();
+      } catch (_) {}
+    });
+    activeVoices.clear();
+  }
+
   function playSound(type, emitterX) {
     try {
       if (!audioCtx) {
@@ -34,16 +75,31 @@
         if (AudioClass) audioCtx = new AudioClass();
       }
       if (!audioCtx) return;
+      if (!masterGain) {
+        masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        try {
+          const comp = audioCtx.createDynamicsCompressor();
+          comp.threshold.setValueAtTime(-0.5, audioCtx.currentTime);
+          comp.knee.setValueAtTime(0, audioCtx.currentTime);
+          comp.ratio.setValueAtTime(20.0, audioCtx.currentTime);
+          comp.attack.setValueAtTime(0.001, audioCtx.currentTime);
+          comp.release.setValueAtTime(0.05, audioCtx.currentTime);
+          limiterNode = comp;
+          masterGain.connect(limiterNode);
+          limiterNode.connect(audioCtx.destination);
+        } catch (_) {
+          masterGain.connect(audioCtx.destination);
+        }
+      }
       if (audioCtx.state === 'suspended') audioCtx.resume();
 
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-
-      // HRTF 3D Spatial Audio Panning (#569)
-      let panner = null;
+      osc.connect(gain);
       if (typeof emitterX === 'number' && audioCtx.createPanner) {
         try {
-          panner = audioCtx.createPanner();
+          const panner = audioCtx.createPanner();
           panner.panningModel = 'HRTF';
           panner.distanceModel = 'inverse';
           const relX = (emitterX - (canvas.width / 2)) / (canvas.width / 2);
@@ -54,17 +110,15 @@
           } else if (typeof panner.setPosition === 'function') {
             panner.setPosition(relX, 0, -0.5);
           }
-          osc.connect(gain);
           gain.connect(panner);
-          panner.connect(audioCtx.destination);
+          panner.connect(masterGain || audioCtx.destination);
         } catch (_) {
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
+          gain.connect(masterGain || audioCtx.destination);
         }
       } else {
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
+        gain.connect(masterGain || audioCtx.destination);
       }
+      trackVoice(osc);
 
       if (type === 'laser') {
         osc.type = 'sawtooth';
@@ -183,6 +237,7 @@
   }
 
   function startGame() {
+    stopAllAudio();
     overlayScreen.classList.add('hidden');
     isPlaying = true;
     score = 0;
@@ -221,28 +276,26 @@
     if (keys.left) ship.angle -= ship.rotSpeed;
     if (keys.right) ship.angle += ship.rotSpeed;
 
-    // Vacuum inertia mode: fuel only drains when thrusters are actively engaged (#667)
-    if (keys.thrust && fuel > 0) {
+    if (keys.thrust) {
       ship.vx += Math.cos(ship.angle) * ship.thrust;
       ship.vy += Math.sin(ship.angle) * ship.thrust;
-      // 1 unit per second calibrated at 60 FPS (~0.0167 / frame)
-      fuel = Math.max(0, fuel - 0.0167);
+      fuel = Math.max(0, fuel - 0.05);
 
-      // Engine particles with active thruster flame
+      // Engine particles
       particles.push({
         x: ship.x - Math.cos(ship.angle) * ship.radius,
         y: ship.y - Math.sin(ship.angle) * ship.radius,
-        vx: -Math.cos(ship.angle) * 2.5 + (Math.random() - 0.5),
-        vy: -Math.sin(ship.angle) * 2.5 + (Math.random() - 0.5),
-        size: 3.5,
+        vx: -Math.cos(ship.angle) * 2 + (Math.random() - 0.5),
+        vy: -Math.sin(ship.angle) * 2 + (Math.random() - 0.5),
+        size: 3,
         alpha: 1,
-        color: Math.random() > 0.5 ? '#f59e0b' : '#ef4444'
+        color: '#f59e0b'
       });
     }
 
-    // Pure vacuum inertia: coasting smoothly with minimal space friction
-    ship.vx *= 0.998;
-    ship.vy *= 0.998;
+    // Drag
+    ship.vx *= 0.985;
+    ship.vy *= 0.985;
     ship.x += ship.vx;
     ship.y += ship.vy;
 
@@ -265,7 +318,7 @@
         if (Math.hypot(laser.x - ast.x, laser.y - ast.y) < ast.radius) {
           ast.ore -= 5;
           score += 15;
-          playSound('mine', ast.x);
+          playSound('mine');
           lasers.splice(l, 1);
 
           for (let p = 0; p < 5; p++) {
@@ -380,19 +433,6 @@
     ctx.strokeStyle = '#f8fafc';
     ctx.fillStyle = '#0284c7';
     ctx.lineWidth = 2;
-
-    // Thruster flame when thrust is active
-    if (keys.thrust && fuel > 0) {
-      ctx.fillStyle = Math.random() > 0.5 ? '#f59e0b' : '#ef4444';
-      ctx.beginPath();
-      ctx.moveTo(-ship.radius * 0.5, -ship.radius * 0.3);
-      ctx.lineTo(-ship.radius * 1.3 - Math.random() * 6, 0);
-      ctx.lineTo(-ship.radius * 0.5, ship.radius * 0.3);
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    ctx.fillStyle = '#0284c7';
     ctx.beginPath();
     ctx.moveTo(ship.radius, 0);
     ctx.lineTo(-ship.radius * 0.7, -ship.radius * 0.6);
@@ -417,10 +457,20 @@
     ArcadeVerse.onResume(() => { if (overlayScreen.classList.contains('hidden')) { isPlaying = true; gameLoop(); } });
     ArcadeVerse.onTeardown(() => {
       isPlaying = false;
+      stopAllAudio();
       if (animationId) cancelAnimationFrame(animationId);
       if (audioCtx) audioCtx.close().catch(() => {});
     });
   }
+
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      stopAllAudio();
+      if (audioCtx && audioCtx.state !== 'closed') {
+        try { audioCtx.close(); } catch (_) {}
+      }
+    }
+  });
 
   initInputs();
 })();
