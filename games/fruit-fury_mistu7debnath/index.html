@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Fruit Fury</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-container">
+    <!-- Main Game Canvas -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Top HUD Bar -->
+    <header id="hud" class="hud-layer hidden" aria-label="Game Status Bar">
+      <div class="hud-left">
+        <div class="hud-pill score-pill">
+          <span class="hud-label">SCORE</span>
+          <span id="hud-score" class="hud-value">0</span>
+        </div>
+        <div class="hud-pill high-pill">
+          <svg class="hud-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+            <path d="M4 22h16"></path>
+            <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+          </svg>
+          <span id="hud-best" class="hud-value">0</span>
+        </div>
+      </div>
+
+      <div class="hud-center">
+        <!-- Mode Badge -->
+        <div id="hud-mode-badge" class="hud-mode-badge">CLASSIC</div>
+        <!-- Lives Container (Classic Mode) -->
+        <div id="hud-lives" class="hud-lives" aria-label="Remaining Lives">
+          <div class="strike-box" data-strike="1" title="Life 1">
+            <svg class="strike-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+            </svg>
+          </div>
+          <div class="strike-box" data-strike="2" title="Life 2">
+            <svg class="strike-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+            </svg>
+          </div>
+          <div class="strike-box" data-strike="3" title="Life 3">
+            <svg class="strike-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+            </svg>
+          </div>
+        </div>
+        <!-- Timer Display (Arcade & Zen Modes) -->
+        <div id="hud-timer-container" class="hud-pill timer-pill hidden">
+          <svg class="hud-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span id="hud-timer" class="hud-value">60s</span>
+        </div>
+      </div>
+
+      <div class="hud-right">
+        <!-- Active Buffs -->
+        <div id="hud-buffs" class="hud-buffs" aria-label="Active Powerups"></div>
+
+        <!-- Mute Toggle -->
+        <button id="btn-sound-toggle" class="icon-btn" aria-label="Toggle Sound" title="Toggle Sound">
+          <svg id="icon-volume-on" class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+          </svg>
+          <svg id="icon-volume-off" class="btn-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+        </button>
+
+        <!-- Pause Button -->
+        <button id="btn-pause-toggle" class="icon-btn" aria-label="Pause Game" title="Pause Game (ESC / P)">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="6" y="4" width="4" height="16"></rect>
+            <rect x="14" y="4" width="4" height="16"></rect>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Floating Combo Banner -->
+    <div id="combo-banner" class="combo-banner hidden" aria-live="polite">
+      <div id="combo-title" class="combo-title">COMBO x3</div>
+      <div id="combo-sub" class="combo-sub">+30 BONUS</div>
+    </div>
+
+    <!-- Screen Flash Overlay (Bombs & Frenzy) -->
+    <div id="screen-flash" class="screen-flash" aria-hidden="true"></div>
+
+    <!-- MAIN MENU OVERLAY -->
+    <div id="screen-menu" class="overlay-screen active" role="dialog" aria-modal="true" aria-labelledby="menu-title">
+      <div class="menu-card">
+        <div class="title-container">
+          <div class="blade-accent" aria-hidden="true"></div>
+          <h1 id="menu-title" class="game-title">
+            <span class="title-word fruit-word">FRUIT</span>
+            <span class="title-word fury-word">FURY</span>
+          </h1>
+          <p class="tagline">Slice Fruits • Dodge Bombs • Unleash Combos</p>
+        </div>
+
+        <!-- Mode Select Tabs -->
+        <div class="mode-select-container">
+          <div class="mode-select-label">SELECT GAME MODE</div>
+          <div class="mode-cards" role="radiogroup" aria-label="Game Mode Selection">
+            <button type="button" class="mode-card active" data-mode="CLASSIC" role="radio" aria-checked="true">
+              <div class="mode-card-header">
+                <svg class="mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <line x1="10" y1="9" x2="8" y2="9"></line>
+                </svg>
+                <span class="mode-name">CLASSIC</span>
+              </div>
+              <p class="mode-desc">3 Lives. Missed fruits cost 1 life. Slicing bombs is fatal. Pure reflex trial.</p>
+            </button>
+
+            <button type="button" class="mode-card" data-mode="ARCADE" role="radio" aria-checked="false">
+              <div class="mode-card-header">
+                <svg class="mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                <span class="mode-name">ARCADE</span>
+              </div>
+              <p class="mode-desc">60s time attack. High-frequency spawns, intense power-ups, frenzy waves.</p>
+            </button>
+
+            <button type="button" class="mode-card" data-mode="ZEN" role="radio" aria-checked="false">
+              <div class="mode-card-header">
+                <svg class="mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M8 12a4 4 0 0 1 8 0"></path>
+                </svg>
+                <span class="mode-name">ZEN</span>
+              </div>
+              <p class="mode-desc">90s pure flow. Zero bombs, no penalties for misses. Master satisfying combos.</p>
+            </button>
+          </div>
+        </div>
+
+        <!-- High Score Preview -->
+        <div class="best-score-preview">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+            <path d="M4 22h16"></path>
+            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+          </svg>
+          <span class="stat-label">RECORD SCORE:</span>
+          <span id="menu-best-score" class="stat-value">0</span>
+        </div>
+
+        <!-- Menu Action Buttons -->
+        <div class="menu-actions">
+          <button id="btn-play" class="btn btn-primary" type="button">
+            <svg class="btn-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span>SLICE TO PLAY</span>
+          </button>
+          <button id="btn-how-to-play" class="btn btn-secondary" type="button">
+            <svg class="btn-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            <span>TACTICAL BRIEFING</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOW TO PLAY MODAL -->
+    <div id="screen-how-to-play" class="overlay-screen hidden" role="dialog" aria-modal="true" aria-labelledby="guide-title">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 id="guide-title" class="modal-title">TACTICAL SLICER BRIEFING</h2>
+          <button id="btn-close-how" class="icon-btn close-btn" aria-label="Close Guide">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="guide-grid">
+            <div class="guide-item">
+              <div class="guide-icon-box orange-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M6 3 2 7l10 10 4-4L6 3Z"></path>
+                  <path d="m14 11 4 4"></path>
+                </svg>
+              </div>
+              <div class="guide-text">
+                <h3>Slice Mechanics</h3>
+                <p>Drag with left mouse or swipe finger across launching fruits. A glowing neon blade cuts fruits into physics-driven halves.</p>
+              </div>
+            </div>
+
+            <div class="guide-item">
+              <div class="guide-icon-box purple-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+              </div>
+              <div class="guide-text">
+                <h3>Combo Multipliers</h3>
+                <p>Cut 3 or more fruits in a single swipe to trigger massive combo multipliers: +30, +50, up to +100 bonus points!</p>
+              </div>
+            </div>
+
+            <div class="guide-item">
+              <div class="guide-icon-box red-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+              </div>
+              <div class="guide-text">
+                <h3>Avoid Dangerous Bombs</h3>
+                <p>Volatile metallic bombs launch with fruits. Cutting a bomb inflicts a critical strike or heavy time penalty!</p>
+              </div>
+            </div>
+
+            <div class="guide-item">
+              <div class="guide-icon-box blue-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+              </div>
+              <div class="guide-text">
+                <h3>5 Tactical Power-Ups</h3>
+                <p>Collect glowing orbs: Freeze (Time Slow), Double Score (2x), Fruit Frenzy (Burst Wave), Bomb Shield, and Extra Life.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button id="btn-back-from-how" class="btn btn-primary" type="button">READY FOR COMBAT</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAUSE SCREEN OVERLAY -->
+    <div id="screen-pause" class="overlay-screen hidden" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+      <div class="menu-card compact-card">
+        <h2 id="pause-title" class="screen-heading">GAME PAUSED</h2>
+        <p class="pause-subtitle">Take a breather, Champion.</p>
+
+        <div class="menu-actions">
+          <button id="btn-resume" class="btn btn-primary" type="button">
+            <svg class="btn-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span>RESUME SLICING</span>
+          </button>
+          <button id="btn-restart-pause" class="btn btn-secondary" type="button">
+            <svg class="btn-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+              <path d="M3 3v5h5"></path>
+              <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
+              <path d="M16 21h5v-5"></path>
+            </svg>
+            <span>RESTART RUN</span>
+          </button>
+          <button id="btn-menu-pause" class="btn btn-outline" type="button">
+            <svg class="btn-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <span>MAIN MENU</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME OVER / RESULT SCREEN OVERLAY -->
+    <div id="screen-game-over" class="overlay-screen hidden" role="dialog" aria-modal="true" aria-labelledby="game-over-title">
+      <div class="menu-card compact-card">
+        <h2 id="game-over-title" class="screen-heading game-over-heading">GAME OVER</h2>
+        <p id="game-over-reason" class="game-over-subtitle">3 Fruits escaped untouched.</p>
+
+        <div class="result-stats-grid">
+          <div class="result-stat-card primary-stat">
+            <span class="result-stat-label">FINAL SCORE</span>
+            <span id="result-final-score" class="result-stat-value highlight-val">0</span>
+          </div>
+          <div class="result-stat-card">
+            <span class="result-stat-label">HIGH SCORE</span>
+            <span id="result-best-score" class="result-stat-value">0</span>
+          </div>
+          <div class="result-stat-card">
+            <span class="result-stat-label">FRUITS SLICED</span>
+            <span id="result-sliced-count" class="result-stat-value">0</span>
+          </div>
+          <div class="result-stat-card">
+            <span class="result-stat-label">BEST COMBO</span>
+            <span id="result-max-combo" class="result-stat-value">0</span>
+          </div>
+        </div>
+
+        <div class="menu-actions">
+          <button id="btn-play-again" class="btn btn-primary" type="button">
+            <svg class="btn-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+              <path d="M3 3v5h5"></path>
+              <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
+              <path d="M16 21h5v-5"></path>
+            </svg>
+            <span>PLAY AGAIN</span>
+          </button>
+          <button id="btn-menu-from-over" class="btn btn-outline" type="button">
+            <svg class="btn-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <span>MAIN MENU</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
+

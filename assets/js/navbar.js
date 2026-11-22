@@ -8,6 +8,8 @@
 (() => {
   // Theme Switching Engine
   const THEME_KEY = "arcadeverse_theme_mode";
+  const THEME_ALT_KEY = "arcadeverse_theme";
+  const THEME_MANUAL_KEY = "arcadeverse_theme_manual";
 
   function getSystemTheme() {
     if (typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) {
@@ -18,8 +20,9 @@
 
   function getStoredTheme() {
     try {
-      const saved = localStorage.getItem(THEME_KEY);
-      if (saved === "light" || saved === "dark") {
+      const isManual = localStorage.getItem(THEME_MANUAL_KEY) === "true";
+      const saved = localStorage.getItem(THEME_KEY) || localStorage.getItem(THEME_ALT_KEY);
+      if (isManual && (saved === "light" || saved === "dark")) {
         return saved;
       }
     } catch (_) {}
@@ -32,6 +35,8 @@
     if (persist) {
       try {
         localStorage.setItem(THEME_KEY, mode);
+        localStorage.setItem(THEME_ALT_KEY, mode);
+        localStorage.setItem(THEME_MANUAL_KEY, "true");
       } catch (_) {}
     }
 
@@ -39,7 +44,7 @@
       const nextLabel = mode === "light" ? "Switch to dark theme" : "Switch to light theme";
       btn.setAttribute("aria-label", nextLabel);
       btn.setAttribute("title", nextLabel);
-      const iconWrap = btn.querySelector(".theme-icon-wrap");
+      const iconWrap = btn.querySelector(".theme-icon-wrap") || btn.querySelector(".mobile-nav-icon");
       if (iconWrap) {
         iconWrap.innerHTML = mode === "light" ? '<i data-lucide="moon"></i>' : '<i data-lucide="sun"></i>';
       }
@@ -53,7 +58,13 @@
       lucide.createIcons();
     }
 
-    window.dispatchEvent(new CustomEvent("arcadeverse:theme-mode-changed", { detail: { mode } }));
+    window.dispatchEvent(new CustomEvent("arcadeverse:theme-mode-changed", {
+      detail: {
+        mode,
+        isManual: persist,
+        systemMode: getSystemTheme()
+      }
+    }));
   }
 
   function toggleThemeMode() {
@@ -66,12 +77,13 @@
   const initialMode = getStoredTheme();
   document.documentElement.setAttribute("data-theme", initialMode);
 
-  // Respect system color preference changes dynamically if no custom preference is saved
+  // Respect system color preference changes dynamically if no custom manual preference is saved (#896)
   if (typeof window !== "undefined" && window.matchMedia) {
     const colorSchemeMedia = window.matchMedia("(prefers-color-scheme: light)");
     const onSystemThemeChange = (e) => {
       try {
-        if (!localStorage.getItem(THEME_KEY)) {
+        const isManual = localStorage.getItem(THEME_MANUAL_KEY) === "true";
+        if (!isManual) {
           applyThemeMode(e.matches ? "light" : "dark", false);
         }
       } catch (_) {}
