@@ -3028,6 +3028,9 @@
 
   if (typeof window !== "undefined") {
     try {
+      if (window.ArcadeAudio && !sdkInstance.ArcadeAudio) {
+        sdkInstance.ArcadeAudio = window.ArcadeAudio;
+      }
       window.ArcadeVerse = sdkInstance;
       window.arcadeverse = sdkInstance;
     } catch (_) {}

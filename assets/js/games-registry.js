@@ -2006,6 +2006,26 @@ const GAMES_REGISTRY = [
     "difficulty": "Intermediate"
   },
   {
+    "id": "protocol-rogue_hrshjswniii",
+    "title": "Protocol Rogue: Cyberdeck Tactics",
+    "category": "Strategy",
+    "lucideIcon": "gamepad-2",
+    "description": "Build a cyber command deck, read enemy intent, and breach a branching corporate network in a tactical roguelike.",
+    "author": "Harsh Jaiswani",
+    "github": "hrshjswniii",
+    "role": "Arcade Contributor",
+    "path": "games/protocol-rogue_hrshjswniii/index.html",
+    "tags": [
+      "Strategy",
+      "Deckbuilding",
+      "Roguelike",
+      "Cards",
+      "Cyberpunk"
+    ],
+    "stars": 0,
+    "featured": false
+  },
+  {
     "id": "pumpkin-express_joitapaul",
     "title": "Pumpkin Express: Haunted Rails",
     "category": "Puzzle",
@@ -2543,7 +2563,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 748,
+    "commits": 823,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2563,7 +2583,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 443,
+    "commits": 506,
     "gamesCount": 76,
     "mechanicsBonus": 2,
     "platformPRs": 29,
@@ -2726,6 +2746,25 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
+    "name": "Harsh Jaiswani",
+    "github": "hrshjswniii",
+    "avatarInitial": "H",
+    "role": "Active Contributor (NSOC '26)",
+    "commits": 37,
+    "gamesCount": 5,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 1,
+    "bonusPts": 0,
+    "contributions": [
+      "Cyber Brick Breaker: Neon Velocity",
+      "Cyber Grapple: Neon Chasm Swinger",
+      "Cyber Logic Gates: Boolean Circuit Forge",
+      "Cyber Typer: Terminal Hacker",
+      "Protocol Rogue: Cyberdeck Tactics"
+    ]
+  },
+  {
     "name": "Pratik Giri",
     "github": "pratikadamas",
     "avatarInitial": "P",
@@ -2741,24 +2780,6 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "Harsh Jaiswani",
-    "github": "hrshjswniii",
-    "avatarInitial": "H",
-    "role": "Active Contributor (NSOC '26)",
-    "commits": 35,
-    "gamesCount": 4,
-    "mechanicsBonus": 0,
-    "platformPRs": 0,
-    "qualityPRs": 1,
-    "bonusPts": 0,
-    "contributions": [
-      "Cyber Brick Breaker: Neon Velocity",
-      "Cyber Grapple: Neon Chasm Swinger",
-      "Cyber Logic Gates: Boolean Circuit Forge",
-      "Cyber Typer: Terminal Hacker"
-    ]
-  },
-  {
     "name": "Arshi Bansal",
     "github": "ArshiBansal",
     "avatarInitial": "A",
@@ -2771,6 +2792,21 @@ const CONTRIBUTORS_REGISTRY = [
     "bonusPts": 0,
     "contributions": [
       "Circuit Connect"
+    ]
+  },
+  {
+    "name": "divyanshagarwal123",
+    "github": "divyanshagarwal123",
+    "avatarInitial": "D",
+    "role": "Contributor (NSOC '26)",
+    "commits": 22,
+    "gamesCount": 0,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Quality & Platform Contribution"
     ]
   },
   {
@@ -2804,21 +2840,6 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "divyanshagarwal123",
-    "github": "divyanshagarwal123",
-    "avatarInitial": "D",
-    "role": "Contributor (NSOC '26)",
-    "commits": 14,
-    "gamesCount": 0,
-    "mechanicsBonus": 0,
-    "platformPRs": 0,
-    "qualityPRs": 0,
-    "bonusPts": 0,
-    "contributions": [
-      "Quality & Platform Contribution"
-    ]
-  },
-  {
     "name": "nilesh0199",
     "github": "nilesh0199",
     "avatarInitial": "N",
@@ -2834,11 +2855,41 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
+    "name": "trunalpatil",
+    "github": "trunalpatil",
+    "avatarInitial": "T",
+    "role": "Contributor (NSOC '26)",
+    "commits": 2,
+    "gamesCount": 0,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Quality & Platform Contribution"
+    ]
+  },
+  {
     "name": "Sarbajit Sengupta",
     "github": "Sarbajit-Sengupta",
     "avatarInitial": "S",
     "role": "Contributor (NSOC '26)",
     "commits": 2,
+    "gamesCount": 0,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Quality & Platform Contribution"
+    ]
+  },
+  {
+    "name": "trunal2005",
+    "github": "trunal2005",
+    "avatarInitial": "T",
+    "role": "Contributor (NSOC '26)",
+    "commits": 1,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,
