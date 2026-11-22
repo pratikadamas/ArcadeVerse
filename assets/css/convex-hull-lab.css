@@ -1,0 +1,57 @@
+:root {
+  color-scheme: dark;
+  font-family: system-ui, sans-serif;
+  background: #10131c;
+  color: #ecf2ff;
+  --line: #35455e;
+  --muted: #aab8cf;
+  --accent: #8eecda;
+}
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { width: min(100% - 32px, 1080px); margin: auto; padding: 34px 0; }
+a { color: var(--accent); text-underline-offset: .2em; }
+header { margin-bottom: 24px; }
+h1 { font-size: clamp(2rem, 5vw, 3.55rem); letter-spacing: -.045em; margin: 20px 0 8px; }
+h2 { font-size: 1.12rem; margin: 0 0 5px; }
+p { color: var(--muted); line-height: 1.52; margin: 6px 0; }
+header p { max-width: 65ch; }
+.controls, .readout, .benchmark {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  background: #1a2130;
+  border: 1px solid var(--line);
+  padding: 12px 15px;
+}
+.controls { border-radius: 12px 12px 0 0; }
+.readout { border-radius: 0 0 12px 12px; justify-content: space-between; font-size: .88rem; }
+.readout p { margin: 0; }
+#summary { color: #e7f3ff; }
+#legend { color: #ffc87c; }
+#scene { display: block; width: 100%; height: auto; background: #141923; border-inline: 1px solid var(--line); }
+button, label { min-height: 40px; font: inherit; }
+label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+button {
+  border: 1px solid #5b7290;
+  background: #253248;
+  color: #f3f6fc;
+  padding: 7px 14px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+button:disabled { opacity: .5; cursor: default; }
+button:focus-visible, input:focus-visible, summary:focus-visible, a:focus-visible {
+  outline: 2px solid #ffd29e;
+  outline-offset: 3px;
+}
+input { accent-color: var(--accent); width: 1.15rem; height: 1.15rem; }
+.benchmark { margin-top: 20px; border-radius: 12px; justify-content: space-between; }
+.benchmark p { font-size: .9rem; }
+#timings { width: 100%; color: #e7f3ff; font-family: ui-monospace, monospace; }
+#timings:empty { display: none; }
+details { margin-top: 16px; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+summary { cursor: pointer; }
+pre { border-radius: 8px; padding: 10px; background: #20293a; overflow-x: auto; }
+code { font-family: ui-monospace, monospace; overflow-wrap: anywhere; }
