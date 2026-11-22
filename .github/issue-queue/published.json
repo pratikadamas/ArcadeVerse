@@ -298,5 +298,65 @@
     "title": "[Feature/Physics]: Interactive 2D Spring-Damper Ragdoll Dismemberment & Skeletal Bone Hierarchy",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1303",
     "published_at": "2026-11-22T06:37:34.864Z"
+  },
+  {
+    "number": 1304,
+    "title": "[Feature/UI]: CSS Glassmorphism & Neon HUD Reticle Customizer for Arcade Cabinets",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1304",
+    "published_at": "2026-11-22T07:04:04.614Z"
+  },
+  {
+    "number": 1305,
+    "title": "[Feature/Audio]: Web Audio Dynamic Comb Filter & Flanger/Phaser Effect DSP Node",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1305",
+    "published_at": "2026-11-22T07:04:10.074Z"
+  },
+  {
+    "number": 1306,
+    "title": "[Feature/Canvas]: Dynamic Canvas Procedural Lightning & Electric Arc Plasma Discharger",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1306",
+    "published_at": "2026-11-22T07:04:15.495Z"
+  },
+  {
+    "number": 1307,
+    "title": "[Feature/Gameplay]: Client-Side Bookmarkable Challenge Run Modifier Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1307",
+    "published_at": "2026-11-22T07:04:20.942Z"
+  },
+  {
+    "number": 1308,
+    "title": "[Feature/Algorithms]: Canvas 2D Convex Hull & Minimum Bounding Box Collision Calculator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1308",
+    "published_at": "2026-11-22T07:04:26.443Z"
+  },
+  {
+    "number": 1309,
+    "title": "[Feature/Graphics]: Interactive Pixel-Art Glyph Matrix & Custom Bitmap Font Renderer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1309",
+    "published_at": "2026-11-22T07:04:31.833Z"
+  },
+  {
+    "number": 1310,
+    "title": "[Feature/VFX]: Dynamic Canvas Particle Text Dissolve & Matrix Digit Rain Transition",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1310",
+    "published_at": "2026-11-22T07:04:37.200Z"
+  },
+  {
+    "number": 1311,
+    "title": "[Feature/Audio]: Web Audio Binaural Beat & Isochronic Tone Brainwave Synchronizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1311",
+    "published_at": "2026-11-22T07:04:42.708Z"
+  },
+  {
+    "number": 1312,
+    "title": "[Feature/Physics]: Dynamic 2D Cloth & Cape Verlet Physics Drape Simulation Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1312",
+    "published_at": "2026-11-22T07:04:48.239Z"
+  },
+  {
+    "number": 1313,
+    "title": "[Feature/Shaders]: Dynamic Canvas Heat Distortion & Thermal Mirage Air Shimmer Filter",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1313",
+    "published_at": "2026-11-22T07:04:53.784Z"
   }
 ]
