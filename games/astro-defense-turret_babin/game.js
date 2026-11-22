@@ -6,39 +6,79 @@
   class SoundFX {
     constructor() {
       this.ctx = null;
+      this.masterGain = null;
+      this.limiter = null;
       this.muted = false;
-      this.activeNodes = new Set();
+      this.activeVoices = new Set();
+      this.maxVoices = 6;
     }
     init() {
       if (!this.ctx) {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         if (AudioCtx) this.ctx = new AudioCtx();
       }
+      if (this.ctx && !this.masterGain) {
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+        try {
+          const comp = this.ctx.createDynamicsCompressor();
+          comp.threshold.setValueAtTime(-0.5, this.ctx.currentTime);
+          comp.knee.setValueAtTime(0, this.ctx.currentTime);
+          comp.ratio.setValueAtTime(20.0, this.ctx.currentTime);
+          comp.attack.setValueAtTime(0.001, this.ctx.currentTime);
+          comp.release.setValueAtTime(0.05, this.ctx.currentTime);
+          this.limiter = comp;
+          this.masterGain.connect(this.limiter);
+          this.limiter.connect(this.ctx.destination);
+        } catch (_) {
+          this.masterGain.connect(this.ctx.destination);
+        }
+      }
       if (this.ctx && this.ctx.state === 'suspended') {
         this.ctx.resume();
       }
     }
-    trackNode(osc) {
-      if (!this.activeNodes) this.activeNodes = new Set();
-      this.activeNodes.add(osc);
-      osc.onended = () => {
-        if (this.activeNodes) this.activeNodes.delete(osc);
+    trackVoice(node) {
+      if (!node) return node;
+      if (!this.activeVoices) this.activeVoices = new Set();
+      while (this.activeVoices.size >= this.maxVoices) {
+        const oldest = this.activeVoices.values().next().value;
+        if (oldest) {
+          try {
+            if (typeof oldest.stop === 'function') oldest.stop();
+            if (typeof oldest.disconnect === 'function') oldest.disconnect();
+          } catch (_) {}
+          this.activeVoices.delete(oldest);
+        } else {
+          break;
+        }
+      }
+      this.activeVoices.add(node);
+      const onEnded = () => {
+        if (this.activeVoices) this.activeVoices.delete(node);
       };
-      return osc;
+      if (typeof node.addEventListener === 'function') {
+        node.addEventListener('ended', onEnded, { once: true });
+      } else {
+        node.onended = onEnded;
+      }
+      return node;
     }
     stopAll() {
-      if (this.activeNodes) {
-        this.activeNodes.forEach(node => {
+      if (this.activeVoices) {
+        this.activeVoices.forEach((node) => {
           try {
-            node.stop();
-            node.disconnect();
+            if (typeof node.stop === 'function') node.stop();
+            if (typeof node.disconnect === 'function') node.disconnect();
           } catch (_) {}
         });
-        this.activeNodes.clear();
+        this.activeVoices.clear();
       }
     }
     laser() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       try {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
@@ -48,14 +88,16 @@
         gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.12);
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        this.trackNode(osc);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
         osc.start();
         osc.stop(this.ctx.currentTime + 0.12);
       } catch (e) {}
     }
     boom() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       try {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
@@ -65,14 +107,16 @@
         gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.25);
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        this.trackNode(osc);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
         osc.start();
         osc.stop(this.ctx.currentTime + 0.25);
       } catch (e) {}
     }
     shieldHit() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       try {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
@@ -82,14 +126,16 @@
         gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.2);
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        this.trackNode(osc);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
         osc.start();
         osc.stop(this.ctx.currentTime + 0.2);
       } catch (e) {}
     }
     gameOver() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       try {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
@@ -99,8 +145,8 @@
         gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.6);
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        this.trackNode(osc);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
         osc.start();
         osc.stop(this.ctx.currentTime + 0.6);
       } catch (e) {}
@@ -212,6 +258,7 @@
   }
 
   function resetGame() {
+    sfx.stopAll();
     score = 0;
     wave = 1;
     shieldHp = 100;
@@ -387,7 +434,6 @@
 
   function endGame() {
     isRunning = false;
-    sfx.stopAll();
     sfx.gameOver();
     if (animId) cancelAnimationFrame(animId);
 
@@ -537,7 +583,6 @@
       animId = null;
     }
     sfx.init();
-    sfx.stopAll();
     resetGame();
     isRunning = true;
     isPaused = false;
@@ -558,42 +603,18 @@
     }
   }
 
-  // Pointer Lock API precision aiming (#573)
-  let isPointerLocked = false;
-  let virtualCrosshair = { x: hub.x + 80, y: hub.y };
-
-  if (window.ArcadeVerse && typeof window.ArcadeVerse.initPointerLock === 'function') {
-    window.ArcadeVerse.initPointerLock(canvas, {
-      sensitivity: 1.2,
-      onMove: (movementX, movementY) => {
-        if (!isRunning || isPaused) return;
-        virtualCrosshair.x = Math.max(20, Math.min(canvas.width - 20, virtualCrosshair.x + movementX));
-        virtualCrosshair.y = Math.max(20, Math.min(canvas.height - 20, virtualCrosshair.y + movementY));
-        hub.angle = Math.atan2(virtualCrosshair.y - hub.y, virtualCrosshair.x - hub.x);
-      },
-      onLockChange: (locked) => {
-        isPointerLocked = locked;
-      }
-    });
-  }
-
   // Mouse & Touch aiming on canvas
   canvas.addEventListener('mousemove', (e) => {
-    if (!isRunning || isPaused || isPointerLocked) return;
+    if (!isRunning || isPaused) return;
     const rect = canvas.getBoundingClientRect();
     const mouseX = ((e.clientX - rect.left) / rect.width) * canvas.width;
     const mouseY = ((e.clientY - rect.top) / rect.height) * canvas.height;
-    virtualCrosshair.x = mouseX;
-    virtualCrosshair.y = mouseY;
     hub.angle = Math.atan2(mouseY - hub.y, mouseX - hub.x);
   });
 
   canvas.addEventListener('mousedown', () => {
     sfx.init();
     if (isRunning && !isPaused) {
-      if (window.ArcadeVerse && typeof window.ArcadeVerse.initPointerLock === 'function' && !isPointerLocked) {
-        try { canvas.requestPointerLock(); } catch (_) {}
-      }
       shootLaser();
     }
   });
@@ -665,9 +686,6 @@
 
   btnMute.addEventListener('click', () => {
     sfx.muted = !sfx.muted;
-    if (sfx.muted) {
-      sfx.stopAll();
-    }
     btnMute.classList.toggle('active', sfx.muted);
   });
 
@@ -687,6 +705,9 @@
         animId = null;
       }
       sfx.stopAll();
+      if (sfx.ctx && sfx.ctx.state !== 'closed') {
+        try { sfx.ctx.close(); } catch (_) {}
+      }
     } else if (e.data.type === 'ARCADEVERSE_PAUSE') {
       if (isRunning && !isPaused) togglePause();
       sfx.stopAll();

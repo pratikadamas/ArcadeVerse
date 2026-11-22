@@ -527,27 +527,46 @@
   let soundOn = storeGet(LS_SOUND) !== '0';
   let actx = null;
   let master = null;
+  let limiter = null;
+  const activeVoices = new Set();
+  const MAX_VOICES = 6;
   let rumbleGain = null;
   let rumbleFilter = null;
-  const activeNodes = new Set();
 
-  function trackNode(node) {
-    activeNodes.add(node);
-    node.onended = () => {
-      activeNodes.delete(node);
+  function trackVoice(node) {
+    if (!node) return node;
+    while (activeVoices.size >= MAX_VOICES) {
+      const oldest = activeVoices.values().next().value;
+      if (oldest) {
+        try {
+          if (typeof oldest.stop === 'function') oldest.stop();
+          if (typeof oldest.disconnect === 'function') oldest.disconnect();
+        } catch (_) {}
+        activeVoices.delete(oldest);
+      } else {
+        break;
+      }
+    }
+    activeVoices.add(node);
+    const onEnded = () => {
+      activeVoices.delete(node);
     };
+    if (typeof node.addEventListener === 'function') {
+      node.addEventListener('ended', onEnded, { once: true });
+    } else {
+      node.onended = onEnded;
+    }
     return node;
   }
 
   function stopAllAudio() {
-    setRumble(0);
-    activeNodes.forEach(node => {
+    activeVoices.forEach((node) => {
       try {
-        node.stop();
-        node.disconnect();
+        if (typeof node.stop === 'function') node.stop();
+        if (typeof node.disconnect === 'function') node.disconnect();
       } catch (_) {}
     });
-    activeNodes.clear();
+    activeVoices.clear();
   }
 
   function initAudio() {
@@ -558,7 +577,19 @@
       actx = new AC();
       master = actx.createGain();
       master.gain.value = soundOn ? 0.7 : 0;
-      master.connect(actx.destination);
+      try {
+        const comp = actx.createDynamicsCompressor();
+        comp.threshold.setValueAtTime(-0.5, actx.currentTime);
+        comp.knee.setValueAtTime(0, actx.currentTime);
+        comp.ratio.setValueAtTime(20.0, actx.currentTime);
+        comp.attack.setValueAtTime(0.001, actx.currentTime);
+        comp.release.setValueAtTime(0.05, actx.currentTime);
+        limiter = comp;
+        master.connect(limiter);
+        limiter.connect(actx.destination);
+      } catch (_) {
+        master.connect(actx.destination);
+      }
 
       // looping brown noise for the engine rumble
       const len = actx.sampleRate * 2;
@@ -581,7 +612,6 @@
       src.connect(rumbleFilter);
       rumbleFilter.connect(rumbleGain);
       rumbleGain.connect(master);
-      trackNode(src);
       src.start();
     } catch (e) {
       actx = null;
@@ -615,7 +645,7 @@
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
     o.connect(g);
     g.connect(master);
-    trackNode(o);
+    trackVoice(o);
     o.start(t0);
     o.stop(t0 + dur + 0.05);
   }
@@ -647,8 +677,9 @@
     src.connect(f);
     f.connect(g);
     g.connect(master);
-    trackNode(src);
+    trackVoice(src);
     src.start(t0);
+    src.stop(t0 + 1.15);
     const o = actx.createOscillator();
     const og = actx.createGain();
     o.type = 'sine';
@@ -658,16 +689,13 @@
     og.gain.exponentialRampToValueAtTime(0.001, t0 + 0.7);
     o.connect(og);
     og.connect(master);
-    trackNode(o);
+    trackVoice(o);
     o.start(t0);
     o.stop(t0 + 0.8);
   }
 
   function setSound(on) {
     soundOn = on;
-    if (!on) {
-      stopAllAudio();
-    }
     storeSet(LS_SOUND, on ? '1' : '0');
     el.soundOn.classList.toggle('hidden', !on);
     el.soundOff.classList.toggle('hidden', on);
@@ -1060,7 +1088,6 @@
       showOverlay(el.crash, 'retry-btn');
     } else {
       state = 'over';
-      stopAllAudio();
       $('over-reason').textContent = r.reasons.slice(0, 2).join(' ');
       $('over-score').textContent = String(score);
       $('over-levels').textContent = String(cleared);
@@ -1677,10 +1704,15 @@
   loadLevel(1);
   updateHud(true);
   showOverlay(el.start, 'start-btn');
+  requestAnimationFrame(frame);
+
+  // Clean audio on teardown (#507)
   window.addEventListener('message', (e) => {
-    if (e.data && (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE')) {
+    if (e.data && e.data.type === 'ARCADEVERSE_TEARDOWN') {
       stopAllAudio();
+      if (actx && actx.state !== 'closed') {
+        try { actx.close(); } catch (_) {}
+      }
     }
   });
-  requestAnimationFrame(frame);
 })();
