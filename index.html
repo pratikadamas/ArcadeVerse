@@ -630,6 +630,8 @@
           <span>•</span>
           <a href="faqs.html">FAQs</a>
           <span>•</span>
+          <a href="#" id="footer-tech-tree-btn">Tech-Tree</a>
+          <span>•</span>
           <a href="https://github.com/DebasmitaBose0/ArcadeVerse" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
         </div>
       </div>
@@ -646,6 +648,7 @@
   <script src="assets/js/arcade-ticket-dispenser.js"></script>
   <script src="assets/js/isometric-arcade-room.js"></script>
   <script src="assets/js/card-flip-manual.js"></script>
+  <script src="assets/js/arcade-tech-tree.js"></script>
   <script src="assets/js/app.js"></script>
   <script src="assets/js/halloween.js"></script>
   <script src="assets/js/daily-challenge.js"></script>
@@ -661,6 +664,18 @@
   <script src="assets/js/report-bug-helper.js"></script>
   <script src="assets/js/arcade-gamepad.js"></script>
   <script src="assets/js/touch-joystick.js"></script>
+  <script>
+    if (window.ArcadeTechTree && typeof window.ArcadeTechTree.init === "function") {
+      window.ArcadeTechTree.init();
+      var techBtn = document.getElementById("footer-tech-tree-btn");
+      if (techBtn) {
+        techBtn.addEventListener("click", function (e) {
+          e.preventDefault();
+          window.ArcadeTechTree.openVisualizer();
+        });
+      }
+    }
+  </script>
   <script>
     if (window.lucide) {
       lucide.createIcons();
