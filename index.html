@@ -210,13 +210,13 @@
         </div>
 
         <div class="quick-stats">
-          <div class="stat-card">
-            <span class="stat-number" id="total-games-count">1</span>
+          <div class="stat-card" id="stat-card-games" tabindex="0" role="button" aria-haspopup="dialog" aria-label="View Playable Games breakdown">
+            <span class="stat-number" id="total-games-count">124</span>
             <span class="stat-label">Playable Games</span>
           </div>
           <div class="stat-divider"></div>
-          <div class="stat-card">
-            <span class="stat-number" id="total-contributors-count">1</span>
+          <div class="stat-card" id="stat-card-contributors" tabindex="0" role="button" aria-haspopup="dialog" aria-label="View Active Contributors summary">
+            <span class="stat-number" id="total-contributors-count">48</span>
             <span class="stat-label">Active Contributors</span>
           </div>
           <div class="stat-divider"></div>
@@ -630,6 +630,8 @@
           <span>•</span>
           <a href="faqs.html">FAQs</a>
           <span>•</span>
+          <button type="button" class="footer-link-btn" id="footer-storage-manager-btn" style="background:none;border:none;color:inherit;font:inherit;cursor:pointer;padding:0;text-decoration:underline;">Storage</button>
+          <span>•</span>
           <a href="https://github.com/DebasmitaBose0/ArcadeVerse" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
         </div>
       </div>
@@ -642,10 +644,12 @@
   <script src="assets/js/playtime-heatmap.js"></script>
   <script src="assets/js/dev-asset-auditor.js"></script>
   <script src="assets/js/storage-inspector-lab.js"></script>
+  <script src="assets/js/storage-manager.js"></script>
   <script src="assets/js/arcade-token-dispenser.js"></script>
   <script src="assets/js/arcade-ticket-dispenser.js"></script>
   <script src="assets/js/isometric-arcade-room.js"></script>
   <script src="assets/js/card-flip-manual.js"></script>
+  <script src="assets/js/rating-histogram.js"></script>
   <script src="assets/js/virtual-controller-splitter.js"></script>
   <script src="assets/js/app.js"></script>
   <script src="assets/js/halloween.js"></script>
@@ -654,6 +658,7 @@
   <script src="assets/js/keyboard-shortcuts.js"></script>
   <script src="assets/js/network-detector.js"></script>
   <script src="assets/js/a11y-audio-beacon.js"></script>
+  <script src="assets/js/a11y-screen-magnifier.js"></script>
   <script src="assets/js/a11y-engine.js"></script>
   <script src="assets/js/trophy-card.js"></script>
   <script src="assets/js/sound-engine.js"></script>
@@ -662,6 +667,7 @@
   <script src="assets/js/report-bug-helper.js"></script>
   <script src="assets/js/arcade-gamepad.js"></script>
   <script src="assets/js/touch-joystick.js"></script>
+  <script src="assets/js/arcade-particles.js"></script>
   <script>
     if (window.ArcadeVirtualControllerSplitter && typeof window.ArcadeVirtualControllerSplitter.init === "function") {
       window.ArcadeVirtualControllerSplitter.init();
