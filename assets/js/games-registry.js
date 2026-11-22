@@ -2605,7 +2605,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 842,
+    "commits": 846,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2625,7 +2625,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 516,
+    "commits": 521,
     "gamesCount": 76,
     "mechanicsBonus": 2,
     "platformPRs": 29,
@@ -2769,6 +2769,21 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
+    "name": "Pratik Giri",
+    "github": "pratikadamas",
+    "avatarInitial": "P",
+    "role": "Contributor (NSOC '26)",
+    "commits": 121,
+    "gamesCount": 1,
+    "mechanicsBonus": 0,
+    "platformPRs": 1,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Math Blitz: 60s Arithmetic Sprint"
+    ]
+  },
+  {
     "name": "Chanchal Gupta",
     "github": "chanchall26",
     "avatarInitial": "C",
@@ -2787,21 +2802,6 @@ const CONTRIBUTORS_REGISTRY = [
       "Neon Air Hockey: Plasma Puck Arena",
       "Neon Highway Hopper",
       "Quantum Lunar Lander"
-    ]
-  },
-  {
-    "name": "Pratik Giri",
-    "github": "pratikadamas",
-    "avatarInitial": "P",
-    "role": "Contributor (NSOC '26)",
-    "commits": 115,
-    "gamesCount": 1,
-    "mechanicsBonus": 0,
-    "platformPRs": 1,
-    "qualityPRs": 0,
-    "bonusPts": 0,
-    "contributions": [
-      "Math Blitz: 60s Arithmetic Sprint"
     ]
   },
   {
