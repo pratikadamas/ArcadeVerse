@@ -687,14 +687,18 @@
             frameDoc.dispatchEvent(frameEvt);
           }
         } catch (_) {
-          // Cross-origin fallback via postMessage
+          // Cross-origin fallback via postMessage with trusted target origin (#884)
           try {
+            const targetOrigin = (typeof window.getTrustedTargetOrigin === 'function')
+              ? window.getTrustedTargetOrigin()
+              : (window.location && window.location.origin && window.location.origin !== 'null' ? window.location.origin : '*');
+
             gameIframe.contentWindow.postMessage({
               type: 'ARCADEVERSE_GAMEPAD_KEY',
               eventType: type,
               key: mapping.key,
               code: mapping.code
-            }, '*');
+            }, targetOrigin);
           } catch (_) {}
         }
       }

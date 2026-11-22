@@ -21,6 +21,9 @@
   <link rel="stylesheet" href="assets/css/keyboard-shortcuts.css">
   <link rel="stylesheet" href="assets/css/network-detector.css">
   <link rel="stylesheet" href="assets/css/trophy-card.css">
+  <link rel="stylesheet" href="assets/css/inverse-kinematics-lab.css">
+  <link rel="stylesheet" href="assets/css/split-depth-studio.css">
+  <link rel="stylesheet" href="assets/css/arcade-wallpaper-generator.css">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -159,6 +162,7 @@
               <li><a href="#lifecycle-bridge" class="docs-nav-link"><i data-lucide="activity"></i> Lifecycle Bridge SDK</a></li>
               <li><a href="#sdk-sandbox" class="docs-nav-link"><i data-lucide="terminal"></i> Interactive SDK Sandbox</a></li>
               <li><a href="#a11y-hub" class="docs-nav-link"><i data-lucide="eye"></i> Accessibility Engine</a></li>
+              <li><a href="#a11y-audio-beacon" class="docs-nav-link"><i data-lucide="radio"></i> Spatial Audio Beacon</a></li>
               <li><a href="#trophy-engine" class="docs-nav-link"><i data-lucide="award"></i> Trophy Certificate Canvas</a></li>
               <li><a href="#shortcuts-engine" class="docs-nav-link"><i data-lucide="keyboard"></i> Keyboard Shortcuts</a></li>
               <li><a href="#recently-played" class="docs-nav-link"><i data-lucide="clock"></i> Quick Resume Engine</a></li>
@@ -167,9 +171,12 @@
               <li><a href="#storage-manager" class="docs-nav-link"><i data-lucide="hard-drive"></i> Save Data Vault & Manager</a></li>
               <li><a href="#snapshot-studio" class="docs-nav-link"><i data-lucide="camera"></i> Retro Snapshot Studio</a></li>
               <li><a href="#theme-studio" class="docs-nav-link"><i data-lucide="palette"></i> Theme Studio & WCAG Contrast</a></li>
+              <li><a href="#wallpaper-studio" class="docs-nav-link"><i data-lucide="image"></i> Wallpaper Studio</a></li>
               <li><a href="#slot-reel" class="docs-nav-link"><i data-lucide="dices"></i> Slot Reel Roulette Picker</a></li>
               <li><a href="#playlist-system" class="docs-nav-link"><i data-lucide="list-music"></i> Custom Playlist Engine</a></li>
               <li><a href="#az-jump-bar" class="docs-nav-link"><i data-lucide="arrow-down-a-z"></i> A-Z Catalog Jump Bar</a></li>
+              <li><a href="#inverse-kinematics-lab" class="docs-nav-link"><i data-lucide="git-branch"></i> Inverse Kinematics Lab</a></li>
+              <li><a href="#split-depth-studio" class="docs-nav-link"><i data-lucide="layers"></i> Split-Depth Cover Studio</a></li>
               <li><a href="#theme-sync" class="docs-nav-link"><i data-lucide="sun-moon"></i> Theme Sync & UI Guidelines</a></li>
               <li><a href="#bug-report-helper" class="docs-nav-link"><i data-lucide="bug"></i> Game Bug Report Diagnostic</a></li>
               <li><a href="#card-flip-manual" class="docs-nav-link"><i data-lucide="layers"></i> 3D Flip Card &amp; Quick Manual</a></li>
@@ -1003,6 +1010,40 @@ arcadeverse.requestPause();
           </ul>
         </section>
 
+        <!-- 10b. Spatial Audio Beacon -->
+        <section class="docs-section" id="a11y-audio-beacon">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Universal Spatial Audio Beacon &amp; Stereo Sonification</h2>
+          <p class="docs-paragraph">
+            Implemented in <code>assets/js/a11y-audio-beacon.js</code>, this subsystem provides real-time 3D binaural spatial sound guidance for blind and visually impaired players across 2D arcade games. Built on the native Web Audio API with zero external audio samples or dependencies:
+          </p>
+          <ul>
+            <li><strong>Stereo Panning Mapping:</strong> Translates horizontal coordinate positions into binaural stereo panning from <code>-1.0</code> (Hard Left) through <code>0.0</code> (Center) to <code>+1.0</code> (Hard Right) via <code>StereoPannerNode</code>.</li>
+            <li><strong>Vertical Frequency Sonification:</strong> Maps vertical coordinate positions to acoustic frequency pitch from <code>200 Hz</code> (bottom of screen) to <code>1200 Hz</code> (top of screen).</li>
+            <li><strong>Proximity Hazard Radar:</strong> Emits rhythmic radar pulses that dynamically accelerate in tempo (from <code>1000 ms</code> down to <code>100 ms</code>) as the player approaches screen boundaries or tracked hazards.</li>
+            <li><strong>Entity Sonification Signatures:</strong> Synthesizes unique spatial audio earcons for game elements: coins, hazards, beacons, boundary walls, portals, and powerups.</li>
+            <li><strong>Accessible Keyboard Shortcut:</strong> Rapidly toggle on or off using <kbd>Alt</kbd>+<kbd>B</kbd> (or via the Accessibility Hub drawer) with verbal screen-reader confirmation and state earcons.</li>
+          </ul>
+          <div class="code-block-wrapper">
+            <div class="code-block-header">
+              <span>ArcadeVerse SDK Spatial Sonification API</span>
+              <button class="btn-copy-code" type="button" aria-label="Copy code snippet">
+                <i data-lucide="copy"></i> Copy
+              </button>
+            </div>
+            <pre><code class="language-javascript">// In-game entity audio sonification
+ArcadeVerse.a11y.sonifyEntity(player.x, player.y, 'coin');
+
+// Continuous player position reporting for beacon and radar
+ArcadeVerse.a11y.updatePlayerPosition(player.x, player.y, 800, 600);
+
+// Query audio beacon status
+if (ArcadeVerse.a11y.isAudioBeaconEnabled()) {
+  console.log("Spatial Audio Beacon active");
+}</code></pre>
+          </div>
+        </section>
+
         <!-- 11. Trophy Certificate Engine -->
         <section class="docs-section" id="trophy-engine">
           <span class="docs-section-tag">04 / Platform Subsystems</span>
@@ -1303,6 +1344,24 @@ arcadeverse.requestPause();
           </p>
         </section>
 
+        <section class="docs-section" id="wallpaper-studio" data-wallpaper-studio>
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Wallpaper Studio</h2>
+          <p class="docs-paragraph">Turn 24 distinct games from the community catalog into a retro wallpaper. Choose your screen size, tint and CRT texture, then download a lossless PNG. Everything is composed in your browser.</p>
+          <form class="av-wallpaper-form">
+            <label>Wallpaper size<select name="size"><option value="desktop">Desktop Full HD · 1920 × 1080</option><option value="uhd">4K UHD · 3840 × 2160</option><option value="phone">Mobile Phone · 1080 × 1920</option></select></label>
+            <label>Color tint<select name="tint"><option value="synthwave">Synthwave Cyan / Pink</option><option value="matrix">Matrix Green</option><option value="amber">Classic Amber</option></select></label>
+            <label for="wallpaper-scanlines">CRT scanline intensity <output for="wallpaper-scanlines">35%</output><input id="wallpaper-scanlines" name="scanlines" type="range" min="0" max="100" value="35"></label>
+            <label class="av-wallpaper-check"><input name="logo" type="checkbox" checked> Glowing center logo</label>
+            <div class="av-wallpaper-actions"><button type="submit" class="btn btn-primary">Generate new mix</button><button type="button" class="btn btn-secondary" data-wallpaper-cancel disabled>Cancel</button><button type="button" class="btn btn-secondary" data-wallpaper-download disabled>Download PNG</button></div>
+          </form>
+          <progress class="av-wallpaper-progress" max="24" value="0" aria-label="Game cards composed"></progress>
+          <p class="av-wallpaper-status" data-wallpaper-status role="status" aria-live="polite">Choose Generate new mix to preview your wallpaper. No image is generated until you ask.</p>
+          <div class="av-wallpaper-preview" data-wallpaper-preview><p>Your wallpaper preview appears here.</p></div>
+          <p class="av-wallpaper-caption" data-wallpaper-caption></p>
+          <details><summary>Games in the completed mix</summary><ol class="av-wallpaper-games" data-wallpaper-games></ol></details>
+        </section>
+
         <!-- 15i. 3D Flip Card & Quick Manual Schematic (Issue #1102) -->
         <section class="docs-section" id="card-flip-manual">
           <span class="docs-section-tag">04 / Platform Subsystems</span>
@@ -1478,6 +1537,48 @@ function updateCategoryPillCounts() {
           </div>
         </section>
 
+        <section class="docs-section" id="split-depth-studio">
+          <span class="docs-section-tag">04 / Platform Subsystems</span><h2 class="docs-section-title">Split-Depth Cover Studio</h2>
+          <p class="docs-paragraph">Put animated foreground artwork in front of white occlusion bars while the background stays behind. Move the pointer, drag on touch, or focus the canvas and use arrow keys for parallax; Home centers the view.</p>
+          <div class="depth-studio" data-depth-studio>
+            <canvas data-depth-canvas width="800" height="450" tabindex="0" role="img" aria-label="Split-depth arcade cover preview. Pointer or arrow keys change parallax."></canvas>
+            <div class="depth-controls">
+              <label>Bar direction<select data-depth-axis><option value="vertical">Vertical</option><option value="horizontal">Horizontal</option></select></label>
+              <label>Quality<select data-depth-quality><option value="auto">Auto</option><option value="full">Full split depth</option><option value="flat">Flat 2D</option></select></label>
+              <label>Occlusion bars<input data-depth-bars type="range" min="2" max="6" step="1" value="2"></label>
+              <label>Bar thickness<input data-depth-thickness type="range" min="4" max="60" step="1" value="22"></label>
+              <label>Local background PNG<input data-depth-background type="file" accept="image/png"></label>
+              <label>Local foreground PNG<input data-depth-foreground type="file" accept="image/png"></label>
+            </div>
+            <p class="docs-paragraph">Use a transparent foreground for the clearest pop-out effect. Each PNG may be up to 4 MiB and 2048 × 2048 pixels. Images stay in your browser.</p>
+            <div class="depth-actions"><button data-depth-play class="btn btn-primary" type="button" aria-pressed="false">Animate preview</button><button data-depth-download class="btn btn-secondary" type="button">Download still PNG</button><button data-depth-reset class="btn btn-secondary" type="button">Reset demo</button></div>
+            <p data-depth-metrics></p><p data-depth-status role="status" aria-live="polite"></p>
+          </div>
+          <p class="docs-paragraph">Auto uses a static flat preview for low-power hints or sustained slow frame cadence. Full mode keeps the layered effect; Flat 2D removes the bars and motion. Reduced-motion settings pause animation. Downloads pause the preview and export its current 800 × 450 frame.</p>
+          <pre class="code-pre"><code>// Load the SDK, then assets/js/split-depth-3d.js.
+const renderer = new ArcadeVerse.effects.SplitDepthRenderer(canvas);
+renderer.configure({ axis: 'horizontal', count: 2, quality: 'full' });
+renderer.start(); // Stop on your game lifecycle; dispose when unmounting.</code></pre>
+          <p class="docs-paragraph"><code>renderSplitDepthFrame(ctx, options, layers)</code> supports a caller-owned 2D context. <code>setLayerImage</code> takes ownership of an ImageBitmap and closes it when replaced or disposed. The studio cleans up frames, images, listeners and download URLs on normal exit; cached page transitions can resume.</p>
+        </section>
+
+        <section class="docs-section" id="inverse-kinematics-lab">
+          <span class="docs-section-tag">04 / Platform Subsystems</span><h2 class="docs-section-title">Inverse Kinematics Lab</h2>
+          <p class="docs-paragraph">Build anchored mechanical arms, articulated limbs and multi-tentacle poses with the bounded FABRIK point solver. Each call makes at most five passes and reports its remaining target error.</p>
+          <div class="ik-lab" data-ik-lab>
+            <label for="ik-preset">Rig preset</label><select id="ik-preset"><option value="arm">Mechanical arm</option><option value="limb">Constrained limb</option><option value="tentacles">Three tentacles</option></select>
+            <canvas width="800" height="420" tabindex="0" role="img" aria-label="Interactive inverse kinematics canvas. Move the pointer or use arrow keys to change the target."></canvas>
+            <p class="docs-paragraph">Move the pointer or drag on touch. Focus the canvas and use arrow keys (Shift for larger steps), or Home to reset the target.</p>
+            <p data-ik-reading></p><p data-ik-status role="status" aria-live="polite"></p>
+          </div>
+          <p class="docs-paragraph">Load the SDK before <code>assets/js/inverse-kinematics-physics.js</code>. Joint count includes the fixed root. Angles are radians relative to the parent link; the first link is relative to the root heading. Limits default to the full circle. A target inside total reach can still be blocked by angular limits; inspect <code>converged</code> and <code>error</code>.</p>
+          <pre class="code-pre"><code>const chain = ArcadeVerse.physics.createIKChain(8, 20);
+chain.setRoot({ x: 100, y: 150 });
+const result = chain.solve({ x: 180, y: 200 }, { iterations: 5 });
+const joints = chain.getPoints(); // independent snapshot for your renderer</code></pre>
+          <p class="docs-paragraph">Use <code>createIKPreset('arm' | 'limb' | 'tentacles')</code> for ready-made constrained chains. The helper owns no game loop; call solve from your game’s existing lifecycle. The lab draws only after input and bounded settling, and releases listeners and queued frames on page exit. <a href="https://www.andreasaristidou.com/publications/papers/FABRIK.pdf">FABRIK reference</a>.</p>
+        </section>
+
       </article>
       </div> <!-- End .docs-content-pane -->
     </div> <!-- End .docs-viewport-container -->
@@ -1499,12 +1600,17 @@ function updateCategoryPillCounts() {
 
   <!-- Scripts -->
   <script src="assets/js/navbar.js"></script>
+  <script src="assets/js/games-registry.js"></script>
+  <script src="assets/js/arcade-wallpaper-generator.js"></script>
+  <script src="assets/js/a11y-audio-beacon.js"></script>
   <script src="assets/js/a11y-engine.js"></script>
   <script src="assets/js/sound-engine.js"></script>
   <script src="assets/js/keyboard-shortcuts.js"></script>
   <script src="assets/js/network-detector.js"></script>
   <script src="assets/js/arcade-audio.js"></script>
   <script src="assets/js/arcadeverse-sdk.js"></script>
+  <script src="assets/js/inverse-kinematics-physics.js"></script>
+  <script src="assets/js/split-depth-3d.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       // Copy code snippet buttons
