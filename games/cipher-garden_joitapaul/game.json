@@ -1,0 +1,16 @@
+{
+  "title": "Cipher Garden",
+  "category": "Puzzle",
+  "lucideIcon": "route",
+  "description": "Rotate interconnected garden tiles to reconnect the central seed to every terminal flower across 20 cipher puzzles.",
+  "author": "Joita Paul",
+  "github": "joitapaul",
+  "role": "Arcade Developer",
+  "tags": [
+    "Puzzle",
+    "Logic",
+    "Grid",
+    "NSOC26"
+  ],
+  "featured": true
+}
