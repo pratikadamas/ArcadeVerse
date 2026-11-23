@@ -322,7 +322,8 @@
     });
   }
 
-  // Export additional diagnostics
+  // Export additional diagnostics and backwards-compatible alias
   if (typeof root !== "undefined" && root.ArcadeVerseWebGL) {
     root.ArcadeVerseWebGL.runStressBenchmark = runStressBenchmark;
+    root.ArcadeWebGLDisposal = root.ArcadeVerseWebGL;
   }

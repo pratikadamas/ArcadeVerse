@@ -1,0 +1,16 @@
+{
+  "title": "Meteor Minecart",
+  "category": "Arcade",
+  "lucideIcon": "train-front",
+  "description": "Race a minecart across a three-lane asteroid track, collect energy crystals, dodge meteors, and build a speed score multiplier.",
+  "author": "Joita Paul",
+  "github": "joitapaul",
+  "role": "Arcade Developer",
+  "tags": [
+    "Arcade",
+    "Runner",
+    "Action",
+    "NSOC26"
+  ],
+  "featured": true
+}
