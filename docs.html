@@ -170,7 +170,7 @@
               <li><a href="#scoring-engine" class="docs-nav-link"><i data-lucide="cpu"></i> Scoring & Leaderboard</a></li>
               <li><a href="#storage-manager" class="docs-nav-link"><i data-lucide="hard-drive"></i> Save Data Vault & Manager</a></li>
               <li><a href="#snapshot-studio" class="docs-nav-link"><i data-lucide="camera"></i> Retro Snapshot Studio</a></li>
-              <li><a href="#pinball-touch-controls" class="docs-nav-link"><i data-lucide="gamepad-2"></i> Virtual Pinball Touch Controls</a></li>
+              <li><a href="#marathon-mode" class="docs-nav-link"><i data-lucide="zap"></i> Survival Marathon Mode</a></li>
               <li><a href="#wallpaper-studio" class="docs-nav-link"><i data-lucide="image"></i> Wallpaper Studio</a></li>
               <li><a href="#slot-reel" class="docs-nav-link"><i data-lucide="dices"></i> Slot Reel Roulette Picker</a></li>
               <li><a href="#playlist-system" class="docs-nav-link"><i data-lucide="list-music"></i> Custom Playlist Engine</a></li>
@@ -1207,18 +1207,19 @@ if (ArcadeVerse.a11y.isAudioBeaconEnabled()) {
           </ul>
         </section>
 
-        <!-- 15c-4. Virtual Arcade Pinball Touch Controls -->
-        <section class="docs-section" id="pinball-touch-controls">
+        <!-- 15c-3. Arcade Survival Marathon Mode -->
+        <section class="docs-section" id="marathon-mode">
           <span class="docs-section-tag">04 / Platform Subsystems</span>
-          <h2 class="docs-section-title">Virtual Arcade Pinball Dual Flipper & Haptic Spring Plunger</h2>
+          <h2 class="docs-section-title">Arcade Survival Marathon Mode (Automated Timed Cross-Game Warp)</h2>
           <p class="docs-paragraph">
-            Implemented in <code>assets/js/pinball-touch-controller.js</code> and styled in <code>assets/css/pinball-touch-controller.css</code>, this mobile control subsystem automatically equips touch-screen smartphones and tablets with physical arcade pinball controls when launching Pinball and Physics games.
+            Implemented in <code>assets/js/arcade-marathon-mode.js</code> and styled in <code>assets/css/arcade-marathon-mode.css</code>, this gamification subsystem introduces continuous cross-game tourney play directly inside the existing player modal.
           </p>
           <ul>
-            <li><strong>Ergonomic Dual Flipper Zones:</strong> Splits the lower 48% of the viewport into left and right transparent touch zones with independent Set-based multi-touch tracking for simultaneous actuation and zero latency.</li>
-            <li><strong>Spring-Loaded Plunger Slider:</strong> A vertical rail plunger allowing players to drag downward to compress the internal spring ($F = -kx$). Releasing fires launch impulses proportional to pull displacement.</li>
-            <li><strong>Web Haptics Integration:</strong> Synthesizes crisp haptic pulses (<code>navigator.vibrate([15])</code>) on flipper actuations and dynamic vibration on plunger release.</li>
-            <li><strong>Universal Key Dispatch:</strong> Synthesizes both <code>KeyboardEvent</code> inputs (ArrowLeft/KeyA/KeyZ, ArrowRight/KeyD/Slash, Space) and window <code>postMessage</code> payloads directly into the game iframe.</li>
+            <li><strong>Marathon Supervisor Engine:</strong> Players start with a 60-second global countdown timer and 3 lives. Surviving each 30-second stage adds +15 seconds to the global clock.</li>
+            <li><strong>Automated Hyperspace Warp:</strong> Every 30 seconds, an animated 3-second warp countdown triggers (<code>WARPING IN 3... 2... 1...</code>) and swaps the game iframe without unmounting the modal shell.</li>
+            <li><strong>Marathon High Score Ledger:</strong> Tracks consecutive games cleared and cumulative scores in <code>localStorage</code> (<code>av_marathon_ledger</code>).</li>
+            <li><strong>Milestone Trophy Badges:</strong> Automatically awards "Marathon Champion: Contender" at 5 consecutive clears and "Marathon Champion: Legend" at 10 consecutive clears.</li>
+            <li><strong>Procedural Audio:</strong> Uses pure Web Audio synthesizer sweeps and fanfares for stage clears and warp sequences with 0 external sound files.</li>
           </ul>
         </section>
 
