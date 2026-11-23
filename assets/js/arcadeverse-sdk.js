@@ -3575,13 +3575,286 @@
         }
       } catch (_) {}
       callback(currentVol);
-    }
+    },
+
+    // ========================================================
+    // DYNAMIC DIFFICULTY ADJUSTMENT (DDA) ADAPTIVE PROTOCOL (#1112)
+    // Analyzes player telemetry and provides dynamic scaling
+    // ========================================================
+    dda: (function () {
+      var STORAGE_KEY = 'arcadeverse_dda_mode';
+      var MIN_MULT = 0.75;
+      var MAX_MULT = 1.25;
+      var BASELINE_MULT = 1.0;
+      var RAPID_WINDOW_MS = 30000;
+      var RAPID_COUNT = 3;
+
+      var mode = 'adaptive';
+      var currentMultiplier = 1.0;
+      var targetMultiplier = 1.0;
+      var lastQueryTime = Date.now();
+      var sessionStartTime = Date.now();
+      var currentSurvivalStart = Date.now();
+      var deathTimestamps = [];
+      var survivalDurations = [];
+      var hits = 0;
+      var misses = 0;
+      var listeners = [];
+
+      try {
+        if (typeof localStorage !== 'undefined') {
+          var saved = localStorage.getItem(STORAGE_KEY);
+          if (saved === 'hardcore' || saved === 'adaptive') mode = saved;
+        }
+      } catch (_) {}
+
+      function clampVal(v, mn, mx) {
+        return Math.max(mn, Math.min(mx, v));
+      }
+
+      function computeTarget() {
+        if (mode === 'hardcore') return BASELINE_MULT;
+        var now = Date.now();
+
+        // Rapid deaths: >= 3 in 30 seconds -> immediate 0.75 relief
+        var rapidDeaths = 0;
+        for (var i = deathTimestamps.length - 1; i >= 0; i--) {
+          if (now - deathTimestamps[i] <= RAPID_WINDOW_MS) {
+            rapidDeaths++;
+          } else {
+            break;
+          }
+        }
+        if (rapidDeaths >= RAPID_COUNT) return MIN_MULT;
+
+        // DPM
+        var recentDeaths = 0;
+        for (var j = deathTimestamps.length - 1; j >= 0; j--) {
+          if (now - deathTimestamps[j] <= 60000) recentDeaths++;
+          else break;
+        }
+        var sessionMins = Math.max(0.5, (now - sessionStartTime) / 60000);
+        var dpm = recentDeaths > 0 ? recentDeaths : (deathTimestamps.length / sessionMins);
+
+        // Survival time
+        var totalSurv = 0;
+        for (var s = 0; s < survivalDurations.length; s++) totalSurv += survivalDurations[s];
+        totalSurv += Math.max(0, (now - currentSurvivalStart) / 1000);
+        var avgSurv = totalSurv / (survivalDurations.length + 1);
+
+        // Hit rate
+        var totalAttempts = hits + misses;
+        var hitRate = totalAttempts > 0 ? (hits / totalAttempts) : 0.5;
+
+        var delta = 0.0;
+        if (dpm >= 4.0) delta -= 0.20;
+        else if (dpm >= 2.5) delta -= 0.12;
+        else if (dpm >= 1.5) delta -= 0.05;
+        else if (dpm === 0 && sessionMins >= 0.75) delta += 0.10;
+
+        if (avgSurv < 12) delta -= 0.08;
+        else if (avgSurv < 20) delta -= 0.04;
+        else if (avgSurv > 60) delta += 0.08;
+        else if (avgSurv > 40) delta += 0.04;
+
+        if (totalAttempts >= 6) {
+          if (hitRate >= 0.85) delta += 0.08;
+          else if (hitRate >= 0.70) delta += 0.04;
+          else if (hitRate <= 0.25) delta -= 0.08;
+          else if (hitRate <= 0.40) delta -= 0.04;
+        }
+
+        return clampVal(BASELINE_MULT + delta, MIN_MULT, MAX_MULT);
+      }
+
+      function updateSmooth() {
+        var now = Date.now();
+        var dt = Math.min(1.0, Math.max(0.016, (now - lastQueryTime) / 1000));
+        lastQueryTime = now;
+        targetMultiplier = computeTarget();
+
+        if (mode === 'hardcore') {
+          currentMultiplier += (BASELINE_MULT - currentMultiplier) * Math.min(1.0, dt * 2.0);
+          if (Math.abs(currentMultiplier - BASELINE_MULT) < 0.005) currentMultiplier = BASELINE_MULT;
+        } else {
+          currentMultiplier += (targetMultiplier - currentMultiplier) * Math.min(1.0, dt * 0.85);
+        }
+        currentMultiplier = clampVal(currentMultiplier, MIN_MULT, MAX_MULT);
+      }
+
+      function notify() {
+        var mult = Math.round(currentMultiplier * 100) / 100;
+        for (var i = 0; i < listeners.length; i++) {
+          try { listeners[i](mult); } catch (_) {}
+        }
+      }
+
+      // Initialize query to parent hub if inside iframe
+      try {
+        if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'ARCADEVERSE_REQUEST_DDA_CONFIG' }, '*');
+        }
+      } catch (_) {}
+
+      return {
+        getAdaptiveMultiplier: function () {
+          if (typeof window !== 'undefined' && window.ArcadeDDA && window.ArcadeDDA !== this && typeof window.ArcadeDDA.getAdaptiveMultiplier === 'function') {
+            return window.ArcadeDDA.getAdaptiveMultiplier();
+          }
+          updateSmooth();
+          return Math.round(currentMultiplier * 100) / 100;
+        },
+
+        getMultiplier: function () {
+          return this.getAdaptiveMultiplier();
+        },
+
+        recordDeath: function () {
+          if (typeof window !== 'undefined' && window.ArcadeDDA && window.ArcadeDDA !== this && typeof window.ArcadeDDA.recordDeath === 'function') {
+            return window.ArcadeDDA.recordDeath();
+          }
+          var now = Date.now();
+          deathTimestamps.push(now);
+          var surv = Math.max(0.5, (now - currentSurvivalStart) / 1000);
+          survivalDurations.push(surv);
+          currentSurvivalStart = now;
+
+          while (deathTimestamps.length > 50 || (deathTimestamps.length > 0 && now - deathTimestamps[0] > 300000)) {
+            deathTimestamps.shift();
+          }
+
+          var rapid = 0;
+          for (var i = deathTimestamps.length - 1; i >= 0; i--) {
+            if (now - deathTimestamps[i] <= RAPID_WINDOW_MS) rapid++;
+            else break;
+          }
+          if (rapid >= RAPID_COUNT) targetMultiplier = MIN_MULT;
+
+          updateSmooth();
+          notify();
+
+          try {
+            if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+              window.parent.postMessage({ type: 'ARCADEVERSE_DDA_DEATH', timestamp: now }, '*');
+            }
+          } catch (_) {}
+        },
+
+        recordHit: function (isHit) {
+          if (typeof window !== 'undefined' && window.ArcadeDDA && window.ArcadeDDA !== this && typeof window.ArcadeDDA.recordHit === 'function') {
+            return window.ArcadeDDA.recordHit(isHit);
+          }
+          if (isHit !== false) hits++;
+          else misses++;
+          updateSmooth();
+          notify();
+
+          try {
+            if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+              window.parent.postMessage({ type: 'ARCADEVERSE_DDA_HIT', isHit: isHit !== false }, '*');
+            }
+          } catch (_) {}
+        },
+
+        setMode: function (newMode) {
+          if (typeof window !== 'undefined' && window.ArcadeDDA && window.ArcadeDDA !== this && typeof window.ArcadeDDA.setMode === 'function') {
+            return window.ArcadeDDA.setMode(newMode);
+          }
+          mode = String(newMode).toLowerCase() === 'hardcore' ? 'hardcore' : 'adaptive';
+          try {
+            if (typeof localStorage !== 'undefined') localStorage.setItem(STORAGE_KEY, mode);
+          } catch (_) {}
+          updateSmooth();
+          notify();
+
+          try {
+            if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
+              window.parent.postMessage({ type: 'ARCADEVERSE_DDA_SET_MODE', mode: mode }, '*');
+            }
+          } catch (_) {}
+        },
+
+        getMode: function () {
+          if (typeof window !== 'undefined' && window.ArcadeDDA && window.ArcadeDDA !== this && typeof window.ArcadeDDA.getMode === 'function') {
+            return window.ArcadeDDA.getMode();
+          }
+          return mode;
+        },
+
+        isEnabled: function () {
+          return this.getMode() === 'adaptive';
+        },
+
+        getTelemetry: function () {
+          if (typeof window !== 'undefined' && window.ArcadeDDA && window.ArcadeDDA !== this && typeof window.ArcadeDDA.getTelemetry === 'function') {
+            return window.ArcadeDDA.getTelemetry();
+          }
+          var now = Date.now();
+          var sessionMins = Math.max(0.1, (now - sessionStartTime) / 60000);
+          var totalAttempts = hits + misses;
+          var totalSurv = 0;
+          for (var s = 0; s < survivalDurations.length; s++) totalSurv += survivalDurations[s];
+          totalSurv += Math.max(0, (now - currentSurvivalStart) / 1000);
+
+          return {
+            mode: mode,
+            enabled: mode === 'adaptive',
+            currentMultiplier: Math.round(currentMultiplier * 100) / 100,
+            targetMultiplier: Math.round(targetMultiplier * 100) / 100,
+            totalDeaths: deathTimestamps.length,
+            deathsPerMinute: Math.round((deathTimestamps.length / sessionMins) * 100) / 100,
+            averageSurvivalSeconds: Math.round((totalSurv / (survivalDurations.length + 1)) * 100) / 100,
+            hitRate: totalAttempts > 0 ? Math.round((hits / totalAttempts) * 100) / 100 : 0.5,
+            totalHits: hits,
+            totalMisses: misses
+          };
+        },
+
+        reset: function () {
+          if (typeof window !== 'undefined' && window.ArcadeDDA && window.ArcadeDDA !== this && typeof window.ArcadeDDA.reset === 'function') {
+            return window.ArcadeDDA.reset();
+          }
+          var now = Date.now();
+          sessionStartTime = now;
+          currentSurvivalStart = now;
+          lastQueryTime = now;
+          deathTimestamps = [];
+          survivalDurations = [];
+          hits = 0;
+          misses = 0;
+          currentMultiplier = mode === 'hardcore' ? BASELINE_MULT : 1.0;
+          targetMultiplier = currentMultiplier;
+        },
+
+        onMultiplierChange: function (callback) {
+          if (typeof callback !== 'function') return function () {};
+          listeners.push(callback);
+          return function () {
+            var idx = listeners.indexOf(callback);
+            if (idx !== -1) listeners.splice(idx, 1);
+          };
+        },
+
+        _syncFromParent: function (cfg) {
+          if (!cfg) return;
+          if (cfg.mode) mode = cfg.mode;
+          if (typeof cfg.multiplier === 'number') {
+            currentMultiplier = clampVal(cfg.multiplier, MIN_MULT, MAX_MULT);
+          }
+          if (typeof cfg.targetMultiplier === 'number') {
+            targetMultiplier = clampVal(cfg.targetMultiplier, MIN_MULT, MAX_MULT);
+          }
+          notify();
+        }
+      };
+    })()
   };
 
-  // Wire message handler for ARCADEVERSE_SET_VOLUME (#735)
+  // Wire message handler for ARCADEVERSE_SET_VOLUME (#735) and ARCADEVERSE_DDA_CONFIG (#1112)
   if (typeof window !== "undefined") {
     window.addEventListener("message", function (event) {
-      if (event.data && event.data.type === "ARCADEVERSE_SET_VOLUME") {
+      if (!event.data) return;
+      if (event.data.type === "ARCADEVERSE_SET_VOLUME") {
         var vol = Number(event.data.volume);
         if (!isNaN(vol)) {
           if (sdkInstance.audio && typeof sdkInstance.audio.setMasterVolume === "function") {
@@ -3592,6 +3865,10 @@
               try { cb(vol); } catch (_) {}
             });
           }
+        }
+      } else if (event.data.type === "ARCADEVERSE_DDA_CONFIG" && event.data.payload) {
+        if (sdkInstance.dda && typeof sdkInstance.dda._syncFromParent === "function") {
+          sdkInstance.dda._syncFromParent(event.data.payload);
         }
       }
     });

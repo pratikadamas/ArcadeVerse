@@ -1927,8 +1927,8 @@ document.addEventListener("DOMContentLoaded", () => {
               ${halloweenBadgeHtml}
               ${flipBtnHtml}
               <div class="card-options-top">
-                <label class="game-compare-label" title="Select to compare with another game">
-                  <input type="checkbox" class="game-compare-checkbox" data-game-id="${safeGameId}">
+                <label class="game-compare-label compare-card-toggle-wrap" title="Select to compare with another game">
+                  <input type="checkbox" class="game-compare-checkbox compare-card-checkbox" data-game-id="${safeGameId}">
                   <span class="compare-custom-box"></span>
                 </label>
                 <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
@@ -2641,6 +2641,47 @@ document.addEventListener("DOMContentLoaded", () => {
   let modalLaunchCooldownTimer = null;
   let closeModalCleanupTimer = null;
 
+  // Screen Wake Lock Controller (#700, #723)
+  // Keeps screen awake during active gameplay sessions on mobile devices
+  let screenWakeLock = null;
+
+  async function requestScreenWakeLock() {
+    if (!("wakeLock" in navigator) || typeof navigator.wakeLock.request !== "function") return;
+    try {
+      if (!screenWakeLock) {
+        screenWakeLock = await navigator.wakeLock.request("screen");
+        screenWakeLock.addEventListener("release", () => {
+          screenWakeLock = null;
+        });
+      }
+    } catch (_) {
+      screenWakeLock = null;
+    }
+  }
+
+  async function releaseScreenWakeLock() {
+    if (screenWakeLock) {
+      try {
+        await screenWakeLock.release();
+      } catch (_) {}
+      screenWakeLock = null;
+    }
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      if (gameModal && gameModal.classList.contains("active")) {
+        requestScreenWakeLock();
+      }
+    } else {
+      releaseScreenWakeLock();
+    }
+  });
+
+  window.addEventListener("pagehide", () => {
+    releaseScreenWakeLock();
+  });
+
   // Modal Handlers
   // Restore the catalog's namespaced storage URL bridge (#493, #824, #878).
   // Ensures that whenever games are launched, retried from error boundaries, or
@@ -2760,6 +2801,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.mountControls === "function") {
       window.GameSpeedRegulator.mountControls();
+    }
+    if (window.ArcadeDDA) {
+      if (typeof window.ArcadeDDA.mountControls === "function") {
+        window.ArcadeDDA.mountControls();
+      }
+      if (typeof window.ArcadeDDA.reset === "function") {
+        window.ArcadeDDA.reset();
+      }
     }
 
     // Monitor game frame lifecycle and attach watchdog
@@ -2987,20 +3036,26 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const doc = iframe.contentDocument || win.document;
         if (doc) {
-          const canvases = doc.querySelectorAll("canvas");
-          canvases.forEach((c) => {
-            try {
-              const gl = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl");
-              if (gl && !gl.isContextLost()) {
-                const loseExt = gl.getExtension("WEBGL_lose_context") ||
-                  gl.getExtension("WEBKIT_WEBGL_lose_context") ||
-                  gl.getExtension("MOZ_WEBGL_lose_context");
-                if (loseExt && typeof loseExt.loseContext === "function") {
-                  loseExt.loseContext();
+          if (window.ArcadeVerseWebGL && typeof window.ArcadeVerseWebGL.disposeAllCanvases === "function") {
+            window.ArcadeVerseWebGL.disposeAllCanvases(doc);
+          } else if (window.ArcadeWebGLDisposal && typeof window.ArcadeWebGLDisposal.disposeAllCanvases === "function") {
+            window.ArcadeWebGLDisposal.disposeAllCanvases(doc);
+          } else {
+            const canvases = doc.querySelectorAll("canvas");
+            canvases.forEach((c) => {
+              try {
+                const gl = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl");
+                if (gl && !gl.isContextLost()) {
+                  const loseExt = gl.getExtension("WEBGL_lose_context") ||
+                    gl.getExtension("WEBKIT_WEBGL_lose_context") ||
+                    gl.getExtension("MOZ_WEBGL_lose_context");
+                  if (loseExt && typeof loseExt.loseContext === "function") {
+                    loseExt.loseContext();
+                  }
                 }
-              }
-            } catch (_) {}
-          });
+              } catch (_) {}
+            });
+          }
         }
       } catch (_) {}
 
@@ -3013,6 +3068,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeGameModal(isFromPopState = false) {
     if (!gameModal || (!gameModal.classList.contains("active") && !activeGame)) return;
+    releaseScreenWakeLock();
     announceToScreenReader("Game closed. Returned to game catalog.");
     if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.closeMenu === "function") {
       window.GameSpeedRegulator.closeMenu();
@@ -3077,20 +3133,26 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
           const doc = gameIframe.contentDocument || gameIframe.contentWindow.document;
           if (doc) {
-            const canvases = doc.querySelectorAll("canvas");
-            canvases.forEach((c) => {
-              try {
-                const gl = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl");
-                if (gl && !gl.isContextLost()) {
-                  const loseExt = gl.getExtension("WEBGL_lose_context") ||
-                                  gl.getExtension("WEBKIT_WEBGL_lose_context") ||
-                                  gl.getExtension("MOZ_WEBGL_lose_context");
-                  if (loseExt && typeof loseExt.loseContext === "function") {
-                    loseExt.loseContext();
+            if (window.ArcadeVerseWebGL && typeof window.ArcadeVerseWebGL.disposeAllCanvases === "function") {
+              window.ArcadeVerseWebGL.disposeAllCanvases(doc);
+            } else if (window.ArcadeWebGLDisposal && typeof window.ArcadeWebGLDisposal.disposeAllCanvases === "function") {
+              window.ArcadeWebGLDisposal.disposeAllCanvases(doc);
+            } else {
+              const canvases = doc.querySelectorAll("canvas");
+              canvases.forEach((c) => {
+                try {
+                  const gl = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl");
+                  if (gl && !gl.isContextLost()) {
+                    const loseExt = gl.getExtension("WEBGL_lose_context") ||
+                                    gl.getExtension("WEBKIT_WEBGL_lose_context") ||
+                                    gl.getExtension("MOZ_WEBGL_lose_context");
+                    if (loseExt && typeof loseExt.loseContext === "function") {
+                      loseExt.loseContext();
+                    }
                   }
-                }
-              } catch (_) {}
-            });
+                } catch (_) {}
+              });
+            }
           }
         } catch (_) {}
       }
@@ -3751,6 +3813,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Handle game-over lifecycle events
     if (type === "ARCADEVERSE_GAME_OVER") {
+      if (window.ArcadeDDA && typeof window.ArcadeDDA.recordDeath === "function") {
+        try { window.ArcadeDDA.recordDeath(); } catch (_) {}
+      }
       const details = e.data.details || {};
       const finalScore = details.score != null ? Number(details.score) : lastAnnouncedScore;
       if (typeof announceToScreenReader === "function") {
@@ -5706,8 +5771,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <div class="controls-legend-footer">
             <div class="legend-shortcut-tip">
-              <span>Shortcut: Press <kbd class="legend-kbd">K</kbd> to toggle</span>
+              <span>Shortcut: <kbd class="legend-kbd">K</kbd> Toggle • <kbd class="legend-kbd">Alt+Shift+S</kbd> Snapshot</span>
             </div>
+            <button type="button" class="btn btn-sm btn-icon" id="legend-snapshot-btn" title="Capture Snapshot (Alt+Shift+S)" aria-label="Capture Snapshot">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </button>
             <button type="button" class="btn btn-sm btn-primary btn-legend-dismiss" id="dismiss-controls-legend-btn">
               <span>Got It, Let's Play!</span>
             </button>
@@ -5715,10 +5786,19 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       `;
 
-      const dialogCloseBtn = controlsLegendDialog.querySelector("#close-controls-legend-btn");
-      const dialogDismissBtn = controlsLegendDialog.querySelector("#dismiss-controls-legend-btn");
-      if (dialogCloseBtn) dialogCloseBtn.addEventListener("click", closeControlsLegend);
-      if (dialogDismissBtn) dialogDismissBtn.addEventListener("click", closeControlsLegend);
+    const dialogCloseBtn = controlsLegendDialog.querySelector("#close-controls-legend-btn");
+    const dialogDismissBtn = controlsLegendDialog.querySelector("#dismiss-controls-legend-btn");
+    const legendSnapBtn = controlsLegendDialog.querySelector("#legend-snapshot-btn");
+    if (dialogCloseBtn) dialogCloseBtn.addEventListener("click", closeControlsLegend);
+    if (dialogDismissBtn) dialogDismissBtn.addEventListener("click", closeControlsLegend);
+    if (legendSnapBtn) {
+      legendSnapBtn.addEventListener("click", () => {
+        closeControlsLegend();
+        if (window.ArcadeSnapshot && typeof window.ArcadeSnapshot.capture === "function") {
+          window.ArcadeSnapshot.capture();
+        }
+      });
+    }
     }
 
     // Tactile Web Audio Mechanical Switch Sound Synthesizer
@@ -6736,6 +6816,134 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 // ========================================================
+// ========================================================
+// GAME SESSION SAVE-STATE BACKUP & RESTORE HANDLER (#747)
+// ========================================================
+(() => {
+  function exportSaveStateBackup() {
+    try {
+      const backupData = {
+        app: 'ArcadeVerse',
+        version: '1.0',
+        schemaVersion: '1.0',
+        exportedAt: new Date().toISOString(),
+        totalGames: Array.isArray(window.GAMES_REGISTRY) ? window.GAMES_REGISTRY.length : 0,
+        storage: {}
+      };
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('av_') || key.startsWith('arcadeverse_') || key.includes('score') || key.includes('favorite') || key.includes('streak'))) {
+          backupData.storage[key] = localStorage.getItem(key);
+        }
+      }
+
+      const jsonString = JSON.stringify(backupData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const dateStr = new Date().toISOString().split('T')[0];
+      link.href = url;
+      link.download = `arcadeverse-backup-${dateStr}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      if (typeof showToast === 'function') {
+        showToast('Save-state backup downloaded successfully.');
+      }
+    } catch (err) {
+      console.error('[Backup] Export failed:', err);
+      if (typeof showToast === 'function') {
+        showToast('Failed to export backup file.');
+      }
+    }
+  }
+
+  function restoreSaveStateBackup(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        if (!parsed || parsed.app !== 'ArcadeVerse' || !parsed.storage || typeof parsed.storage !== 'object') {
+          throw new Error('Invalid ArcadeVerse backup schema.');
+        }
+
+        let restoredCount = 0;
+        for (const [key, value] of Object.entries(parsed.storage)) {
+          if (typeof key === 'string' && typeof value === 'string') {
+            // Guard against script injection into storage
+            const sanitizedKey = key.replace(/[^a-zA-Z0-9_\-]/g, '');
+            if (sanitizedKey.startsWith('av_') || sanitizedKey.startsWith('arcadeverse_')) {
+              localStorage.setItem(sanitizedKey, value);
+              restoredCount++;
+            }
+          }
+        }
+
+        if (typeof showToast === 'function') {
+          showToast(`Successfully restored ${restoredCount} save entries. Reloading...`);
+        }
+        setTimeout(() => window.location.reload(), 800);
+      } catch (err) {
+        console.error('[Backup] Restore failed:', err);
+        if (typeof showToast === 'function') {
+          showToast('Failed to restore backup: ' + err.message);
+        }
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const triggerBtn = document.getElementById('backup-restore-trigger-btn');
+    const modal = document.getElementById('backup-restore-modal');
+    const closeBtn = document.getElementById('backup-modal-close-btn');
+    const exportBtn = document.getElementById('btn-export-backup-json');
+    const importBtn = document.getElementById('btn-import-backup-json');
+    const fileInput = document.getElementById('backup-file-input');
+
+    if (triggerBtn && modal) {
+      triggerBtn.addEventListener('click', () => {
+        modal.classList.add('active');
+        modal.setAttribute('aria-hidden', 'false');
+      });
+    }
+
+    if (closeBtn && modal) {
+      closeBtn.addEventListener('click', () => {
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+      });
+    }
+
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.classList.remove('active');
+          modal.setAttribute('aria-hidden', 'true');
+        }
+      });
+    }
+
+    if (exportBtn) {
+      exportBtn.addEventListener('click', exportSaveStateBackup);
+    }
+
+    if (importBtn && fileInput) {
+      importBtn.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          restoreSaveStateBackup(e.target.files[0]);
+        }
+      });
+    }
+  });
+})();
+
+// ========================================================
 // IN-MODAL VOLUME SLIDER & CROSS-IFRAME BROADCASTER (#735, #887)
 // ========================================================
 (() => {
@@ -6798,6 +7006,9 @@ document.addEventListener("DOMContentLoaded", () => {
       iframe.addEventListener('load', () => {
         setTimeout(() => broadcastMasterVolume(masterVolume), 200);
       });
+    }
+  });
+})();
     }
   });
 })();
