@@ -5693,8 +5693,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
           <div class="controls-legend-footer">
             <div class="legend-shortcut-tip">
-              <span>Shortcut: Press <kbd class="legend-kbd">K</kbd> to toggle</span>
+              <span>Shortcut: <kbd class="legend-kbd">K</kbd> Toggle • <kbd class="legend-kbd">Alt+Shift+S</kbd> Snapshot</span>
             </div>
+            <button type="button" class="btn btn-sm btn-icon" id="legend-snapshot-btn" title="Capture Snapshot (Alt+Shift+S)" aria-label="Capture Snapshot">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </button>
             <button type="button" class="btn btn-sm btn-primary btn-legend-dismiss" id="dismiss-controls-legend-btn">
               <span>Got It, Let's Play!</span>
             </button>
@@ -5702,10 +5708,19 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       `;
 
-      const dialogCloseBtn = controlsLegendDialog.querySelector("#close-controls-legend-btn");
-      const dialogDismissBtn = controlsLegendDialog.querySelector("#dismiss-controls-legend-btn");
-      if (dialogCloseBtn) dialogCloseBtn.addEventListener("click", closeControlsLegend);
-      if (dialogDismissBtn) dialogDismissBtn.addEventListener("click", closeControlsLegend);
+    const dialogCloseBtn = controlsLegendDialog.querySelector("#close-controls-legend-btn");
+    const dialogDismissBtn = controlsLegendDialog.querySelector("#dismiss-controls-legend-btn");
+    const legendSnapBtn = controlsLegendDialog.querySelector("#legend-snapshot-btn");
+    if (dialogCloseBtn) dialogCloseBtn.addEventListener("click", closeControlsLegend);
+    if (dialogDismissBtn) dialogDismissBtn.addEventListener("click", closeControlsLegend);
+    if (legendSnapBtn) {
+      legendSnapBtn.addEventListener("click", () => {
+        closeControlsLegend();
+        if (window.ArcadeSnapshot && typeof window.ArcadeSnapshot.capture === "function") {
+          window.ArcadeSnapshot.capture();
+        }
+      });
+    }
     }
 
     // Tactile Web Audio Mechanical Switch Sound Synthesizer
