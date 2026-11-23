@@ -630,7 +630,7 @@
           <span>•</span>
           <a href="faqs.html">FAQs</a>
           <span>•</span>
-          <a href="#" id="footer-tech-tree-btn">Tech-Tree</a>
+          <a href="#" id="footer-synth-studio-btn">Synth Studio</a>
           <span>•</span>
           <button type="button" class="footer-link-btn" id="footer-storage-manager-btn" style="background:none;border:none;color:inherit;font:inherit;cursor:pointer;padding:0;text-decoration:underline;">Storage</button>
           <span>•</span>
@@ -652,7 +652,7 @@
   <script src="assets/js/isometric-arcade-room.js"></script>
   <script src="assets/js/card-flip-manual.js"></script>
   <script src="assets/js/rating-histogram.js"></script>
-  <script src="assets/js/holographic-cards.js"></script>
+  <script src="assets/js/arcade-synth-studio.js"></script>
   <script src="assets/js/app.js"></script>
   <script src="assets/js/halloween.js"></script>
   <script src="assets/js/daily-challenge.js"></script>
@@ -696,6 +696,18 @@
   <script>
     if (window.ArcadeHolographicCard && typeof window.ArcadeHolographicCard.init === "function") {
       window.ArcadeHolographicCard.init();
+    }
+  </script>
+  <script>
+    if (window.ArcadeSynthStudio && typeof window.ArcadeSynthStudio.init === "function") {
+      window.ArcadeSynthStudio.init();
+      var synthBtn = document.getElementById("footer-synth-studio-btn");
+      if (synthBtn) {
+        synthBtn.addEventListener("click", function (e) {
+          e.preventDefault();
+          window.ArcadeSynthStudio.openStudio();
+        });
+      }
     }
   </script>
   <script>
