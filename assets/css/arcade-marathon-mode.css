@@ -1,0 +1,525 @@
+/**
+ * Arcade Survival Marathon Mode Styles
+ * Retro cyberpunk styling for In-Modal HUD, Interstitial Warp Overlays, and Game Over Decks.
+ * Strictly zero Unicode emojis across all styles and comments.
+ */
+
+/* Top HUD In-Modal Deck */
+.marathon-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: rgba(10, 15, 26, 0.95);
+  border-bottom: 2px solid #00f0ff;
+  box-shadow: 0 4px 15px rgba(0, 240, 255, 0.2);
+  color: #f8fafc;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+  z-index: 100;
+  position: relative;
+  animation: marathonHudSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes marathonHudSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.marathon-hud-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.marathon-hud-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #060a12;
+  background: #00f0ff;
+  padding: 3px 8px;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+  text-transform: uppercase;
+}
+
+/* Life Hearts */
+.marathon-lives {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.marathon-heart {
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: drop-shadow(0 0 5px rgba(239, 68, 68, 0.7));
+}
+
+.marathon-heart.lost {
+  color: rgba(255, 255, 255, 0.2);
+  filter: none;
+  transform: scale(0.8);
+}
+
+/* Center Timers */
+.marathon-hud-center {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.marathon-timer-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.marathon-timer-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: 0.06em;
+}
+
+.marathon-timer-value {
+  font-family: "Courier New", monospace;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #00f0ff;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+}
+
+.marathon-timer-value.marathon-timer-critical {
+  color: #ef4444;
+  text-shadow: 0 0 12px rgba(239, 68, 68, 0.8);
+  animation: marathonTimerPulse 0.6s infinite alternate;
+}
+
+@keyframes marathonTimerPulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.1); }
+}
+
+.marathon-stage-box {
+  display: flex;
+  flex-direction: column;
+  width: 140px;
+  gap: 3px;
+}
+
+.marathon-stage-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.marathon-stage-countdown {
+  font-family: monospace;
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+.marathon-progress-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.marathon-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #00f0ff);
+  transition: width 0.3s linear;
+}
+
+/* Right Stats & Quit Button */
+.marathon-hud-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.marathon-stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.marathon-stat-label {
+  font-size: 0.62rem;
+  color: #64748b;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.marathon-stat-val {
+  font-family: monospace;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.marathon-btn-quit {
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.marathon-btn-quit:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
+
+/* Interstitial Warp Overlay */
+.marathon-warp-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 500;
+  background: rgba(4, 7, 14, 0.94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: warpFadeIn 0.25s ease;
+}
+
+@keyframes warpFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.marathon-warp-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  z-index: 2;
+  animation: warpContentZoom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes warpContentZoom {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.marathon-warp-tag {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: #00f0ff;
+  text-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+}
+
+.marathon-warp-title {
+  margin: 0;
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+}
+
+.marathon-warp-countdown {
+  font-family: monospace;
+  font-size: 4rem;
+  font-weight: 900;
+  color: #ff007f;
+  text-shadow: 0 0 25px rgba(255, 0, 127, 0.8);
+  animation: warpNumberPulse 0.5s infinite alternate;
+}
+
+@keyframes warpNumberPulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.15); }
+}
+
+.marathon-warp-next {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  padding: 8px 18px;
+  border-radius: 20px;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+}
+
+.warp-next-label {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+.warp-next-title {
+  font-size: 0.95rem;
+  color: #00f0ff;
+  font-weight: 800;
+}
+
+.warp-next-category {
+  font-size: 0.72rem;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+/* Game Over Modal Deck */
+.marathon-gameover-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 600;
+  background: rgba(5, 8, 16, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.marathon-gameover-card {
+  width: 100%;
+  max-width: 580px;
+  background: #0d1424;
+  border: 2px solid #ef4444;
+  border-radius: 12px;
+  box-shadow: 0 0 35px rgba(239, 68, 68, 0.35);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 20px;
+  animation: gameoverZoom 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes gameoverZoom {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.gameover-tag {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #f87171;
+}
+
+.gameover-title {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.gameover-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+
+.gameover-stat-item {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item-label {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.item-val {
+  font-family: monospace;
+  font-size: 1.15rem;
+  color: #00f0ff;
+  font-weight: 800;
+}
+
+.gameover-badges-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.badges-title {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+.marathon-badge-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.marathon-badge-card strong {
+  display: block;
+  font-size: 0.88rem;
+  color: #f59e0b;
+}
+
+.marathon-badge-card p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #cbd5e1;
+}
+
+.gameover-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+/* Badge Toast */
+.marathon-badge-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 10600;
+  background: rgba(15, 23, 42, 0.96);
+  border: 2px solid #f59e0b;
+  border-radius: 10px;
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.4);
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #ffffff;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.marathon-badge-toast.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.marathon-badge-toast .toast-title {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #f59e0b;
+  letter-spacing: 0.08em;
+}
+
+.marathon-badge-toast .toast-name {
+  display: block;
+  font-size: 0.92rem;
+  color: #ffffff;
+}
+
+.marathon-badge-toast .toast-desc {
+  display: block;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+/* Hero CTA Button Styling */
+.btn-marathon {
+  background: linear-gradient(135deg, #ff007f 0%, #7928ca 100%);
+  border: 1px solid rgba(255, 0, 127, 0.5);
+  color: #ffffff !important;
+  font-weight: 700;
+  box-shadow: 0 0 20px rgba(255, 0, 127, 0.35);
+  transition: all 0.25s ease;
+}
+
+.btn-marathon:hover {
+  background: linear-gradient(135deg, #ff2a9d 0%, #8b3ff8 100%);
+  box-shadow: 0 0 28px rgba(255, 0, 127, 0.6);
+  transform: translateY(-2px);
+}
+
+/* Responsive Breakdown */
+@media (max-width: 768px) {
+  .marathon-hud {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 6px 10px;
+  }
+
+  .marathon-stage-box {
+    width: 100px;
+  }
+
+  .marathon-hud-right {
+    gap: 8px;
+  }
+
+  .marathon-warp-title {
+    font-size: 1.6rem;
+  }
+
+  .marathon-warp-countdown {
+    font-size: 3rem;
+  }
+
+  .gameover-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gameover-actions {
+    flex-direction: column;
+  }
+}

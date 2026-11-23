@@ -170,7 +170,7 @@
               <li><a href="#scoring-engine" class="docs-nav-link"><i data-lucide="cpu"></i> Scoring & Leaderboard</a></li>
               <li><a href="#storage-manager" class="docs-nav-link"><i data-lucide="hard-drive"></i> Save Data Vault & Manager</a></li>
               <li><a href="#snapshot-studio" class="docs-nav-link"><i data-lucide="camera"></i> Retro Snapshot Studio</a></li>
-              <li><a href="#wallpaper-studio" class="docs-nav-link"><i data-lucide="image"></i> Wallpaper Studio</a></li>
+              <li><a href="#ascii-terminal-studio" class="docs-nav-link"><i data-lucide="terminal"></i> Retro ASCII / ANSI Converter</a></li>
               <li><a href="#slot-reel" class="docs-nav-link"><i data-lucide="dices"></i> Slot Reel Roulette Picker</a></li>
               <li><a href="#playlist-system" class="docs-nav-link"><i data-lucide="list-music"></i> Custom Playlist Engine</a></li>
               <li><a href="#az-jump-bar" class="docs-nav-link"><i data-lucide="arrow-down-a-z"></i> A-Z Catalog Jump Bar</a></li>
@@ -699,6 +699,30 @@ soundNode.connect(masterGain);</code></pre>
                 </div>
               </div>
 
+              <!-- Zero-Dependency ArcadeFX Particle & Screen Shake Engine (#899) -->
+              <div class="docs-callout note" style="margin-top: 24px;">
+                <div class="docs-callout-icon"><i data-lucide="sparkles"></i></div>
+                <div>
+                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Zero-Dependency ArcadeFX Particle & Camera Trauma Engine (#899)</h4>
+                  <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
+                    Game contributors can trigger high-performance object-pooled particle explosions, floating combat text, and screen shake trauma at 60 FPS without external libraries:
+                  </p>
+                  <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
+                    <li><strong>Pre-Allocated Object Pools:</strong> Zero runtime memory allocations or GC stalls during explosive action sequences.</li>
+                    <li><strong>Accessibility-First Reduced Motion:</strong> Automatically integrates with <code>prefers-reduced-motion</code> and <code>A11yEngine</code> to suppress camera trauma and scale back particle velocity.</li>
+                    <li><strong>Dynamic Trauma Falloff:</strong> Uses polynomial camera decay for cinematic, punchy screen shake feedback.</li>
+                  </ul>
+                  <h5 style="color: var(--text-primary); margin-top: 14px; margin-bottom: 6px; font-size: 0.95rem;">Usage in Game Projects</h5>
+                  <div class="code-block-wrapper" style="margin-top: 10px; margin-bottom: 10px;">
+                    <pre class="code-pre"><code class="language-javascript">// Spawn particle burst and camera trauma
+ArcadeFX.explode(x, y, { count: 32, shake: 0.5 });
+// Render pooled particles to game canvas
+ArcadeFX.update();
+ArcadeFX.render(ctx);</code></pre>
+                  </div>
+                </div>
+              </div>
+
               <h5 style="color: var(--text-primary); margin-top: 16px; margin-bottom: 6px; font-size: 0.95rem;">Implementation Guide for Game Contributors</h5>
               <p style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 10px;">
                 When developing WebGL games for ArcadeVerse, always bind the context recovery handler. When a mobile or laptop GPU sleeps or switches display adapters, the browser triggers a synthetic context loss. With the ArcadeVerse lifecycle bridge, your game avoids black screens:
@@ -796,8 +820,26 @@ if (window.ArcadeVerse) {
   // 6. Listen for pause & resume events
   ArcadeVerse.onPause(() => { gameState = 'PAUSED'; });
   ArcadeVerse.onResume(() => { gameState = 'PLAYING'; });
+
+  // 7. Dynamic Difficulty Adjustment (DDA) (#1112)
+  const ddaMultiplier = ArcadeVerse.dda.getAdaptiveMultiplier();
+  enemySpeed = baseSpeed * ddaMultiplier;
+  ArcadeVerse.dda.onMultiplierChange((multiplier) => {
+    enemySpeed = baseSpeed * multiplier;
+  });
 }</code></pre>
           </div>
+
+          <h3 class="docs-subsection-title">Dynamic Difficulty Adjustment (DDA) Protocol (#1112)</h3>
+          <p class="docs-paragraph">
+            ArcadeVerse features a built-in Dynamic Difficulty Adjustment (DDA) adaptive game supervisor. It monitors player telemetry (deaths per minute, survival duration, and hit/evasion rate) to compute a smooth adaptive multiplier between <code>0.75x</code> and <code>1.25x</code>:
+          </p>
+          <ul>
+            <li><strong>Adaptive Scaling:</strong> Use <code>ArcadeVerse.dda.getAdaptiveMultiplier()</code> to scale enemy speeds, projectile velocity, obstacle density, or power-up spawn rates.</li>
+            <li><strong>Beginner Relief:</strong> If a player suffers 3 deaths within 30 seconds, DDA immediately ramps difficulty down to <code>0.75x</code> to prevent player churn.</li>
+            <li><strong>Telemetry Hooks:</strong> Call <code>ArcadeVerse.dda.recordDeath()</code> and <code>ArcadeVerse.dda.recordHit(isHit)</code> to feed real-time performance telemetry.</li>
+            <li><strong>Player Mode Locking:</strong> Players can toggle between <em>Adaptive</em> and <em>Pure Hardcore</em> (fixed <code>1.0x</code>) via the Dynamic Balancing button in modal controls.</li>
+          </ul>
 
           <h3 class="docs-subsection-title">Cryptographic Session Handshake Protocol (#489)</h3>
           <p class="docs-paragraph">
@@ -1166,6 +1208,22 @@ if (ArcadeVerse.a11y.isAudioBeaconEnabled()) {
             <li><strong>Cross-Frame Canvas Capture:</strong> Safely samples <code>&lt;canvas&gt;</code> rendering contexts from same-origin game instances.</li>
             <li><strong>Stylized CRT Border Overlays:</strong> Injects dynamic game metadata, player handle, timestamp, and retro scanline vignette effects.</li>
             <li><strong>Zero External Storage:</strong> 100% rendered client-side with instant data-URL download without uploading images to any third-party server.</li>
+          </ul>
+        </section>
+
+        <!-- 15c-2. Retro ASCII / ANSI Terminal Converter -->
+        <section class="docs-section" id="ascii-terminal-studio">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Retro ASCII & ANSI Canvas Art Terminal Converter</h2>
+          <p class="docs-paragraph">
+            Implemented in <code>assets/js/ascii-art-converter.js</code> and styled in <code>assets/css/ascii-art-converter.css</code>, this subsystem translates dynamic game canvas frames into authentic 1980s retro ASCII and ANSI text cards for sharing across Discord, Reddit, BBS forums, and terminal MOTDs.
+          </p>
+          <ul>
+            <li><strong>Luminance Quantization:</strong> Downscales active game canvas frames into an 80x40 (or 60x30, 40x20) grid using standard ITU-R BT.709 perceived photometric luminance.</li>
+            <li><strong>Character Density Ramps:</strong> Maps pixel brightness to retro ramps (<code>@%#*+=-:. </code> or block characters <code>█▓▒░ </code>) with optional contrast and inversion controls.</li>
+            <li><strong>ANSI 16-Color Sequences:</strong> Quantizes RGB pixels into retro 16-color ANSI terminal escape sequences with stateful code caching to minimize payload bloat.</li>
+            <li><strong>Discord Code Block Sharing:</strong> Generates ready-to-paste <code>```ansi</code> and monospace code blocks with a live 2,000-character safety indicator badge.</li>
+            <li><strong>1-Click Multi-Format Export:</strong> Supports instant clipboard copying for Discord, Raw ASCII, Terminal ANSI, and text file (<code>.txt</code>) download.</li>
           </ul>
         </section>
 

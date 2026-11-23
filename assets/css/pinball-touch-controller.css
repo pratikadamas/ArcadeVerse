@@ -1,0 +1,251 @@
+/**
+ * Virtual Arcade Pinball Dual Flipper & Haptic Spring Plunger Styles
+ * Ergonomic split touch zones and mechanical spring plunger styling.
+ * Strictly zero Unicode emojis across all styles and comments.
+ */
+
+/* Main Touch Overlay: Covers bottom 45% of game viewport */
+.pinball-touch-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 48%;
+  min-height: 180px;
+  max-height: 380px;
+  z-index: 40;
+  display: flex;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  animation: pinballOverlayFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pinballOverlayFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Flipper Touch Half Zones */
+.pinball-flipper-zone {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 24px;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, rgba(6, 10, 20, 0.05) 0%, rgba(12, 20, 36, 0.45) 100%);
+  border-top: 1px dashed rgba(0, 240, 255, 0.18);
+  transition: all 0.15s ease-out;
+  cursor: pointer;
+  position: relative;
+}
+
+.pinball-zone-left {
+  border-right: 1px dashed rgba(0, 240, 255, 0.2);
+}
+
+.pinball-zone-right {
+  margin-right: 76px; /* Leave space for vertical plunger */
+}
+
+/* Flipper Active State */
+.pinball-flipper-zone.flipper-active {
+  background: linear-gradient(180deg, rgba(0, 240, 255, 0.15) 0%, rgba(0, 240, 255, 0.38) 100%);
+  border-top-color: #00f0ff;
+  box-shadow: inset 0 0 25px rgba(0, 240, 255, 0.35);
+}
+
+.pinball-zone-left.flipper-active .flipper-indicator-left svg {
+  transform: rotate(-18deg) scale(1.08);
+  color: #00f0ff;
+  filter: drop-shadow(0 0 8px #00f0ff);
+}
+
+.pinball-zone-right.flipper-active .flipper-indicator-right svg {
+  transform: rotate(18deg) scale(1.08);
+  color: #00f0ff;
+  filter: drop-shadow(0 0 8px #00f0ff);
+}
+
+/* Flipper Indicator HUD */
+.flipper-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  pointer-events: none;
+  transition: all 0.15s ease;
+}
+
+.flipper-indicator svg {
+  color: rgba(0, 240, 255, 0.7);
+  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), color 0.12s ease;
+}
+
+.flipper-label {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.7);
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
+}
+
+/* Spring-Loaded Plunger Column (Right Rail) */
+.pinball-plunger-column {
+  position: absolute;
+  right: 12px;
+  bottom: 16px;
+  width: 58px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 16, 28, 0.75);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 30px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.6), inset 0 0 10px rgba(0, 240, 255, 0.15);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.plunger-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 14px;
+  box-sizing: border-box;
+}
+
+/* Power Tension Meter */
+.plunger-tension-meter {
+  position: absolute;
+  left: 6px;
+  top: 16px;
+  bottom: 16px;
+  width: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+
+.plunger-tension-fill {
+  width: 100%;
+  height: 0%;
+  background: #00f0ff;
+  border-radius: 2px;
+  transition: height 0.05s linear, background-color 0.15s ease;
+  box-shadow: 0 0 6px #00f0ff;
+}
+
+/* Plunger Spring SVG */
+.plunger-spring {
+  transform-origin: top center;
+  transition: transform 0.05s linear;
+  pointer-events: none;
+}
+
+.plunger-spring.snapping {
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Plunger Knob / Handle */
+.plunger-knob {
+  position: absolute;
+  top: 74px;
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #ff007f 0%, #a855f7 100%);
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(255, 0, 127, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+  cursor: grab;
+  touch-action: none;
+  transition: transform 0.05s linear;
+  z-index: 2;
+}
+
+.plunger-knob:active {
+  cursor: grabbing;
+}
+
+.plunger-knob.snapping {
+  transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.plunger-knob-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -2px;
+}
+
+.plunger-knob-label {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+  font-size: 0.55rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  margin-top: -3px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* Toggle Button in Modal Controls */
+#pinball-controls-toggle.active {
+  color: #00f0ff;
+  border-color: #00f0ff;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+}
+
+/* Landscape Viewport Optimizations */
+@media (orientation: landscape) and (max-height: 500px) {
+  .pinball-touch-overlay {
+    height: 55%;
+    min-height: 140px;
+  }
+
+  .pinball-plunger-column {
+    height: 150px;
+    right: 8px;
+    bottom: 8px;
+    width: 52px;
+  }
+
+  .plunger-knob {
+    width: 38px;
+    height: 38px;
+    top: 50px;
+  }
+}
+
+/* Portrait Viewport Optimizations */
+@media (orientation: portrait) {
+  .pinball-touch-overlay {
+    height: 42%;
+  }
+
+  .pinball-zone-right {
+    margin-right: 68px;
+  }
+}
