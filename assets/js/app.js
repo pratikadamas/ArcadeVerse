@@ -2963,20 +2963,26 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const doc = iframe.contentDocument || win.document;
         if (doc) {
-          const canvases = doc.querySelectorAll("canvas");
-          canvases.forEach((c) => {
-            try {
-              const gl = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl");
-              if (gl && !gl.isContextLost()) {
-                const loseExt = gl.getExtension("WEBGL_lose_context") ||
-                  gl.getExtension("WEBKIT_WEBGL_lose_context") ||
-                  gl.getExtension("MOZ_WEBGL_lose_context");
-                if (loseExt && typeof loseExt.loseContext === "function") {
-                  loseExt.loseContext();
+          if (window.ArcadeVerseWebGL && typeof window.ArcadeVerseWebGL.disposeAllCanvases === "function") {
+            window.ArcadeVerseWebGL.disposeAllCanvases(doc);
+          } else if (window.ArcadeWebGLDisposal && typeof window.ArcadeWebGLDisposal.disposeAllCanvases === "function") {
+            window.ArcadeWebGLDisposal.disposeAllCanvases(doc);
+          } else {
+            const canvases = doc.querySelectorAll("canvas");
+            canvases.forEach((c) => {
+              try {
+                const gl = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl");
+                if (gl && !gl.isContextLost()) {
+                  const loseExt = gl.getExtension("WEBGL_lose_context") ||
+                    gl.getExtension("WEBKIT_WEBGL_lose_context") ||
+                    gl.getExtension("MOZ_WEBGL_lose_context");
+                  if (loseExt && typeof loseExt.loseContext === "function") {
+                    loseExt.loseContext();
+                  }
                 }
-              }
-            } catch (_) {}
-          });
+              } catch (_) {}
+            });
+          }
         }
       } catch (_) {}
 
@@ -3054,20 +3060,26 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
           const doc = gameIframe.contentDocument || gameIframe.contentWindow.document;
           if (doc) {
-            const canvases = doc.querySelectorAll("canvas");
-            canvases.forEach((c) => {
-              try {
-                const gl = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl");
-                if (gl && !gl.isContextLost()) {
-                  const loseExt = gl.getExtension("WEBGL_lose_context") ||
-                                  gl.getExtension("WEBKIT_WEBGL_lose_context") ||
-                                  gl.getExtension("MOZ_WEBGL_lose_context");
-                  if (loseExt && typeof loseExt.loseContext === "function") {
-                    loseExt.loseContext();
+            if (window.ArcadeVerseWebGL && typeof window.ArcadeVerseWebGL.disposeAllCanvases === "function") {
+              window.ArcadeVerseWebGL.disposeAllCanvases(doc);
+            } else if (window.ArcadeWebGLDisposal && typeof window.ArcadeWebGLDisposal.disposeAllCanvases === "function") {
+              window.ArcadeWebGLDisposal.disposeAllCanvases(doc);
+            } else {
+              const canvases = doc.querySelectorAll("canvas");
+              canvases.forEach((c) => {
+                try {
+                  const gl = c.getContext("webgl2") || c.getContext("webgl") || c.getContext("experimental-webgl");
+                  if (gl && !gl.isContextLost()) {
+                    const loseExt = gl.getExtension("WEBGL_lose_context") ||
+                                    gl.getExtension("WEBKIT_WEBGL_lose_context") ||
+                                    gl.getExtension("MOZ_WEBGL_lose_context");
+                    if (loseExt && typeof loseExt.loseContext === "function") {
+                      loseExt.loseContext();
+                    }
                   }
-                }
-              } catch (_) {}
-            });
+                } catch (_) {}
+              });
+            }
           }
         } catch (_) {}
       }
