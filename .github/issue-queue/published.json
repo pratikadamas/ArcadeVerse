@@ -424,5 +424,65 @@
     "title": "[Theme/UI]: Amber Phosphor CRT Monochrome Terminal Theme Studio",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1371",
     "published_at": "2026-11-22T15:30:06.528Z"
+  },
+  {
+    "number": 1379,
+    "title": "[Enhancement/A11y]: Skip-to-Content Navigation Link & Focus Trapping Indicator for Modals",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1379",
+    "published_at": "2026-11-23T16:25:16.472Z"
+  },
+  {
+    "number": 1380,
+    "title": "[Enhancement/UX]: Keyboard Shortcut Legend Overlay Modal with Printable Cheat Sheet",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1380",
+    "published_at": "2026-11-23T16:25:22.000Z"
+  },
+  {
+    "number": 1381,
+    "title": "[Enhancement/UI]: Floating Feedback & Issue Bug Report Quick-Launch Floating Pill Widget",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1381",
+    "published_at": "2026-11-23T16:25:27.540Z"
+  },
+  {
+    "number": 1382,
+    "title": "[Enhancement/Catalog]: Empty Search State with Smart Did-You-Mean Suggestions & Randomizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1382",
+    "published_at": "2026-11-23T16:25:33.058Z"
+  },
+  {
+    "number": 1383,
+    "title": "[Enhancement/UI]: Arcade Badge Tooltip Micro-Animations with Dynamic Arrow Positioning",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1383",
+    "published_at": "2026-11-23T16:25:38.573Z"
+  },
+  {
+    "number": 1384,
+    "title": "[Enhancement/UX]: Recent Search History Pills with One-Click Clear & Local Storage Persistence",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1384",
+    "published_at": "2026-11-23T16:25:44.071Z"
+  },
+  {
+    "number": 1385,
+    "title": "[Enhancement/UI]: Animated Skeleton Loading Shimmer Placeholders for Game Cards",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1385",
+    "published_at": "2026-11-23T16:25:49.615Z"
+  },
+  {
+    "number": 1386,
+    "title": "[Enhancement/UI]: Interactive Volume Slider HUD with Real-Time Decibel Percentage Meter",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1386",
+    "published_at": "2026-11-23T16:25:55.136Z"
+  },
+  {
+    "number": 1387,
+    "title": "[Enhancement/Catalog]: Category Quick-Filter Horizontal Scrollbar with Fade Gradients & Arrow Steppers",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1387",
+    "published_at": "2026-11-23T16:26:00.633Z"
+  },
+  {
+    "number": 1388,
+    "title": "[Enhancement/UI]: Game Card Favorite Star Animation with Particle Heart Burst Effect",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1388",
+    "published_at": "2026-11-23T16:26:06.083Z"
   }
 ]
