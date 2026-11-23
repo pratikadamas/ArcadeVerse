@@ -1,50 +1,5 @@
 [
   {
-    "title": "[Enhancement/A11y]: Dynamic Text Size Scale Adjuster (Small, Normal, Large) in Settings Drawer",
-    "labels": [
-      "nsoc26",
-      "level2"
-    ],
-    "body": "## Problem\nPlayers with visual impairments or those viewing on high-resolution displays may find the catalog card metadata and game synopsis fonts too small to read comfortably.\n\n## Architectural Scope & Requirements\n1. **Font Scale CSS Architecture (`assets/css/text-scale.css`):**\n   - Bind global typography sizes to a root CSS custom property `--base-text-scale: 1`.\n   - Define presets: Small (`0.875`), Default (`1.0`), Large (`1.15`), and Extra Large (`1.3`).\n2. **Settings Switcher Control:**\n   - Add an accessible 3-button segmented control in the settings drawer (`A-`, `A`, `A+`).\n3. **Persistence:**\n   - Save selected font scale in `localStorage` under `av_text_scale` and apply immediately before DOM rendering.\n\n## Acceptance Criteria\n- [ ] Modifying scale adjusts all headings, card descriptions, and nav text smoothly.\n- [ ] Layout remains responsive without overlapping or broken container bounds.\n- [ ] Preference persists across all page reloads.\n- [ ] 100% Pure Vanilla CSS and JS.",
-    "id": 11
-  },
-  {
-    "title": "[Enhancement/UX]: Auto-Scroll to Active Filtered Category Section on Selection",
-    "labels": [
-      "nsoc26",
-      "level2"
-    ],
-    "body": "## Problem\nWhen players scroll down the homepage to review categories and click a filter pill, the page stays at the current scroll position, forcing them to manually scroll back up to inspect the newly filtered games grid.\n\n## Architectural Scope & Requirements\n1. **Scroll Positioning Logic (`assets/js/app.js`):**\n   - When a category facet or search tag is selected, calculate the bounding rectangle of `#games-grid`.\n   - If the grid header is scrolled out of view, execute a smooth scroll (`behavior: 'smooth'`) to align the top of the grid with an 80px offset below the sticky navigation bar.\n2. **Respect User Context:**\n   - Skip auto-scroll if the grid is already prominently visible in the current viewport.\n\n## Acceptance Criteria\n- [ ] Smoothly scrolls to the games grid only when selected from an out-of-view scroll position.\n- [ ] Respects sticky navbar height without obscuring category title.\n- [ ] Gracefully supports `prefers-reduced-motion` by using instant scroll.\n- [ ] 100% Pure Vanilla JS.",
-    "id": 12
-  },
-  {
-    "title": "[Enhancement/UI]: Interactive Sound Toggle Mute Animation with Speaker Wave Ripples",
-    "labels": [
-      "nsoc26",
-      "level2"
-    ],
-    "body": "## Problem\nThe global audio mute button in the navbar currently toggles a static speaker icon, providing minimal visual feedback on whether sound synthesis is actively enabled.\n\n## Architectural Scope & Requirements\n1. **SVG Sound Wave Animation (`assets/css/speaker-waves.css`):**\n   - Replace static speaker icon with an inline SVG featuring 3 separate sound arc waves.\n   - When unmuted and audio is playing, animate arcs with staggered opacity pulses simulating acoustic sound waves.\n2. **Mute State Transition:**\n   - When muted, cleanly animate a diagonal slash stroke crossing through the speaker, pausing wave animations.\n3. **Tooltip and Aria:**\n   - Update `title` and `aria-label` dynamically to `\"Mute Audio (M)\"` and `\"Unmute Audio (M)\"`.\n\n## Acceptance Criteria\n- [ ] Smooth wave pulsing animation when audio is active.\n- [ ] Clear diagonal strike-through slash when audio is muted.\n- [ ] Seamless integration with global audio engine state.\n- [ ] 100% Pure CSS/SVG.",
-    "id": 13
-  },
-  {
-    "title": "[Enhancement/UI]: Game Description Expandable Read-More Accordion for Long Synopsis",
-    "labels": [
-      "nsoc26",
-      "level2"
-    ],
-    "body": "## Problem\nSome games have extensive multi-sentence descriptions that cause card heights to stretch unevenly in the catalog grid, breaking the clean visual alignment of card rows.\n\n## Architectural Scope & Requirements\n1. **CSS Text Clamping (`assets/css/card-clamp.css`):**\n   - Apply CSS line clamping (`-webkit-line-clamp: 2; display: -webkit-box; overflow: hidden`) to game card description paragraphs.\n2. **Read More Toggle Button:**\n   - For descriptions exceeding 2 lines, dynamically append a subtle `\"More...\"` link with a bottom gradient fade.\n   - Clicking expands the full synopsis smoothly without navigating away or opening the modal.\n3. **Keyboard Accessibility:**\n   - Focusable via keyboard with Enter/Spacebar toggle and appropriate `aria-expanded` attributes.\n\n## Acceptance Criteria\n- [ ] Enforces uniform 2-line card height across the entire games grid.\n- [ ] \"More...\" button renders only on descriptions that exceed 2 lines.\n- [ ] Smooth expand and collapse behavior with full keyboard support.\n- [ ] 100% Pure Vanilla JS and CSS3.",
-    "id": 14
-  },
-  {
-    "title": "[Enhancement/UX]: Game Modal Exit Confirmation Dialog with Don't Ask Again Checkbox",
-    "labels": [
-      "nsoc26",
-      "level2"
-    ],
-    "body": "## Problem\nWhen playing an engaging arcade game, accidentally pressing Escape or clicking outside the modal can trigger the exit dialog. However, experienced players find having to confirm exit every single time repetitive.\n\n## Architectural Scope & Requirements\n1. **Don't Ask Again Preference (`assets/js/app.js`):**\n   - Add a styled retro checkbox `\"Don't ask again this session\"` inside the quit confirmation modal.\n   - When checked, store `av_skip_exit_confirmation: true` in `sessionStorage`.\n2. **Direct Modal Closing:**\n   - If preference is set, subsequent Escape or close button clicks immediately close the game modal without blocking gameplay exit.\n3. **Reset in Settings:**\n   - Provide a \"Reset Quit Confirmation\" toggle in the settings drawer to restore the safety prompt anytime.\n\n## Acceptance Criteria\n- [ ] Checkbox renders cleanly inside the quit dialog.\n- [ ] Checking the box allows instant modal exit for the remainder of the session.\n- [ ] Settings drawer allows resetting preference.\n- [ ] 100% Pure Vanilla JS.",
-    "id": 15
-  },
-  {
     "title": "[Enhancement/UI]: Catalog Footer Dynamic Version Pill & System Status Indicator Pulse",
     "labels": [
       "nsoc26",
