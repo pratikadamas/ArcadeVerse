@@ -27,7 +27,7 @@
   let progress={room:'canopy-arrival',checkpoint:'canopy-arrival',abilities:[],relics:[],discovered:['canopy-arrival'],flags:{},records:[],elapsed:0};
   let player={x:75,y:470,w:22,h:30,vx:0,vy:0,face:1,ground:false,wall:0,grapple:null,rope:0,dash:0,dashCooldown:0,invulnerable:0,brake:false};
   let keyState=Object.create(null),touchState=Object.create(null),particles=[];
-  let active=false,muted=false,audio=null,worldTime=0,lastFrame=performance.now(),lastHurt=0,runStarted=0,toastTimer=0;
+  let active=false,muted=false,slowMode=false,audio=null,worldTime=0,lastFrame=performance.now(),lastHurt=0,runStarted=0,toastTimer=0;
   let movingPlatforms=[],currentRoom=null,waterDamageAt=0;
   let saveExists=false,bestChallenge=0;
   try{
@@ -35,10 +35,12 @@
     if(raw){const saved=JSON.parse(raw);if(saved&&typeof saved==='object'){progress=Object.assign(progress,saved);saveExists=true;}}
     bestChallenge=Number(localStorage.getItem('skyline_relic_best_time'))||0;
     muted=localStorage.getItem('skyline_relic_muted')==='true';
+    slowMode=localStorage.getItem('skyline_relic_slow_mode')==='true';
   }catch(_){saveExists=false;}
   $('best-time').textContent=bestChallenge?formatTime(bestChallenge):'—';
   $('saved-relics').textContent=progress.relics.length+' / 3';
   $('sound-button').textContent=muted?'SOUND OFF':'SOUND ON';
+  $('speed-button').textContent=slowMode?'PACE: SLOW':'PACE: NORMAL';
   $('continue-button').textContent=saveExists?'CONTINUE EXPEDITION':'BEGIN EXPEDITION';
 
   function formatTime(seconds){const m=Math.floor(seconds/60);const s=Math.floor(seconds%60);return m+':'+String(s).padStart(2,'0');}
@@ -112,7 +114,7 @@
     const right=keyState.ArrowRight||keyState.d||touchState.right;
     const jump=keyState[' ']||keyState.ArrowUp||keyState.w||touchState.jump;
     const brake=keyState.ArrowDown||keyState.s||touchState.brake;
-    const speed=touchState.slow?175:260;
+    const speed=slowMode?175:260;
     if(player.dash>0){player.dash=Math.max(0,player.dash-dt);player.vx=player.face*700;player.vy*=.94;}
     else{
       if(left){player.vx-=1700*dt;player.face=-1;}
@@ -332,7 +334,7 @@
 
   function frame(now){if(teardown)return;const dt=Math.min(.035,(now-lastFrame)/1000||0);lastFrame=now;if(active){update(dt);drawWorld();}else{currentRoom=nowRoom();drawWorld();}requestAnimationFrame(frame);}
   function keydown(event){const k=event.key.length===1?event.key.toLowerCase():event.key;if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(event.key))event.preventDefault();
-    if(k==='m'){toggleMap();return;}if(k==='Escape'){overlays.forEach(el=>el.classList.remove('visible'));return;}
+    if(k==='m'){toggleMap();return;}if(k==='Escape'){if(active)overlays.slice(1,4).forEach(el=>el.classList.remove('visible'));return;}
     if(k==='e'&&!event.repeat){interact();return;}if(k==='g'&&!event.repeat){grapple();return;}if((k==='Shift'||k==='ShiftLeft')&&!event.repeat){dash();return;}
     if((k===' '||k==='ArrowUp'||k==='w')&&!event.repeat&&player.grapple){player.grapple=null;player.vy-=110;return;}
     keyState[k]=true;
@@ -351,6 +353,7 @@
   document.querySelectorAll('[data-action]').forEach(button=>button.addEventListener('click',()=>button.dataset.action==='grapple'?grapple():dash()));
   document.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>$(button.dataset.close).classList.remove('visible')));
   $('map-button').addEventListener('click',toggleMap);$('guide-button').addEventListener('click',()=>{if(active)$('help-overlay').classList.add('visible');});
+  $('speed-button').addEventListener('click',event=>{slowMode=!slowMode;event.currentTarget.textContent=slowMode?'PACE: SLOW':'PACE: NORMAL';try{localStorage.setItem('skyline_relic_slow_mode',String(slowMode));}catch(_){}});
   $('continue-button').addEventListener('click',()=>begin(saveExists));$('new-game').addEventListener('click',()=>begin(false));$('sound-button').addEventListener('click',event=>{muted=!muted;event.currentTarget.textContent=muted?'SOUND OFF':'SOUND ON';try{localStorage.setItem('skyline_relic_muted',String(muted));}catch(_){}if(!muted)startAudio();});
   $('ending-close').addEventListener('click',()=>{$('ending-overlay').classList.remove('visible');active=true;progress.room='archive-core';player.x=740;player.y=175;save();updateHud();});
   document.addEventListener('keydown',keydown);document.addEventListener('keyup',keyup);document.addEventListener('visibilitychange',()=>{lastFrame=performance.now();});
