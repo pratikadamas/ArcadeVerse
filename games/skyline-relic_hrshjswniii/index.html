@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07151b">
+  <title>Skyline Relic: The Sunken City | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <a class="hub" href="../../index.html" aria-label="Back to ArcadeVerse">AV</a>
+      <div class="brand"><div class="eyebrow">ARCADEVERSE / FIELD EXPEDITION</div><h1>SKYLINE <span>RELIC</span></h1></div>
+      <button id="map-button" class="icon-button" type="button" aria-label="Open discovered district map">MAP <kbd>M</kbd></button>
+      <button id="sound-button" class="icon-button" type="button" aria-label="Toggle sound">SOUND ON</button>
+    </header>
+    <section class="hud">
+      <div class="room-readout"><small>DISTRICT / ROOM</small><strong id="room-name">Canopy Blocks / Arrival Deck</strong></div>
+      <div><small>RELICS</small><strong id="relic-count">0 / 3</strong></div>
+      <div><small>INTEGRITY</small><strong id="health">3</strong></div>
+      <div class="ability-readout"><small>TRAVERSAL KIT</small><strong id="abilities">NO MODULES</strong></div>
+    </section>
+    <section class="arena">
+      <canvas id="game" width="900" height="540" aria-label="Skyline Relic exploration platformer. Move, jump, grapple and explore."></canvas>
+      <div class="arena-tag"><span class="live-dot"></span><span id="objective">OBJECTIVE: FIND THE ROOFTOP ROUTE</span></div>
+      <div id="start-overlay" class="overlay visible"><div class="dialog start-dialog"><div class="eyebrow">EXPEDITION LOG / ENTRY 01</div><h2>THE CITY<br><span>REMEMBERS.</span></h2><p>Climb a drowned skyline, recover the relic fragments, and bring the archive back to life. Explore at your own pace; checkpoints preserve your discoveries.</p><div class="start-stats"><span>BEST CHALLENGE TIME <b id="best-time">—</b></span><span>RELICS RECOVERED <b id="saved-relics">0 / 3</b></span></div><button id="continue-button" class="primary" type="button">BEGIN EXPEDITION</button><button id="new-game" class="text-button" type="button">RESET EXPEDITION</button></div></div>
+      <div id="map-overlay" class="overlay"><div class="dialog map-dialog"><div class="modal-top"><div><div class="eyebrow">FIELD MAP / DISCOVERED ROOMS</div><h2>Skyline Districts</h2></div><button class="close-button" data-close="map-overlay" type="button" aria-label="Close map">×</button></div><div id="map-grid" class="map-grid"></div><div class="map-legend"><span><i class="legend-current"></i> CURRENT</span><span><i class="legend-visited"></i> EXPLORED</span><span><i class="legend-locked"></i> UNKNOWN</span></div><p class="modal-note">Select a discovered room to backtrack. Locked routes show the ability needed to open them.</p></div></div>
+      <div id="journal-overlay" class="overlay"><div class="dialog"><div class="modal-top"><div><div class="eyebrow">ARCHIVE FRAGMENT</div><h2 id="journal-title">A City's Memory</h2></div><button class="close-button" data-close="journal-overlay" type="button" aria-label="Close journal">×</button></div><p id="journal-copy"></p><button class="primary" data-close="journal-overlay" type="button">CONTINUE</button></div></div>
+      <div id="help-overlay" class="overlay"><div class="dialog"><div class="modal-top"><div><div class="eyebrow">FIELD GUIDE</div><h2>Movement & Tools</h2></div><button class="close-button" data-close="help-overlay" type="button" aria-label="Close guide">×</button></div><div class="guide-grid"><p><b>Move</b><span>A/D or arrow keys. Touch arrows work on phones.</span></p><p><b>Jump / Wall Jump</b><span>Space, W, up arrow, or the jump button.</span></p><p><b>Pulse Grapple</b><span>Tap a visible anchor or press E. Press E again to release.</span></p><p><b>Phase Dash</b><span>Shift or the dash button to cross phase barriers.</span></p><p><b>Air Brake</b><span>Hold S or down arrow while airborne to slow your fall.</span></p><p><b>Interact / Map</b><span>Press E near switches; press M to open the map.</span></p></div><button class="primary" data-close="help-overlay" type="button">BACK TO THE CITY</button></div></div>
+      <div id="ending-overlay" class="overlay"><div class="dialog"><div class="eyebrow">SKY ARCHIVE RESTORED</div><h2>THE SKYLINE<br><span>REMEMBERS.</span></h2><p id="ending-copy">The archive is awake again.</p><button id="ending-close" class="primary" type="button">RETURN TO THE ROOFTOP</button></div></div>
+    </section>
+    <section class="touch-controls" aria-label="Touch movement controls">
+      <div class="direction-pad"><button data-hold="left" aria-label="Move left">◀</button><button data-hold="right" aria-label="Move right">▶</button></div>
+      <div class="action-pad"><button data-hold="jump" aria-label="Jump">JUMP</button><button data-action="grapple" aria-label="Grapple">GRAPPLE</button><button data-action="dash" aria-label="Phase dash">DASH</button><button data-hold="brake" aria-label="Air brake">BRAKE</button></div>
+    </section>
+    <footer><span id="checkpoint-label">CHECKPOINT: ARRIVAL DECK</span><span>WASD / ARROWS <b>·</b> SPACE JUMP <b>·</b> E INTERACT <b>·</b> M MAP</span><button id="guide-button" type="button">FIELD GUIDE</button></footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
