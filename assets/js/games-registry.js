@@ -229,6 +229,25 @@ const GAMES_REGISTRY = [
     "featured": false
   },
   {
+    "id": "cipher-garden_joitapaul",
+    "title": "Cipher Garden",
+    "category": "Puzzle",
+    "lucideIcon": "gamepad-2",
+    "description": "Rotate interconnected garden tiles to reconnect the central seed to every terminal flower across 20 cipher puzzles.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/cipher-garden_joitapaul/index.html",
+    "tags": [
+      "Puzzle",
+      "Logic",
+      "Grid",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": true
+  },
+  {
     "id": "circuit-breaker_your-joitapaul",
     "title": "Circuit Breaker",
     "category": "Puzzle",
@@ -2624,7 +2643,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 852,
+    "commits": 853,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2734,14 +2753,15 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "joitapaul",
     "avatarInitial": "J",
     "role": "Active Contributor (NSOC '26)",
-    "commits": 29,
-    "gamesCount": 18,
+    "commits": 30,
+    "gamesCount": 19,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 1,
     "bonusPts": 0,
     "contributions": [
       "Astro Courier",
+      "Cipher Garden",
       "Circuit Breaker",
       "Deep Signal: Subsea Rescue",
       "Fossil Frontiers: Dig Site Puzzle",
