@@ -1,0 +1,86 @@
+/* ==========================================================================
+   INTERACTIVE SOUND TOGGLE MUTE ANIMATION WITH SPEAKER WAVE RIPPLES (#1391)
+   SVG acoustic arc wave pulses, diagonal strike-through slash, and dynamic aria
+   ========================================================================== */
+
+.speaker-toggle-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #00f0ff;
+    outline: none;
+    transition: transform 0.15s ease;
+}
+
+.speaker-toggle-btn:hover {
+    transform: scale(1.1);
+}
+
+.speaker-svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Staggered Acoustic Wave Arc Animations */
+.speaker-wave {
+    opacity: 0.3;
+    transition: opacity 0.2s ease, stroke-dashoffset 0.2s ease;
+}
+
+.speaker-toggle-btn.playing .speaker-wave-1 {
+    animation: speakerPulse 1.2s infinite ease-in-out;
+}
+
+.speaker-toggle-btn.playing .speaker-wave-2 {
+    animation: speakerPulse 1.2s infinite ease-in-out 0.2s;
+}
+
+.speaker-toggle-btn.playing .speaker-wave-3 {
+    animation: speakerPulse 1.2s infinite ease-in-out 0.4s;
+}
+
+@keyframes speakerPulse {
+    0%, 100% { opacity: 0.2; transform: scale(0.95); }
+    50% { opacity: 1; stroke: #00ffff; filter: drop-shadow(0 0 3px #00ffff); }
+}
+
+/* Diagonal Mute Slash Stroke */
+.speaker-slash {
+    stroke: #ff0055;
+    stroke-width: 2.5;
+    stroke-dasharray: 32;
+    stroke-dashoffset: 32;
+    transition: stroke-dashoffset 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.speaker-toggle-btn.muted .speaker-slash {
+    stroke-dashoffset: 0;
+}
+
+.speaker-toggle-btn.muted .speaker-wave {
+    opacity: 0 !important;
+    animation: none !important;
+}
+
+.speaker-toggle-btn.muted {
+    color: #8b949e;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .speaker-wave {
+        animation: none !important;
+        opacity: 0.8 !important;
+    }
+    .speaker-slash {
+        transition: none !important;
+    }
+}
