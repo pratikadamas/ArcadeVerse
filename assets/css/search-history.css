@@ -1,0 +1,65 @@
+/* ==========================================================================
+   RECENT SEARCH HISTORY PILLS & CLEAR ACTION (#1384)
+   Compact chips row underneath search input with responsive scroll
+   ========================================================================== */
+
+.recent-searches-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px auto 16px auto;
+    max-width: 640px;
+    width: 100%;
+    padding: 0 8px;
+    box-sizing: border-box;
+    font-size: 0.8rem;
+    color: #8b949e;
+}
+
+.recent-searches-label {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    color: #8b949e;
+    white-space: nowrap;
+}
+
+.recent-pills-list {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.recent-search-pill {
+    background: #161b22;
+    color: #00f0ff;
+    border: 1px solid #30363d;
+    border-radius: 14px;
+    padding: 3px 10px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+    white-space: nowrap;
+}
+
+.recent-search-pill:hover {
+    background: #21262d;
+    border-color: #00f0ff;
+    transform: translateY(-1px);
+}
+
+.recent-clear-btn {
+    background: none;
+    border: none;
+    color: #ff0055;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    padding: 2px 6px;
+}
+
+.recent-clear-btn:hover {
+    text-decoration: underline;
+}
