@@ -1,0 +1,98 @@
+/* ==========================================================================
+   THEME: VAPORWAVE & VINTAGE WINDOWS 95 OS (#1399)
+   Pastel Pink, Cyan Teal, Soft Lavender, 3D Beveled Chrome & Classic Desktop Chrome
+   ========================================================================== */
+
+:root[data-theme="vaporwave"],
+html[data-theme="vaporwave"] {
+  --bg-primary: #008080; /* Classic Win95 Teal desktop */
+  --bg-secondary: #c0c0c0; /* Classic 3D surface gray */
+  --bg-card: #dfdfdf;
+  --bg-card-hover: #ececec;
+  --bg-header: #c0c0c0;
+  
+  --accent-primary: #ff71ce; /* Pastel Neon Pink */
+  --accent-secondary: #01cdfe; /* Cyan Teal */
+  --accent-tertiary: #b967ff; /* Soft Lavender */
+  --accent-quaternary: #05ffa1; /* Mint */
+  --accent-sunlight: #fffb96; /* Sunlight Yellow */
+
+  --text-primary: #000000;
+  --text-secondary: #222222;
+  --text-muted: #555555;
+  --text-inverse: #ffffff;
+
+  --border-subtle: #808080;
+  --border-glow: #ffffff;
+  --bevel-light: #ffffff;
+  --bevel-dark: #808080;
+  --bevel-shadow: #000000;
+
+  --font-mono: 'MS Sans Serif', Tahoma, 'Press Start 2P', monospace;
+}
+
+/* 3D Beveled Window Chrome Container */
+[data-theme="vaporwave"] .game-card,
+[data-theme="vaporwave"] .catalog-card,
+[data-theme="vaporwave"] .modal-content,
+[data-theme="vaporwave"] .navbar,
+[data-theme="vaporwave"] .controls-legend-card {
+  background: #c0c0c0 !important;
+  color: #000000 !important;
+  border-top: 2px solid #ffffff !important;
+  border-left: 2px solid #ffffff !important;
+  border-right: 2px solid #808080 !important;
+  border-bottom: 2px solid #808080 !important;
+  box-shadow: inset 1px 1px #dfdfdf, inset -1px -1px #0a0a0a, 2px 2px 0px rgba(0,0,0,0.4) !important;
+  border-radius: 0px !important;
+}
+
+/* Classic OS Title Bars */
+[data-theme="vaporwave"] .modal-header,
+[data-theme="vaporwave"] .card-header,
+[data-theme="vaporwave"] .game-card-header {
+  background: linear-gradient(90deg, #000080, #1084d0) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  padding: 4px 8px !important;
+}
+
+/* Classic Beveled Buttons */
+[data-theme="vaporwave"] .btn,
+[data-theme="vaporwave"] button.btn,
+[data-theme="vaporwave"] .filter-chip,
+[data-theme="vaporwave"] .action-btn {
+  background: #c0c0c0 !important;
+  color: #000000 !important;
+  border-top: 2px solid #ffffff !important;
+  border-left: 2px solid #ffffff !important;
+  border-right: 2px solid #808080 !important;
+  border-bottom: 2px solid #808080 !important;
+  box-shadow: inset 1px 1px 0px #ffffff, inset -1px -1px 0px #000000 !important;
+  border-radius: 0px !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="vaporwave"] .btn:active,
+[data-theme="vaporwave"] button.btn:active,
+[data-theme="vaporwave"] .filter-chip.active {
+  border-top: 2px solid #808080 !important;
+  border-left: 2px solid #808080 !important;
+  border-right: 2px solid #ffffff !important;
+  border-bottom: 2px solid #ffffff !important;
+  box-shadow: inset 1px 1px 0px #000000 !important;
+  background: #b5b5b5 !important;
+  transform: translate(1px, 1px) !important;
+}
+
+/* Vaporwave Checkered Accent Footer */
+[data-theme="vaporwave"] .footer {
+  background: #c0c0c0 !important;
+  border-top: 2px solid #ffffff !important;
+  color: #000000 !important;
+}
+
+[data-theme="vaporwave"] a {
+  color: #000080 !important;
+  text-decoration: underline !important;
+}
