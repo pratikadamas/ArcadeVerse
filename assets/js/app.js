@@ -6701,110 +6701,128 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // ========================================================
 // ========================================================
-// MULTI-SELECT DYNAMIC TAG FILTERING ENGINE (#738)
+// GAME SESSION SAVE-STATE BACKUP & RESTORE HANDLER (#747)
 // ========================================================
 (() => {
-  const activeTags = new Set();
+  function exportSaveStateBackup() {
+    try {
+      const backupData = {
+        app: 'ArcadeVerse',
+        version: '1.0',
+        schemaVersion: '1.0',
+        exportedAt: new Date().toISOString(),
+        totalGames: Array.isArray(window.GAMES_REGISTRY) ? window.GAMES_REGISTRY.length : 0,
+        storage: {}
+      };
 
-  function updateTagFilterMatches() {
-    const games = Array.isArray(window.GAMES_REGISTRY) ? window.GAMES_REGISTRY : [];
-    const countBadge = document.getElementById('tag-filter-count');
-    if (!countBadge) return;
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('av_') || key.startsWith('arcadeverse_') || key.includes('score') || key.includes('favorite') || key.includes('streak'))) {
+          backupData.storage[key] = localStorage.getItem(key);
+        }
+      }
 
-    if (activeTags.size === 0) {
-      countBadge.style.display = 'none';
-      return;
+      const jsonString = JSON.stringify(backupData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const dateStr = new Date().toISOString().split('T')[0];
+      link.href = url;
+      link.download = `arcadeverse-backup-${dateStr}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      if (typeof showToast === 'function') {
+        showToast('Save-state backup downloaded successfully.');
+      }
+    } catch (err) {
+      console.error('[Backup] Export failed:', err);
+      if (typeof showToast === 'function') {
+        showToast('Failed to export backup file.');
+      }
     }
-
-    let matchCount = 0;
-    games.forEach(game => {
-      let matchesAll = true;
-      if (activeTags.has('top-rated')) {
-        const rating = typeof getGameAverageRating === 'function' ? getGameAverageRating(game.id) : (game.rating || 5);
-        if (rating < 4.5) matchesAll = false;
-      }
-      if (activeTags.has('featured')) {
-        if (!game.featured && !game.badge) matchesAll = false;
-      }
-      if (activeTags.has('favorites')) {
-        const isFav = typeof isFavorite === 'function' ? isFavorite(game.id) : false;
-        if (!isFav) matchesAll = false;
-      }
-      if (activeTags.has('touch')) {
-        const hasTouchTag = Array.isArray(game.tags) && game.tags.some(t => String(t).toLowerCase().includes('touch') || String(t).toLowerCase().includes('mobile'));
-        if (!hasTouchTag && !game.touchControls) matchesAll = false;
-      }
-      if (matchesAll) matchCount++;
-    });
-
-    countBadge.textContent = `${matchCount} match${matchCount === 1 ? '' : 'es'}`;
-    countBadge.style.display = 'inline-block';
   }
 
-  function applyTagFilterToGrid() {
-    const cards = document.querySelectorAll('.game-card');
-    cards.forEach(card => {
-      const gameId = card.getAttribute('data-game-id');
-      const game = (Array.isArray(window.GAMES_REGISTRY) ? window.GAMES_REGISTRY : []).find(g => g.id === gameId);
-      if (!game) return;
+  function restoreSaveStateBackup(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        if (!parsed || parsed.app !== 'ArcadeVerse' || !parsed.storage || typeof parsed.storage !== 'object') {
+          throw new Error('Invalid ArcadeVerse backup schema.');
+        }
 
-      let passesTags = true;
-      if (activeTags.has('top-rated')) {
-        const rating = typeof getGameAverageRating === 'function' ? getGameAverageRating(game.id) : (game.rating || 5);
-        if (rating < 4.5) passesTags = false;
-      }
-      if (activeTags.has('featured')) {
-        if (!game.featured && !game.badge) passesTags = false;
-      }
-      if (activeTags.has('favorites')) {
-        const isFav = typeof isFavorite === 'function' ? isFavorite(game.id) : false;
-        if (!isFav) passesTags = false;
-      }
-      if (activeTags.has('touch')) {
-        const hasTouchTag = Array.isArray(game.tags) && game.tags.some(t => String(t).toLowerCase().includes('touch') || String(t).toLowerCase().includes('mobile'));
-        if (!hasTouchTag && !game.touchControls) passesTags = false;
-      }
+        let restoredCount = 0;
+        for (const [key, value] of Object.entries(parsed.storage)) {
+          if (typeof key === 'string' && typeof value === 'string') {
+            // Guard against script injection into storage
+            const sanitizedKey = key.replace(/[^a-zA-Z0-9_\-]/g, '');
+            if (sanitizedKey.startsWith('av_') || sanitizedKey.startsWith('arcadeverse_')) {
+              localStorage.setItem(sanitizedKey, value);
+              restoredCount++;
+            }
+          }
+        }
 
-      if (!passesTags) {
-        card.style.display = 'none';
+        if (typeof showToast === 'function') {
+          showToast(`Successfully restored ${restoredCount} save entries. Reloading...`);
+        }
+        setTimeout(() => window.location.reload(), 800);
+      } catch (err) {
+        console.error('[Backup] Restore failed:', err);
+        if (typeof showToast === 'function') {
+          showToast('Failed to restore backup: ' + err.message);
+        }
       }
-    });
-
-    updateTagFilterMatches();
+    };
+    reader.readAsText(file);
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    const pills = document.querySelectorAll('.tag-pill');
-    pills.forEach(pill => {
-      pill.addEventListener('click', () => {
-        const tag = pill.getAttribute('data-tag');
-        if (activeTags.has(tag)) {
-          activeTags.delete(tag);
-          pill.classList.remove('active');
-          pill.setAttribute('aria-pressed', 'false');
-        } else {
-          activeTags.add(tag);
-          pill.classList.add('active');
-          pill.setAttribute('aria-pressed', 'true');
-        }
+    const triggerBtn = document.getElementById('backup-restore-trigger-btn');
+    const modal = document.getElementById('backup-restore-modal');
+    const closeBtn = document.getElementById('backup-modal-close-btn');
+    const exportBtn = document.getElementById('btn-export-backup-json');
+    const importBtn = document.getElementById('btn-import-backup-json');
+    const fileInput = document.getElementById('backup-file-input');
 
-        if (typeof filterGames === 'function') {
-          filterGames();
-        }
-        applyTagFilterToGrid();
+    if (triggerBtn && modal) {
+      triggerBtn.addEventListener('click', () => {
+        modal.classList.add('active');
+        modal.setAttribute('aria-hidden', 'false');
       });
-    });
+    }
 
-    // Re-apply tag filter after catalog re-renders
-    const originalFilterGames = window.filterGames;
-    if (typeof originalFilterGames === 'function') {
-      window.filterGames = function (...args) {
-        const res = originalFilterGames.apply(this, args);
-        if (activeTags.size > 0) {
-          applyTagFilterToGrid();
+    if (closeBtn && modal) {
+      closeBtn.addEventListener('click', () => {
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+      });
+    }
+
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.classList.remove('active');
+          modal.setAttribute('aria-hidden', 'true');
         }
-        return res;
-      };
+      });
+    }
+
+    if (exportBtn) {
+      exportBtn.addEventListener('click', exportSaveStateBackup);
+    }
+
+    if (importBtn && fileInput) {
+      importBtn.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          restoreSaveStateBackup(e.target.files[0]);
+        }
+      });
     }
   });
 })();
