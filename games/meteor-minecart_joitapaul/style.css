@@ -1,0 +1,150 @@
+:root {
+  color-scheme: dark;
+  --bg: #090b16;
+  --panel: #11182c;
+  --line: #43558b;
+  --cyan: #62e7ff;
+  --violet: #9e86ff;
+  --amber: #ffc86b;
+  --text: #f4f7ff;
+  --muted: #abb5d1;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, "Segoe UI", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 20% 15%, rgba(98, 231, 255, 0.12), transparent 30rem),
+    radial-gradient(circle at 82% 85%, rgba(158, 134, 255, 0.11), transparent 28rem),
+    var(--bg);
+}
+
+button { font: inherit; }
+
+.game-shell {
+  width: min(760px, calc(100% - 24px));
+  margin: 0 auto;
+  padding: 16px 0 24px;
+}
+
+.game-header, .title-lockup, .hud, .action-bar {
+  display: flex;
+  align-items: center;
+}
+
+.game-header { justify-content: space-between; margin-bottom: 12px; }
+.title-lockup { gap: 10px; }
+.title-lockup svg { width: 38px; height: 38px; stroke: var(--cyan); fill: none; stroke-width: 1.7; }
+.title-lockup h1 { margin: 0; font-size: clamp(1.25rem, 4vw, 2rem); }
+.title-lockup p { margin: 3px 0 0; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.12em; }
+
+.icon-button, .control-button, .secondary-button, .primary-button {
+  border: 1px solid var(--line);
+  color: var(--text);
+  background: rgba(17, 24, 44, 0.94);
+  cursor: pointer;
+}
+
+.icon-button { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; }
+.icon-button svg, .control-button svg, .secondary-button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; }
+
+.hud {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.hud div {
+  min-width: 0;
+  padding: 8px 5px;
+  text-align: center;
+  border: 1px solid rgba(98, 231, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(17, 24, 44, 0.72);
+}
+
+.hud span { display: block; color: var(--muted); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.07em; }
+.hud strong { display: block; margin-top: 3px; font-size: clamp(0.75rem, 2.4vw, 1rem); }
+
+.canvas-wrap {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #070914;
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.38);
+}
+
+#game-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  touch-action: none;
+  outline: none;
+}
+
+.overlay, .modal {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(4, 5, 14, 0.82);
+  backdrop-filter: blur(5px);
+}
+
+.hidden { display: none !important; }
+
+.overlay-card, .modal-card {
+  width: min(420px, 92%);
+  padding: 24px;
+  text-align: center;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+.overlay-card svg { width: 44px; height: 44px; fill: none; stroke: var(--cyan); stroke-width: 1.8; }
+.overlay-card h2, .modal-card h2 { margin: 10px 0 8px; }
+.overlay-card p { color: var(--muted); }
+
+.primary-button, .control-button, .secondary-button {
+  min-height: 42px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.primary-button { width: 100%; margin-top: 12px; border: none; color: #11162a; background: var(--cyan); }
+.secondary-button, .control-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.secondary-button { padding: 8px 12px; }
+.control-button { position: relative; width: 48px; padding: 8px; }
+.control-button span { position: absolute; right: -4px; top: -5px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--amber); color: #181200; font-size: 0.68rem; line-height: 18px; }
+
+.action-bar { justify-content: center; gap: 7px; margin-top: 10px; }
+
+.modal { position: fixed; z-index: 100; }
+.modal-card { width: min(620px, 94%); text-align: left; }
+.modal-card h2 { color: var(--cyan); text-align: center; }
+.rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.rules-grid section { padding: 12px; border: 1px solid rgba(98, 231, 255, 0.13); border-radius: 8px; background: rgba(7, 9, 20, 0.55); }
+.rules-grid h3 { margin: 0 0 5px; color: var(--amber); font-size: 0.9rem; }
+.rules-grid p { margin: 4px 0; color: var(--muted); line-height: 1.45; font-size: 0.82rem; }
+
+@media (max-width: 520px) {
+  .game-shell { width: min(100% - 12px, 760px); padding-top: 8px; }
+  .hud { gap: 3px; }
+  .hud div { padding: 7px 2px; }
+  .rules-grid { grid-template-columns: 1fr; }
+  .modal-card { max-height: 92vh; overflow: auto; }
+  .action-bar { flex-wrap: wrap; }
+  .secondary-button { flex: 1; }
+}

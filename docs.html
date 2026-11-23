@@ -820,8 +820,26 @@ if (window.ArcadeVerse) {
   // 6. Listen for pause & resume events
   ArcadeVerse.onPause(() => { gameState = 'PAUSED'; });
   ArcadeVerse.onResume(() => { gameState = 'PLAYING'; });
+
+  // 7. Dynamic Difficulty Adjustment (DDA) (#1112)
+  const ddaMultiplier = ArcadeVerse.dda.getAdaptiveMultiplier();
+  enemySpeed = baseSpeed * ddaMultiplier;
+  ArcadeVerse.dda.onMultiplierChange((multiplier) => {
+    enemySpeed = baseSpeed * multiplier;
+  });
 }</code></pre>
           </div>
+
+          <h3 class="docs-subsection-title">Dynamic Difficulty Adjustment (DDA) Protocol (#1112)</h3>
+          <p class="docs-paragraph">
+            ArcadeVerse features a built-in Dynamic Difficulty Adjustment (DDA) adaptive game supervisor. It monitors player telemetry (deaths per minute, survival duration, and hit/evasion rate) to compute a smooth adaptive multiplier between <code>0.75x</code> and <code>1.25x</code>:
+          </p>
+          <ul>
+            <li><strong>Adaptive Scaling:</strong> Use <code>ArcadeVerse.dda.getAdaptiveMultiplier()</code> to scale enemy speeds, projectile velocity, obstacle density, or power-up spawn rates.</li>
+            <li><strong>Beginner Relief:</strong> If a player suffers 3 deaths within 30 seconds, DDA immediately ramps difficulty down to <code>0.75x</code> to prevent player churn.</li>
+            <li><strong>Telemetry Hooks:</strong> Call <code>ArcadeVerse.dda.recordDeath()</code> and <code>ArcadeVerse.dda.recordHit(isHit)</code> to feed real-time performance telemetry.</li>
+            <li><strong>Player Mode Locking:</strong> Players can toggle between <em>Adaptive</em> and <em>Pure Hardcore</em> (fixed <code>1.0x</code>) via the Dynamic Balancing button in modal controls.</li>
+          </ul>
 
           <h3 class="docs-subsection-title">Cryptographic Session Handshake Protocol (#489)</h3>
           <p class="docs-paragraph">
