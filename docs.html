@@ -170,6 +170,7 @@
               <li><a href="#scoring-engine" class="docs-nav-link"><i data-lucide="cpu"></i> Scoring & Leaderboard</a></li>
               <li><a href="#storage-manager" class="docs-nav-link"><i data-lucide="hard-drive"></i> Save Data Vault & Manager</a></li>
               <li><a href="#snapshot-studio" class="docs-nav-link"><i data-lucide="camera"></i> Retro Snapshot Studio</a></li>
+              <li><a href="#theme-studio" class="docs-nav-link"><i data-lucide="palette"></i> Theme Studio & WCAG Contrast</a></li>
               <li><a href="#wallpaper-studio" class="docs-nav-link"><i data-lucide="image"></i> Wallpaper Studio</a></li>
               <li><a href="#slot-reel" class="docs-nav-link"><i data-lucide="dices"></i> Slot Reel Roulette Picker</a></li>
               <li><a href="#playlist-system" class="docs-nav-link"><i data-lucide="list-music"></i> Custom Playlist Engine</a></li>
@@ -1203,6 +1204,22 @@ if (ArcadeVerse.a11y.isAudioBeaconEnabled()) {
             <li><strong>Cross-Frame Canvas Capture:</strong> Safely samples <code>&lt;canvas&gt;</code> rendering contexts from same-origin game instances.</li>
             <li><strong>Stylized CRT Border Overlays:</strong> Injects dynamic game metadata, player handle, timestamp, and retro scanline vignette effects.</li>
             <li><strong>Zero External Storage:</strong> 100% rendered client-side with instant data-URL download without uploading images to any third-party server.</li>
+          </ul>
+        </section>
+
+        <!-- 15c-5. Theme Studio & WCAG Contrast Checker -->
+        <section class="docs-section" id="theme-studio">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Theme Studio & WCAG 2.1 Contrast Checker</h2>
+          <p class="docs-paragraph">
+            Implemented in <code>assets/js/theme-studio.js</code> and styled in <code>assets/css/theme-studio.css</code>, this accessibility subsystem empowers players to build personalized high-contrast neon themes while guaranteeing full compliance with WCAG 2.1 visual accessibility standards.
+          </p>
+          <ul>
+            <li><strong>Interactive Token Customization:</strong> Fine-tune core platform design tokens (<code>--bg-main</code>, <code>--bg-card</code>, <code>--accent-primary</code>, and <code>--text-primary</code>) with real-time platform reflection.</li>
+            <li><strong>Real-Time Contrast Ratio Engine:</strong> Computes relative photometric luminance ($L_1, L_2$) and exact contrast ratios ($CR = (L_1 + 0.05) / (L_2 + 0.05)$) with live ratings: Pass (AAA) [$\ge 7:1$], Pass (AA) [$\ge 4.5:1$], or Fail.</li>
+            <li><strong>Platform Accessibility Gatekeeper:</strong> Enforces WCAG 2.1 Level AA minimum contrast standards ($4.5:1$ for body text) before allowing custom themes to be saved or activated.</li>
+            <li><strong>Intelligent Auto-Fix Engine:</strong> Provides a 1-click optimizer that dynamically adjusts text brightness to reach guaranteed accessibility compliance.</li>
+            <li><strong>CSS & JSON Interchange:</strong> One-click export to clipboard as ready-to-paste CSS custom properties or portable theme JSON configurations.</li>
           </ul>
         </section>
 

@@ -69,6 +69,7 @@
   <link rel="stylesheet" href="assets/css/trophy-card.css">
   <link rel="stylesheet" href="assets/css/sound-engine.css">
   <link rel="stylesheet" href="assets/css/game-ratings.css">
+  <link rel="stylesheet" href="assets/css/theme-studio.css">
   <link rel="stylesheet" href="assets/css/halloween.css?v=20261103">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -122,6 +123,15 @@
             <path d="m14.83 14.83 4.24 4.24"></path>
             <path d="m9.17 14.83-4.24 4.24"></path>
             <circle cx="12" cy="12" r="4"></circle>
+          </svg>
+        </button>
+        <button class="theme-studio-btn" id="theme-studio-trigger-btn" type="button" aria-label="Open Theme Studio & WCAG Contrast Checker (Shift+T)" title="Custom Theme Studio & WCAG Contrast (Shift+T)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle>
+            <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle>
+            <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle>
+            <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle>
+            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path>
           </svg>
         </button>
         <button class="theme-toggle-btn" id="theme-toggle-btn" type="button" aria-label="Toggle dark/light theme"
@@ -695,17 +705,8 @@
   <script src="assets/js/report-bug-helper.js"></script>
   <script src="assets/js/arcade-gamepad.js"></script>
   <script src="assets/js/touch-joystick.js"></script>
-  <script src="assets/js/arcade-dda-engine.js"></script>
-  <script>
-    if (window.ArcadeGameComparison && typeof window.ArcadeGameComparison.init === "function") {
-      window.ArcadeGameComparison.init();
-    }
-  </script>
-  <script>
-    if (window.ArcadeCRTShaderEngine && typeof window.ArcadeCRTShaderEngine.init === "function") {
-      window.ArcadeCRTShaderEngine.init();
-    }
-  </script>
+  <script src="assets/js/theme-studio.js"></script>
+  <script src="assets/js/arcade-particles.js"></script>
   <script>
     if (window.lucide) {
       lucide.createIcons();
