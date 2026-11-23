@@ -630,6 +630,8 @@
           <span>•</span>
           <a href="faqs.html">FAQs</a>
           <span>•</span>
+          <a href="#" id="footer-tech-tree-btn">Tech-Tree</a>
+          <span>•</span>
           <button type="button" class="footer-link-btn" id="footer-storage-manager-btn" style="background:none;border:none;color:inherit;font:inherit;cursor:pointer;padding:0;text-decoration:underline;">Storage</button>
           <span>•</span>
           <a href="https://github.com/DebasmitaBose0/ArcadeVerse" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
@@ -668,6 +670,19 @@
   <script src="assets/js/arcade-gamepad.js"></script>
   <script src="assets/js/touch-joystick.js"></script>
   <script src="assets/js/arcade-particles.js"></script>
+  <script src="assets/js/per-game-controls.js"></script>
+  <script>
+    if (window.ArcadeTechTree && typeof window.ArcadeTechTree.init === "function") {
+      window.ArcadeTechTree.init();
+      var techBtn = document.getElementById("footer-tech-tree-btn");
+      if (techBtn) {
+        techBtn.addEventListener("click", function (e) {
+          e.preventDefault();
+          window.ArcadeTechTree.openVisualizer();
+        });
+      }
+    }
+  </script>
   <script>
     if (window.lucide) {
       lucide.createIcons();
