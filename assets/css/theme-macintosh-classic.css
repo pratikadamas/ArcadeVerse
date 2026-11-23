@@ -1,0 +1,98 @@
+/* ==========================================================================
+   THEME: 1984 MACINTOSH CLASSIC PLATINUM GRAY 1-BIT STIPPLE THEME (#1404)
+   Authentic 2x2 stipple pattern fill, Chicago-inspired typography, and classic window chrome
+   ========================================================================== */
+
+:root[data-theme="macintosh-classic"],
+html[data-theme="macintosh-classic"] {
+  /* 2x2 50% Gray Stipple Desktop Fill */
+  --bg-primary: #808080;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f0f0f0;
+  --bg-header: #ffffff;
+
+  --accent-primary: #000000;
+  --accent-secondary: #505050;
+  --accent-tertiary: #000000;
+
+  --text-primary: #000000;
+  --text-secondary: #333333;
+  --text-muted: #666666;
+  --text-inverse: #ffffff;
+
+  --border-subtle: #000000;
+  --border-glow: #000000;
+
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+}
+
+/* 2x2 1-Bit Stipple Pattern Desktop Background */
+[data-theme="macintosh-classic"] body {
+  background-color: #ffffff !important;
+  background-image: radial-gradient(#808080 25%, transparent 25%), radial-gradient(#808080 25%, transparent 25%) !important;
+  background-position: 0 0, 2px 2px !important;
+  background-size: 4px 4px !important;
+  color: #000000 !important;
+  font-family: 'Chicago', 'Geneva', monospace, sans-serif !important;
+}
+
+/* Classic 1984 Macintosh Window Chrome */
+[data-theme="macintosh-classic"] .game-card,
+[data-theme="macintosh-classic"] .catalog-card,
+[data-theme="macintosh-classic"] .modal-content,
+[data-theme="macintosh-classic"] .controls-legend-card {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 2px 2px 0px #000000 !important;
+}
+
+/* Horizontal Pinstripe Title Bars */
+[data-theme="macintosh-classic"] .modal-header,
+[data-theme="macintosh-classic"] .card-header,
+[data-theme="macintosh-classic"] .game-card-header {
+  background: repeating-linear-gradient(
+    0deg,
+    #000000,
+    #000000 1px,
+    #ffffff 1px,
+    #ffffff 3px
+  ) !important;
+  color: #000000 !important;
+  border-bottom: 1px solid #000000 !important;
+  padding: 4px 8px !important;
+}
+
+/* Classic Macintosh 1-Bit Inset / Outset Buttons */
+[data-theme="macintosh-classic"] .btn,
+[data-theme="macintosh-classic"] button.btn,
+[data-theme="macintosh-classic"] .filter-chip {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #000000 !important;
+  border-radius: 4px !important;
+  box-shadow: 1px 1px 0px #000000 !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="macintosh-classic"] .btn:active,
+[data-theme="macintosh-classic"] button.btn:active,
+[data-theme="macintosh-classic"] .filter-chip.active {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: #000000 !important;
+  transform: translate(1px, 1px) !important;
+  box-shadow: none !important;
+}
+
+/* Navbar & Footer Chrome */
+[data-theme="macintosh-classic"] .navbar,
+[data-theme="macintosh-classic"] .footer {
+  background: #ffffff !important;
+  border-bottom: 1px solid #000000 !important;
+  color: #000000 !important;
+}
