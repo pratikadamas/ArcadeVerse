@@ -699,6 +699,30 @@ soundNode.connect(masterGain);</code></pre>
                 </div>
               </div>
 
+              <!-- Zero-Dependency ArcadeFX Particle & Screen Shake Engine (#899) -->
+              <div class="docs-callout note" style="margin-top: 24px;">
+                <div class="docs-callout-icon"><i data-lucide="sparkles"></i></div>
+                <div>
+                  <h4 style="color: var(--accent-primary); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">Zero-Dependency ArcadeFX Particle & Camera Trauma Engine (#899)</h4>
+                  <p style="font-size: 0.92rem; line-height: 1.6; margin-bottom: 12px;">
+                    Game contributors can trigger high-performance object-pooled particle explosions, floating combat text, and screen shake trauma at 60 FPS without external libraries:
+                  </p>
+                  <ul style="font-size: 0.88rem; line-height: 1.7; padding-left: 20px;">
+                    <li><strong>Pre-Allocated Object Pools:</strong> Zero runtime memory allocations or GC stalls during explosive action sequences.</li>
+                    <li><strong>Accessibility-First Reduced Motion:</strong> Automatically integrates with <code>prefers-reduced-motion</code> and <code>A11yEngine</code> to suppress camera trauma and scale back particle velocity.</li>
+                    <li><strong>Dynamic Trauma Falloff:</strong> Uses polynomial camera decay for cinematic, punchy screen shake feedback.</li>
+                  </ul>
+                  <h5 style="color: var(--text-primary); margin-top: 14px; margin-bottom: 6px; font-size: 0.95rem;">Usage in Game Projects</h5>
+                  <div class="code-block-wrapper" style="margin-top: 10px; margin-bottom: 10px;">
+                    <pre class="code-pre"><code class="language-javascript">// Spawn particle burst and camera trauma
+ArcadeFX.explode(x, y, { count: 32, shake: 0.5 });
+// Render pooled particles to game canvas
+ArcadeFX.update();
+ArcadeFX.render(ctx);</code></pre>
+                  </div>
+                </div>
+              </div>
+
               <h5 style="color: var(--text-primary); margin-top: 16px; margin-bottom: 6px; font-size: 0.95rem;">Implementation Guide for Game Contributors</h5>
               <p style="font-size: 0.88rem; line-height: 1.6; margin-bottom: 10px;">
                 When developing WebGL games for ArcadeVerse, always bind the context recovery handler. When a mobile or laptop GPU sleeps or switches display adapters, the browser triggers a synthetic context loss. With the ArcadeVerse lifecycle bridge, your game avoids black screens:
@@ -796,8 +820,26 @@ if (window.ArcadeVerse) {
   // 6. Listen for pause & resume events
   ArcadeVerse.onPause(() => { gameState = 'PAUSED'; });
   ArcadeVerse.onResume(() => { gameState = 'PLAYING'; });
+
+  // 7. Dynamic Difficulty Adjustment (DDA) (#1112)
+  const ddaMultiplier = ArcadeVerse.dda.getAdaptiveMultiplier();
+  enemySpeed = baseSpeed * ddaMultiplier;
+  ArcadeVerse.dda.onMultiplierChange((multiplier) => {
+    enemySpeed = baseSpeed * multiplier;
+  });
 }</code></pre>
           </div>
+
+          <h3 class="docs-subsection-title">Dynamic Difficulty Adjustment (DDA) Protocol (#1112)</h3>
+          <p class="docs-paragraph">
+            ArcadeVerse features a built-in Dynamic Difficulty Adjustment (DDA) adaptive game supervisor. It monitors player telemetry (deaths per minute, survival duration, and hit/evasion rate) to compute a smooth adaptive multiplier between <code>0.75x</code> and <code>1.25x</code>:
+          </p>
+          <ul>
+            <li><strong>Adaptive Scaling:</strong> Use <code>ArcadeVerse.dda.getAdaptiveMultiplier()</code> to scale enemy speeds, projectile velocity, obstacle density, or power-up spawn rates.</li>
+            <li><strong>Beginner Relief:</strong> If a player suffers 3 deaths within 30 seconds, DDA immediately ramps difficulty down to <code>0.75x</code> to prevent player churn.</li>
+            <li><strong>Telemetry Hooks:</strong> Call <code>ArcadeVerse.dda.recordDeath()</code> and <code>ArcadeVerse.dda.recordHit(isHit)</code> to feed real-time performance telemetry.</li>
+            <li><strong>Player Mode Locking:</strong> Players can toggle between <em>Adaptive</em> and <em>Pure Hardcore</em> (fixed <code>1.0x</code>) via the Dynamic Balancing button in modal controls.</li>
+          </ul>
 
           <h3 class="docs-subsection-title">Cryptographic Session Handshake Protocol (#489)</h3>
           <p class="docs-paragraph">
