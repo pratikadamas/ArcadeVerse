@@ -2568,6 +2568,47 @@ document.addEventListener("DOMContentLoaded", () => {
   let modalLaunchCooldownTimer = null;
   let closeModalCleanupTimer = null;
 
+  // Screen Wake Lock Controller (#700, #723)
+  // Keeps screen awake during active gameplay sessions on mobile devices
+  let screenWakeLock = null;
+
+  async function requestScreenWakeLock() {
+    if (!("wakeLock" in navigator) || typeof navigator.wakeLock.request !== "function") return;
+    try {
+      if (!screenWakeLock) {
+        screenWakeLock = await navigator.wakeLock.request("screen");
+        screenWakeLock.addEventListener("release", () => {
+          screenWakeLock = null;
+        });
+      }
+    } catch (_) {
+      screenWakeLock = null;
+    }
+  }
+
+  async function releaseScreenWakeLock() {
+    if (screenWakeLock) {
+      try {
+        await screenWakeLock.release();
+      } catch (_) {}
+      screenWakeLock = null;
+    }
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      if (gameModal && gameModal.classList.contains("active")) {
+        requestScreenWakeLock();
+      }
+    } else {
+      releaseScreenWakeLock();
+    }
+  });
+
+  window.addEventListener("pagehide", () => {
+    releaseScreenWakeLock();
+  });
+
   // Modal Handlers
   // Restore the catalog's namespaced storage URL bridge (#493, #824, #878).
   // Ensures that whenever games are launched, retried from error boundaries, or
@@ -2940,6 +2981,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeGameModal(isFromPopState = false) {
     if (!gameModal || (!gameModal.classList.contains("active") && !activeGame)) return;
+    releaseScreenWakeLock();
     announceToScreenReader("Game closed. Returned to game catalog.");
     if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.closeMenu === "function") {
       window.GameSpeedRegulator.closeMenu();
@@ -6830,6 +6872,9 @@ document.addEventListener("DOMContentLoaded", () => {
       iframe.addEventListener('load', () => {
         setTimeout(() => broadcastMasterVolume(masterVolume), 200);
       });
+    }
+  });
+})();
     }
   });
 })();
