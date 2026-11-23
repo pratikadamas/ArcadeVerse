@@ -514,5 +514,35 @@
     "title": "[Enhancement/UX]: Game Modal Exit Confirmation Dialog with Don't Ask Again Checkbox",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1393",
     "published_at": "2026-11-23T16:29:04.774Z"
+  },
+  {
+    "number": 1394,
+    "title": "[Enhancement/UI]: Catalog Footer Dynamic Version Pill & System Status Indicator Pulse",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1394",
+    "published_at": "2026-11-23T16:31:06.075Z"
+  },
+  {
+    "number": 1395,
+    "title": "[Enhancement/UI]: Responsive Grid Column Toggle (2, 3, 4 Columns) for Desktop Displays",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1395",
+    "published_at": "2026-11-23T16:31:11.553Z"
+  },
+  {
+    "number": 1396,
+    "title": "[Enhancement/UX]: Copy Game Share Link Direct-to-Clipboard with Success Toast Notification",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1396",
+    "published_at": "2026-11-23T16:31:17.096Z"
+  },
+  {
+    "number": 1397,
+    "title": "[Enhancement/UI]: Dynamic Breadcrumb Navigation Trail on Active Game Modal Header",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1397",
+    "published_at": "2026-11-23T16:31:22.776Z"
+  },
+  {
+    "number": 1398,
+    "title": "[Enhancement/UI]: Interactive Retro Loading Progress Bar with Neon Segment Blocks",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1398",
+    "published_at": "2026-11-23T16:31:28.353Z"
   }
 ]

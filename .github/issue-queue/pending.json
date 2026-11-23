@@ -1,50 +1,5 @@
 [
   {
-    "title": "[Enhancement/UI]: Catalog Footer Dynamic Version Pill & System Status Indicator Pulse",
-    "labels": [
-      "nsoc26",
-      "level2"
-    ],
-    "body": "## Problem\nThe footer displays static copyright text without indicating whether the offline Service Worker cache is active, what version of ArcadeVerse is running, or if connection to the host is healthy.\n\n## Architectural Scope & Requirements\n1. **Status Pill Component (`index.html`, `assets/css/status-pill.css`):**\n   - Add a compact status pill in the footer: a pulsing status dot, version badge (`v2.4.0`), and PWA cache status.\n2. **Online / Offline Event Handling:**\n   - Listen to `window.addEventListener('online')` and `'offline'`.\n   - When online: glowing green dot with text `\"Vault Online\"`.\n   - When offline: amber dot with text `\"Offline Ready (PWA Vault Active)\"`.\n3. **PWA Cache Inspection:**\n   - Query `navigator.serviceWorker.controller` to confirm local asset caching status.\n\n## Acceptance Criteria\n- [ ] Live pulsing green status indicator updating instantly on network state change.\n- [ ] Clear PWA offline readiness feedback for users.\n- [ ] Compact, elegant footer placement.\n- [ ] 100% Pure Vanilla JS and CSS.",
-    "id": 16
-  },
-  {
-    "title": "[Enhancement/UI]: Responsive Grid Column Toggle (2, 3, 4 Columns) for Desktop Displays",
-    "labels": [
-      "nsoc26",
-      "level2"
-    ],
-    "body": "## Problem\nDesktop users with ultra-wide or large displays have different viewing preferences: some prefer large immersive game cards (2 columns), while others prefer compact dense browsing (4 columns).\n\n## Architectural Scope & Requirements\n1. **Grid Density Switcher UI (`assets/js/grid-columns.js`):**\n   - Place a compact 3-icon button group above the games grid on desktop viewports (`||`, `|||`, `||||`).\n2. **CSS Grid Variable Architecture:**\n   - Dynamically update CSS custom property `--catalog-columns: repeat(var(--col-count, 3), 1fr)`.\n3. **Persistence:**\n   - Save selected column preference (`2`, `3`, or `4`) in `localStorage` under `av_catalog_columns`.\n   - Hidden gracefully on mobile and tablet viewports where responsive single/double columns are required.\n\n## Acceptance Criteria\n- [ ] Smooth transition between 2, 3, and 4 column grid layouts on desktop screens.\n- [ ] Persists user choice across browser sessions.\n- [ ] Gracefully defaults to standard responsive layout on smaller screens.\n- [ ] 100% Pure Vanilla JS and CSS Grid.",
-    "id": 17
-  },
-  {
-    "title": "[Enhancement/UX]: Copy Game Share Link Direct-to-Clipboard with Success Toast Notification",
-    "labels": [
-      "nsoc26",
-      "level2"
-    ],
-    "body": "## Problem\nSharing a specific game currently requires users to copy the entire browser address bar or manually type out the game query URL parameter.\n\n## Architectural Scope & Requirements\n1. **Share Button on Game Cards & Modals (`assets/js/share-game.js`):**\n   - Add a subtle share link icon button to each game card and active game modal header.\n2. **Clipboard Integration:**\n   - Use `navigator.clipboard.writeText()` with fallback to copy the exact deep link (e.g. `https://domain/?game=cyber-snake`).\n3. **Transient Toast Notification:**\n   - Display a floating neon toast `\"Game link copied to clipboard!\"` for 2.5 seconds with a smooth slide-in and fade-out animation.\n\n## Acceptance Criteria\n- [ ] Reliably copies canonical game deep-link URL to clipboard.\n- [ ] Non-intrusive, styled toast confirmation appears and dismisses automatically.\n- [ ] Keyboard accessible with appropriate ARIA feedback.\n- [ ] 100% Pure Vanilla JavaScript.",
-    "id": 18
-  },
-  {
-    "title": "[Enhancement/UI]: Dynamic Breadcrumb Navigation Trail on Active Game Modal Header",
-    "labels": [
-      "nsoc26",
-      "level2"
-    ],
-    "body": "## Problem\nWhen a game modal is open in fullscreen or overlay mode, players lose visual context of what category or collection the game belongs to, lacking an instant way to browse related titles.\n\n## Architectural Scope & Requirements\n1. **Breadcrumb Component (`assets/js/app.js`, `assets/css/breadcrumb.css`):**\n   - Insert an accessible breadcrumb trail above the game iframe title: `ArcadeVerse > {Category} > {Game Title}`.\n2. **Interactive Filtering Links:**\n   - Clicking `ArcadeVerse` closes the modal and resets the catalog.\n   - Clicking `{Category}` closes the modal and immediately filters the catalog to that category.\n3. **Responsive Truncation:**\n   - On mobile screens, truncate long game titles with an ellipsis (`text-overflow: ellipsis`) to prevent header clipping.\n\n## Acceptance Criteria\n- [ ] Clear hierarchical breadcrumb navigation on every opened game.\n- [ ] Clicking category returns to catalog with that category active.\n- [ ] Fully responsive and accessible with `nav[aria-label=\"Breadcrumb\"]`.\n- [ ] 100% Pure Vanilla JS and CSS.",
-    "id": 19
-  },
-  {
-    "title": "[Enhancement/UI]: Interactive Retro Loading Progress Bar with Neon Segment Blocks",
-    "labels": [
-      "nsoc26",
-      "level2"
-    ],
-    "body": "## Problem\nWhile game iframe assets and canvas resources are initializing inside the modal, a basic spinner circle is shown, which feels generic and out of place in a retro arcade environment.\n\n## Architectural Scope & Requirements\n1. **Segmented Progress Bar (`assets/css/retro-loader.css`):**\n   - Implement an authentic 8-bit segmented progress bar composed of glowing neon pixel blocks.\n2. **Simulated Initialization Stages:**\n   - Animate progress through realistic arcade boot stages: `\"Loading ROM...\"` (30%), `\"Mounting Audio Synth...\"` (70%), `\"Ready!\"` (100%).\n3. **Smooth Dismissal:**\n   - Upon iframe `DOMContentLoaded` or `window.load`, transition loader smoothly to 100% and fade out within 200ms.\n\n## Acceptance Criteria\n- [ ] Retro segmented loading block animation with authentic arcade feel.\n- [ ] Meaningful stage labels informing player of load progress.\n- [ ] Automatically fades out as soon as game iframe completes initialization.\n- [ ] 100% Pure Vanilla CSS and JavaScript.",
-    "id": 20
-  },
-  {
     "title": "[Theme/UI]: Retro Vaporwave Pastel Aesthetics & Windows 95 Vintage OS Theme",
     "labels": [
       "nsoc26",
