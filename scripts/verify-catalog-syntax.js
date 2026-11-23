@@ -21,7 +21,8 @@ const TARGET_FILES = [
   path.join(ROOT_DIR, 'assets', 'js', 'app.js'),
   path.join(ROOT_DIR, 'assets', 'js', 'games-registry.js'),
   path.join(ROOT_DIR, 'scripts', 'validate-games.js'),
-  path.join(ROOT_DIR, 'scripts', 'build-registry.js')
+  path.join(ROOT_DIR, 'scripts', 'build-registry.js'),
+  path.join(ROOT_DIR, 'sw.js')
 ];
 
 let errorCount = 0;

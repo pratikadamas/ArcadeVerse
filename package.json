@@ -17,7 +17,8 @@
     "build": "node scripts/build-registry.js",
     "build:registry": "node scripts/build-registry.js",
     "create-game": "node scripts/create-game.js",
-    "test:loop": "node scripts/test-game-loop-engine.mjs"
+    "test:loop": "node scripts/test-game-loop-engine.mjs",
+    "test:sw": "node scripts/test-service-worker-syntax.js"
   },
   "keywords": [
     "arcade",

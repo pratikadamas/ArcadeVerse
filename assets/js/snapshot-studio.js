@@ -22,7 +22,7 @@
     const snapshotBtn = document.createElement('button');
     snapshotBtn.id = 'modal-snapshot-btn';
     snapshotBtn.className = 'btn btn-sm btn-icon';
-    snapshotBtn.title = 'Capture Retro Snapshot (P)';
+    snapshotBtn.title = 'Capture Retro Snapshot (Alt+Shift+S)';
     snapshotBtn.setAttribute('aria-label', 'Capture Game Frame Snapshot');
     snapshotBtn.innerHTML = `
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="modal-snapshot-icon" aria-hidden="true">
@@ -44,15 +44,27 @@
       triggerSnapshotCapture();
     });
 
-    // Keyboard shortcut [P] when modal is open
-    window.addEventListener('keydown', (e) => {
-      if ((e.key === 'p' || e.key === 'P') && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        if (gameModal.classList.contains('active') && document.activeElement.tagName !== 'INPUT') {
-          e.preventDefault();
-          triggerSnapshotCapture();
+    // Keyboard shortcut [Alt+Shift+S] when modal is open and non-input focused (#894)
+    // Never intercepts bare 'P' key to prevent collision with universal in-game pause
+    function handleSnapshotKeydown(e) {
+      if ((e.key === 's' || e.key === 'S') && e.altKey && e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        if (gameModal.classList.contains('active')) {
+          const activeEl = document.activeElement;
+          const isInput = activeEl && (
+            activeEl.tagName === 'INPUT' ||
+            activeEl.tagName === 'TEXTAREA' ||
+            activeEl.tagName === 'SELECT' ||
+            activeEl.isContentEditable
+          );
+          if (!isInput) {
+            e.preventDefault();
+            e.stopPropagation();
+            triggerSnapshotCapture();
+          }
         }
       }
-    });
+    }
+    window.addEventListener('keydown', handleSnapshotKeydown);
   }
 
   /**
@@ -60,6 +72,9 @@
    * and triggers automatic PNG download.
    */
   function triggerSnapshotCapture() {
+    const gameModal = document.getElementById('game-modal');
+    if (!gameModal || !gameModal.classList.contains('active')) return;
+
     const gameIframe = document.getElementById('game-iframe');
     const modalTitleElem = document.getElementById('modal-game-title');
     const modalAuthorElem = document.getElementById('modal-game-author');
@@ -83,6 +98,19 @@
     }
 
     if (!sourceCanvas) {
+      // Check for canvas in child shadow roots or SVG fallback
+      try {
+        if (iframeDoc) {
+          const svgElem = iframeDoc.querySelector('svg');
+          if (svgElem) {
+            showToast('SVG games do not support direct bitmap snapshot.', 'warning');
+            return;
+          }
+        }
+      } catch (_) {}
+      showToast('No active canvas frame detected in current game.', 'warning');
+      return;
+    }
       showToast('No active canvas frame detected in current game.', 'warning');
       return;
     }
@@ -97,8 +125,10 @@
       const headerHeight = 54;
       const footerHeight = 44;
 
-      const targetWidth = Math.max(sourceCanvas.width, 640);
-      const targetHeight = Math.max(sourceCanvas.height, 480);
+      const sourceW = sourceCanvas.width || 640;
+      const sourceH = sourceCanvas.height || 480;
+      const targetWidth = Math.max(sourceW, 640);
+      const targetHeight = Math.max(sourceH, 480);
 
       const compCanvas = document.createElement('canvas');
       compCanvas.width = targetWidth + padding * 2;

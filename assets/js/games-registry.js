@@ -229,6 +229,25 @@ const GAMES_REGISTRY = [
     "featured": false
   },
   {
+    "id": "cipher-garden_joitapaul",
+    "title": "Cipher Garden",
+    "category": "Puzzle",
+    "lucideIcon": "gamepad-2",
+    "description": "Rotate interconnected garden tiles to reconnect the central seed to every terminal flower across 20 cipher puzzles.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/cipher-garden_joitapaul/index.html",
+    "tags": [
+      "Puzzle",
+      "Logic",
+      "Grid",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": true
+  },
+  {
     "id": "circuit-breaker_your-joitapaul",
     "title": "Circuit Breaker",
     "category": "Puzzle",
@@ -1462,6 +1481,25 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "meteor-minecart_joitapaul",
+    "title": "Meteor Minecart",
+    "category": "Arcade",
+    "lucideIcon": "gamepad-2",
+    "description": "Race a minecart across a three-lane asteroid track, collect energy crystals, dodge meteors, and build a speed score multiplier.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/meteor-minecart_joitapaul/index.html",
+    "tags": [
+      "Arcade",
+      "Runner",
+      "Action",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": true
+  },
+  {
     "id": "microbe-medics_joitapaul",
     "title": "Microbe Medics: Outbreak Protocol",
     "category": "Puzzle",
@@ -2605,7 +2643,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 849,
+    "commits": 853,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2715,19 +2753,21 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "joitapaul",
     "avatarInitial": "J",
     "role": "Active Contributor (NSOC '26)",
-    "commits": 28,
-    "gamesCount": 17,
+    "commits": 30,
+    "gamesCount": 19,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 1,
     "bonusPts": 0,
     "contributions": [
       "Astro Courier",
+      "Cipher Garden",
       "Circuit Breaker",
       "Deep Signal: Subsea Rescue",
       "Fossil Frontiers: Dig Site Puzzle",
       "Gridlock Escape",
       "Lunar Landing Protocol",
+      "Meteor Minecart",
       "Microbe Medics: Outbreak Protocol",
       "Midnight Graveyard: Lantern Run",
       "Neon Asteroid Escape",
@@ -2773,7 +2813,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "pratikadamas",
     "avatarInitial": "P",
     "role": "Contributor (NSOC '26)",
-    "commits": 129,
+    "commits": 128,
     "gamesCount": 1,
     "mechanicsBonus": 0,
     "platformPRs": 1,
