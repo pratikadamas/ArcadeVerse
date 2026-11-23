@@ -652,7 +652,7 @@
   <script src="assets/js/isometric-arcade-room.js"></script>
   <script src="assets/js/card-flip-manual.js"></script>
   <script src="assets/js/rating-histogram.js"></script>
-  <script src="assets/js/arcade-adaptive-resolution.js"></script>
+  <script src="assets/js/virtual-controller-splitter.js"></script>
   <script src="assets/js/app.js"></script>
   <script src="assets/js/halloween.js"></script>
   <script src="assets/js/daily-challenge.js"></script>
@@ -681,6 +681,11 @@
           window.ArcadeTechTree.openVisualizer();
         });
       }
+    }
+  </script>
+  <script>
+    if (window.ArcadeVirtualControllerSplitter && typeof window.ArcadeVirtualControllerSplitter.init === "function") {
+      window.ArcadeVirtualControllerSplitter.init();
     }
   </script>
   <script>
