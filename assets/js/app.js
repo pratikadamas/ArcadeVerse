@@ -2729,6 +2729,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.mountControls === "function") {
       window.GameSpeedRegulator.mountControls();
     }
+    if (window.ArcadeDDA) {
+      if (typeof window.ArcadeDDA.mountControls === "function") {
+        window.ArcadeDDA.mountControls();
+      }
+      if (typeof window.ArcadeDDA.reset === "function") {
+        window.ArcadeDDA.reset();
+      }
+    }
 
     // Monitor game frame lifecycle and attach watchdog
     try {
@@ -3720,6 +3728,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Handle game-over lifecycle events
     if (type === "ARCADEVERSE_GAME_OVER") {
+      if (window.ArcadeDDA && typeof window.ArcadeDDA.recordDeath === "function") {
+        try { window.ArcadeDDA.recordDeath(); } catch (_) {}
+      }
       const details = e.data.details || {};
       const finalScore = details.score != null ? Number(details.score) : lastAnnouncedScore;
       if (typeof announceToScreenReader === "function") {
