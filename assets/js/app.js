@@ -6701,160 +6701,110 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // ========================================================
 // ========================================================
-// PERIODIC HEAP MEMORY MONITOR & IN-MODAL ALERT (#707)
+// MULTI-SELECT DYNAMIC TAG FILTERING ENGINE (#738)
 // ========================================================
 (() => {
-  let memoryWatchdogInterval = null;
-  let droppedFramesCount = 0;
-  let totalSampleFrames = 0;
-  let lastFrameTime = performance.now();
-  let rafMonitoringId = null;
-  let isAlertActive = false;
+  const activeTags = new Set();
 
-  function showMemoryWarningBanner(reason) {
-    if (isAlertActive) return;
-    const modalFrameWrapper = document.querySelector('.modal-frame-wrapper');
-    if (!modalFrameWrapper) return;
+  function updateTagFilterMatches() {
+    const games = Array.isArray(window.GAMES_REGISTRY) ? window.GAMES_REGISTRY : [];
+    const countBadge = document.getElementById('tag-filter-count');
+    if (!countBadge) return;
 
-    let banner = document.getElementById('av-memory-warning-banner');
-    if (!banner) {
-      banner = document.createElement('div');
-      banner.id = 'av-memory-warning-banner';
-      banner.className = 'av-memory-warning-banner';
-      banner.setAttribute('role', 'alert');
-      banner.innerHTML = `
-        <div class="av-memory-icon-wrap" aria-hidden="true">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/>
-            <line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
-        </div>
-        <div class="av-memory-text">
-          <span class="av-memory-title">High memory usage detected.</span>
-          <span class="av-memory-desc">Consider reloading for optimal performance. (${reason})</span>
-        </div>
-        <div class="av-memory-actions">
-          <button type="button" class="btn-memory-purge" id="btn-purge-cache-reload">Purge Cache & Reload</button>
-          <button type="button" class="btn-memory-dismiss" id="btn-dismiss-memory-banner" aria-label="Dismiss warning">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-        </div>
-      `;
-      modalFrameWrapper.appendChild(banner);
-
-      const purgeBtn = banner.querySelector('#btn-purge-cache-reload');
-      if (purgeBtn) {
-        purgeBtn.addEventListener('click', async () => {
-          purgeBtn.disabled = true;
-          purgeBtn.textContent = 'Purging...';
-          try {
-            if ('caches' in window) {
-              const keys = await caches.keys();
-              await Promise.all(keys.map(k => caches.delete(k)));
-            }
-          } catch (_) {}
-          const activeIframe = document.getElementById('game-iframe');
-          if (activeIframe && activeIframe.src) {
-            activeIframe.src = activeIframe.src;
-          } else {
-            window.location.reload();
-          }
-          banner.classList.remove('visible');
-          isAlertActive = false;
-        });
-      }
-
-      const dismissBtn = banner.querySelector('#btn-dismiss-memory-banner');
-      if (dismissBtn) {
-        dismissBtn.addEventListener('click', () => {
-          banner.classList.remove('visible');
-          isAlertActive = false;
-        });
-      }
+    if (activeTags.size === 0) {
+      countBadge.style.display = 'none';
+      return;
     }
 
-    isAlertActive = true;
-    requestAnimationFrame(() => banner.classList.add('visible'));
+    let matchCount = 0;
+    games.forEach(game => {
+      let matchesAll = true;
+      if (activeTags.has('top-rated')) {
+        const rating = typeof getGameAverageRating === 'function' ? getGameAverageRating(game.id) : (game.rating || 5);
+        if (rating < 4.5) matchesAll = false;
+      }
+      if (activeTags.has('featured')) {
+        if (!game.featured && !game.badge) matchesAll = false;
+      }
+      if (activeTags.has('favorites')) {
+        const isFav = typeof isFavorite === 'function' ? isFavorite(game.id) : false;
+        if (!isFav) matchesAll = false;
+      }
+      if (activeTags.has('touch')) {
+        const hasTouchTag = Array.isArray(game.tags) && game.tags.some(t => String(t).toLowerCase().includes('touch') || String(t).toLowerCase().includes('mobile'));
+        if (!hasTouchTag && !game.touchControls) matchesAll = false;
+      }
+      if (matchesAll) matchCount++;
+    });
+
+    countBadge.textContent = `${matchCount} match${matchCount === 1 ? '' : 'es'}`;
+    countBadge.style.display = 'inline-block';
   }
 
-  function frameWatchdogLoop(now) {
-    const delta = now - lastFrameTime;
-    lastFrameTime = now;
-    totalSampleFrames++;
+  function applyTagFilterToGrid() {
+    const cards = document.querySelectorAll('.game-card');
+    cards.forEach(card => {
+      const gameId = card.getAttribute('data-game-id');
+      const game = (Array.isArray(window.GAMES_REGISTRY) ? window.GAMES_REGISTRY : []).find(g => g.id === gameId);
+      if (!game) return;
 
-    // Delta > 34ms indicates dropped frame under 30 FPS
-    if (delta > 34) {
-      droppedFramesCount++;
-    }
-
-    if (totalSampleFrames >= 300) {
-      const dropRate = droppedFramesCount / totalSampleFrames;
-      if (dropRate > 0.45 && !isAlertActive) {
-        showMemoryWarningBanner('Severe frame drops detected');
+      let passesTags = true;
+      if (activeTags.has('top-rated')) {
+        const rating = typeof getGameAverageRating === 'function' ? getGameAverageRating(game.id) : (game.rating || 5);
+        if (rating < 4.5) passesTags = false;
       }
-      totalSampleFrames = 0;
-      droppedFramesCount = 0;
-    }
+      if (activeTags.has('featured')) {
+        if (!game.featured && !game.badge) passesTags = false;
+      }
+      if (activeTags.has('favorites')) {
+        const isFav = typeof isFavorite === 'function' ? isFavorite(game.id) : false;
+        if (!isFav) passesTags = false;
+      }
+      if (activeTags.has('touch')) {
+        const hasTouchTag = Array.isArray(game.tags) && game.tags.some(t => String(t).toLowerCase().includes('touch') || String(t).toLowerCase().includes('mobile'));
+        if (!hasTouchTag && !game.touchControls) passesTags = false;
+      }
 
-    const modal = document.getElementById('game-modal');
-    if (modal && modal.classList.contains('active')) {
-      rafMonitoringId = requestAnimationFrame(frameWatchdogLoop);
-    }
+      if (!passesTags) {
+        card.style.display = 'none';
+      }
+    });
+
+    updateTagFilterMatches();
   }
-
-  function inspectMemoryHealth() {
-    const modal = document.getElementById('game-modal');
-    if (!modal || !modal.classList.contains('active')) return;
-
-    if (performance && performance.memory) {
-      const { usedJSHeapSize, jsHeapSizeLimit } = performance.memory;
-      if (jsHeapSizeLimit > 0) {
-        const usageRatio = usedJSHeapSize / jsHeapSizeLimit;
-        // Heap usage exceeding 82% threshold or > 650MB
-        if ((usageRatio > 0.82 || usedJSHeapSize > 681574400) && !isAlertActive) {
-          const usedMB = Math.round(usedJSHeapSize / (1024 * 1024));
-          showMemoryWarningBanner(`Heap: ${usedMB}MB`);
-        }
-      }
-    }
-  }
-
-  // Hook into game modal open & close lifecycle
-  const observer = new MutationObserver(() => {
-    const modal = document.getElementById('game-modal');
-    if (modal && modal.classList.contains('active')) {
-      if (!memoryWatchdogInterval) {
-        memoryWatchdogInterval = setInterval(inspectMemoryHealth, 15000);
-        lastFrameTime = performance.now();
-        totalSampleFrames = 0;
-        droppedFramesCount = 0;
-        if (!rafMonitoringId) {
-          rafMonitoringId = requestAnimationFrame(frameWatchdogLoop);
-        }
-      }
-    } else {
-      if (memoryWatchdogInterval) {
-        clearInterval(memoryWatchdogInterval);
-        memoryWatchdogInterval = null;
-      }
-      if (rafMonitoringId) {
-        cancelAnimationFrame(rafMonitoringId);
-        rafMonitoringId = null;
-      }
-      isAlertActive = false;
-      const banner = document.getElementById('av-memory-warning-banner');
-      if (banner) banner.classList.remove('visible');
-    }
-  });
 
   document.addEventListener('DOMContentLoaded', () => {
-    const modal = document.getElementById('game-modal');
-    if (modal) {
-      observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+    const pills = document.querySelectorAll('.tag-pill');
+    pills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        const tag = pill.getAttribute('data-tag');
+        if (activeTags.has(tag)) {
+          activeTags.delete(tag);
+          pill.classList.remove('active');
+          pill.setAttribute('aria-pressed', 'false');
+        } else {
+          activeTags.add(tag);
+          pill.classList.add('active');
+          pill.setAttribute('aria-pressed', 'true');
+        }
+
+        if (typeof filterGames === 'function') {
+          filterGames();
+        }
+        applyTagFilterToGrid();
+      });
+    });
+
+    // Re-apply tag filter after catalog re-renders
+    const originalFilterGames = window.filterGames;
+    if (typeof originalFilterGames === 'function') {
+      window.filterGames = function (...args) {
+        const res = originalFilterGames.apply(this, args);
+        if (activeTags.size > 0) {
+          applyTagFilterToGrid();
+        }
+        return res;
+      };
     }
   });
 })();
