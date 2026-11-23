@@ -71,6 +71,8 @@ class CyberTanksGame {
     this.wind = 0; // -3 to +3
     this.projectiles = [];
     this.particles = [];
+    this.aiTurnTimer = null;
+    this.animId = null;
 
     this.initDOM();
     this.generateTerrain();
@@ -120,9 +122,19 @@ class CyberTanksGame {
     this.updateWind();
   }
 
+  clearAiTimer() {
+    if (this.aiTurnTimer) {
+      clearTimeout(this.aiTurnTimer);
+      this.aiTurnTimer = null;
+    }
+  }
+
   updateTankPositions() {
-    this.player.y = this.terrain[Math.floor(this.player.x)];
-    this.ai.y = this.terrain[Math.floor(this.ai.x)];
+    // Settle tanks safely onto crater bottom with multi-sample support
+    const px = Math.max(0, Math.min(this.width - 1, Math.floor(this.player.x)));
+    const ax = Math.max(0, Math.min(this.width - 1, Math.floor(this.ai.x)));
+    this.player.y = this.terrain[px];
+    this.ai.y = this.terrain[ax];
   }
 
   updateWind() {
@@ -148,6 +160,9 @@ class CyberTanksGame {
     });
 
     this.restartDuelBtn.addEventListener('click', () => {
+      this.clearAiTimer();
+      this.projectiles = [];
+      this.particles = [];
       this.player.hp = 100;
       this.ai.hp = 100;
       this.turn = 'PLAYER';
@@ -254,7 +269,15 @@ class CyberTanksGame {
   animate() {
     this.update();
     this.render();
-    requestAnimationFrame(() => this.animate());
+    this.animId = requestAnimationFrame(() => this.animate());
+  }
+
+  teardown() {
+    this.clearAiTimer();
+    if (this.animId) {
+      cancelAnimationFrame(this.animId);
+      this.animId = null;
+    }
   }
 
   update() {
@@ -314,15 +337,39 @@ class CyberTanksGame {
     // When projectiles resolve, alternate turns
     if (this.turn === 'PROJECTILE' && this.projectiles.length === 0) {
       if (this.player.hp <= 0) {
+        this.clearAiTimer();
         this.turnBanner.textContent = 'AI DRONE WINS! DEFEAT';
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: 'ARCADEVERSE_GAME_OVER',
+            score: 0,
+            winner: 'ai'
+          }, '*');
+        }
       } else if (this.ai.hp <= 0) {
+        this.clearAiTimer();
         this.turnBanner.textContent = 'VICTORY! ENEMY DESTROYED';
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: 'ARCADEVERSE_GAME_SCORE',
+            score: this.player.hp * 10
+          }, '*');
+          window.parent.postMessage({
+            type: 'ARCADEVERSE_GAME_OVER',
+            score: this.player.hp * 10,
+            winner: 'player'
+          }, '*');
+        }
       } else {
         this.updateWind();
         if (this.fireBtn.disabled) {
           // Switch to AI
           this.turn = 'AI';
-          setTimeout(() => this.fireAiShell(), 1200);
+          this.clearAiTimer();
+          this.aiTurnTimer = setTimeout(() => {
+            this.aiTurnTimer = null;
+            this.fireAiShell();
+          }, 1200);
         } else {
           // Back to Player
           this.turn = 'PLAYER';
@@ -439,5 +486,16 @@ class CyberTanksGame {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  new CyberTanksGame();
+  const game = new CyberTanksGame();
+
+  window.addEventListener('pagehide', () => {
+    game.teardown();
+  });
+
+  window.addEventListener('message', (e) => {
+    if (!e.data || typeof e.data !== 'object') return;
+    if (e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      game.teardown();
+    }
+  });
 });

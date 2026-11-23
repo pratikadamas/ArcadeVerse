@@ -58,6 +58,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cambria+Math&family=Jolly+Lodger&family=Permanent+Marker&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/card-flip-manual.css">
   <link rel="stylesheet" href="assets/css/isometric-arcade-room.css">
   <link rel="stylesheet" href="assets/css/pages.css">
   <link rel="stylesheet" href="assets/css/daily-challenge.css">
@@ -99,7 +100,14 @@
       </nav>
 
       <div class="nav-actions">
-                <button class="keyboard-shortcuts-btn" id="shortcuts-trigger-btn" type="button" aria-label="View keyboard shortcuts cheatsheet (?)" title="Keyboard Shortcuts (?)">
+                <button class="backup-restore-btn" id="backup-restore-trigger-btn" type="button" aria-label="Backup & Restore Game Progress" title="Backup & Restore Data">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+        </button>
+        <button class="keyboard-shortcuts-btn" id="shortcuts-trigger-btn" type="button" aria-label="View keyboard shortcuts cheatsheet (?)" title="Keyboard Shortcuts (?)">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect width="20" height="16" x="2" y="4" rx="2"></rect>
             <path d="M6 8h.001M10 8h.001M14 8h.001M18 8h.001M8 12h.001M12 12h.001M16 12h.001M7 16h10"></path>
@@ -115,6 +123,15 @@
             <path d="m14.83 14.83 4.24 4.24"></path>
             <path d="m9.17 14.83-4.24 4.24"></path>
             <circle cx="12" cy="12" r="4"></circle>
+          </svg>
+        </button>
+        <button class="theme-studio-btn" id="theme-studio-trigger-btn" type="button" aria-label="Open Theme Studio & WCAG Contrast Checker (Shift+T)" title="Custom Theme Studio & WCAG Contrast (Shift+T)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle>
+            <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle>
+            <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle>
+            <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle>
+            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path>
           </svg>
         </button>
         <button class="theme-toggle-btn" id="theme-toggle-btn" type="button" aria-label="Toggle dark/light theme"
@@ -200,6 +217,9 @@
               <i data-lucide="dices" class="dice-icon"></i> <span>Surprise Me!</span>
             </span>
           </button>
+          <button type="button" class="btn btn-marathon" id="hero-marathon-btn" aria-label="Launch Arcade Survival Marathon Mode" title="Survive timed continuous multi-game sequence!">
+            <span><i data-lucide="zap"></i> Survival Marathon</span>
+          </button>
           <a href="https://github.com/DebasmitaBose0/ArcadeVerse/blob/main/CONTRIBUTING.md" target="_blank"
             class="btn btn-secondary">
             <span><i data-lucide="book-open"></i> Contributor Guide</span>
@@ -210,13 +230,13 @@
         </div>
 
         <div class="quick-stats">
-          <div class="stat-card">
-            <span class="stat-number" id="total-games-count">1</span>
+          <div class="stat-card" id="stat-card-games" tabindex="0" role="button" aria-haspopup="dialog" aria-label="View Playable Games breakdown">
+            <span class="stat-number" id="total-games-count">124</span>
             <span class="stat-label">Playable Games</span>
           </div>
           <div class="stat-divider"></div>
-          <div class="stat-card">
-            <span class="stat-number" id="total-contributors-count">1</span>
+          <div class="stat-card" id="stat-card-contributors" tabindex="0" role="button" aria-haspopup="dialog" aria-label="View Active Contributors summary">
+            <span class="stat-number" id="total-contributors-count">48</span>
             <span class="stat-label">Active Contributors</span>
           </div>
           <div class="stat-divider"></div>
@@ -382,6 +402,25 @@
           <button class="pill" data-category="Action">Action</button>
           <button class="pill" data-category="Strategy">Strategy</button>
           <button class="pill" data-category="Rhythm">Rhythm</button>
+        </div>
+      </div>
+
+      <!-- Secondary Horizontal Multi-Select Tag Filter Bar (#738) -->
+      <div class="tag-filter-bar" id="tag-filter-bar" role="group" aria-label="Secondary tag filters">
+        <div class="tag-filter-pills" id="tag-filter-pills">
+          <button class="tag-pill" data-tag="top-rated" type="button" aria-pressed="false">
+            <span class="tag-pill-icon"><i data-lucide="star"></i></span> Top Rated (4.5+)
+          </button>
+          <button class="tag-pill" data-tag="featured" type="button" aria-pressed="false">
+            <span class="tag-pill-icon"><i data-lucide="flame"></i></span> Featured
+          </button>
+          <button class="tag-pill" data-tag="favorites" type="button" aria-pressed="false">
+            <span class="tag-pill-icon"><i data-lucide="heart"></i></span> Favorites
+          </button>
+          <button class="tag-pill" data-tag="touch" type="button" aria-pressed="false">
+            <span class="tag-pill-icon"><i data-lucide="smartphone"></i></span> Touch Ready
+          </button>
+          <span class="tag-filter-count" id="tag-filter-count" style="display: none;">0 matches</span>
         </div>
       </div>
 
@@ -630,6 +669,10 @@
           <span>•</span>
           <a href="faqs.html">FAQs</a>
           <span>•</span>
+          <a href="#" id="footer-synth-studio-btn">Synth Studio</a>
+          <span>•</span>
+          <button type="button" class="footer-link-btn" id="footer-storage-manager-btn" style="background:none;border:none;color:inherit;font:inherit;cursor:pointer;padding:0;text-decoration:underline;">Storage</button>
+          <span>•</span>
           <a href="https://github.com/DebasmitaBose0/ArcadeVerse" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
         </div>
       </div>
@@ -641,14 +684,22 @@
   <script src="assets/js/games-registry.js"></script>
   <script src="assets/js/playtime-heatmap.js"></script>
   <script src="assets/js/dev-asset-auditor.js"></script>
+  <script src="assets/js/storage-inspector-lab.js"></script>
+  <script src="assets/js/storage-manager.js"></script>
   <script src="assets/js/arcade-token-dispenser.js"></script>
+  <script src="assets/js/arcade-ticket-dispenser.js"></script>
   <script src="assets/js/isometric-arcade-room.js"></script>
+  <script src="assets/js/card-flip-manual.js"></script>
+  <script src="assets/js/rating-histogram.js"></script>
+  <script src="assets/js/snapshot-studio.js"></script>
   <script src="assets/js/app.js"></script>
   <script src="assets/js/halloween.js"></script>
   <script src="assets/js/daily-challenge.js"></script>
   <script src="assets/js/recently-played.js"></script>
   <script src="assets/js/keyboard-shortcuts.js"></script>
   <script src="assets/js/network-detector.js"></script>
+  <script src="assets/js/a11y-audio-beacon.js"></script>
+  <script src="assets/js/a11y-screen-magnifier.js"></script>
   <script src="assets/js/a11y-engine.js"></script>
   <script src="assets/js/trophy-card.js"></script>
   <script src="assets/js/sound-engine.js"></script>
@@ -721,6 +772,36 @@
       }
     })();
   </script>
+  <!-- Backup & Restore Data Modal Dialog (#747) -->
+  <div class="backup-restore-modal-overlay" id="backup-restore-modal" aria-hidden="true" role="dialog" aria-labelledby="backup-modal-title">
+    <div class="backup-restore-modal-card">
+      <div class="backup-modal-header">
+        <h3 id="backup-modal-title">Backup & Restore Game Progress</h3>
+        <button class="backup-modal-close" id="backup-modal-close-btn" aria-label="Close modal">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="backup-modal-body">
+        <p class="backup-modal-desc">
+          Safeguard your high scores, favorites, unlocked achievements, and sound preferences. Export a portable JSON snapshot or restore a previously saved backup file.
+        </p>
+        <div class="backup-actions-grid">
+          <div class="backup-action-box">
+            <h4>Export Progress</h4>
+            <p>Download your complete gameplay data as a <code>.json</code> file.</p>
+            <button class="btn btn-primary btn-sm" id="btn-export-backup-json" type="button">Export Backup</button>
+          </div>
+          <div class="backup-action-box">
+            <h4>Restore Progress</h4>
+            <p>Upload a valid ArcadeVerse JSON backup to restore saved progress.</p>
+            <input type="file" id="backup-file-input" accept=".json,.arcadeverse" style="display: none;">
+            <button class="btn btn-secondary btn-sm" id="btn-import-backup-json" type="button">Select File & Restore</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Page Transition Circular Loader -->
   <div id="page-transition-loader" class="page-loader-overlay" aria-hidden="true">
     <div class="loader-spinner-wrap">
