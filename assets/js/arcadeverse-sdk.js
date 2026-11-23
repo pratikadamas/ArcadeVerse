@@ -460,6 +460,7 @@
   var registeredAudioContexts = [];
   var registeredGainNodes = [];
   var registeredWebGLContexts = [];
+  var registeredGameLoops = [];
 
   // ========================================================
   // WEBGL CONTEXT RECOVERY & PROTECTION SUBSYSTEM
@@ -786,211 +787,676 @@
       }
     }
     registeredWebGLContexts.length = 0;
+
+    // 5. Clean and halt active game loops (#1183)
+    for (var l = 0; l < registeredGameLoops.length; l++) {
+      try {
+        if (registeredGameLoops[l] && typeof registeredGameLoops[l].destroy === "function") {
+          registeredGameLoops[l].destroy();
+        }
+      } catch (e) {}
+    }
+    registeredGameLoops.length = 0;
   }
 
   // ========================================================
-  // IN-BROWSER DEV MANIFEST VALIDATOR WIDGET (#704)
-  // Visible exclusively when window.location.hostname === 'localhost' or '127.0.0.1'
-  // Zero production overhead: bypassed completely on live/production domains
+  // IN-BROWSER CONTRIBUTOR GAME VALIDATOR WIDGET (#727)
+  // Dev-mode only: audits 4-file compliance, game.json schema,
+  // zero-emoji standards, and XSS breakout rules on localhost.
+  // Zero production footprint.
   // ========================================================
-  var isDevHost = (function () {
+  var devValidatorReport = null;
+
+  function isLocalDev() {
     try {
       if (typeof window === "undefined" || !window.location) return false;
-      var h = window.location.hostname;
-      return h === "localhost" || h === "127.0.0.1" || h === "[::1]";
+      var host = window.location.hostname;
+      return (
+        host === "localhost" ||
+        host === "127.0.0.1" ||
+        host === "[::1]" ||
+        window.__ARCADEVERSE_DEV_FORCE_VALIDATOR__ === true
+      );
     } catch (_) {
       return false;
     }
-  })();
+  }
 
-  function initDevValidator() {
-    if (!isDevHost) return;
-    if (typeof document === "undefined" || typeof window === "undefined") return;
-
-    var EMOJI_REGEX = /[\uD83C-\uDBFF\uDC00-\uDFFF]|[\u2600-\u27BF]/;
-    var REQUIRED_JSON_FIELDS = ["title", "category", "description", "author", "github"];
-
-    function runAudit() {
-      var errors = [];
-      var warnings = [];
-      var passed = [];
-
-      var jsonUrl = "game.json";
-      var cssUrl = "style.css";
-      var jsUrl = "game.js";
-
-      Promise.all([
-        // 1. Fetch game.json
-        fetch(jsonUrl).then(function (res) {
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          return res.text();
-        }).catch(function (err) {
-          return { error: "Missing or unreachable file: game.json (" + err.message + ")" };
-        }),
-        // 2. Head check style.css
-        fetch(cssUrl, { method: "HEAD" }).then(function (res) {
-          return res.ok;
-        }).catch(function () { return false; }),
-        // 3. Head check game.js
-        fetch(jsUrl, { method: "HEAD" }).then(function (res) {
-          return res.ok;
-        }).catch(function () { return false; })
-      ]).then(function (results) {
-        var jsonRaw = results[0];
-        var cssOk = results[1];
-        var jsOk = results[2];
-
-        // 4-file compliance check: index.html, style.css, game.js, game.json
-        if (!cssOk) {
-          errors.push("Missing required bundle file: style.css");
-        } else {
-          passed.push("style.css present");
-        }
-
-        if (!jsOk) {
-          errors.push("Missing required bundle file: game.js");
-        } else {
-          passed.push("game.js present");
-        }
-
-        if (!document.title || !document.title.trim()) {
-          errors.push("index.html is missing a <title> tag");
-        } else {
-          passed.push("index.html <title> present");
-        }
-
-        // game.json structure & field validation
-        if (typeof jsonRaw === "object" && jsonRaw.error) {
-          errors.push(jsonRaw.error);
-        } else if (typeof jsonRaw === "string") {
-          // Emoji check in game.json
-          if (EMOJI_REGEX.test(jsonRaw)) {
-            warnings.push("Unicode emoji detected in game.json (use Lucide icons or SVG)");
+  function fetchDevFile(url) {
+    if (typeof fetch === "function") {
+      return fetch(url)
+        .then(function (res) {
+          if (!res.ok) {
+            return { exists: false, status: res.status, text: "" };
           }
-
-          try {
-            var meta = JSON.parse(jsonRaw);
-            REQUIRED_JSON_FIELDS.forEach(function (field) {
-              if (!meta[field] || (typeof meta[field] === "string" && !meta[field].trim())) {
-                errors.push("game.json missing required field: \"" + field + "\"");
-              }
-            });
-
-            ["title", "category", "author", "description"].forEach(function (field) {
-              var val = meta[field];
-              if (typeof val === "string" && (val.indexOf('"') !== -1 || val.indexOf("<") !== -1 || val.indexOf(">") !== -1)) {
-                errors.push("Attribute breakout risk: \"" + field + "\" contains unescaped quotes or angle brackets");
-              }
-            });
-
-            if (errors.filter(function (e) { return e.indexOf("game.json") !== -1; }).length === 0) {
-              passed.push("game.json manifest schema valid");
-            }
-          } catch (jsonErr) {
-            errors.push("game.json contains invalid JSON: " + jsonErr.message);
-          }
-        }
-
-        // Unicode emoji scan in DOM body
-        var bodyHtml = document.body ? document.body.innerHTML : "";
-        if (EMOJI_REGEX.test(bodyHtml)) {
-          warnings.push("Unicode emoji detected in index.html DOM (replace with SVG/Lucide)");
-        } else {
-          passed.push("Zero unicode emojis in HTML");
-        }
-
-        renderBadge(errors, warnings, passed);
-        logConsole(errors, warnings, passed);
-      }).catch(function (fatal) {
-        console.warn("[ArcadeVerse DevValidator] Unexpected audit error:", fatal);
-      });
+          return res.text().then(function (txt) {
+            return { exists: true, status: res.status, text: txt };
+          });
+        })
+        .catch(function (err) {
+          return { exists: false, status: 0, text: "", error: err };
+        });
     }
-
-    function logConsole(errors, warnings, passed) {
-      if (errors.length === 0 && warnings.length === 0) {
-        console.group("%c[ArcadeVerse DevValidator] %cPASS", "color:#38bdf8;font-weight:bold;", "color:#22c55e;font-weight:bold;");
-        passed.forEach(function (p) { console.log("%c✓ " + p, "color:#22c55e;"); });
-        console.log("%cPre-flight validation passed for local development.", "color:#94a3b8;font-style:italic;");
-        console.groupEnd();
-      } else {
-        var statusLabel = errors.length > 0 ? "FAIL (" + errors.length + " errors)" : "WARN (" + warnings.length + " warnings)";
-        var statusColor = errors.length > 0 ? "color:#ef4444;font-weight:bold;" : "color:#f59e0b;font-weight:bold;";
-        console.group("%c[ArcadeVerse DevValidator] %c" + statusLabel, "color:#38bdf8;font-weight:bold;", statusColor);
-        errors.forEach(function (e) { console.error("❌ " + e); });
-        warnings.forEach(function (w) { console.warn("⚠️ " + w); });
-        passed.forEach(function (p) { console.log("%c✓ " + p, "color:#94a3b8;"); });
-        console.groupEnd();
+    return new Promise(function (resolve) {
+      try {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.onload = function () {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve({ exists: true, status: xhr.status, text: xhr.responseText });
+          } else {
+            resolve({ exists: false, status: xhr.status, text: "" });
+          }
+        };
+        xhr.onerror = function (e) {
+          resolve({ exists: false, status: 0, text: "", error: e });
+        };
+        xhr.send();
+      } catch (e) {
+        resolve({ exists: false, status: 0, text: "", error: e });
       }
-    }
+    });
+  }
 
-    function renderBadge(errors, warnings, passed) {
-      var existing = document.getElementById("dev-validator-badge");
-      if (existing) existing.remove();
+  var DevValidator = {
+    badgeEl: null,
+    popoverEl: null,
+    hasInjectedStyles: false,
 
+    injectStyles: function () {
+      if (typeof document === "undefined" || this.hasInjectedStyles || document.getElementById("dev-validator-styles")) {
+        return;
+      }
+      try {
+        var style = document.createElement("style");
+        style.id = "dev-validator-styles";
+        style.textContent =
+          "#dev-validator-badge { position: fixed; bottom: 16px; right: 16px; z-index: 999999; display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 9999px; font-family: 'JetBrains Mono', monospace, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #f8fafc; border: 1px solid rgba(255, 255, 255, 0.16); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45); cursor: pointer; user-select: none; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }\n" +
+          "#dev-validator-badge:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(0, 0, 0, 0.6); }\n" +
+          "#dev-validator-badge:focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; }\n" +
+          "#dev-validator-badge .dev-validator-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; transition: background-color 0.2s ease, box-shadow 0.2s ease; }\n" +
+          "#dev-validator-badge.dev-validator-pending .dev-validator-dot { background: #3b82f6; box-shadow: 0 0 8px #3b82f6; animation: devValidatorPulse 1.2s infinite ease-in-out; }\n" +
+          "#dev-validator-badge.dev-validator-pass { border-color: rgba(16, 185, 129, 0.5); }\n" +
+          "#dev-validator-badge.dev-validator-pass .dev-validator-dot { background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.7); }\n" +
+          "#dev-validator-badge.dev-validator-pass .dev-validator-text { color: #34d399; }\n" +
+          "#dev-validator-badge.dev-validator-warn { border-color: rgba(245, 158, 11, 0.5); }\n" +
+          "#dev-validator-badge.dev-validator-warn .dev-validator-dot { background: #f59e0b; box-shadow: 0 0 8px rgba(245, 158, 11, 0.7); }\n" +
+          "#dev-validator-badge.dev-validator-warn .dev-validator-text { color: #fbbf24; }\n" +
+          "#dev-validator-badge.dev-validator-fail { border-color: rgba(244, 63, 94, 0.6); }\n" +
+          "#dev-validator-badge.dev-validator-fail .dev-validator-dot { background: #f43f5e; box-shadow: 0 0 8px rgba(244, 63, 94, 0.8); animation: devValidatorPulse 1.5s infinite ease-in-out; }\n" +
+          "#dev-validator-badge.dev-validator-fail .dev-validator-text { color: #fb7185; }\n" +
+          "#dev-validator-badge .dev-validator-badge-count { display: inline-flex; align-items: center; justify-content: center; font-size: 10px; padding: 1px 6px; border-radius: 9999px; background: rgba(255, 255, 255, 0.12); margin-left: 2px; }\n" +
+          "#dev-validator-popover { position: fixed; bottom: 58px; right: 16px; z-index: 999999; width: 380px; max-width: calc(100vw - 32px); max-height: calc(100vh - 80px); display: flex; flex-direction: column; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 14px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6); color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; overflow: hidden; animation: devValidatorSlideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1); }\n" +
+          ".dev-validator-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.03); }\n" +
+          ".dev-validator-title-row { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; color: #f1f5f9; }\n" +
+          ".dev-validator-title-row svg { color: #3b82f6; flex-shrink: 0; }\n" +
+          ".dev-validator-header-actions { display: flex; align-items: center; gap: 8px; }\n" +
+          ".dev-validator-pill-tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.04em; }\n" +
+          ".dev-validator-pill-tag.tag-pass { background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }\n" +
+          ".dev-validator-pill-tag.tag-warn { background: rgba(245, 158, 11, 0.16); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }\n" +
+          ".dev-validator-pill-tag.tag-fail { background: rgba(244, 63, 94, 0.16); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }\n" +
+          ".dev-validator-close-btn { background: transparent; border: none; color: #94a3b8; cursor: pointer; padding: 4px; border-radius: 6px; display: flex; align-items: center; justify-content: center; line-height: 1; transition: color 0.15s ease, background-color 0.15s ease; }\n" +
+          ".dev-validator-close-btn:hover { color: #f8fafc; background: rgba(255, 255, 255, 0.08); }\n" +
+          ".dev-validator-body { padding: 12px 16px; overflow-y: auto; max-height: 380px; display: flex; flex-direction: column; gap: 10px; }\n" +
+          ".dev-validator-section-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-top: 4px; margin-bottom: 2px; }\n" +
+          ".dev-validator-checklist { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }\n" +
+          ".dev-validator-item { display: flex; align-items: flex-start; gap: 8px; padding: 6px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.03); font-size: 11.5px; line-height: 1.4; }\n" +
+          ".dev-validator-item-icon { margin-top: 2px; flex-shrink: 0; width: 14px; height: 14px; }\n" +
+          ".dev-validator-item.item-pass .dev-validator-item-icon { color: #10b981; }\n" +
+          ".dev-validator-item.item-warn .dev-validator-item-icon { color: #f59e0b; }\n" +
+          ".dev-validator-item.item-fail .dev-validator-item-icon { color: #f43f5e; }\n" +
+          ".dev-validator-item-content { flex: 1; }\n" +
+          ".dev-validator-item-name { font-weight: 600; color: #e2e8f0; }\n" +
+          ".dev-validator-item-desc { color: #94a3b8; font-size: 10.5px; margin-top: 1px; word-break: break-word; }\n" +
+          ".dev-validator-issues-box { background: rgba(244, 63, 94, 0.08); border: 1px solid rgba(244, 63, 94, 0.25); border-radius: 8px; padding: 8px 12px; margin-top: 4px; }\n" +
+          ".dev-validator-issues-box.issues-warn { background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.25); }\n" +
+          ".dev-validator-issue-text { font-size: 11px; color: #fca5a5; margin: 3px 0; }\n" +
+          ".dev-validator-issues-box.issues-warn .dev-validator-issue-text { color: #fcd34d; }\n" +
+          ".dev-validator-footer { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-top: 1px solid rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.02); }\n" +
+          ".dev-validator-rerun-btn { font-family: inherit; font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.06); color: #f1f5f9; cursor: pointer; transition: all 0.15s ease; }\n" +
+          ".dev-validator-rerun-btn:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.25); }\n" +
+          ".dev-validator-dev-note { font-size: 10px; color: #64748b; font-family: 'JetBrains Mono', monospace; }\n" +
+          "@keyframes devValidatorSlideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }\n" +
+          "@keyframes devValidatorPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }\n";
+        document.head.appendChild(style);
+        this.hasInjectedStyles = true;
+      } catch (_) {}
+    },
+
+    getIconSvg: function (type) {
+      if (type === "pass") {
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      }
+      if (type === "warn") {
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+      }
+      if (type === "terminal") {
+        return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>';
+      }
+      return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+    },
+
+    init: function () {
+      if (!isLocalDev()) return;
+      if (typeof document === "undefined" || !document.body) return;
+
+      this.injectStyles();
+      this.createDomElements();
+      this.runAudit(false);
+    },
+
+    createDomElements: function () {
+      if (document.getElementById("dev-validator-badge")) {
+        this.badgeEl = document.getElementById("dev-validator-badge");
+        this.popoverEl = document.getElementById("dev-validator-popover");
+        return;
+      }
+
+      var self = this;
+
+      // Create Badge Pill
       var badge = document.createElement("div");
       badge.id = "dev-validator-badge";
-      badge.setAttribute("role", "status");
-      badge.setAttribute("aria-live", "polite");
+      badge.className = "dev-validator-badge dev-validator-pending";
+      badge.setAttribute("role", "button");
+      badge.setAttribute("tabindex", "0");
+      badge.setAttribute("aria-label", "ArcadeVerse Development Validator: Checking...");
+      badge.setAttribute("title", "Click to view ArcadeVerse game manifest and compliance diagnostics");
 
-      var statusClass = errors.length > 0 ? "fail" : (warnings.length > 0 ? "warn" : "pass");
-      badge.className = "dev-validator-badge " + statusClass;
-
-      var statusText = errors.length > 0
-        ? "DEV: FAIL (" + errors.length + ")"
-        : (warnings.length > 0 ? "DEV: " + warnings.length + " WARN" : "DEV: PASS");
-
-      var titleAttr = errors.length > 0
-        ? "ArcadeVerse DevTools: Validation errors detected (Click to expand / check console)"
-        : "ArcadeVerse DevTools: All pre-flight checks passed";
-
-      var html = '<div class="dev-validator-pill" title="' + titleAttr + '">' +
+      badge.innerHTML =
         '<span class="dev-validator-dot"></span>' +
-        '<span class="dev-validator-text">' + statusText + '</span>' +
+        '<span class="dev-validator-text">DEV: Checking...</span>' +
+        '<span class="dev-validator-badge-count" style="display:none;"></span>';
+
+      // Create Popover Card
+      var popover = document.createElement("div");
+      popover.id = "dev-validator-popover";
+      popover.style.display = "none";
+      popover.setAttribute("role", "dialog");
+      popover.setAttribute("aria-modal", "false");
+      popover.setAttribute("aria-label", "ArcadeVerse Dev Validator Diagnostics");
+
+      popover.innerHTML =
+        '<div class="dev-validator-header">' +
+          '<div class="dev-validator-title-row">' +
+            self.getIconSvg("terminal") +
+            '<span>Game Manifest Validator</span>' +
+          '</div>' +
+          '<div class="dev-validator-header-actions">' +
+            '<span class="dev-validator-pill-tag tag-pass">CHECKING</span>' +
+            '<button class="dev-validator-close-btn" aria-label="Close Popover">&times;</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="dev-validator-body">' +
+          '<div class="dev-validator-section-title">Pre-Flight Checks</div>' +
+          '<ul class="dev-validator-checklist"></ul>' +
+          '<div class="dev-validator-issues-container"></div>' +
+        '</div>' +
+        '<div class="dev-validator-footer">' +
+          '<button class="dev-validator-rerun-btn">Re-run Validation</button>' +
+          '<span class="dev-validator-dev-note">Localhost Only</span>' +
         '</div>';
 
-      html += '<div class="dev-validator-details">';
-      errors.forEach(function (e) {
-        html += '<div class="dev-validator-item error">❌ ' + escapeHtml(e) + '</div>';
-      });
-      warnings.forEach(function (w) {
-        html += '<div class="dev-validator-item warn">⚠️ ' + escapeHtml(w) + '</div>';
-      });
-      passed.forEach(function (p) {
-        html += '<div class="dev-validator-item pass">✓ ' + escapeHtml(p) + '</div>';
-      });
-      html += '</div>';
-
-      badge.innerHTML = html;
-
-      // Inline fallback styling in case game doesn't link style.css
-      badge.style.position = "fixed";
-      badge.style.bottom = "12px";
-      badge.style.right = "12px";
-      badge.style.zIndex = "999999";
-      badge.style.fontSize = "11px";
-      badge.style.fontWeight = "600";
-      badge.style.borderRadius = "20px";
-      badge.style.cursor = "pointer";
-      badge.style.userSelect = "none";
-      badge.style.fontFamily = "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif";
-
-      badge.addEventListener("click", function () {
-        badge.classList.toggle("expanded");
-      });
-
       document.body.appendChild(badge);
-    }
+      document.body.appendChild(popover);
 
-    function escapeHtml(s) {
-      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    }
+      this.badgeEl = badge;
+      this.popoverEl = popover;
 
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", runAudit);
-    } else {
-      setTimeout(runAudit, 120);
+      // Event handlers
+      badge.addEventListener("click", function (e) {
+        e.stopPropagation();
+        self.togglePopover();
+      });
+
+      badge.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          self.togglePopover();
+        }
+      });
+
+      var closeBtn = popover.querySelector(".dev-validator-close-btn");
+      if (closeBtn) {
+        closeBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          self.hidePopover();
+        });
+      }
+
+      var rerunBtn = popover.querySelector(".dev-validator-rerun-btn");
+      if (rerunBtn) {
+        rerunBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          self.runAudit(true);
+        });
+      }
+
+      document.addEventListener("click", function (e) {
+        if (self.popoverEl && self.popoverEl.style.display !== "none") {
+          if (!self.popoverEl.contains(e.target) && !self.badgeEl.contains(e.target)) {
+            self.hidePopover();
+          }
+        }
+      });
+
+      window.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && self.popoverEl && self.popoverEl.style.display !== "none") {
+          self.hidePopover();
+        }
+      });
+    },
+
+    togglePopover: function () {
+      if (!this.popoverEl) return;
+      if (this.popoverEl.style.display === "none") {
+        this.showPopover();
+      } else {
+        this.hidePopover();
+      }
+    },
+
+    showPopover: function () {
+      if (this.popoverEl) {
+        this.popoverEl.style.display = "flex";
+      }
+    },
+
+    hidePopover: function () {
+      if (this.popoverEl) {
+        this.popoverEl.style.display = "none";
+      }
+    },
+
+    runAudit: function (verbose) {
+      var self = this;
+      if (!isLocalDev()) return Promise.resolve(null);
+
+      if (this.badgeEl) {
+        this.badgeEl.className = "dev-validator-badge dev-validator-pending";
+        var txt = this.badgeEl.querySelector(".dev-validator-text");
+        if (txt) txt.textContent = "DEV: Checking...";
+        var countEl = this.badgeEl.querySelector(".dev-validator-badge-count");
+        if (countEl) countEl.style.display = "none";
+      }
+
+      var EMOJI_REGEX = /[\uD83C-\uDBFF\uDC00-\uDFFF]|[\u2600-\u27BF]/;
+
+      return Promise.all([
+        fetchDevFile("./game.json"),
+        fetchDevFile("./style.css"),
+        fetchDevFile("./game.js")
+      ]).then(function (results) {
+        var gameJsonRes = results[0];
+        var styleCssRes = results[1];
+        var gameJsRes = results[2];
+
+        // If not in a game context and game.json doesn't exist, gracefully hide badge
+        if (!gameJsonRes.exists && detectedGameId === "game" && !styleCssRes.exists && !gameJsRes.exists) {
+          if (self.badgeEl) self.badgeEl.style.display = "none";
+          if (self.popoverEl) self.popoverEl.style.display = "none";
+          return null;
+        }
+
+        if (self.badgeEl) self.badgeEl.style.display = "inline-flex";
+
+        var errors = [];
+        var warnings = [];
+        var items = [];
+
+        // 1. 4-File Compliance
+        var missingFiles = [];
+        if (!gameJsonRes.exists) missingFiles.push("game.json");
+        if (!styleCssRes.exists) missingFiles.push("style.css");
+        if (!gameJsRes.exists) missingFiles.push("game.js");
+
+        if (missingFiles.length === 0) {
+          items.push({
+            id: "files",
+            name: "4-File Structure",
+            status: "pass",
+            desc: "All required files found (index.html, style.css, game.js, game.json)"
+          });
+        } else {
+          missingFiles.forEach(function (f) {
+            errors.push("Missing required file: " + f);
+          });
+          items.push({
+            id: "files",
+            name: "4-File Structure",
+            status: "fail",
+            desc: "Missing: " + missingFiles.join(", ")
+          });
+        }
+
+        // 2. game.json Structure & Required Fields
+        if (gameJsonRes.exists) {
+          try {
+            var meta = JSON.parse(gameJsonRes.text);
+            var reqFields = ["title", "category", "description", "author", "github"];
+            var missingFields = [];
+            reqFields.forEach(function (f) {
+              if (!meta[f] || typeof meta[f] !== "string" || !meta[f].trim()) {
+                missingFields.push(f);
+                errors.push('game.json missing required field: "' + f + '"');
+              }
+            });
+
+            // Strict XSS & Attribute Breakout Check (#491)
+            var xssErrors = [];
+            ["title", "category", "author", "description"].forEach(function (f) {
+              var val = meta[f];
+              if (typeof val === "string" && (val.indexOf('"') !== -1 || val.indexOf("<") !== -1 || val.indexOf(">") !== -1)) {
+                var xssMsg = 'Attribute Breakout / XSS risk: "' + f + '" contains unescaped quotes or angle brackets.';
+                errors.push(xssMsg);
+                xssErrors.push(f);
+              }
+            });
+
+            if (missingFields.length === 0 && xssErrors.length === 0) {
+              items.push({
+                id: "schema",
+                name: "game.json Schema",
+                status: "pass",
+                desc: 'Manifest valid: "' + (meta.title || detectedGameId) + '" by @' + (meta.author || "contributor")
+              });
+            } else {
+              items.push({
+                id: "schema",
+                name: "game.json Schema",
+                status: "fail",
+                desc: (missingFields.length > 0 ? "Missing: " + missingFields.join(", ") + ". " : "") +
+                      (xssErrors.length > 0 ? "XSS quotes detected in: " + xssErrors.join(", ") : "")
+              });
+            }
+          } catch (jsonErr) {
+            var parseErr = "game.json contains invalid JSON: " + jsonErr.message;
+            errors.push(parseErr);
+            items.push({
+              id: "schema",
+              name: "game.json Schema",
+              status: "fail",
+              desc: parseErr
+            });
+          }
+        } else {
+          items.push({
+            id: "schema",
+            name: "game.json Schema",
+            status: "fail",
+            desc: "game.json file missing"
+          });
+        }
+
+        // 3. Zero-Emoji Scan
+        var emojiFiles = [];
+        if (gameJsonRes.exists && EMOJI_REGEX.test(gameJsonRes.text)) {
+          emojiFiles.push("game.json");
+          warnings.push("Detected unicode emoji in game.json. Please replace with SVG or Lucide icon.");
+        }
+        if (styleCssRes.exists && EMOJI_REGEX.test(styleCssRes.text)) {
+          emojiFiles.push("style.css");
+          warnings.push("Detected unicode emoji in style.css. Please replace with SVG or Lucide icon.");
+        }
+        if (gameJsRes.exists && EMOJI_REGEX.test(gameJsRes.text)) {
+          emojiFiles.push("game.js");
+          warnings.push("Detected unicode emoji in game.js. Please replace with SVG or Lucide icon.");
+        }
+        if (typeof document !== "undefined" && document.body && EMOJI_REGEX.test(document.body.innerHTML)) {
+          emojiFiles.push("index.html");
+          warnings.push("Detected unicode emoji in index.html. Please replace with SVG or Lucide icon.");
+        }
+
+        if (emojiFiles.length === 0) {
+          items.push({
+            id: "emoji",
+            name: "Zero-Emoji Standards",
+            status: "pass",
+            desc: "No unicode emojis detected (strict SVG/icon compliance passed)"
+          });
+        } else {
+          items.push({
+            id: "emoji",
+            name: "Zero-Emoji Standards",
+            status: "warn",
+            desc: "Unicode emojis found in: " + emojiFiles.join(", ") + " (replace with SVG)"
+          });
+        }
+
+        // 4. HTML Meta & Viewport Standards
+        var htmlMissing = [];
+        if (typeof document !== "undefined") {
+          if (!document.title || !document.title.trim()) {
+            errors.push("index.html is missing a <title> tag.");
+            htmlMissing.push("missing <title>");
+          }
+          if (!document.querySelector('meta[name="viewport"]')) {
+            warnings.push("index.html is missing a responsive viewport <meta> tag.");
+            htmlMissing.push("missing viewport meta");
+          }
+        }
+        if (htmlMissing.length === 0) {
+          items.push({
+            id: "html",
+            name: "HTML Head Standards",
+            status: "pass",
+            desc: "Responsive viewport meta tag and document <title> verified"
+          });
+        } else {
+          items.push({
+            id: "html",
+            name: "HTML Head Standards",
+            status: errors.some(function (e) { return e.indexOf("<title>") !== -1; }) ? "fail" : "warn",
+            desc: htmlMissing.join(", ")
+          });
+        }
+
+        // 5. Folder Naming Convention
+        if (detectedGameId && detectedGameId !== "game") {
+          var folderRegex = /^[a-z0-9-]+_[a-z0-9-]+$/i;
+          if (folderRegex.test(detectedGameId)) {
+            items.push({
+              id: "folder",
+              name: "Folder Naming",
+              status: "pass",
+              desc: "Folder adheres to games/<game-name_username> (" + detectedGameId + ")"
+            });
+          } else {
+            var folderWarn = "Folder naming should be games/<game-name_username> (got: " + detectedGameId + ")";
+            warnings.push(folderWarn);
+            items.push({
+              id: "folder",
+              name: "Folder Naming",
+              status: "warn",
+              desc: folderWarn
+            });
+          }
+        }
+
+        // 6. Security Heuristics (Isolation & DOM XSS)
+        if (gameJsRes.exists) {
+          var jsSecIssues = [];
+          if (gameJsRes.text.indexOf("document.write(") !== -1 || gameJsRes.text.indexOf("document.writeln(") !== -1) {
+            var docWriteErr = "Avoid document.write() in community games; it breaks DOM streaming and player isolation.";
+            errors.push(docWriteErr);
+            jsSecIssues.push(docWriteErr);
+          }
+          if (/(window\.)?(top|parent)\.location/i.test(gameJsRes.text)) {
+            var topNavErr = "Security violation (#492): Attempt to access top or parent frame navigation.";
+            errors.push(topNavErr);
+            jsSecIssues.push(topNavErr);
+          }
+
+          if (jsSecIssues.length === 0) {
+            items.push({
+              id: "security",
+              name: "Sandbox Security",
+              status: "pass",
+              desc: "Passed iframe sandboxing and DOM isolation checks"
+            });
+          } else {
+            items.push({
+              id: "security",
+              name: "Sandbox Security",
+              status: "fail",
+              desc: jsSecIssues.join("; ")
+            });
+          }
+        }
+
+        // Determine Status
+        var overallStatus = "pass";
+        if (errors.length > 0) {
+          overallStatus = "fail";
+        } else if (warnings.length > 0) {
+          overallStatus = "warn";
+        }
+
+        devValidatorReport = {
+          timestamp: new Date().toISOString(),
+          status: overallStatus,
+          errors: errors,
+          warnings: warnings,
+          items: items,
+          gameId: detectedGameId
+        };
+
+        // Update Badge UI
+        self.updateBadgeUI(overallStatus, errors, warnings);
+
+        // Update Popover UI
+        self.updatePopoverUI(overallStatus, items, errors, warnings);
+
+        // Console Log Output
+        self.logConsoleReport(overallStatus, items, errors, warnings, verbose);
+
+        return devValidatorReport;
+      }).catch(function (err) {
+        console.warn("[ArcadeVerse DevValidator] Audit encountered error:", err);
+        return null;
+      });
+    },
+
+    updateBadgeUI: function (status, errors, warnings) {
+      if (!this.badgeEl) return;
+      this.badgeEl.className = "dev-validator-badge dev-validator-" + status;
+
+      var textEl = this.badgeEl.querySelector(".dev-validator-text");
+      var countEl = this.badgeEl.querySelector(".dev-validator-badge-count");
+
+      if (status === "pass") {
+        if (textEl) textEl.textContent = "DEV: Manifest Valid";
+        if (countEl) countEl.style.display = "none";
+        this.badgeEl.setAttribute("aria-label", "ArcadeVerse Development Validator: Pass (All checks valid)");
+      } else if (status === "warn") {
+        if (textEl) textEl.textContent = "DEV: " + warnings.length + " Warning" + (warnings.length > 1 ? "s" : "");
+        if (countEl) {
+          countEl.textContent = String(warnings.length);
+          countEl.style.display = "inline-flex";
+        }
+        this.badgeEl.setAttribute("aria-label", "ArcadeVerse Development Validator: " + warnings.length + " Warnings");
+      } else {
+        if (textEl) textEl.textContent = "DEV: " + errors.length + " Error" + (errors.length > 1 ? "s" : "");
+        if (countEl) {
+          countEl.textContent = String(errors.length);
+          countEl.style.display = "inline-flex";
+        }
+        this.badgeEl.setAttribute("aria-label", "ArcadeVerse Development Validator: " + errors.length + " Errors");
+      }
+    },
+
+    updatePopoverUI: function (status, items, errors, warnings) {
+      if (!this.popoverEl) return;
+
+      var tagPill = this.popoverEl.querySelector(".dev-validator-pill-tag");
+      if (tagPill) {
+        tagPill.className = "dev-validator-pill-tag tag-" + status;
+        tagPill.textContent = status.toUpperCase();
+      }
+
+      var listEl = this.popoverEl.querySelector(".dev-validator-checklist");
+      if (listEl) {
+        listEl.innerHTML = "";
+        var self = this;
+        items.forEach(function (item) {
+          var li = document.createElement("li");
+          li.className = "dev-validator-item item-" + item.status;
+          li.innerHTML =
+            '<div class="dev-validator-item-icon">' + self.getIconSvg(item.status) + '</div>' +
+            '<div class="dev-validator-item-content">' +
+              '<div class="dev-validator-item-name">' + item.name + '</div>' +
+              '<div class="dev-validator-item-desc">' + item.desc + '</div>' +
+            '</div>';
+          listEl.appendChild(li);
+        });
+      }
+
+      var issuesContainer = this.popoverEl.querySelector(".dev-validator-issues-container");
+      if (issuesContainer) {
+        issuesContainer.innerHTML = "";
+        if (errors.length > 0) {
+          var errBox = document.createElement("div");
+          errBox.className = "dev-validator-issues-box";
+          errBox.innerHTML = '<div style="font-weight:600; font-size:11px; margin-bottom:4px; color:#f87171;">Errors to fix before merge:</div>';
+          errors.forEach(function (err) {
+            var p = document.createElement("div");
+            p.className = "dev-validator-issue-text";
+            p.textContent = "[FAIL] " + err;
+            errBox.appendChild(p);
+          });
+          issuesContainer.appendChild(errBox);
+        }
+        if (warnings.length > 0) {
+          var warnBox = document.createElement("div");
+          warnBox.className = "dev-validator-issues-box issues-warn";
+          warnBox.innerHTML = '<div style="font-weight:600; font-size:11px; margin-bottom:4px; color:#fbbf24;">Advisory Warnings:</div>';
+          warnings.forEach(function (w) {
+            var p = document.createElement("div");
+            p.className = "dev-validator-issue-text";
+            p.textContent = "[WARN] " + w;
+            warnBox.appendChild(p);
+          });
+          issuesContainer.appendChild(warnBox);
+        }
+      }
+    },
+
+    logConsoleReport: function (status, items, errors, warnings, verbose) {
+      if (typeof console === "undefined" || !console.groupCollapsed) return;
+
+      var headerColor = status === "pass" ? "#10b981" : (status === "warn" ? "#f59e0b" : "#f43f5e");
+      var title = "[ArcadeVerse DevValidator] " + (status === "pass" ? "[PASS] All checks passed" : (status === "warn" ? "[WARN] " + warnings.length + " warning(s)" : "[FAIL] " + errors.length + " error(s)"));
+
+      if (verbose || status !== "pass") {
+        console.groupCollapsed("%c" + title, "color:" + headerColor + "; font-weight:bold; font-size:11px;");
+      } else {
+        console.groupCollapsed("%c" + title, "color:" + headerColor + "; font-weight:bold; font-size:11px;");
+      }
+
+      items.forEach(function (item) {
+        var prefix = item.status === "pass" ? "[PASS]" : (item.status === "warn" ? "[WARN]" : "[FAIL]");
+        var itemColor = item.status === "pass" ? "#10b981" : (item.status === "warn" ? "#f59e0b" : "#f43f5e");
+        console.log("%c" + prefix + " " + item.name + "%c: " + item.desc, "color:" + itemColor + "; font-weight:bold;", "color:inherit;");
+      });
+
+      if (errors.length > 0) {
+        console.log("%cAction Required:", "color:#f43f5e; font-weight:bold;");
+        errors.forEach(function (err) {
+          console.error("  x " + err);
+        });
+      }
+
+      if (warnings.length > 0) {
+        console.log("%cRecommendations:", "color:#f59e0b; font-weight:bold;");
+        warnings.forEach(function (w) {
+          console.warn("  ! " + w);
+        });
+      }
+
+      console.log("%cDev mode active on " + (window.location && window.location.hostname) + ". Validator is completely stripped in production.", "color:#64748b; font-size:10px; font-style:italic;");
+      console.groupEnd();
     }
-  }
+  };
 
   /**
    * Initializes message bridging with parent window
@@ -1094,7 +1560,20 @@
         }, true);
       }
 
-      // Universal AudioContext & Master Gain Shield
+      // Initialize in-browser developer game validator on localhost (#727)
+      if (isLocalDev()) {
+        if (typeof document !== "undefined") {
+          if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", function () {
+              DevValidator.init();
+            });
+          } else {
+            DevValidator.init();
+          }
+        }
+      }
+
+// Universal AudioContext & Master Gain Shield
       // Ensures games initializing local AudioContext start muted if hub is muted
       installAudioShield();
 
@@ -1208,6 +1687,41 @@
     },
 
     /**
+     * Register a callback triggered when parent hub updates game speed multiplier (#1183)
+     * @param {Function} callback receives { speed: number, speedMultiplier: number }
+     * @returns {Object} sdkInstance for chaining
+     */
+    onSpeedChange: function (callback) {
+      if (typeof callback === "function") {
+        speedChangeHandlers.push(callback);
+        try {
+          callback({ speed: currentGameSpeed, speedMultiplier: currentGameSpeed });
+        } catch (e) {}
+      }
+      return this;
+    },
+
+    /**
+     * Get current global game speed multiplier (#1183)
+     * @returns {number}
+     */
+    getSpeed: function () {
+      return currentGameSpeed;
+    },
+
+    /**
+     * Set local game speed multiplier (bounded between 0.25 and 3.0) (#1183)
+     * @param {number} speed
+     * @returns {Object} sdkInstance for chaining
+     */
+    setSpeed: function (speed) {
+      var targetSpeed = typeof speed === "number" ? Math.max(0.25, Math.min(3.0, speed)) : 1.0;
+      currentGameSpeed = targetSpeed;
+      executeHandlers(speedChangeHandlers, { speed: targetSpeed, speedMultiplier: targetSpeed });
+      return this;
+    },
+
+    /**
      * Track an AudioContext for automatic suspension/closure on teardown and mute synchronization
      * @param {AudioContext} ctx
      */
@@ -1232,6 +1746,74 @@
      */
     registerAudioContext: function (ctx) {
       return this.trackAudioContext(ctx);
+    },
+
+    /**
+     * Micro-Limiter for Master Audio Bus (#507)
+     * Creates a brickwall limiter for safe bus-level peak control.
+     */
+    createMicroLimiter: function (audioCtx) {
+      if (!audioCtx) return null;
+      try {
+        var comp = audioCtx.createDynamicsCompressor();
+        comp.threshold.setValueAtTime(-0.5, audioCtx.currentTime);
+        comp.knee.setValueAtTime(0, audioCtx.currentTime);
+        comp.ratio.setValueAtTime(20.0, audioCtx.currentTime);
+        comp.attack.setValueAtTime(0.001, audioCtx.currentTime);
+        comp.release.setValueAtTime(0.05, audioCtx.currentTime);
+        return comp;
+      } catch (_e) {
+        return null;
+      }
+    },
+
+    /**
+     * Voice-Stealing Audio Pool (#507)
+     * Limits concurrent audio voices and stops the oldest voice when full.
+     */
+    createVoicePool: function (options) {
+      var opts = options || {};
+      var maxVoices = typeof opts.maxVoices === "number" && opts.maxVoices > 0 ? opts.maxVoices : 6;
+      var activeVoices = [];
+
+      return {
+        maxVoices: maxVoices,
+        getActiveVoiceCount: function () {
+          return activeVoices.length;
+        },
+        addVoice: function (node, onStop) {
+          if (!node) return null;
+          while (activeVoices.length >= maxVoices) {
+            var oldest = activeVoices.shift();
+            if (oldest) {
+              try {
+                if (typeof oldest.onStop === "function") oldest.onStop();
+                else if (typeof oldest.node.stop === "function") oldest.node.stop();
+                if (typeof oldest.node.disconnect === "function") oldest.node.disconnect();
+              } catch (_) {}
+            }
+          }
+          var voiceEntry = { node: node, onStop: onStop };
+          activeVoices.push(voiceEntry);
+          var origOnEnded = node.onended;
+          node.onended = function (e) {
+            var idx = activeVoices.indexOf(voiceEntry);
+            if (idx !== -1) activeVoices.splice(idx, 1);
+            if (typeof origOnEnded === "function") origOnEnded.call(node, e);
+          };
+          return voiceEntry;
+        },
+        stopAll: function () {
+          while (activeVoices.length > 0) {
+            var voice = activeVoices.pop();
+            try {
+              if (typeof voice.onStop === "function") voice.onStop();
+              else if (typeof voice.node.stop === "function") voice.node.stop();
+              if (typeof voice.node.disconnect === "function") voice.node.disconnect();
+            } catch (_) {}
+          }
+        }
+      };
     },
 
     /**
@@ -1424,6 +2006,275 @@
       var idx = registeredAnimationFrameIds.indexOf(id);
       if (idx !== -1) registeredAnimationFrameIds.splice(idx, 1);
       cancelAnimationFrame(id);
+    },
+
+    /**
+     * Standardized Fixed-Timestep Physics Accumulator & Resilient Frame-Pacing Game Loop Engine (#1183)
+     * Implements the Glenn Fiedler semi-fixed timestep model with spiral-of-death delta clamping,
+     * sub-stepping, alpha rendering interpolation, speed regulator scaling, and automatic lifecycle management.
+     *
+     * @param {Object} options
+     * @param {Function} [options.update] - Physics/state update callback: update(fixedDt, totalTime)
+     * @param {Function} [options.render] - Render/drawing callback: render(alpha, totalTime) where alpha in [0, 1]
+     * @param {number} [options.fixedDt=16.666666666666668] - Target fixed physics step in milliseconds (default: 60Hz / 16.67ms)
+     * @param {number} [options.maxSubSteps=4] - Maximum physics sub-steps per frame to prevent the spiral of death
+     * @param {number} [options.maxFrameTime=250] - Maximum elapsed frame time clamp in milliseconds
+     * @param {boolean} [options.autoPause=true] - Automatically pause/resume with ArcadeVerse lifecycle events
+     * @param {boolean} [options.autoStart=false] - Automatically start loop on creation
+     * @returns {Object} GameLoop controller instance
+     */
+    createGameLoop: function (options) {
+      var opts = options || {};
+      var updateFn = typeof opts.update === "function" ? opts.update : function () {};
+      var renderFn = typeof opts.render === "function" ? opts.render : function () {};
+      var fixedDt = (typeof opts.fixedDt === "number" && opts.fixedDt > 0) ? opts.fixedDt : (1000 / 60);
+      var maxSubSteps = (typeof opts.maxSubSteps === "number" && opts.maxSubSteps >= 1) ? Math.floor(opts.maxSubSteps) : 4;
+      var maxFrameTime = (typeof opts.maxFrameTime === "number" && opts.maxFrameTime > 0) ? opts.maxFrameTime : 250;
+      var autoPause = opts.autoPause !== false;
+
+      var isRunning = false;
+      var isPaused = false;
+      var animFrameId = null;
+      var lastTime = 0;
+      var accumulator = 0;
+      var totalSimulatedTime = 0;
+      var frameCount = 0;
+      var tickCount = 0;
+      var localSpeedMultiplier = 1.0;
+
+      function getEffectiveSpeed() {
+        return currentGameSpeed * localSpeedMultiplier;
+      }
+
+      function step(now) {
+        if (!isRunning) return;
+
+        if (typeof now !== "number") {
+          now = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+        }
+
+        if (!lastTime) {
+          lastTime = now;
+        }
+
+        var rawDelta = now - lastTime;
+        lastTime = now;
+
+        if (!isPaused) {
+          var clampedDelta = Math.min(Math.max(0, rawDelta), maxFrameTime);
+          var effectiveDelta = clampedDelta * getEffectiveSpeed();
+          accumulator += effectiveDelta;
+
+          var TIME_EPSILON = 0.001;
+          var steps = 0;
+          while ((accumulator + TIME_EPSILON) >= fixedDt && steps < maxSubSteps) {
+            updateFn(fixedDt, totalSimulatedTime);
+            totalSimulatedTime += fixedDt;
+            accumulator -= fixedDt;
+            if (accumulator < 0) accumulator = 0;
+            tickCount++;
+            steps++;
+          }
+
+          if (steps >= maxSubSteps && accumulator > fixedDt) {
+            accumulator = 0;
+          }
+
+          var alpha = fixedDt > 0 ? (accumulator / fixedDt) : 0;
+          if (alpha > 1) alpha = 1;
+          if (alpha < 0) alpha = 0;
+
+          renderFn(alpha, totalSimulatedTime);
+          frameCount++;
+        } else {
+          lastTime = now;
+        }
+
+        if (isRunning) {
+          if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+            if (animFrameId !== null) {
+              var pIdx = registeredAnimationFrameIds.indexOf(animFrameId);
+              if (pIdx !== -1) registeredAnimationFrameIds.splice(pIdx, 1);
+            }
+            animFrameId = window.requestAnimationFrame(step);
+            registeredAnimationFrameIds.push(animFrameId);
+          }
+        }
+      }
+
+      var onPauseUnsub = null;
+      var onResumeUnsub = null;
+      var onTeardownUnsub = null;
+
+      var loop = {
+        start: function () {
+          if (isRunning) return this;
+          isRunning = true;
+          isPaused = false;
+          lastTime = 0;
+          accumulator = 0;
+
+          if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+            animFrameId = window.requestAnimationFrame(step);
+            registeredAnimationFrameIds.push(animFrameId);
+          }
+          return this;
+        },
+
+        stop: function () {
+          if (!isRunning) return this;
+          isRunning = false;
+          isPaused = false;
+          if (animFrameId !== null) {
+            if (typeof window !== "undefined" && typeof window.cancelAnimationFrame === "function") {
+              window.cancelAnimationFrame(animFrameId);
+            }
+            var cIdx = registeredAnimationFrameIds.indexOf(animFrameId);
+            if (cIdx !== -1) registeredAnimationFrameIds.splice(cIdx, 1);
+            animFrameId = null;
+          }
+          lastTime = 0;
+          accumulator = 0;
+          return this;
+        },
+
+        pause: function () {
+          if (!isRunning || isPaused) return this;
+          isPaused = true;
+          return this;
+        },
+
+        resume: function () {
+          if (!isRunning || !isPaused) return this;
+          isPaused = false;
+          lastTime = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+          accumulator = 0;
+          return this;
+        },
+
+        stepManual: function (dt) {
+          var stepDt = (typeof dt === "number" && dt > 0) ? dt : fixedDt;
+          var effectiveDelta = stepDt * getEffectiveSpeed();
+          accumulator += effectiveDelta;
+
+          var TIME_EPSILON = 0.001;
+          var steps = 0;
+          while ((accumulator + TIME_EPSILON) >= fixedDt && steps < maxSubSteps) {
+            updateFn(fixedDt, totalSimulatedTime);
+            totalSimulatedTime += fixedDt;
+            accumulator -= fixedDt;
+            if (accumulator < 0) accumulator = 0;
+            tickCount++;
+            steps++;
+          }
+          if (steps >= maxSubSteps && accumulator > fixedDt) {
+            accumulator = 0;
+          }
+          var alpha = fixedDt > 0 ? (accumulator / fixedDt) : 0;
+          if (alpha > 1) alpha = 1;
+          if (alpha < 0) alpha = 0;
+          renderFn(alpha, totalSimulatedTime);
+          frameCount++;
+          return this;
+        },
+
+        isRunning: function () {
+          return isRunning;
+        },
+
+        isPaused: function () {
+          return isPaused;
+        },
+
+        getFixedDt: function () {
+          return fixedDt;
+        },
+
+        getAccumulator: function () {
+          return accumulator;
+        },
+
+        getTickCount: function () {
+          return tickCount;
+        },
+
+        getFrameCount: function () {
+          return frameCount;
+        },
+
+        getTotalSimulatedTime: function () {
+          return totalSimulatedTime;
+        },
+
+        getSpeed: function () {
+          return getEffectiveSpeed();
+        },
+
+        setSpeedMultiplier: function (multiplier) {
+          if (typeof multiplier === "number" && multiplier > 0) {
+            localSpeedMultiplier = Math.max(0.1, Math.min(5.0, multiplier));
+          }
+          return this;
+        },
+
+        destroy: function () {
+          this.stop();
+          var loopIdx = registeredGameLoops.indexOf(loop);
+          if (loopIdx !== -1) {
+            registeredGameLoops.splice(loopIdx, 1);
+          }
+          if (onPauseUnsub) {
+            onPauseUnsub();
+            onPauseUnsub = null;
+          }
+          if (onResumeUnsub) {
+            onResumeUnsub();
+            onResumeUnsub = null;
+          }
+          if (onTeardownUnsub) {
+            onTeardownUnsub();
+            onTeardownUnsub = null;
+          }
+          return this;
+        }
+      };
+
+      if (autoPause) {
+        var pauseCb = function () {
+          loop.pause();
+        };
+        var resumeCb = function () {
+          loop.resume();
+        };
+        var teardownCb = function () {
+          loop.destroy();
+        };
+
+        pauseHandlers.push(pauseCb);
+        resumeHandlers.push(resumeCb);
+        teardownHandlers.push(teardownCb);
+
+        onPauseUnsub = function () {
+          var idx = pauseHandlers.indexOf(pauseCb);
+          if (idx !== -1) pauseHandlers.splice(idx, 1);
+        };
+        onResumeUnsub = function () {
+          var idx = resumeHandlers.indexOf(resumeCb);
+          if (idx !== -1) resumeHandlers.splice(idx, 1);
+        };
+        onTeardownUnsub = function () {
+          var idx = teardownHandlers.indexOf(teardownCb);
+          if (idx !== -1) teardownHandlers.splice(idx, 1);
+        };
+      }
+
+      registeredGameLoops.push(loop);
+
+      if (opts.autoStart) {
+        loop.start();
+      }
+
+      return loop;
     },
 
     /**
@@ -1869,7 +2720,29 @@
     },
 
     // ========================================================
-    // ARCADEVERSE CAMERA & VIEWPORT SUBSYSTEM
+    // IN-BROWSER DEV VALIDATOR PUBLIC API (#727)
+    // ========================================================
+    /**
+     * Programmatically executes pre-flight manifest and file compliance audit.
+     * Active only on localhost/127.0.0.1; disabled in production builds.
+     * @returns {Promise<Object|null>}
+     */
+    runDevValidator: function () {
+      if (!isLocalDev()) {
+        return Promise.resolve({ isDev: false, message: "DevValidator is active only on localhost/127.0.0.1" });
+      }
+      return DevValidator.runAudit(true);
+    },
+
+    /**
+     * Retrieves the latest DevValidator audit telemetry and findings
+     * @returns {Object|null}
+     */
+    getDevValidatorReport: function () {
+      return devValidatorReport;
+    },
+
+// ARCADEVERSE CAMERA & VIEWPORT SUBSYSTEM
     // Handles 0.5x to 2.0x zoom, middle-click/drag-to-pan,
     // smooth matrix transformations, zero coordinate drift,
     // on-screen reset HUD, and screen-to-world projection
@@ -2990,6 +3863,9 @@
 
   if (typeof window !== "undefined") {
     try {
+      if (window.ArcadeAudio && !sdkInstance.ArcadeAudio) {
+        sdkInstance.ArcadeAudio = window.ArcadeAudio;
+      }
       window.ArcadeVerse = sdkInstance;
       window.arcadeverse = sdkInstance;
     } catch (_) {}
