@@ -1927,8 +1927,8 @@ document.addEventListener("DOMContentLoaded", () => {
               ${halloweenBadgeHtml}
               ${flipBtnHtml}
               <div class="card-options-top">
-                <label class="game-compare-label" title="Select to compare with another game">
-                  <input type="checkbox" class="game-compare-checkbox" data-game-id="${safeGameId}">
+                <label class="game-compare-label compare-card-toggle-wrap" title="Select to compare with another game">
+                  <input type="checkbox" class="game-compare-checkbox compare-card-checkbox" data-game-id="${safeGameId}">
                   <span class="compare-custom-box"></span>
                 </label>
                 <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
