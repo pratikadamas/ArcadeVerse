@@ -145,6 +145,11 @@
     document.getElementById('btn-export-all-saves').addEventListener('click', exportAllSaves);
     document.getElementById('input-import-saves').addEventListener('change', importSaves);
 
+    // Mount Serverless GitHub Gist Cloud Sync Engine (#1111)
+    if (window.GistCloudSync && typeof window.GistCloudSync.mountUI === 'function') {
+      window.GistCloudSync.mountUI();
+    }
+
     injectStorageCSS();
   }
 
@@ -354,6 +359,8 @@
       tableBody.appendChild(tr);
     });
   }
+
+  window.renderStorageTable = renderStorageTable;
 
   // Export All Saves to JSON
   function exportAllSaves() {
