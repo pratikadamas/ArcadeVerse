@@ -1,137 +1,362 @@
 [
   {
-    "id": 11,
-    "title": "[Feature/Gamification]: In-Browser Retro Stamp Card & Daily Play Loyalty Punchcard",
+    "title": "[Enhancement/A11y]: Skip-to-Content Navigation Link & Focus Trapping Indicator for Modals",
     "labels": [
       "nsoc26",
-      "level3"
+      "level2"
     ],
-    "body": "## Problem\nWhile ArcadeVerse tracks daily streaks, players lack a tactile, visual collection mechanism celebrating daily visits in a retro physical format.\n\n## Architectural Scope & Requirements\n1. **Retro Paper Loyalty Punchcard UI (`assets/js/arcade-punchcard.js`):**\n   - An interactive physical-styled 7-day loyalty punchcard drawer rendered with vintage textured paper borders and stamped ink slots.\n2. **Animated Ink Stamping Ceremony:**\n   - When completing the daily play goal, plays a satisfying mechanical stamp sound (`thump!`) with a randomized ink rotation angle and slight smudge imperfection.\n3. **Day 7 Holographic Completion Badge:**\n   - Completing a full 7-day punchcard unlocks an exclusive local holographic punchcard badge and resets the card for the following week.\n\n## Acceptance Criteria\n- [ ] 100% client-side persistence in `localStorage` under `arcadeverse_punchcard`.\n- [ ] Procedural Web Audio mechanical stamp sound effect with zero audio files.\n- [ ] Responsive drawer accessible from the daily streak counter in the header."
+    "body": "## Problem\nKeyboard-only and screen reader players currently have to tab through numerous top navigation links and header filters before reaching the arcade games catalog. Furthermore, when modals open, focus is not visibly styled with a high-contrast accessibility focus ring.\n\n## Architectural Scope & Requirements\n1. **Skip-to-Main Link (`index.html`, `assets/css/style.css`):**\n   - Insert an accessible skip-link (`#skip-to-content`) as the first focusable element inside the `<body>`.\n   - Hidden offscreen by default (`transform: translateY(-120%)`) and animates smoothly into view at top-left with neon high-contrast styling upon keyboard focus.\n2. **Focus Indicator Ring:**\n   - Standardize a 2px neon cyan/amber focus ring with `outline-offset: 3px` across all interactive buttons, cards, and input controls.\n3. **Modal Focus Management:**\n   - Ensure the skip link immediately transfers focus to the `#games-grid` container upon pressing Enter.\n\n## Acceptance Criteria\n- [ ] Skip link appears immediately upon first Tab press on page load.\n- [ ] Pressing Enter bypasses top navigation and focuses the game card grid directly.\n- [ ] Compliant with WCAG 2.4.1 (Bypass Blocks) and WCAG 2.4.7 (Focus Visible).\n- [ ] 100% Pure Vanilla HTML/CSS without external dependencies.",
+    "id": 1
   },
   {
-    "id": 12,
-    "title": "[Enhancement/UI]: Interactive Mini-Game Card Hover Quick-Peek Micro-Canvases",
+    "title": "[Enhancement/UX]: Keyboard Shortcut Legend Overlay Modal with Printable Cheat Sheet",
     "labels": [
       "nsoc26",
-      "level3"
+      "level2"
     ],
-    "body": "## Problem\nBrowsing games requires clicking open the full game modal to see what gameplay looks like, as game cards currently display only static screenshots or category icons.\n\n## Architectural Scope & Requirements\n1. **Lightweight Hover Micro-Canvas (`assets/js/card-quickpeek.js`):**\n   - When hovering over a game card for more than 400ms on desktop, replaces the static thumbnail with a lightweight procedural micro-canvas animation depicting core game mechanics (e.g. bouncing paddle/ball for brick breaker, moving neon worm for snake, falling blocks for puzzle).\n2. **Instant Micro-Animation Generators:**\n   - Implements 6 archetypal procedural micro-animations mapped to game categories (`Action/Shooter`, `Brick Breaker`, `Snake/Runner`, `Puzzle`, `Maze/Dungeon`, `Sports/Racing`).\n3. **Zero Resource Overhead when Not Hovered:**\n   - Micro-canvases are created and destroyed on demand with `cancelAnimationFrame` upon `pointerleave` to preserve battery life and CPU.\n\n## Acceptance Criteria\n- [ ] Micro-animations start smoothly after 400ms hover delay with zero memory leaks.\n- [ ] Completely disabled on mobile/touchscreen devices to preserve mobile performance.\n- [ ] Respects `prefers-reduced-motion` by displaying static preview only."
+    "body": "## Problem\nArcadeVerse supports various power-user keyboard shortcuts (e.g. `/` for search, `Escape` to close/pause, `F` for fullscreen, `M` for audio mute), but new users have no intuitive in-app reference discovering these hotkeys.\n\n## Architectural Scope & Requirements\n1. **Shortcut Legend Modal (`assets/js/shortcut-legend.js`):**\n   - Bind global `?` (Shift + `/`) key listener to toggle a retro arcade keyboard cheat-sheet modal.\n   - Categorize hotkeys: Navigation, Audio Controls, Game Modal Management, and Search.\n2. **Keycap UI Components:**\n   - Style keycap pills with authentic retro beveled 3D borders (`box-shadow: 0 3px 0 #222`).\n3. **Accessibility & Trigger:**\n   - Add a subtle keyboard icon button in the site footer to open the legend via mouse/touch.\n\n## Acceptance Criteria\n- [ ] Pressing `?` reliably toggles the shortcut overlay modal.\n- [ ] Clicking outside or pressing `Escape` dismisses the modal gracefully.\n- [ ] Fully responsive on desktop and tablet viewports.\n- [ ] 100% Pure Vanilla JS and CSS.",
+    "id": 2
   },
   {
-    "id": 13,
-    "title": "[Theme/UI]: Solarized Cyber Dark & Cyber Light Dual Thematic Mode Studio",
+    "title": "[Enhancement/UI]: Floating Feedback & Issue Bug Report Quick-Launch Floating Pill Widget",
     "labels": [
       "nsoc26",
-      "level3"
+      "level2"
     ],
-    "body": "## Problem\nPlayers who use laptops outdoors or in brightly lit rooms struggle with dark cyber themes. Furthermore, existing light themes often produce harsh glare without carefully calibrated contrast ratios.\n\n## Architectural Scope & Requirements\n1. **Scientifically Calibrated Solarized Palette (`assets/css/theme-solarized-cyber.css`):**\n   - Adapts Ethan Schoonover's precision Solarized color system for cyber arcade UI:\n     - Dark Mode: Base03 `#002b36`, Base02 `#073642`, Cyan `#2aa198`, Yellow `#b58900`.\n     - Light Mode: Base3 `#fdf6e3`, Base2 `#eee8d5`, Cyan `#2aa198`, Orange `#cb4b16`.\n2. **Dual Mode Sub-Toggle:**\n   - Provides a dedicated Solarized Dark / Solarized Light toggle within the theme customizer.\n3. **Mathematically Guaranteed Contrast:**\n   - Guarantees strict WCAG 2.1 AAA contrast compliance across all text labels, badges, and button states in both lighting conditions.\n\n## Acceptance Criteria\n- [ ] Flawless visual clarity under direct ambient daylight and in dark rooms.\n- [ ] Smooth color transitions with zero component layout shifts.\n- [ ] Fully integrated with `theme-customizer.js`."
+    "body": "## Problem\nWhen players encounter an anomaly or visual bug on a game or platform page, navigating to GitHub to file an issue requires manually locating the repository and copying system environment details.\n\n## Architectural Scope & Requirements\n1. **Floating Report Pill (`assets/js/bug-report-widget.js`):**\n   - Dock a non-intrusive floating pill at the bottom right corner with a bug icon.\n   - Expand on click into a lightweight dialog with pre-filled telemetry: Active Game Title (if modal open), Browser User-Agent, Screen Resolution, and Current Theme.\n2. **Direct GitHub Pre-Fill URL:**\n   - Generate a sanitized GitHub issue creation URL with formatted query parameters (`?title=...&body=...`) pointing directly to `DebasmitaBose0/ArcadeVerse/issues/new`.\n3. **Dismiss & Storage:**\n   - Allow minimizing or muting the pill, storing preference in `localStorage`.\n\n## Acceptance Criteria\n- [ ] Clean floating button positioned gracefully without obscuring catalog cards.\n- [ ] Pre-fills relevant client telemetry accurately into GitHub issue template URL.\n- [ ] Dismiss state persists across page refreshes.\n- [ ] Zero external dependencies.",
+    "id": 3
   },
   {
-    "id": 14,
-    "title": "[Feature/UX]: Fullscreen Arcade Theater Immersion Mode with Darkened Backdrop & Spotlight",
+    "title": "[Enhancement/Catalog]: Empty Search State with Smart Did-You-Mean Suggestions & Randomizer",
     "labels": [
       "nsoc26",
-      "level3"
+      "level2"
     ],
-    "body": "## Problem\nWhen playing a game inside the modal, background navbar buttons, search bars, and colorful catalog elements remain visible in the peripheral vision, distracting the player from fast-paced action.\n\n## Architectural Scope & Requirements\n1. **Theater Immersion Controller (`assets/js/theater-mode.js`):**\n   - Adds an \"Arcade Theater Mode\" toggle button to the game modal header.\n   - When activated, dims the entire browser viewport behind the game to 96% deep black opacity with a soft CSS backdrop blur (`backdrop-filter: blur(16px)`).\n2. **Cabinet Spotlight Overhead Projection:**\n   - Casts an authentic radial spotlight gradient centered on the active game canvas, simulating the overhead marquee light of an authentic arcade cabinet.\n3. **Keyboard Quick-Toggle & Escape Handling:**\n   - Quick toggle via `T` key; automatically exits theater mode cleanly upon `Escape` or modal close.\n\n## Acceptance Criteria\n- [ ] Seamless transition into darkened theater immersion mode with zero frame drops.\n- [ ] Game controls and audio continue uninterrupted during mode toggling.\n- [ ] Persistent setting in `localStorage` remember player preference."
+    "body": "## Problem\nWhen a player enters a search query that matches zero games, the games catalog displays a bare blank screen, which can make users feel the website has stalled or crashed.\n\n## Architectural Scope & Requirements\n1. **Empty State UI (`assets/js/app.js`):**\n   - Render a dedicated retro arcade cabinet vector illustration when search results return 0 items.\n2. **Fuzzy Did-You-Mean Suggestions:**\n   - Implement client-side Levenshtein distance matching comparing the search query against all registered game titles.\n   - Suggest: \"Did you mean: *Cyber Snake*?\" as an interactive clickable link.\n3. **Instant Random Game Button:**\n   - Include a \"Surprise Me (Play Random Game)\" button that immediately picks and opens a random game from the registry.\n\n## Acceptance Criteria\n- [ ] Informative and visually polished empty state renders when 0 games match.\n- [ ] Suggests closest matching titles for queries with 1\u20132 character typos.\n- [ ] Clicking random game button launches a playable title smoothly.\n- [ ] 100% Vanilla JS without external fuzzy search libraries.",
+    "id": 4
   },
   {
-    "id": 15,
-    "title": "[Enhancement/UI]: Floating Glassmorphic Quick-Action Bottom Dock for Mobile Viewports",
+    "title": "[Enhancement/UI]: Arcade Badge Tooltip Micro-Animations with Dynamic Arrow Positioning",
     "labels": [
       "nsoc26",
-      "level3"
+      "level2"
     ],
-    "body": "## Problem\nOn modern tall smartphones, reaching the top navbar buttons (Search, Favorites, Daily Streak, Theme Settings) with one hand is ergonomically difficult, leading to awkward thumb stretching.\n\n## Architectural Scope & Requirements\n1. **Ergonomic Floating Bottom Navigation Dock (`assets/js/mobile-dock.js`):**\n   - Automatically appears on screen widths under 768px.\n   - Fixed at the bottom of the viewport with safe-area padding for mobile home-bar swipe indicators (`env(safe-area-inset-bottom)`).\n2. **Frosted Glassmorphic Styling:**\n   - Styled with frosted glassmorphism (`backdrop-filter: blur(14px)`, `background: rgba(18, 18, 30, 0.75)`, neon border accents).\n3. **Thumb-Friendly Action Buttons:**\n   - 5 essential thumb buttons: `Home`, `Search`, `Favorites`, `Streak`, and `Theme Studio` with animated micro-bounce icons on tap.\n\n## Acceptance Criteria\n- [ ] Automatically hides on desktop (> 768px) and mounts cleanly on mobile.\n- [ ] Seamless integration with existing search inputs and favorites drawers.\n- [ ] Respects device safe-area insets on iOS and Android devices."
+    "body": "## Problem\nGame card tag badges (e.g. `Action`, `Retro`, `Canvas`, `NSOC26`) currently lack descriptive explanations, and native browser `title` attributes take 2+ seconds to appear with inconsistent OS styling.\n\n## Architectural Scope & Requirements\n1. **Micro-Tooltip Engine (`assets/css/tooltips.css`):**\n   - Implement pure CSS `data-tooltip` attribute styling with retro dark-background tooltips.\n   - Add a subtle 150ms ease-out spring scale animation (`transform: scale(0.95)` to `scale(1)`).\n2. **Dynamic Boundary Detection (`assets/js/tooltips.js`):**\n   - Detect viewport edges; flip tooltip positioning from top to bottom if the element is within 40px of the top window edge.\n3. **A11y Support:**\n   - Mirror tooltip content to `aria-label` for screen reader compatibility.\n\n## Acceptance Criteria\n- [ ] Instant, polished tooltips on hover and keyboard focus.\n- [ ] Dynamic directional flipping near viewport boundaries without horizontal scroll overflow.\n- [ ] Respects `prefers-reduced-motion` by disabling spring animations.\n- [ ] Pure Vanilla JS and CSS3.",
+    "id": 5
   },
   {
-    "id": 16,
+    "title": "[Enhancement/UX]: Recent Search History Pills with One-Click Clear & Local Storage Persistence",
+    "labels": [
+      "nsoc26",
+      "level2"
+    ],
+    "body": "## Problem\nPlayers searching for specific categories or favorite authors frequently re-type the same search keywords across sessions, lacking convenient quick-access history chips.\n\n## Architectural Scope & Requirements\n1. **Search History Storage (`assets/js/search-history.js`):**\n   - Save successful non-empty search queries (minimum 3 characters) up to a maximum of 5 recent items in `localStorage` under `av_recent_searches`.\n2. **Clickable Tag Chips:**\n   - Render recent search terms as compact pill buttons beneath the search input when focused.\n   - Clicking a pill immediately applies the filter query.\n3. **Clear History Action:**\n   - Include a subtle \"Clear History\" button with confirmation state to reset stored queries.\n\n## Acceptance Criteria\n- [ ] Automatically records valid search queries and displays top 5 most recent chips.\n- [ ] Clicking a chip executes the catalog search instantaneously.\n- [ ] Clean storage eviction keeping exactly 5 items without memory leaks.\n- [ ] 100% Pure Vanilla JS.",
+    "id": 6
+  },
+  {
+    "title": "[Enhancement/UI]: Animated Skeleton Loading Shimmer Placeholders for Game Cards",
+    "labels": [
+      "nsoc26",
+      "level2"
+    ],
+    "body": "## Problem\nDuring initial page load or when filtering large sets of game cards, the sudden abrupt appearance of content can cause visual layout shift and content flashes.\n\n## Architectural Scope & Requirements\n1. **Skeleton Card Structure (`assets/css/skeleton.css`):**\n   - Create skeleton placeholder elements matching exact dimensions of game cards (thumbnail, title block, badge pills, author info).\n2. **Pure CSS Shimmer Gradient Animation:**\n   - Implement an infinite CSS linear-gradient wave moving from left to right (`linear-gradient(90deg, #111, #222, #111)`).\n3. **Transition Management:**\n   - Gracefully crossfade from skeleton placeholders to live game cards with a 200ms opacity transition.\n\n## Acceptance Criteria\n- [ ] Zero layout shift (Cumulative Layout Shift = 0) during catalog card rendering.\n- [ ] High-performance CSS animation utilizing GPU hardware acceleration.\n- [ ] Automatically disables shimmer if user has `prefers-reduced-motion` enabled.\n- [ ] 100% Pure CSS3.",
+    "id": 7
+  },
+  {
+    "title": "[Enhancement/UI]: Interactive Volume Slider HUD with Real-Time Decibel Percentage Meter",
+    "labels": [
+      "nsoc26",
+      "level2"
+    ],
+    "body": "## Problem\nThe global sound engine toggle allows only full mute or full volume. Players listening with headphones or playing in quiet environments have no granular volume control slider.\n\n## Architectural Scope & Requirements\n1. **Volume Slider UI (`assets/js/volume-control.js`, `assets/css/volume-slider.css`):**\n   - Add a sleek collapsible horizontal volume slider next to the sound toggle in the navigation header.\n   - Custom styled `<input type=\"range\">` with neon gradient progress fill and glowing thumb tracker.\n2. **Audio Master Gain Connection:**\n   - Connect the slider value (0.0 to 1.0) directly to the Web Audio API `masterGainNode.gain.setValueAtTime`.\n3. **Real-time Percentage Readout:**\n   - Display dynamic text readout: `0% (Muted)`, `50%`, `100% (Max)`. Persist chosen level in `localStorage`.\n\n## Acceptance Criteria\n- [ ] Smooth, real-time volume adjustment across all procedural sound synthesis.\n- [ ] Visual percentage readout updates seamlessly with slider drag.\n- [ ] Persists user volume preference across page navigations.\n- [ ] 100% Pure Vanilla JS and Web Audio API.",
+    "id": 8
+  },
+  {
+    "title": "[Enhancement/Catalog]: Category Quick-Filter Horizontal Scrollbar with Fade Gradients & Arrow Steppers",
+    "labels": [
+      "nsoc26",
+      "level2"
+    ],
+    "body": "## Problem\nAs ArcadeVerse expands with dozens of game categories (Action, Puzzle, Rhythm, Retro, Arcade, Physics), category filter pills wrap onto multiple vertical lines on mobile devices, taking up significant screen height.\n\n## Architectural Scope & Requirements\n1. **Horizontal Scroll Container (`assets/css/category-scroll.css`):**\n   - Restructure the category facet pills into a clean single-row horizontal scroll track (`overflow-x: auto; scrollbar-width: none`).\n2. **Edge Fade Masks & Steppers:**\n   - Apply CSS `mask-image` linear gradients on the left and right edges to visually indicate overflow content.\n   - Add left and right chevron stepper buttons that smoothly scroll the track by 150px on click.\n3. **Active Pill Centering:**\n   - When a user taps a category pill, automatically scroll the selected pill smoothly into center view.\n\n## Acceptance Criteria\n- [ ] Single-line horizontal scrolling preserving mobile screen real estate.\n- [ ] Stepper buttons show/hide dynamically based on scroll offset.\n- [ ] Smooth scroll-into-view behavior on pill click.\n- [ ] 100% Pure Vanilla JS and CSS3.",
+    "id": 9
+  },
+  {
+    "title": "[Enhancement/UI]: Game Card Favorite Star Animation with Particle Heart Burst Effect",
+    "labels": [
+      "nsoc26",
+      "level2"
+    ],
+    "body": "## Problem\nToggling a game as a favorite bookmarks the item in `localStorage`, but the visual feedback is a static icon swap without a rewarding micro-interaction.\n\n## Architectural Scope & Requirements\n1. **Micro-Interaction Animation (`assets/css/favorite-animation.css`):**\n   - Implement a playful CSS keyframe pop animation (`scale(0.8)` -> `scale(1.3)` -> `scale(1)`) on the favorite star button.\n2. **Mini Particle Burst:**\n   - Spawn 6 tiny CSS sparkle particles radiating outward around the button when favorited, fading out over 400ms.\n3. **A11y Notification:**\n   - Dispatch screen reader live region announcement: `\"{Game Title} added to favorites\"` / `\"{Game Title} removed from favorites\"`.\n\n## Acceptance Criteria\n- [ ] Tactile, smooth 60 FPS scale and particle animation on click.\n- [ ] Zero layout disruption to neighboring card elements.\n- [ ] Accessible status announcement for screen readers.\n- [ ] 100% Pure Vanilla CSS/JS.",
+    "id": 10
+  },
+  {
+    "title": "[Enhancement/A11y]: Dynamic Text Size Scale Adjuster (Small, Normal, Large) in Settings Drawer",
+    "labels": [
+      "nsoc26",
+      "level2"
+    ],
+    "body": "## Problem\nPlayers with visual impairments or those viewing on high-resolution displays may find the catalog card metadata and game synopsis fonts too small to read comfortably.\n\n## Architectural Scope & Requirements\n1. **Font Scale CSS Architecture (`assets/css/text-scale.css`):**\n   - Bind global typography sizes to a root CSS custom property `--base-text-scale: 1`.\n   - Define presets: Small (`0.875`), Default (`1.0`), Large (`1.15`), and Extra Large (`1.3`).\n2. **Settings Switcher Control:**\n   - Add an accessible 3-button segmented control in the settings drawer (`A-`, `A`, `A+`).\n3. **Persistence:**\n   - Save selected font scale in `localStorage` under `av_text_scale` and apply immediately before DOM rendering.\n\n## Acceptance Criteria\n- [ ] Modifying scale adjusts all headings, card descriptions, and nav text smoothly.\n- [ ] Layout remains responsive without overlapping or broken container bounds.\n- [ ] Preference persists across all page reloads.\n- [ ] 100% Pure Vanilla CSS and JS.",
+    "id": 11
+  },
+  {
+    "title": "[Enhancement/UX]: Auto-Scroll to Active Filtered Category Section on Selection",
+    "labels": [
+      "nsoc26",
+      "level2"
+    ],
+    "body": "## Problem\nWhen players scroll down the homepage to review categories and click a filter pill, the page stays at the current scroll position, forcing them to manually scroll back up to inspect the newly filtered games grid.\n\n## Architectural Scope & Requirements\n1. **Scroll Positioning Logic (`assets/js/app.js`):**\n   - When a category facet or search tag is selected, calculate the bounding rectangle of `#games-grid`.\n   - If the grid header is scrolled out of view, execute a smooth scroll (`behavior: 'smooth'`) to align the top of the grid with an 80px offset below the sticky navigation bar.\n2. **Respect User Context:**\n   - Skip auto-scroll if the grid is already prominently visible in the current viewport.\n\n## Acceptance Criteria\n- [ ] Smoothly scrolls to the games grid only when selected from an out-of-view scroll position.\n- [ ] Respects sticky navbar height without obscuring category title.\n- [ ] Gracefully supports `prefers-reduced-motion` by using instant scroll.\n- [ ] 100% Pure Vanilla JS.",
+    "id": 12
+  },
+  {
+    "title": "[Enhancement/UI]: Interactive Sound Toggle Mute Animation with Speaker Wave Ripples",
+    "labels": [
+      "nsoc26",
+      "level2"
+    ],
+    "body": "## Problem\nThe global audio mute button in the navbar currently toggles a static speaker icon, providing minimal visual feedback on whether sound synthesis is actively enabled.\n\n## Architectural Scope & Requirements\n1. **SVG Sound Wave Animation (`assets/css/speaker-waves.css`):**\n   - Replace static speaker icon with an inline SVG featuring 3 separate sound arc waves.\n   - When unmuted and audio is playing, animate arcs with staggered opacity pulses simulating acoustic sound waves.\n2. **Mute State Transition:**\n   - When muted, cleanly animate a diagonal slash stroke crossing through the speaker, pausing wave animations.\n3. **Tooltip and Aria:**\n   - Update `title` and `aria-label` dynamically to `\"Mute Audio (M)\"` and `\"Unmute Audio (M)\"`.\n\n## Acceptance Criteria\n- [ ] Smooth wave pulsing animation when audio is active.\n- [ ] Clear diagonal strike-through slash when audio is muted.\n- [ ] Seamless integration with global audio engine state.\n- [ ] 100% Pure CSS/SVG.",
+    "id": 13
+  },
+  {
+    "title": "[Enhancement/UI]: Game Description Expandable Read-More Accordion for Long Synopsis",
+    "labels": [
+      "nsoc26",
+      "level2"
+    ],
+    "body": "## Problem\nSome games have extensive multi-sentence descriptions that cause card heights to stretch unevenly in the catalog grid, breaking the clean visual alignment of card rows.\n\n## Architectural Scope & Requirements\n1. **CSS Text Clamping (`assets/css/card-clamp.css`):**\n   - Apply CSS line clamping (`-webkit-line-clamp: 2; display: -webkit-box; overflow: hidden`) to game card description paragraphs.\n2. **Read More Toggle Button:**\n   - For descriptions exceeding 2 lines, dynamically append a subtle `\"More...\"` link with a bottom gradient fade.\n   - Clicking expands the full synopsis smoothly without navigating away or opening the modal.\n3. **Keyboard Accessibility:**\n   - Focusable via keyboard with Enter/Spacebar toggle and appropriate `aria-expanded` attributes.\n\n## Acceptance Criteria\n- [ ] Enforces uniform 2-line card height across the entire games grid.\n- [ ] \"More...\" button renders only on descriptions that exceed 2 lines.\n- [ ] Smooth expand and collapse behavior with full keyboard support.\n- [ ] 100% Pure Vanilla JS and CSS3.",
+    "id": 14
+  },
+  {
+    "title": "[Enhancement/UX]: Game Modal Exit Confirmation Dialog with Don't Ask Again Checkbox",
+    "labels": [
+      "nsoc26",
+      "level2"
+    ],
+    "body": "## Problem\nWhen playing an engaging arcade game, accidentally pressing Escape or clicking outside the modal can trigger the exit dialog. However, experienced players find having to confirm exit every single time repetitive.\n\n## Architectural Scope & Requirements\n1. **Don't Ask Again Preference (`assets/js/app.js`):**\n   - Add a styled retro checkbox `\"Don't ask again this session\"` inside the quit confirmation modal.\n   - When checked, store `av_skip_exit_confirmation: true` in `sessionStorage`.\n2. **Direct Modal Closing:**\n   - If preference is set, subsequent Escape or close button clicks immediately close the game modal without blocking gameplay exit.\n3. **Reset in Settings:**\n   - Provide a \"Reset Quit Confirmation\" toggle in the settings drawer to restore the safety prompt anytime.\n\n## Acceptance Criteria\n- [ ] Checkbox renders cleanly inside the quit dialog.\n- [ ] Checking the box allows instant modal exit for the remainder of the session.\n- [ ] Settings drawer allows resetting preference.\n- [ ] 100% Pure Vanilla JS.",
+    "id": 15
+  },
+  {
+    "title": "[Enhancement/UI]: Catalog Footer Dynamic Version Pill & System Status Indicator Pulse",
+    "labels": [
+      "nsoc26",
+      "level2"
+    ],
+    "body": "## Problem\nThe footer displays static copyright text without indicating whether the offline Service Worker cache is active, what version of ArcadeVerse is running, or if connection to the host is healthy.\n\n## Architectural Scope & Requirements\n1. **Status Pill Component (`index.html`, `assets/css/status-pill.css`):**\n   - Add a compact status pill in the footer: a pulsing status dot, version badge (`v2.4.0`), and PWA cache status.\n2. **Online / Offline Event Handling:**\n   - Listen to `window.addEventListener('online')` and `'offline'`.\n   - When online: glowing green dot with text `\"Vault Online\"`.\n   - When offline: amber dot with text `\"Offline Ready (PWA Vault Active)\"`.\n3. **PWA Cache Inspection:**\n   - Query `navigator.serviceWorker.controller` to confirm local asset caching status.\n\n## Acceptance Criteria\n- [ ] Live pulsing green status indicator updating instantly on network state change.\n- [ ] Clear PWA offline readiness feedback for users.\n- [ ] Compact, elegant footer placement.\n- [ ] 100% Pure Vanilla JS and CSS.",
+    "id": 16
+  },
+  {
+    "title": "[Enhancement/UI]: Responsive Grid Column Toggle (2, 3, 4 Columns) for Desktop Displays",
+    "labels": [
+      "nsoc26",
+      "level2"
+    ],
+    "body": "## Problem\nDesktop users with ultra-wide or large displays have different viewing preferences: some prefer large immersive game cards (2 columns), while others prefer compact dense browsing (4 columns).\n\n## Architectural Scope & Requirements\n1. **Grid Density Switcher UI (`assets/js/grid-columns.js`):**\n   - Place a compact 3-icon button group above the games grid on desktop viewports (`||`, `|||`, `||||`).\n2. **CSS Grid Variable Architecture:**\n   - Dynamically update CSS custom property `--catalog-columns: repeat(var(--col-count, 3), 1fr)`.\n3. **Persistence:**\n   - Save selected column preference (`2`, `3`, or `4`) in `localStorage` under `av_catalog_columns`.\n   - Hidden gracefully on mobile and tablet viewports where responsive single/double columns are required.\n\n## Acceptance Criteria\n- [ ] Smooth transition between 2, 3, and 4 column grid layouts on desktop screens.\n- [ ] Persists user choice across browser sessions.\n- [ ] Gracefully defaults to standard responsive layout on smaller screens.\n- [ ] 100% Pure Vanilla JS and CSS Grid.",
+    "id": 17
+  },
+  {
+    "title": "[Enhancement/UX]: Copy Game Share Link Direct-to-Clipboard with Success Toast Notification",
+    "labels": [
+      "nsoc26",
+      "level2"
+    ],
+    "body": "## Problem\nSharing a specific game currently requires users to copy the entire browser address bar or manually type out the game query URL parameter.\n\n## Architectural Scope & Requirements\n1. **Share Button on Game Cards & Modals (`assets/js/share-game.js`):**\n   - Add a subtle share link icon button to each game card and active game modal header.\n2. **Clipboard Integration:**\n   - Use `navigator.clipboard.writeText()` with fallback to copy the exact deep link (e.g. `https://domain/?game=cyber-snake`).\n3. **Transient Toast Notification:**\n   - Display a floating neon toast `\"Game link copied to clipboard!\"` for 2.5 seconds with a smooth slide-in and fade-out animation.\n\n## Acceptance Criteria\n- [ ] Reliably copies canonical game deep-link URL to clipboard.\n- [ ] Non-intrusive, styled toast confirmation appears and dismisses automatically.\n- [ ] Keyboard accessible with appropriate ARIA feedback.\n- [ ] 100% Pure Vanilla JavaScript.",
+    "id": 18
+  },
+  {
+    "title": "[Enhancement/UI]: Dynamic Breadcrumb Navigation Trail on Active Game Modal Header",
+    "labels": [
+      "nsoc26",
+      "level2"
+    ],
+    "body": "## Problem\nWhen a game modal is open in fullscreen or overlay mode, players lose visual context of what category or collection the game belongs to, lacking an instant way to browse related titles.\n\n## Architectural Scope & Requirements\n1. **Breadcrumb Component (`assets/js/app.js`, `assets/css/breadcrumb.css`):**\n   - Insert an accessible breadcrumb trail above the game iframe title: `ArcadeVerse > {Category} > {Game Title}`.\n2. **Interactive Filtering Links:**\n   - Clicking `ArcadeVerse` closes the modal and resets the catalog.\n   - Clicking `{Category}` closes the modal and immediately filters the catalog to that category.\n3. **Responsive Truncation:**\n   - On mobile screens, truncate long game titles with an ellipsis (`text-overflow: ellipsis`) to prevent header clipping.\n\n## Acceptance Criteria\n- [ ] Clear hierarchical breadcrumb navigation on every opened game.\n- [ ] Clicking category returns to catalog with that category active.\n- [ ] Fully responsive and accessible with `nav[aria-label=\"Breadcrumb\"]`.\n- [ ] 100% Pure Vanilla JS and CSS.",
+    "id": 19
+  },
+  {
+    "title": "[Enhancement/UI]: Interactive Retro Loading Progress Bar with Neon Segment Blocks",
+    "labels": [
+      "nsoc26",
+      "level2"
+    ],
+    "body": "## Problem\nWhile game iframe assets and canvas resources are initializing inside the modal, a basic spinner circle is shown, which feels generic and out of place in a retro arcade environment.\n\n## Architectural Scope & Requirements\n1. **Segmented Progress Bar (`assets/css/retro-loader.css`):**\n   - Implement an authentic 8-bit segmented progress bar composed of glowing neon pixel blocks.\n2. **Simulated Initialization Stages:**\n   - Animate progress through realistic arcade boot stages: `\"Loading ROM...\"` (30%), `\"Mounting Audio Synth...\"` (70%), `\"Ready!\"` (100%).\n3. **Smooth Dismissal:**\n   - Upon iframe `DOMContentLoaded` or `window.load`, transition loader smoothly to 100% and fade out within 200ms.\n\n## Acceptance Criteria\n- [ ] Retro segmented loading block animation with authentic arcade feel.\n- [ ] Meaningful stage labels informing player of load progress.\n- [ ] Automatically fades out as soon as game iframe completes initialization.\n- [ ] 100% Pure Vanilla CSS and JavaScript.",
+    "id": 20
+  },
+  {
     "title": "[Theme/UI]: Retro Vaporwave Pastel Aesthetics & Windows 95 Vintage OS Theme",
     "labels": [
       "nsoc26",
       "level3"
     ],
-    "body": "## Problem\nRetro aesthetics encompass multiple eras. The mid-90s Vaporwave and Windows 95 aesthetic (classic beveled windows, teal desktops, pastel pinks) is widely beloved in retrogaming culture but missing from ArcadeVerse.\n\n## Architectural Scope & Requirements\n1. **Vaporwave / Win95 Palette (`assets/css/theme-vaporwave-win95.css`):**\n   - Classic Windows 95 Teal desktop: `#008080`.\n   - Vintage 3D Beveled Grey: `#c0c0c0` with `#ffffff` top-left highlights and `#808080` bottom-right shadow borders.\n   - Vaporwave Pastel Accents: Lavender `#b57bee`, Pastel Pink `#ff94c2`, and Sky Blue `#70d6ff`.\n2. **Authentic 3D Inset / Outset Buttons:**\n   - Re-styles buttons and cards with classic 2px 3D bevels that physically depress on click.\n3. **Retro Title Bars with Close Box:**\n   - Renders classic navy gradient title bars with pixelated `X` close buttons on modal windows.\n\n## Acceptance Criteria\n- [ ] Distinctive, charming 90s vintage OS aesthetic across all hub components.\n- [ ] Tactile 3D button press animations in pure CSS.\n- [ ] Clean integration into `theme-customizer.js` with instant switching."
+    "body": "## Problem\nWhile ArcadeVerse features neon cyberpunk palettes, fans of late-80s and 90s digital art love vaporwave aesthetics (pastel pinks, teal gradients, classic beveled window chrome, and checkered floors). The platform currently lacks a dedicated nostalgic vaporwave theme.\n\n## Architectural Scope & Requirements\n1. **Vaporwave CSS Architecture (`assets/css/theme-vaporwave.css`):**\n   - Palette: Pastel Pink `#ff71ce`, Cyan Teal `#01cdfe`, Soft Lavender `#b967ff`, Mint `#05ffa1`, and Sunlight Yellow `#fffb96`.\n   - Beveled window chrome: High-contrast 2px gray 3D inset/outset borders (`#dfdfdf`, `#ffffff`, `#808080`) reminiscent of classic desktop operating systems.\n2. **Retro Component Styling:**\n   - Classic beveled button states with sunken `:active` styling (`inset 1px 1px #000`).\n   - Title bars with horizontal gradient bars and pixelated close button keycaps.\n3. **Integration with Theme Selector:**\n   - Register `vaporwave` in `theme-customizer.js` with live stylesheet toggling and `localStorage` persistence.\n\n## Acceptance Criteria\n- [ ] Authentic pastel vaporwave aesthetic across all cards, modals, and nav bars.\n- [ ] Crisp 3D beveled borders with authentic classic OS button depression on click.\n- [ ] Seamless integration into the theme selector with full state persistence.\n- [ ] 100% Pure Vanilla CSS/JS without external image assets.",
+    "id": 21
   },
   {
-    "id": 17,
     "title": "[Feature/Audio]: Customizable UI Interaction Click Sound Packs with Zero-Asset Synthesis",
     "labels": [
       "nsoc26",
       "level3"
     ],
-    "body": "## Problem\nUI interactions (button clicks, tab switches, favorite toggles) currently play the same hardcoded sound effect or remain silent, offering players no choice in auditory feedback.\n\n## Architectural Scope & Requirements\n1. **Synthesized UI Click Sound Packs (`assets/js/ui-click-packs.js`):**\n   - Synthesizes 4 distinct tactile sound packs programmatically via Web Audio API:\n     - `Mechanical Keyboard`: Authentic Cherry MX Blue tactile switch clicks.\n     - `Arcade Microswitch`: Crisp physical joystick microswitch snaps.\n     - `Bubble Pop`: Playful hollow aquatic popping bubble sounds.\n     - `Sci-Fi Hologram`: Subtle futuristic high-frequency chimes.\n2. **Debounced Global Event Listener:**\n   - Attaches a single delegated click listener to `data-sound-trigger` and button elements with a 50ms debounce to prevent audio stacking during fast clicking.\n3. **Theme Settings Selector:**\n   - Sound pack selection dropdown in the theme customizer with instant preview button and volume slider.\n\n## Acceptance Criteria\n- [ ] 100% procedural sound synthesis without a single external audio file.\n- [ ] Under 0.1ms execution time per click with zero UI thread freezing.\n- [ ] Respects global sound mute settings in `localStorage`."
+    "body": "## Problem\nUI interactions (hovering cards, clicking filters, expanding modals, toggling bookmarks) currently occur in complete silence, missing the tactile auditory punch of physical arcade machines.\n\n## Architectural Scope & Requirements\n1. **Procedural UI SFX Engine (`assets/js/ui-sound-packs.js`):**\n   - Implement zero-asset audio synthesis using the Web Audio API with rapid exponential gain envelopes (10ms to 40ms duration).\n2. **Sound Pack Presets:**\n   - *Arcade Relay:* Mechanical solenoid clicks and spring pops.\n   - *Cyber Beep:* Short 880Hz / 1760Hz micro-sine chirps.\n   - *Bubble Pop:* Frequency-swept sine wave drops (600Hz down to 200Hz).\n3. **User Controls & Accessibility:**\n   - Add a Sound Pack selector in the settings drawer.\n   - Strictly respect the global mute state and default to muted on initial load.\n\n## Acceptance Criteria\n- [ ] Tactile, clean auditory feedback on button clicks and card hovers with zero audio latency.\n- [ ] Three procedural sound packs synthesized in pure code (0 KB audio file downloads).\n- [ ] User can switch packs or disable UI click sounds independently in settings.\n- [ ] Pure Web Audio API.",
+    "id": 22
   },
   {
-    "id": 18,
     "title": "[Enhancement/Catalog]: Multi-Criteria Game Comparison Drawer with Side-by-Side Spec Matrix",
     "labels": [
       "nsoc26",
       "level3"
     ],
-    "body": "## Problem\nWith over 120 games across diverse categories, players and developers often struggle to decide which games to play or analyze without launching them individually.\n\n## Architectural Scope & Requirements\n1. **Interactive Comparison Drawer (`assets/js/game-comparator-drawer.js`):**\n   - Allows users to select up to 3 games (via a new \"Compare\" button on cards) and open a slide-up comparison drawer.\n2. **Side-by-Side Metric Matrix:**\n   - Compares key attributes side-by-side: Category, Difficulty Rating, Input Controls (Keyboard, Mouse, Touch, Gamepad), High Score records, Author credits, and Tech Stack details.\n3. **1-Click Launch from Matrix:**\n   - Direct launch buttons for each compared game and 1-click \"Clear Comparison\" reset.\n\n## Acceptance Criteria\n- [ ] Smooth slide-up drawer animation on both desktop and mobile viewports.\n- [ ] Clean keyboard accessibility with `Escape` key dismissal.\n- [ ] Zero interference with default game launch modals."
+    "body": "## Problem\nPlayers deciding between multiple arcade titles (e.g. comparing two puzzle games or space shooters) have no way to compare game mechanics, control schemes, release dates, and high scores side-by-side.\n\n## Architectural Scope & Requirements\n1. **Comparison Drawer Component (`assets/js/game-comparator.js`):**\n   - Add a subtle \"Compare\" checkbox on each catalog game card.\n   - Allow selecting up to 3 games simultaneously, sliding up a docked comparison tray from the bottom.\n2. **Side-by-Side Spec Matrix:**\n   - Modal comparing: Category, Input Compatibility (Keyboard, Touch, Mouse), Difficulty, File Footprint, High Score, and Supported Features.\n3. **Direct Launch:**\n   - Allow launching any compared game directly from the matrix.\n\n## Acceptance Criteria\n- [ ] Select and compare up to 3 titles side-by-side cleanly.\n- [ ] Accurate metadata diffing highlighting matching and distinct tags.\n- [ ] Responsive drawer with collapse, clear, and direct-play triggers.\n- [ ] 100% Pure Vanilla JS and CSS.",
+    "id": 23
   },
   {
-    "id": 19,
     "title": "[Theme/UI]: Pitch Black OLED Pure Dark Mode for Battery Saving on Mobile Displays",
     "labels": [
       "nsoc26",
       "level3"
     ],
-    "body": "## Problem\nStandard dark modes use dark charcoal or grey backgrounds (`#121212` or `#1a1a2e`). On modern OLED/AMOLED mobile screens, pixels only truly turn off when displaying true pitch black (`#000000`). Using true black significantly cuts display battery consumption during extended mobile gaming sessions.\n\n## Architectural Scope & Requirements\n1. **Pure OLED Black Stylesheet (`assets/css/theme-oled-black.css`):**\n   - Enforces true `#000000` on body, containers, card backgrounds, and modals.\n2. **Crisp 1px Neon Wireframe Accents:**\n   - Uses razor-sharp 1px high-contrast borders (Electric Lime `#39ff14`, Cyan `#00ffff`) so elements remain distinct without requiring grey background fill blocks.\n3. **Battery Saving Verification:**\n   - Maximizes the percentage of turned-off pixels (> 85% of total screen area is true `#000000`).\n\n## Acceptance Criteria\n- [ ] 100% pure black `#000000` backgrounds across the entire platform.\n- [ ] Maximum visual clarity with vibrant neon contrast lines.\n- [ ] Seamless integration into `theme-customizer.js` with zero layout shifts."
+    "body": "## Problem\nExisting dark themes on ArcadeVerse use deep navy (`#070b14`) and charcoal (`#121620`) backgrounds. On mobile OLED and AMOLED displays, true black (`#000000`) completely turns off display pixels, dramatically saving battery life and offering infinite contrast.\n\n## Architectural Scope & Requirements\n1. **Pure OLED CSS Architecture (`assets/css/theme-oled-pure.css`):**\n   - True Black `#000000` base for `<body>`, containers, headers, and modal backdrops.\n   - High-contrast 1px hairline borders (`#222222`) and electric accent highlights (`#00e5ff`, `#39ff14`).\n2. **Component Optimization:**\n   - Eliminate heavy multi-layered box-shadow blur filters to minimize GPU compositor power consumption on mobile devices.\n3. **Theme Selector Integration:**\n   - Register `oled-pure` in `theme-customizer.js` with instant switching and persistent storage.\n\n## Acceptance Criteria\n- [ ] Exact `#000000` background across all primary structural containers.\n- [ ] Pixel-perfect contrast with zero light bleed on AMOLED displays.\n- [ ] Verified reduction in GPU paint complexity and smooth 60 FPS scrolling.\n- [ ] 100% Pure Vanilla CSS/JS.",
+    "id": 24
   },
   {
-    "id": 20,
     "title": "[Feature/Social]: Shareable Game Challenge Deep-Link URL Generator with Target Score Badges",
     "labels": [
       "nsoc26",
       "level3"
     ],
-    "body": "## Problem\nWhen a player scores a great run, sharing a generic game link only opens the game at score 0. There is no built-in way to challenge a friend to beat a specific score target.\n\n## Architectural Scope & Requirements\n1. **Challenge Link Generator (`assets/js/challenge-deep-link.js`):**\n   - Adds a \"Challenge a Friend\" button on game over screens and game cards.\n   - Encodes target score and challenger name into a shareable URL: `?game=cyber-runner&target=3500&challenger=Debasmita`.\n2. **In-Game Challenge Banner HUD:**\n   - When opened via a challenge link, displays an animated banner at the top of the game: `\"CHALLENGE: Beat Debasmita's 3,500 pts!\"` with real-time target distance tracking.\n3. **Victory Celebration Overlay:**\n   - If the player surpasses the target score during the run, immediately triggers a celebratory neon banner (\"TARGET SURPASSED!\") with confetti VFX.\n\n## Acceptance Criteria\n- [ ] Seamlessly parses challenge URL query parameters on game launch.\n- [ ] Generates instant shareable links with 1-click clipboard copy.\n- [ ] Clean fallback to standard game play if query parameters are missing or invalid."
+    "body": "## Problem\nWhen players achieve a personal record, they want to challenge friends to beat their specific score. ArcadeVerse supports basic game deep-links, but does not support challenge query parameters with target scores.\n\n## Architectural Scope & Requirements\n1. **Challenge URL Generator (`assets/js/challenge-deep-link.js`):**\n   - Add a \"Challenge a Friend\" button in the game over dialog.\n   - Generate encoded deep-links: `?game={id}&challenge=1&target={score}&challenger={encodedName}`.\n2. **In-Game Target HUD Banner:**\n   - When a game opens via a challenge link, display a floating retro target banner at top: `\"Beat {challenger}'s Score: {target} pts!\"`.\n3. **Challenge Completion Fanfare:**\n   - When the player surpasses the target score during the session, trigger a celebration particle burst and audio chime.\n\n## Acceptance Criteria\n- [ ] Generates valid, sanitized challenge deep links with target score payload.\n- [ ] Game modal detects challenge parameters and mounts target challenge banner.\n- [ ] Celebrates target score breakthroughs with visual and audio feedback.\n- [ ] 100% Pure Vanilla JavaScript.",
+    "id": 25
   },
   {
-    "id": 21,
     "title": "[Theme/UI]: Authentic 1984 Macintosh Classic Platinum Gray 1-Bit Stipple Pattern Theme Studio",
     "labels": [
       "nsoc26",
       "level3"
     ],
-    "body": "## Problem\nRetro computing enthusiasts revere the minimalist, clean aesthetics of the early GUI era, particularly the 1984 original Macintosh System 1 desktop. ArcadeVerse currently features neon, synthwave, dark, and CRT themes, but lacks an authentic vintage 1-bit monochrome desktop computing aesthetic.\n\n## Architectural Scope & Requirements\n1. **1-Bit Stipple CSS Engine (`assets/css/theme-macintosh-classic.css`):**\n   - Implement an authentic 2x2 pixel stipple checkerboard desktop background using CSS SVG data URI pattern fills (`#ffffff` and `#808080`).\n   - Clean Chicago-inspired bitmap typography styling, flat 1px black borders with sharp 1px drop-shadows, and retro window title bars with horizontal hairline stripes.\n2. **Component Reskinning:**\n   - Style all arcade cards, search facets, filter buttons, and dialog modals with classic vintage desktop window bevels and monochrome scrollbar tracks.\n3. **Theme Customizer Integration:**\n   - Register `macintosh-classic` in `theme-customizer.js` with instant live switching and `localStorage` persistence.\n\n## Acceptance Criteria\n- [ ] Authentic 1-bit monochrome stipple wallpaper and retro window chrome styling across all pages.\n- [ ] High-contrast, sharp 1px border aesthetic with zero fuzzy gradient bleeds.\n- [ ] Seamless integration into the theme selector with full state persistence.\n- [ ] 100% Pure Vanilla CSS/JS without external fonts or dependencies."
+    "body": "## Problem\nRetro computing enthusiasts revere the minimalist, clean aesthetics of the early GUI era, particularly the 1984 original Macintosh System 1 desktop. ArcadeVerse currently features neon, synthwave, dark, and CRT themes, but lacks an authentic vintage 1-bit monochrome desktop computing aesthetic.\n\n## Architectural Scope & Requirements\n1. **1-Bit Stipple CSS Engine (`assets/css/theme-macintosh-classic.css`):**\n   - Implement an authentic 2x2 pixel stipple checkerboard desktop background using CSS SVG data URI pattern fills (`#ffffff` and `#808080`).\n   - Clean Chicago-inspired bitmap typography styling, flat 1px black borders with sharp 1px drop-shadows, and retro window title bars with horizontal hairline stripes.\n2. **Component Reskinning:**\n   - Style all arcade cards, search facets, filter buttons, and dialog modals with classic vintage desktop window bevels and monochrome scrollbar tracks.\n3. **Theme Customizer Integration:**\n   - Register `macintosh-classic` in `theme-customizer.js` with instant live switching and `localStorage` persistence.\n\n## Acceptance Criteria\n- [ ] Authentic 1-bit monochrome stipple wallpaper and retro window chrome styling across all pages.\n- [ ] High-contrast, sharp 1px border aesthetic with zero fuzzy gradient bleeds.\n- [ ] Seamless integration into the theme selector with full state persistence.\n- [ ] 100% Pure Vanilla CSS/JS without external fonts or dependencies.",
+    "id": 26
   },
   {
-    "id": 22,
     "title": "[Feature/Audio]: Dynamic Interactive Morse Code Audio Keyer & Telegraph SFX Studio",
     "labels": [
       "nsoc26",
       "level3"
     ],
-    "body": "## Problem\nAudio accessibility and vintage communications enthusiasts often enjoy retro auditory signaling. The platform currently provides chiptune and synthesizer tools, but lacks a dedicated interactive Morse code telegraph studio for synthesizing international Morse code soundscapes and decoding real-time key taps.\n\n## Architectural Scope & Requirements\n1. **Pure Web Audio Morse Keyer (`assets/js/morse-code-audio-keyer.js`):**\n   - Implement international Morse standard timing: dit (1 unit), dah (3 units), intra-character gap (1 unit), inter-letter gap (3 units), and inter-word gap (7 units).\n   - Use clean sine-wave synthesis with rapid exponential ramp envelopes (5ms attack/decay) to eliminate speaker clicks.\n2. **Interactive Telegraph Interface:**\n   - Virtual brass straight-key button supporting both mouse clicks and Spacebar tapping with live pitch and tone generation.\n   - Real-time text-to-Morse audio converter and live audio frequency visualizer.\n3. **Customization Controls:**\n   - WPM speed slider (5 to 35 WPM), tone frequency tuner (400 Hz to 1000 Hz), and volume master governor.\n\n## Acceptance Criteria\n- [ ] Accurate international Morse code timing and clean click-free Web Audio sound synthesis.\n- [ ] Interactive virtual telegraph key with responsive keyboard and touch triggers.\n- [ ] Bi-directional text translation and audio generation with real-time waveform feedback.\n- [ ] 100% Pure Vanilla Web Audio API without external audio samples."
+    "body": "## Problem\nAudio accessibility and vintage communications enthusiasts often enjoy retro auditory signaling. The platform currently provides chiptune and synthesizer tools, but lacks a dedicated interactive Morse code telegraph studio for synthesizing international Morse code soundscapes and decoding real-time key taps.\n\n## Architectural Scope & Requirements\n1. **Pure Web Audio Morse Keyer (`assets/js/morse-code-audio-keyer.js`):**\n   - Implement international Morse standard timing: dit (1 unit), dah (3 units), intra-character gap (1 unit), inter-letter gap (3 units), and inter-word gap (7 units).\n   - Use clean sine-wave synthesis with rapid exponential ramp envelopes (5ms attack/decay) to eliminate speaker clicks.\n2. **Interactive Telegraph Interface:**\n   - Virtual brass straight-key button supporting both mouse clicks and Spacebar tapping with live pitch and tone generation.\n   - Real-time text-to-Morse audio converter and live audio frequency visualizer.\n3. **Customization Controls:**\n   - WPM speed slider (5 to 35 WPM), tone frequency tuner (400 Hz to 1000 Hz), and volume master governor.\n\n## Acceptance Criteria\n- [ ] Accurate international Morse code timing and clean click-free Web Audio sound synthesis.\n- [ ] Interactive virtual telegraph key with responsive keyboard and touch triggers.\n- [ ] Bi-directional text translation and audio generation with real-time waveform feedback.\n- [ ] 100% Pure Vanilla Web Audio API without external audio samples.",
+    "id": 27
   },
   {
-    "id": 23,
     "title": "[Feature/VFX]: Interactive Canvas Holographic Diffraction Grating & Rainbow Iridescence Studio",
     "labels": [
       "nsoc26",
       "level3"
     ],
-    "body": "## Problem\nPhysical arcade trading cards, collector foils, and high-end cabinet marquees frequently feature holographic diffraction grating foil that shimmers into rainbow caustics under changing lighting angles. ArcadeVerse currently relies on static flat images for game cards, lacking dynamic optical iridescence.\n\n## Architectural Scope & Requirements\n1. **Optical Shader & Diffraction Simulation (`assets/js/holographic-diffraction-studio.js`):**\n   - Implement real-time thin-film interference simulation using an HTML5 Canvas overlay.\n   - Calculate surface normal vectors relative to cursor coordinates and mobile device gyroscope tilt angles (`DeviceOrientationEvent`).\n2. **Prismatic Rainbow Dispersion:**\n   - Map incident light angles to spectral wavelength color ramps (violet to red) with realistic specular glare highlights.\n3. **Card & Modal Mounting:**\n   - Overlay on featured showcase cards and achievement modals with `mix-blend-mode: color-dodge` and reduced motion safeguards (`prefers-reduced-motion`).\n\n## Acceptance Criteria\n- [ ] Realistic rainbow prismatic color dispersion shifting with mouse position and device orientation.\n- [ ] Smooth 60 FPS canvas rendering with low memory overhead and zero DOM thrashing.\n- [ ] Respects `prefers-reduced-motion` by gracefully disabling dynamic angular animations.\n- [ ] 100% Pure Vanilla JS and Canvas 2D context."
+    "body": "## Problem\nPhysical arcade trading cards, collector foils, and high-end cabinet marquees frequently feature holographic diffraction grating foil that shimmers into rainbow caustics under changing lighting angles. ArcadeVerse currently relies on static flat images for game cards, lacking dynamic optical iridescence.\n\n## Architectural Scope & Requirements\n1. **Optical Shader & Diffraction Simulation (`assets/js/holographic-diffraction-studio.js`):**\n   - Implement real-time thin-film interference simulation using an HTML5 Canvas overlay.\n   - Calculate surface normal vectors relative to cursor coordinates and mobile device gyroscope tilt angles (`DeviceOrientationEvent`).\n2. **Prismatic Rainbow Dispersion:**\n   - Map incident light angles to spectral wavelength color ramps (violet to red) with realistic specular glare highlights.\n3. **Card & Modal Mounting:**\n   - Overlay on featured showcase cards and achievement modals with `mix-blend-mode: color-dodge` and reduced motion safeguards (`prefers-reduced-motion`).\n\n## Acceptance Criteria\n- [ ] Realistic rainbow prismatic color dispersion shifting with mouse position and device orientation.\n- [ ] Smooth 60 FPS canvas rendering with low memory overhead and zero DOM thrashing.\n- [ ] Respects `prefers-reduced-motion` by gracefully disabling dynamic angular animations.\n- [ ] 100% Pure Vanilla JS and Canvas 2D context.",
+    "id": 28
   },
   {
-    "id": 24,
     "title": "[Enhancement/UI]: Interactive Dual-Spool Retro Audio Cassette Tape Rewind & Fast-Forward Animation HUD",
     "labels": [
       "nsoc26",
       "level3"
     ],
-    "body": "## Problem\nArcadeVerse features ambient background chiptune audio, but the player UI is a simple minimal button. Players lack a tactile, visually engaging retro audio playback mechanism reminiscent of 1980s boomboxes and cassette Walkmans.\n\n## Architectural Scope & Requirements\n1. **Cassette HUD Architecture (`assets/js/cassette-tape-hud.js`):**\n   - Render a detailed retro compact audio cassette enclosure with transparent plastic center window.\n   - Dual rotating spools with dynamically transferring magnetic tape radius (left spool shrinks as right spool grows during playback).\n2. **Tactile Mechanical Controls:**\n   - Interactive Play, Pause, Fast-Forward (4x speed spool rotation), and Rewind buttons.\n   - Procedural mechanical latching and gear-whir click SFX synthesized via Web Audio API.\n3. **Integration with Hub Audio:**\n   - Synchronize spool rotation state directly with background audio playback events.\n\n## Acceptance Criteria\n- [ ] Dynamic dual-spool tape rotation with accurate tape radius transfer calculation.\n- [ ] Responsive mechanical button controls with synthesized tactile click effects.\n- [ ] Compact floating or docked HUD widget with collapse and drag capabilities.\n- [ ] 100% Pure Vanilla JS and Canvas/SVG rendering with zero external images."
+    "body": "## Problem\nArcadeVerse features ambient background chiptune audio, but the player UI is a simple minimal button. Players lack a tactile, visually engaging retro audio playback mechanism reminiscent of 1980s boomboxes and cassette Walkmans.\n\n## Architectural Scope & Requirements\n1. **Cassette HUD Architecture (`assets/js/cassette-tape-hud.js`):**\n   - Render a detailed retro compact audio cassette enclosure with transparent plastic center window.\n   - Dual rotating spools with dynamically transferring magnetic tape radius (left spool shrinks as right spool grows during playback).\n2. **Tactile Mechanical Controls:**\n   - Interactive Play, Pause, Fast-Forward (4x speed spool rotation), and Rewind buttons.\n   - Procedural mechanical latching and gear-whir click SFX synthesized via Web Audio API.\n3. **Integration with Hub Audio:**\n   - Synchronize spool rotation state directly with background audio playback events.\n\n## Acceptance Criteria\n- [ ] Dynamic dual-spool tape rotation with accurate tape radius transfer calculation.\n- [ ] Responsive mechanical button controls with synthesized tactile click effects.\n- [ ] Compact floating or docked HUD widget with collapse and drag capabilities.\n- [ ] 100% Pure Vanilla JS and Canvas/SVG rendering with zero external images.",
+    "id": 29
   },
   {
-    "id": 25,
     "title": "[Feature/Social]: Global Arcade Activity Feed Ticker & Live Event Notification Stream",
     "labels": [
       "nsoc26",
       "level3"
     ],
-    "body": "## Problem\nWhile browsing the extensive game catalog, the platform feels static and solitary. Players do not have an immediate sense of platform vitality, recent high-score breakthroughs, or achievement unlocks across the arcade ecosystem.\n\n## Architectural Scope & Requirements\n1. **Marquee Activity Ticker (`assets/js/arcade-activity-ticker.js`):**\n   - Implement a lightweight, smooth continuous horizontal ticker docked at the bottom of the catalog.\n   - Stream recent local gameplay achievements, high-score records, and daily challenge completions.\n2. **Event Dispatcher & Privacy:**\n   - Listen to internal game lifecycle events (`ARCADEVERSE_HIGH_SCORE`, `AV_ACHIEVEMENT_UNLOCKED`) via standard `window.addEventListener`.\n   - Store recent event telemetry locally in `localStorage` without collecting personally identifiable information.\n3. **User Controls:**\n   - Hover-to-pause functionality, toggle mute, and a collapsible compact mode for small viewports.\n\n## Acceptance Criteria\n- [ ] Smooth continuous 60 FPS scrolling ticker with zero layout jank.\n- [ ] Real-time event ingestion and dynamic notification pill generation.\n- [ ] Hover-to-pause and mobile-responsive collapse toggle.\n- [ ] 100% Pure Vanilla JavaScript and CSS animations."
+    "body": "## Problem\nWhile browsing the extensive game catalog, the platform feels static and solitary. Players do not have an immediate sense of platform vitality, recent high-score breakthroughs, or achievement unlocks across the arcade ecosystem.\n\n## Architectural Scope & Requirements\n1. **Marquee Activity Ticker (`assets/js/arcade-activity-ticker.js`):**\n   - Implement a lightweight, smooth continuous horizontal ticker docked at the bottom of the catalog.\n   - Stream recent local gameplay achievements, high-score records, and daily challenge completions.\n2. **Event Dispatcher & Privacy:**\n   - Listen to internal game lifecycle events (`ARCADEVERSE_HIGH_SCORE`, `AV_ACHIEVEMENT_UNLOCKED`) via standard `window.addEventListener`.\n   - Store recent event telemetry locally in `localStorage` without collecting personally identifiable information.\n3. **User Controls:**\n   - Hover-to-pause functionality, toggle mute, and a collapsible compact mode for small viewports.\n\n## Acceptance Criteria\n- [ ] Smooth continuous 60 FPS scrolling ticker with zero layout jank.\n- [ ] Real-time event ingestion and dynamic notification pill generation.\n- [ ] Hover-to-pause and mobile-responsive collapse toggle.\n- [ ] 100% Pure Vanilla JavaScript and CSS animations.",
+    "id": 30
+  },
+  {
+    "title": "[Feature/Physics]: 2D Rope & Double Pendulum Chaotic Motion Physics Sandbox",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse features classic mechanics and particle demos, but lacks an interactive showcase demonstrating non-linear chaotic physics, pendulum inertia, and distance constraint solving.\n\n## Architectural Scope & Requirements\n1. **Double Pendulum Engine (`assets/js/chaotic-pendulum-sandbox.js`):**\n   - Implement Runge-Kutta 4th order (RK4) integration for solving the equations of motion of a compound double pendulum.\n   - Render multi-colored phosphorescent trail traces mapping chaotic attractor trajectories on an HTML5 Canvas.\n2. **Verlet Rope Simulation:**\n   - Multi-segment rope chain with distance constraint relaxation and mouse drag interaction.\n3. **Controls & Customization:**\n   - Sliders for pendulum rod lengths, bob masses, gravity, and air resistance damping.\n\n## Acceptance Criteria\n- [ ] Accurate chaotic double pendulum simulation with numerical stability.\n- [ ] Real-time fading trajectory trail rendering with customizable color ramps.\n- [ ] Interactive mouse/touch grabbing of pendulum bobs.\n- [ ] 100% Pure Vanilla JS with zero external physics engines.",
+    "id": 31
+  },
+  {
+    "title": "[Theme/UI]: Authentic 1977 Apple II Composite NTSC Artifacting & Retro Font Theme Studio",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nEarly 8-bit home computing on composite color televisions used NTSC color artifacting (subcarrier phase shifts generating color from monochrome pixel patterns). ArcadeVerse currently lacks an authentic Apple II era phosphor aesthetic.\n\n## Architectural Scope & Requirements\n1. **Apple II CSS Theme (`assets/css/theme-apple-ii.css`):**\n   - Palette: Black `#000000`, Violet `#912be2`, Green `#10a310`, White `#ffffff`, Orange `#e45c10`, and Blue `#105ce4`.\n   - Simulated composite artifacting with alternating green/violet vertical fringe lines and scanline interlace.\n2. **Typography & Layout:**\n   - 40-column retro monospace character spacing and authentic uppercase-heavy terminal borders.\n3. **Theme Customizer Integration:**\n   - Registered in `theme-customizer.js` with instant stylesheet swapping and `localStorage` persistence.\n\n## Acceptance Criteria\n- [ ] Authentic Apple II composite color artifacting aesthetic across all hub cards and modals.\n- [ ] High-contrast, authentic 1977 home computing visual identity.\n- [ ] Seamless integration into the theme switcher with state persistence.\n- [ ] 100% Pure Vanilla CSS/JS.",
+    "id": 32
+  },
+  {
+    "title": "[Feature/Audio]: Web Audio Procedural Atmospheric Storm & Distant Thunder Audio Synthesizer",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nPlatform ambient audio currently focuses exclusively on upbeat chiptune music. Players playing puzzle, mystery, or nocturnal games often desire relaxing, atmospheric procedural nature soundscapes without looping pre-recorded MP3 files.\n\n## Architectural Scope & Requirements\n1. **Procedural Rain & Wind (`assets/js/ambient-storm-synthesizer.js`):**\n   - White noise generator passed through a BiquadFilter (bandpass) with an LFO-modulated cutoff frequency simulating gusting wind.\n   - High-pass filtered pink noise with random micro-impulses creating realistic raindrops.\n2. **Distant Thunder Simulation:**\n   - Procedural burst synthesis: sudden sharp low-pass impulse followed by slow rolling resonance decay (30Hz to 80Hz rumble).\n3. **Controls & Performance:**\n   - Volume sliders for Rain Intensity, Wind Velocity, and Thunder Frequency with zero network audio asset downloads.\n\n## Acceptance Criteria\n- [ ] Rich, organic atmospheric storm soundscape generated 100% procedurally in real time.\n- [ ] Zero audio sample files (zero KB bandwidth overhead).\n- [ ] Low CPU audio synthesis with clean audio context disposal upon stop.\n- [ ] Pure Web Audio API.",
+    "id": 33
+  },
+  {
+    "title": "[Feature/VFX]: Interactive 2D Magnetic Ferrofluid Spike Formation & Attraction Physics Canvas",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nFerrofluids (nanoscale magnetic particles suspended in fluid) create captivating dynamic spikes under magnetic fields. ArcadeVerse lacks an interactive science/math physics toy showcasing surface tension and magnetic field lines.\n\n## Architectural Scope & Requirements\n1. **Ferrofluid Simulation (`assets/js/ferrofluid-physics-canvas.js`):**\n   - 2D canvas simulation modeling magnetic attraction vectors from cursor/touch poles.\n   - Dynamic surface normal spike elongation proportional to magnetic field strength and distance.\n2. **Specular Metallic Shading:**\n   - Dark obsidian fluid rendering with high-specular metallic highlights and fluid coalescence.\n3. **Interaction & Multi-Pole Support:**\n   - Support for multiple magnetic poles (North / South repulsion and attraction).\n\n## Acceptance Criteria\n- [ ] Real-time procedural magnetic spike formation responding to cursor movement.\n- [ ] Smooth 60 FPS performance with low memory allocation.\n- [ ] Touch-screen support with multi-touch magnetic pole placement.\n- [ ] 100% Pure Vanilla Canvas 2D and JavaScript.",
+    "id": 34
+  },
+  {
+    "title": "[Feature/UX]: Interactive Voice-Guided Arcade Audio Tour & Virtual Tour Guide Subsystem",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nFirst-time visitors to ArcadeVerse can be overwhelmed by over 115+ community games, multiple themes, and tools. The site lacks an interactive, hands-free guided tour introducing key features.\n\n## Architectural Scope & Requirements\n1. **Arcade Tour Guide Engine (`assets/js/arcade-tour-guide.js`):**\n   - Interactive multi-step walkthrough highlighting: Featured Games, Category Filter, Leaderboard, and Theme Customizer.\n2. **Speech Synthesis Integration:**\n   - Use the native Web Speech API (`window.speechSynthesis`) with robotic pitch modulation to deliver retro arcade guide voice prompts.\n   - Provide simultaneous retro speech bubble captions for hearing-impaired users.\n3. **Controls & Mute:**\n   - Instant Skip, Pause, and Mute Voice options; remembers completed tour in `localStorage`.\n\n## Acceptance Criteria\n- [ ] Guided spotlight focus navigating through key arcade hub landmarks.\n- [ ] Clear voice narration paired with synchronized speech bubble captions.\n- [ ] Non-intrusive, dismissible at any step with persistence.\n- [ ] 100% Pure Vanilla JS without external tour libraries.",
+    "id": 35
+  },
+  {
+    "title": "[Feature/Graphics]: Procedural Pseudo-3D Voxel Heightmap Terrain Flyover Engine",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nRetro 90s flight simulators (e.g. *Comanche*, *Mars*, early voxel engines) achieved vast 3D landscape rendering on modest hardware using 2D raycasting over 2D heightmaps. ArcadeVerse currently lacks an authentic voxel terrain rendering experiment.\n\n## Architectural Scope & Requirements\n1. **Voxel Engine (`assets/js/voxel-terrain-flyover.js`):**\n   - Implement raycast column rendering over procedural Perlin/Simplex heightmap and colormap arrays on an HTML5 Canvas.\n   - Support forward motion, altitude changes, and yaw rotation at 60 FPS.\n2. **Procedural Terrain Generator:**\n   - Generate layered fractal noise heightmaps in memory with adjustable mountain peaks and cyber-grid valleys.\n3. **HUD Controls:**\n   - Render retro flight instrumentation: Artificial Horizon, Compass Bearing, and Altitude Gauge.\n\n## Acceptance Criteria\n- [ ] Smooth 60 FPS pseudo-3D voxel terrain flyover rendering.\n- [ ] Interactive flight steering using Arrow Keys, WASD, or touch virtual joystick.\n- [ ] Adjustable render distance and fog density sliders.\n- [ ] 100% Pure Vanilla JavaScript without WebGL or third-party engines.",
+    "id": 36
+  },
+  {
+    "title": "[Theme/UI]: Virtual Boy Dual-Tone Red & Black Stereoscopic 3D Wireframe Theme Studio",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nThe mid-90s saw radical experimentation with stereoscopic gaming displays, epitomized by Nintendo's 1995 Virtual Boy. ArcadeVerse currently features monochrome green and amber phosphor themes, but lacks a stark dual-tone crimson red and obsidian aesthetic.\n\n## Architectural Scope & Requirements\n1. **Virtual Boy CSS Theme (`assets/css/theme-virtual-boy.css`):**\n   - Palette: Pure Obsidian `#000000`, Deep Crimson `#5a0000`, Bright Ruby `#b00000`, and Neon Scarlet `#ff0000`.\n   - Subtle anaglyph red-offset shadow styling (`text-shadow: 2px 0 0 #ff0000, -2px 0 0 #5a0000`).\n2. **Wireframe Grid Mesh:**\n   - Render glowing red wireframe borders (1px solid `#b00000`) and translucent dark ruby overlays on cards and modals.\n3. **Theme Customizer Integration:**\n   - Registered in `theme-customizer.js` with instant switching and persistent `localStorage` state.\n\n## Acceptance Criteria\n- [ ] Authentic high-contrast red-and-black dual-tone aesthetic across all components.\n- [ ] Clean visual hierarchy with zero muddy colors or unreadable contrast.\n- [ ] Fully integrated into the theme selector drawer.\n- [ ] 100% Pure Vanilla CSS/JS.",
+    "id": 37
+  },
+  {
+    "title": "[Feature/Audio]: Dynamic Web Audio Theremin Instrument with Cursor Frequency & Vibrato Control",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nThe theremin (the first electronic musical instrument, invented in 1920) produces haunting retro sci-fi sounds controlled without physical contact. The arcade platform lacks an intuitive continuous-pitch gesture instrument.\n\n## Architectural Scope & Requirements\n1. **Theremin Audio Engine (`assets/js/virtual-theremin.js`):**\n   - Pitch axis (horizontal cursor position / touch X): Maps smoothly from 65 Hz (C2) to 1046 Hz (C6) with exponential pitch scaling.\n   - Volume axis (vertical cursor position / touch Y): Maps linearly from silence (bottom) to 0 dB gain (top).\n2. **Vibrato LFO Node:**\n   - An independent low-frequency oscillator (5 Hz to 8 Hz) modulating oscillator frequency for rich musical vibrato.\n3. **Visual Pitch Aerial:**\n   - Interactive SVG antenna with glowing electric particle arcs radiating toward the active cursor position.\n\n## Acceptance Criteria\n- [ ] Glissando continuous pitch tracking with zero audio pops or discontinuous phase clicks.\n- [ ] Smooth exponential frequency interpolation and responsive volume response.\n- [ ] Interactive visual antenna rendering on canvas.\n- [ ] Pure Web Audio API.",
+    "id": 38
+  },
+  {
+    "title": "[Feature/Audio]: Interactive Dynamic Web Audio Vocoder & Formant Filter Synthesizer",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nClassic 1970s and 80s arcade robotic voices (e.g. *Berzerk*, *Sinistar*) were created using vocal tract formant filtering and vocoders. ArcadeVerse currently has no tool synthesizing authentic robotic vocal phonemes.\n\n## Architectural Scope & Requirements\n1. **Formant Synthesis Architecture (`assets/js/formant-vocoder-synth.js`):**\n   - Model vocal tract resonances using 3 parallel BiquadFilter bandpass nodes corresponding to standard human vowel formants (F1, F2, F3 for vowels: /a/, /e/, /i/, /o/, /u/).\n2. **Carrier Pulse Wave Generator:**\n   - Low-frequency buzz pulse oscillator (80 Hz to 220 Hz) fed into formant filters to produce synthetic speech-like vowel phonemes.\n3. **Interactive Phoneme Matrix:**\n   - Grid of interactive vowel and robot phrase buttons triggering procedural voice chirps with real-time spectrum display.\n\n## Acceptance Criteria\n- [ ] Clear synthetic vowel formant resonance without external audio samples.\n- [ ] Interactive phoneme soundboard with adjustable robotic pitch controls.\n- [ ] Real-time frequency spectrum display showing formant resonance peaks.\n- [ ] 100% Pure Vanilla Web Audio API.",
+    "id": 39
+  },
+  {
+    "title": "[Feature/VFX]: Interactive 2D Gravitational Lensing & Black Hole Accretion Disk Warp Canvas",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nSpace-themed arcade games and cosmic visuals are a core pillar of ArcadeVerse, but background visuals currently lack relativistic optical phenomena such as gravitational light deflection around intense masses.\n\n## Architectural Scope & Requirements\n1. **Gravitational Lensing Canvas (`assets/js/gravitational-lensing-canvas.js`):**\n   - 2D Canvas shader simulating Einstein ring light deflection: bending incoming background pixel coordinates toward a central black hole singularity based on inverse distance ($1/r$).\n2. **Dynamic Accretion Disk:**\n   - Procedural swirling plasma accretion disk with relativistic Doppler beaming (brighter approaching side, dimmer receding side).\n3. **Interactive Cursor Mass:**\n   - Allow dragging the black hole mass across the catalog starfield, smoothly distorting behind-the-scenes star coordinates.\n\n## Acceptance Criteria\n- [ ] Physically inspired gravitational light deflection and photon sphere rendering.\n- [ ] Smooth 60 FPS performance utilizing optimized typed arrays (`ImageData.data`).\n- [ ] Draggable singularity responding smoothly to mouse and touch input.\n- [ ] 100% Pure Vanilla JS and HTML5 Canvas.",
+    "id": 40
   }
 ]
