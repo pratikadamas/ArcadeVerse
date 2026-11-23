@@ -170,7 +170,7 @@
               <li><a href="#scoring-engine" class="docs-nav-link"><i data-lucide="cpu"></i> Scoring & Leaderboard</a></li>
               <li><a href="#storage-manager" class="docs-nav-link"><i data-lucide="hard-drive"></i> Save Data Vault & Manager</a></li>
               <li><a href="#snapshot-studio" class="docs-nav-link"><i data-lucide="camera"></i> Retro Snapshot Studio</a></li>
-              <li><a href="#theme-studio" class="docs-nav-link"><i data-lucide="palette"></i> Theme Studio & WCAG Contrast</a></li>
+              <li><a href="#pinball-touch-controls" class="docs-nav-link"><i data-lucide="gamepad-2"></i> Virtual Pinball Touch Controls</a></li>
               <li><a href="#wallpaper-studio" class="docs-nav-link"><i data-lucide="image"></i> Wallpaper Studio</a></li>
               <li><a href="#slot-reel" class="docs-nav-link"><i data-lucide="dices"></i> Slot Reel Roulette Picker</a></li>
               <li><a href="#playlist-system" class="docs-nav-link"><i data-lucide="list-music"></i> Custom Playlist Engine</a></li>
@@ -1207,19 +1207,18 @@ if (ArcadeVerse.a11y.isAudioBeaconEnabled()) {
           </ul>
         </section>
 
-        <!-- 15c-5. Theme Studio & WCAG Contrast Checker -->
-        <section class="docs-section" id="theme-studio">
+        <!-- 15c-4. Virtual Arcade Pinball Touch Controls -->
+        <section class="docs-section" id="pinball-touch-controls">
           <span class="docs-section-tag">04 / Platform Subsystems</span>
-          <h2 class="docs-section-title">Theme Studio & WCAG 2.1 Contrast Checker</h2>
+          <h2 class="docs-section-title">Virtual Arcade Pinball Dual Flipper & Haptic Spring Plunger</h2>
           <p class="docs-paragraph">
-            Implemented in <code>assets/js/theme-studio.js</code> and styled in <code>assets/css/theme-studio.css</code>, this accessibility subsystem empowers players to build personalized high-contrast neon themes while guaranteeing full compliance with WCAG 2.1 visual accessibility standards.
+            Implemented in <code>assets/js/pinball-touch-controller.js</code> and styled in <code>assets/css/pinball-touch-controller.css</code>, this mobile control subsystem automatically equips touch-screen smartphones and tablets with physical arcade pinball controls when launching Pinball and Physics games.
           </p>
           <ul>
-            <li><strong>Interactive Token Customization:</strong> Fine-tune core platform design tokens (<code>--bg-main</code>, <code>--bg-card</code>, <code>--accent-primary</code>, and <code>--text-primary</code>) with real-time platform reflection.</li>
-            <li><strong>Real-Time Contrast Ratio Engine:</strong> Computes relative photometric luminance ($L_1, L_2$) and exact contrast ratios ($CR = (L_1 + 0.05) / (L_2 + 0.05)$) with live ratings: Pass (AAA) [$\ge 7:1$], Pass (AA) [$\ge 4.5:1$], or Fail.</li>
-            <li><strong>Platform Accessibility Gatekeeper:</strong> Enforces WCAG 2.1 Level AA minimum contrast standards ($4.5:1$ for body text) before allowing custom themes to be saved or activated.</li>
-            <li><strong>Intelligent Auto-Fix Engine:</strong> Provides a 1-click optimizer that dynamically adjusts text brightness to reach guaranteed accessibility compliance.</li>
-            <li><strong>CSS & JSON Interchange:</strong> One-click export to clipboard as ready-to-paste CSS custom properties or portable theme JSON configurations.</li>
+            <li><strong>Ergonomic Dual Flipper Zones:</strong> Splits the lower 48% of the viewport into left and right transparent touch zones with independent Set-based multi-touch tracking for simultaneous actuation and zero latency.</li>
+            <li><strong>Spring-Loaded Plunger Slider:</strong> A vertical rail plunger allowing players to drag downward to compress the internal spring ($F = -kx$). Releasing fires launch impulses proportional to pull displacement.</li>
+            <li><strong>Web Haptics Integration:</strong> Synthesizes crisp haptic pulses (<code>navigator.vibrate([15])</code>) on flipper actuations and dynamic vibration on plunger release.</li>
+            <li><strong>Universal Key Dispatch:</strong> Synthesizes both <code>KeyboardEvent</code> inputs (ArrowLeft/KeyA/KeyZ, ArrowRight/KeyD/Slash, Space) and window <code>postMessage</code> payloads directly into the game iframe.</li>
           </ul>
         </section>
 
