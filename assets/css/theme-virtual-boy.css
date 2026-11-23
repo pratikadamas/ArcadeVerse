@@ -1,0 +1,103 @@
+/* ==========================================================================
+   THEME: 1995 VIRTUAL BOY DUAL-TONE RED & OBSIDIAN (#1415)
+   Monochromatic LED Crimson (#ff0000) & Pure Pitch Black (#000000)
+   with 4-tier red shades and retro stereoscopic wireframe borders.
+   ========================================================================== */
+
+:root[data-theme="virtual-boy"],
+html[data-theme="virtual-boy"] {
+  --vb-black: #000000;
+  --vb-dark-red: #550000;
+  --vb-medium-red: #aa0000;
+  --vb-bright-red: #ff0000;
+
+  --bg-primary: var(--vb-black);
+  --bg-secondary: #0a0000;
+  --bg-card: #0d0000;
+  --bg-card-hover: #180000;
+  --bg-header: var(--vb-black);
+
+  --accent-primary: var(--vb-bright-red);
+  --accent-secondary: var(--vb-medium-red);
+  --accent-tertiary: var(--vb-dark-red);
+
+  --text-primary: var(--vb-bright-red);
+  --text-secondary: #ff3333;
+  --text-muted: var(--vb-dark-red);
+  --text-inverse: var(--vb-black);
+
+  --border-subtle: var(--vb-dark-red);
+  --border-glow: var(--vb-bright-red);
+
+  --font-mono: 'Courier New', Courier, monospace;
+}
+
+/* Monochromatic High Contrast Viewport */
+[data-theme="virtual-boy"] body {
+  background-color: var(--vb-black) !important;
+  color: var(--vb-bright-red) !important;
+  text-shadow: 0 0 4px rgba(255, 0, 0, 0.8) !important;
+  background-image: linear-gradient(
+    0deg,
+    rgba(255, 0, 0, 0.05) 1px,
+    transparent 1px
+  ),
+  linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.05) 1px,
+    transparent 1px
+  ) !important;
+  background-size: 20px 20px !important;
+}
+
+/* Stereoscopic Red Wireframe Cards */
+[data-theme="virtual-boy"] .game-card,
+[data-theme="virtual-boy"] .catalog-card,
+[data-theme="virtual-boy"] .modal-content,
+[data-theme="virtual-boy"] .controls-legend-card {
+  background: var(--vb-black) !important;
+  border: 2px solid var(--vb-bright-red) !important;
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.4), inset 0 0 6px rgba(255, 0, 0, 0.2) !important;
+  color: var(--vb-bright-red) !important;
+  border-radius: 0px !important;
+}
+
+[data-theme="virtual-boy"] .game-card:hover,
+[data-theme="virtual-boy"] .catalog-card:hover {
+  border-color: #ff3333 !important;
+  box-shadow: 0 0 16px rgba(255, 0, 0, 0.9), inset 0 0 10px rgba(255, 0, 0, 0.4) !important;
+}
+
+/* Virtual Boy Monochromatic Buttons */
+[data-theme="virtual-boy"] .btn,
+[data-theme="virtual-boy"] button.btn,
+[data-theme="virtual-boy"] .filter-chip {
+  background: var(--vb-black) !important;
+  color: var(--vb-bright-red) !important;
+  border: 1px solid var(--vb-bright-red) !important;
+  border-radius: 0px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="virtual-boy"] .filter-chip.active,
+[data-theme="virtual-boy"] .btn.btn-primary {
+  background: var(--vb-bright-red) !important;
+  color: var(--vb-black) !important;
+  text-shadow: none !important;
+  box-shadow: 0 0 12px rgba(255, 0, 0, 0.8) !important;
+}
+
+/* Navbar & Chrome */
+[data-theme="virtual-boy"] .navbar,
+[data-theme="virtual-boy"] .footer {
+  background: var(--vb-black) !important;
+  border-bottom: 2px solid var(--vb-bright-red) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="virtual-boy"] body {
+    text-shadow: none !important;
+  }
+}
