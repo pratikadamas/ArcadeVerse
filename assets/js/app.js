@@ -6700,6 +6700,166 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 // ========================================================
+// ========================================================
+// PERIODIC HEAP MEMORY MONITOR & IN-MODAL ALERT (#707)
+// ========================================================
+(() => {
+  let memoryWatchdogInterval = null;
+  let droppedFramesCount = 0;
+  let totalSampleFrames = 0;
+  let lastFrameTime = performance.now();
+  let rafMonitoringId = null;
+  let isAlertActive = false;
+
+  function showMemoryWarningBanner(reason) {
+    if (isAlertActive) return;
+    const modalFrameWrapper = document.querySelector('.modal-frame-wrapper');
+    if (!modalFrameWrapper) return;
+
+    let banner = document.getElementById('av-memory-warning-banner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'av-memory-warning-banner';
+      banner.className = 'av-memory-warning-banner';
+      banner.setAttribute('role', 'alert');
+      banner.innerHTML = `
+        <div class="av-memory-icon-wrap" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div class="av-memory-text">
+          <span class="av-memory-title">High memory usage detected.</span>
+          <span class="av-memory-desc">Consider reloading for optimal performance. (${reason})</span>
+        </div>
+        <div class="av-memory-actions">
+          <button type="button" class="btn-memory-purge" id="btn-purge-cache-reload">Purge Cache & Reload</button>
+          <button type="button" class="btn-memory-dismiss" id="btn-dismiss-memory-banner" aria-label="Dismiss warning">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      `;
+      modalFrameWrapper.appendChild(banner);
+
+      const purgeBtn = banner.querySelector('#btn-purge-cache-reload');
+      if (purgeBtn) {
+        purgeBtn.addEventListener('click', async () => {
+          purgeBtn.disabled = true;
+          purgeBtn.textContent = 'Purging...';
+          try {
+            if ('caches' in window) {
+              const keys = await caches.keys();
+              await Promise.all(keys.map(k => caches.delete(k)));
+            }
+          } catch (_) {}
+          const activeIframe = document.getElementById('game-iframe');
+          if (activeIframe && activeIframe.src) {
+            activeIframe.src = activeIframe.src;
+          } else {
+            window.location.reload();
+          }
+          banner.classList.remove('visible');
+          isAlertActive = false;
+        });
+      }
+
+      const dismissBtn = banner.querySelector('#btn-dismiss-memory-banner');
+      if (dismissBtn) {
+        dismissBtn.addEventListener('click', () => {
+          banner.classList.remove('visible');
+          isAlertActive = false;
+        });
+      }
+    }
+
+    isAlertActive = true;
+    requestAnimationFrame(() => banner.classList.add('visible'));
+  }
+
+  function frameWatchdogLoop(now) {
+    const delta = now - lastFrameTime;
+    lastFrameTime = now;
+    totalSampleFrames++;
+
+    // Delta > 34ms indicates dropped frame under 30 FPS
+    if (delta > 34) {
+      droppedFramesCount++;
+    }
+
+    if (totalSampleFrames >= 300) {
+      const dropRate = droppedFramesCount / totalSampleFrames;
+      if (dropRate > 0.45 && !isAlertActive) {
+        showMemoryWarningBanner('Severe frame drops detected');
+      }
+      totalSampleFrames = 0;
+      droppedFramesCount = 0;
+    }
+
+    const modal = document.getElementById('game-modal');
+    if (modal && modal.classList.contains('active')) {
+      rafMonitoringId = requestAnimationFrame(frameWatchdogLoop);
+    }
+  }
+
+  function inspectMemoryHealth() {
+    const modal = document.getElementById('game-modal');
+    if (!modal || !modal.classList.contains('active')) return;
+
+    if (performance && performance.memory) {
+      const { usedJSHeapSize, jsHeapSizeLimit } = performance.memory;
+      if (jsHeapSizeLimit > 0) {
+        const usageRatio = usedJSHeapSize / jsHeapSizeLimit;
+        // Heap usage exceeding 82% threshold or > 650MB
+        if ((usageRatio > 0.82 || usedJSHeapSize > 681574400) && !isAlertActive) {
+          const usedMB = Math.round(usedJSHeapSize / (1024 * 1024));
+          showMemoryWarningBanner(`Heap: ${usedMB}MB`);
+        }
+      }
+    }
+  }
+
+  // Hook into game modal open & close lifecycle
+  const observer = new MutationObserver(() => {
+    const modal = document.getElementById('game-modal');
+    if (modal && modal.classList.contains('active')) {
+      if (!memoryWatchdogInterval) {
+        memoryWatchdogInterval = setInterval(inspectMemoryHealth, 15000);
+        lastFrameTime = performance.now();
+        totalSampleFrames = 0;
+        droppedFramesCount = 0;
+        if (!rafMonitoringId) {
+          rafMonitoringId = requestAnimationFrame(frameWatchdogLoop);
+        }
+      }
+    } else {
+      if (memoryWatchdogInterval) {
+        clearInterval(memoryWatchdogInterval);
+        memoryWatchdogInterval = null;
+      }
+      if (rafMonitoringId) {
+        cancelAnimationFrame(rafMonitoringId);
+        rafMonitoringId = null;
+      }
+      isAlertActive = false;
+      const banner = document.getElementById('av-memory-warning-banner');
+      if (banner) banner.classList.remove('visible');
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('game-modal');
+    if (modal) {
+      observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+    }
+  });
+})();
+
+// ========================================================
 // IN-MODAL VOLUME SLIDER & CROSS-IFRAME BROADCASTER (#735, #887)
 // ========================================================
 (() => {
@@ -6762,6 +6922,9 @@ document.addEventListener("DOMContentLoaded", () => {
       iframe.addEventListener('load', () => {
         setTimeout(() => broadcastMasterVolume(masterVolume), 200);
       });
+    }
+  });
+})();
     }
   });
 })();
