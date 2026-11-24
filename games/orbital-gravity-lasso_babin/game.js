@@ -104,7 +104,12 @@
   let maxAltitude = 0;
   let multiplier = 1.0;
   let maxMultiplier = 1.0;
-  let highDistance = parseInt(localStorage.getItem('orbital_lasso_high') || '0', 10);
+  let highDistance = 0;
+  try {
+    highDistance = parseInt(localStorage.getItem('orbital_lasso_high') || '0', 10);
+  } catch (_) {
+    highDistance = 0;
+  }
   statHighEl.textContent = `${highDistance}m`;
 
   const probe = {
@@ -196,7 +201,7 @@
       }
       if (nearest) {
         probe.tetheredBeacon = nearest;
-        probe.tetherRadius = minDist;
+        probe.tetherRadius = Math.max(18, minDist);
         probe.tetherAngle = Math.atan2(probe.y - nearest.y, probe.x - nearest.x);
         const cross = (probe.x - nearest.x) * probe.vy - (probe.y - nearest.y) * probe.vx;
         const dir = cross > 0 ? 1 : -1;
@@ -235,9 +240,10 @@
 
     const currentAltitude = Math.max(0, Math.round((canvas.height - 120 - probe.y) / 5));
     if (currentAltitude > maxAltitude) {
+      const gained = currentAltitude - maxAltitude;
       distance = currentAltitude;
       maxAltitude = currentAltitude;
-      score += Math.round((distance - maxAltitude + 1) * multiplier);
+      score += Math.round(gained * multiplier);
     }
 
     const targetCamY = probe.y - canvas.height * 0.6;
@@ -271,11 +277,16 @@
   function endGame() {
     isRunning = false;
     sfx.lost();
-    if (animId) cancelAnimationFrame(animId);
+    if (animId) {
+      cancelAnimationFrame(animId);
+      animId = null;
+    }
 
     if (distance > highDistance) {
       highDistance = distance;
-      localStorage.setItem('orbital_lasso_high', highDistance.toString());
+      try {
+        localStorage.setItem('orbital_lasso_high', highDistance.toString());
+      } catch (_) {}
       statHighEl.textContent = `${highDistance}m`;
     }
 
@@ -284,6 +295,11 @@
     finalMultiEl.textContent = `${maxMultiplier.toFixed(1)}x`;
 
     gameOverScreen.classList.remove('hidden');
+
+    try {
+      window.parent.postMessage({ type: 'ARCADEVERSE_GAME_SCORE', score: score }, '*');
+      window.parent.postMessage({ type: 'ARCADEVERSE_GAME_OVER' }, '*');
+    } catch (_) {}
   }
 
   function render() {
@@ -446,5 +462,32 @@
   btnMute.addEventListener('click', () => {
     sfx.muted = !sfx.muted;
     btnMute.classList.toggle('active', sfx.muted);
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && isRunning && !isPaused) {
+      togglePause();
+    }
+  });
+
+  window.addEventListener('message', (e) => {
+    if (!e.data || typeof e.data !== 'object') return;
+    const type = e.data.type;
+    if (type === 'ARCADEVERSE_PAUSE') {
+      if (isRunning && !isPaused) togglePause();
+    } else if (type === 'ARCADEVERSE_RESUME') {
+      if (isPaused) togglePause();
+    } else if (type === 'ARCADEVERSE_TEARDOWN') {
+      if (animId) {
+        cancelAnimationFrame(animId);
+        animId = null;
+      }
+    } else if (type === 'AV_RESIZE') {
+      const d = e.data;
+      if (d.width && d.height && canvas) {
+        canvas.width = d.width;
+        canvas.height = d.height;
+      }
+    }
   });
 })();

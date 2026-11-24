@@ -1,0 +1,58 @@
+/* ==========================================================================
+   DYNAMIC TEXT SIZE SCALE ARCHITECTURE (#1389)
+   Root typographic variables and accessible segmented size switchers
+   ========================================================================== */
+
+:root {
+    --base-text-scale: 1;
+}
+
+body {
+    font-size: calc(1rem * var(--base-text-scale, 1));
+}
+
+h1 { font-size: calc(2.25rem * var(--base-text-scale, 1)); }
+h2 { font-size: calc(1.75rem * var(--base-text-scale, 1)); }
+h3 { font-size: calc(1.35rem * var(--base-text-scale, 1)); }
+h4 { font-size: calc(1.1rem * var(--base-text-scale, 1)); }
+
+.game-card-title {
+    font-size: calc(1rem * var(--base-text-scale, 1));
+}
+
+.game-card-description {
+    font-size: calc(0.85rem * var(--base-text-scale, 1));
+    line-height: 1.4;
+}
+
+/* Settings Drawer Segmented Control */
+.text-scale-segmented-control {
+    display: inline-flex;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 2px;
+    gap: 2px;
+}
+
+.text-scale-btn {
+    background: none;
+    border: none;
+    color: #8b949e;
+    padding: 4px 10px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.text-scale-btn:hover {
+    color: #e6edf3;
+}
+
+.text-scale-btn.active {
+    background: #00f0ff;
+    color: #000;
+    box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+}

@@ -355,3 +355,62 @@ html.light-mode .activity-link-btn.table-trophy-btn:hover {
   color: #ffffff !important;
   border-color: #0284c7 !important;
 }
+
+/* Certificate Print Stylesheet (#524) */
+@media print {
+  @page {
+    size: landscape;
+    margin: 0;
+  }
+  body.printing-trophy > :not(#trophy-card-modal) {
+    display: none !important;
+  }
+  body.printing-trophy,
+  html {
+    height: auto !important;
+    overflow: hidden !important;
+    background: transparent !important;
+  }
+  body.printing-trophy #trophy-card-modal {
+    position: static !important;
+    display: flex !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    align-items: center;
+    justify-content: center;
+    width: 100vw !important;
+    height: 100vh !important;
+  }
+  .trophy-modal-content {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    max-width: 100vw !important;
+    width: 100vw !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .trophy-modal-header,
+  .trophy-modal-actions {
+    display: none !important;
+  }
+  .trophy-card-preview-wrap {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .trophy-preview-img {
+    width: 100vw !important;
+    max-width: 100% !important;
+    height: auto !important;
+    object-fit: contain;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+}

@@ -20,6 +20,25 @@ const soundIconOff = document.getElementById("sound-icon-off");
 
 let soundEnabled = true;
 let audioCtx = null;
+const activeNodes = new Set();
+
+function trackNode(osc) {
+  activeNodes.add(osc);
+  osc.onended = () => {
+    activeNodes.delete(osc);
+  };
+  return osc;
+}
+
+function stopAllAudio() {
+  activeNodes.forEach(node => {
+    try {
+      node.stop();
+      node.disconnect();
+    } catch (_) {}
+  });
+  activeNodes.clear();
+}
 
 try {
   const saved = localStorage.getItem("neon-drift-racer-sound-enabled");
@@ -59,6 +78,7 @@ function playTone(freq, type = "sine", duration = 0.08, gainVal = 0.14) {
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
+    trackNode(osc);
     osc.start();
     osc.stop(audioCtx.currentTime + duration);
   } catch (_) {}
@@ -81,6 +101,7 @@ function playSteerSound(dir) {
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
+    trackNode(osc);
     osc.start(now);
     osc.stop(now + 0.08);
   } catch (_) {}
@@ -114,6 +135,7 @@ function playStartSound() {
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
+    trackNode(osc);
     osc.start(now);
     osc.stop(now + 0.25);
   } catch (_) {}
@@ -122,6 +144,9 @@ function playStartSound() {
 if (soundToggleBtn) {
   soundToggleBtn.addEventListener("click", () => {
     soundEnabled = !soundEnabled;
+    if (!soundEnabled) {
+      stopAllAudio();
+    }
     try {
       localStorage.setItem("neon-drift-racer-sound-enabled", String(soundEnabled));
     } catch (_) {}
@@ -151,6 +176,9 @@ const PLAYER_Y = HEIGHT - 96;
 const BEST_SCORE_KEY = "neon-drift-racer-best";
 
 let playerLane = 1;
+let playerX = LANES[1];
+let driftAngle = 0;
+let angularVelocity = 0;
 let objects = [];
 let score = 0;
 let energy = 0;
@@ -182,6 +210,9 @@ function saveBestScore() {
 
 function startGame() {
   playerLane = 1;
+  playerX = LANES[1];
+  driftAngle = 0;
+  angularVelocity = 0;
   objects = [];
   score = 0;
   energy = 0;
@@ -192,11 +223,13 @@ function startGame() {
   scoreValue.textContent = "0";
   energyValue.textContent = "0";
   overlay.classList.add("is-hidden");
+  stopAllAudio();
   playStartSound();
 }
 
 function finishGame() {
   gameState = "over";
+  stopAllAudio();
   playCrashSound();
   if (score > bestScore) {
     bestScore = score;
@@ -234,6 +267,15 @@ function update(delta) {
   roadOffset = (roadOffset + speed * delta) % 90;
   score = Math.floor(elapsed * 5) + energy * 25;
   scoreValue.textContent = score;
+
+  // Issue #595: Smooth exponential angular momentum and drift damping
+  const targetX = LANES[playerLane];
+  const deltaX = targetX - playerX;
+  playerX += deltaX * Math.min(1, delta * 14);
+  const targetAngle = (deltaX / LANE_WIDTH) * 0.35;
+  angularVelocity += (targetAngle - driftAngle) * 24 * delta;
+  angularVelocity *= 0.88; // Exponential friction decay on zero-throttle
+  driftAngle += angularVelocity * delta;
 
   spawnTimer -= delta;
   if (spawnTimer <= 0) {
@@ -298,9 +340,10 @@ function drawRoad() {
   }
 }
 
-function drawCar(x, y, color, isPlayer) {
+function drawCar(x, y, color, isPlayer, angle = 0) {
   context.save();
   context.translate(x, y);
+  if (angle) context.rotate(angle);
   context.shadowColor = color;
   context.shadowBlur = isPlayer ? 22 : 12;
 
@@ -369,7 +412,7 @@ function draw() {
     if (object.type === "energy") drawEnergyOrb(x, object.y);
     else drawCar(x, object.y, "#fb5368", false);
   }
-  drawCar(LANES[playerLane], PLAYER_Y, "#39c9ff", true);
+  drawCar(playerX, PLAYER_Y, "#39c9ff", true, driftAngle);
 }
 
 function frame(timestamp) {
@@ -391,6 +434,12 @@ document.addEventListener("keydown", (event) => {
 document.getElementById("left-button").addEventListener("click", () => steer(-1));
 document.getElementById("right-button").addEventListener("click", () => steer(1));
 startButton.addEventListener("click", startGame);
+
+window.addEventListener("message", (e) => {
+  if (e.data && (e.data.type === "ARCADEVERSE_TEARDOWN" || e.data.type === "ARCADEVERSE_PAUSE")) {
+    stopAllAudio();
+  }
+});
 
 draw();
 requestAnimationFrame(frame);

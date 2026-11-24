@@ -323,3 +323,21 @@ body {
   display: flex;
   justify-content: flex-end;
 }
+
+@media (max-width: 680px) {
+  .golf-course-container {
+    border-radius: 0;
+  }
+  .course-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .hud-stats {
+    justify-content: space-around;
+  }
+  canvas {
+    max-width: 100%;
+    height: auto;
+  }
+}

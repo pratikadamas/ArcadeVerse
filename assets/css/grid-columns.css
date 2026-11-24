@@ -1,0 +1,58 @@
+/* ==========================================================================
+   RESPONSIVE GRID COLUMN DENSITY SWITCHER (#1395)
+   Custom property --catalog-columns and desktop density switcher icons
+   ========================================================================== */
+
+:root {
+    --catalog-col-count: 3;
+}
+
+@media (min-width: 1024px) {
+    #games-grid,
+    .games-catalog-grid {
+        display: grid !important;
+        grid-template-columns: repeat(var(--catalog-col-count, 3), 1fr) !important;
+        gap: 24px;
+        transition: gap 0.2s ease;
+    }
+}
+
+/* Grid Column Toggle Group */
+.grid-density-switcher {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 2px;
+}
+
+@media (min-width: 1024px) {
+    .grid-density-switcher {
+        display: inline-flex;
+    }
+}
+
+.grid-density-btn {
+    background: none;
+    border: none;
+    color: #8b949e;
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    font-family: monospace;
+    font-weight: 700;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.grid-density-btn:hover {
+    color: #e6edf3;
+}
+
+.grid-density-btn.active {
+    background: #00f0ff;
+    color: #000;
+    box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+}

@@ -1,0 +1,94 @@
+/* ==========================================================================
+   ARCADE BADGE TOOLTIPS & MICRO-ANIMATIONS (#1383)
+   CSS data-tooltip attribute engine with spring scale and dynamic arrow positioning
+   ========================================================================== */
+
+[data-tooltip] {
+    position: relative;
+    cursor: pointer;
+}
+
+[data-tooltip]::before,
+[data-tooltip]::after {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    transition: opacity 0.15s ease, transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Tooltip Body */
+[data-tooltip]::before {
+    content: attr(data-tooltip);
+    padding: 6px 10px;
+    background: #0d1117;
+    color: #e6edf3;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    border-radius: 4px;
+    border: 1px solid #00f0ff;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6), 0 0 8px rgba(0, 240, 255, 0.3);
+    text-transform: none;
+    letter-spacing: 0.5px;
+}
+
+/* Tooltip Arrow */
+[data-tooltip]::after {
+    content: "";
+    border: 5px solid transparent;
+}
+
+/* Default / Top Placement */
+[data-tooltip]:not([data-tooltip-pos="bottom"]):not([data-tooltip-pos="left"]):not([data-tooltip-pos="right"])::before,
+[data-tooltip][data-tooltip-pos="top"]::before {
+    bottom: 100%;
+    left: 50%;
+    transform: translate(-50%, -6px) scale(0.95);
+    margin-bottom: 6px;
+}
+
+[data-tooltip]:not([data-tooltip-pos="bottom"]):not([data-tooltip-pos="left"]):not([data-tooltip-pos="right"])::after,
+[data-tooltip][data-tooltip-pos="top"]::after {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-top-color: #00f0ff;
+    margin-bottom: -4px;
+}
+
+/* Bottom Placement */
+[data-tooltip][data-tooltip-pos="bottom"]::before {
+    top: 100%;
+    left: 50%;
+    transform: translate(-50%, 6px) scale(0.95);
+    margin-top: 6px;
+}
+
+[data-tooltip][data-tooltip-pos="bottom"]::after {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-bottom-color: #00f0ff;
+    margin-top: -4px;
+}
+
+/* Hover and Focus triggers */
+[data-tooltip]:hover::before,
+[data-tooltip]:focus-visible::before {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+}
+
+[data-tooltip]:hover::after,
+[data-tooltip]:focus-visible::after {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-tooltip]::before,
+    [data-tooltip]::after {
+        transition: opacity 0.1s linear !important;
+        transform: translate(-50%, 0) scale(1) !important;
+    }
+}

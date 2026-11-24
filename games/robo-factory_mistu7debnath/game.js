@@ -724,7 +724,8 @@
     }
 
     isTileVacant(x, y, excludeId = null) {
-      return !this.items.some(it => it.id !== excludeId && Math.round(it.x) === x && Math.round(it.y) === y);
+      // Check both current tile position and planned destination to prevent corner squeezing (#593)
+      return !this.items.some(it => it.id !== excludeId && ((Math.round(it.x) === x && Math.round(it.y) === y) || (it.targetX === x && it.targetY === y)));
     }
 
     spawnItem(x, y, type) {

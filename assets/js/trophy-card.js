@@ -20,15 +20,49 @@
     });
   }
 
+  function drawVectorStar(ctx, cx, cy, spikes = 5, outerRadius = 7.5, innerRadius = 3.5, fillStyle = '#fde047') {
+    let rot = (Math.PI / 2) * 3;
+    let x = cx;
+    let y = cy;
+    const step = Math.PI / spikes;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - outerRadius);
+    for (let i = 0; i < spikes; i++) {
+      x = cx + Math.cos(rot) * outerRadius;
+      y = cy + Math.sin(rot) * outerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
+
+      x = cx + Math.cos(rot) * innerRadius;
+      y = cy + Math.sin(rot) * innerRadius;
+      ctx.lineTo(x, y);
+      rot += step;
+    }
+    ctx.lineTo(cx, cy - outerRadius);
+    ctx.closePath();
+    ctx.fillStyle = fillStyle;
+    ctx.fill();
+    ctx.restore();
+  }
+
   const TrophyCardEngine = {
     canvas: null,
     ctx: null,
+    previouslyFocusedElement: null,
+    handleKeydown: null,
+    isExporting: false,
 
     init() {
+      const dpr = Math.max(window.devicePixelRatio || 1, 2);
       this.canvas = document.createElement('canvas');
-      this.canvas.width = 1200;
-      this.canvas.height = 750;
+      this.canvas.width = Math.round(1200 * dpr);
+      this.canvas.height = Math.round(750 * dpr);
+      this.canvas.style.width = '1200px';
+      this.canvas.style.height = '750px';
       this.ctx = this.canvas.getContext('2d');
+      this.ctx.scale(dpr, dpr);
       this.bindEvents();
     },
 
@@ -197,7 +231,7 @@
       ctx.fillStyle = '#38bdf8';
       ctx.font = '700 13px "JetBrains Mono", monospace';
       ctx.letterSpacing = '3.5px';
-      ctx.fillText('NEXUS SPRING OF CODE 2026 • OFFICIAL OPEN SOURCE CREDENTIAL', W / 2, 150);
+      ctx.fillText('NEXUS SPRING OF CODE 2026 | OFFICIAL OPEN SOURCE CREDENTIAL', W / 2, 150);
 
       // Main Certificate Title
       const titleGrad = ctx.createLinearGradient((W / 2) - 340, 0, (W / 2) + 340, 0);
@@ -283,10 +317,27 @@
       ctx.fillText(userHandle, W / 2, 416);
 
       // Distinction / Rank Tier Pill with Luxury Gradient Glow
-      const pillW = 500;
+      const rankText = String(rank || 'Verified Contributor');
+      const scoreText = `Total Arcade Score: ${score}`;
+
+      ctx.save();
+      ctx.font = 'bold 15.5px "Space Grotesk", sans-serif';
+      const rankW = ctx.measureText(rankText).width;
+      const scoreW = ctx.measureText(scoreText).width;
+
+      const starOuterRadius = 7.5;
+      const starInnerRadius = 3.5;
+      const starDiameter = starOuterRadius * 2;
+      const starGap = 14;
+      const bulletRadius = 2.5;
+      const bulletGap = 12;
+
+      const totalContentW = starDiameter + starGap + rankW + bulletGap + (bulletRadius * 2) + bulletGap + scoreW + starGap + starDiameter;
+      const pillW = Math.max(500, Math.round(totalContentW + 48));
       const pillH = 40;
       const pillX = (W - pillW) / 2;
       const pillY = 438;
+      const pillCenterY = pillY + (pillH / 2);
 
       const badgeGrad = ctx.createLinearGradient(pillX, 0, pillX + pillW, 0);
       badgeGrad.addColorStop(0, 'rgba(0, 245, 255, 0.12)');
@@ -303,15 +354,40 @@
       ctx.stroke();
 
       ctx.shadowBlur = 0;
+
+      // Draw Left 5-Point Vector Star
+      const leftStarX = (W - totalContentW) / 2 + starOuterRadius;
+      drawVectorStar(ctx, leftStarX, pillCenterY, 5, starOuterRadius, starInnerRadius, '#fde047');
+
+      // Draw Rank Text
+      const rankX = leftStarX + starOuterRadius + starGap;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
       ctx.fillStyle = '#fde047';
-      ctx.font = 'bold 15.5px "Space Grotesk", sans-serif';
-      ctx.fillText(`★  ${rank}  •  Total Arcade Score: ${score}  ★`, W / 2, pillY + 25);
+      ctx.fillText(rankText, rankX, pillCenterY);
+
+      // Draw Vector Bullet Separator
+      const bulletX = rankX + rankW + bulletGap + bulletRadius;
+      ctx.beginPath();
+      ctx.arc(bulletX, pillCenterY, bulletRadius, 0, Math.PI * 2);
+      ctx.fillStyle = '#fde047';
+      ctx.fill();
+
+      // Draw Score Text
+      const scoreX = bulletX + bulletRadius + bulletGap;
+      ctx.fillText(scoreText, scoreX, pillCenterY);
+
+      // Draw Right 5-Point Vector Star
+      const rightStarX = scoreX + scoreW + starGap + starOuterRadius;
+      drawVectorStar(ctx, rightStarX, pillCenterY, 5, starOuterRadius, starInnerRadius, '#fde047');
+      ctx.restore();
 
       // Certificate Citation Statement
       ctx.fillStyle = '#94a3b8';
       ctx.font = '400 15px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'center';
       ctx.fillText('In recognition of verified code contributions, game architecture, and open-source craftsmanship', W / 2, 514);
-      ctx.fillText('for the ArcadeVerse platform during Nexus Spring of Code – Winter Edition 2026.', W / 2, 536);
+      ctx.fillText('for the ArcadeVerse platform during Nexus Spring of Code - Winter Edition 2026.', W / 2, 536);
       ctx.restore();
 
       // 6. Verification Seal & Signatures
@@ -438,21 +514,59 @@
           const avatarUrl = trigger.dataset.avatar || '';
           const rank = trigger.dataset.rank || 'Verified Contributor';
           const badge = trigger.dataset.badge || 'NSOC 2026';
-          this.showModal({ gameTitle: game, score, playerName: player, handle, avatarUrl, rank, badge });
+          this.showModal({ gameTitle: game, score, playerName: player, handle, avatarUrl, rank, badge }, trigger);
         }
       });
     },
 
-    async showModal(data) {
+    closeModal() {
+      const modal = document.getElementById('trophy-card-modal');
+      if (!modal || !modal.classList.contains('active')) return;
+      modal.classList.remove('active');
+
+      if (this.handleKeydown) {
+        document.removeEventListener('keydown', this.handleKeydown);
+        this.handleKeydown = null;
+      }
+
+      this.isExporting = false;
+      const allBtns = modal.querySelectorAll('.btn-trophy');
+      allBtns.forEach((btn) => {
+        btn.disabled = false;
+        btn.style.pointerEvents = '';
+        btn.style.opacity = '';
+      });
+
+      const btnDownload = modal.querySelector('#btn-download-trophy');
+      if (btnDownload) btnDownload.textContent = 'Download Certificate (PNG)';
+      const btnCopy = modal.querySelector('#btn-copy-trophy');
+      if (btnCopy) btnCopy.textContent = 'Copy Certificate';
+      const btnPrint = modal.querySelector('#btn-print-trophy');
+      if (btnPrint) btnPrint.textContent = 'Print Certificate';
+
+      if (this.previouslyFocusedElement && typeof this.previouslyFocusedElement.focus === 'function') {
+        try {
+          this.previouslyFocusedElement.focus();
+        } catch (_) {}
+      }
+      this.previouslyFocusedElement = null;
+    },
+
+    async showModal(data, triggerEl) {
+      this.previouslyFocusedElement = triggerEl || document.activeElement;
+
       let modal = document.getElementById('trophy-card-modal');
       if (!modal) {
         modal = document.createElement('div');
         modal.id = 'trophy-card-modal';
         modal.className = 'trophy-modal';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-labelledby', 'trophy-modal-title');
         modal.innerHTML = `
           <div class="trophy-modal-content">
             <div class="trophy-modal-header">
-              <h3 class="trophy-modal-title">Verified Achievement Certificate</h3>
+              <h3 id="trophy-modal-title" class="trophy-modal-title">Verified Achievement Certificate</h3>
               <button class="trophy-modal-close" aria-label="Close Certificate Modal">&times;</button>
             </div>
             <div class="trophy-card-preview-wrap">
@@ -464,18 +578,30 @@
             </div>
             <div class="trophy-modal-actions">
               <button id="btn-download-trophy" class="btn-trophy primary">Download Certificate (PNG)</button>
+              <button id="btn-print-trophy" class="btn-trophy secondary">Print Certificate</button>
               <button id="btn-copy-trophy" class="btn-trophy secondary">Copy Certificate</button>
             </div>
           </div>
         `;
         document.body.appendChild(modal);
 
-        modal.querySelector('.trophy-modal-close').addEventListener('click', () => {
-          modal.classList.remove('active');
-        });
+        const closeBtn = modal.querySelector('.trophy-modal-close');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', () => {
+            this.closeModal();
+          });
+        }
         modal.addEventListener('click', (e) => {
-          if (e.target === modal) modal.classList.remove('active');
+          if (e.target === modal) this.closeModal();
         });
+      } else {
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-labelledby', 'trophy-modal-title');
+        const titleEl = modal.querySelector('.trophy-modal-title');
+        if (titleEl && !titleEl.id) {
+          titleEl.id = 'trophy-modal-title';
+        }
       }
 
       const img = modal.querySelector('#trophy-preview-img');
@@ -484,6 +610,54 @@
       if (img) img.style.display = 'none';
 
       modal.classList.add('active');
+
+      // Bind Escape key dismissal & Tab focus cycling
+      if (this.handleKeydown) {
+        document.removeEventListener('keydown', this.handleKeydown);
+      }
+      this.handleKeydown = (e) => {
+        if (!modal.classList.contains('active')) return;
+
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          this.closeModal();
+          return;
+        }
+
+        if (e.key === 'Tab') {
+          const focusable = modal.querySelectorAll(
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          );
+          if (focusable.length === 0) return;
+
+          const firstEl = focusable[0];
+          const lastEl = focusable[focusable.length - 1];
+
+          if (e.shiftKey) {
+            if (document.activeElement === firstEl || !modal.contains(document.activeElement)) {
+              e.preventDefault();
+              lastEl.focus();
+            }
+          } else {
+            if (document.activeElement === lastEl || !modal.contains(document.activeElement)) {
+              e.preventDefault();
+              firstEl.focus();
+            }
+          }
+        }
+      };
+      document.addEventListener('keydown', this.handleKeydown);
+
+      // Set initial focus to close button
+      const closeBtn = modal.querySelector('.trophy-modal-close');
+      if (closeBtn) {
+        setTimeout(() => {
+          if (modal.classList.contains('active')) {
+            closeBtn.focus();
+          }
+        }, 50);
+      }
 
       const dataUrl = await this.generateCard(data);
 
@@ -494,19 +668,103 @@
       if (spinner) spinner.style.display = 'none';
 
       const btnDownload = modal.querySelector('#btn-download-trophy');
-      btnDownload.onclick = () => this.downloadCard(data);
-
+      const btnPrint = modal.querySelector('#btn-print-trophy');
       const btnCopy = modal.querySelector('#btn-copy-trophy');
-      btnCopy.onclick = async () => {
-        try {
-          const blob = await (await fetch(dataUrl)).blob();
-          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-          btnCopy.textContent = 'Certificate Copied to Clipboard!';
-          setTimeout(() => { btnCopy.textContent = 'Copy Certificate'; }, 2000);
-        } catch (_) {
-          this.downloadCard(data);
-        }
-      };
+
+      if (btnDownload) {
+        btnDownload.onclick = async () => {
+          if (this.isExporting) return;
+          this.isExporting = true;
+          btnDownload.disabled = true;
+          btnDownload.style.pointerEvents = 'none';
+          btnDownload.style.opacity = '0.7';
+          const originalText = btnDownload.textContent;
+          btnDownload.textContent = 'Downloading...';
+          try {
+            await this.downloadCard(data);
+            btnDownload.textContent = 'Certificate Downloaded!';
+            setTimeout(() => {
+              btnDownload.textContent = originalText;
+              btnDownload.disabled = false;
+              btnDownload.style.pointerEvents = '';
+              btnDownload.style.opacity = '';
+              this.isExporting = false;
+            }, 1200);
+          } catch (err) {
+            console.error('[TrophyCard] Download failed:', err);
+            btnDownload.textContent = originalText;
+            btnDownload.disabled = false;
+            btnDownload.style.pointerEvents = '';
+            btnDownload.style.opacity = '';
+            this.isExporting = false;
+          }
+        };
+      }
+
+      if (btnPrint) {
+        btnPrint.onclick = () => {
+          if (this.isExporting) return;
+          this.isExporting = true;
+          btnPrint.disabled = true;
+          btnPrint.style.pointerEvents = 'none';
+          btnPrint.style.opacity = '0.7';
+          document.body.classList.add('printing-trophy');
+          window.addEventListener('afterprint', () => {
+            document.body.classList.remove('printing-trophy');
+            btnPrint.disabled = false;
+            btnPrint.style.pointerEvents = '';
+            btnPrint.style.opacity = '';
+            this.isExporting = false;
+          }, { once: true });
+          setTimeout(() => {
+            document.body.classList.remove('printing-trophy');
+            btnPrint.disabled = false;
+            btnPrint.style.pointerEvents = '';
+            btnPrint.style.opacity = '';
+            this.isExporting = false;
+          }, 3000);
+          window.print();
+        };
+      }
+
+      if (btnCopy) {
+        btnCopy.onclick = async () => {
+          if (this.isExporting) return;
+          this.isExporting = true;
+          btnCopy.disabled = true;
+          btnCopy.style.pointerEvents = 'none';
+          btnCopy.style.opacity = '0.7';
+          const originalText = btnCopy.textContent;
+          btnCopy.textContent = 'Copying...';
+          try {
+            const targetDataUrl = dataUrl || (await this.generateCard(data));
+            const blob = await (await fetch(targetDataUrl)).blob();
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+            btnCopy.textContent = 'Certificate Copied to Clipboard!';
+            setTimeout(() => {
+              btnCopy.textContent = originalText;
+              btnCopy.disabled = false;
+              btnCopy.style.pointerEvents = '';
+              btnCopy.style.opacity = '';
+              this.isExporting = false;
+            }, 2000);
+          } catch (_) {
+            try {
+              await this.downloadCard(data);
+              btnCopy.textContent = 'Downloaded (Clipboard Blocked)';
+            } catch (e) {
+              btnCopy.textContent = originalText;
+            }
+            setTimeout(() => {
+              btnCopy.textContent = originalText;
+              btnCopy.disabled = false;
+              btnCopy.style.pointerEvents = '';
+              btnCopy.style.opacity = '';
+              this.isExporting = false;
+            }, 2000);
+          }
+        };
+      }
     }
   };
 

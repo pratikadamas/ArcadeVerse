@@ -145,13 +145,26 @@
     document.getElementById('btn-export-all-saves').addEventListener('click', exportAllSaves);
     document.getElementById('input-import-saves').addEventListener('change', importSaves);
 
+    // Mount Serverless GitHub Gist Cloud Sync Engine (#1111)
+    if (window.GistCloudSync && typeof window.GistCloudSync.mountUI === 'function') {
+      window.GistCloudSync.mountUI();
+    }
+
     injectStorageCSS();
   }
 
   // Add Trigger Link in Footer
   function addFooterTriggerLink() {
-    const footerLinks = document.querySelector('.footer-links') || document.querySelector('footer');
-    if (footerLinks && !document.getElementById('link-manage-storage')) {
+    const footerBtn = document.getElementById('footer-storage-manager-btn');
+    if (footerBtn) {
+      footerBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openStorageModal();
+      });
+    }
+
+    const footerLinks = document.querySelector('.footer-links') || document.querySelector('.footer-bottom-links');
+    if (footerLinks && !document.getElementById('link-manage-storage') && !footerBtn) {
       const link = document.createElement('a');
       link.id = 'link-manage-storage';
       link.href = '#';
@@ -188,62 +201,83 @@
 
     let totalBytes = 0;
 
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key) continue;
-
-      const val = localStorage.getItem(key) || '';
-      const byteSize = (key.length + val.length) * 2; // UTF-16 byte estimation
-      totalBytes += byteSize;
-
-      // Identify corresponding game
-      let matchedGameId = null;
-      let matchedGameTitle = null;
-
-      // 1. Direct registry ID match
-      for (let g = 0; g < registry.length; g++) {
-        const game = registry[g];
-        if (key.includes(game.id) || key.startsWith(game.id)) {
-          matchedGameId = game.id;
-          matchedGameTitle = game.title;
-          break;
-        }
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) {
+        throw new Error('localStorage is not available');
       }
 
-      // 2. Prefix fallback
-      if (!matchedGameId) {
-        for (let p = 0; p < GAME_STORAGE_PREFIXES.length; p++) {
-          const prefix = GAME_STORAGE_PREFIXES[p];
-          if (key.startsWith(prefix) && key !== 'arcadeverse_favorites' && key !== 'arcadeverse_theme') {
-            matchedGameId = prefix.replace(/_$/, '');
-            matchedGameTitle = matchedGameId.toUpperCase().replace('-', ' ') + ' (Save Group)';
+      const totalKeys = window.localStorage.length;
+      for (let i = 0; i < totalKeys; i++) {
+        let key = null;
+        let val = '';
+        try {
+          key = window.localStorage.key(i);
+          if (!key) continue;
+          val = window.localStorage.getItem(key) || '';
+        } catch (_) {
+          continue;
+        }
+
+        const byteSize = (key.length + val.length) * 2; // UTF-16 byte estimation
+        totalBytes += byteSize;
+
+        // Identify corresponding game
+        let matchedGameId = null;
+        let matchedGameTitle = null;
+
+        // 1. Direct registry ID match
+        for (let g = 0; g < registry.length; g++) {
+          const game = registry[g];
+          if (key.includes(game.id) || key.startsWith(game.id)) {
+            matchedGameId = game.id;
+            matchedGameTitle = game.title;
             break;
           }
         }
-      }
 
-      // 3. Misc application state
-      if (!matchedGameId) {
-        matchedGameId = 'platform_shared';
-        matchedGameTitle = 'Platform Shared State';
-      }
+        // 2. Prefix fallback
+        if (!matchedGameId) {
+          for (let p = 0; p < GAME_STORAGE_PREFIXES.length; p++) {
+            const prefix = GAME_STORAGE_PREFIXES[p];
+            if (key.startsWith(prefix) && key !== 'arcadeverse_favorites' && key !== 'arcadeverse_theme') {
+              matchedGameId = prefix.replace(/_$/, '');
+              matchedGameTitle = matchedGameId.toUpperCase().replace('-', ' ') + ' (Save Group)';
+              break;
+            }
+          }
+        }
 
-      if (!storageMap[matchedGameId]) {
-        storageMap[matchedGameId] = {
-          id: matchedGameId,
-          title: matchedGameTitle,
-          keys: [],
-          bytes: 0
-        };
-      }
+        // 3. Misc application state
+        if (!matchedGameId) {
+          matchedGameId = 'platform_shared';
+          matchedGameTitle = 'Platform Shared State';
+        }
 
-      storageMap[matchedGameId].keys.push(key);
-      storageMap[matchedGameId].bytes += byteSize;
+        if (!storageMap[matchedGameId]) {
+          storageMap[matchedGameId] = {
+            id: matchedGameId,
+            title: matchedGameTitle,
+            keys: [],
+            bytes: 0
+          };
+        }
+
+        storageMap[matchedGameId].keys.push(key);
+        storageMap[matchedGameId].bytes += byteSize;
+      }
+    } catch (err) {
+      console.warn('[ArcadeStorageManager] Storage scan guarded error:', err);
+      return {
+        games: [],
+        totalBytes: 0,
+        restricted: true
+      };
     }
 
     return {
       games: Object.values(storageMap),
-      totalBytes: totalBytes
+      totalBytes: totalBytes,
+      restricted: false
     };
   }
 
@@ -262,6 +296,17 @@
 
     tableBody.innerHTML = '';
 
+    if (audit.restricted) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="4" style="text-align: center; color: #f59e0b; padding: 24px;">
+            Storage access is restricted in this private/sandboxed browser session. No data was modified.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
     if (audit.games.length === 0) {
       tableBody.innerHTML = `
         <tr>
@@ -274,16 +319,20 @@
     }
 
     audit.games.forEach((item) => {
+      const safeTitle = escapeHTML(item.title || 'Untitled Game');
+      const safeId = escapeHTML(item.id || 'unknown');
+      const safeKeys = escapeHTML((item.keys || []).slice(0, 3).join(', ')) + (item.keys && item.keys.length > 3 ? '...' : '');
+
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>
-          <div class="storage-game-name">${escapeHTML(item.title)}</div>
-          <div class="storage-keys-preview">${escapeHTML(item.keys.slice(0, 3).join(', '))}${item.keys.length > 3 ? '...' : ''}</div>
+          <div class="storage-game-name">${safeTitle}</div>
+          <div class="storage-keys-preview">${safeKeys}</div>
         </td>
-        <td><span class="badge-count">${item.keys.length} keys</span></td>
-        <td><span class="badge-bytes">${formatBytes(item.bytes)}</span></td>
+        <td><span class="badge-count">${(item.keys || []).length} keys</span></td>
+        <td><span class="badge-bytes">${formatBytes(item.bytes || 0)}</span></td>
         <td style="text-align: right;">
-          <button class="btn-clear-game" data-game-id="${escapeHTML(item.id)}">
+          <button class="btn-clear-game" data-game-id="${safeId}">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="3 6 5 6 21 6"></polyline>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -296,7 +345,13 @@
       const clearBtn = tr.querySelector('.btn-clear-game');
       clearBtn.addEventListener('click', () => {
         if (confirm(`Are you sure you want to delete all saved data and high scores for "${item.title}"?`)) {
-          item.keys.forEach((k) => localStorage.removeItem(k));
+          try {
+            item.keys.forEach((k) => {
+              try {
+                if (window.localStorage) window.localStorage.removeItem(k);
+              } catch (_) {}
+            });
+          } catch (_) {}
           renderStorageTable();
         }
       });
@@ -304,6 +359,8 @@
       tableBody.appendChild(tr);
     });
   }
+
+  window.renderStorageTable = renderStorageTable;
 
   // Export All Saves to JSON
   function exportAllSaves() {

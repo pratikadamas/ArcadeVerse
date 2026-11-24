@@ -64,12 +64,16 @@
     }
   };
 
-  // --- Procedural Web Audio API Sound Engine ---
+  // --- Procedural Web Audio API Sound Engine (#507) ---
   class SoundEngine {
     constructor() {
       this.ctx = null;
+      this.masterGain = null;
+      this.limiter = null;
       this.muted = false;
       this.initialized = false;
+      this.activeVoices = new Set();
+      this.maxVoices = 6;
     }
 
     init() {
@@ -79,6 +83,21 @@
         if (AudioCtx) {
           this.ctx = new AudioCtx();
           this.initialized = true;
+          this.masterGain = this.ctx.createGain();
+          this.masterGain.gain.setValueAtTime(0.5, this.ctx.currentTime);
+          try {
+            const comp = this.ctx.createDynamicsCompressor();
+            comp.threshold.setValueAtTime(-0.5, this.ctx.currentTime);
+            comp.knee.setValueAtTime(0, this.ctx.currentTime);
+            comp.ratio.setValueAtTime(20.0, this.ctx.currentTime);
+            comp.attack.setValueAtTime(0.001, this.ctx.currentTime);
+            comp.release.setValueAtTime(0.05, this.ctx.currentTime);
+            this.limiter = comp;
+            this.masterGain.connect(this.limiter);
+            this.limiter.connect(this.ctx.destination);
+          } catch (_) {
+            this.masterGain.connect(this.ctx.destination);
+          }
         }
       } catch (e) {
         console.warn('Web Audio API not supported on this browser.');
@@ -91,12 +110,53 @@
       }
     }
 
+    trackVoice(node) {
+      if (!node) return node;
+      if (!this.activeVoices) this.activeVoices = new Set();
+      while (this.activeVoices.size >= this.maxVoices) {
+        const oldest = this.activeVoices.values().next().value;
+        if (oldest) {
+          try {
+            if (typeof oldest.stop === 'function') oldest.stop();
+            if (typeof oldest.disconnect === 'function') oldest.disconnect();
+          } catch (_) {}
+          this.activeVoices.delete(oldest);
+        } else {
+          break;
+        }
+      }
+      this.activeVoices.add(node);
+      const onEnded = () => {
+        if (this.activeVoices) this.activeVoices.delete(node);
+      };
+      if (typeof node.addEventListener === 'function') {
+        node.addEventListener('ended', onEnded, { once: true });
+      } else {
+        node.onended = onEnded;
+      }
+      return node;
+    }
+
+    stopAll() {
+      if (this.activeVoices) {
+        this.activeVoices.forEach((node) => {
+          try {
+            if (typeof node.stop === 'function') node.stop();
+            if (typeof node.disconnect === 'function') node.disconnect();
+          } catch (_) {}
+        });
+        this.activeVoices.clear();
+      }
+    }
+
     setMuted(mute) {
       this.muted = mute;
     }
 
     playStart() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       this.resume();
       const now = this.ctx.currentTime;
       // Dual-tone cyber synth chime
@@ -110,7 +170,8 @@
         gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.35);
 
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
 
         osc.start(now + idx * 0.06);
         osc.stop(now + idx * 0.06 + 0.35);
@@ -118,7 +179,9 @@
     }
 
     playLaneSwitch() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       this.resume();
       const now = this.ctx.currentTime;
       const osc = this.ctx.createOscillator();
@@ -131,14 +194,17 @@
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
 
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(osc);
 
       osc.start(now);
       osc.stop(now + 0.09);
     }
 
     playJump() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       this.resume();
       const now = this.ctx.currentTime;
       const osc = this.ctx.createOscillator();
@@ -151,18 +217,21 @@
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
 
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(osc);
 
       osc.start(now);
       osc.stop(now + 0.22);
     }
 
     playSlide() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       this.resume();
       const now = this.ctx.currentTime;
       // High-pass friction sizzle
-      const bufferSize = this.ctx.sampleRate * 0.15;
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.15);
       const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
       const data = buffer.getChannelData(0);
       for (let i = 0; i < bufferSize; i++) {
@@ -182,14 +251,17 @@
 
       noise.connect(filter);
       filter.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(noise);
 
       noise.start(now);
       noise.stop(now + 0.15);
     }
 
     playCoin() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       this.resume();
       const now = this.ctx.currentTime;
       // Sparkling arpeggio (C6 - E6 - G6)
@@ -203,7 +275,8 @@
         gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.04 + 0.2);
 
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(osc);
 
         osc.start(now + idx * 0.04);
         osc.stop(now + idx * 0.04 + 0.2);
@@ -211,7 +284,9 @@
     }
 
     playCrash() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       this.resume();
       const now = this.ctx.currentTime;
 
@@ -226,14 +301,15 @@
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
 
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(osc);
 
       osc.start(now);
       osc.stop(now + 0.45);
 
       // Glitch noise burst
       try {
-        const bufferSize = this.ctx.sampleRate * 0.3;
+        const bufferSize = Math.floor(this.ctx.sampleRate * 0.3);
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
@@ -253,7 +329,8 @@
 
         noise.connect(filter);
         filter.connect(nGain);
-        nGain.connect(this.ctx.destination);
+        nGain.connect(this.masterGain || this.ctx.destination);
+        this.trackVoice(noise);
 
         noise.start(now);
         noise.stop(now + 0.3);
@@ -261,7 +338,9 @@
     }
 
     playClick() {
-      if (this.muted || !this.ctx) return;
+      if (this.muted) return;
+      this.init();
+      if (!this.ctx) return;
       this.resume();
       const now = this.ctx.currentTime;
       const osc = this.ctx.createOscillator();
@@ -273,7 +352,8 @@
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
 
       osc.connect(gain);
-      gain.connect(this.ctx.destination);
+      gain.connect(this.masterGain || this.ctx.destination);
+      this.trackVoice(osc);
 
       osc.start(now);
       osc.stop(now + 0.05);
@@ -368,10 +448,12 @@
       this.type = type;
       this.laneIndex = laneIndex;
       this.z = z;
+      this.prevZ = z;
       this.passed = false;
     }
 
     update(dt, speed) {
+      this.prevZ = this.z;
       this.z -= speed * dt;
     }
   }
@@ -537,11 +619,6 @@
       this.updateHudBest();
       this.updateSoundButtonUI();
 
-      // Trigger initial Lucide icons compilation
-      if (window.lucide && typeof window.lucide.createIcons === 'function') {
-        window.lucide.createIcons();
-      }
-
       // Start background render loop for attractive menu
       this.startLoop();
     }
@@ -559,11 +636,9 @@
 
     updateSoundButtonUI() {
       if (!this.soundIcon) return;
-      const iconName = this.sound.muted ? 'volume-x' : 'volume-2';
-      this.soundIcon.innerHTML = `<i data-lucide="${iconName}"></i>`;
-      if (window.lucide && typeof window.lucide.createIcons === 'function') {
-        window.lucide.createIcons();
-      }
+      const SVG_VOL_ON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>';
+      const SVG_VOL_OFF = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>';
+      this.soundIcon.innerHTML = this.sound.muted ? SVG_VOL_OFF : SVG_VOL_ON;
     }
 
     toggleSound() {
@@ -586,7 +661,6 @@
       this.howToPlayModal.style.display = 'none';
       this.updateHudBest();
       this.announce('Main menu. Press Initiate Run or press Enter to start.');
-      if (window.lucide) lucide.createIcons();
     }
 
     showPauseScreen() {
@@ -597,7 +671,6 @@
       this.pauseCoins.textContent = this.coins;
       this.pauseScreen.style.display = 'flex';
       this.announce('Game paused. Press Resume or P to continue.');
-      if (window.lucide) lucide.createIcons();
     }
 
     resumeGame() {
@@ -622,7 +695,6 @@
 
       this.gameoverScreen.style.display = 'flex';
       this.announce(`Run terminated. Final score: ${Math.floor(this.score)}. Distance: ${Math.floor(this.distance)} meters.`);
-      if (window.lucide) lucide.createIcons();
     }
 
     openHowToPlayModal() {
@@ -630,7 +702,6 @@
       this.previousStateBeforeModal = this.state;
       this.howToPlayModal.style.display = 'flex';
       this.announce('How to play instructions dialog opened.');
-      if (window.lucide) lucide.createIcons();
     }
 
     closeHowToPlayModal() {
@@ -643,6 +714,7 @@
 
     // --- Game Lifecycle ---
     startNewGame() {
+      this.sound.stopAll();
       this.sound.init();
       this.sound.playStart();
 
@@ -927,11 +999,13 @@
         const obs = this.obstacles[i];
         obs.update(dt, this.speed);
 
-        // Collision Check
+        // Continuous Collision Swept Volume Check (#534)
+        // Prevents obstacle collision box desync / tunnel-through at high speeds
+        const entersWindow = obs.prevZ >= CONFIG.COLLISION_Z_MIN && obs.z <= CONFIG.COLLISION_Z_MAX;
+        const inWindow = obs.z >= CONFIG.COLLISION_Z_MIN && obs.z <= CONFIG.COLLISION_Z_MAX;
         if (
           this.player.invulnerableTimer <= 0 &&
-          obs.z >= CONFIG.COLLISION_Z_MIN &&
-          obs.z <= CONFIG.COLLISION_Z_MAX &&
+          (inWindow || entersWindow) &&
           this.isPlayerInLane(obs.laneIndex)
         ) {
           if (this.checkCollision(obs)) {
@@ -1773,8 +1847,21 @@
   }
 
   // --- Bootstrap on DOM Ready ---
+  let activeGameInstance = null;
   window.addEventListener('DOMContentLoaded', () => {
-    new CyberRunnerGame();
+    activeGameInstance = new CyberRunnerGame();
+  });
+
+  // Clean audio on teardown (#507)
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      if (activeGameInstance && activeGameInstance.sound) {
+        activeGameInstance.sound.stopAll();
+        if (activeGameInstance.sound.ctx && activeGameInstance.sound.ctx.state !== 'closed') {
+          try { activeGameInstance.sound.ctx.close(); } catch (_) {}
+        }
+      }
+    }
   });
 
 })();

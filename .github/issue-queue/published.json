@@ -1,0 +1,668 @@
+[
+  {
+    "number": 1190,
+    "title": "[Feature/Audio]: Multi-Channel Standard MIDI Binary File Parser & Polyphonic Chiptune Synthesizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1190",
+    "published_at": "2026-11-21T14:19:08.695Z"
+  },
+  {
+    "number": 1191,
+    "title": "[Feature/Input]: Virtual Multi-Touch Arcade Trackball & Inertial Spinner Physics Controller",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1191",
+    "published_at": "2026-11-21T14:19:14.268Z"
+  },
+  {
+    "number": 1192,
+    "title": "[Feature/HUD]: Dynamic Vector Glyph Radar & Minimap Projection Engine for Canvas Games",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1192",
+    "published_at": "2026-11-21T14:19:19.918Z"
+  },
+  {
+    "number": 1193,
+    "title": "[Feature/Audio]: Custom Chiptune SFX Step-Sequencer & Parameter Preset Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1193",
+    "published_at": "2026-11-21T14:30:18.075Z"
+  },
+  {
+    "number": 1194,
+    "title": "[Feature/VFX]: Pure Vanilla Object-Pooled 2D Particle VFX Emitter Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1194",
+    "published_at": "2026-11-21T14:30:23.621Z"
+  },
+  {
+    "number": 1195,
+    "title": "[Feature/Gameplay]: Ghost Car & Speedrunner Silhouette Delta-Encoded Replay Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1195",
+    "published_at": "2026-11-21T14:30:29.112Z"
+  },
+  {
+    "number": 1196,
+    "title": "[Feature/Canvas]: Procedural Pixel-Art Parallax Starfield & Space Nebula Canvas Generator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1196",
+    "published_at": "2026-11-21T14:30:34.646Z"
+  },
+  {
+    "number": 1197,
+    "title": "[Feature/A11y]: Accessibility Input Macro Sequence Recorder & Assisted Playback Bot",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1197",
+    "published_at": "2026-11-21T14:30:40.038Z"
+  },
+  {
+    "number": 1198,
+    "title": "[Feature/Audio]: Spectral Flux Onset Beat-Detector & Canvas Pulse Synchronizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1198",
+    "published_at": "2026-11-21T14:36:35.778Z"
+  },
+  {
+    "number": 1199,
+    "title": "[Feature/Docs]: Classic Mode 7 Affine Texture Projection & Horizon Curvature Sandbox",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1199",
+    "published_at": "2026-11-21T14:36:41.312Z"
+  },
+  {
+    "number": 1200,
+    "title": "[Feature/Audio]: Web Audio ConvolverNode Procedural Impulse Response (IR) Reverb Space Simulator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1200",
+    "published_at": "2026-11-21T14:36:46.722Z"
+  },
+  {
+    "number": 1201,
+    "title": "[Feature/UI]: Client-Side Animated Matrix LED Marquee Signage & 5x7 Dot-Font Banner Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1201",
+    "published_at": "2026-11-21T14:36:52.158Z"
+  },
+  {
+    "number": 1202,
+    "title": "[Feature/Input]: Retro CRT Light Gun Calibration & Screen-Flash Optical Target Tracker",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1202",
+    "published_at": "2026-11-21T14:36:57.602Z"
+  },
+  {
+    "number": 1203,
+    "title": "[Feature/Social]: High-Resolution Retro Arcade Trading Card & Polaroid Trophy Compositor",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1203",
+    "published_at": "2026-11-21T14:37:03.171Z"
+  },
+  {
+    "number": 1204,
+    "title": "[Feature/Canvas]: Dynamic Canvas Sprite Sheet Atlas Slicer & Multi-Track Frame Sequence Animator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1204",
+    "published_at": "2026-11-21T14:37:08.871Z"
+  },
+  {
+    "number": 1205,
+    "title": "[Feature/UI]: Dynamic Virtual Arcade Coin Door & Credit Counter Mechanism with Physics SFX",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1205",
+    "published_at": "2026-11-21T14:37:14.382Z"
+  },
+  {
+    "number": 1206,
+    "title": "[Feature/Input]: Interactive Gamepad Stick Deadzone Visualizer & Trigger Response Curve Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1206",
+    "published_at": "2026-11-21T14:37:19.887Z"
+  },
+  {
+    "number": 1207,
+    "title": "[Feature/Leaderboard]: Client-Side Leaderboard Score Distribution Analytics & Percentile Histogram Suite",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1207",
+    "published_at": "2026-11-21T14:37:25.282Z"
+  },
+  {
+    "number": 1214,
+    "title": "[Feature/Canvas]: Canvas Split-Depth 3D Pop-Out Illusion & Parallax Occlusion Bar Generator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1214",
+    "published_at": "2026-11-21T14:51:34.654Z"
+  },
+  {
+    "number": 1215,
+    "title": "[Feature/Physics]: 2D Inverse Kinematics (IK) FABRIK Multi-Joint Tentacle & Ragdoll Physics Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1215",
+    "published_at": "2026-11-21T14:51:40.226Z"
+  },
+  {
+    "number": 1217,
+    "title": "[Feature/Audio]: Multi-Channel Standard MIDI Binary File Parser & Polyphonic Chiptune Synthesizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1217",
+    "published_at": "2026-11-21T16:16:17.116Z"
+  },
+  {
+    "number": 1218,
+    "title": "[Feature/Input]: Virtual Multi-Touch Arcade Trackball & Inertial Spinner Physics Controller",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1218",
+    "published_at": "2026-11-21T16:16:22.557Z"
+  },
+  {
+    "number": 1219,
+    "title": "[Feature/HUD]: Dynamic Vector Glyph Radar & Minimap Projection Engine for Canvas Games",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1219",
+    "published_at": "2026-11-21T16:16:27.988Z"
+  },
+  {
+    "number": 1220,
+    "title": "[Feature/Physics]: Interactive 2D Soft-Body Jelly & Lattice Blob Mesh Physics Simulator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1220",
+    "published_at": "2026-11-21T16:17:33.738Z"
+  },
+  {
+    "number": 1221,
+    "title": "[Feature/Graphics]: Client-Side Pixel-Art Dithering & Retro Palette Quantization Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1221",
+    "published_at": "2026-11-21T16:17:39.237Z"
+  },
+  {
+    "number": 1223,
+    "title": "[Feature/Audio]: Web Audio Granular Synthesis Sound Scaper & Ambient Micro-Grain Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1223",
+    "published_at": "2026-11-21T16:17:44.876Z"
+  },
+  {
+    "number": 1225,
+    "title": "[Feature/Multiplayer]: Local Hotseat Turn-Based Game State Orchestrator & Transition Curtains",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1225",
+    "published_at": "2026-11-21T16:17:50.492Z"
+  },
+  {
+    "number": 1227,
+    "title": "[Feature/A11y]: Eye-Tracking & Head-Pose Pointer Navigation via WebRTC Landmark Mesh",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1227",
+    "published_at": "2026-11-21T16:17:56.039Z"
+  },
+  {
+    "number": 1229,
+    "title": "[Feature/Canvas]: Procedural 2D Raymarched Metaball Plasma Caustics & Water Ripple Sandbox",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1229",
+    "published_at": "2026-11-21T16:18:01.747Z"
+  },
+  {
+    "number": 1231,
+    "title": "[Feature/Danmaku]: Parametric Spline Bullet Pattern Generator & Rose Curve Shmup Spawner",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1231",
+    "published_at": "2026-11-21T16:18:07.463Z"
+  },
+  {
+    "number": 1233,
+    "title": "[Feature/UI]: CSS 3D Anamorphic Isometric Projection Room & Tilting Vanishing Perspective",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1233",
+    "published_at": "2026-11-21T16:18:13.087Z"
+  },
+  {
+    "number": 1236,
+    "title": "[Feature/Audio]: Pure Vanilla Audio Bitcrusher & Sample-Rate Reduction Lo-Fi DSP Node",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1236",
+    "published_at": "2026-11-21T16:18:18.647Z"
+  },
+  {
+    "number": 1238,
+    "title": "[Feature/Lighting]: Dynamic Canvas Silhouette Shadow Puppet & Soft Penumbra Lighting Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1238",
+    "published_at": "2026-11-21T16:18:24.297Z"
+  },
+  {
+    "number": 1240,
+    "title": "[Feature/Input]: Chorded Keystroke & Stenographic Arcade Combo Decoder with NKRO",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1240",
+    "published_at": "2026-11-21T16:19:45.670Z"
+  },
+  {
+    "number": 1241,
+    "title": "[Feature/Haptics]: Virtual Gamepad Haptic Rhythm & Pulse Feedback Vibration Pattern Adapter",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1241",
+    "published_at": "2026-11-21T16:19:51.303Z"
+  },
+  {
+    "number": 1242,
+    "title": "[Feature/Physics]: Dynamic 2D Fluid Metaball Liquid Drop & Mercury Merge Physics Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1242",
+    "published_at": "2026-11-21T16:19:56.781Z"
+  },
+  {
+    "number": 1243,
+    "title": "[Feature/Catalog]: Client-Side Custom Game Shelf Collections & Base64 Library Exporter",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1243",
+    "published_at": "2026-11-21T16:20:02.255Z"
+  },
+  {
+    "number": 1244,
+    "title": "[Feature/Audio]: Web Audio Dynamic Pitch-Shifting Doppler Effect Acoustic Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1244",
+    "published_at": "2026-11-21T16:20:07.749Z"
+  },
+  {
+    "number": 1245,
+    "title": "[Feature/Security]: Audio-Reactive Spectrum Barcode & Inaudible FSK Watermark Encoder",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1245",
+    "published_at": "2026-11-21T16:20:13.243Z"
+  },
+  {
+    "number": 1246,
+    "title": "[Feature/Shaders]: Convex CRT Glass Curvature & Spherical Barrel Distortion Lens Mapper",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1246",
+    "published_at": "2026-11-21T16:20:18.794Z"
+  },
+  {
+    "number": 1294,
+    "title": "[Feature/Algorithms]: Procedural Cellular Automata Cave & Organic Maze Generator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1294",
+    "published_at": "2026-11-22T06:36:46.103Z"
+  },
+  {
+    "number": 1295,
+    "title": "[Feature/Audio]: Web Audio Adaptive Dynamic Music Stem Layering & Cross-Fading Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1295",
+    "published_at": "2026-11-22T06:36:51.642Z"
+  },
+  {
+    "number": 1296,
+    "title": "[Feature/Input]: Virtual Arcade Trackpad Multi-Gesture Macro Swipe Controller",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1296",
+    "published_at": "2026-11-22T06:36:57.047Z"
+  },
+  {
+    "number": 1297,
+    "title": "[Feature/Graphics]: Pure Vanilla Canvas Isometric 2.5D Tilemap Stacking & Heightmap Renderer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1297",
+    "published_at": "2026-11-22T06:37:02.418Z"
+  },
+  {
+    "number": 1298,
+    "title": "[Feature/A11y]: Client-Side Live Web Speech Recognition (ASR) Voice Command Controller",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1298",
+    "published_at": "2026-11-22T06:37:07.885Z"
+  },
+  {
+    "number": 1299,
+    "title": "[Feature/Physics]: Canvas Dynamic 2D Liquid Splash & Surface Tension Wave Equation",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1299",
+    "published_at": "2026-11-22T06:37:13.388Z"
+  },
+  {
+    "number": 1300,
+    "title": "[Feature/Audio]: Multi-Channel Retro Chiptune Pitch-Bend & Vibrato LFO Envelope Generator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1300",
+    "published_at": "2026-11-22T06:37:18.701Z"
+  },
+  {
+    "number": 1301,
+    "title": "[Feature/Algorithms]: Procedural 2D Voronoi Diagram Biome Sharding & Territory Conquest Map",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1301",
+    "published_at": "2026-11-22T06:37:24.063Z"
+  },
+  {
+    "number": 1302,
+    "title": "[Feature/Audio]: Web Audio Dynamic Stereo Haas Effect Spatial Widener & Psychoacoustic Delay",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1302",
+    "published_at": "2026-11-22T06:37:29.476Z"
+  },
+  {
+    "number": 1303,
+    "title": "[Feature/Physics]: Interactive 2D Spring-Damper Ragdoll Dismemberment & Skeletal Bone Hierarchy",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1303",
+    "published_at": "2026-11-22T06:37:34.864Z"
+  },
+  {
+    "number": 1304,
+    "title": "[Feature/UI]: CSS Glassmorphism & Neon HUD Reticle Customizer for Arcade Cabinets",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1304",
+    "published_at": "2026-11-22T07:04:04.614Z"
+  },
+  {
+    "number": 1305,
+    "title": "[Feature/Audio]: Web Audio Dynamic Comb Filter & Flanger/Phaser Effect DSP Node",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1305",
+    "published_at": "2026-11-22T07:04:10.074Z"
+  },
+  {
+    "number": 1306,
+    "title": "[Feature/Canvas]: Dynamic Canvas Procedural Lightning & Electric Arc Plasma Discharger",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1306",
+    "published_at": "2026-11-22T07:04:15.495Z"
+  },
+  {
+    "number": 1307,
+    "title": "[Feature/Gameplay]: Client-Side Bookmarkable Challenge Run Modifier Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1307",
+    "published_at": "2026-11-22T07:04:20.942Z"
+  },
+  {
+    "number": 1308,
+    "title": "[Feature/Algorithms]: Canvas 2D Convex Hull & Minimum Bounding Box Collision Calculator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1308",
+    "published_at": "2026-11-22T07:04:26.443Z"
+  },
+  {
+    "number": 1309,
+    "title": "[Feature/Graphics]: Interactive Pixel-Art Glyph Matrix & Custom Bitmap Font Renderer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1309",
+    "published_at": "2026-11-22T07:04:31.833Z"
+  },
+  {
+    "number": 1310,
+    "title": "[Feature/VFX]: Dynamic Canvas Particle Text Dissolve & Matrix Digit Rain Transition",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1310",
+    "published_at": "2026-11-22T07:04:37.200Z"
+  },
+  {
+    "number": 1311,
+    "title": "[Feature/Audio]: Web Audio Binaural Beat & Isochronic Tone Brainwave Synchronizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1311",
+    "published_at": "2026-11-22T07:04:42.708Z"
+  },
+  {
+    "number": 1312,
+    "title": "[Feature/Physics]: Dynamic 2D Cloth & Cape Verlet Physics Drape Simulation Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1312",
+    "published_at": "2026-11-22T07:04:48.239Z"
+  },
+  {
+    "number": 1313,
+    "title": "[Feature/Shaders]: Dynamic Canvas Heat Distortion & Thermal Mirage Air Shimmer Filter",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1313",
+    "published_at": "2026-11-22T07:04:53.784Z"
+  },
+  {
+    "number": 1315,
+    "title": "[Refactor/UI]: Decommission and Remove 16-Band Audio Equalizer Widget from Hall of Fame Leaderboard",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1315",
+    "published_at": "2026-11-22T10:51:56.097Z"
+  },
+  {
+    "number": 1362,
+    "title": "[Theme/UI]: Authentic 1982 Vector Graphics Monochromatic Green Wireframe Theme & Glow Matrix",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1362",
+    "published_at": "2026-11-22T15:29:17.319Z"
+  },
+  {
+    "number": 1363,
+    "title": "[Theme/UI]: Game Boy DMG-01 4-Shade Monochromatic Olive Green LCD Ghosting Theme",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1363",
+    "published_at": "2026-11-22T15:29:22.836Z"
+  },
+  {
+    "number": 1364,
+    "title": "[Enhancement/UI]: Dynamic Canvas Cursor Particle Trail Studio & Retro Comet Spark Tail",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1364",
+    "published_at": "2026-11-22T15:29:28.369Z"
+  },
+  {
+    "number": 1365,
+    "title": "[Theme/UI]: Cyberpunk Neon Sunset Synthwave Outrun Theme Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1365",
+    "published_at": "2026-11-22T15:29:33.823Z"
+  },
+  {
+    "number": 1366,
+    "title": "[Feature/Catalog]: Virtualized Game Card Grid Scroller for Instant Mobile & Low-End DOM Performance",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1366",
+    "published_at": "2026-11-22T15:29:39.237Z"
+  },
+  {
+    "number": 1367,
+    "title": "[Enhancement/UI]: Floating Retro Arcade Marquee Header Banner with Dynamic Sound Waves",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1367",
+    "published_at": "2026-11-22T15:29:44.751Z"
+  },
+  {
+    "number": 1368,
+    "title": "[Theme/A11y]: High-Legibility OpenDyslexic & Atkinson Hyperlegible Font Theme Switcher",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1368",
+    "published_at": "2026-11-22T15:29:50.156Z"
+  },
+  {
+    "number": 1369,
+    "title": "[Feature/Audio]: Procedural Background Ambient Arcade Hall Chatter & Coin Drop Soundscape Generator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1369",
+    "published_at": "2026-11-22T15:29:55.700Z"
+  },
+  {
+    "number": 1370,
+    "title": "[Enhancement/UX]: Keyboard-Only Fast Arcade Navigation & Vim-Style Modal Quick-Jumps",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1370",
+    "published_at": "2026-11-22T15:30:01.125Z"
+  },
+  {
+    "number": 1371,
+    "title": "[Theme/UI]: Amber Phosphor CRT Monochrome Terminal Theme Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1371",
+    "published_at": "2026-11-22T15:30:06.528Z"
+  },
+  {
+    "number": 1379,
+    "title": "[Enhancement/A11y]: Skip-to-Content Navigation Link & Focus Trapping Indicator for Modals",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1379",
+    "published_at": "2026-11-23T16:25:16.472Z"
+  },
+  {
+    "number": 1380,
+    "title": "[Enhancement/UX]: Keyboard Shortcut Legend Overlay Modal with Printable Cheat Sheet",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1380",
+    "published_at": "2026-11-23T16:25:22.000Z"
+  },
+  {
+    "number": 1381,
+    "title": "[Enhancement/UI]: Floating Feedback & Issue Bug Report Quick-Launch Floating Pill Widget",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1381",
+    "published_at": "2026-11-23T16:25:27.540Z"
+  },
+  {
+    "number": 1382,
+    "title": "[Enhancement/Catalog]: Empty Search State with Smart Did-You-Mean Suggestions & Randomizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1382",
+    "published_at": "2026-11-23T16:25:33.058Z"
+  },
+  {
+    "number": 1383,
+    "title": "[Enhancement/UI]: Arcade Badge Tooltip Micro-Animations with Dynamic Arrow Positioning",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1383",
+    "published_at": "2026-11-23T16:25:38.573Z"
+  },
+  {
+    "number": 1384,
+    "title": "[Enhancement/UX]: Recent Search History Pills with One-Click Clear & Local Storage Persistence",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1384",
+    "published_at": "2026-11-23T16:25:44.071Z"
+  },
+  {
+    "number": 1385,
+    "title": "[Enhancement/UI]: Animated Skeleton Loading Shimmer Placeholders for Game Cards",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1385",
+    "published_at": "2026-11-23T16:25:49.615Z"
+  },
+  {
+    "number": 1386,
+    "title": "[Enhancement/UI]: Interactive Volume Slider HUD with Real-Time Decibel Percentage Meter",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1386",
+    "published_at": "2026-11-23T16:25:55.136Z"
+  },
+  {
+    "number": 1387,
+    "title": "[Enhancement/Catalog]: Category Quick-Filter Horizontal Scrollbar with Fade Gradients & Arrow Steppers",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1387",
+    "published_at": "2026-11-23T16:26:00.633Z"
+  },
+  {
+    "number": 1388,
+    "title": "[Enhancement/UI]: Game Card Favorite Star Animation with Particle Heart Burst Effect",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1388",
+    "published_at": "2026-11-23T16:26:06.083Z"
+  },
+  {
+    "number": 1389,
+    "title": "[Enhancement/A11y]: Dynamic Text Size Scale Adjuster (Small, Normal, Large) in Settings Drawer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1389",
+    "published_at": "2026-11-23T16:28:42.662Z"
+  },
+  {
+    "number": 1390,
+    "title": "[Enhancement/UX]: Auto-Scroll to Active Filtered Category Section on Selection",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1390",
+    "published_at": "2026-11-23T16:28:48.161Z"
+  },
+  {
+    "number": 1391,
+    "title": "[Enhancement/UI]: Interactive Sound Toggle Mute Animation with Speaker Wave Ripples",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1391",
+    "published_at": "2026-11-23T16:28:53.787Z"
+  },
+  {
+    "number": 1392,
+    "title": "[Enhancement/UI]: Game Description Expandable Read-More Accordion for Long Synopsis",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1392",
+    "published_at": "2026-11-23T16:28:59.228Z"
+  },
+  {
+    "number": 1393,
+    "title": "[Enhancement/UX]: Game Modal Exit Confirmation Dialog with Don't Ask Again Checkbox",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1393",
+    "published_at": "2026-11-23T16:29:04.774Z"
+  },
+  {
+    "number": 1394,
+    "title": "[Enhancement/UI]: Catalog Footer Dynamic Version Pill & System Status Indicator Pulse",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1394",
+    "published_at": "2026-11-23T16:31:06.075Z"
+  },
+  {
+    "number": 1395,
+    "title": "[Enhancement/UI]: Responsive Grid Column Toggle (2, 3, 4 Columns) for Desktop Displays",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1395",
+    "published_at": "2026-11-23T16:31:11.553Z"
+  },
+  {
+    "number": 1396,
+    "title": "[Enhancement/UX]: Copy Game Share Link Direct-to-Clipboard with Success Toast Notification",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1396",
+    "published_at": "2026-11-23T16:31:17.096Z"
+  },
+  {
+    "number": 1397,
+    "title": "[Enhancement/UI]: Dynamic Breadcrumb Navigation Trail on Active Game Modal Header",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1397",
+    "published_at": "2026-11-23T16:31:22.776Z"
+  },
+  {
+    "number": 1398,
+    "title": "[Enhancement/UI]: Interactive Retro Loading Progress Bar with Neon Segment Blocks",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1398",
+    "published_at": "2026-11-23T16:31:28.353Z"
+  },
+  {
+    "number": 1399,
+    "title": "[Theme/UI]: Retro Vaporwave Pastel Aesthetics & Windows 95 Vintage OS Theme",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1399",
+    "published_at": "2026-11-23T16:32:36.499Z"
+  },
+  {
+    "number": 1400,
+    "title": "[Feature/Audio]: Customizable UI Interaction Click Sound Packs with Zero-Asset Synthesis",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1400",
+    "published_at": "2026-11-23T16:32:41.892Z"
+  },
+  {
+    "number": 1401,
+    "title": "[Enhancement/Catalog]: Multi-Criteria Game Comparison Drawer with Side-by-Side Spec Matrix",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1401",
+    "published_at": "2026-11-23T16:32:47.279Z"
+  },
+  {
+    "number": 1402,
+    "title": "[Theme/UI]: Pitch Black OLED Pure Dark Mode for Battery Saving on Mobile Displays",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1402",
+    "published_at": "2026-11-23T16:32:52.838Z"
+  },
+  {
+    "number": 1403,
+    "title": "[Feature/Social]: Shareable Game Challenge Deep-Link URL Generator with Target Score Badges",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1403",
+    "published_at": "2026-11-23T16:32:58.238Z"
+  },
+  {
+    "number": 1404,
+    "title": "[Theme/UI]: Authentic 1984 Macintosh Classic Platinum Gray 1-Bit Stipple Pattern Theme Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1404",
+    "published_at": "2026-11-23T16:33:03.640Z"
+  },
+  {
+    "number": 1405,
+    "title": "[Feature/Audio]: Dynamic Interactive Morse Code Audio Keyer & Telegraph SFX Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1405",
+    "published_at": "2026-11-23T16:33:09.149Z"
+  },
+  {
+    "number": 1406,
+    "title": "[Feature/VFX]: Interactive Canvas Holographic Diffraction Grating & Rainbow Iridescence Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1406",
+    "published_at": "2026-11-23T16:33:14.566Z"
+  },
+  {
+    "number": 1407,
+    "title": "[Enhancement/UI]: Interactive Dual-Spool Retro Audio Cassette Tape Rewind & Fast-Forward Animation HUD",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1407",
+    "published_at": "2026-11-23T16:33:20.015Z"
+  },
+  {
+    "number": 1408,
+    "title": "[Feature/Social]: Global Arcade Activity Feed Ticker & Live Event Notification Stream",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1408",
+    "published_at": "2026-11-23T16:33:25.391Z"
+  },
+  {
+    "number": 1409,
+    "title": "[Feature/Physics]: 2D Rope & Double Pendulum Chaotic Motion Physics Sandbox",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1409",
+    "published_at": "2026-11-23T16:34:42.853Z"
+  },
+  {
+    "number": 1410,
+    "title": "[Theme/UI]: Authentic 1977 Apple II Composite NTSC Artifacting & Retro Font Theme Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1410",
+    "published_at": "2026-11-23T16:34:48.402Z"
+  },
+  {
+    "number": 1411,
+    "title": "[Feature/Audio]: Web Audio Procedural Atmospheric Storm & Distant Thunder Audio Synthesizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1411",
+    "published_at": "2026-11-23T16:34:53.849Z"
+  },
+  {
+    "number": 1412,
+    "title": "[Feature/VFX]: Interactive 2D Magnetic Ferrofluid Spike Formation & Attraction Physics Canvas",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1412",
+    "published_at": "2026-11-23T16:34:59.299Z"
+  },
+  {
+    "number": 1413,
+    "title": "[Feature/UX]: Interactive Voice-Guided Arcade Audio Tour & Virtual Tour Guide Subsystem",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1413",
+    "published_at": "2026-11-23T16:35:04.871Z"
+  },
+  {
+    "number": 1414,
+    "title": "[Feature/Graphics]: Procedural Pseudo-3D Voxel Heightmap Terrain Flyover Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1414",
+    "published_at": "2026-11-23T16:35:10.320Z"
+  },
+  {
+    "number": 1415,
+    "title": "[Theme/UI]: Virtual Boy Dual-Tone Red & Black Stereoscopic 3D Wireframe Theme Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1415",
+    "published_at": "2026-11-23T16:35:15.857Z"
+  },
+  {
+    "number": 1416,
+    "title": "[Feature/Audio]: Dynamic Web Audio Theremin Instrument with Cursor Frequency & Vibrato Control",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1416",
+    "published_at": "2026-11-23T16:35:21.339Z"
+  },
+  {
+    "number": 1417,
+    "title": "[Feature/Audio]: Interactive Dynamic Web Audio Vocoder & Formant Filter Synthesizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1417",
+    "published_at": "2026-11-23T16:35:26.868Z"
+  },
+  {
+    "number": 1418,
+    "title": "[Feature/VFX]: Interactive 2D Gravitational Lensing & Black Hole Accretion Disk Warp Canvas",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1418",
+    "published_at": "2026-11-23T16:35:32.409Z"
+  }
+]

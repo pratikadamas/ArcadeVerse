@@ -1,0 +1,56 @@
+{
+  "name": "ArcadeVerse",
+  "short_name": "ArcadeVerse",
+  "description": "An open-source community arcade built with pure HTML, CSS, and JS for NSOC Winter Edition 2026.",
+  "id": "arcadeverse-pwa",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#060913",
+  "theme_color": "#0f172a",
+  "categories": [
+    "games",
+    "entertainment"
+  ],
+  "icons": [
+    {
+      "src": "assets/public/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/public/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/public/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/public/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Explore Games",
+      "short_name": "Games",
+      "description": "Browse and launch all 118+ arcade games",
+      "url": "./index.html#games-section",
+      "icons": [{ "src": "assets/public/favicon-32x32.png", "sizes": "32x32" }]
+    },
+    {
+      "name": "Hall of Fame",
+      "short_name": "Leaderboard",
+      "description": "Check live contributor standings and trophies",
+      "url": "./leaderboard.html",
+      "icons": [{ "src": "assets/public/favicon-32x32.png", "sizes": "32x32" }]
+    }
+  ]
+}

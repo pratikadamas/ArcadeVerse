@@ -22,28 +22,152 @@
   var isMuted = false;
   var volume = 0.3;
 
+  // Synchronize initial mute and volume from persistent storage or parent SoundEngine (#898)
+  try {
+    if (typeof localStorage !== 'undefined') {
+      var savedMute = localStorage.getItem('arcadeverse_muted') || localStorage.getItem('av_sound_muted');
+      if (savedMute !== null) {
+        isMuted = savedMute === 'true';
+      }
+      var savedVol = localStorage.getItem('arcadeverse_master_volume') || localStorage.getItem('av_master_volume');
+      if (savedVol !== null) {
+        var parsedVol = parseFloat(savedVol);
+        if (!isNaN(parsedVol)) {
+          volume = Math.max(0, Math.min(1, parsedVol));
+        }
+      }
+    }
+  } catch (_) {}
+
+  // Listen to storage events and cross-frame postMessages for instant volume/mute synchronization (#898)
+  if (typeof window !== 'undefined') {
+    try {
+      window.addEventListener('storage', function (e) {
+        if (e.key === 'arcadeverse_muted' || e.key === 'av_sound_muted') {
+          isMuted = e.newValue === 'true';
+          if (masterGain && audioCtx) {
+            masterGain.gain.setValueAtTime(isMuted ? 0 : volume, audioCtx.currentTime);
+          }
+        } else if (e.key === 'arcadeverse_master_volume' || e.key === 'av_master_volume') {
+          var v = parseFloat(e.newValue);
+          if (!isNaN(v)) {
+            volume = Math.max(0, Math.min(1, v));
+            if (masterGain && audioCtx && !isMuted) {
+              masterGain.gain.setValueAtTime(volume, audioCtx.currentTime);
+            }
+          }
+        }
+      });
+    } catch (_) {}
+
+    try {
+      window.addEventListener('message', function (event) {
+        if (!event.data || typeof event.data !== 'object') return;
+        if (event.data.type === 'ARCADEVERSE_AUDIO_CONFIG' || event.data.type === 'ARCADEVERSE_SET_VOLUME') {
+          if (typeof event.data.muted === 'boolean') {
+            isMuted = event.data.muted;
+          }
+          if (typeof event.data.volume === 'number' && !isNaN(event.data.volume)) {
+            volume = Math.max(0, Math.min(1, event.data.volume));
+          }
+          if (masterGain && audioCtx) {
+            masterGain.gain.setValueAtTime(isMuted ? 0 : volume, audioCtx.currentTime);
+          }
+        }
+      });
+    } catch (_) {}
+  }
+
   function getContext() {
     if (!audioCtx) {
-      var AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContextClass) return null;
-      audioCtx = new AudioContextClass();
-      masterGain = audioCtx.createGain();
-      masterGain.gain.setValueAtTime(isMuted ? 0 : volume, audioCtx.currentTime);
-      masterGain.connect(audioCtx.destination);
+      try {
+        var AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return null;
+        audioCtx = new AudioContextClass();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(isMuted ? 0 : volume, audioCtx.currentTime);
+        masterGain.connect(audioCtx.destination);
+      } catch (err) {
+        return null;
+      }
     }
-    if (audioCtx.state === 'suspended') {
+    if (audioCtx && audioCtx.state === 'suspended') {
       audioCtx.resume().catch(function () {});
     }
     return audioCtx;
   }
 
-  function createNoiseBuffer(ctx, durationSec) {
-    var bufferSize = Math.floor(ctx.sampleRate * (durationSec || 0.25));
-    var buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    var output = buffer.getChannelData(0);
-    for (var i = 0; i < bufferSize; i++) {
-      output[i] = Math.random() * 2 - 1;
+  /**
+   * Procedural Multi-Curve Noise Buffer Synthesizer (#701, #724)
+   * Produces White, Pink (1/f), and Brownian (1/f^2) noise buffers without external audio assets.
+   * Supports polymorphic signatures: (type, duration, customCtx) or (ctx, duration, type).
+   * @param {string|AudioContext} type - Noise curve name ('white', 'pink', 'brownian') or AudioContext
+   * @param {number|string} [duration=0.25] - Duration in seconds or noise type
+   * @param {AudioContext|string} [customCtx] - AudioContext or noise type
+   * @returns {AudioBuffer|null}
+   */
+  function createNoiseBuffer(type, duration, customCtx) {
+    var ctx;
+    var noiseType = 'white';
+    var dur = 0.25;
+
+    // Polymorphic signature handling:
+    // Signature A: createNoiseBuffer(ctx, duration, type)
+    if (type && typeof type === 'object' && typeof type.createBuffer === 'function') {
+      ctx = type;
+      if (typeof duration === 'string') {
+        noiseType = duration.toLowerCase();
+        dur = Number(customCtx) || 0.25;
+      } else {
+        dur = Number(duration) || 0.25;
+        noiseType = typeof customCtx === 'string' ? customCtx.toLowerCase() : 'white';
+      }
+    } else {
+      // Signature B: createNoiseBuffer(type, duration, customCtx)
+      if (typeof type === 'string') {
+        noiseType = type.toLowerCase();
+      }
+      dur = Number(duration) || 0.25;
+      ctx = customCtx || getContext();
     }
+
+    if (!ctx) return null;
+
+    var sampleRate = ctx.sampleRate || 44100;
+    var bufferSize = Math.max(1, Math.floor(sampleRate * dur));
+    var buffer = ctx.createBuffer(1, bufferSize, sampleRate);
+    var output = buffer.getChannelData(0);
+
+    if (noiseType === 'pink') {
+      // Paul Kellet's refined 7-pole 1/f Pink Noise algorithm
+      var b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+      for (var i = 0; i < bufferSize; i++) {
+        var white = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.96900 * b2 + white * 0.1538520;
+        b3 = 0.86650 * b3 + white * 0.3104856;
+        b4 = 0.55000 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.0168980;
+        output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
+        b6 = white * 0.115926;
+      }
+    } else if (noiseType === 'brown' || noiseType === 'brownian' || noiseType === 'red') {
+      // Brownian / Red Noise (1/f^2) algorithm with leaky integrator
+      var lastOut = 0.0;
+      for (var j = 0; j < bufferSize; j++) {
+        var w = Math.random() * 2 - 1;
+        output[j] = (lastOut + (0.02 * w)) / 1.02;
+        lastOut = output[j];
+        output[j] *= 3.5; // Compensate for integration roll-off
+      }
+    } else {
+      // White Noise (uniform flat distribution)
+      for (var k = 0; k < bufferSize; k++) {
+        output[k] = Math.random() * 2 - 1;
+      }
+    }
+
     return buffer;
   }
 
@@ -179,33 +303,270 @@
     },
 
     /**
-     * Deep arcade explosion: Noise buffer with lowpass resonant sweep
+     * Deep arcade explosion: Filtered brownian/pink noise buffer with resonant lowpass sweep
+     * @param {Object} [options] - Configuration { type, duration, volume, startFreq, endFreq, Q }
+     * @returns {AudioBufferSourceNode|undefined}
      */
-    playExplosion: function () {
+    playExplosion: function (options) {
       var ctx = getContext();
       if (!ctx || isMuted) return;
 
+      options = options || {};
       var now = ctx.currentTime;
-      var duration = 0.45;
-      var noiseBuffer = createNoiseBuffer(ctx, duration);
+      var duration = options.duration || 0.5;
+      var noiseType = options.type || 'brownian';
+      var noiseBuffer = createNoiseBuffer(noiseType, duration, ctx);
+      if (!noiseBuffer) return;
+
       var noiseSource = ctx.createBufferSource();
       noiseSource.buffer = noiseBuffer;
 
+      if (typeof this.requestVoice === 'function' && !this.requestVoice('critical', noiseSource)) {
+        return;
+      }
+
       var filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(800, now);
-      filter.frequency.linearRampToValueAtTime(40, now + duration);
+      var startFreq = options.startFreq || 850;
+      var endFreq = options.endFreq || 35;
+      filter.frequency.setValueAtTime(startFreq, now);
+      filter.frequency.exponentialRampToValueAtTime(endFreq, now + duration);
+      filter.Q.setValueAtTime(options.Q !== undefined ? options.Q : 3.5, now);
 
       var gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.35, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+      var vol = options.volume !== undefined ? options.volume : 0.35;
+      gain.gain.setValueAtTime(vol, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
       noiseSource.connect(filter);
       filter.connect(gain);
       gain.connect(masterGain || ctx.destination);
 
+      // Memory cleanup on sound node termination (#701, #724)
+      noiseSource.onended = function () {
+        try {
+          noiseSource.disconnect();
+          filter.disconnect();
+          gain.disconnect();
+        } catch (_) {}
+      };
+
       noiseSource.start(now);
       noiseSource.stop(now + duration);
+      return noiseSource;
+    },
+
+    /**
+     * Punchy retro blast / energy shockwave impact using pink noise
+     * @param {Object} [options] - Configuration { type, duration, volume }
+     * @returns {AudioBufferSourceNode|undefined}
+     */
+    playBlast: function (options) {
+      var ctx = getContext();
+      if (!ctx || isMuted) return;
+
+      options = options || {};
+      var now = ctx.currentTime;
+      var duration = options.duration || 0.35;
+      var noiseType = options.type || 'pink';
+      var noiseBuffer = createNoiseBuffer(noiseType, duration, ctx);
+      if (!noiseBuffer) return;
+
+      var noiseSource = ctx.createBufferSource();
+      noiseSource.buffer = noiseBuffer;
+
+      if (typeof this.requestVoice === 'function' && !this.requestVoice('medium', noiseSource)) {
+        return;
+      }
+
+      var filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1400, now);
+      filter.frequency.exponentialRampToValueAtTime(70, now + duration);
+      filter.Q.setValueAtTime(2.5, now);
+
+      var gain = ctx.createGain();
+      var vol = options.volume !== undefined ? options.volume : 0.3;
+      gain.gain.setValueAtTime(vol, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+      noiseSource.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain || ctx.destination);
+
+      // Memory cleanup on sound node termination (#701, #724)
+      noiseSource.onended = function () {
+        try {
+          noiseSource.disconnect();
+          filter.disconnect();
+          gain.disconnect();
+        } catch (_) {}
+      };
+
+      noiseSource.start(now);
+      noiseSource.stop(now + duration);
+      return noiseSource;
+    },
+
+    /**
+     * Procedural retro engine drone / thruster hum using filtered brownian noise
+     * @param {number} [duration=1.0] - Duration in seconds, or 0 / Infinity for sustained loop
+     * @param {Object} [options] - Configuration { type, cutoff, volume, loop, Q }
+     * @returns {Object|null} Sound controller with stop() method
+     */
+    playEngineHum: function (duration, options) {
+      var ctx = getContext();
+      if (!ctx || isMuted) return null;
+
+      if (typeof duration === 'object') {
+        options = duration;
+        duration = 1.0;
+      }
+      options = options || {};
+      var dur = duration !== undefined ? duration : 1.0;
+      var isLoop = dur === 0 || dur === Infinity || options.loop === true;
+      var bufferDur = isLoop ? 2.0 : Math.max(0.2, dur);
+      var now = ctx.currentTime;
+
+      var noiseType = options.type || 'brownian';
+      var noiseBuffer = createNoiseBuffer(noiseType, bufferDur, ctx);
+      if (!noiseBuffer) return null;
+
+      var noiseSource = ctx.createBufferSource();
+      noiseSource.buffer = noiseBuffer;
+      noiseSource.loop = isLoop;
+
+      if (typeof this.requestVoice === 'function' && !this.requestVoice('low', noiseSource)) {
+        return null;
+      }
+
+      // Resonant Lowpass filter to sculpt deep engine rumble
+      var filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      var cutoff = options.cutoff || 150;
+      filter.frequency.setValueAtTime(cutoff, now);
+      filter.Q.setValueAtTime(options.Q !== undefined ? options.Q : 3.0, now);
+
+      var gain = ctx.createGain();
+      var targetVol = options.volume !== undefined ? options.volume : 0.25;
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(targetVol, now + 0.08);
+
+      if (!isLoop) {
+        gain.gain.setValueAtTime(targetVol, now + dur - 0.1);
+        gain.gain.linearRampToValueAtTime(0.001, now + dur);
+      }
+
+      noiseSource.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain || ctx.destination);
+
+      function cleanup() {
+        try {
+          noiseSource.disconnect();
+          filter.disconnect();
+          gain.disconnect();
+        } catch (_) {}
+      }
+
+      noiseSource.onended = cleanup;
+
+      noiseSource.start(now);
+      if (!isLoop) {
+        noiseSource.stop(now + dur);
+      }
+
+      return {
+        source: noiseSource,
+        filter: filter,
+        gain: gain,
+        stop: function (fadeMs) {
+          var fadeTime = (fadeMs || 80) / 1000;
+          var stopNow = ctx.currentTime;
+          try {
+            gain.gain.cancelScheduledValues(stopNow);
+            gain.gain.setValueAtTime(gain.gain.value, stopNow);
+            gain.gain.linearRampToValueAtTime(0.001, stopNow + fadeTime);
+            setTimeout(function () {
+              try { noiseSource.stop(); } catch (_) {}
+              cleanup();
+            }, (fadeTime * 1000) + 20);
+          } catch (_) {
+            cleanup();
+          }
+        }
+      };
+    },
+
+    /**
+     * Atmospheric ambient wind / thruster airflow using swept bandpass pink noise
+     * @param {number} [duration=1.2] - Duration in seconds
+     * @param {Object} [options] - Configuration { type, volume, minFreq, maxFreq }
+     * @returns {Object|null} Sound controller with stop() method
+     */
+    playWind: function (duration, options) {
+      var ctx = getContext();
+      if (!ctx || isMuted) return null;
+
+      if (typeof duration === 'object') {
+        options = duration;
+        duration = 1.2;
+      }
+      options = options || {};
+      var dur = duration || 1.2;
+      var now = ctx.currentTime;
+      var noiseType = options.type || 'pink';
+      var noiseBuffer = createNoiseBuffer(noiseType, dur, ctx);
+      if (!noiseBuffer) return null;
+
+      var noiseSource = ctx.createBufferSource();
+      noiseSource.buffer = noiseBuffer;
+
+      if (typeof this.requestVoice === 'function' && !this.requestVoice('low', noiseSource)) {
+        return null;
+      }
+
+      var filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      var minFreq = options.minFreq || 350;
+      var maxFreq = options.maxFreq || 750;
+      filter.frequency.setValueAtTime(minFreq, now);
+      filter.frequency.exponentialRampToValueAtTime(maxFreq, now + dur * 0.5);
+      filter.frequency.exponentialRampToValueAtTime(minFreq, now + dur);
+      filter.Q.setValueAtTime(1.8, now);
+
+      var gain = ctx.createGain();
+      var targetVol = options.volume !== undefined ? options.volume : 0.2;
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(targetVol, now + dur * 0.3);
+      gain.gain.linearRampToValueAtTime(0.001, now + dur);
+
+      noiseSource.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain || ctx.destination);
+
+      function cleanup() {
+        try {
+          noiseSource.disconnect();
+          filter.disconnect();
+          gain.disconnect();
+        } catch (_) {}
+      }
+
+      noiseSource.onended = cleanup;
+
+      noiseSource.start(now);
+      noiseSource.stop(now + dur);
+
+      return {
+        source: noiseSource,
+        filter: filter,
+        gain: gain,
+        stop: function () {
+          try { noiseSource.stop(); } catch (_) {}
+          cleanup();
+        }
+      };
     },
 
     /**
@@ -292,6 +653,327 @@
         osc.start(now);
         osc.stop(now + 0.6);
       });
+    },
+
+    // ========================================================
+    // DYNAMIC AUDIO DUCKING CONTROLLER (#567)
+    // Side-chain attenuates background music during loud SFX (explosions, jumps, impacts)
+    // ========================================================
+    /**
+     * Dynamically ducks (temporarily lowers) target music GainNode during punchy SFX.
+     * @param {GainNode} musicGainNode - The music gain node to duck
+     * @param {number} [duckAmount=0.35] - Attenuation factor (0.35 = -9dB reduction)
+     * @param {number} [holdMs=250] - Duration in ms before restoring volume
+     * @param {number} [rampMs=180] - Smoothing ramp duration in ms
+     */
+    duckMusic: function (musicGainNode, duckAmount, holdMs, rampMs) {
+      if (!musicGainNode || !musicGainNode.gain) return;
+      var ctx = getContext();
+      if (!ctx) return;
+
+      var now = ctx.currentTime;
+      var factor = duckAmount !== undefined ? duckAmount : 0.35;
+      var hold = (holdMs || 250) / 1000;
+      var ramp = (rampMs || 180) / 1000;
+
+      var currentVal = musicGainNode.gain.value;
+      musicGainNode.gain.cancelScheduledValues(now);
+      musicGainNode.gain.setValueAtTime(currentVal, now);
+      // Fast attack (25ms)
+      musicGainNode.gain.linearRampToValueAtTime(currentVal * factor, now + 0.025);
+      // Hold then smooth release back to original level
+      musicGainNode.gain.setValueAtTime(currentVal * factor, now + 0.025 + hold);
+      musicGainNode.gain.linearRampToValueAtTime(currentVal, now + 0.025 + hold + ramp);
+    },
+
+    // ========================================================
+    // SOUND EFFECT PRIORITY QUEUING & VOICE STEALER (#571)
+    // Eliminates voice starvation: Critical (Damage, GameOver) > Medium > Low
+    // ========================================================
+    MAX_CONCURRENT_VOICES: 8,
+    _activeVoices: [],
+
+    /**
+     * Allocates a voice slot according to priority rank
+     * @param {string} priority - 'critical', 'medium', or 'low'
+     * @param {AudioNode} [sourceNode] - Optional audio source node for voice stealing
+     * @returns {boolean} Whether the sound is permitted to play
+     */
+    requestVoice: function (priority, sourceNode) {
+      priority = (priority || 'medium').toLowerCase();
+      var priorityRank = { critical: 3, medium: 2, low: 1 }[priority] || 2;
+      var now = Date.now();
+
+      // Clean finished voices
+      this._activeVoices = this._activeVoices.filter(function (v) {
+        return v.expiresAt > now;
+      });
+
+      if (this._activeVoices.length < this.MAX_CONCURRENT_VOICES) {
+        this._activeVoices.push({
+          rank: priorityRank,
+          node: sourceNode,
+          expiresAt: now + 1200
+        });
+        return true;
+      }
+
+      // Voice pool is full: search for lowest priority voice to steal
+      var lowestIndex = -1;
+      var lowestRank = priorityRank;
+
+      for (var i = 0; i < this._activeVoices.length; i++) {
+        if (this._activeVoices[i].rank < lowestRank) {
+          lowestRank = this._activeVoices[i].rank;
+          lowestIndex = i;
+        }
+      }
+
+      if (lowestIndex !== -1) {
+        // Voice stealer drops lowest priority ambient sound to guarantee critical cue
+        var stolen = this._activeVoices.splice(lowestIndex, 1)[0];
+        if (stolen.node && typeof stolen.node.stop === 'function') {
+          try {
+            stolen.node.stop();
+          } catch (_) {}
+        }
+        this._activeVoices.push({
+          rank: priorityRank,
+          node: sourceNode,
+          expiresAt: now + 1200
+        });
+        return true;
+      }
+
+      // If requested voice is lowest priority and no lower voices exist, drop it
+      return priorityRank >= 3;
+    },
+
+    // ========================================================
+    // RETRO 5-BAND BIQUADFILTER AUDIO EQUALIZER (#570)
+    // 60Hz, 250Hz, 1kHz, 4kHz, 12kHz Equalizer Chain with Presets
+    // ========================================================
+    _eqNodes: null,
+    _currentPreset: 'arcade',
+
+    initEqualizer: function () {
+      var ctx = getContext();
+      if (!ctx || this._eqNodes) return this._eqNodes;
+
+      var freqs = [60, 250, 1000, 4000, 12000];
+      var types = ['lowshelf', 'peaking', 'peaking', 'peaking', 'highshelf'];
+      var nodes = [];
+
+      for (var i = 0; i < freqs.length; i++) {
+        var filter = ctx.createBiquadFilter();
+        filter.type = types[i];
+        filter.frequency.value = freqs[i];
+        filter.gain.value = 0;
+        if (types[i] === 'peaking') filter.Q.value = 1.0;
+        nodes.push(filter);
+      }
+
+      // Chain filters
+      for (var j = 0; j < nodes.length - 1; j++) {
+        nodes[j].connect(nodes[j + 1]);
+      }
+
+      this._eqNodes = nodes;
+
+      // Re-route masterGain through EQ chain before destination
+      try {
+        if (masterGain) {
+          masterGain.disconnect();
+          masterGain.connect(nodes[0]);
+          nodes[nodes.length - 1].connect(ctx.destination);
+        }
+      } catch (_) {}
+
+      // Load saved preset
+      try {
+        var saved = localStorage.getItem('arcadeverse_eq_preset') || 'arcade';
+        this.setPreset(saved);
+      } catch (_) {
+        this.setPreset('arcade');
+      }
+
+      return nodes;
+    },
+
+    setPreset: function (presetName) {
+      this._currentPreset = presetName || 'arcade';
+      try {
+        localStorage.setItem('arcadeverse_eq_preset', this._currentPreset);
+      } catch (_) {}
+
+      if (!this._eqNodes) {
+        this.initEqualizer();
+      }
+      if (!this._eqNodes) return;
+
+      // Gains: [60Hz, 250Hz, 1kHz, 4kHz, 12kHz]
+      var gains = [0, 0, 0, 0, 0];
+      switch (this._currentPreset) {
+        case 'warm':
+          // Warm Cabinet (Boosted Mids, trimmed high piercing hiss)
+          gains = [3, 5, 4, 1, -4];
+          break;
+        case 'lofi':
+          // 8-Bit Lo-Fi (Low-pass filtered, rolled-off crisp top)
+          gains = [2, 3, 2, -6, -12];
+          break;
+        case 'bass':
+          // Bass Boost
+          gains = [8, 5, 1, 0, 1];
+          break;
+        case 'arcade':
+        default:
+          // Default Arcade Flat
+          gains = [0, 0, 0, 0, 0];
+          break;
+      }
+
+      var ctx = getContext();
+      var now = ctx ? ctx.currentTime : 0;
+      for (var k = 0; k < this._eqNodes.length; k++) {
+        if (this._eqNodes[k] && this._eqNodes[k].gain) {
+          this._eqNodes[k].gain.setValueAtTime(gains[k], now);
+        }
+      }
+    },
+
+    getPreset: function () {
+      return this._currentPreset;
+    },
+
+    /**
+     * Procedural Noise Buffer Factory (#701, #724)
+     * Generates native AudioBuffer containing white, pink (1/f), or brownian (1/f^2) noise.
+     * @param {string} [type='white'] - Noise spectral curve: 'white', 'pink', 'brownian' (or 'brown' / 'red')
+     * @param {number} [duration=0.25] - Buffer duration in seconds
+     * @param {AudioContext} [customCtx] - Optional AudioContext instance
+     * @returns {AudioBuffer|null}
+     */
+    createNoiseBuffer: function (type, duration, customCtx) {
+      return createNoiseBuffer(type, duration, customCtx);
+    },
+
+    /**
+     * Polyphonic 4-Channel MIDI-Like Chiptune Sequencer with BGM Loop Tracks (#694)
+     * Channels: Lead (Pulse), Harmony (Square), Bass (Triangle), Percussion (Noise)
+     */
+    _bgmInterval: null,
+    _bgmCurrentTrack: null,
+
+    playBGM: function (trackName) {
+      this.stopBGM();
+      var ctx = getContext();
+      if (!ctx || isMuted) return;
+
+      var TRACKS = {
+        action: {
+          bpm: 140,
+          lead: [440, 494, 523, 587, 659, 587, 523, 494, 440, 523, 659, 880, 784, 659, 587, 523],
+          harmony: [220, 247, 262, 294, 330, 294, 262, 247, 220, 262, 330, 440, 392, 330, 294, 262],
+          bass: [110, 110, 131, 131, 147, 147, 165, 165, 110, 110, 131, 131, 147, 147, 165, 165],
+          perc: [1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0]
+        },
+        mystery: {
+          bpm: 110,
+          lead: [330, 349, 392, 440, 392, 349, 330, 294, 330, 392, 440, 523, 494, 440, 392, 349],
+          harmony: [165, 175, 196, 220, 196, 175, 165, 147, 165, 196, 220, 262, 247, 220, 196, 175],
+          bass: [82, 82, 98, 98, 110, 110, 82, 82, 82, 82, 98, 98, 110, 110, 82, 82],
+          perc: [1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1]
+        },
+        cyberpunk: {
+          bpm: 128,
+          lead: [587, 587, 659, 698, 587, 523, 440, 523, 587, 698, 784, 880, 784, 698, 659, 587],
+          harmony: [294, 294, 330, 349, 294, 262, 220, 262, 294, 349, 392, 440, 392, 349, 330, 294],
+          bass: [73, 73, 87, 87, 73, 65, 55, 65, 73, 87, 98, 110, 98, 87, 73, 73],
+          perc: [1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1]
+        }
+      };
+
+      var track = TRACKS[trackName] || TRACKS.action;
+      this._bgmCurrentTrack = trackName;
+      var stepDuration = (60 / track.bpm) / 4; // 16th notes
+      var currentStep = 0;
+
+      var self = this;
+      this._bgmInterval = setInterval(function () {
+        if (isMuted || !audioCtx) return;
+        var now = audioCtx.currentTime;
+
+        // Channel 1: Lead (Pulse / Sawtooth)
+        var leadFreq = track.lead[currentStep];
+        if (leadFreq > 0) {
+          var osc1 = audioCtx.createOscillator();
+          var gain1 = audioCtx.createGain();
+          osc1.type = 'sawtooth';
+          osc1.frequency.setValueAtTime(leadFreq, now);
+          gain1.gain.setValueAtTime(0.08 * volume, now);
+          gain1.gain.exponentialRampToValueAtTime(0.001, now + stepDuration * 0.9);
+          osc1.connect(gain1);
+          gain1.connect(masterGain);
+          osc1.start(now);
+          osc1.stop(now + stepDuration * 0.9);
+        }
+
+        // Channel 2: Harmony (Square)
+        var harmFreq = track.harmony[currentStep];
+        if (harmFreq > 0) {
+          var osc2 = audioCtx.createOscillator();
+          var gain2 = audioCtx.createGain();
+          osc2.type = 'square';
+          osc2.frequency.setValueAtTime(harmFreq, now);
+          gain2.gain.setValueAtTime(0.05 * volume, now);
+          gain2.gain.exponentialRampToValueAtTime(0.001, now + stepDuration * 0.85);
+          osc2.connect(gain2);
+          gain2.connect(masterGain);
+          osc2.start(now);
+          osc2.stop(now + stepDuration * 0.85);
+        }
+
+        // Channel 3: Bass (Triangle)
+        var bassFreq = track.bass[currentStep];
+        if (bassFreq > 0) {
+          var osc3 = audioCtx.createOscillator();
+          var gain3 = audioCtx.createGain();
+          osc3.type = 'triangle';
+          osc3.frequency.setValueAtTime(bassFreq, now);
+          gain3.gain.setValueAtTime(0.12 * volume, now);
+          gain3.gain.exponentialRampToValueAtTime(0.001, now + stepDuration * 0.95);
+          osc3.connect(gain3);
+          gain3.connect(masterGain);
+          osc3.start(now);
+          osc3.stop(now + stepDuration * 0.95);
+        }
+
+        // Channel 4: Percussion (Noise)
+        if (track.perc[currentStep]) {
+          var noiseBuf = createNoiseBuffer('white', 0.04, audioCtx);
+          if (noiseBuf) {
+            var nSource = audioCtx.createBufferSource();
+            var nGain = audioCtx.createGain();
+            nSource.buffer = noiseBuf;
+            nGain.gain.setValueAtTime(0.07 * volume, now);
+            nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+            nSource.connect(nGain);
+            nGain.connect(masterGain);
+            nSource.start(now);
+          }
+        }
+
+        currentStep = (currentStep + 1) % 16;
+      }, stepDuration * 1000);
+    },
+
+    stopBGM: function () {
+      if (this._bgmInterval) {
+        clearInterval(this._bgmInterval);
+        this._bgmInterval = null;
+        this._bgmCurrentTrack = null;
+      }
     }
   };
 

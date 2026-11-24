@@ -37,8 +37,8 @@ class Quantum2048 {
     this.boardContainer = document.getElementById("board-container");
 
     this.audioCtx = null;
-    this.touchStartX = 0;
-    this.touchStartY = 0;
+    this.touchStartX = null;
+    this.touchStartY = null;
 
     this.init();
   }
@@ -107,7 +107,7 @@ class Quantum2048 {
       }, { passive: true });
 
       this.boardContainer.addEventListener("touchend", (e) => {
-        if (!this.touchStartX || !this.touchStartY) return;
+        if (this.touchStartX === null || this.touchStartY === null) return;
         const deltaX = e.changedTouches[0].clientX - this.touchStartX;
         const deltaY = e.changedTouches[0].clientY - this.touchStartY;
         const minSwipeDistance = 30;
@@ -120,8 +120,8 @@ class Quantum2048 {
           this.move(deltaY > 0 ? "down" : "up");
         }
 
-        this.touchStartX = 0;
-        this.touchStartY = 0;
+        this.touchStartX = null;
+        this.touchStartY = null;
       }, { passive: true });
     }
 
@@ -145,11 +145,8 @@ class Quantum2048 {
       this.soundBtn.addEventListener("click", () => {
         this.soundEnabled = !this.soundEnabled;
         this.soundIcon.innerHTML = this.soundEnabled 
-          ? '<i data-lucide="volume-2"></i> Sound ON' 
-          : '<i data-lucide="volume-x"></i> Muted';
-        if (window.lucide) {
-          lucide.createIcons();
-        }
+          ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg> Sound ON' 
+          : '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg> Muted';
       });
     }
   }
@@ -212,6 +209,7 @@ class Quantum2048 {
   }
 
   move(direction) {
+    if (this.over && !this.keepPlaying) return;
     const previousBoard = JSON.stringify(this.board);
     this.savePreviousState();
 
@@ -312,12 +310,19 @@ class Quantum2048 {
     if (this.gameOverScore) this.gameOverScore.textContent = this.score;
     if (this.gameOverOverlay) this.gameOverOverlay.classList.remove("hidden");
     this.playSound("over");
+    try {
+      window.parent.postMessage({ type: 'ARCADEVERSE_GAME_SCORE', score: this.score }, '*');
+      window.parent.postMessage({ type: 'ARCADEVERSE_GAME_OVER' }, '*');
+    } catch (_) {}
   }
 
   showVictory() {
     if (this.victoryScore) this.victoryScore.textContent = this.score;
     if (this.victoryOverlay) this.victoryOverlay.classList.remove("hidden");
     this.playSound("win");
+    try {
+      window.parent.postMessage({ type: 'ARCADEVERSE_GAME_SCORE', score: this.score }, '*');
+    } catch (_) {}
   }
 
   render() {

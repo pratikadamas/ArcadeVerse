@@ -171,13 +171,28 @@
 
   // Guaranteed Safe First Click (Spawns mines avoiding first clicked cell and its 8 neighbors)
   function populateMines(firstRow, firstCol) {
+    // First-click guaranteed safe reseed (#594)
+    // Clear all existing mines first if board was pre-seeded
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        grid[r][c].mine = false;
+        grid[r][c].adjacent = 0;
+      }
+    }
+
+    const maxSafeSlots = rows * cols - totalMines;
+    const useSurroundingSafe = maxSafeSlots > 9;
+
     let planted = 0;
-    while (planted < totalMines) {
+    let attempts = 0;
+    while (planted < totalMines && attempts < 10000) {
+      attempts++;
       const r = Math.floor(Math.random() * rows);
       const c = Math.floor(Math.random() * cols);
 
-      // Safe zone: cell itself and surrounding 8 neighbors
-      const isSafeZone = Math.abs(r - firstRow) <= 1 && Math.abs(c - firstCol) <= 1;
+      const isSafeZone = useSurroundingSafe
+        ? (Math.abs(r - firstRow) <= 1 && Math.abs(c - firstCol) <= 1)
+        : (r === firstRow && c === firstCol);
 
       if (!grid[r][c].mine && !isSafeZone) {
         grid[r][c].mine = true;

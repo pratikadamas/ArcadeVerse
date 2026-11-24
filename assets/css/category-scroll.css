@@ -1,0 +1,79 @@
+/* ==========================================================================
+   CATEGORY QUICK-FILTER HORIZONTAL SCROLLBAR & STEPPERS (#1387)
+   Single-row horizontal scroll track with edge fade masks and chevron buttons
+   ========================================================================== */
+
+.category-scroll-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin: 12px 0 20px 0;
+}
+
+.category-scroll-track {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    padding: 6px 12px;
+    mask-image: linear-gradient(
+        to right,
+        transparent,
+        black 24px,
+        black calc(100% - 24px),
+        transparent
+    );
+    -webkit-mask-image: linear-gradient(
+        to right,
+        transparent,
+        black 24px,
+        black calc(100% - 24px),
+        transparent
+    );
+}
+
+.category-scroll-track::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+}
+
+.category-stepper-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #161b22;
+    border: 1px solid #30363d;
+    color: #00f0ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.category-stepper-btn:hover {
+    background: #21262d;
+    border-color: #00f0ff;
+}
+
+.category-stepper-btn.stepper-left {
+    left: 0;
+}
+
+.category-stepper-btn.stepper-right {
+    right: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .category-scroll-track {
+        scroll-behavior: auto !important;
+    }
+}

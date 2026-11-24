@@ -1,0 +1,95 @@
+/* ==========================================================================
+   GAME MODAL EXIT CONFIRMATION DIALOG (#1393)
+   High-contrast retro alert dialog with don't ask again checkbox
+   ========================================================================== */
+
+.exit-dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.exit-dialog-card {
+    background: #0d1117;
+    border: 2px solid #ff0055;
+    border-radius: 8px;
+    box-shadow: 0 0 24px rgba(255, 0, 85, 0.4), inset 0 0 10px rgba(255, 0, 85, 0.1);
+    max-width: 440px;
+    width: 100%;
+    color: #e6edf3;
+    padding: 24px;
+    font-family: inherit;
+    text-align: center;
+}
+
+.exit-dialog-card h3 {
+    margin: 0 0 12px 0;
+    color: #ff0055;
+    font-size: 1.25rem;
+    letter-spacing: 1px;
+}
+
+.exit-dialog-card p {
+    font-size: 0.9rem;
+    color: #8b949e;
+    margin: 0 0 18px 0;
+    line-height: 1.5;
+}
+
+.exit-dialog-checkbox-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: #c9d1d9;
+    cursor: pointer;
+    margin-bottom: 20px;
+}
+
+.exit-dialog-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.exit-btn-cancel,
+.exit-btn-confirm {
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.exit-btn-cancel {
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #c9d1d9;
+}
+
+.exit-btn-cancel:hover {
+    background: #30363d;
+}
+
+.exit-btn-confirm {
+    background: #ff0055;
+    border: 1px solid #ff0055;
+    color: #fff;
+    box-shadow: 0 0 12px rgba(255, 0, 85, 0.4);
+}
+
+.exit-btn-confirm:hover {
+    background: #e6004c;
+    transform: translateY(-1px);
+}

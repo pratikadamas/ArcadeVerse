@@ -25,6 +25,47 @@
   let fuel = 100;
   let landings = 0;
 
+  /**
+   * Safe 64-bit integer addition accumulator with boundary clamping.
+   * Prevents 16-bit/32-bit bitwise overflow, wrapping, or negative number rollbacks.
+   * Clamps safely against Number.MAX_SAFE_INTEGER (9,007,199,254,740,991).
+   */
+  function safeAddScore(currentScore, delta) {
+    if (typeof delta !== 'number' || !Number.isFinite(delta)) return currentScore;
+    const safeDelta = Math.max(0, Math.floor(delta));
+    if (currentScore >= Number.MAX_SAFE_INTEGER - safeDelta) {
+      return Number.MAX_SAFE_INTEGER;
+    }
+    return Math.max(0, currentScore + safeDelta);
+  }
+
+  /**
+   * Calculates fuel conservation multiplier and touchdown score.
+   * Perfect touchdowns on difficulty 5 with full fuel (100%) award substantial bonus points
+   * (>65,535 pts), safely handled via standard 64-bit float math.
+   */
+  function calculateLandingBonus(pad, landerVy, currentFuel, currentLandings) {
+    const difficulty = Math.min(5, Math.floor(currentLandings / 2) + 1);
+    const basePoints = 300 * pad.mult;
+
+    // Fuel conservation bonus: fuel percentage * 50 pts/unit * difficulty * pad multiplier
+    // e.g. 100% fuel on diff 5 with 3x pad gives 75,000 bonus pts
+    const fuelBonus = Math.round(Math.max(0, currentFuel) * 50 * difficulty * pad.mult);
+
+    // Smooth touchdown precision bonus: softer vertical landing velocity yields bonus reward
+    const precisionRatio = Math.max(0, (1.8 - Math.abs(landerVy)) / 1.8);
+    const precisionBonus = Math.round(precisionRatio * 200 * difficulty * pad.mult);
+
+    const totalAward = basePoints + fuelBonus + precisionBonus;
+    return {
+      total: totalAward,
+      base: basePoints,
+      fuelBonus: fuelBonus,
+      precisionBonus: precisionBonus,
+      difficulty: difficulty
+    };
+  }
+
   // Web Audio Synth
   let audioCtx = null;
   function playSound(type) {
@@ -79,6 +120,7 @@
   let terrain = [];
   let landingPads = [];
   let exhaust = [];
+  let floatingTexts = [];
 
   function generateTerrain() {
     terrain = [];
@@ -136,28 +178,56 @@
     lander.vy = 0;
     lander.angle = 0;
     exhaust = [];
+    floatingTexts = [];
     generateTerrain();
     updateHUD();
     gameLoop();
   }
 
+  function syncScoreToPlatform() {
+    try {
+      if (window.ArcadeVerse && typeof ArcadeVerse.postScore === 'function') {
+        ArcadeVerse.postScore(score);
+      }
+      if (window.ArcadeStorage && typeof ArcadeStorage.getItem === 'function') {
+        const prevBest = Number(ArcadeStorage.getItem('highScore')) || 0;
+        if (score > prevBest) {
+          ArcadeStorage.setItem('highScore', score);
+        }
+      }
+    } catch (_) {}
+  }
+
   function gameOver(crashed) {
     isPlaying = false;
+    const finalScore = score.toLocaleString();
     if (crashed) {
       playSound('crash');
       overlayHeading.textContent = 'MODULE CRUSHED';
-      overlayDesc.textContent = 'Descent velocity or orientation exceeded safety limits! Final Score: ' + score;
+      overlayDesc.textContent = 'Descent velocity or orientation exceeded safety limits! Final Score: ' + finalScore + ' (Landings: ' + landings + ')';
     } else {
       overlayHeading.textContent = 'OUT OF FUEL';
-      overlayDesc.textContent = 'Thruster fuel depleted in zero gravity! Final Score: ' + score;
+      overlayDesc.textContent = 'Thruster fuel depleted in zero gravity! Final Score: ' + finalScore + ' (Landings: ' + landings + ')';
     }
     btnActionStart.textContent = 'RESTART DESCENT';
     overlayScreen.classList.remove('hidden');
+
+    syncScoreToPlatform();
+    try {
+      if (window.ArcadeVerse && typeof ArcadeVerse.postGameOver === 'function') {
+        ArcadeVerse.postGameOver({
+          score: score,
+          landings: landings,
+          crashed: Boolean(crashed)
+        });
+      }
+    } catch (_) {}
   }
 
   function updateHUD() {
-    scoreVal.textContent = score;
-    levelVal.textContent = 'Fuel: ' + Math.round(fuel) + '% | V: ' + lander.vy.toFixed(1);
+    scoreVal.textContent = score.toLocaleString();
+    const difficulty = Math.min(5, Math.floor(landings / 2) + 1);
+    levelVal.textContent = 'Diff ' + difficulty + ' | Fuel ' + Math.round(fuel) + '% | V: ' + lander.vy.toFixed(1);
   }
 
   function update() {
@@ -194,10 +264,20 @@
         // Check landing conditions: low vertical & horizontal speed, upright angle
         if (Math.abs(lander.vy) < 1.8 && Math.abs(lander.vx) < 1.2 && Math.abs(lander.angle) < 0.25) {
           // Success landing!
-          score += 300 * pad.mult;
+          const bonus = calculateLandingBonus(pad, lander.vy, fuel, landings);
+          score = safeAddScore(score, bonus.total);
           landings++;
           fuel = Math.min(100, fuel + 40);
           playSound('land');
+          syncScoreToPlatform();
+
+          // Floating score feedback showing safe score & fuel bonus breakdown
+          floatingTexts.push({
+            text: '+' + bonus.total.toLocaleString() + ' (Fuel Bonus +' + bonus.fuelBonus.toLocaleString() + ')',
+            x: Math.min(700, Math.max(100, (pad.x1 + pad.x2) / 2)),
+            y: pad.y - 18,
+            alpha: 1.0
+          });
 
           // Reset to top
           lander.x = 100 + Math.random() * 600;
@@ -238,6 +318,14 @@
       if (ex.alpha <= 0) exhaust.splice(p, 1);
     }
 
+    // Floating score particles
+    for (let f = floatingTexts.length - 1; f >= 0; f--) {
+      const ft = floatingTexts[f];
+      ft.y -= 0.6;
+      ft.alpha -= 0.015;
+      if (ft.alpha <= 0) floatingTexts.splice(f, 1);
+    }
+
     updateHUD();
   }
 
@@ -271,6 +359,18 @@
       ctx.fillStyle = '#00f5ff';
       ctx.font = '10px monospace';
       ctx.fillText(pad.mult + 'X BONUS', pad.x1 + 10, pad.y + 16);
+    }
+
+    // Floating score bonus indicators
+    for (const ft of floatingTexts) {
+      ctx.save();
+      ctx.font = 'bold 12px monospace';
+      ctx.fillStyle = 'rgba(0, 245, 255, ' + Math.max(0, ft.alpha).toFixed(2) + ')';
+      ctx.textAlign = 'center';
+      ctx.shadowColor = '#00f5ff';
+      ctx.shadowBlur = 4;
+      ctx.fillText(ft.text, ft.x, ft.y);
+      ctx.restore();
     }
 
     // Exhaust

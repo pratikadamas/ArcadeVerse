@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Meteor Minecart | ArcadeVerse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="game-shell">
+    <header class="game-header">
+      <div class="title-lockup">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="15" width="18" height="5" rx="2"></rect><circle cx="7" cy="20" r="2"></circle><circle cx="17" cy="20" r="2"></circle><path d="M6 15V9l6-4 6 4v6"></path><path d="M10 15v-5h4v5"></path></svg>
+        <div>
+          <h1>Meteor Minecart</h1>
+          <p>Asteroid Track Run</p>
+        </div>
+      </div>
+      <button class="icon-button" id="rules-btn" type="button" title="How to Play" aria-label="How to Play">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9a2.7 2.7 0 1 1 4.2 2.2c-1.2.8-1.7 1.3-1.7 2.8"></path><path d="M12 17h.01"></path></svg>
+      </button>
+    </header>
+
+    <section class="hud" aria-label="Game status">
+      <div><span>Score</span><strong id="score">0</strong></div>
+      <div><span>Distance</span><strong id="distance">0m</strong></div>
+      <div><span>Speed</span><strong id="speed">1.0x</strong></div>
+      <div><span>Multiplier</span><strong id="multiplier">x1</strong></div>
+      <div><span>Health</span><strong id="health">3</strong></div>
+    </section>
+
+    <section class="canvas-wrap" aria-label="Meteor Minecart track">
+      <canvas id="game-canvas" width="700" height="700" role="img" aria-label="Three lane asteroid minecart racing game" tabindex="0"></canvas>
+
+      <div class="overlay hidden" id="pause-overlay" role="dialog" aria-modal="true">
+        <div class="overlay-card">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+          <h2>Run Paused</h2>
+          <p>Press P or select Resume to continue.</p>
+          <button class="primary-button" id="resume-btn" type="button">Resume</button>
+        </div>
+      </div>
+
+      <div class="overlay hidden" id="gameover-overlay" role="dialog" aria-modal="true">
+        <div class="overlay-card">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 3 21h18L12 3Z"></path><path d="M12 9v5"></path><path d="M12 18h.01"></path></svg>
+          <h2>Minecart Disabled</h2>
+          <p id="gameover-copy"></p>
+          <button class="primary-button" id="playagain-btn" type="button">Run Again</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="action-bar">
+      <button class="control-button" id="left-btn" type="button" aria-label="Move left">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
+      </button>
+      <button class="control-button" id="shield-btn" type="button" aria-label="Activate shield">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22c5-2 8-6 8-12V5l-8-3-8 3v5c0 6 3 10 8 12Z"></path></svg>
+        <span id="shield-count">3</span>
+      </button>
+      <button class="control-button" id="right-btn" type="button" aria-label="Move right">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+      </button>
+      <button class="secondary-button" id="pause-btn" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+        Pause
+      </button>
+      <button class="secondary-button" id="restart-btn" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v6h6"></path></svg>
+        Restart
+      </button>
+    </div>
+  </main>
+
+  <div class="modal hidden" id="rules-modal" role="dialog" aria-modal="true" aria-labelledby="rules-title">
+    <div class="modal-card">
+      <h2 id="rules-title">How to Play</h2>
+      <div class="rules-grid">
+        <section>
+          <h3>Objective</h3>
+          <p>Switch lanes, collect energy crystals, and avoid meteors for as long as possible.</p>
+        </section>
+        <section>
+          <h3>Controls</h3>
+          <p><strong>Keyboard:</strong> Left/Right arrows or A/D.</p>
+          <p><strong>Mobile:</strong> Swipe left or right.</p>
+        </section>
+        <section>
+          <h3>Scoring and Hazards</h3>
+          <p>Crystals add score and build a multiplier. Meteors remove one health. Three collisions end the run.</p>
+        </section>
+        <section>
+          <h3>Pause, Restart, and Shield</h3>
+          <p>Press P to pause, R to restart, or use Down/S for one of three limited shields.</p>
+        </section>
+      </div>
+      <button class="primary-button" id="close-rules-btn" type="button">Start Run</button>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

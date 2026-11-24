@@ -1815,6 +1815,9 @@
 
     togglePause() {
       this.isPaused = !this.isPaused;
+      if (!this.isPaused) {
+        this.lastTime = performance.now();
+      }
       this.dom.pauseIcon.classList.toggle('hidden', this.isPaused);
       this.dom.playIcon.classList.toggle('hidden', !this.isPaused);
     }

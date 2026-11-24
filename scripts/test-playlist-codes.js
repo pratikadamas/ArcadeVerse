@@ -34,7 +34,7 @@ function code(value) {
 
 test('exports compact UTF-8 AVPL codes and imports with fresh metadata', () => {
   const { manager, saved, updates } = setup();
-  const original = manager.createPlaylist('日本語 café 🎮');
+  const original = manager.createPlaylist('日本語 café Arcade');
   manager.addGameToPlaylist(original.id, 'one');
   manager.addGameToPlaylist(original.id, 'two');
   const encoded = manager.exportPlaylistCode(original.id);

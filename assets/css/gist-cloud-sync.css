@@ -1,0 +1,274 @@
+/* ========================================================
+   ARCADEVERSE GITHUB GIST CLOUD SYNC STYLESHEET (#1111)
+   ======================================================== */
+
+.gist-cloud-sync-deck {
+  margin: 1.25rem 0;
+  padding: 1.15rem;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 10px;
+  box-shadow: inset 0 0 15px rgba(0, 240, 255, 0.05);
+}
+
+.gist-sync-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.gist-sync-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gist-sync-icon {
+  color: #00f0ff;
+}
+
+.gist-sync-header h4 {
+  margin: 0;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #f8fafc;
+}
+
+.gist-sync-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  color: #38bdf8;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00f0ff;
+  box-shadow: 0 0 6px #00f0ff;
+}
+
+.gist-sync-desc {
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #94a3b8;
+  margin: 0 0 1rem 0;
+}
+
+.gist-sync-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .gist-sync-controls {
+    grid-template-columns: 1fr;
+  }
+}
+
+.gist-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.gist-field-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.gist-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.gist-input-wrap input {
+  width: 100%;
+  padding: 0.5rem 2.2rem 0.5rem 0.65rem;
+  background: rgba(2, 6, 23, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  color: #f1f5f9;
+  font-family: 'Space Grotesk', monospace;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+.gist-input-wrap input:focus {
+  outline: none;
+  border-color: #00f0ff;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+  background: rgba(2, 6, 23, 0.9);
+}
+
+.btn-toggle-pat,
+.btn-copy-gist-id {
+  position: absolute;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.15s ease;
+}
+
+.btn-toggle-pat:hover,
+.btn-copy-gist-id:hover {
+  color: #00f0ff;
+}
+
+.gist-pat-help {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.35rem;
+  font-size: 0.72rem;
+}
+
+.gist-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  color: #94a3b8;
+  user-select: none;
+}
+
+.gist-create-token-link {
+  color: #38bdf8;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.gist-create-token-link:hover {
+  color: #00f0ff;
+  text-decoration: underline;
+}
+
+.gist-sync-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.btn-cloud-sync {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1rem;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.btn-cloud-sync.btn-backup {
+  background: rgba(0, 240, 255, 0.15);
+  border: 1px solid rgba(0, 240, 255, 0.5);
+  color: #00f0ff;
+}
+
+.btn-cloud-sync.btn-backup:hover:not(:disabled) {
+  background: rgba(0, 240, 255, 0.25);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+}
+
+.btn-cloud-sync.btn-restore {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  color: #34d399;
+}
+
+.btn-cloud-sync.btn-restore:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.25);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+}
+
+.btn-cloud-sync:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gist-sync-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.btn-forget-token {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 0.72rem;
+  text-decoration: underline;
+  transition: color 0.15s ease;
+}
+
+.btn-forget-token:hover {
+  color: #ef4444;
+}
+
+/* Light Theme Support */
+[data-theme="light"] .gist-cloud-sync-deck {
+  background: #f8fafc;
+  border-color: rgba(2, 132, 199, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .gist-sync-header h4 {
+  color: #0f172a;
+}
+
+[data-theme="light"] .gist-sync-desc {
+  color: #475569;
+}
+
+[data-theme="light"] .gist-field-group label {
+  color: #334155;
+}
+
+[data-theme="light"] .gist-input-wrap input {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+[data-theme="light"] .gist-input-wrap input:focus {
+  border-color: #0284c7;
+  box-shadow: 0 0 6px rgba(2, 132, 199, 0.25);
+}

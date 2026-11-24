@@ -62,16 +62,24 @@
   // Expose configuration globally for extensibility
   window.HALLOWEEN_GAMES_CONFIG = HALLOWEEN_GAMES_CONFIG;
 
-  // Bat SVG Template with separate animated wing elements
-  const BAT_SVG = `
+  let batGradUid = 0;
+
+  function prefersReducedMotion() {
+    return typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+
+  // Generates bat SVG with unique gradient IDs to prevent shading drops across particle lifecycles
+  function createBatSvg() {
+    const gradId = `batOrangeGlow-${++batGradUid}`;
+    return `
     <svg class="bat-svg" viewBox="0 0 100 60" aria-hidden="true" focusable="false">
       <defs>
-        <radialGradient id="batOrangeGlow" cx="50%" cy="50%" r="50%">
+        <radialGradient id="${gradId}" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stop-color="#ff7700" stop-opacity="0.8"/>
           <stop offset="100%" stop-color="#ff3300" stop-opacity="0"/>
         </radialGradient>
       </defs>
-      <circle cx="50" cy="30" r="26" fill="url(#batOrangeGlow)" class="bat-glow" />
+      <circle cx="50" cy="30" r="26" fill="url(#${gradId})" class="bat-glow" />
       <g class="bat-wings-group">
         <path class="bat-wing bat-wing-left" d="M 50,32 C 40,8 14,4 4,22 C 14,29 27,27 34,42 C 41,37 47,39 50,32 Z" />
         <path class="bat-wing bat-wing-right" d="M 50,32 C 60,8 86,4 96,22 C 86,29 73,27 66,42 C 59,37 53,39 50,32 Z" />
@@ -84,9 +92,23 @@
       </g>
     </svg>
   `;
+  }
+
+  const BAT_SVG = createBatSvg();
 
   let activeLoaderTimeout = null;
   let activePhraseInterval = null;
+
+  function clearActiveTimers() {
+    if (activePhraseInterval) {
+      clearInterval(activePhraseInterval);
+      activePhraseInterval = null;
+    }
+    if (activeLoaderTimeout) {
+      clearTimeout(activeLoaderTimeout);
+      activeLoaderTimeout = null;
+    }
+  }
 
   /**
    * Initializes the exclusive Flying Bat Loader elements
@@ -159,6 +181,8 @@
     if (!swarmContainer) return;
     swarmContainer.innerHTML = "";
 
+    const reducedMotion = prefersReducedMotion();
+
     // 8 bats with randomized trajectory classes and delays
     const batTrajectories = [
       { cls: "trajectory-diag-up-right", size: 54, dur: 1.1, delay: 0 },
@@ -171,14 +195,14 @@
       { cls: "trajectory-lead-giant", size: 76, dur: 1.05, delay: 0.22 }
     ];
 
-    batTrajectories.forEach((item, index) => {
+    batTrajectories.forEach((item) => {
       const batEl = document.createElement("div");
       batEl.className = `flying-bat ${item.cls}`;
       batEl.style.width = `${item.size}px`;
       batEl.style.height = `${Math.round(item.size * 0.6)}px`;
-      batEl.style.animationDuration = `${item.dur}s`;
-      batEl.style.animationDelay = `${item.delay}s`;
-      batEl.innerHTML = BAT_SVG;
+      batEl.style.animationDuration = reducedMotion ? "0.01s" : `${item.dur}s`;
+      batEl.style.animationDelay = reducedMotion ? "0s" : `${item.delay}s`;
+      batEl.innerHTML = createBatSvg();
       swarmContainer.appendChild(batEl);
     });
   }
@@ -220,10 +244,11 @@
         loader.classList.remove("active", "bat-loader-fading");
         const actions = document.getElementById("bat-loader-actions");
         if (actions) actions.style.display = "none";
+        const swarm = document.getElementById("bat-loader-swarm");
+        if (swarm) swarm.replaceChildren();
       }, 350);
     }
-    if (activeLoaderTimeout) clearTimeout(activeLoaderTimeout);
-    if (activePhraseInterval) clearInterval(activePhraseInterval);
+    clearActiveTimers();
   }
 
   /**
@@ -235,6 +260,8 @@
       showUnavailableNotice("The spirits have temporarily sealed this portal. Game is currently unavailable.");
       return;
     }
+
+    clearActiveTimers();
 
     const loader = ensureBatLoader();
     loader.setAttribute("data-target-game", gameId);
@@ -249,6 +276,8 @@
     if (gameTitleEl) gameTitleEl.textContent = game.title;
     if (actionsEl) actionsEl.style.display = "none";
 
+    const reducedMotion = prefersReducedMotion();
+
     // Set initial phrase and rotate
     const phrases = game.loadingPhrases || [
       "Entering the Haunted World...",
@@ -258,22 +287,23 @@
     let phraseIndex = 0;
     if (statusTextEl) statusTextEl.textContent = phrases[0];
 
-    if (activePhraseInterval) clearInterval(activePhraseInterval);
-    activePhraseInterval = setInterval(() => {
-      phraseIndex = (phraseIndex + 1) % phrases.length;
-      if (statusTextEl) {
-        statusTextEl.style.opacity = "0";
-        setTimeout(() => {
-          statusTextEl.textContent = phrases[phraseIndex];
-          statusTextEl.style.opacity = "1";
-        }, 180);
-      }
-    }, 450);
+    if (!reducedMotion) {
+      activePhraseInterval = setInterval(() => {
+        phraseIndex = (phraseIndex + 1) % phrases.length;
+        if (statusTextEl && activePhraseInterval) {
+          statusTextEl.style.opacity = "0";
+          setTimeout(() => {
+            if (statusTextEl && activePhraseInterval) {
+              statusTextEl.textContent = phrases[phraseIndex];
+              statusTextEl.style.opacity = "1";
+            }
+          }, 180);
+        }
+      }, 450);
+    }
 
     // Spawn bats
     populateBatSwarm(swarmEl);
-
-    if (activeLoaderTimeout) clearTimeout(activeLoaderTimeout);
 
     // Play a short atmospheric sound if sound-engine is available
     if (window.soundEngine && typeof window.soundEngine.playTone === "function") {
@@ -284,20 +314,40 @@
       }
     }
 
-    // Snappy transition (approx 780ms) for an immersive bat swarm flight before launching new tab
+    const launchDelay = reducedMotion ? 120 : 780;
+
     activeLoaderTimeout = setTimeout(() => {
-      clearInterval(activePhraseInterval);
+      clearActiveTimers();
 
       try {
-        // Secure launch in a NEW browser tab
-        const openedWindow = window.open(game.url, "_blank", "noopener,noreferrer");
+        // Safe tab opener with full reverse-tabnabbing protection
+        let openedWindow = null;
+        try {
+          openedWindow = window.open(game.url, "_blank");
+          if (openedWindow) {
+            openedWindow.opener = null;
+          }
+        } catch (_) {}
 
-        // Check if browser blocked the new tab
-        if (!openedWindow || openedWindow.closed || typeof openedWindow.closed === "undefined") {
+        // Fallback using synthetic secure anchor click if popup was intercepted
+        if (!openedWindow) {
+          try {
+            const anchor = document.createElement("a");
+            anchor.href = game.url;
+            anchor.target = "_blank";
+            anchor.rel = "noopener noreferrer";
+            anchor.style.display = "none";
+            document.body.appendChild(anchor);
+            anchor.click();
+            document.body.removeChild(anchor);
+            openedWindow = true;
+          } catch (_) {}
+        }
+
+        if (!openedWindow) {
           if (actionsEl) actionsEl.style.display = "flex";
           if (statusTextEl) statusTextEl.textContent = "Pop-up blocked by your browser settings.";
         } else {
-          // Window successfully opened: complete animation and hide loader
           if (statusTextEl) statusTextEl.textContent = "Portal Opened! Safe travels...";
           setTimeout(() => {
             hideBatLoader();
@@ -307,7 +357,7 @@
         if (actionsEl) actionsEl.style.display = "flex";
         if (statusTextEl) statusTextEl.textContent = "Unable to open new tab directly.";
       }
-    }, 780);
+    }, launchDelay);
   }
 
   // Expose launch function globally
@@ -315,6 +365,8 @@
    * Triggers the exclusive Halloween flying bats animation when loading any Halloween game.
    */
   function triggerHalloweenBatAnimation(game, onComplete) {
+    clearActiveTimers();
+
     const loader = ensureBatLoader();
     loader.classList.remove("bat-loader-fading");
     loader.classList.add("active");
@@ -337,17 +389,22 @@
     let phraseIndex = 0;
     if (statusTextEl) statusTextEl.textContent = phrases[0];
 
-    if (activePhraseInterval) clearInterval(activePhraseInterval);
-    activePhraseInterval = setInterval(() => {
-      phraseIndex = (phraseIndex + 1) % phrases.length;
-      if (statusTextEl) {
-        statusTextEl.style.opacity = "0";
-        setTimeout(() => {
-          statusTextEl.textContent = phrases[phraseIndex];
-          statusTextEl.style.opacity = "1";
-        }, 160);
-      }
-    }, 400);
+    const reducedMotion = prefersReducedMotion();
+
+    if (!reducedMotion) {
+      activePhraseInterval = setInterval(() => {
+        phraseIndex = (phraseIndex + 1) % phrases.length;
+        if (statusTextEl && activePhraseInterval) {
+          statusTextEl.style.opacity = "0";
+          setTimeout(() => {
+            if (statusTextEl && activePhraseInterval) {
+              statusTextEl.textContent = phrases[phraseIndex];
+              statusTextEl.style.opacity = "1";
+            }
+          }, 160);
+        }
+      }, 400);
+    }
 
     // Populate flying bats swarm
     populateBatSwarm(swarmEl);
@@ -359,12 +416,13 @@
       } catch (err) {}
     }
 
-    if (activeLoaderTimeout) clearTimeout(activeLoaderTimeout);
+    const animDuration = reducedMotion ? 140 : 950;
+
     activeLoaderTimeout = setTimeout(() => {
-      clearInterval(activePhraseInterval);
+      clearActiveTimers();
       hideBatLoader();
       if (typeof onComplete === "function") onComplete();
-    }, 950);
+    }, animDuration);
   }
 
   // Expose launch & animation functions globally
@@ -419,6 +477,8 @@
     const container = document.querySelector(".halloween-container");
     if (!container || container.querySelector(".halloween-ambient-particles")) return;
 
+    if (prefersReducedMotion()) return;
+
     const particleWrap = document.createElement("div");
     particleWrap.className = "halloween-ambient-particles";
     particleWrap.setAttribute("aria-hidden", "true");
@@ -445,6 +505,8 @@
     const container = document.querySelector(".halloween-container");
     if (!container || container.querySelector(".halloween-ambient-bats")) return;
 
+    if (prefersReducedMotion()) return;
+
     const ambientBatsWrap = document.createElement("div");
     ambientBatsWrap.className = "halloween-ambient-bats";
     ambientBatsWrap.setAttribute("aria-hidden", "true");
@@ -453,7 +515,7 @@
     for (let i = 0; i < 3; i++) {
       const b = document.createElement("div");
       b.className = `ambient-bg-bat bg-bat-${i + 1}`;
-      b.innerHTML = BAT_SVG;
+      b.innerHTML = createBatSvg();
       ambientBatsWrap.appendChild(b);
     }
 
@@ -488,6 +550,17 @@
       });
     });
   }
+
+  // Pause animations & clear timers when switching tabs or backgrounded
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      clearActiveTimers();
+      const loader = document.getElementById("halloween-bat-loader");
+      if (loader && loader.classList.contains("active")) {
+        hideBatLoader();
+      }
+    }
+  });
 
   // Document Ready Initialization
   function initHalloweenShowcase() {

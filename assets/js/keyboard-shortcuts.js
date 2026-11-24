@@ -106,6 +106,14 @@
                   <span>Toggle Dark / Light Theme</span>
                   <div class="shortcut-keys"><kbd>T</kbd></div>
                 </div>
+                <div class="shortcut-row">
+                  <span>Cycle Game Velocity (Slow-Mo / Turbo)</span>
+                  <div class="shortcut-keys"><kbd>[</kbd> / <kbd>]</kbd></div>
+                </div>
+                <div class="shortcut-row">
+                  <span>Spatial Audio Beacon (Blind A11y)</span>
+                  <div class="shortcut-keys"><kbd>Alt</kbd>+<kbd>B</kbd></div>
+                </div>
               </div>
             </div>
           </div>
@@ -159,14 +167,29 @@
       }
     },
 
+    getFocusableElements() {
+      if (!this.modalEl) return [];
+      const selector = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+      return Array.from(this.modalEl.querySelectorAll(selector)).filter((el) => {
+        return Boolean(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+      });
+    },
+
     open() {
       if (!this.modalEl) return;
       this.lastFocused = document.activeElement;
       this.modalEl.classList.add('active');
       this.modalEl.setAttribute('aria-hidden', 'false');
       this.isOpen = true;
-      const closeBtn = this.modalEl.querySelector('#shortcuts-close-btn');
-      if (closeBtn) closeBtn.focus();
+      requestAnimationFrame(() => {
+        const focusables = this.getFocusableElements();
+        if (focusables.length > 0) {
+          focusables[0].focus();
+        } else {
+          this.modalEl.setAttribute('tabindex', '-1');
+          this.modalEl.focus();
+        }
+      });
     },
 
     close() {
@@ -175,7 +198,9 @@
       this.modalEl.setAttribute('aria-hidden', 'true');
       this.isOpen = false;
       if (this.lastFocused && typeof this.lastFocused.focus === 'function') {
-        this.lastFocused.focus();
+        try {
+          this.lastFocused.focus();
+        } catch (_) {}
       }
     },
 
@@ -189,20 +214,55 @@
 
     bindListeners() {
       window.addEventListener('keydown', (e) => {
-        const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
-        const isEditing = activeTag === 'input' || activeTag === 'textarea' || document.activeElement.isContentEditable;
-
-        // Esc always closes open modal
-        if (e.key === 'Escape') {
-          if (this.isOpen) {
+        // Dialog keyboard focus trap & Escape close when shortcuts cheatsheet is open
+        if (this.isOpen) {
+          if (e.key === 'Escape') {
             e.preventDefault();
+            e.stopPropagation();
             this.close();
+            return;
+          }
+
+          if (e.key === 'Tab') {
+            const focusables = this.getFocusableElements();
+            if (focusables.length === 0) {
+              e.preventDefault();
+              return;
+            }
+
+            const firstEl = focusables[0];
+            const lastEl = focusables[focusables.length - 1];
+
+            if (e.shiftKey) {
+              // Shift + Tab: wrap from first focusable element to last
+              if (document.activeElement === firstEl || !this.modalEl.contains(document.activeElement)) {
+                e.preventDefault();
+                lastEl.focus();
+              }
+            } else {
+              // Tab: wrap from last focusable element to first
+              if (document.activeElement === lastEl || !this.modalEl.contains(document.activeElement)) {
+                e.preventDefault();
+                firstEl.focus();
+              }
+            }
             return;
           }
         }
 
+        // Null-guard activeElement before accessing tagName or isContentEditable
+        const activeEl = document.activeElement;
+        const activeTag = activeEl ? (activeEl.tagName || '').toLowerCase() : '';
+        const isEditing = Boolean(activeEl && (activeTag === 'input' || activeTag === 'textarea' || activeEl.isContentEditable));
+
         // When typing in text input, don't trigger global shortcuts
         if (isEditing) return;
+
+        const gameModal = document.getElementById('game-modal');
+        const isGameActive = Boolean(gameModal && gameModal.classList.contains('active'));
+
+        // Skip all hub-level single-letter shortcuts when actively playing a game in modal
+        if (isGameActive) return;
 
         // ? or Shift + /: Toggle shortcuts modal
         if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
@@ -286,47 +346,24 @@
           return;
         }
 
-        // F: Toggle Game Fullscreen (when modal is open)
-        if (e.key === 'f' || e.key === 'F') {
+        // [ and ]: Cycle Game Speed (when game modal is active)
+        if (e.key === '[' || e.key === ']') {
           const gameModal = document.getElementById('game-modal');
           if (gameModal && gameModal.classList.contains('active')) {
-            const fsBtn = document.getElementById('fullscreen-btn');
-            if (fsBtn) {
-              fsBtn.click();
+            if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.cycleSpeed === 'function') {
               e.preventDefault();
+              window.GameSpeedRegulator.cycleSpeed(e.key === ']' ? 1 : -1);
+              return;
             }
           }
-          return;
         }
 
-        // R: Reload / Restart Game (when modal is open)
-        if (e.key === 'r' || e.key === 'R') {
-          const gameModal = document.getElementById('game-modal');
-          if (gameModal && gameModal.classList.contains('active')) {
-            const reloadBtn = document.getElementById('reload-btn');
-            if (reloadBtn) {
-              reloadBtn.click();
-              e.preventDefault();
-            }
-          }
-          return;
-        }
-
-        // B: Bookmark / Toggle Favorite (in modal or jump to favorites tab)
+        // B: Bookmark / Jump to favorites tab
         if (e.key === 'b' || e.key === 'B') {
-          const gameModal = document.getElementById('game-modal');
-          if (gameModal && gameModal.classList.contains('active')) {
-            const favBtn = document.getElementById('modal-fav-btn');
-            if (favBtn) {
-              favBtn.click();
-              e.preventDefault();
-            }
-          } else {
-            const favPill = document.querySelector('.category-pills .pill[data-category="favorites"]');
-            if (favPill) {
-              favPill.click();
-              e.preventDefault();
-            }
+          const favPill = document.querySelector('.category-pills .pill[data-category="favorites"]');
+          if (favPill) {
+            favPill.click();
+            e.preventDefault();
           }
           return;
         }

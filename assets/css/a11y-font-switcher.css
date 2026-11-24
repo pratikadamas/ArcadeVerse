@@ -1,0 +1,90 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Dyslexic:wght@400;700&family=Atkinson+Hyperlegible:wght@400;700&display=swap');
+
+@layer a11y {
+/* ===================================================
+   ArcadeVerse High-Legibility Font Switcher
+   OpenDyslexic & Atkinson Hyperlegible typographic profiles
+   =================================================== */
+
+/* Root-level spacing & rhythm (inherits to all text) */
+html.a11y-font-opendyslexic,
+html.a11y-font-atkinson {
+  letter-spacing: 0.08em !important;
+  word-spacing: 0.16em !important;
+  line-height: 1.6 !important;
+}
+
+/* OpenDyslexic profile font family */
+html.a11y-font-opendyslexic {
+  --a11y-font-family: 'OpenDyslexic', 'OpenDyslexic Alt', 'OpenDyslexic Mono', sans-serif;
+}
+html.a11y-font-opendyslexic body,
+html.a11y-font-opendyslexic .game-card-desc,
+html.a11y-font-opendyslexic .leaderboard-table td,
+html.a11y-font-opendyslexic .leaderboard-table th,
+html.a11y-font-opendyslexic .modal-window,
+html.a11y-font-opendyslexic .modal-topbar,
+html.a11y-font-opendyslexic #modal-game-title,
+html.a11y-font-opendyslexic .modal-game-info,
+html.a11y-font-opendyslexic .tier-table td,
+html.a11y-font-opendyslexic .tier-table th {
+  font-family: var(--a11y-font-family) !important;
+}
+
+/* Atkinson Hyperlegible profile font family */
+html.a11y-font-atkinson {
+  --a11y-font-family: 'Atkinson Hyperlegible', 'Atkinson Hyperlegible Mono', sans-serif;
+}
+html.a11y-font-atkinson body,
+html.a11y-font-atkinson .game-card-desc,
+html.a11y-font-atkinson .leaderboard-table td,
+html.a11y-font-atkinson .leaderboard-table th,
+html.a11y-font-atkinson .modal-window,
+html.a11y-font-atkinson .modal-topbar,
+html.a11y-font-atkinson #modal-game-title,
+html.a11y-font-atkinson .modal-game-info,
+html.a11y-font-atkinson .tier-table td,
+html.a11y-font-atkinson .tier-table th {
+  font-family: var(--a11y-font-family) !important;
+}
+
+/* Guaranteed text wrapping, zero clipping in cards, leaderboards, modals */
+html.a11y-font-opendyslexic .game-card-desc,
+html.a11y-font-atkinson .game-card-desc,
+html.a11y-font-opendyslexic .leaderboard-table td,
+html.a11y-font-atkinson .leaderboard-table td,
+html.a11y-font-opendyslexic .tier-table td,
+html.a11y-font-atkinson .tier-table td,
+html.a11y-font-opendyslexic .modal-window,
+html.a11y-font-atkinson .modal-window,
+html.a11y-font-opendyslexic #modal-game-title,
+html.a11y-font-atkinson #modal-game-title,
+html.a11y-font-opendyslexic .modal-game-info,
+html.a11y-font-atkinson .modal-game-info {
+  text-wrap: balance !important;
+  overflow-wrap: anywhere !important;
+  white-space: normal !important;
+  overflow: visible !important;
+}
+
+/* Zero button truncation */
+html.a11y-font-opendyslexic button,
+html.a11y-font-atkinson button,
+html.a11y-font-opendyslexic .btn,
+html.a11y-font-atkinson .btn {
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  text-overflow: unset !important;
+  overflow: visible !important;
+  min-width: auto !important;
+  max-width: none !important;
+}
+
+/* Leaderboard container growth to avoid clipped columns */
+html.a11y-font-opendyslexic .table-responsive,
+html.a11y-font-atkinson .table-responsive,
+html.a11y-font-opendyslexic .leaderboard-table-card,
+html.a11y-font-atkinson .leaderboard-table-card {
+  overflow: visible !important;
+}
+}

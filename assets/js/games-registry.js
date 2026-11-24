@@ -2,8 +2,8 @@ const GAMES_REGISTRY = [
   {
     "id": "asteroid-miner_babin",
     "title": "Asteroid Miner: Deep Space Extraction",
-    "category": "Arcade / Shooter",
-    "lucideIcon": "gamepad-2",
+    "category": "Arcade",
+    "lucideIcon": "crosshair",
     "description": "Navigate hazardous asteroid fields, blast mineral ores with precision mining lasers, and extract raw cosmic crystals.",
     "author": "Babin Bid",
     "github": "Babin123456",
@@ -14,16 +14,37 @@ const GAMES_REGISTRY = [
       "arcade",
       "retro",
       "html5-canvas",
-      "nsoc26"
+      "nsoc26",
+      "Shooter"
     ],
     "stars": 15,
     "featured": true,
     "difficulty": "Medium"
   },
   {
+    "id": "astro-courier_joitapaul",
+    "title": "Astro Courier",
+    "category": "Arcade",
+    "lucideIcon": "gamepad-2",
+    "description": "Deliver every parcel across three increasingly challenging floating-platform routes while avoiding patrol drones.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/astro-courier_joitapaul/index.html",
+    "tags": [
+      "Arcade",
+      "Platformer",
+      "Action",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false,
+    "difficulty": "Intermediate"
+  },
+  {
     "id": "astro-defense-turret_babin",
     "title": "Astro Defense Turret",
-    "category": "Defense",
+    "category": "Strategy",
     "lucideIcon": "gamepad-2",
     "description": "Defend humanity's orbital gateway from incoming alien drone swarms using a 360-degree rotating laser defense cannon.",
     "author": "Babin Bid",
@@ -65,15 +86,19 @@ const GAMES_REGISTRY = [
   {
     "id": "brick-breaker-dx_babin",
     "title": "Neon Brick Breaker DX: Cyber Shatter",
-    "category": "Arcade / Physics",
-    "lucideIcon": "gamepad-2",
+    "category": "Arcade",
+    "lucideIcon": "layers",
     "description": "Shatter cybernetic brick matrices with realistic ball physics, explosive power-ups, and multi-level challenges.",
     "author": "Babin Bid",
     "github": "Babin123456",
     "role": "Arcade Developer",
     "path": "games/brick-breaker-dx_babin/index.html",
     "tags": [
-      "Arcade"
+      "Arcade",
+      "Physics",
+      "Breakout",
+      "Retro",
+      "NSOC26"
     ],
     "stars": 25,
     "featured": false
@@ -102,8 +127,8 @@ const GAMES_REGISTRY = [
   {
     "id": "chrono-breakout_babin",
     "title": "Chrono Breakout: Quantum Time Shatter",
-    "category": "Arcade / Breakout",
-    "lucideIcon": "gamepad-2",
+    "category": "Arcade",
+    "lucideIcon": "timer",
     "description": "Shatter quantum crystal brick matrixes with a time-bending cyber ball; hold spacebar to reverse local time buffers and recover missed drops.",
     "author": "Babin Bid",
     "github": "Babin123456",
@@ -114,7 +139,8 @@ const GAMES_REGISTRY = [
       "arcade",
       "retro",
       "html5-canvas",
-      "nsoc26"
+      "nsoc26",
+      "Breakout"
     ],
     "stars": 15,
     "featured": true,
@@ -185,15 +211,56 @@ const GAMES_REGISTRY = [
   {
     "id": "chrono-shift_babin",
     "title": "Chrono-Shift: Temporal Paradox",
-    "category": "Puzzle / Platformer",
-    "lucideIcon": "gamepad-2",
+    "category": "Puzzle",
+    "lucideIcon": "clock",
     "description": "Manipulate time buffers and cooperate with holographic past-self echoes to solve paradoxical chamber puzzles.",
     "author": "Babin Bid",
     "github": "Babin123456",
     "role": "Arcade Developer",
     "path": "games/chrono-shift_babin/index.html",
     "tags": [
-      "Arcade"
+      "Puzzle",
+      "Platformer",
+      "TimeManipulation",
+      "Retro",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
+    "id": "cipher-garden_joitapaul",
+    "title": "Cipher Garden",
+    "category": "Puzzle",
+    "lucideIcon": "gamepad-2",
+    "description": "Rotate interconnected garden tiles to reconnect the central seed to every terminal flower across 20 cipher puzzles.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/cipher-garden_joitapaul/index.html",
+    "tags": [
+      "Puzzle",
+      "Logic",
+      "Grid",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": true
+  },
+  {
+    "id": "circuit-breaker_your-joitapaul",
+    "title": "Circuit Breaker",
+    "category": "Puzzle",
+    "lucideIcon": "cpu",
+    "description": "Rotate circuit tiles to connect the power source to the target across four increasingly complex grids.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/circuit-breaker_your-joitapaul/index.html",
+    "tags": [
+      "Puzzle",
+      "Logic",
+      "NSOC26"
     ],
     "stars": 25,
     "featured": false
@@ -221,7 +288,7 @@ const GAMES_REGISTRY = [
   {
     "id": "code-breaker_babin",
     "title": "Cryptic Code Breaker: Mastermind Terminal",
-    "category": "Puzzle / Logic",
+    "category": "Puzzle",
     "lucideIcon": "gamepad-2",
     "description": "Crack randomized security cipher sequences using colorblind-friendly feedback pegs in a rogue AI terminal.",
     "author": "Babin Bid",
@@ -229,7 +296,11 @@ const GAMES_REGISTRY = [
     "role": "Arcade Developer",
     "path": "games/code-breaker_babin/index.html",
     "tags": [
-      "Arcade"
+      "Puzzle",
+      "Logic",
+      "Deduction",
+      "Retro",
+      "NSOC26"
     ],
     "stars": 25,
     "featured": false
@@ -358,7 +429,7 @@ const GAMES_REGISTRY = [
   },
   {
     "id": "cyber-brick-breaker_babin",
-    "title": "Cyber Brick Breaker",
+    "title": "Cyber Brick Breaker: Precision Breakout",
     "category": "Arcade",
     "lucideIcon": "gamepad-2",
     "description": "Shatter holographic neon brick barriers with precision multi-angle paddle physics, laser power-ups, and particle chain explosions!",
@@ -380,7 +451,7 @@ const GAMES_REGISTRY = [
   },
   {
     "id": "cyber-brick-breaker_hrshjswniii",
-    "title": "Cyber Brick Breaker",
+    "title": "Cyber Brick Breaker: Neon Velocity",
     "category": "Arcade",
     "lucideIcon": "gamepad-2",
     "description": "High-velocity cyberpunk breakout with multi-angle canvas deflection, armored quantum bricks, plasma laser cannons, and procedural Web Audio chiptune synthesis.",
@@ -464,7 +535,7 @@ const GAMES_REGISTRY = [
   {
     "id": "cyber-glider_babin",
     "title": "Cyber Glider",
-    "category": "Runner",
+    "category": "Arcade",
     "lucideIcon": "gamepad-2",
     "description": "Pilot an aerodynamic quantum paper glider through glowing Neo-Tokyo canyons. Surf thermal updrafts to regain altitude, collect energy rings, and evade skyscraper obstacles.",
     "author": "Babin Bid",
@@ -481,6 +552,26 @@ const GAMES_REGISTRY = [
     ],
     "stars": 25,
     "featured": true
+  },
+  {
+    "id": "cyber-grapple_hrshjswniii",
+    "title": "Cyber Grapple: Neon Chasm Swinger",
+    "category": "Platformer",
+    "lucideIcon": "gamepad-2",
+    "description": "Swing between unstable neon anchors, dodge laser gates, and outrun the rising glitch tide in a momentum-driven chasm climb.",
+    "author": "Harsh Jaiswani",
+    "github": "hrshjswniii",
+    "role": "Arcade Contributor",
+    "path": "games/cyber-grapple_hrshjswniii/index.html",
+    "tags": [
+      "Platformer",
+      "Physics",
+      "Grapple",
+      "Action",
+      "Arcade"
+    ],
+    "stars": 0,
+    "featured": false
   },
   {
     "id": "cyber-gravity-hopper_babin",
@@ -543,15 +634,19 @@ const GAMES_REGISTRY = [
   {
     "id": "cyber-katana_babin",
     "title": "Cyber-Katana: Neon Deflector",
-    "category": "Action / Reflex",
-    "lucideIcon": "gamepad-2",
+    "category": "Action",
+    "lucideIcon": "zap",
     "description": "Slice, dash, and deflect glowing neon projectile waves in bullet-time cyber combat.",
     "author": "Babin Bid",
     "github": "Babin123456",
     "role": "Arcade Developer",
     "path": "games/cyber-katana_babin/index.html",
     "tags": [
-      "Arcade"
+      "Action",
+      "Reflex",
+      "Cyberpunk",
+      "Slash",
+      "NSOC26"
     ],
     "stars": 25,
     "featured": false
@@ -574,6 +669,26 @@ const GAMES_REGISTRY = [
     ],
     "stars": 49,
     "featured": true
+  },
+  {
+    "id": "cyber-logic-gates_hrshjswniii",
+    "title": "Cyber Logic Gates: Boolean Circuit Forge",
+    "category": "Puzzle",
+    "lucideIcon": "gamepad-2",
+    "description": "Build and test Boolean circuits by wiring logic gate chips to match target truth tables across fifteen engineering puzzles.",
+    "author": "Harsh Jaiswani",
+    "github": "hrshjswniii",
+    "role": "Arcade Contributor",
+    "path": "games/cyber-logic-gates_hrshjswniii/index.html",
+    "tags": [
+      "Puzzle",
+      "Logic",
+      "Engineering",
+      "Educational",
+      "Circuit"
+    ],
+    "stars": 0,
+    "featured": false
   },
   {
     "id": "cyber-maze-runner_chanchall26",
@@ -820,7 +935,7 @@ const GAMES_REGISTRY = [
   {
     "id": "cyber-sudoku_babin",
     "title": "Cyber-Sudoku: Neon Matrix 9x9",
-    "category": "Puzzle / Logic",
+    "category": "Puzzle",
     "lucideIcon": "gamepad-2",
     "description": "Restore corrupted cyber sector arrays by arranging matrix digits 1-9 without row, column, or sector collisions.",
     "author": "Babin Bid",
@@ -828,7 +943,11 @@ const GAMES_REGISTRY = [
     "role": "Arcade Developer",
     "path": "games/cyber-sudoku_babin/index.html",
     "tags": [
-      "Arcade"
+      "Puzzle",
+      "Logic",
+      "Sudoku",
+      "Cyberpunk",
+      "NSOC26"
     ],
     "stars": 25,
     "featured": false
@@ -877,8 +996,8 @@ const GAMES_REGISTRY = [
   {
     "id": "cyber-tower-defense_babin",
     "title": "Cyber Tower Defense: Grid Bastion",
-    "category": "Strategy / Defense",
-    "lucideIcon": "gamepad-2",
+    "category": "Strategy",
+    "lucideIcon": "shield",
     "description": "Deploy cybernetic laser turrets along the circuit pathways to halt rogue bot swarms before they breach the mainframe core.",
     "author": "Babin Bid",
     "github": "Babin123456",
@@ -889,7 +1008,8 @@ const GAMES_REGISTRY = [
       "arcade",
       "retro",
       "html5-canvas",
-      "nsoc26"
+      "nsoc26",
+      "Defense"
     ],
     "stars": 15,
     "featured": true,
@@ -1004,15 +1124,19 @@ const GAMES_REGISTRY = [
   {
     "id": "detective-mystery_babin",
     "title": "Detective Mystery: Neo-Tokyo Syndicate",
-    "category": "Adventure / Narrative",
-    "lucideIcon": "gamepad-2",
+    "category": "Adventure",
+    "lucideIcon": "search",
     "description": "Investigate cyber crime scenes, interrogate corporate suspects, expose contradictory alibis, and issue arrest verdicts.",
     "author": "Babin Bid",
     "github": "Babin123456",
     "role": "Arcade Developer",
     "path": "games/detective-mystery_babin/index.html",
     "tags": [
-      "Arcade"
+      "Adventure",
+      "Narrative",
+      "Mystery",
+      "Detective",
+      "NSOC26"
     ],
     "stars": 25,
     "featured": false
@@ -1042,7 +1166,7 @@ const GAMES_REGISTRY = [
   {
     "id": "escape-room_debasmita",
     "title": "Halloween Escape: Witch's Crypt",
-    "category": "Horror / Escape Room",
+    "category": "Adventure",
     "lucideIcon": "gamepad-2",
     "description": "Trapped deep inside a gothic subterranean crypt on All Hallows' Eve! Decipher runic celestial altars, brew corrosive acid in the bubbling cauldron, unseal arcane grimoires, and break the three dark gate wards before the witch returns. Flip through the Alchemist's Grimoire for runic clues, or start the optional Cursed Miasma time attack: 4 minutes before the poison fog fills the crypt, with per-mode best escape times.",
     "author": "Debasmita Bose",
@@ -1122,10 +1246,31 @@ const GAMES_REGISTRY = [
     "featured": false
   },
   {
+    "id": "fruit-fury_mistu7debnath",
+    "title": "Fruit Fury",
+    "category": "Arcade",
+    "lucideIcon": "gamepad-2",
+    "description": "Slice juicy flying fruits, trigger massive combo multipliers, and dodge explosive bombs in this fast-paced neon arcade slicer.",
+    "author": "Manisha Debnath",
+    "github": "mistu7debnath",
+    "role": "Arcade Developer",
+    "path": "games/fruit-fury_mistu7debnath/index.html",
+    "tags": [
+      "Arcade",
+      "Casual",
+      "Action",
+      "Reflex",
+      "Fruit",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "gravity-well_babin",
     "title": "Gravity Well: Singularity Slingshot",
-    "category": "Puzzle / Physics",
-    "lucideIcon": "gamepad-2",
+    "category": "Puzzle",
+    "lucideIcon": "compass",
     "description": "Slingshot cosmic research probes through multi-body gravitational fields, sling around black hole accretion disks, and collect quantum beacons.",
     "author": "Babin Bid",
     "github": "Babin123456",
@@ -1136,7 +1281,8 @@ const GAMES_REGISTRY = [
       "arcade",
       "retro",
       "html5-canvas",
-      "nsoc26"
+      "nsoc26",
+      "Physics"
     ],
     "stars": 15,
     "featured": true,
@@ -1145,7 +1291,7 @@ const GAMES_REGISTRY = [
   {
     "id": "gridlock-escape_joitapaul",
     "title": "Gridlock Escape",
-    "category": "puzzle",
+    "category": "Puzzle",
     "lucideIcon": "gamepad-2",
     "description": "Slide the traffic jam to clear a clean escape route for the blue getaway vehicle.",
     "author": "Joita Paul",
@@ -1166,7 +1312,7 @@ const GAMES_REGISTRY = [
   {
     "id": "haunted-house_debasmita",
     "title": "Haunted House: The Curse Within",
-    "category": "Adventure / Horror",
+    "category": "Adventure",
     "lucideIcon": "ghost",
     "description": "You wake up inside an abandoned Victorian mansion with no memory of how you arrived. Explore mysterious rooms, search for keys and secret passages, discover torn diary entries, solve cryptic puzzles, evade wandering paranormal entities, and uncover the dark history of the Blackwood curse before the house claims your soul.",
     "author": "Debasmita Bose",
@@ -1188,8 +1334,8 @@ const GAMES_REGISTRY = [
   {
     "id": "hex-match_babin",
     "title": "Hex Match: Prismatic Tile Connect",
-    "category": "Puzzle / Match-3",
-    "lucideIcon": "gamepad-2",
+    "category": "Puzzle",
+    "lucideIcon": "sparkles",
     "description": "Swap and link vibrant chromatic hexagonal prisms across a hexagonal honey-grid to trigger cascading light bursts.",
     "author": "Babin Bid",
     "github": "Babin123456",
@@ -1200,7 +1346,8 @@ const GAMES_REGISTRY = [
       "arcade",
       "retro",
       "html5-canvas",
-      "nsoc26"
+      "nsoc26",
+      "Match-3"
     ],
     "stars": 15,
     "featured": true,
@@ -1230,7 +1377,7 @@ const GAMES_REGISTRY = [
   {
     "id": "island-survival_debasmita",
     "title": "Island Survival: Lost Beyond the Shore",
-    "category": "Survival / Horror",
+    "category": "Adventure",
     "lucideIcon": "compass",
     "description": "Stranded alone on an uncharted cursed atoll after a harrowing crash. Explore misty primeval mangroves, forage supplies, craft tools and torches, build campfires to ward off nocturnal Shadow Stalkers, manage hunger, thirst, and sanity, and find a way to escape the island's dark curse.",
     "author": "Debasmita Bose",
@@ -1296,7 +1443,7 @@ const GAMES_REGISTRY = [
   {
     "id": "math-blitz_pratikadamas",
     "title": "Math Blitz: 60s Arithmetic Sprint",
-    "category": "Arcade / Educational",
+    "category": "Arcade",
     "lucideIcon": "gamepad-2",
     "description": "Fast-paced arithmetic sprint! Race against a 60-second timer to solve 10 dynamically generated math equations with integer precision.",
     "author": "Pratik Giri",
@@ -1331,6 +1478,25 @@ const GAMES_REGISTRY = [
       "Timed"
     ],
     "stars": 24,
+    "featured": true
+  },
+  {
+    "id": "meteor-minecart_joitapaul",
+    "title": "Meteor Minecart",
+    "category": "Arcade",
+    "lucideIcon": "gamepad-2",
+    "description": "Race a minecart across a three-lane asteroid track, collect energy crystals, dodge meteors, and build a speed score multiplier.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/meteor-minecart_joitapaul/index.html",
+    "tags": [
+      "Arcade",
+      "Runner",
+      "Action",
+      "NSOC26"
+    ],
+    "stars": 25,
     "featured": true
   },
   {
@@ -1411,6 +1577,27 @@ const GAMES_REGISTRY = [
     "featured": false,
     "difficulty": "Intermediate",
     "releaseDate": "2026-10-22"
+  },
+  {
+    "id": "neon-blaster_mistu7debnath",
+    "title": "Neon Blaster",
+    "category": "Action",
+    "lucideIcon": "crosshair",
+    "description": "Futuristic cyberpunk space-shooter arcade game with fluid combat, weapon upgrades, wave progression, and intense boss battles.",
+    "author": "Manisha Debnath",
+    "github": "mistu7debnath",
+    "role": "Arcade Developer",
+    "path": "games/neon-blaster_mistu7debnath/index.html",
+    "tags": [
+      "Action",
+      "Shooter",
+      "Cyberpunk",
+      "Space",
+      "Arcade",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false
   },
   {
     "id": "neon-bowling_babin",
@@ -1616,8 +1803,8 @@ const GAMES_REGISTRY = [
   {
     "id": "neon-pinball-dx_babin",
     "title": "Neon Pinball DX: Cybernetic Table",
-    "category": "Arcade / Physics",
-    "lucideIcon": "gamepad-2",
+    "category": "Arcade",
+    "lucideIcon": "dices",
     "description": "Launch high-voltage chrome pinballs across neon bumpers, dynamic flipper traps, and multi-colored score multipliers.",
     "author": "Babin Bid",
     "github": "Babin123456",
@@ -1628,7 +1815,8 @@ const GAMES_REGISTRY = [
       "arcade",
       "retro",
       "html5-canvas",
-      "nsoc26"
+      "nsoc26",
+      "Physics"
     ],
     "stars": 15,
     "featured": true,
@@ -1817,6 +2005,24 @@ const GAMES_REGISTRY = [
     "featured": false
   },
   {
+    "id": "pixel-bakery-rush_joitapaul",
+    "title": "Pixel Bakery Rush",
+    "category": "Arcade",
+    "lucideIcon": "gamepad-2",
+    "description": "Fill increasingly complex bakery orders before customer patience and the shift timer run out.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/pixel-bakery-rush_joitapaul/index.html",
+    "tags": [
+      "Arcade",
+      "Time Management",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false
+  },
+  {
     "id": "potion-maker_mistu7debnath",
     "title": "Potion Maker",
     "category": "Puzzle",
@@ -1878,6 +2084,26 @@ const GAMES_REGISTRY = [
     "stars": 0,
     "featured": false,
     "difficulty": "Intermediate"
+  },
+  {
+    "id": "protocol-rogue_hrshjswniii",
+    "title": "Protocol Rogue: Cyberdeck Tactics",
+    "category": "Strategy",
+    "lucideIcon": "gamepad-2",
+    "description": "Build a cyber command deck, read enemy intent, and breach a branching corporate network in a tactical roguelike.",
+    "author": "Harsh Jaiswani",
+    "github": "hrshjswniii",
+    "role": "Arcade Contributor",
+    "path": "games/protocol-rogue_hrshjswniii/index.html",
+    "tags": [
+      "Strategy",
+      "Deckbuilding",
+      "Roguelike",
+      "Cards",
+      "Cyberpunk"
+    ],
+    "stars": 0,
+    "featured": false
   },
   {
     "id": "pumpkin-express_joitapaul",
@@ -1959,15 +2185,19 @@ const GAMES_REGISTRY = [
   {
     "id": "quantum-minesweeper-dx_babin",
     "title": "Quantum Minesweeper DX: Grid Defusal",
-    "category": "Puzzle / Strategy",
-    "lucideIcon": "gamepad-2",
+    "category": "Puzzle",
+    "lucideIcon": "alert-triangle",
     "description": "Defuse unstable quantum network anomalies with guaranteed safe first-clicks and precision cascade algorithms.",
     "author": "Babin Bid",
     "github": "Babin123456",
     "role": "Arcade Developer",
     "path": "games/quantum-minesweeper-dx_babin/index.html",
     "tags": [
-      "Arcade"
+      "Puzzle",
+      "Strategy",
+      "Minesweeper",
+      "Quantum",
+      "NSOC26"
     ],
     "stars": 25,
     "featured": false
@@ -2035,8 +2265,8 @@ const GAMES_REGISTRY = [
   {
     "id": "quantum-pulse_babin",
     "title": "Quantum Pulse: Cyber Rhythm Blaster",
-    "category": "Arcade / Rhythm",
-    "lucideIcon": "gamepad-2",
+    "category": "Arcade",
+    "lucideIcon": "radar",
     "description": "Sync into the digital quantum grid, time your key strikes to incoming light pulses, and build electrifying high-voltage combos.",
     "author": "Babin Bid",
     "github": "Babin123456",
@@ -2047,7 +2277,8 @@ const GAMES_REGISTRY = [
       "arcade",
       "retro",
       "html5-canvas",
-      "nsoc26"
+      "nsoc26",
+      "Rhythm"
     ],
     "stars": 15,
     "featured": true,
@@ -2056,7 +2287,7 @@ const GAMES_REGISTRY = [
   {
     "id": "quantum-slide_babin",
     "title": "Quantum Slide: 15-Matrix Shift",
-    "category": "Puzzle / Logic",
+    "category": "Puzzle",
     "lucideIcon": "gamepad-2",
     "description": "Rearrange scrambled cyber-chips into sequential order on a glowing circuit matrix with guaranteed solvable boards.",
     "author": "Babin Bid",
@@ -2064,7 +2295,11 @@ const GAMES_REGISTRY = [
     "role": "Arcade Developer",
     "path": "games/quantum-slide_babin/index.html",
     "tags": [
-      "Arcade"
+      "Puzzle",
+      "Logic",
+      "Sliding",
+      "Quantum",
+      "NSOC26"
     ],
     "stars": 25,
     "featured": false
@@ -2091,8 +2326,8 @@ const GAMES_REGISTRY = [
   {
     "id": "retro-space-lander_babin",
     "title": "Retro Space Lander: Apollo Lunar Descent",
-    "category": "Arcade / Physics",
-    "lucideIcon": "gamepad-2",
+    "category": "Arcade",
+    "lucideIcon": "flame",
     "description": "Throttle lunar descent engines, manage scarce thruster fuel, and execute safe low-velocity touchdowns across jagged craters.",
     "author": "Babin Bid",
     "github": "Babin123456",
@@ -2103,7 +2338,8 @@ const GAMES_REGISTRY = [
       "arcade",
       "retro",
       "html5-canvas",
-      "nsoc26"
+      "nsoc26",
+      "Physics"
     ],
     "stars": 15,
     "featured": true,
@@ -2135,8 +2371,8 @@ const GAMES_REGISTRY = [
   {
     "id": "solar-flare_babin",
     "title": "Solar Flare: Stellar Shield Defense",
-    "category": "Arcade / Defense",
-    "lucideIcon": "gamepad-2",
+    "category": "Arcade",
+    "lucideIcon": "sun",
     "description": "Rotate a high-energy magnetic arc shield around a pulsating stellar core to deflect hyper-velocity coronal mass ejections.",
     "author": "Babin Bid",
     "github": "Babin123456",
@@ -2147,7 +2383,8 @@ const GAMES_REGISTRY = [
       "arcade",
       "retro",
       "html5-canvas",
-      "nsoc26"
+      "nsoc26",
+      "Defense"
     ],
     "stars": 15,
     "featured": true,
@@ -2218,7 +2455,7 @@ const GAMES_REGISTRY = [
   {
     "id": "stellar-warp-runner_babin",
     "title": "Stellar Warp Runner",
-    "category": "Runner",
+    "category": "Arcade",
     "lucideIcon": "zap",
     "description": "Pilot a hyperspace warp vessel through shifting tachyon barriers and collect stellar energy cells!",
     "author": "Babin Bid",
@@ -2315,6 +2552,26 @@ const GAMES_REGISTRY = [
     "featured": true
   },
   {
+    "id": "tidal-tunnels_joitapaul",
+    "title": "Tidal Tunnels",
+    "category": "Arcade",
+    "lucideIcon": "gamepad-2",
+    "description": "Guide a diver through a scrolling reef, collect air bubbles, and avoid moving mines before oxygen runs out.",
+    "author": "Joita Paul",
+    "github": "joitapaul",
+    "role": "Arcade Developer",
+    "path": "games/tidal-tunnels_joitapaul/index.html",
+    "tags": [
+      "Arcade",
+      "Action",
+      "Underwater",
+      "NSOC26"
+    ],
+    "stars": 25,
+    "featured": false,
+    "difficulty": "Intermediate"
+  },
+  {
     "id": "time-warp_mistu7debnath",
     "title": "Time Warp: Chrono Shift",
     "category": "Puzzle",
@@ -2338,8 +2595,8 @@ const GAMES_REGISTRY = [
   {
     "id": "wave-rider_babin",
     "title": "Wave Rider: Frequency Pulse Surfer",
-    "category": "Arcade / Endless",
-    "lucideIcon": "gamepad-2",
+    "category": "Arcade",
+    "lucideIcon": "sliders",
     "description": "Surf across undulating sine-wave carrier frequencies, modulate pulse amplitudes, and weave through dampening glitch walls.",
     "author": "Babin Bid",
     "github": "Babin123456",
@@ -2350,7 +2607,8 @@ const GAMES_REGISTRY = [
       "arcade",
       "retro",
       "html5-canvas",
-      "nsoc26"
+      "nsoc26",
+      "Endless"
     ],
     "stars": 15,
     "featured": true,
@@ -2385,7 +2643,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 443,
+    "commits": 962,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2405,7 +2663,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 276,
+    "commits": 617,
     "gamesCount": 76,
     "mechanicsBonus": 2,
     "platformPRs": 29,
@@ -2424,7 +2682,7 @@ const CONTRIBUTORS_REGISTRY = [
       "Cryptic Code Breaker: Mastermind Terminal",
       "Cryptic Wordle Hack",
       "Cyber Block Matrix",
-      "Cyber Brick Breaker",
+      "Cyber Brick Breaker: Precision Breakout",
       "Cyber Circuit Scramble",
       "Cyber Curling",
       "Cyber Glider",
@@ -2495,26 +2753,32 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "joitapaul",
     "avatarInitial": "J",
     "role": "Active Contributor (NSOC '26)",
-    "commits": 24,
-    "gamesCount": 13,
+    "commits": 30,
+    "gamesCount": 19,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 1,
     "bonusPts": 0,
     "contributions": [
+      "Astro Courier",
+      "Cipher Garden",
+      "Circuit Breaker",
       "Deep Signal: Subsea Rescue",
       "Fossil Frontiers: Dig Site Puzzle",
       "Gridlock Escape",
       "Lunar Landing Protocol",
+      "Meteor Minecart",
       "Microbe Medics: Outbreak Protocol",
       "Midnight Graveyard: Lantern Run",
       "Neon Asteroid Escape",
       "Neon Drift Racer",
       "Parcel Panic: Conveyor Shift",
+      "Pixel Bakery Rush",
       "Potion Panic",
       "Prism Pulse: Laser Labyrinth",
       "Pumpkin Express: Haunted Rails",
-      "Quantum Pinball: Reactor Run"
+      "Quantum Pinball: Reactor Run",
+      "Tidal Tunnels"
     ]
   },
   {
@@ -2522,8 +2786,8 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "mistu7debnath",
     "avatarInitial": "M",
     "role": "Contributor (NSOC '26)",
-    "commits": 18,
-    "gamesCount": 11,
+    "commits": 24,
+    "gamesCount": 13,
     "mechanicsBonus": 1,
     "platformPRs": 0,
     "qualityPRs": 0,
@@ -2535,11 +2799,28 @@ const CONTRIBUTORS_REGISTRY = [
       "Dino Dig",
       "Fishing Frenzy",
       "Flappy Cyber Jet",
+      "Fruit Fury",
       "Kingdom Maker",
+      "Neon Blaster",
       "Neon Grid Defense: Core Protocol",
       "Potion Maker",
       "Robo Factory",
       "Time Warp: Chrono Shift"
+    ]
+  },
+  {
+    "name": "Pratik Giri",
+    "github": "pratikadamas",
+    "avatarInitial": "P",
+    "role": "Contributor (NSOC '26)",
+    "commits": 148,
+    "gamesCount": 1,
+    "mechanicsBonus": 0,
+    "platformPRs": 1,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Math Blitz: 60s Arithmetic Sprint"
     ]
   },
   {
@@ -2568,30 +2849,48 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "hrshjswniii",
     "avatarInitial": "H",
     "role": "Active Contributor (NSOC '26)",
-    "commits": 13,
-    "gamesCount": 2,
+    "commits": 37,
+    "gamesCount": 5,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 1,
     "bonusPts": 0,
     "contributions": [
-      "Cyber Brick Breaker",
-      "Cyber Typer: Terminal Hacker"
+      "Cyber Brick Breaker: Neon Velocity",
+      "Cyber Grapple: Neon Chasm Swinger",
+      "Cyber Logic Gates: Boolean Circuit Forge",
+      "Cyber Typer: Terminal Hacker",
+      "Protocol Rogue: Cyberdeck Tactics"
     ]
   },
   {
-    "name": "Pratik Giri",
-    "github": "pratikadamas",
-    "avatarInitial": "P",
+    "name": "divyanshagarwal123",
+    "github": "divyanshagarwal123",
+    "avatarInitial": "D",
     "role": "Contributor (NSOC '26)",
-    "commits": 17,
-    "gamesCount": 1,
+    "commits": 24,
+    "gamesCount": 0,
     "mechanicsBonus": 0,
-    "platformPRs": 1,
+    "platformPRs": 0,
     "qualityPRs": 0,
     "bonusPts": 0,
     "contributions": [
-      "Math Blitz: 60s Arithmetic Sprint"
+      "Quality & Platform Contribution"
+    ]
+  },
+  {
+    "name": "Arshi Bansal",
+    "github": "ArshiBansal",
+    "avatarInitial": "A",
+    "role": "Puzzle Developer (NSOC '26)",
+    "commits": 3,
+    "gamesCount": 1,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Circuit Connect"
     ]
   },
   {
@@ -2610,26 +2909,86 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "Arshi Bansal",
-    "github": "ArshiBansal",
+    "name": "Abhishek",
+    "github": "Anshuu2004",
     "avatarInitial": "A",
-    "role": "Puzzle Developer (NSOC '26)",
-    "commits": 1,
-    "gamesCount": 1,
+    "role": "Contributor (NSOC '26)",
+    "commits": 19,
+    "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,
     "qualityPRs": 0,
     "bonusPts": 0,
     "contributions": [
-      "Circuit Connect"
+      "Quality & Platform Contribution"
     ]
   },
   {
-    "name": "Abhishek",
-    "github": "Anshuu2004",
-    "avatarInitial": "A",
+    "name": "trunalpatil",
+    "github": "trunalpatil",
+    "avatarInitial": "T",
     "role": "Contributor (NSOC '26)",
     "commits": 6,
+    "gamesCount": 0,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Quality & Platform Contribution"
+    ]
+  },
+  {
+    "name": "sumittiwari",
+    "github": "sumittiwari",
+    "avatarInitial": "S",
+    "role": "Contributor (NSOC '26)",
+    "commits": 5,
+    "gamesCount": 0,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Quality & Platform Contribution"
+    ]
+  },
+  {
+    "name": "trunal2005",
+    "github": "trunal2005",
+    "avatarInitial": "T",
+    "role": "Contributor (NSOC '26)",
+    "commits": 4,
+    "gamesCount": 0,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Quality & Platform Contribution"
+    ]
+  },
+  {
+    "name": "nilesh0199",
+    "github": "nilesh0199",
+    "avatarInitial": "N",
+    "role": "Contributor (NSOC '26)",
+    "commits": 4,
+    "gamesCount": 0,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Quality & Platform Contribution"
+    ]
+  },
+  {
+    "name": "khushishah0307",
+    "github": "khushishah0307",
+    "avatarInitial": "K",
+    "role": "Contributor (NSOC '26)",
+    "commits": 2,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,

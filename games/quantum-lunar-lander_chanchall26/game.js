@@ -415,6 +415,7 @@
   }
 
   function resetShip() {
+    stopAllAudio();
     const s = level.spawn;
     ship.x = s.x;
     ship.y = s.y;
@@ -526,8 +527,47 @@
   let soundOn = storeGet(LS_SOUND) !== '0';
   let actx = null;
   let master = null;
+  let limiter = null;
+  const activeVoices = new Set();
+  const MAX_VOICES = 6;
   let rumbleGain = null;
   let rumbleFilter = null;
+
+  function trackVoice(node) {
+    if (!node) return node;
+    while (activeVoices.size >= MAX_VOICES) {
+      const oldest = activeVoices.values().next().value;
+      if (oldest) {
+        try {
+          if (typeof oldest.stop === 'function') oldest.stop();
+          if (typeof oldest.disconnect === 'function') oldest.disconnect();
+        } catch (_) {}
+        activeVoices.delete(oldest);
+      } else {
+        break;
+      }
+    }
+    activeVoices.add(node);
+    const onEnded = () => {
+      activeVoices.delete(node);
+    };
+    if (typeof node.addEventListener === 'function') {
+      node.addEventListener('ended', onEnded, { once: true });
+    } else {
+      node.onended = onEnded;
+    }
+    return node;
+  }
+
+  function stopAllAudio() {
+    activeVoices.forEach((node) => {
+      try {
+        if (typeof node.stop === 'function') node.stop();
+        if (typeof node.disconnect === 'function') node.disconnect();
+      } catch (_) {}
+    });
+    activeVoices.clear();
+  }
 
   function initAudio() {
     if (actx) { ensureAudioRunning(); return; }
@@ -537,7 +577,19 @@
       actx = new AC();
       master = actx.createGain();
       master.gain.value = soundOn ? 0.7 : 0;
-      master.connect(actx.destination);
+      try {
+        const comp = actx.createDynamicsCompressor();
+        comp.threshold.setValueAtTime(-0.5, actx.currentTime);
+        comp.knee.setValueAtTime(0, actx.currentTime);
+        comp.ratio.setValueAtTime(20.0, actx.currentTime);
+        comp.attack.setValueAtTime(0.001, actx.currentTime);
+        comp.release.setValueAtTime(0.05, actx.currentTime);
+        limiter = comp;
+        master.connect(limiter);
+        limiter.connect(actx.destination);
+      } catch (_) {
+        master.connect(actx.destination);
+      }
 
       // looping brown noise for the engine rumble
       const len = actx.sampleRate * 2;
@@ -593,6 +645,7 @@
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
     o.connect(g);
     g.connect(master);
+    trackVoice(o);
     o.start(t0);
     o.stop(t0 + dur + 0.05);
   }
@@ -624,7 +677,9 @@
     src.connect(f);
     f.connect(g);
     g.connect(master);
+    trackVoice(src);
     src.start(t0);
+    src.stop(t0 + 1.15);
     const o = actx.createOscillator();
     const og = actx.createGain();
     o.type = 'sine';
@@ -634,6 +689,7 @@
     og.gain.exponentialRampToValueAtTime(0.001, t0 + 0.7);
     o.connect(og);
     og.connect(master);
+    trackVoice(o);
     o.start(t0);
     o.stop(t0 + 0.8);
   }
@@ -1649,4 +1705,14 @@
   updateHud(true);
   showOverlay(el.start, 'start-btn');
   requestAnimationFrame(frame);
+
+  // Clean audio on teardown (#507)
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'ARCADEVERSE_TEARDOWN') {
+      stopAllAudio();
+      if (actx && actx.state !== 'closed') {
+        try { actx.close(); } catch (_) {}
+      }
+    }
+  });
 })();

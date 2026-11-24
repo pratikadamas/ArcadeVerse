@@ -19,6 +19,24 @@
   const touchLeft = document.getElementById('touch-left');
   const touchRight = document.getElementById('touch-right');
 
+  // Safe localStorage helpers
+  function getStorage(key, fallback) {
+    try {
+      const val = localStorage.getItem(key);
+      return val !== null ? val : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  function setStorage(key, val) {
+    try {
+      localStorage.setItem(key, val);
+    } catch {
+      // In-memory fallback
+    }
+  }
+
   // Audio Synth (Zero-dependency Web Audio API)
   let audioCtx = null;
   function initAudio() {
@@ -48,10 +66,12 @@
 
   // State
   let isRunning = false;
+  let rafId = null;
+  let lastTime = performance.now();
   let score = 0;
   let wave = 1;
   let coreHealth = 100;
-  let bestScore = parseInt(localStorage.getItem('cyber_orbit_best') || '0', 10);
+  let bestScore = parseInt(getStorage('cyber_orbit_best', '0'), 10);
   bestDisplay.textContent = bestScore;
 
   // Geometry
@@ -190,20 +210,30 @@
     isRunning = false;
     if (score > bestScore) {
       bestScore = score;
-      localStorage.setItem('cyber_orbit_best', bestScore);
+      setStorage('cyber_orbit_best', bestScore);
       bestDisplay.textContent = bestScore;
     }
+
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'ARCADEVERSE_GAME_OVER',
+        score: score,
+        wave: wave
+      }, '*');
+    }
+
     gameoverStats.textContent = `Score: ${score} • Wave: ${wave} • Best: ${bestScore}`;
     gameoverOverlay.classList.add('active');
     playTone(180, 'sawtooth', 0.4, 0.3);
   }
 
-  function update(delta) {
+  function update(deltaMs = 16.67) {
     if (!isRunning) return;
+    const dtScale = Math.min(2.0, Math.max(0.2, deltaMs / 16.667));
 
     // Shield rotation
-    if (keys.left) shieldAngle -= rotationSpeed;
-    if (keys.right) shieldAngle += rotationSpeed;
+    if (keys.left) shieldAngle -= rotationSpeed * dtScale;
+    if (keys.right) shieldAngle += rotationSpeed * dtScale;
 
     // Keep angle positive
     shieldAngle = (shieldAngle % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
@@ -221,8 +251,14 @@
       const toCenterY = center.y - m.y;
       const dist = Math.sqrt(toCenterX * toCenterX + toCenterY * toCenterY);
 
-      m.x += (toCenterX / dist) * m.speed;
-      m.y += (toCenterY / dist) * m.speed;
+      if (dist < 1e-4) {
+        // Prevent 0 / 0 NaN when entity touches exact center
+        m.x += (Math.random() - 0.5) * m.speed * dtScale;
+        m.y += (Math.random() - 0.5) * m.speed * dtScale;
+      } else {
+        m.x += (toCenterX / dist) * m.speed * dtScale;
+        m.y += (toCenterY / dist) * m.speed * dtScale;
+      }
 
       // Check Shield Collision
       if (!m.isHealth && checkDeflection(m)) {
@@ -335,13 +371,30 @@
       ctx.fill();
     });
     ctx.globalAlpha = 1.0;
-
-    requestAnimationFrame(render);
   }
 
-  function loop() {
-    update();
-    requestAnimationFrame(loop);
+  function gameLoop(now) {
+    const deltaMs = Math.min(64, now - lastTime);
+    lastTime = now;
+
+    update(deltaMs);
+    render();
+
+    rafId = requestAnimationFrame(gameLoop);
+  }
+
+  function startLoop() {
+    if (!rafId) {
+      lastTime = performance.now();
+      rafId = requestAnimationFrame(gameLoop);
+    }
+  }
+
+  function stopLoop() {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
   }
 
   // Keyboard handlers
@@ -410,7 +463,11 @@
     rulesModal.classList.remove('active');
   });
 
-  // Start animation loop
-  render();
-  loop();
+  // Teardown / cleanup
+  window.addEventListener('pagehide', () => {
+    stopLoop();
+  });
+
+  // Start unified animation loop
+  startLoop();
 })();

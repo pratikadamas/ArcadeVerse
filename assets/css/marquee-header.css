@@ -1,0 +1,498 @@
+/* ==========================================================================
+   Arcade Cabinet Marquee Header Banner & Dynamic Sound Waves (#1367)
+   Pure CSS3 & SVG Illuminated Back-Lit Acrylic Textures with Rivet Borders
+   ========================================================================== */
+
+/* Container & Layout */
+.arcade-marquee-wrapper {
+  container-type: inline-size;
+  container-name: arcade-marquee;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 2.5rem;
+  position: relative;
+  z-index: 10;
+}
+
+/* Outer Cabinet Frame: Metallic bevels, molded T-molding rim and physical depth */
+.arcade-marquee-frame {
+  position: relative;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #2a2c35 0%, #15161b 45%, #0d0e12 100%);
+  padding: 14px 18px;
+  box-shadow:
+    0 0 0 2px #3a3f4d,
+    0 0 0 4px #121318,
+    0 0 0 6px #4a5163,
+    0 18px 45px rgba(0, 0, 0, 0.75),
+    0 0 35px rgba(0, 240, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Metallic Rivet Corners & Perimeter Accents */
+.arcade-marquee-rivets {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.arcade-rivet {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #e6edf8 0%, #8a94a6 45%, #3d434e 85%, #1e2229 100%);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.8),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.9),
+    0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.arcade-rivet-tl { top: 6px; left: 8px; }
+.arcade-rivet-tr { top: 6px; right: 8px; }
+.arcade-rivet-bl { bottom: 6px; left: 8px; }
+.arcade-rivet-br { bottom: 6px; right: 8px; }
+.arcade-rivet-tc { top: 6px; left: 50%; transform: translateX(-50%); }
+.arcade-rivet-bc { bottom: 6px; left: 50%; transform: translateX(-50%); }
+
+/* Chasing Bulb Neon Marquee Strip */
+.arcade-marquee-chase-track {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  background: #090a0d;
+  border-radius: 6px;
+  border: 1px solid #1a1c23;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.arcade-marquee-chase-track.bottom-track {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+.marquee-bulb {
+  flex: 1 1 0;
+  min-width: 6px;
+  max-width: 14px;
+  height: 12px;
+  border-radius: 50%;
+  background: #252830;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+  transition: background-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+/* Sequential Chase Animation Mode */
+.arcade-marquee-frame[data-chase-mode="sequential"] .marquee-bulb:nth-child(4n + 1) {
+  animation: bulbSequential1 1.2s infinite steps(1);
+}
+.arcade-marquee-frame[data-chase-mode="sequential"] .marquee-bulb:nth-child(4n + 2) {
+  animation: bulbSequential2 1.2s infinite steps(1);
+}
+.arcade-marquee-frame[data-chase-mode="sequential"] .marquee-bulb:nth-child(4n + 3) {
+  animation: bulbSequential3 1.2s infinite steps(1);
+}
+.arcade-marquee-frame[data-chase-mode="sequential"] .marquee-bulb:nth-child(4n + 4) {
+  animation: bulbSequential4 1.2s infinite steps(1);
+}
+
+@keyframes bulbSequential1 {
+  0%, 100% { background: #00f0ff; box-shadow: 0 0 10px #00f0ff, 0 0 16px rgba(0, 240, 255, 0.8), inset 0 0 3px #ffffff; }
+  25%, 50%, 75% { background: #1a2228; box-shadow: none; }
+}
+@keyframes bulbSequential2 {
+  25% { background: #ff007b; box-shadow: 0 0 10px #ff007b, 0 0 16px rgba(255, 0, 123, 0.8), inset 0 0 3px #ffffff; }
+  0%, 50%, 75%, 100% { background: #281822; box-shadow: none; }
+}
+@keyframes bulbSequential3 {
+  50% { background: #ffea00; box-shadow: 0 0 10px #ffea00, 0 0 16px rgba(255, 234, 0, 0.8), inset 0 0 3px #ffffff; }
+  0%, 25%, 75%, 100% { background: #262418; box-shadow: none; }
+}
+@keyframes bulbSequential4 {
+  75% { background: #00ff73; box-shadow: 0 0 10px #00ff73, 0 0 16px rgba(0, 255, 115, 0.8), inset 0 0 3px #ffffff; }
+  0%, 25%, 50%, 100% { background: #16241c; box-shadow: none; }
+}
+
+/* Alternating Blink Mode */
+.arcade-marquee-frame[data-chase-mode="alternating"] .marquee-bulb:nth-child(even) {
+  animation: bulbAltEven 0.8s infinite steps(1);
+}
+.arcade-marquee-frame[data-chase-mode="alternating"] .marquee-bulb:nth-child(odd) {
+  animation: bulbAltOdd 0.8s infinite steps(1);
+}
+
+@keyframes bulbAltEven {
+  0%, 49.9% { background: #ff007b; box-shadow: 0 0 10px #ff007b, 0 0 16px rgba(255, 0, 123, 0.8), inset 0 0 3px #fff; }
+  50%, 100% { background: #22141c; box-shadow: none; }
+}
+@keyframes bulbAltOdd {
+  0%, 49.9% { background: #162228; box-shadow: none; }
+  50%, 100% { background: #00f0ff; box-shadow: 0 0 10px #00f0ff, 0 0 16px rgba(0, 240, 255, 0.8), inset 0 0 3px #fff; }
+}
+
+/* Sound-Reactive Pulse Mode (driven by JS CSS Custom Property or reactive keyframes) */
+.arcade-marquee-frame[data-chase-mode="pulse"] .marquee-bulb {
+  background: hsl(calc(180 + var(--marquee-audio-peak, 20) * 1.4), 100%, 55%);
+  box-shadow: 0 0 calc(6px + var(--marquee-audio-energy, 4px)) hsl(calc(180 + var(--marquee-audio-peak, 20) * 1.4), 100%, 55%);
+  filter: brightness(calc(0.7 + var(--marquee-audio-intensity, 0.4)));
+}
+
+/* Illuminated Back-Lit Acrylic Diffuser Plate */
+.arcade-marquee-acrylic-plate {
+  position: relative;
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(0, 240, 255, 0.22) 0%, rgba(138, 43, 226, 0.16) 45%, rgba(10, 11, 16, 0.95) 100%),
+    linear-gradient(180deg, #12141d 0%, #08090d 100%);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  box-shadow:
+    inset 0 0 25px rgba(0, 240, 255, 0.25),
+    inset 0 1px 2px rgba(255, 255, 255, 0.4),
+    0 0 20px rgba(0, 240, 255, 0.15);
+  padding: 1.2rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow: hidden;
+}
+
+/* Acrylic Specular Sheen / Glass Highlight Reflection */
+.arcade-marquee-acrylic-plate::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 48%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.02) 80%, transparent 100%);
+  pointer-events: none;
+  z-index: 2;
+  border-top-left-radius: 7px;
+  border-top-right-radius: 7px;
+}
+
+/* Internal Backlight Bulb Diffuser Glow */
+.arcade-marquee-backlight {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 35%, rgba(0, 240, 255, 0.18), transparent 70%);
+  pointer-events: none;
+  mix-blend-mode: screen;
+  z-index: 1;
+  animation: marqueeBacklightFlicker 6s infinite alternate ease-in-out;
+}
+
+@keyframes marqueeBacklightFlicker {
+  0%, 100% { opacity: 0.95; }
+  25% { opacity: 0.88; }
+  50% { opacity: 1; }
+  82% { opacity: 0.91; }
+  85% { opacity: 0.75; }
+  88% { opacity: 0.98; }
+}
+
+/* Marquee Header Top Row: Brand & Status Controls */
+.arcade-marquee-inner {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* Neon Backlit Title Signage */
+.marquee-title-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.marquee-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Press Start 2P', monospace, sans-serif;
+  font-size: 0.65rem;
+  color: #ff007b;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.marquee-badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff007b;
+  box-shadow: 0 0 8px #ff007b;
+  animation: badgeDotPulse 1.2s infinite ease-in-out;
+}
+
+@keyframes badgeDotPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.6; }
+}
+
+.marquee-glow-heading {
+  margin: 0;
+  font-family: 'Press Start 2P', monospace, sans-serif;
+  font-size: 1.75rem;
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  color: #ffffff;
+  text-shadow:
+    0 0 5px #fff,
+    0 0 10px #00f0ff,
+    0 0 20px #00f0ff,
+    0 0 35px #00f0ff,
+    0 0 50px #00b4d8;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.marquee-glow-heading .sub-text {
+  color: #ff007b;
+  text-shadow:
+    0 0 5px #fff,
+    0 0 10px #ff007b,
+    0 0 20px #ff007b,
+    0 0 35px #ff007b;
+}
+
+.marquee-tagline {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  color: #a4b3c6;
+  font-family: system-ui, -apple-system, sans-serif;
+  letter-spacing: 0.03em;
+}
+
+/* Sound Wave Visualizer & Marquee Modes Toolbar */
+.marquee-hud-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+/* Dynamic Sound Waves Oscilloscope SVG */
+.marquee-waveform-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+  background: rgba(10, 13, 20, 0.75);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 6px;
+  padding: 6px 10px;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+.waveform-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.7rem;
+  color: #00f0ff;
+  letter-spacing: 0.08em;
+}
+
+.waveform-meta .audio-state-text {
+  color: #00ff73;
+}
+
+.marquee-waveform-svg {
+  display: block;
+  width: 160px;
+  height: 34px;
+  overflow: visible;
+}
+
+.wave-grid-line {
+  stroke: rgba(0, 240, 255, 0.12);
+  stroke-dasharray: 2 2;
+}
+
+.wave-path-glow {
+  fill: none;
+  stroke: #00f0ff;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 4px #00f0ff) drop-shadow(0 0 8px rgba(0, 240, 255, 0.6));
+}
+
+.wave-path-sub {
+  fill: none;
+  stroke: rgba(255, 0, 123, 0.75);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Interactive Controls: Chase Mode Selector & Audio Toggle */
+.marquee-buttons-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.marquee-mode-btn {
+  background: rgba(20, 24, 34, 0.85);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  color: #a0aec0;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.72rem;
+  padding: 5px 9px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.marquee-mode-btn:hover {
+  background: rgba(0, 240, 255, 0.15);
+  color: #ffffff;
+  border-color: #00f0ff;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+}
+
+.marquee-mode-btn.active {
+  background: #00f0ff;
+  color: #0d1117;
+  border-color: #00f0ff;
+  font-weight: bold;
+  box-shadow: 0 0 10px #00f0ff;
+}
+
+/* Quick Statistics Meter Strip across Marquee Base */
+.marquee-stats-strip {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: rgba(5, 7, 10, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 6px 12px;
+  gap: 12px;
+}
+
+.marquee-stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: #8da2be;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.marquee-stat-pill strong {
+  color: #ffea00;
+  font-size: 0.85rem;
+}
+
+/* CSS Container Queries for Responsive Scaling */
+@container arcade-marquee (max-width: 860px) {
+  .arcade-marquee-acrylic-plate {
+    padding: 1rem 1.2rem;
+  }
+  .marquee-glow-heading {
+    font-size: 1.35rem;
+  }
+  .marquee-waveform-svg {
+    width: 130px;
+    height: 30px;
+  }
+}
+
+@container arcade-marquee (max-width: 600px) {
+  .arcade-marquee-wrapper {
+    margin-bottom: 1.8rem;
+  }
+  .arcade-marquee-frame {
+    padding: 10px 10px;
+    border-radius: 10px;
+  }
+  .arcade-marquee-inner {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    gap: 0.85rem;
+  }
+  .marquee-title-box {
+    align-items: center;
+  }
+  .marquee-glow-heading {
+    font-size: 1.1rem;
+    justify-content: center;
+  }
+  .marquee-hud-controls {
+    flex-direction: column;
+    align-items: center;
+  }
+  .marquee-waveform-box {
+    align-items: center;
+    width: 100%;
+    max-width: 280px;
+  }
+  .marquee-waveform-svg {
+    width: 100%;
+    height: 32px;
+  }
+  .marquee-stats-strip {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .marquee-bulb {
+    min-width: 4px;
+    height: 9px;
+  }
+}
+
+/* Fallback Responsive Media Queries for non-container browser engines */
+@media (max-width: 600px) {
+  .arcade-marquee-frame {
+    padding: 10px;
+  }
+}
+
+/* Accessibility: Reduced Motion and Inactive Tab Lifecycle */
+@media (prefers-reduced-motion: reduce) {
+  .arcade-marquee-frame .marquee-bulb {
+    animation: none !important;
+    background: #00f0ff !important;
+    box-shadow: 0 0 6px #00f0ff !important;
+  }
+  .arcade-marquee-backlight {
+    animation: none !important;
+    opacity: 0.9 !important;
+  }
+  .marquee-badge-dot {
+    animation: none !important;
+  }
+}
+
+/* Tab inactive / Paused state applied via JS */
+.arcade-marquee-frame.is-paused .marquee-bulb {
+  animation-play-state: paused !important;
+}
+.arcade-marquee-frame.is-paused .arcade-marquee-backlight {
+  animation-play-state: paused !important;
+}
+.arcade-marquee-frame.is-paused .marquee-badge-dot {
+  animation-play-state: paused !important;
+}

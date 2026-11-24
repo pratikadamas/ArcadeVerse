@@ -327,3 +327,21 @@ kbd {
   display: flex;
   justify-content: flex-end;
 }
+
+@media (max-width: 768px) {
+  .pool-arena {
+    border-radius: 0;
+  }
+  .pool-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .hud-stats {
+    justify-content: space-around;
+  }
+  canvas {
+    max-width: 100%;
+    height: auto;
+  }
+}

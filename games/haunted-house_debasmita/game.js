@@ -43,6 +43,7 @@
       this.muted = false;
       this.breathingOsc = null;
       this.breathingGain = null;
+      this.activeNodes = new Set();
     }
 
     init() {
@@ -52,6 +53,27 @@
       }
       if (this.ctx && this.ctx.state === 'suspended') {
         this.ctx.resume();
+      }
+    }
+
+    trackNode(osc) {
+      if (!this.activeNodes) this.activeNodes = new Set();
+      this.activeNodes.add(osc);
+      osc.onended = () => {
+        if (this.activeNodes) this.activeNodes.delete(osc);
+      };
+      return osc;
+    }
+
+    stopAll() {
+      if (this.activeNodes) {
+        this.activeNodes.forEach(node => {
+          try {
+            node.stop();
+            node.disconnect();
+          } catch (_) {}
+        });
+        this.activeNodes.clear();
       }
     }
 
@@ -68,6 +90,7 @@
       gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start();
       osc.stop(this.ctx.currentTime + 0.05);
     }
@@ -86,6 +109,7 @@
       gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.7);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start();
       osc.stop(this.ctx.currentTime + 0.7);
     }
@@ -103,6 +127,7 @@
       gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 1.4);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start();
       osc.stop(this.ctx.currentTime + 1.4);
     }
@@ -123,6 +148,7 @@
           gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
           osc.connect(gain);
           gain.connect(this.ctx.destination);
+          this.trackNode(osc);
           osc.start();
           osc.stop(this.ctx.currentTime + 0.12);
         }, delay * 1000);
@@ -145,6 +171,7 @@
       gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 1.6);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start();
       osc.stop(this.ctx.currentTime + 1.6);
     }
@@ -163,6 +190,7 @@
       gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.9);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start();
       osc.stop(this.ctx.currentTime + 0.9);
     }
@@ -183,6 +211,7 @@
           gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.55);
           osc.connect(gain);
           gain.connect(this.ctx.destination);
+          this.trackNode(osc);
           osc.start();
           osc.stop(this.ctx.currentTime + 0.55);
         }, idx * 280);
@@ -202,6 +231,7 @@
       gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.65);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
+      this.trackNode(osc);
       osc.start();
       osc.stop(this.ctx.currentTime + 0.65);
     }
@@ -1370,6 +1400,7 @@
 
   function triggerEnding(type) {
     state.gameEnded = true;
+    sound.stopAll();
     if (type === 'cursebreaker') {
       endingTitle.textContent = 'ENDING 1: THE CURSE BREAKER (TRUE ENDING)';
       endingTitle.className = 'ending-title good';
@@ -1424,7 +1455,16 @@
 
   btnJournal.addEventListener('click', () => openModal(modalJournal));
   document.getElementById('helpBtn').addEventListener('click', () => openModal(modalHelp));
-  document.getElementById('btnRestartGame').addEventListener('click', () => window.location.reload());
+  document.getElementById('btnRestartGame').addEventListener('click', () => {
+    sound.stopAll();
+    window.location.reload();
+  });
+
+  window.addEventListener('message', (e) => {
+    if (e.data && (e.data.type === 'ARCADEVERSE_TEARDOWN' || e.data.type === 'ARCADEVERSE_PAUSE')) {
+      sound.stopAll();
+    }
+  });
 
   // Room Nav Tabs
   document.querySelectorAll('.room-tab').forEach(tab => {

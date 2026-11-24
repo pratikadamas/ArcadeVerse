@@ -419,6 +419,67 @@ body {
   display: none !important;
 }
 
+/* Touch Controls for Mobile */
+.touch-controls {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  z-index: 15;
+  display: flex;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.touch-dpad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.dpad-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dpad-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  color: #00f0ff;
+  font-size: 1rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  transition: background 0.1s, transform 0.1s;
+}
+
+.dpad-btn:active, .dpad-btn.active {
+  background: rgba(0, 240, 255, 0.35);
+  color: #fff;
+  transform: scale(0.95);
+}
+
+.dpad-action {
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  background: rgba(30, 41, 59, 0.85);
+  color: #facc15;
+  border-color: rgba(250, 204, 21, 0.5);
+}
+
+.dpad-action.active {
+  background: rgba(250, 204, 21, 0.4);
+  color: #fff;
+}
+
 @media (max-width: 860px) {
   .side-hud {
     display: none;
