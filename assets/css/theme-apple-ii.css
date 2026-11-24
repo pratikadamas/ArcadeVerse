@@ -1,0 +1,120 @@
+/* ==========================================================================
+   THEME: AUTHENTIC 1977 APPLE II COMPOSITE NTSC ARTIFACTING (#1410)
+   Phosphor Green, Violet, Orange, and Blue with horizontal scanline artifact fringes
+   ========================================================================== */
+
+:root[data-theme="apple-ii"],
+html[data-theme="apple-ii"] {
+  --apple-black: #000000;
+  --apple-green: #11c638; /* Apple II Phosphor Green */
+  --apple-violet: #8e1ae2; /* Composite Violet */
+  --apple-orange: #d35400; /* Composite Orange */
+  --apple-blue: #2277ee; /* Composite Blue */
+
+  --bg-primary: var(--apple-black);
+  --bg-secondary: #080808;
+  --bg-card: #0c0c0c;
+  --bg-card-hover: #141414;
+  --bg-header: var(--apple-black);
+
+  --accent-primary: var(--apple-green);
+  --accent-secondary: var(--apple-violet);
+  --accent-tertiary: var(--apple-orange);
+  --accent-blue: var(--apple-blue);
+
+  --text-primary: var(--apple-green);
+  --text-secondary: #22ff55;
+  --text-muted: #0b6d0b;
+  --text-inverse: var(--apple-black);
+
+  --border-subtle: var(--apple-green);
+  --border-glow: var(--apple-green);
+
+  --font-mono: 'PRNumber3', 'Apple II', monospace;
+}
+
+/* NTSC Color Artifacting & Interlace Simulation */
+[data-theme="apple-ii"] body {
+  background-color: #000000 !important;
+  color: var(--apple-green) !important;
+  text-shadow: 1px 0px 1px rgba(142, 26, 226, 0.7), -1px 0px 1px rgba(17, 198, 56, 0.7) !important;
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.6) 0px,
+    rgba(0, 0, 0, 0.6) 1px,
+    transparent 1px,
+    transparent 2px
+  ) !important;
+}
+
+/* 40-Column Terminal Cards */
+[data-theme="apple-ii"] .game-card,
+[data-theme="apple-ii"] .catalog-card,
+[data-theme="apple-ii"] .modal-content,
+[data-theme="apple-ii"] .controls-legend-card {
+  background: #080808 !important;
+  border: 1px solid var(--apple-green) !important;
+  box-shadow: 0 0 10px rgba(17, 198, 56, 0.3), inset 0 0 10px rgba(17, 198, 56, 0.1) !important;
+  color: var(--apple-green) !important;
+  border-radius: 0px !important;
+}
+
+[data-theme="apple-ii"] .game-card:hover,
+[data-theme="apple-ii"] .catalog-card:hover {
+  border-color: var(--apple-violet) !important;
+  box-shadow: 0 0 12px rgba(142, 26, 226, 0.5) !important;
+}
+
+/* Apple II Terminal Buttons */
+[data-theme="apple-ii"] .btn,
+[data-theme="apple-ii"] button.btn,
+[data-theme="apple-ii"] .filter-chip {
+  background: #000000 !important;
+  color: var(--apple-green) !important;
+  border: 1px solid var(--apple-green) !important;
+  border-radius: 0px !important;
+  text-transform: uppercase !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="apple-ii"] .filter-chip.active,
+[data-theme="apple-ii"] .btn.btn-primary {
+  background: var(--apple-green) !important;
+  color: #000000 !important;
+  text-shadow: none !important;
+}
+
+/* Navbar & Footer Chrome */
+[data-theme="apple-ii"] .navbar,
+[data-theme="apple-ii"] .footer {
+  background: #000000 !important;
+  border-bottom: 1px solid var(--apple-green) !important;
+}
+
+/* Scanlines and Chroma Bleed classes */
+[data-theme="apple-ii"] .apple-scanlines {
+  position: relative;
+  overflow: hidden;
+}
+
+[data-theme="apple-ii"] .apple-scanlines::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+              linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  z-index: 20;
+  background-size: 100% 2px, 3px 100%;
+  pointer-events: none;
+}
+
+[data-theme="apple-ii"] .apple-chroma-bleed {
+  filter: contrast(1.1) brightness(1.05);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="apple-ii"] body {
+    text-shadow: none !important;
+  }
+}
