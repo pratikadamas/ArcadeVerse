@@ -1,0 +1,84 @@
+/* ==========================================================================
+   HIGH-VISIBILITY GLOW FOCUS RING INDICATOR FOR KEYBOARD NAVIGATORS (#695)
+   WCAG 2.4.7 (Focus Visible) compliant neon-cyan / soft-blur focus ring.
+   Suppresses focus outlines on pointer clicks while providing glowing indicators
+   for keyboard tab navigation across cards, inputs, and interactive controls.
+   ========================================================================== */
+
+/* 1. Global Reset & Mouse Click Outline Suppression */
+:focus:not(:focus-visible) {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* 2. Global Keyboard Navigation High-Visibility Glow Focus Ring */
+:focus-visible {
+    outline: 3px solid #00f0ff !important;
+    outline-offset: 3px !important;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.8), 0 0 4px rgba(255, 255, 255, 0.5) !important;
+    transition: outline-offset 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* 3. Catalog Game Card Keyboard Focus Ring */
+.game-card:focus-visible,
+.catalog-card:focus-visible,
+.game-card-link:focus-visible,
+[data-game-id]:focus-visible {
+    outline: 3px solid #00f0ff !important;
+    outline-offset: 4px !important;
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.9), inset 0 0 8px rgba(0, 240, 255, 0.3) !important;
+    transform: translateY(-2px);
+}
+
+/* 4. Search Bar, Form Controls, and Filter Chips */
+.search-bar:focus-visible,
+#search-bar:focus-visible,
+input[type="text"]:focus-visible,
+input[type="search"]:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid #00f0ff !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 14px rgba(0, 240, 255, 0.7) !important;
+    border-color: #00f0ff !important;
+}
+
+.filter-chip:focus-visible,
+.category-pill:focus-visible,
+.tag-chip:focus-visible {
+    outline: 2px solid #00f0ff !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.8) !important;
+}
+
+/* 5. Buttons and Navigation Links */
+.btn:focus-visible,
+button:focus-visible,
+.nav-link:focus-visible {
+    outline: 2px solid #00f0ff !important;
+    outline-offset: 3px !important;
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.75) !important;
+}
+
+/* 6. Light Theme High-Contrast Fallback */
+[data-theme="light"] :focus-visible,
+body.light-theme :focus-visible {
+    outline: 3px solid #0066cc !important;
+    outline-offset: 3px !important;
+    box-shadow: 0 0 10px rgba(0, 102, 204, 0.6) !important;
+}
+
+[data-theme="light"] .game-card:focus-visible,
+body.light-theme .game-card:focus-visible {
+    outline: 3px solid #0066cc !important;
+    box-shadow: 0 0 14px rgba(0, 102, 204, 0.7) !important;
+}
+
+/* 7. Reduced Motion Compatibility */
+@media (prefers-reduced-motion: reduce) {
+    :focus-visible,
+    .game-card:focus-visible {
+        transition: none !important;
+        transform: none !important;
+    }
+}
