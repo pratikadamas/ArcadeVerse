@@ -1,0 +1,55 @@
+/* ==========================================================================
+   LEADERBOARD SPECIALIZATION ROLE FILTER STYLES (#581)
+   Dropdown select and filter controls beside leaderboard search input
+   ========================================================================== */
+
+.leaderboard-role-filter-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0;
+    font-family: inherit;
+}
+
+.role-filter-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #8b949e;
+    white-space: nowrap;
+}
+
+.role-filter-select {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    color: #00f0ff;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.role-filter-select:hover,
+.role-filter-select:focus-visible {
+    border-color: #00f0ff;
+    box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+}
+
+.role-filter-select option {
+    background: #0d1117;
+    color: #e6edf3;
+}
+
+@media (max-width: 640px) {
+    .leaderboard-role-filter-wrap {
+        width: 100%;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .role-filter-select {
+        width: 100%;
+    }
+}
