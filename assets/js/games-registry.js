@@ -2643,7 +2643,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 924,
+    "commits": 927,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2939,6 +2939,21 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
+    "name": "sumittiwari",
+    "github": "sumittiwari",
+    "avatarInitial": "S",
+    "role": "Contributor (NSOC '26)",
+    "commits": 4,
+    "gamesCount": 0,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Quality & Platform Contribution"
+    ]
+  },
+  {
     "name": "trunal2005",
     "github": "trunal2005",
     "avatarInitial": "T",
@@ -2969,9 +2984,9 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "sumittiwari",
-    "github": "sumittiwari",
-    "avatarInitial": "S",
+    "name": "khushishah0307",
+    "github": "khushishah0307",
+    "avatarInitial": "K",
     "role": "Contributor (NSOC '26)",
     "commits": 2,
     "gamesCount": 0,
