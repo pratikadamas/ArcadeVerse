@@ -412,10 +412,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let activeGame = null;
   let modalPushedHistory = false;
   let closeAutocomplete = () => {};
-  let lastAnnouncedScore = 0;
-  let lastScoreAnnouncementTime = 0;
-  let currentSessionHighScore = 0;
-  let isNewHighScoreAnnounced = false;
+  let resetActiveMutatorSession = () => {};
 
   // History API State Synchronization & Deep-Linking Engine
   function syncURLState(push = false) {
@@ -2801,6 +2798,9 @@ document.addEventListener("DOMContentLoaded", () => {
       window.AvGameLruCacheManager.recordGamePlay(game.id);
     }
     hideQuitConfirmationModal();
+    if (typeof resetActiveMutatorSession === "function") {
+      resetActiveMutatorSession();
+    }
     lastFocusedElement = triggerElement || document.activeElement;
 
     // Trigger bat animation if launching a Halloween Special Game
@@ -3101,17 +3101,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeGameModal(isFromPopState = false) {
     if (!gameModal || (!gameModal.classList.contains("active") && !activeGame)) return;
-    releaseScreenWakeLock();
-    announceToScreenReader("Game closed. Returned to game catalog.");
-    if (window.GameSpeedRegulator && typeof window.GameSpeedRegulator.closeMenu === "function") {
-      window.GameSpeedRegulator.closeMenu();
+    if (typeof resetActiveMutatorSession === "function") {
+      resetActiveMutatorSession();
     }
-    const closedGame = activeGame;
-    const closedGameTitle = closedGame ? closedGame.title : "Game";
-    const closedGameId = closedGame ? closedGame.id : null;
-    const elementToRestore = lastFocusedElement;
-    hideLandscapePrompt();
-    closeScratchpad(false);
     activeGame = null;
     isGameSessionActive = false;
     // Stop the 15s load timer so a game closed mid load does not raise the error screen later
@@ -5538,15 +5530,760 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 6000);
   }
 
+  // ========================================================
+  // ARCADE GAME MUTATOR & CHALLENGE MODIFIER WHEEL SUBSYSTEM
+  // ========================================================
+  const CHALLENGE_MUTATORS = [
+    {
+      id: "mirror-dimension",
+      name: "Mirror Dimension",
+      category: "Visual Reflex",
+      badgeColor: "cyan",
+      description: "Spatial coordinates inverted! Left is right and right is left.",
+      iconSvg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="17 2 21 6 17 10"></polyline><line x1="21" y1="6" x2="9" y2="6"></line><path d="M3 10v6a4 4 0 0 0 4 4h10"></path></svg>',
+      apply: (frameWrap, iframe) => {
+        iframe.style.transform = "scaleX(-1)";
+        iframe.style.filter = "";
+        iframe.style.clipPath = "";
+      },
+      cleanup: (frameWrap, iframe) => {
+        iframe.style.transform = "";
+        iframe.style.filter = "";
+        iframe.style.clipPath = "";
+      }
+    },
+    {
+      id: "speed-blitz",
+      name: "90-Second Speed Blitz",
+      category: "Time Attack",
+      badgeColor: "amber",
+      description: "Achieve target score or clear the stage before the 90-second buzzer!",
+      timerSeconds: 90,
+      iconSvg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
+      apply: (frameWrap, iframe) => {
+        iframe.style.transform = "";
+        iframe.style.filter = "";
+        iframe.style.clipPath = "";
+      },
+      cleanup: (frameWrap, iframe) => {
+        iframe.style.transform = "";
+        iframe.style.filter = "";
+        iframe.style.clipPath = "";
+      }
+    },
+    {
+      id: "cyber-noir",
+      name: "Cyber Noir Monolith",
+      category: "Aesthetic Filter",
+      badgeColor: "slate",
+      description: "Play through high-contrast retro monochrome noir phosphor.",
+      iconSvg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 0 0 20z" fill="currentColor"></path></svg>',
+      apply: (frameWrap, iframe) => {
+        iframe.style.transform = "";
+        iframe.style.filter = "grayscale(1) contrast(1.45) brightness(0.95)";
+        iframe.style.clipPath = "";
+      },
+      cleanup: (frameWrap, iframe) => {
+        iframe.style.transform = "";
+        iframe.style.filter = "";
+        iframe.style.clipPath = "";
+      }
+    },
+    {
+      id: "terminal-phosphor",
+      name: "Terminal Phosphor Radar",
+      category: "Aesthetic Filter",
+      badgeColor: "emerald",
+      description: "Vintage CRT monochrome green radar phosphor display.",
+      iconSvg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>',
+      apply: (frameWrap, iframe) => {
+        iframe.style.transform = "";
+        iframe.style.filter = "sepia(1) hue-rotate(85deg) saturate(3) contrast(1.2)";
+        iframe.style.clipPath = "";
+      },
+      cleanup: (frameWrap, iframe) => {
+        iframe.style.transform = "";
+        iframe.style.filter = "";
+        iframe.style.clipPath = "";
+      }
+    },
+    {
+      id: "vaporwave-overdrive",
+      name: "Vaporwave Overdrive",
+      category: "Aesthetic Filter",
+      badgeColor: "fuchsia",
+      description: "Supercharged chromatic spectrum shift and hyper-saturation.",
+      iconSvg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>',
+      apply: (frameWrap, iframe) => {
+        iframe.style.transform = "";
+        iframe.style.filter = "hue-rotate(180deg) saturate(2)";
+        iframe.style.clipPath = "";
+      },
+      cleanup: (frameWrap, iframe) => {
+        iframe.style.transform = "";
+        iframe.style.filter = "";
+        iframe.style.clipPath = "";
+      }
+    },
+    {
+      id: "one-handed-commando",
+      name: "One-Handed Commando",
+      category: "Physical Rule",
+      badgeColor: "blue",
+      description: "Play this session strictly using only your non-dominant hand!",
+      iconSvg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"></path><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"></path><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"></path><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path></svg>',
+      apply: (frameWrap, iframe) => {
+        iframe.style.transform = "";
+        iframe.style.filter = "";
+        iframe.style.clipPath = "";
+      },
+      cleanup: (frameWrap, iframe) => {
+        iframe.style.transform = "";
+        iframe.style.filter = "";
+        iframe.style.clipPath = "";
+      }
+    },
+    {
+      id: "hardcore-ironman",
+      name: "Hardcore Iron-Man",
+      category: "Precision Rule",
+      badgeColor: "rose",
+      description: "Zero margin for error. If you take damage or lose a life, instant restart!",
+      iconSvg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>',
+      apply: (frameWrap, iframe) => {
+        iframe.style.transform = "";
+        iframe.style.filter = "";
+        iframe.style.clipPath = "";
+      },
+      cleanup: (frameWrap, iframe) => {
+        iframe.style.transform = "";
+        iframe.style.filter = "";
+        iframe.style.clipPath = "";
+      }
+    },
+    {
+      id: "letterbox-aperture",
+      name: "Letterbox Aperture",
+      category: "Visual Challenge",
+      badgeColor: "purple",
+      description: "Narrow aperture widescreen letterbox restricts peripheral vision.",
+      iconSvg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="18" rx="2"></rect><line x1="2" y1="8" x2="22" y2="8"></line><line x1="2" y1="16" x2="22" y2="16"></line></svg>',
+      apply: (frameWrap, iframe) => {
+        iframe.style.transform = "";
+        iframe.style.filter = "";
+        iframe.style.clipPath = "inset(12% 0 12% 0)";
+      },
+      cleanup: (frameWrap, iframe) => {
+        iframe.style.transform = "";
+        iframe.style.filter = "";
+        iframe.style.clipPath = "";
+      }
+    }
+  ];
+
+  let activeSessionMutator = null;
+  let mutatorTimerInterval = null;
+  let mutatorRemainingSeconds = 0;
+  let openMutatorWheelDialog = () => {};
+  let applyMutatorToSession = () => {};
+
+  // Procedural Web Audio Synthesizer for Retro Arcade Wheel
+  let mutatorAudioCtx = null;
+  function getMutatorAudioCtx() {
+    try {
+      if (!mutatorAudioCtx) {
+        const AudioClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioClass) mutatorAudioCtx = new AudioClass();
+      }
+      if (mutatorAudioCtx && mutatorAudioCtx.state === "suspended") {
+        mutatorAudioCtx.resume().catch(() => {});
+      }
+    } catch (_) {}
+    return mutatorAudioCtx;
+  }
+
+  function playReelTick() {
+    try {
+      const ctx = getMutatorAudioCtx();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(620 + Math.random() * 200, ctx.currentTime);
+      gain.gain.setValueAtTime(0.06, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.04);
+    } catch (_) {}
+  }
+
+  function playReelSnap() {
+    try {
+      const ctx = getMutatorAudioCtx();
+      if (!ctx) return;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(420, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(840, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.16);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.16);
+    } catch (_) {}
+  }
+
+  function initArcadeMutatorWheel() {
+    const modalControls = document.querySelector(".modal-controls");
+    if (!modalControls || document.getElementById("modal-mutator-btn")) return;
+
+    // Create toolbar trigger button
+    const mutatorBtn = document.createElement("button");
+    mutatorBtn.id = "modal-mutator-btn";
+    mutatorBtn.className = "btn btn-sm btn-icon modal-mutator-btn";
+    mutatorBtn.type = "button";
+    mutatorBtn.title = "Challenge Mutators (Alt+M)";
+    mutatorBtn.setAttribute("aria-label", "Open Challenge Mutator Wheel");
+    mutatorBtn.innerHTML = `
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="modal-mutator-icon" aria-hidden="true">
+        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+        <path d="M16 8h.01"></path>
+        <path d="M8 8h.01"></path>
+        <path d="M8 16h.01"></path>
+        <path d="M16 16h.01"></path>
+        <path d="M12 12h.01"></path>
+      </svg>
+      <span class="mutator-active-indicator" aria-hidden="true"></span>
+    `;
+
+    // Mount before close button
+    const closeBtn = document.getElementById("close-modal-btn");
+    if (closeBtn) {
+      modalControls.insertBefore(mutatorBtn, closeBtn);
+    } else {
+      modalControls.appendChild(mutatorBtn);
+    }
+
+    // Build Mutator Spinner Dialog
+    let dialogEl = document.getElementById("arcade-mutator-dialog");
+    if (!dialogEl) {
+      dialogEl = document.createElement("div");
+      dialogEl.id = "arcade-mutator-dialog";
+      dialogEl.className = "mutator-dialog-backdrop";
+      dialogEl.setAttribute("role", "dialog");
+      dialogEl.setAttribute("aria-modal", "true");
+      dialogEl.setAttribute("aria-labelledby", "mutator-dialog-title");
+      dialogEl.setAttribute("aria-hidden", "true");
+      dialogEl.innerHTML = `
+        <div class="mutator-dialog-card">
+          <div class="mutator-dialog-header">
+            <div class="mutator-dialog-heading-wrap">
+              <span class="mutator-dialog-badge">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                SESSION MODIFIERS
+              </span>
+              <h2 id="mutator-dialog-title" class="mutator-dialog-title">Arcade Challenge Mutator Wheel</h2>
+              <p class="mutator-dialog-subtitle">Spin to assign an optional kinetic or visual modifier to this play session.</p>
+            </div>
+            <button type="button" class="mutator-dialog-close-btn" id="mutator-dialog-close-btn" aria-label="Close Mutator Wheel">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+
+          <div class="mutator-reel-container">
+            <div class="mutator-reel-frame">
+              <div class="mutator-reel-pointer" aria-hidden="true"></div>
+              <div class="mutator-reel-viewport">
+                <div class="mutator-reel-track" id="mutator-reel-track"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mutator-preview-card" id="mutator-preview-card">
+            <div class="mutator-preview-icon" id="mutator-preview-icon"></div>
+            <div class="mutator-preview-details">
+              <div class="mutator-preview-meta">
+                <span class="mutator-preview-category" id="mutator-preview-category">Select or Spin</span>
+                <span class="mutator-preview-name" id="mutator-preview-name">Arcade Mutator</span>
+              </div>
+              <p class="mutator-preview-desc" id="mutator-preview-desc">Hit the Spin Wheel button below to randomly draw a game modifier.</p>
+            </div>
+          </div>
+
+          <div class="mutator-dialog-actions">
+            <button type="button" class="btn btn-secondary" id="mutator-spin-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+              <span>SPIN WHEEL</span>
+            </button>
+            <button type="button" class="btn btn-primary" id="mutator-apply-btn" disabled>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>Apply Mutator</span>
+            </button>
+            <button type="button" class="btn btn-outline mutator-clear-btn" id="mutator-clear-btn" style="display: none;">
+              <span>Clear Mutator</span>
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(dialogEl);
+    }
+
+    const reelTrack = dialogEl.querySelector("#mutator-reel-track");
+    const previewIcon = dialogEl.querySelector("#mutator-preview-icon");
+    const previewCat = dialogEl.querySelector("#mutator-preview-category");
+    const previewName = dialogEl.querySelector("#mutator-preview-name");
+    const previewDesc = dialogEl.querySelector("#mutator-preview-desc");
+    const spinBtn = dialogEl.querySelector("#mutator-spin-btn");
+    const applyBtn = dialogEl.querySelector("#mutator-apply-btn");
+    const clearBtn = dialogEl.querySelector("#mutator-clear-btn");
+    const closeDialogBtn = dialogEl.querySelector("#mutator-dialog-close-btn");
+
+    let isSpinning = false;
+    let selectedMutator = null;
+
+    // Populate reel cards (3 full cycles for smooth slot-reel momentum)
+    function populateReelTrack() {
+      if (!reelTrack) return;
+      reelTrack.innerHTML = "";
+      const cycles = 3;
+      for (let c = 0; c < cycles; c++) {
+        CHALLENGE_MUTATORS.forEach((m) => {
+          const card = document.createElement("div");
+          card.className = "mutator-reel-item";
+          card.dataset.mutatorId = m.id;
+          card.innerHTML = `
+            <div class="reel-item-icon">${m.iconSvg}</div>
+            <div class="reel-item-text">
+              <span class="reel-item-title">${m.name}</span>
+              <span class="reel-item-cat">${m.category}</span>
+            </div>
+          `;
+          reelTrack.appendChild(card);
+        });
+      }
+    }
+    populateReelTrack();
+
+    function updatePreview(mutator) {
+      if (!mutator) {
+        previewIcon.innerHTML = CHALLENGE_MUTATORS[0].iconSvg;
+        previewCat.textContent = "Select or Spin";
+        previewName.textContent = "Arcade Mutator";
+        previewDesc.textContent = "Hit the Spin Wheel button below to randomly draw a game modifier.";
+        applyBtn.disabled = true;
+        selectedMutator = null;
+        return;
+      }
+      selectedMutator = mutator;
+      previewIcon.innerHTML = mutator.iconSvg;
+      previewCat.textContent = mutator.category;
+      previewName.textContent = mutator.name;
+      previewDesc.textContent = mutator.description;
+      applyBtn.disabled = false;
+    }
+
+    function spinReel() {
+      if (isSpinning) return;
+      isSpinning = true;
+      spinBtn.disabled = true;
+      applyBtn.disabled = true;
+
+      const targetIndex = Math.floor(Math.random() * CHALLENGE_MUTATORS.length);
+      const chosenMutator = CHALLENGE_MUTATORS[targetIndex];
+
+      const itemHeight = 60;
+      const cycleOffset = CHALLENGE_MUTATORS.length * itemHeight;
+      const targetY = cycleOffset + (targetIndex * itemHeight);
+
+      // Play staggered tick sounds
+      const totalTicks = 12;
+      for (let t = 0; t < totalTicks; t++) {
+        setTimeout(() => {
+          playReelTick();
+        }, t * (55 + t * 6));
+      }
+
+      reelTrack.style.transition = "transform 0.9s cubic-bezier(0.12, 0.88, 0.22, 1.0)";
+      reelTrack.style.transform = `translateY(-${targetY}px)`;
+
+      setTimeout(() => {
+        isSpinning = false;
+        spinBtn.disabled = false;
+        applyBtn.disabled = false;
+        playReelSnap();
+        updatePreview(chosenMutator);
+
+        // Highlight selected reel card
+        const allItems = reelTrack.querySelectorAll(".mutator-reel-item");
+        allItems.forEach(it => it.classList.remove("selected"));
+        const selectedEl = allItems[CHALLENGE_MUTATORS.length + targetIndex];
+        if (selectedEl) selectedEl.classList.add("selected");
+      }, 950);
+    }
+
+    openMutatorWheelDialog = () => {
+      dialogEl.classList.add("active");
+      dialogEl.setAttribute("aria-hidden", "false");
+      document.body.classList.add("mutator-dialog-open");
+
+      if (activeSessionMutator) {
+        clearBtn.style.display = "inline-flex";
+        updatePreview(activeSessionMutator);
+      } else {
+        clearBtn.style.display = "none";
+        if (!selectedMutator) {
+          updatePreview(null);
+        }
+      }
+      setTimeout(() => spinBtn.focus(), 80);
+    };
+
+    function closeMutatorWheelDialog() {
+      dialogEl.classList.remove("active");
+      dialogEl.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("mutator-dialog-open");
+      if (mutatorBtn) mutatorBtn.focus();
+    }
+
+    closeDialogBtn.addEventListener("click", closeMutatorWheelDialog);
+    dialogEl.addEventListener("click", (e) => {
+      if (e.target === dialogEl) closeMutatorWheelDialog();
+    });
+
+    spinBtn.addEventListener("click", spinReel);
+
+    applyBtn.addEventListener("click", () => {
+      if (!selectedMutator) return;
+      applyMutatorToSession(selectedMutator);
+      closeMutatorWheelDialog();
+    });
+
+    clearBtn.addEventListener("click", () => {
+      resetActiveMutatorSession();
+      closeMutatorWheelDialog();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (dialogEl.classList.contains("active")) {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          closeMutatorWheelDialog();
+        } else if ((e.key === " " || e.key === "Enter") && document.activeElement === spinBtn) {
+          e.preventDefault();
+          spinReel();
+        }
+      }
+    });
+
+    // LocalStorage completion persistence
+    const MUTATOR_STORAGE_KEY = "arcadeverse_mutator_completions";
+
+    function getCompletedMutators(gameId) {
+      if (!gameId) return [];
+      try {
+        const raw = localStorage.getItem(MUTATOR_STORAGE_KEY);
+        if (!raw) return [];
+        const data = JSON.parse(raw);
+        return Array.isArray(data[gameId]) ? data[gameId] : [];
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function markMutatorCompleted(gameId, mutatorId) {
+      if (!gameId || !mutatorId) return;
+      try {
+        let data = {};
+        const raw = localStorage.getItem(MUTATOR_STORAGE_KEY);
+        if (raw) data = JSON.parse(raw) || {};
+        if (!Array.isArray(data[gameId])) data[gameId] = [];
+        if (!data[gameId].includes(mutatorId)) {
+          data[gameId].push(mutatorId);
+        }
+        localStorage.setItem(MUTATOR_STORAGE_KEY, JSON.stringify(data));
+      } catch (_) {}
+    }
+
+    function playVictoryFanfare() {
+      try {
+        const ctx = getMutatorAudioCtx();
+        if (!ctx) return;
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.09);
+          gain.gain.setValueAtTime(0.18, ctx.currentTime + idx * 0.09);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.09 + 0.32);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + idx * 0.09);
+          osc.stop(ctx.currentTime + idx * 0.09 + 0.32);
+        });
+      } catch (_) {}
+    }
+
+    function triggerConfettiBurst() {
+      const container = modalWindow || document.body;
+      const existing = document.getElementById("mutator-confetti-canvas");
+      if (existing) existing.remove();
+
+      const canvas = document.createElement("canvas");
+      canvas.id = "mutator-confetti-canvas";
+      canvas.className = "mutator-confetti-canvas";
+      canvas.width = container.clientWidth || 800;
+      canvas.height = container.clientHeight || 600;
+      container.appendChild(canvas);
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      const colors = ["#00f5ff", "#ec4899", "#f59e0b", "#10b981", "#8b5cf6", "#38bdf8"];
+      const particles = [];
+      const count = 48;
+
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: canvas.width / 2 + (Math.random() - 0.5) * 120,
+          y: canvas.height * 0.25 + (Math.random() - 0.5) * 60,
+          vx: (Math.random() - 0.5) * 9,
+          vy: -Math.random() * 7 - 3,
+          size: Math.random() * 7 + 4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          rotation: Math.random() * 360,
+          rotSpeed: (Math.random() - 0.5) * 14,
+          alpha: 1.0
+        });
+      }
+
+      let animHandle = null;
+      const startTime = Date.now();
+
+      function render() {
+        const elapsed = Date.now() - startTime;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.28;
+          p.vx *= 0.98;
+          p.rotation += p.rotSpeed;
+          p.alpha = Math.max(0, 1 - (elapsed / 1600));
+
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rotation * Math.PI) / 180);
+          ctx.globalAlpha = p.alpha;
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+          ctx.restore();
+        }
+
+        if (elapsed < 1600) {
+          animHandle = requestAnimationFrame(render);
+        } else {
+          if (canvas.parentElement) canvas.remove();
+        }
+      }
+      render();
+    }
+
+    // Build Mutator HUD Ribbon
+    let ribbonEl = document.getElementById("modal-mutator-ribbon");
+    if (!ribbonEl && modalWindow) {
+      ribbonEl = document.createElement("div");
+      ribbonEl.id = "modal-mutator-ribbon";
+      ribbonEl.className = "modal-mutator-ribbon";
+      ribbonEl.setAttribute("role", "region");
+      ribbonEl.setAttribute("aria-label", "Active Game Mutator Challenge");
+      ribbonEl.innerHTML = `
+        <div class="mutator-ribbon-left">
+          <span class="mutator-ribbon-badge" id="mutator-ribbon-badge">
+            <span class="mutator-ribbon-icon" id="mutator-ribbon-icon"></span>
+            <span class="mutator-ribbon-name" id="mutator-ribbon-name">Modifier</span>
+          </span>
+          <span class="mutator-ribbon-desc" id="mutator-ribbon-desc">Modifier constraint</span>
+        </div>
+        <div class="mutator-ribbon-center" id="mutator-ribbon-timer-wrap" style="display: none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <span class="mutator-ribbon-timer" id="mutator-ribbon-timer">01:30</span>
+        </div>
+        <div class="mutator-ribbon-right">
+          <button type="button" class="btn btn-sm mutator-complete-btn" id="mutator-complete-btn" title="Mark challenge complete">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span id="mutator-complete-text">Mark Complete</span>
+          </button>
+          <button type="button" class="btn btn-sm btn-icon mutator-ribbon-btn" id="mutator-ribbon-reroll-btn" title="Reroll Mutator">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+          </button>
+          <button type="button" class="btn btn-sm btn-icon mutator-ribbon-btn" id="mutator-ribbon-dismiss-btn" title="Clear Mutator">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+      `;
+      if (modalFrameWrapper) {
+        modalWindow.insertBefore(ribbonEl, modalFrameWrapper);
+      } else {
+        modalWindow.appendChild(ribbonEl);
+      }
+    }
+
+    const ribbonIcon = ribbonEl ? ribbonEl.querySelector("#mutator-ribbon-icon") : null;
+    const ribbonName = ribbonEl ? ribbonEl.querySelector("#mutator-ribbon-name") : null;
+    const ribbonDesc = ribbonEl ? ribbonEl.querySelector("#mutator-ribbon-desc") : null;
+    const ribbonTimerWrap = ribbonEl ? ribbonEl.querySelector("#mutator-ribbon-timer-wrap") : null;
+    const ribbonTimer = ribbonEl ? ribbonEl.querySelector("#mutator-ribbon-timer") : null;
+    const completeBtn = ribbonEl ? ribbonEl.querySelector("#mutator-complete-btn") : null;
+    const completeText = ribbonEl ? ribbonEl.querySelector("#mutator-complete-text") : null;
+    const rerollRibbonBtn = ribbonEl ? ribbonEl.querySelector("#mutator-ribbon-reroll-btn") : null;
+    const dismissRibbonBtn = ribbonEl ? ribbonEl.querySelector("#mutator-ribbon-dismiss-btn") : null;
+
+    if (rerollRibbonBtn) {
+      rerollRibbonBtn.addEventListener("click", () => {
+        openMutatorWheelDialog();
+      });
+    }
+
+    if (dismissRibbonBtn) {
+      dismissRibbonBtn.addEventListener("click", () => {
+        resetActiveMutatorSession();
+      });
+    }
+
+    if (completeBtn) {
+      completeBtn.addEventListener("click", () => {
+        if (!activeSessionMutator || !activeGame) return;
+        markMutatorCompleted(activeGame.id, activeSessionMutator.id);
+        completeBtn.classList.add("completed");
+        if (completeText) completeText.textContent = "Completed!";
+        playVictoryFanfare();
+        triggerConfettiBurst();
+      });
+    }
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+    }
+
+    applyMutatorToSession = (mutator) => {
+      if (!mutator) return;
+
+      if (activeSessionMutator && typeof activeSessionMutator.cleanup === "function") {
+        try {
+          activeSessionMutator.cleanup(modalFrameWrapper, gameIframe);
+        } catch (_) {}
+      }
+      if (mutatorTimerInterval) {
+        clearInterval(mutatorTimerInterval);
+        mutatorTimerInterval = null;
+      }
+
+      activeSessionMutator = mutator;
+      try {
+        mutator.apply(modalFrameWrapper, gameIframe);
+      } catch (_) {}
+
+      const indicator = document.querySelector(".mutator-active-indicator");
+      if (indicator) indicator.classList.add("active");
+
+      if (ribbonEl) {
+        if (ribbonIcon) ribbonIcon.innerHTML = mutator.iconSvg;
+        if (ribbonName) ribbonName.textContent = mutator.name;
+        if (ribbonDesc) ribbonDesc.textContent = mutator.description;
+
+        const completedList = activeGame ? getCompletedMutators(activeGame.id) : [];
+        if (completedList.includes(mutator.id)) {
+          if (completeBtn) completeBtn.classList.add("completed");
+          if (completeText) completeText.textContent = "Completed!";
+        } else {
+          if (completeBtn) completeBtn.classList.remove("completed");
+          if (completeText) completeText.textContent = "Mark Complete";
+        }
+
+        if (mutator.timerSeconds && ribbonTimerWrap && ribbonTimer) {
+          ribbonTimerWrap.style.display = "inline-flex";
+          ribbonTimerWrap.classList.remove("is-warning", "is-expired");
+          mutatorRemainingSeconds = mutator.timerSeconds;
+          ribbonTimer.textContent = formatTime(mutatorRemainingSeconds);
+
+          mutatorTimerInterval = setInterval(() => {
+            mutatorRemainingSeconds--;
+            if (mutatorRemainingSeconds <= 10 && mutatorRemainingSeconds > 0) {
+              ribbonTimerWrap.classList.add("is-warning");
+              playReelTick();
+            }
+            if (mutatorRemainingSeconds <= 0) {
+              clearInterval(mutatorTimerInterval);
+              mutatorTimerInterval = null;
+              ribbonTimer.textContent = "TIME UP!";
+              ribbonTimerWrap.classList.remove("is-warning");
+              ribbonTimerWrap.classList.add("is-expired");
+            } else {
+              ribbonTimer.textContent = formatTime(mutatorRemainingSeconds);
+            }
+          }, 1000);
+        } else if (ribbonTimerWrap) {
+          ribbonTimerWrap.style.display = "none";
+        }
+
+        ribbonEl.classList.add("active");
+      }
+    };
+
+    // Reset session helper
+    resetActiveMutatorSession = () => {
+      if (mutatorTimerInterval) {
+        clearInterval(mutatorTimerInterval);
+        mutatorTimerInterval = null;
+      }
+      mutatorRemainingSeconds = 0;
+      if (activeSessionMutator && typeof activeSessionMutator.cleanup === "function") {
+        try {
+          activeSessionMutator.cleanup(modalFrameWrapper, gameIframe);
+        } catch (_) {}
+      }
+      activeSessionMutator = null;
+      if (ribbonEl) ribbonEl.classList.remove("active");
+      const indicator = document.querySelector(".mutator-active-indicator");
+      if (indicator) indicator.classList.remove("active");
+      const confetti = document.getElementById("mutator-confetti-canvas");
+      if (confetti) confetti.remove();
+    };
+
+    mutatorBtn.addEventListener("click", () => {
+      if (typeof openMutatorWheelDialog === "function") {
+        openMutatorWheelDialog();
+      }
+    });
+
+    // Keyboard shortcut: Alt+M toggles mutator wheel
+    document.addEventListener("keydown", (e) => {
+      if (e.altKey && (e.key === "m" || e.key === "M")) {
+        if (gameModal && gameModal.classList.contains("active")) {
+          e.preventDefault();
+          if (typeof openMutatorWheelDialog === "function") {
+            openMutatorWheelDialog();
+          }
+        }
+      }
+    });
+  }
+
   // Initial render
   initFontPreloadResilience();
   initCatalogViewSwitcher();
   initAZJumpBar();
   initURLDeepLinking();
-  initControlsLegend();
-  if (typeof initMultiChannelAudioMixer === "function") initMultiChannelAudioMixer();
-  if (typeof initOfflineDispatchQueue === "function") initOfflineDispatchQueue();
-  initPwaUpdateNotifier();
+  initArcadeMutatorWheel();
 });
 
   // ========================================================
