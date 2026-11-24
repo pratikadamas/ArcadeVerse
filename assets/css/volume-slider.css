@@ -1,0 +1,65 @@
+/* ==========================================================================
+   VOLUME SLIDER HUD & NEON DECIBEL PERCENTAGE METER (#1386)
+   Collapsible horizontal neon slider with glowing thumb and dynamic meter
+   ========================================================================== */
+
+.volume-control-hud {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #11141a;
+    border: 1px solid #30363d;
+    border-radius: 20px;
+    padding: 4px 12px;
+    height: 32px;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.volume-slider-input {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 80px;
+    height: 4px;
+    background: #21262d;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.volume-slider-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #00f0ff;
+    box-shadow: 0 0 8px #00f0ff;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.volume-slider-input::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 12px #00f0ff;
+}
+
+.volume-slider-input::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border: none;
+    border-radius: 50%;
+    background: #00f0ff;
+    box-shadow: 0 0 8px #00f0ff;
+    cursor: pointer;
+}
+
+.volume-readout {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #00f0ff;
+    min-width: 38px;
+    text-align: right;
+    font-family: monospace;
+}
