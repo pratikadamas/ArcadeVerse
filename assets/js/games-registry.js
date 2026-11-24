@@ -2369,6 +2369,26 @@ const GAMES_REGISTRY = [
     "releaseDate": "2026-11-07"
   },
   {
+    "id": "skyline-relic_hrshjswniii",
+    "title": "Skyline Relic: The Sunken City",
+    "category": "Platformer",
+    "lucideIcon": "gamepad-2",
+    "description": "Explore a vertical city reclaimed by nature, unlock traversal abilities, recover relics, and uncover the skyline's lost history.",
+    "author": "Harsh Jaiswani",
+    "github": "hrshjswniii",
+    "role": "Arcade Contributor",
+    "path": "games/skyline-relic_hrshjswniii/index.html",
+    "tags": [
+      "Platformer",
+      "Exploration",
+      "Adventure",
+      "Metroidvania",
+      "Physics"
+    ],
+    "stars": 0,
+    "featured": false
+  },
+  {
     "id": "solar-flare_babin",
     "title": "Solar Flare: Stellar Shield Defense",
     "category": "Arcade",
@@ -2643,7 +2663,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 973,
+    "commits": 975,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2663,7 +2683,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 626,
+    "commits": 627,
     "gamesCount": 76,
     "mechanicsBonus": 2,
     "platformPRs": 29,
@@ -2824,6 +2844,26 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
+    "name": "Harsh Jaiswani",
+    "github": "hrshjswniii",
+    "avatarInitial": "H",
+    "role": "Active Contributor (NSOC '26)",
+    "commits": 44,
+    "gamesCount": 6,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 1,
+    "bonusPts": 0,
+    "contributions": [
+      "Cyber Brick Breaker: Neon Velocity",
+      "Cyber Grapple: Neon Chasm Swinger",
+      "Cyber Logic Gates: Boolean Circuit Forge",
+      "Cyber Typer: Terminal Hacker",
+      "Protocol Rogue: Cyberdeck Tactics",
+      "Skyline Relic: The Sunken City"
+    ]
+  },
+  {
     "name": "Chanchal Gupta",
     "github": "chanchall26",
     "avatarInitial": "C",
@@ -2842,25 +2882,6 @@ const CONTRIBUTORS_REGISTRY = [
       "Neon Air Hockey: Plasma Puck Arena",
       "Neon Highway Hopper",
       "Quantum Lunar Lander"
-    ]
-  },
-  {
-    "name": "Harsh Jaiswani",
-    "github": "hrshjswniii",
-    "avatarInitial": "H",
-    "role": "Active Contributor (NSOC '26)",
-    "commits": 41,
-    "gamesCount": 5,
-    "mechanicsBonus": 0,
-    "platformPRs": 0,
-    "qualityPRs": 1,
-    "bonusPts": 0,
-    "contributions": [
-      "Cyber Brick Breaker: Neon Velocity",
-      "Cyber Grapple: Neon Chasm Swinger",
-      "Cyber Logic Gates: Boolean Circuit Forge",
-      "Cyber Typer: Terminal Hacker",
-      "Protocol Rogue: Cyberdeck Tactics"
     ]
   },
   {
