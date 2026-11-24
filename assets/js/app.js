@@ -7009,6 +7009,3 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 })();
-    }
-  });
-})();
