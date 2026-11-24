@@ -1,0 +1,257 @@
+/* ==========================================================================
+   ARCADE TIME CAPSULE & MILESTONE CHRONOLOGY TIMELINE (#601)
+   Glowing vertical highway track, alternating roadmap nodes, and era filter bar
+   ========================================================================== */
+
+.arcade-time-capsule-container {
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 0 16px;
+    font-family: inherit;
+    color: #e6edf3;
+}
+
+.time-capsule-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.time-capsule-header h2 {
+    color: #00f0ff;
+    letter-spacing: 2px;
+    margin: 0 0 8px 0;
+}
+
+.time-capsule-header p {
+    color: #8b949e;
+    font-size: 0.95rem;
+}
+
+/* Stats Ribbon */
+.time-capsule-stats-ribbon {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.time-capsule-stats-ribbon .stat-pill {
+    background: #11141c;
+    border: 1px solid #30363d;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: #c9d1d9;
+}
+
+.time-capsule-stats-ribbon .stat-pill strong {
+    color: #00f0ff;
+}
+
+/* Era Nav */
+.time-capsule-era-nav {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 60px;
+    z-index: 100;
+    background: rgba(13, 17, 23, 0.9);
+    backdrop-filter: blur(8px);
+    padding: 10px 0;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #30363d;
+}
+
+.era-nav-pill {
+    background: #161b22;
+    border: 1px solid #30363d;
+    color: #8b949e;
+    border-radius: 14px;
+    padding: 5px 12px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.era-nav-pill:hover,
+.era-nav-pill.active {
+    background: #00f0ff;
+    color: #000;
+    border-color: #00f0ff;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+/* Timeline Highway Track */
+.time-capsule-highway {
+    position: relative;
+    padding: 20px 0;
+}
+
+.time-capsule-highway::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 4px;
+    background: linear-gradient(180deg, #00f0ff, #ff007f, #ffd700);
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+    transform: translateX(-50%);
+}
+
+.timeline-milestone-node {
+    position: relative;
+    width: 50%;
+    box-sizing: border-box;
+    margin-bottom: 40px;
+}
+
+.timeline-milestone-node.align-left {
+    left: 0;
+    padding-right: 36px;
+    text-align: right;
+}
+
+.timeline-milestone-node.align-right {
+    left: 50%;
+    padding-left: 36px;
+    text-align: left;
+}
+
+/* Node Marker Glow */
+.node-marker {
+    position: absolute;
+    top: 20px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #00f0ff;
+    box-shadow: 0 0 12px #00f0ff;
+    border: 3px solid #0d1117;
+    z-index: 10;
+}
+
+.align-left .node-marker {
+    right: -8px;
+}
+
+.align-right .node-marker {
+    left: -8px;
+}
+
+/* Node Card */
+.node-card {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+.node-badge-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.node-era-badge {
+    color: #ff007f;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+}
+
+.node-era-date {
+    color: #8b949e;
+    font-size: 0.8rem;
+    font-family: monospace;
+}
+
+.node-highlight {
+    font-size: 0.85rem;
+    color: #c9d1d9;
+    margin: 8px 0 14px 0;
+    line-height: 1.4;
+}
+
+.node-contributors-row {
+    font-size: 0.8rem;
+    color: #8b949e;
+    margin-bottom: 14px;
+}
+
+.contrib-pill {
+    background: #161b22;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #00f0ff;
+}
+
+/* Games Grid */
+.node-games-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.timeline-game-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 6px;
+    padding: 6px 10px;
+}
+
+.game-chip-icon {
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #ffd700;
+}
+
+.game-chip-title {
+    flex: 1;
+    font-size: 0.85rem;
+    color: #e6edf3;
+}
+
+.game-chip-play-btn {
+    background: #00f0ff;
+    color: #000;
+    border: none;
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.game-chip-play-btn:hover {
+    transform: scale(1.05);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .time-capsule-highway::before {
+        left: 20px;
+    }
+
+    .timeline-milestone-node {
+        width: 100%;
+        left: 0 !important;
+        padding-left: 45px !important;
+        padding-right: 0 !important;
+        text-align: left !important;
+    }
+
+    .node-marker {
+        left: 12px !important;
+    }
+}
