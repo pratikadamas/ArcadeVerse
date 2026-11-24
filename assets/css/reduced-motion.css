@@ -1,0 +1,56 @@
+/* ==========================================================================
+   GLOBAL REDUCED MOTION ACCESSIBILITY ENFORCEMENT (#698)
+   WCAG 2.3.3 (Animation from Interactions) compliance.
+   Pauses background canvas strobe pulses, particle loops, and transforms.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    /* Screen Shake Suppression */
+    .screen-shake,
+    .shake-fx,
+    .canvas-shake {
+        animation: none !important;
+        transform: none !important;
+    }
+
+    /* Background Strobe & Parallax Freezing */
+    .starfield-canvas,
+    .nebula-canvas,
+    .particle-canvas,
+    .bg-strobe-active {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    /* Hover Micro-Transform Freezing */
+    .game-card:hover,
+    .btn:hover,
+    button:hover {
+        transform: none !important;
+    }
+}
+
+/* Explicit class-based fallback */
+body.reduce-motion-active *,
+body.reduce-motion-active *::before,
+body.reduce-motion-active *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+}
+
+body.reduce-motion-active .screen-shake,
+body.reduce-motion-active .shake-fx {
+    transform: none !important;
+    animation: none !important;
+}
