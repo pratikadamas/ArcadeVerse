@@ -49,6 +49,16 @@
       textPrimary: '#f8fafc'
     },
     {
+      id: 'synthwave_outrun',
+      name: 'Synthwave Outrun',
+      bgMain: '#0d001a',
+      bgCard: '#1a0033',
+      accentPrimary: '#ff007f',
+      accentSecondary: '#00f0ff',
+      accentWarm: '#ff7b00',
+      textPrimary: '#ffffff'
+    },
+    {
       id: 'solarized_cyber_dark',
       name: 'Solarized Cyber Dark',
       bgMain: '#002b36',
@@ -447,13 +457,24 @@
 
     const p = palette || DEFAULT_THEME;
 
+    if (p.id === 'synthwave_outrun') {
+      rootEl.setAttribute('data-theme', 'synthwave-outrun');
+      if (typeof window !== 'undefined' && window.ThemeCustomizer && typeof window.ThemeCustomizer.toggleHorizonGrid === 'function') {
+        window.ThemeCustomizer.toggleHorizonGrid(true);
+      }
+    } else {
+      if (typeof window !== 'undefined' && window.ThemeCustomizer && typeof window.ThemeCustomizer.toggleHorizonGrid === 'function') {
+        window.ThemeCustomizer.toggleHorizonGrid(false);
+      }
+    }
+
     rootEl.style.setProperty('--bg-main', p.bgMain);
     rootEl.style.setProperty('--bg-card', p.bgCard);
     rootEl.style.setProperty('--accent-primary', p.accentPrimary);
     rootEl.style.setProperty('--text-primary', p.textPrimary);
 
     // Synchronize hover and accent variations
-    rootEl.style.setProperty('--border-focus', p.accentPrimary);
+    rootEl.style.setProperty('--border-focus', p.accentWarm || p.accentSecondary || p.accentPrimary);
 
     window.dispatchEvent(new CustomEvent('arcadeverse:theme-customized', { detail: p }));
   }
@@ -666,6 +687,22 @@
                 </button>
               </div>
             </div>
+
+            <!-- Synthwave Outrun Quick Switch (#1365) -->
+            <div class="synthwave-subtoggle-group" id="studio-synthwave-subtoggle">
+              <div class="synthwave-subtoggle-header">
+                <span class="synthwave-subtoggle-title">1980s SYNTHWAVE / OUTRUN</span>
+                <span class="synthwave-subtoggle-badge">NEON MATRIX</span>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <button type="button" class="synthwave-mode-btn" id="studio-synthwave-btn" style="flex:1;" aria-label="Activate Cyberpunk Neon Sunset Synthwave Outrun Theme">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                  </svg>
+                  <span>Activate Synthwave Outrun</span>
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- Right Diagnostics & Live Preview Column -->
@@ -852,6 +889,20 @@
           subtoggleDark.classList.remove('active');
           subtoggleDark.setAttribute('aria-pressed', 'false');
           showStudioToast('Loaded Solarized Cyber Light mode (WCAG AAA)!');
+        }
+      });
+    }
+
+    // Synthwave Outrun Button (#1365)
+    const synthwaveBtn = document.getElementById('studio-synthwave-btn');
+    if (synthwaveBtn) {
+      synthwaveBtn.addEventListener('click', () => {
+        const found = PRESET_PALETTES.find(p => p.id === 'synthwave_outrun');
+        if (found) {
+          syncPaletteToControls(found);
+          updateStudioAudit();
+          synthwaveBtn.classList.add('active');
+          showStudioToast('Loaded Synthwave Outrun Neon Matrix!');
         }
       });
     }
