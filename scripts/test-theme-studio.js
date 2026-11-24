@@ -195,11 +195,13 @@ test('Ensures zero Unicode emojis in theme studio script and stylesheet', () => 
   const cssPath = require.resolve('../assets/css/theme-studio.css');
   const customizerJsPath = require.resolve('../assets/js/theme-customizer.js');
   const solarizedCssPath = require.resolve('../assets/css/theme-solarized-cyber.css');
+  const synthwaveCssPath = require.resolve('../assets/css/theme-synthwave-outrun.css');
 
   const jsContent = fs.readFileSync(jsPath, 'utf8');
   const cssContent = fs.readFileSync(cssPath, 'utf8');
   const customizerJsContent = fs.readFileSync(customizerJsPath, 'utf8');
   const solarizedCssContent = fs.readFileSync(solarizedCssPath, 'utf8');
+  const synthwaveCssContent = fs.readFileSync(synthwaveCssPath, 'utf8');
 
   const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u;
 
@@ -207,6 +209,7 @@ test('Ensures zero Unicode emojis in theme studio script and stylesheet', () => 
   assert.equal(emojiRegex.test(cssContent), false, 'Found emoji in theme-studio.css');
   assert.equal(emojiRegex.test(customizerJsContent), false, 'Found emoji in theme-customizer.js');
   assert.equal(emojiRegex.test(solarizedCssContent), false, 'Found emoji in theme-solarized-cyber.css');
+  assert.equal(emojiRegex.test(synthwaveCssContent), false, 'Found emoji in theme-synthwave-outrun.css');
 });
 
 test('Solarized Cyber Dark and Light palettes guarantee strict WCAG 2.1 AAA contrast compliance', () => {
@@ -260,4 +263,41 @@ test('Solarized Cyber Dark and Light palettes guarantee strict WCAG 2.1 AAA cont
   assert.equal(typeof customizer.applySolarizedMode, 'function');
   assert.equal(typeof customizer.toggleSolarizedMode, 'function');
   assert.equal(typeof customizer.createSubToggleDOM, 'function');
+});
+
+test('Synthwave Outrun palette satisfies full matrix requirements and WCAG AAA contrast compliance', () => {
+  const customizer = require('../assets/js/theme-customizer.js');
+  assert.ok(customizer.SYNTHWAVE_OUTRUN_PALETTE, 'SYNTHWAVE_OUTRUN_PALETTE must exist');
+
+  const palette = customizer.SYNTHWAVE_OUTRUN_PALETTE;
+
+  // Verify Palette Matrix
+  assert.equal(palette.accentPrimary.toLowerCase(), '#ff007f', 'Hot Magenta should be #ff007f');
+  assert.equal(palette.accentSecondary.toLowerCase(), '#00f0ff', 'Electric Cyan should be #00f0ff');
+  assert.equal(palette.accentWarm.toLowerCase(), '#ff7b00', 'Sunset Tangerine should be #ff7b00');
+  assert.equal(palette.bgCard.toLowerCase(), '#1a0033', 'Deep Violet should be #1a0033');
+  assert.equal(palette.bgMain.toLowerCase(), '#0d001a', 'Midnight Indigo should be #0d001a');
+
+  // Verify WCAG 2.1 AAA Contrast Compliance
+  const textMainCR = studio.getContrastRatio(palette.textPrimary, palette.bgMain);
+  const textCardCR = studio.getContrastRatio(palette.textPrimary, palette.bgCard);
+  const secMainCR = studio.getContrastRatio(palette.textSecondary, palette.bgMain);
+  const secCardCR = studio.getContrastRatio(palette.textSecondary, palette.bgCard);
+
+  assert.ok(textMainCR >= 7.0, `textPrimary on bgMain must be >= 7.0 (AAA): got ${textMainCR}`);
+  assert.ok(textCardCR >= 7.0, `textPrimary on bgCard must be >= 7.0 (AAA): got ${textCardCR}`);
+  assert.ok(secMainCR >= 7.0, `textSecondary on bgMain must be >= 7.0 (AAA): got ${secMainCR}`);
+  assert.ok(secCardCR >= 7.0, `textSecondary on bgCard must be >= 7.0 (AAA): got ${secCardCR}`);
+
+  // Registered inside ThemeStudio PRESET_PALETTES
+  const foundInStudio = studio.PRESET_PALETTES.find(p => p.id === 'synthwave_outrun');
+  assert.ok(foundInStudio, 'synthwave_outrun must be registered in studio PRESET_PALETTES');
+  assert.equal(foundInStudio.bgMain, palette.bgMain);
+  assert.equal(foundInStudio.bgCard, palette.bgCard);
+  assert.equal(foundInStudio.accentPrimary, palette.accentPrimary);
+
+  // Switching methods integrity
+  assert.equal(typeof customizer.applySynthwaveOutrun, 'function');
+  assert.equal(typeof customizer.switchTheme, 'function');
+  assert.equal(typeof customizer.toggleHorizonGrid, 'function');
 });

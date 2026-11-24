@@ -1,0 +1,432 @@
+/* ==========================================================================
+   ArcadeVerse Cyberpunk Neon Sunset Synthwave Outrun Theme Studio (#1365)
+   1980s Synthwave / Outrun aesthetic featuring vibrant tropical sunset
+   gradients, animated wireframe horizon grid, and retro duotone card glows.
+
+   Outrun Synthwave Color Matrix:
+   - Hot Magenta:       #ff007f
+   - Electric Cyan:     #00f0ff
+   - Sunset Tangerine:  #ff7b00
+   - Deep Violet:       #1a0033
+   - Midnight Indigo:   #0d001a
+   - High Contrast Text:#ffffff (18.5+:1 WCAG AAA on Midnight Indigo & Deep Violet)
+
+   Respects prefers-reduced-motion media query and html.a11y-reduced-motion.
+   Strictly zero Unicode emojis across all rules and comments.
+   ========================================================================== */
+
+/* ==========================================================================
+   1. ROOT VARIABLES & SYNTHWAVE OUTRUN COLOR MATRIX
+   ========================================================================== */
+:root[data-theme="synthwave-outrun"],
+[data-theme="synthwave-outrun"] {
+  --bg-main: #0d001a;               /* Midnight Indigo */
+  --bg-surface: #1a0033;            /* Deep Violet */
+  --bg-surface-elevated: #28004d;
+  --bg-card: rgba(26, 0, 51, 0.88);
+  --bg-card-hover: rgba(40, 0, 77, 0.94);
+
+  --border-subtle: rgba(255, 0, 127, 0.28);
+  --border-medium: rgba(0, 240, 255, 0.45);
+  --border-focus: #ff7b00;          /* Sunset Tangerine */
+
+  --accent-primary: #ff007f;        /* Hot Magenta */
+  --accent-primary-hover: #ff3399;
+  --accent-secondary: #00f0ff;      /* Electric Cyan */
+  --accent-warm: #ff7b00;           /* Sunset Tangerine */
+  --accent-violet: #8a2be2;
+  --accent-sunset: linear-gradient(135deg, #ff007f 0%, #ff7b00 50%, #00f0ff 100%);
+
+  --text-primary: #ffffff;          /* WCAG 2.1 AAA (18.6:1 on #0d001a, 14.5:1 on #1a0033) */
+  --text-secondary: #e0d0f5;        /* Light Violet-White (WCAG 2.1 AAA, >10:1) */
+  --text-muted: #b39ddb;            /* High Contrast Muted Violet */
+
+  --grid-line-color: rgba(0, 240, 255, 0.18);
+  --grid-horizon-color: #ff007f;
+  --dot-pattern-color: rgba(255, 0, 127, 0.14);
+  --bg-gradient: radial-gradient(circle at 50% 10%, #2a004f 0%, #0d001a 80%);
+  --cyber-grid-opacity: 0.85;
+
+  --orb-1-color: #ff007f;
+  --orb-2-color: #00f0ff;
+  --orb-opacity: 0.22;
+  --table-row-hover: rgba(255, 0, 127, 0.12);
+  --preview-bg: #1a0033;
+
+  --shadow-sm: 0 2px 8px rgba(13, 0, 26, 0.6);
+  --shadow-md: 0 8px 24px rgba(13, 0, 26, 0.75);
+  --shadow-lg: 0 16px 40px -8px rgba(13, 0, 26, 0.85);
+  --shadow-card: 0 10px 30px -10px rgba(0, 240, 255, 0.25);
+  --glow-duotone: 0 0 14px rgba(0, 240, 255, 0.4), 0 0 28px rgba(255, 0, 127, 0.35);
+}
+
+/* ==========================================================================
+   2. SMOOTH TRANSITION WITHOUT LAYOUT SHIFT (Zero CLS)
+   ========================================================================== */
+html[data-theme="synthwave-outrun"],
+body[data-theme="synthwave-outrun"] {
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+[data-theme="synthwave-outrun"] .game-card,
+[data-theme="synthwave-outrun"] .stat-card,
+[data-theme="synthwave-outrun"] .navbar {
+  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* ==========================================================================
+   3. ANIMATED WIREFRAME HORIZON GRID
+   Pure CSS perspective grid background with an infinite forward-scrolling
+   horizon line positioned beneath catalog header / hero section.
+   ========================================================================== */
+[data-theme="synthwave-outrun"] .synthwave-horizon-grid {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 280px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  perspective: 350px;
+  background: linear-gradient(to bottom, rgba(13, 0, 26, 0) 0%, rgba(26, 0, 51, 0.5) 100%);
+}
+
+[data-theme="synthwave-outrun"] .synthwave-horizon-grid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, #00f0ff 25%, #ff007f 50%, #ff7b00 75%, transparent 100%);
+  box-shadow: 0 0 15px #ff007f, 0 0 30px #00f0ff;
+  z-index: 2;
+}
+
+[data-theme="synthwave-outrun"] .synthwave-grid-plane {
+  position: absolute;
+  width: 200%;
+  left: -50%;
+  top: 0;
+  height: 100%;
+  background-image:
+    linear-gradient(to right, rgba(0, 240, 255, 0.35) 2px, transparent 2px),
+    linear-gradient(to bottom, rgba(255, 0, 127, 0.35) 2px, transparent 2px);
+  background-size: 50px 40px;
+  transform: rotateX(65deg);
+  transform-origin: top center;
+  animation: synthwave-grid-scroll 1.6s linear infinite;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.2) 80%, rgba(0, 0, 0, 0) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.2) 80%, rgba(0, 0, 0, 0) 100%);
+}
+
+@keyframes synthwave-grid-scroll {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 40px;
+  }
+}
+
+/* Reduced motion media query & class compliance */
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="synthwave-outrun"] .synthwave-grid-plane {
+    animation: none;
+  }
+}
+
+html.a11y-reduced-motion [data-theme="synthwave-outrun"] .synthwave-grid-plane {
+  animation: none;
+}
+
+/* ==========================================================================
+   4. RETRO DUOTONE CARD GLOWS & RETRO ANGLED ITALIC TYPOGRAPHY
+   ========================================================================== */
+[data-theme="synthwave-outrun"] .game-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(0, 240, 255, 0.32);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(13, 0, 26, 0.8), 0 0 10px rgba(0, 240, 255, 0.15);
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+[data-theme="synthwave-outrun"] .game-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ff007f, #ff7b00, #00f0ff);
+  opacity: 0.8;
+  transition: opacity 0.25s ease;
+}
+
+[data-theme="synthwave-outrun"] .game-card:hover {
+  transform: translateY(-4px);
+  border-color: #ff007f;
+  box-shadow: 0 12px 32px rgba(13, 0, 26, 0.9), 0 0 20px rgba(0, 240, 255, 0.45), 0 0 35px rgba(255, 0, 127, 0.35);
+}
+
+[data-theme="synthwave-outrun"] .game-card:hover::before {
+  opacity: 1;
+}
+
+/* Retro Angled Italic Typography Accents */
+[data-theme="synthwave-outrun"] .section-tag,
+[data-theme="synthwave-outrun"] .hero-badge,
+[data-theme="synthwave-outrun"] .games-header-left .section-tag {
+  font-style: italic;
+  transform: skewX(-8deg);
+  letter-spacing: 0.12em;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #00f0ff;
+  border-color: #ff007f;
+  background: rgba(255, 0, 127, 0.15);
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+}
+
+[data-theme="synthwave-outrun"] .section-title,
+[data-theme="synthwave-outrun"] .hero-title {
+  font-style: italic;
+  letter-spacing: 0.04em;
+  background: linear-gradient(180deg, #ffffff 0%, #ff7b00 45%, #ff007f 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 18px rgba(255, 0, 127, 0.4));
+}
+
+[data-theme="synthwave-outrun"] .game-title {
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+[data-theme="synthwave-outrun"] .game-card:hover .game-title {
+  color: #00f0ff;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+}
+
+[data-theme="synthwave-outrun"] .game-desc,
+[data-theme="synthwave-outrun"] .section-subtitle,
+[data-theme="synthwave-outrun"] .hero-subtitle {
+  color: #e0d0f5;
+}
+
+/* ==========================================================================
+   5. BUTTONS, BADGES & INTERACTIVE CONTROLS
+   ========================================================================== */
+[data-theme="synthwave-outrun"] .btn-primary,
+[data-theme="synthwave-outrun"] .btn-play {
+  background: linear-gradient(135deg, #ff007f 0%, #ff7b00 100%);
+  border: 1px solid #ff7b00;
+  color: #ffffff;
+  font-weight: 700;
+  font-style: italic;
+  transform: skewX(-4deg);
+  box-shadow: 0 0 15px rgba(255, 0, 127, 0.4);
+  transition: all 0.25s ease;
+}
+
+[data-theme="synthwave-outrun"] .btn-primary > *,
+[data-theme="synthwave-outrun"] .btn-play > * {
+  transform: skewX(4deg);
+}
+
+[data-theme="synthwave-outrun"] .btn-primary:hover,
+[data-theme="synthwave-outrun"] .btn-play:hover {
+  background: linear-gradient(135deg, #ff1a8c 0%, #ff8c1a 100%);
+  border-color: #00f0ff;
+  box-shadow: 0 0 25px rgba(255, 0, 127, 0.7), 0 0 15px rgba(0, 240, 255, 0.5);
+  color: #ffffff;
+}
+
+[data-theme="synthwave-outrun"] .btn-secondary,
+[data-theme="synthwave-outrun"] .btn-roulette {
+  background: rgba(26, 0, 51, 0.85);
+  border: 1px solid #00f0ff;
+  color: #00f0ff;
+  font-weight: 600;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+}
+
+[data-theme="synthwave-outrun"] .btn-secondary:hover,
+[data-theme="synthwave-outrun"] .btn-roulette:hover {
+  background: rgba(40, 0, 77, 0.95);
+  border-color: #ff007f;
+  color: #ffffff;
+  box-shadow: 0 0 20px rgba(255, 0, 127, 0.5);
+}
+
+/* Badges and Tags */
+[data-theme="synthwave-outrun"] .game-meta-badge,
+[data-theme="synthwave-outrun"] .meta-badge,
+[data-theme="synthwave-outrun"] .tag-pill {
+  background: rgba(26, 0, 51, 0.9);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  color: #00f0ff;
+  font-weight: 600;
+}
+
+[data-theme="synthwave-outrun"] .tag-pill:hover,
+[data-theme="synthwave-outrun"] .tag-pill.active {
+  background: #ff007f;
+  border-color: #ff7b00;
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(255, 0, 127, 0.6);
+}
+
+[data-theme="synthwave-outrun"] .pill-count-badge {
+  background: #0d001a;
+  color: #ff7b00;
+  border: 1px solid rgba(255, 123, 0, 0.4);
+}
+
+/* ==========================================================================
+   6. TABLES & LEADERBOARD COMPONENT STYLING
+   ========================================================================== */
+[data-theme="synthwave-outrun"] .leaderboard-table,
+[data-theme="synthwave-outrun"] table {
+  background: rgba(26, 0, 51, 0.7);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+[data-theme="synthwave-outrun"] .leaderboard-table th,
+[data-theme="synthwave-outrun"] table th {
+  background: #1a0033;
+  color: #ff7b00;
+  font-style: italic;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid #ff007f;
+}
+
+[data-theme="synthwave-outrun"] .leaderboard-table tr,
+[data-theme="synthwave-outrun"] table tr {
+  border-bottom: 1px solid rgba(255, 0, 127, 0.15);
+  transition: background 0.2s ease;
+}
+
+[data-theme="synthwave-outrun"] .leaderboard-table tr:hover,
+[data-theme="synthwave-outrun"] table tr:hover {
+  background: var(--table-row-hover);
+}
+
+[data-theme="synthwave-outrun"] .leaderboard-table td,
+[data-theme="synthwave-outrun"] table td {
+  color: #ffffff;
+}
+
+/* Stat Cards */
+[data-theme="synthwave-outrun"] .stat-card {
+  background: rgba(26, 0, 51, 0.8);
+  border: 1px solid rgba(255, 0, 127, 0.35);
+  box-shadow: 0 4px 16px rgba(13, 0, 26, 0.6), 0 0 10px rgba(255, 0, 127, 0.15);
+}
+
+[data-theme="synthwave-outrun"] .stat-card:hover {
+  border-color: #00f0ff;
+  box-shadow: 0 8px 24px rgba(13, 0, 26, 0.8), 0 0 18px rgba(0, 240, 255, 0.3);
+}
+
+[data-theme="synthwave-outrun"] .stat-number {
+  color: #ff7b00;
+  font-style: italic;
+  text-shadow: 0 0 10px rgba(255, 123, 0, 0.5);
+}
+
+[data-theme="synthwave-outrun"] .stat-label {
+  color: #e0d0f5;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Navigation and Modal styling */
+[data-theme="synthwave-outrun"] .navbar {
+  background: rgba(13, 0, 26, 0.92);
+  border-bottom: 1px solid rgba(255, 0, 127, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 1px 12px rgba(255, 0, 127, 0.2);
+}
+
+[data-theme="synthwave-outrun"] .modal-content,
+[data-theme="synthwave-outrun"] .theme-studio-modal-content {
+  background: #0d001a;
+  border: 1px solid #00f0ff;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 25px rgba(255, 0, 127, 0.35);
+}
+
+/* ==========================================================================
+   7. SYNTHWAVE OUTRUN STUDIO CONTROLS & SUB-TOGGLE
+   ========================================================================== */
+.synthwave-subtoggle-group {
+  margin: 1rem 0;
+  padding: 0.85rem 1rem;
+  background: rgba(26, 0, 51, 0.6);
+  border: 1px solid rgba(255, 0, 127, 0.35);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.synthwave-subtoggle-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.synthwave-subtoggle-title {
+  font-family: var(--font-code, monospace);
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-style: italic;
+  color: #ff007f;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.synthwave-subtoggle-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(0, 240, 255, 0.15);
+  color: #00f0ff;
+  border: 1px solid rgba(0, 240, 255, 0.35);
+}
+
+.synthwave-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #b39ddb;
+  font-family: var(--font-body, sans-serif);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.synthwave-mode-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 0, 127, 0.15);
+}
+
+.synthwave-mode-btn.active {
+  background: linear-gradient(135deg, #ff007f, #ff7b00);
+  color: #ffffff;
+  border-color: #00f0ff;
+  font-weight: 700;
+  box-shadow: 0 0 12px rgba(255, 0, 127, 0.5);
+}

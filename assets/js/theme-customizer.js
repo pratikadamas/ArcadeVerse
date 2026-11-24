@@ -1,7 +1,9 @@
 /**
- * ArcadeVerse Theme Customizer & Solarized Dual Thematic Controller (#1374)
- * Precision Solarized Cyber Architecture: Ethan Schoonover's precision Solarized system
- * calibrated for gaming display clarity under both bright daylight and dark environments.
+ * ArcadeVerse Theme Customizer, Solarized Controller & Synthwave Outrun Controller (#1365, #1374)
+ * Precision Theme Architecture:
+ * - Ethan Schoonover's precision Solarized system (Cyber Dark & Cyber Light)
+ * - 1980s Cyberpunk Neon Sunset Synthwave Outrun Theme Studio (Hot Magenta, Electric Cyan,
+ *   Sunset Tangerine, Deep Violet, Midnight Indigo) with animated horizon grid and retro duotone card glows.
  *
  * Strictly zero Unicode emojis across all code, logs, and elements.
  */
@@ -13,12 +15,14 @@
     const api = factory();
     root.ThemeCustomizer = api;
     root.SolarizedThemeController = api;
+    root.SynthwaveThemeController = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
   const STORAGE_KEY_PALETTE = 'arcadeverse_solarized_palette';
   const STORAGE_KEY_MODE = 'arcadeverse_solarized_mode'; // 'dark' | 'light'
+  const STORAGE_KEY_ACTIVE_THEME = 'arcadeverse_active_custom_theme';
 
   // Precision Solarized Palettes
   const SOLARIZED_PALETTES = {
@@ -58,6 +62,95 @@
     }
   };
 
+  // 1980s Synthwave Outrun Palette Matrix (#1365)
+  const SYNTHWAVE_OUTRUN_PALETTE = {
+    id: 'synthwave_outrun',
+    name: 'Synthwave Outrun',
+    bgMain: '#0d001a',          // Midnight Indigo
+    bgCard: '#1a0033',          // Deep Violet
+    accentPrimary: '#ff007f',   // Hot Magenta
+    accentSecondary: '#00f0ff', // Electric Cyan
+    accentWarm: '#ff7b00',      // Sunset Tangerine
+    textPrimary: '#ffffff',     // Pure White (18.6:1 WCAG AAA on Midnight Indigo)
+    textSecondary: '#e0d0f5',   // Light Violet-White
+    textMuted: '#b39ddb',       // High Contrast Muted Violet
+    badgeBg: '#1a0033',
+    badgeBorder: '#00f0ff',
+    badgeText: '#00f0ff',
+    buttonBg: '#ff007f',
+    buttonText: '#ffffff'
+  };
+
+  /**
+   * Injects or removes the pure CSS animated horizon grid beneath the catalog header.
+   * @param {boolean} enable
+   */
+  function toggleHorizonGrid(enable) {
+    if (typeof document === 'undefined') return;
+
+    let grid = document.getElementById('synthwave-horizon-grid');
+    if (enable) {
+      if (!grid) {
+        grid = document.createElement('div');
+        grid.id = 'synthwave-horizon-grid';
+        grid.className = 'synthwave-horizon-grid';
+        grid.setAttribute('aria-hidden', 'true');
+        grid.innerHTML = '<div class="synthwave-grid-plane"></div>';
+
+        // Anchor beneath hero section or before games catalog
+        const heroSection = document.querySelector('.hero-section');
+        const gamesSection = document.getElementById('games');
+        if (heroSection) {
+          heroSection.style.position = 'relative';
+          heroSection.appendChild(grid);
+        } else if (gamesSection) {
+          gamesSection.style.position = 'relative';
+          gamesSection.insertBefore(grid, gamesSection.firstChild);
+        } else {
+          document.body.appendChild(grid);
+        }
+      }
+    } else if (grid && grid.parentNode) {
+      grid.parentNode.removeChild(grid);
+    }
+  }
+
+  /**
+   * Applies the Synthwave / Outrun theme to the document.
+   * @param {boolean} persist
+   */
+  function applySynthwaveOutrun(persist = true) {
+    const palette = SYNTHWAVE_OUTRUN_PALETTE;
+    const rootEl = typeof document !== 'undefined' ? document.documentElement : null;
+
+    if (rootEl) {
+      rootEl.setAttribute('data-theme', 'synthwave-outrun');
+      rootEl.style.setProperty('--bg-main', palette.bgMain);
+      rootEl.style.setProperty('--bg-card', palette.bgCard);
+      rootEl.style.setProperty('--accent-primary', palette.accentPrimary);
+      rootEl.style.setProperty('--accent-secondary', palette.accentSecondary);
+      rootEl.style.setProperty('--accent-warm', palette.accentWarm);
+      rootEl.style.setProperty('--text-primary', palette.textPrimary);
+      rootEl.style.setProperty('--border-focus', palette.accentWarm);
+
+      toggleHorizonGrid(true);
+    }
+
+    if (persist && typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem(STORAGE_KEY_ACTIVE_THEME, 'synthwave-outrun');
+      } catch (_) {}
+    }
+
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+      window.dispatchEvent(new CustomEvent('arcadeverse:synthwave-theme-changed', {
+        detail: { palette }
+      }));
+    }
+
+    return palette;
+  }
+
   /**
    * Applies selected Solarized mode to DOM root.
    * @param {'dark'|'light'} mode
@@ -69,6 +162,7 @@
     const rootEl = typeof document !== 'undefined' ? document.documentElement : null;
 
     if (rootEl) {
+      toggleHorizonGrid(false);
       rootEl.setAttribute('data-theme', targetMode === 'light' ? 'solarized-light' : 'solarized-dark');
       rootEl.style.setProperty('--bg-main', palette.bgMain);
       rootEl.style.setProperty('--bg-card', palette.bgCard);
@@ -81,6 +175,7 @@
       try {
         localStorage.setItem(STORAGE_KEY_MODE, targetMode);
         localStorage.setItem(STORAGE_KEY_PALETTE, JSON.stringify(palette));
+        localStorage.setItem(STORAGE_KEY_ACTIVE_THEME, targetMode === 'light' ? 'solarized-light' : 'solarized-dark');
       } catch (_) {}
     }
 
@@ -103,6 +198,25 @@
     }
 
     return palette;
+  }
+
+  /**
+   * Switches theme instantly by key/id.
+   * @param {string} themeKey ('synthwave-outrun' | 'synthwave_outrun' | 'solarized-dark' | 'solarized-light' | 'dark' | 'light')
+   * @param {boolean} persist
+   */
+  function switchTheme(themeKey, persist = true) {
+    if (themeKey === 'synthwave-outrun' || themeKey === 'synthwave_outrun') {
+      return applySynthwaveOutrun(persist);
+    }
+    if (themeKey === 'solarized-light' || themeKey === 'solarized_cyber_light') {
+      return applySolarizedMode('light', persist);
+    }
+    if (themeKey === 'solarized-dark' || themeKey === 'solarized_cyber_dark') {
+      return applySolarizedMode('dark', persist);
+    }
+    toggleHorizonGrid(false);
+    return null;
   }
 
   /**
@@ -147,7 +261,7 @@
       <div class="solarized-subtoggle-switch" role="group" aria-label="Solarized Lighting Mode Sub-Toggle">
         <button type="button" class="solarized-mode-btn mode-dark" id="solarized-mode-dark-btn" aria-label="Switch to Solarized Cyber Dark">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+            <path d="M12 3a6 6 0 0 0 9 9 9 0 1 1-9-9Z"></path>
           </svg>
           <span>Cyber Dark</span>
         </button>
@@ -190,11 +304,14 @@
   function init() {
     if (typeof document === 'undefined') return;
 
-    // Check if user previously active theme is Solarized
     try {
-      const savedMode = localStorage.getItem(STORAGE_KEY_MODE);
+      const activeCustom = localStorage.getItem(STORAGE_KEY_ACTIVE_THEME);
       const rootTheme = document.documentElement.getAttribute('data-theme');
-      if (rootTheme && rootTheme.startsWith('solarized-')) {
+
+      if (rootTheme === 'synthwave-outrun' || activeCustom === 'synthwave-outrun') {
+        applySynthwaveOutrun(false);
+      } else if (rootTheme && rootTheme.startsWith('solarized-')) {
+        const savedMode = localStorage.getItem(STORAGE_KEY_MODE);
         applySolarizedMode(savedMode === 'light' ? 'light' : 'dark', false);
       }
     } catch (_) {}
@@ -210,8 +327,12 @@
 
   return {
     SOLARIZED_PALETTES,
+    SYNTHWAVE_OUTRUN_PALETTE,
     applySolarizedMode,
     toggleSolarizedMode,
+    applySynthwaveOutrun,
+    switchTheme,
+    toggleHorizonGrid,
     getActiveMode,
     createSubToggleDOM,
     init
