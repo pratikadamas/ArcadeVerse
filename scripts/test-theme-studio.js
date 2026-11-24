@@ -193,12 +193,71 @@ test('exportToJson and importFromJson support safe bidirectional export/import w
 test('Ensures zero Unicode emojis in theme studio script and stylesheet', () => {
   const jsPath = require.resolve('../assets/js/theme-studio.js');
   const cssPath = require.resolve('../assets/css/theme-studio.css');
+  const customizerJsPath = require.resolve('../assets/js/theme-customizer.js');
+  const solarizedCssPath = require.resolve('../assets/css/theme-solarized-cyber.css');
 
   const jsContent = fs.readFileSync(jsPath, 'utf8');
   const cssContent = fs.readFileSync(cssPath, 'utf8');
+  const customizerJsContent = fs.readFileSync(customizerJsPath, 'utf8');
+  const solarizedCssContent = fs.readFileSync(solarizedCssPath, 'utf8');
 
   const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u;
 
   assert.equal(emojiRegex.test(jsContent), false, 'Found emoji in theme-studio.js');
   assert.equal(emojiRegex.test(cssContent), false, 'Found emoji in theme-studio.css');
+  assert.equal(emojiRegex.test(customizerJsContent), false, 'Found emoji in theme-customizer.js');
+  assert.equal(emojiRegex.test(solarizedCssContent), false, 'Found emoji in theme-solarized-cyber.css');
+});
+
+test('Solarized Cyber Dark and Light palettes guarantee strict WCAG 2.1 AAA contrast compliance', () => {
+  const customizer = require('../assets/js/theme-customizer.js');
+  assert.ok(customizer.SOLARIZED_PALETTES);
+
+  const dark = customizer.SOLARIZED_PALETTES.dark;
+  const light = customizer.SOLARIZED_PALETTES.light;
+
+  // Dark Mode Contrast
+  assert.equal(dark.bgMain, '#002b36');
+  assert.equal(dark.bgCard, '#073642');
+  assert.equal(dark.accentPrimary, '#2aa198');
+  assert.equal(dark.accentSecondary, '#b58900');
+
+  const darkTextMainCR = studio.getContrastRatio(dark.textPrimary, dark.bgMain);
+  const darkTextCardCR = studio.getContrastRatio(dark.textPrimary, dark.bgCard);
+  const darkSecMainCR = studio.getContrastRatio(dark.textSecondary, dark.bgMain);
+  const darkSecCardCR = studio.getContrastRatio(dark.textSecondary, dark.bgCard);
+
+  assert.ok(darkTextMainCR >= 7.0, `Dark textPrimary on bgMain must be >= 7.0 (AAA): got ${darkTextMainCR}`);
+  assert.ok(darkTextCardCR >= 7.0, `Dark textPrimary on bgCard must be >= 7.0 (AAA): got ${darkTextCardCR}`);
+  assert.ok(darkSecMainCR >= 7.0, `Dark textSecondary on bgMain must be >= 7.0 (AAA): got ${darkSecMainCR}`);
+  assert.ok(darkSecCardCR >= 7.0, `Dark textSecondary on bgCard must be >= 7.0 (AAA): got ${darkSecCardCR}`);
+
+  // Dark badge and button states
+  const darkBadgeCR = studio.getContrastRatio(dark.badgeText, dark.badgeBg);
+  assert.ok(darkBadgeCR >= 7.0, `Dark badge text must be >= 7.0 (AAA): got ${darkBadgeCR}`);
+
+  // Light Mode Contrast
+  assert.equal(light.bgMain, '#fdf6e3');
+  assert.equal(light.bgCard, '#eee8d5');
+  assert.equal(light.accentPrimary, '#2aa198');
+  assert.equal(light.accentSecondary, '#cb4b16');
+
+  const lightTextMainCR = studio.getContrastRatio(light.textPrimary, light.bgMain);
+  const lightTextCardCR = studio.getContrastRatio(light.textPrimary, light.bgCard);
+  const lightSecMainCR = studio.getContrastRatio(light.textSecondary, light.bgMain);
+  const lightSecCardCR = studio.getContrastRatio(light.textSecondary, light.bgCard);
+
+  assert.ok(lightTextMainCR >= 7.0, `Light textPrimary on bgMain must be >= 7.0 (AAA): got ${lightTextMainCR}`);
+  assert.ok(lightTextCardCR >= 7.0, `Light textPrimary on bgCard must be >= 7.0 (AAA): got ${lightTextCardCR}`);
+  assert.ok(lightSecMainCR >= 7.0, `Light textSecondary on bgMain must be >= 7.0 (AAA): got ${lightSecMainCR}`);
+  assert.ok(lightSecCardCR >= 7.0, `Light textSecondary on bgCard must be >= 7.0 (AAA): got ${lightSecCardCR}`);
+
+  // Light badge and button states
+  const lightBadgeCR = studio.getContrastRatio(light.badgeText, light.badgeBg);
+  assert.ok(lightBadgeCR >= 7.0, `Light badge text must be >= 7.0 (AAA): got ${lightBadgeCR}`);
+
+  // Sub-toggle switching API integrity
+  assert.equal(typeof customizer.applySolarizedMode, 'function');
+  assert.equal(typeof customizer.toggleSolarizedMode, 'function');
+  assert.equal(typeof customizer.createSubToggleDOM, 'function');
 });
