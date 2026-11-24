@@ -1449,8 +1449,263 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
 
+  // Virtualized Game Card Grid Instance (#1366)
+  let catalogVirtualGrid = null;
+
+  /**
+   * Factory to build a single interactive game card DOM element
+   * Used by both standard rendering and Windowed Grid Virtualization
+   * @param {Object} game
+   * @param {Set} favs
+   * @returns {HTMLElement}
+   */
+  function createGameCardElement(game, favs) {
+    if (!favs) favs = getFavorites();
+    const card = document.createElement("div");
+    card.className = "game-card";
+    card.setAttribute("data-game-id", escapeAttr(game.id));
+    const safeGameId = escapeAttr(game.id);
+    const safeTitle = escapeHTML(game.title);
+    const safeCategory = escapeHTML(game.category);
+    const safeDesc = escapeHTML(game.description || "");
+    const safeAuthor = escapeHTML(game.author || game.github || "Contributor");
+    const safeGithub = escapeHTML(game.github || game.author || "Contributor");
+    const safeAuthorAttr = escapeAttr(game.author || game.github || "Contributor");
+    const iconHtml = renderSafeIcon(game.lucideIcon || "gamepad-2");
+    const favorited = favs.has(game.id);
+    const actionText = `Play Now ${renderSafeIcon("play", "btn-play-icon")}`;
+
+    const userRating = (window.GameRatings && window.GameRatings.ratings[game.id]) || null;
+    const displayScore = userRating ? Number(userRating).toFixed(1) : (game.stars ? (game.stars / 10).toFixed(1) : "5.0");
+    const currentStar = userRating || Math.min(5, Math.max(1, Math.round((game.stars || 25) / 10)));
+
+    const isHalloween = isHalloweenGame(game);
+    const halloweenBadgeHtml = isHalloween ? `
+      <span class="badge-halloween-special" title="Halloween Special Games">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 4c-1.5 0-3 1.2-3 2.5 0 .5.2 1 .5 1.5C6 9 4 11 4 14c0 3.5 3 6 8 6s8-2.5 8-6c0-3-2-5-5.5-6 .3-.5.5-1 .5-1.5 0-1.3-1.5-2.5-3-2.5z"/>
+        </svg>
+        Halloween Special Games
+      </span>
+    ` : "";
+    const halloweenTitleBadge = isHalloween ? `<span class="halloween-title-badge" title="Halloween Special Games">Halloween Special Games</span>` : "";
+
+    const flipBtnHtml = window.ArcadeCardFlipManual ? window.ArcadeCardFlipManual.renderFlipButtonHtml(game) : "";
+    const cardBackHtml = window.ArcadeCardFlipManual ? window.ArcadeCardFlipManual.renderCardBackHtml(game) : "";
+
+    card.innerHTML = `
+      <div class="game-card-inner">
+        <div class="game-card-front">
+          <div class="game-card-preview">
+            <canvas class="card-micro-preview-canvas" width="280" height="140"></canvas>
+            <span class="game-category-tag">${safeCategory}</span>
+            ${halloweenBadgeHtml}
+            ${flipBtnHtml}
+            <div class="card-options-top">
+              <label class="game-compare-label compare-card-toggle-wrap" title="Select to compare with another game">
+                <input type="checkbox" class="game-compare-checkbox compare-card-checkbox" data-game-id="${safeGameId}">
+                <span class="compare-custom-box"></span>
+              </label>
+              <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
+                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                </svg>
+              </button>
+            </div>
+            <div class="game-icon">${iconHtml}</div>${playsBadgeHtml}
+          </div>
+          <div class="game-card-body">
+            <h3 class="game-card-title">${safeTitle}${halloweenTitleBadge}</h3>
+            <p class="game-card-desc">${safeDesc}</p>
+            <div class="game-card-rating-row">
+              <div class="game-rating-stars" data-game-id="${safeGameId}" aria-label="Rating for ${escapeAttr(game.title)}">
+                ${[1, 2, 3, 4, 5].map(starNum => `
+                  <button type="button" class="rate-star-btn ${currentStar >= starNum ? 'voted' : ''}" data-game="${safeGameId}" data-star="${starNum}" title="Rate ${starNum} star${starNum > 1 ? 's' : ''}" aria-label="Rate ${starNum} stars">
+                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  </button>
+                `).join('')}
+                <span class="rating-badge">${escapeHTML(displayScore)}</span>
+              </div>
+            </div>
+            <div class="game-card-footer">
+              <div class="contributor-meta">
+                <div class="contributor-avatar">${escapeHTML((game.author || game.github || "A").charAt(0).toUpperCase())}</div>
+                <div class="contributor-name">
+                  <button type="button" class="author-filter-btn" data-author="${safeAuthorAttr}" title="Filter games by ${safeAuthorAttr}" aria-label="Filter games by author ${safeAuthorAttr}">by @${safeGithub}</button>
+                </div>
+              </div>
+              <button class="btn-play-trigger" data-id="${safeGameId}">${actionText}</button>
+            </div>
+          </div>
+        </div>
+        ${cardBackHtml}
+      </div>
+    `;
+
+    if (window.ArcadeCardFlipManual) {
+      window.ArcadeCardFlipManual.bindCard(card, game);
+    }
+
+    const ratingBadge = card.querySelector(".rating-badge");
+    if (ratingBadge) {
+      ratingBadge.style.cursor = "pointer";
+      ratingBadge.title = "View ratings breakdown";
+      ratingBadge.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (window.RatingHistogram) window.RatingHistogram.openForGame(game);
+      });
+    }
+
+    const favBtn = card.querySelector(".btn-card-favorite");
+    favBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleFavorite(game.id);
+    });
+
+    const playBtn = card.querySelector(".btn-play-trigger");
+    playBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openGameModal(game, playBtn);
+    });
+
+    // Direct author handle click filter
+    const authorBtn = card.querySelector(".author-filter-btn");
+    if (authorBtn) {
+      authorBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const author = authorBtn.getAttribute("data-author") || game.author || game.github;
+        if (searchInput) {
+          if (currentCategory !== "all") {
+            currentCategory = "all";
+            categoryPills.forEach((p) => {
+              const isAll = p.getAttribute("data-category") === "all";
+              p.classList.toggle("active", isAll);
+              p.setAttribute("aria-selected", isAll ? "true" : "false");
+            });
+          }
+          if (currentLetterFilter !== "all") {
+            currentLetterFilter = "all";
+            if (typeof resetLetterFilterUI === "function") {
+              resetLetterFilterUI();
+            }
+          }
+          currentDurationFacet = "all";
+          currentControlsFacet = "all";
+          currentTagFilter = "";
+          const durationChips = document.querySelectorAll("#duration-facet-chips .facet-chip");
+          durationChips.forEach((c) => c.classList.toggle("active", c.getAttribute("data-duration") === "all"));
+          const controlsChips = document.querySelectorAll("#controls-facet-chips .facet-chip");
+          controlsChips.forEach((c) => c.classList.toggle("active", c.getAttribute("data-controls") === "all"));
+
+          searchInput.value = author;
+          searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+          closeAutocomplete();
+          setTimeout(closeAutocomplete, 50);
+        }
+        const catalogEl = document.getElementById("games-catalog") || document.getElementById("games");
+        if (catalogEl) {
+          catalogEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
+    }
+
+    // Direct star rating click binding - 100% reliable, never triggers game modal
+    const starBtns = card.querySelectorAll(".rate-star-btn");
+    starBtns.forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const gameId = btn.dataset.game;
+        const score = parseInt(btn.dataset.star, 10);
+        if (window.GameRatings && gameId && score) {
+          window.GameRatings.setGameRating(gameId, score);
+          window.GameRatings.updateStarUI(gameId, score);
+        }
+      });
+    });
+
+    // Clicking any empty area of the rating row also stops modal launch
+    const ratingRow = card.querySelector(".game-card-rating-row");
+    if (ratingRow) {
+      ratingRow.addEventListener("click", (e) => {
+        e.stopPropagation();
+      });
+    }
+
+    // Interactive Micro-Preview Particle Animation on Hover (#588)
+    const previewCanvas = card.querySelector(".card-micro-preview-canvas");
+    let microAnimId = null;
+    let microParticles = [];
+
+    card.addEventListener("pointerenter", () => {
+      if (!previewCanvas) return;
+      const pctx = previewCanvas.getContext("2d");
+      if (!pctx) return;
+      previewCanvas.style.opacity = "1";
+
+      microParticles = [];
+      const color = (game.category || "").toLowerCase().includes("action") ? "#ef4444" :
+                    (game.category || "").toLowerCase().includes("puzzle") ? "#a855f7" :
+                    (game.category || "").toLowerCase().includes("strategy") ? "#10b981" : "#38bdf8";
+
+      for (let i = 0; i < 22; i++) {
+        microParticles.push({
+          x: Math.random() * previewCanvas.width,
+          y: Math.random() * previewCanvas.height,
+          vx: (Math.random() - 0.5) * 1.8,
+          vy: (Math.random() - 0.5) * 1.8,
+          size: Math.random() * 3 + 1,
+          color: color
+        });
+      }
+
+      const startTime = Date.now();
+      function loopPreview() {
+        if (Date.now() - startTime > 3000) {
+          cancelAnimationFrame(microAnimId);
+          return;
+        }
+        pctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+        pctx.fillStyle = color;
+        for (const pt of microParticles) {
+          pt.x += pt.vx;
+          pt.y += pt.vy;
+          if (pt.x < 0) pt.x = previewCanvas.width;
+          if (pt.x > previewCanvas.width) pt.x = 0;
+          if (pt.y < 0) pt.y = previewCanvas.height;
+          if (pt.y > previewCanvas.height) pt.y = 0;
+
+          pctx.beginPath();
+          pctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+          pctx.fill();
+        }
+        microAnimId = requestAnimationFrame(loopPreview);
+      }
+      loopPreview();
+    });
+
+    card.addEventListener("pointerleave", () => {
+      if (microAnimId) {
+        cancelAnimationFrame(microAnimId);
+        microAnimId = null;
+      }
+      if (previewCanvas) {
+        const pctx = previewCanvas.getContext("2d");
+        if (pctx) pctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+        previewCanvas.style.opacity = "0";
+      }
+    });
+
+    return card;
+  }
+
   function renderGames() {
     if (window.ArcadeFloor) window.ArcadeFloor.destroy();
+    if (catalogVirtualGrid) {
+      catalogVirtualGrid.destroy();
+      catalogVirtualGrid = null;
+    }
     gamesGrid.innerHTML = "";
     gamesGrid.classList.toggle("view-list", currentCatalogView === "list");
     const favs = getFavorites();
@@ -1885,246 +2140,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     updateResultsCount(filtered.length, isFuzzyFallback);
-    filtered.forEach((game) => {
-      const card = document.createElement("div");
-      card.className = "game-card";
-      card.setAttribute("data-game-id", escapeAttr(game.id));
-      const safeGameId = escapeAttr(game.id);
-      const safeTitle = escapeHTML(game.title);
-      const safeCategory = escapeHTML(game.category);
-      const safeDesc = escapeHTML(game.description || "");
-      const safeAuthor = escapeHTML(game.author || game.github || "Contributor");
-      const safeGithub = escapeHTML(game.github || game.author || "Contributor");
-      const safeAuthorAttr = escapeAttr(game.author || game.github || "Contributor");
-      const iconHtml = renderSafeIcon(game.lucideIcon || "gamepad-2");
-      const favorited = favs.has(game.id);
-      const actionText = `Play Now ${renderSafeIcon("play", "btn-play-icon")}`;
 
-      const userRating = (window.GameRatings && window.GameRatings.ratings[game.id]) || null;
-      const displayScore = userRating ? Number(userRating).toFixed(1) : (game.stars ? (game.stars / 10).toFixed(1) : "5.0");
-      const currentStar = userRating || Math.min(5, Math.max(1, Math.round((game.stars || 25) / 10)));
-
-      const isHalloween = isHalloweenGame(game);
-      const halloweenBadgeHtml = isHalloween ? `
-        <span class="badge-halloween-special" title="Halloween Special Games">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 4c-1.5 0-3 1.2-3 2.5 0 .5.2 1 .5 1.5C6 9 4 11 4 14c0 3.5 3 6 8 6s8-2.5 8-6c0-3-2-5-5.5-6 .3-.5.5-1 .5-1.5 0-1.3-1.5-2.5-3-2.5z"/>
-          </svg>
-          Halloween Special Games
-        </span>
-      ` : "";
-      const halloweenTitleBadge = isHalloween ? `<span class="halloween-title-badge" title="Halloween Special Games">Halloween Special Games</span>` : "";
-
-      const flipBtnHtml = window.ArcadeCardFlipManual ? window.ArcadeCardFlipManual.renderFlipButtonHtml(game) : "";
-      const cardBackHtml = window.ArcadeCardFlipManual ? window.ArcadeCardFlipManual.renderCardBackHtml(game) : "";
-
-      card.innerHTML = `
-        <div class="game-card-inner">
-          <div class="game-card-front">
-            <div class="game-card-preview">
-              <canvas class="card-micro-preview-canvas" width="280" height="140"></canvas>
-              <span class="game-category-tag">${safeCategory}</span>
-              ${halloweenBadgeHtml}
-              ${flipBtnHtml}
-              <div class="card-options-top">
-                <label class="game-compare-label compare-card-toggle-wrap" title="Select to compare with another game">
-                  <input type="checkbox" class="game-compare-checkbox compare-card-checkbox" data-game-id="${safeGameId}">
-                  <span class="compare-custom-box"></span>
-                </label>
-                <button class="btn-card-favorite ${favorited ? "favorited" : ""}" data-id="${safeGameId}" aria-label="${favorited ? "Remove from Favorites" : "Save to Favorites"}" aria-pressed="${favorited ? "true" : "false"}" title="${favorited ? "Remove from Favorites" : "Save to Favorites"}">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="fav-heart-icon">
-                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-                  </svg>
-                </button>
-              </div>
-              <div class="game-icon">${iconHtml}</div>${playsBadgeHtml}
-            </div>
-            <div class="game-card-body">
-              <h3 class="game-card-title">${safeTitle}${halloweenTitleBadge}</h3>
-              <p class="game-card-desc">${safeDesc}</p>
-              <div class="game-card-rating-row">
-                <div class="game-rating-stars" data-game-id="${safeGameId}" aria-label="Rating for ${escapeAttr(game.title)}">
-                  ${[1, 2, 3, 4, 5].map(starNum => `
-                    <button type="button" class="rate-star-btn ${currentStar >= starNum ? 'voted' : ''}" data-game="${safeGameId}" data-star="${starNum}" title="Rate ${starNum} star${starNum > 1 ? 's' : ''}" aria-label="Rate ${starNum} stars">
-                      <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    </button>
-                  `).join('')}
-                  <span class="rating-badge">${escapeHTML(displayScore)}</span>
-                </div>
-              </div>
-              <div class="game-card-footer">
-                <div class="contributor-meta">
-                  <div class="contributor-avatar">${escapeHTML((game.author || game.github || "A").charAt(0).toUpperCase())}</div>
-                  <div class="contributor-name">
-                    <button type="button" class="author-filter-btn" data-author="${safeAuthorAttr}" title="Filter games by ${safeAuthorAttr}" aria-label="Filter games by author ${safeAuthorAttr}">by @${safeGithub}</button>
-                  </div>
-                </div>
-                <button class="btn-play-trigger" data-id="${safeGameId}">${actionText}</button>
-              </div>
-            </div>
-          </div>
-          ${cardBackHtml}
-        </div>
-      `;
-
-      if (window.ArcadeCardFlipManual) {
-        window.ArcadeCardFlipManual.bindCard(card, game);
-      }
-
-      const ratingBadge = card.querySelector(".rating-badge");
-      if (ratingBadge) {
-        ratingBadge.style.cursor = "pointer";
-        ratingBadge.title = "View ratings breakdown";
-        ratingBadge.addEventListener("click", (e) => {
-          e.stopPropagation();
-          if (window.RatingHistogram) window.RatingHistogram.openForGame(game);
-        });
-      }
-
-      const favBtn = card.querySelector(".btn-card-favorite");
-      favBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        toggleFavorite(game.id);
+    // Windowed Grid Virtualization Engine (#1366)
+    // Limits mounted DOM nodes to visible viewport + buffer rows (< 30 nodes for 125+ games)
+    if (window.ArcadeVirtualGrid && typeof window.ArcadeVirtualGrid.create === "function") {
+      catalogVirtualGrid = window.ArcadeVirtualGrid.create({
+        container: gamesGrid,
+        mode: currentCatalogView === "list" ? "list" : "grid",
+        renderItem: (game) => createGameCardElement(game, favs),
+        getItemKey: (game) => game.id
       });
-
-      const playBtn = card.querySelector(".btn-play-trigger");
-      playBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        openGameModal(game, playBtn);
+      catalogVirtualGrid.init(gamesGrid, filtered);
+    } else {
+      // Fallback standard DOM rendering
+      filtered.forEach((game) => {
+        const card = createGameCardElement(game, favs);
+        gamesGrid.appendChild(card);
       });
-
-      // Direct author handle click filter
-      const authorBtn = card.querySelector(".author-filter-btn");
-      if (authorBtn) {
-        authorBtn.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          const author = authorBtn.getAttribute("data-author") || game.author || game.github;
-          if (searchInput) {
-            if (currentCategory !== "all") {
-              currentCategory = "all";
-              categoryPills.forEach((p) => {
-                const isAll = p.getAttribute("data-category") === "all";
-                p.classList.toggle("active", isAll);
-                p.setAttribute("aria-selected", isAll ? "true" : "false");
-              });
-            }
-            if (currentLetterFilter !== "all") {
-              currentLetterFilter = "all";
-              if (typeof resetLetterFilterUI === "function") {
-                resetLetterFilterUI();
-              }
-            }
-            currentDurationFacet = "all";
-            currentControlsFacet = "all";
-            currentTagFilter = "";
-            const durationChips = document.querySelectorAll("#duration-facet-chips .facet-chip");
-            durationChips.forEach((c) => c.classList.toggle("active", c.getAttribute("data-duration") === "all"));
-            const controlsChips = document.querySelectorAll("#controls-facet-chips .facet-chip");
-            controlsChips.forEach((c) => c.classList.toggle("active", c.getAttribute("data-controls") === "all"));
-
-            searchInput.value = author;
-            searchInput.dispatchEvent(new Event("input", { bubbles: true }));
-            closeAutocomplete();
-            setTimeout(closeAutocomplete, 50);
-          }
-          const catalogEl = document.getElementById("games-catalog") || document.getElementById("games");
-          if (catalogEl) {
-            catalogEl.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-        });
-      }
-
-      // Direct star rating click binding - 100% reliable, never triggers game modal
-      const starBtns = card.querySelectorAll(".rate-star-btn");
-      starBtns.forEach((btn) => {
-        btn.addEventListener("click", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          const gameId = btn.dataset.game;
-          const score = parseInt(btn.dataset.star, 10);
-          if (window.GameRatings && gameId && score) {
-            window.GameRatings.setGameRating(gameId, score);
-            window.GameRatings.updateStarUI(gameId, score);
-          }
-        });
-      });
-
-      // Clicking any empty area of the rating row also stops modal launch
-      const ratingRow = card.querySelector(".game-card-rating-row");
-      if (ratingRow) {
-        ratingRow.addEventListener("click", (e) => {
-          e.stopPropagation();
-        });
-      }
-
-      // Interactive Micro-Preview Particle Animation on Hover (#588)
-      const previewCanvas = card.querySelector(".card-micro-preview-canvas");
-      let microAnimId = null;
-      let microParticles = [];
-
-      card.addEventListener("pointerenter", () => {
-        if (!previewCanvas) return;
-        const pctx = previewCanvas.getContext("2d");
-        if (!pctx) return;
-        previewCanvas.style.opacity = "1";
-
-        microParticles = [];
-        const color = (game.category || "").toLowerCase().includes("action") ? "#ef4444" :
-                      (game.category || "").toLowerCase().includes("puzzle") ? "#a855f7" :
-                      (game.category || "").toLowerCase().includes("strategy") ? "#10b981" : "#38bdf8";
-
-        for (let i = 0; i < 22; i++) {
-          microParticles.push({
-            x: Math.random() * previewCanvas.width,
-            y: Math.random() * previewCanvas.height,
-            vx: (Math.random() - 0.5) * 1.8,
-            vy: (Math.random() - 0.5) * 1.8,
-            size: Math.random() * 3 + 1,
-            color: color
-          });
-        }
-
-        const startTime = Date.now();
-        function loopPreview() {
-          if (Date.now() - startTime > 3000) {
-            cancelAnimationFrame(microAnimId);
-            return;
-          }
-          pctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-          pctx.fillStyle = color;
-          for (const pt of microParticles) {
-            pt.x += pt.vx;
-            pt.y += pt.vy;
-            if (pt.x < 0) pt.x = previewCanvas.width;
-            if (pt.x > previewCanvas.width) pt.x = 0;
-            if (pt.y < 0) pt.y = previewCanvas.height;
-            if (pt.y > previewCanvas.height) pt.y = 0;
-
-            pctx.beginPath();
-            pctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
-            pctx.fill();
-          }
-          microAnimId = requestAnimationFrame(loopPreview);
-        }
-        loopPreview();
-      });
-
-      card.addEventListener("pointerleave", () => {
-        if (microAnimId) {
-          cancelAnimationFrame(microAnimId);
-          microAnimId = null;
-        }
-        if (previewCanvas) {
-          const pctx = previewCanvas.getContext("2d");
-          if (pctx) pctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-          previewCanvas.style.opacity = "0";
-        }
-      });
-
-      // Only clicking the dedicated Play Now button launches the game modal
-      gamesGrid.appendChild(card);
-    });
+    }
 
     updateFacetSummaryUI();
 

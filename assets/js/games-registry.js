@@ -2643,7 +2643,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 922,
+    "commits": 924,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2663,7 +2663,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 584,
+    "commits": 585,
     "gamesCount": 76,
     "mechanicsBonus": 2,
     "platformPRs": 29,
@@ -2969,8 +2969,8 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "Sarbajit Sengupta",
-    "github": "Sarbajit-Sengupta",
+    "name": "sumittiwari",
+    "github": "sumittiwari",
     "avatarInitial": "S",
     "role": "Contributor (NSOC '26)",
     "commits": 2,
@@ -2984,11 +2984,11 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "sumittiwari",
-    "github": "sumittiwari",
+    "name": "Sarbajit Sengupta",
+    "github": "Sarbajit-Sengupta",
     "avatarInitial": "S",
     "role": "Contributor (NSOC '26)",
-    "commits": 1,
+    "commits": 2,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,
