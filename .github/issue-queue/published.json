@@ -784,5 +784,65 @@
     "title": "[Enhancement/UI]: Game Card Hover Sound Feedback with Subtle Retro Click Tones",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1508",
     "published_at": "2026-11-24T16:09:32.434Z"
+  },
+  {
+    "number": 1509,
+    "title": "[Theme/UI]: Authentic 1982 Commodore 64 VIC-II Palette & PETSCII Font Aesthetic Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1509",
+    "published_at": "2026-11-24T16:26:42.952Z"
+  },
+  {
+    "number": 1510,
+    "title": "[Feature/VFX]: Interactive 2D Water Surface Wave Ripple & Specular Refraction Canvas Sandbox",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1510",
+    "published_at": "2026-11-24T16:26:48.722Z"
+  },
+  {
+    "number": 1511,
+    "title": "[Feature/Audio]: Dynamic 8-Bit Chiptune Arpeggiator & Chords Generator Using Web Audio API",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1511",
+    "published_at": "2026-11-24T16:26:54.512Z"
+  },
+  {
+    "number": 1512,
+    "title": "[Feature/Graphics]: Procedural 2D Raymarched Metaball Liquid Blob Fusion Canvas Visualizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1512",
+    "published_at": "2026-11-24T16:27:00.319Z"
+  },
+  {
+    "number": 1513,
+    "title": "[Feature/Physics]: Interactive 2D Cloth & Soft-Body Mesh Verlet Integration Physics Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1513",
+    "published_at": "2026-11-24T16:27:06.120Z"
+  },
+  {
+    "number": 1514,
+    "title": "[Theme/UI]: 1993 Game Boy Color Atomic Purple Translucent Shell Aesthetic Theme Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1514",
+    "published_at": "2026-11-24T16:27:11.840Z"
+  },
+  {
+    "number": 1515,
+    "title": "[Feature/Audio]: Dynamic Interactive Web Audio Dual-Oscillator FM Synthesizer Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1515",
+    "published_at": "2026-11-24T16:27:17.499Z"
+  },
+  {
+    "number": 1516,
+    "title": "[Feature/VFX]: Interactive 2D Boids Flocking Simulation with Predator-Prey Dynamics Canvas",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1516",
+    "published_at": "2026-11-24T16:27:23.298Z"
+  },
+  {
+    "number": 1517,
+    "title": "[Feature/Graphics]: Interactive 2D Canvas Cellular Automata Simulation Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1517",
+    "published_at": "2026-11-24T16:27:29.050Z"
+  },
+  {
+    "number": 1518,
+    "title": "[Theme/UI]: 1989 Sega Genesis 16-Bit High-Contrast Metallic Chrome Arcade Theme Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1518",
+    "published_at": "2026-11-24T16:27:34.806Z"
   }
 ]
