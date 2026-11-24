@@ -1,0 +1,66 @@
+/* ==========================================================================
+   ACCESSIBILITY: SKIP LINK & FOCUS TRAPPING INDICATOR (#1379)
+   High-contrast neon focus rings and offscreen animating skip-to-content banner
+   ========================================================================== */
+
+.arcade-skip-link {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 999999;
+    padding: 10px 18px;
+    background: #000000;
+    color: #00ffff;
+    border: 2px solid #00ffff;
+    border-radius: 4px;
+    font-weight: 700;
+    font-family: inherit;
+    font-size: 14px;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 0 16px rgba(0, 255, 255, 0.8), inset 0 0 8px rgba(0, 255, 255, 0.4);
+    transform: translateY(-160%);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+    outline: none;
+}
+
+.arcade-skip-link:focus,
+.arcade-skip-link:focus-visible {
+    transform: translateY(0);
+    outline: 2px solid #ff007f;
+    outline-offset: 4px;
+}
+
+/* High Contrast Focus Indicator Ring across all interactive elements */
+:focus-visible {
+    outline: 2px solid #00f0ff !important;
+    outline-offset: 3px !important;
+    box-shadow: 0 0 8px rgba(0, 240, 255, 0.6) !important;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+    outline: 2px solid #00f0ff !important;
+    outline-offset: 3px !important;
+}
+
+/* Modal Focus Trap Styling */
+.arcade-modal-active {
+    overflow: hidden;
+}
+
+.arcade-modal-focus-trap {
+    position: relative;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.85);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .arcade-skip-link {
+        transition: none !important;
+    }
+}
