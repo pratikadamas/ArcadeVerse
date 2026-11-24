@@ -1,0 +1,59 @@
+/* ==========================================================================
+   GAME SHARE BUTTON & TOAST NOTIFICATION (#1396)
+   Subtle link icon button and floating bottom neon toast banner
+   ========================================================================== */
+
+.game-share-btn {
+    background: none;
+    border: none;
+    color: #8b949e;
+    cursor: pointer;
+    padding: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.game-share-btn:hover {
+    color: #00f0ff;
+    background: rgba(0, 240, 255, 0.1);
+}
+
+.game-share-btn:focus-visible {
+    outline: 2px solid #00f0ff;
+}
+
+/* Floating Toast Notification */
+.arcade-share-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #0d1117;
+    color: #e6edf3;
+    border: 1px solid #00f0ff;
+    border-radius: 20px;
+    padding: 10px 22px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: inherit;
+    box-shadow: 0 4px 16px rgba(0, 240, 255, 0.4), 0 2px 8px rgba(0, 0, 0, 0.8);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 999999;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+}
+
+.arcade-share-toast.visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .arcade-share-toast {
+        transition: opacity 0.1s ease !important;
+        transform: translateX(-50%) translateY(0) !important;
+    }
+}

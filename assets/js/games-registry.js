@@ -2643,7 +2643,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "DebasmitaBose0",
     "avatarInitial": "D",
     "role": "Project Admin & Lead (NSOC '26)",
-    "commits": 853,
+    "commits": 922,
     "gamesCount": 6,
     "mechanicsBonus": 2,
     "platformPRs": 2,
@@ -2663,7 +2663,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "Babin123456",
     "avatarInitial": "B",
     "role": "Arcade Developer (NSOC '26)",
-    "commits": 522,
+    "commits": 584,
     "gamesCount": 76,
     "mechanicsBonus": 2,
     "platformPRs": 29,
@@ -2813,7 +2813,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "pratikadamas",
     "avatarInitial": "P",
     "role": "Contributor (NSOC '26)",
-    "commits": 128,
+    "commits": 148,
     "gamesCount": 1,
     "mechanicsBonus": 0,
     "platformPRs": 1,
@@ -2883,7 +2883,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "divyanshagarwal123",
     "avatarInitial": "D",
     "role": "Contributor (NSOC '26)",
-    "commits": 22,
+    "commits": 23,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,
@@ -2924,6 +2924,36 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
+    "name": "trunalpatil",
+    "github": "trunalpatil",
+    "avatarInitial": "T",
+    "role": "Contributor (NSOC '26)",
+    "commits": 6,
+    "gamesCount": 0,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Quality & Platform Contribution"
+    ]
+  },
+  {
+    "name": "trunal2005",
+    "github": "trunal2005",
+    "avatarInitial": "T",
+    "role": "Contributor (NSOC '26)",
+    "commits": 4,
+    "gamesCount": 0,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Quality & Platform Contribution"
+    ]
+  },
+  {
     "name": "nilesh0199",
     "github": "nilesh0199",
     "avatarInitial": "N",
@@ -2939,41 +2969,26 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "trunal2005",
-    "github": "trunal2005",
-    "avatarInitial": "T",
-    "role": "Contributor (NSOC '26)",
-    "commits": 2,
-    "gamesCount": 0,
-    "mechanicsBonus": 0,
-    "platformPRs": 0,
-    "qualityPRs": 0,
-    "bonusPts": 0,
-    "contributions": [
-      "Quality & Platform Contribution"
-    ]
-  },
-  {
-    "name": "trunalpatil",
-    "github": "trunalpatil",
-    "avatarInitial": "T",
-    "role": "Contributor (NSOC '26)",
-    "commits": 2,
-    "gamesCount": 0,
-    "mechanicsBonus": 0,
-    "platformPRs": 0,
-    "qualityPRs": 0,
-    "bonusPts": 0,
-    "contributions": [
-      "Quality & Platform Contribution"
-    ]
-  },
-  {
     "name": "Sarbajit Sengupta",
     "github": "Sarbajit-Sengupta",
     "avatarInitial": "S",
     "role": "Contributor (NSOC '26)",
     "commits": 2,
+    "gamesCount": 0,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Quality & Platform Contribution"
+    ]
+  },
+  {
+    "name": "sumittiwari",
+    "github": "sumittiwari",
+    "avatarInitial": "S",
+    "role": "Contributor (NSOC '26)",
+    "commits": 1,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,

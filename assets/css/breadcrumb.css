@@ -1,0 +1,77 @@
+/* ==========================================================================
+   DYNAMIC BREADCRUMB NAVIGATION ON ACTIVE GAME MODAL (#1397)
+   Hierarchical trail with interactive filtering and responsive ellipsis
+   ========================================================================== */
+
+.modal-breadcrumb-nav {
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #8b949e;
+    padding: 6px 0;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.breadcrumb-list {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.breadcrumb-item {
+    display: inline-flex;
+    align-items: center;
+}
+
+.breadcrumb-link {
+    background: none;
+    border: none;
+    color: #8b949e;
+    font-size: inherit;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.15s ease;
+}
+
+.breadcrumb-link:hover,
+.breadcrumb-link:focus-visible {
+    color: #00f0ff;
+    text-decoration: underline;
+    outline: none;
+}
+
+.breadcrumb-separator {
+    color: #30363d;
+    font-size: 0.75rem;
+    user-select: none;
+}
+
+.breadcrumb-current {
+    color: #00f0ff;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.breadcrumb-title {
+    display: inline-block;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+}
+
+@media (max-width: 600px) {
+    .breadcrumb-title {
+        max-width: 110px;
+    }
+}
