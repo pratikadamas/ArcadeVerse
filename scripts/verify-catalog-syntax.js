@@ -19,6 +19,7 @@ console.log('========================================================\n');
 const ROOT_DIR = path.resolve(__dirname, '..');
 const TARGET_FILES = [
   path.join(ROOT_DIR, 'assets', 'js', 'app.js'),
+  path.join(ROOT_DIR, 'assets', 'js', 'virtual-grid.js'),
   path.join(ROOT_DIR, 'assets', 'js', 'games-registry.js'),
   path.join(ROOT_DIR, 'scripts', 'validate-games.js'),
   path.join(ROOT_DIR, 'scripts', 'build-registry.js'),

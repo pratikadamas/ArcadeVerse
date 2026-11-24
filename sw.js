@@ -26,6 +26,7 @@ const SHELL_ASSETS = [
   './assets/css/game-ratings.css',
   './assets/css/pwa-cache-prewarmer.css',
   './assets/js/navbar.js',
+  './assets/js/virtual-grid.js',
   './assets/js/app.js',
   './assets/js/network-detector.js',
   './assets/js/pwa-cache-prewarmer.js',

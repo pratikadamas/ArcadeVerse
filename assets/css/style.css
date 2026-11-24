@@ -1988,6 +1988,35 @@ textarea:focus-visible,
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
   gap: 2rem;
+  position: relative;
+}
+
+/* Windowed Virtual Grid Scroller (#1366) */
+.games-grid.virtual-grid-host {
+  display: block !important;
+  position: relative !important;
+  min-height: 200px;
+}
+
+.games-grid.virtual-grid-host .virtual-grid-spacer {
+  position: relative;
+  width: 100%;
+  pointer-events: none;
+  visibility: hidden;
+  clear: both;
+}
+
+.games-grid.virtual-grid-host .virtual-grid-items {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  pointer-events: auto;
+  will-change: transform;
+}
+
+.games-grid.virtual-grid-host .virtual-card-item {
+  box-sizing: border-box;
 }
 
 /* =========================================================================
