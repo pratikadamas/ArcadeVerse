@@ -1,0 +1,82 @@
+/* ==========================================================================
+   THEME: PITCH BLACK OLED PURE DARK MODE (#1402)
+   True #000000 base for pixel-level shutoff, zero light bleed, and battery savings
+   ========================================================================== */
+
+:root[data-theme="oled-pure"],
+html[data-theme="oled-pure"] {
+  --bg-primary: #000000; /* Pure black AMOLED shutoff */
+  --bg-secondary: #000000;
+  --bg-card: #050505;
+  --bg-card-hover: #0a0a0a;
+  --bg-header: #000000;
+
+  --accent-primary: #00e5ff; /* Electric Cyan */
+  --accent-secondary: #39ff14; /* Pure Neon Green */
+  --accent-tertiary: #ff0055; /* Hot Pink */
+  
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
+  --text-muted: #555555;
+  --text-inverse: #000000;
+
+  --border-subtle: #1c1c1c; /* 1px hairline border */
+  --border-glow: #00e5ff;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+}
+
+/* Base Body and Primary Containers */
+[data-theme="oled-pure"] body,
+[data-theme="oled-pure"] .main-content,
+[data-theme="oled-pure"] .catalog-container,
+[data-theme="oled-pure"] .navbar,
+[data-theme="oled-pure"] .footer {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+/* Eliminate heavy blur box-shadows to conserve mobile GPU power */
+[data-theme="oled-pure"] .game-card,
+[data-theme="oled-pure"] .catalog-card,
+[data-theme="oled-pure"] .modal-content,
+[data-theme="oled-pure"] .controls-legend-card {
+  background: #050505 !important;
+  border: 1px solid #1c1c1c !important;
+  box-shadow: none !important;
+  border-radius: 6px !important;
+}
+
+[data-theme="oled-pure"] .game-card:hover,
+[data-theme="oled-pure"] .catalog-card:hover {
+  background: #0a0a0a !important;
+  border-color: #00e5ff !important;
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.3) !important;
+}
+
+/* High-Contrast Hairline Buttons */
+[data-theme="oled-pure"] .btn,
+[data-theme="oled-pure"] button.btn,
+[data-theme="oled-pure"] .filter-chip {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: 1px solid #2a2a2a !important;
+  box-shadow: none !important;
+}
+
+[data-theme="oled-pure"] .filter-chip.active,
+[data-theme="oled-pure"] .btn.btn-primary {
+  background: #00e5ff !important;
+  color: #000000 !important;
+  border-color: #00e5ff !important;
+  font-weight: 700 !important;
+}
+
+/* Clean Modal Overlay */
+[data-theme="oled-pure"] .modal,
+[data-theme="oled-pure"] .game-modal-overlay {
+  background: rgba(0, 0, 0, 0.95) !important;
+  backdrop-filter: none !important; /* Save mobile battery by removing backdrop-filter GPU blurs */
+}
