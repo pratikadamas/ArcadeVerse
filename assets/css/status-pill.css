@@ -1,0 +1,66 @@
+/* ==========================================================================
+   CATALOG FOOTER DYNAMIC STATUS PILL & PULSE (#1394)
+   Pulsing glowing dot, network listener states, and compact version badge
+   ========================================================================== */
+
+.arcade-status-pill-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.78rem;
+    color: #c9d1d9;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.status-indicator-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-indicator-dot.status-online {
+    background: #00ff66;
+    box-shadow: 0 0 8px #00ff66;
+    animation: statusPulseGreen 2s infinite ease-in-out;
+}
+
+.status-indicator-dot.status-offline {
+    background: #ffaa00;
+    box-shadow: 0 0 8px #ffaa00;
+    animation: statusPulseAmber 1.5s infinite ease-in-out;
+}
+
+@keyframes statusPulseGreen {
+    0%, 100% { opacity: 0.6; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.15); box-shadow: 0 0 12px #00ff66; }
+}
+
+@keyframes statusPulseAmber {
+    0%, 100% { opacity: 0.6; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.15); box-shadow: 0 0 12px #ffaa00; }
+}
+
+.status-indicator-text {
+    font-weight: 600;
+}
+
+.status-version-badge {
+    background: #161b22;
+    border: 1px solid #30363d;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-family: monospace;
+    color: #00f0ff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .status-indicator-dot {
+        animation: none !important;
+    }
+}
