@@ -1,0 +1,191 @@
+/* ArcadeVerse - Game Card Play-Count Milestone Badges & Unlock Animations (#1494) */
+
+.play-milestone-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.play-milestone-badge svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+/* Tier 1: Rookie (1+ plays) */
+.play-milestone-badge.tier-rookie {
+  border-color: #10b981;
+  color: #6ee7b7;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+}
+
+.game-card.milestone-rookie {
+  border-color: rgba(16, 185, 129, 0.45);
+}
+
+/* Tier 2: Veteran (10+ plays) */
+.play-milestone-badge.tier-veteran {
+  border-color: #3b82f6;
+  color: #93c5fd;
+  box-shadow: 0 0 14px rgba(59, 130, 246, 0.45);
+}
+
+.game-card.milestone-veteran {
+  border-color: rgba(59, 130, 246, 0.55);
+  box-shadow: 0 0 18px rgba(59, 130, 246, 0.14);
+}
+
+/* Tier 3: Master (25+ plays) */
+.play-milestone-badge.tier-master {
+  border-color: #c084fc;
+  color: #e9d5ff;
+  background: linear-gradient(135deg, rgba(88, 28, 135, 0.9), rgba(15, 23, 42, 0.92));
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.5);
+}
+
+.game-card.milestone-master {
+  border-color: rgba(168, 85, 247, 0.65);
+  box-shadow: 0 0 22px rgba(168, 85, 247, 0.2);
+}
+
+/* Tier 4: Century (100+ plays) */
+.play-milestone-badge.tier-century {
+  border-color: #fbbf24;
+  color: #fef08a;
+  background: linear-gradient(135deg, rgba(146, 64, 14, 0.92), rgba(15, 23, 42, 0.95));
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+}
+
+.game-card.milestone-century {
+  border-color: rgba(251, 191, 36, 0.78);
+  box-shadow: 0 0 26px rgba(251, 191, 36, 0.24);
+}
+
+/* Unlock Shimmer Animation */
+.game-card.is-milestone-unlocked {
+  position: relative;
+  overflow: hidden;
+  animation: milestone-card-pop 550ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.game-card.is-milestone-unlocked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 80%
+  );
+  transform: translateX(-120%);
+  animation: milestone-unlock-shimmer 900ms ease-out forwards;
+}
+
+@keyframes milestone-unlock-shimmer {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes milestone-card-pop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.03);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Celebratory Milestone Unlock Toast */
+.milestone-unlock-toast {
+  position: fixed;
+  right: 20px;
+  bottom: 24px;
+  z-index: 10070;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 340px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(34, 211, 238, 0.45);
+  background: rgba(15, 23, 42, 0.96);
+  color: #f8fafc;
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(10px);
+  transform: translateY(16px);
+  opacity: 0;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.milestone-unlock-toast.is-visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.milestone-toast-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(34, 211, 238, 0.16);
+  color: #22d3ee;
+  flex-shrink: 0;
+}
+
+.milestone-toast-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.milestone-toast-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #22d3ee;
+}
+
+.milestone-toast-sub {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-card.is-milestone-unlocked,
+  .game-card.is-milestone-unlocked::after,
+  .milestone-unlock-toast {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
