@@ -168,6 +168,7 @@
               <li><a href="#a11y-audio-beacon" class="docs-nav-link"><i data-lucide="radio"></i> Spatial Audio Beacon</a></li>
               <li><a href="#trophy-engine" class="docs-nav-link"><i data-lucide="award"></i> Trophy Certificate Canvas</a></li>
               <li><a href="#shortcuts-engine" class="docs-nav-link"><i data-lucide="keyboard"></i> Keyboard Shortcuts</a></li>
+              <li><a href="#hardware-bridge" class="docs-nav-link"><i data-lucide="cpu"></i> DIY Hardware Bridge (Serial/BLE)</a></li>
               <li><a href="#recently-played" class="docs-nav-link"><i data-lucide="clock"></i> Quick Resume Engine</a></li>
               <li><a href="#daily-quest" class="docs-nav-link"><i data-lucide="flame"></i> Daily Quest Engine</a></li>
               <li><a href="#scoring-engine" class="docs-nav-link"><i data-lucide="cpu"></i> Scoring & Leaderboard</a></li>
@@ -1115,6 +1116,21 @@ if (ArcadeVerse.a11y.isAudioBeaconEnabled()) {
             <li><kbd>T</kbd>: Instant dark/light theme switch</li>
             <li><kbd>M</kbd>: Instant audio mute/unmute toggle</li>
             <li><kbd>Esc</kbd>: Close modal player, cheatsheet, or accessibility hub</li>
+          </ul>
+        </section>
+
+        <!-- DIY Hardware Controller Bridge -->
+        <section class="docs-section" id="hardware-bridge">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Web Serial &amp; Web Bluetooth DIY Hardware Bridge</h2>
+          <p class="docs-paragraph">
+            Implemented in <code>assets/js/hardware-arcade-bridge.js</code>, this gateway lets hardware builders connect custom Arduino, ESP32, and Raspberry Pi Pico arcade controllers directly to ArcadeVerse in Chrome/Edge without OS-level drivers:
+          </p>
+          <ul>
+            <li><strong>Web Serial &amp; Web Bluetooth:</strong> Supports USB/UART serial streams (<code>9600</code> to <code>921600</code> baud, default <code>115200</code>) via <code>navigator.serial.requestPort()</code> and wireless BLE GATT notifications via <code>navigator.bluetooth.requestDevice()</code>.</li>
+            <li><strong>Dual Line Protocols:</strong> Parses newline-delimited JSON packets (e.g. <code>{"btnA":1,"joyX":-128}</code>) and single-byte binary bitmasks (<code>0x00..0xFF</code>).</li>
+            <li><strong>Zero-Latency Input Routing:</strong> Emits synthetic <code>KeyboardEvent</code>s directly into <code>#game-iframe</code> and maintains a W3C-compatible virtual Gamepad state snapshot.</li>
+            <li><strong>Graceful Browser Fallback:</strong> Detects unsupported browsers (Safari, Firefox) and displays a clear compatibility notice alongside a built-in Packet Simulator.</li>
           </ul>
         </section>
 
