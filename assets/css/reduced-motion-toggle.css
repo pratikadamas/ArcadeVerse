@@ -1,0 +1,46 @@
+/* ArcadeVerse - Reduced Motion Mode Overrides for UI Shimmers & Transitions (#1507) */
+
+body.arcade-reduced-motion,
+body.arcade-reduced-motion *,
+body.arcade-reduced-motion *::before,
+body.arcade-reduced-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  animation-delay: 0s !important;
+  scroll-behavior: auto !important;
+}
+
+/* Replace complex movement/3D transforms with gentle opacity fades */
+body.arcade-reduced-motion *,
+body.arcade-reduced-motion *::before,
+body.arcade-reduced-motion *::after {
+  transition-property: opacity, background-color, border-color, color !important;
+  transition-duration: 120ms !important;
+  transition-timing-function: linear !important;
+}
+
+/* Disable infinite glowing pulses, orbs, particles, shimmers, and 3D card tilts */
+body.arcade-reduced-motion .glow-orb,
+body.arcade-reduced-motion .cyber-grid,
+body.arcade-reduced-motion #arcade-particles-canvas,
+body.arcade-reduced-motion .marquee-bulb,
+body.arcade-reduced-motion .eq-bar {
+  animation: none !important;
+}
+
+body.arcade-reduced-motion .game-card:hover,
+body.arcade-reduced-motion .game-card:focus-within {
+  transform: none !important;
+}
+
+body.arcade-reduced-motion .game-card.is-milestone-unlocked::after,
+body.arcade-reduced-motion .game-card.is-milestone-unlocked {
+  animation: none !important;
+}
+
+body.arcade-reduced-motion .crt-transition-overlay,
+body.arcade-reduced-motion .crt-phosphor-beam,
+body.arcade-reduced-motion .crt-scanlines {
+  animation: none !important;
+  transition: none !important;
+}
