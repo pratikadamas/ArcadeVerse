@@ -904,5 +904,65 @@
     "title": "[Enhancement/UI]: Catalog Empty Filter Reset Banner with Applied Filter Summary Chips",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1547",
     "published_at": "2026-11-25T16:25:33.542Z"
+  },
+  {
+    "number": 1548,
+    "title": "[Enhancement/Leaderboard]: Interactive Contributor Rank Delta Indicator & Tier Progress Bar",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1548",
+    "published_at": "2026-11-25T16:27:25.684Z"
+  },
+  {
+    "number": 1549,
+    "title": "[Enhancement/UX]: Distraction-Free Game Theater Dimmer Opacity Slider",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1549",
+    "published_at": "2026-11-25T16:27:31.284Z"
+  },
+  {
+    "number": 1550,
+    "title": "[Enhancement/UI]: Interactive Footer Network & Offline Cache Status Badge with Sync Timestamp",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1550",
+    "published_at": "2026-11-25T16:27:36.953Z"
+  },
+  {
+    "number": 1551,
+    "title": "[Enhancement/Catalog]: Game Author Filter Dropdown & Creator Spotlight Card Attribution",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1551",
+    "published_at": "2026-11-25T16:27:42.513Z"
+  },
+  {
+    "number": 1552,
+    "title": "[Enhancement/A11y]: Custom Accessibility Oversized Pointer Cursor Switcher",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1552",
+    "published_at": "2026-11-25T16:27:48.143Z"
+  },
+  {
+    "number": 1553,
+    "title": "[Enhancement/UX]: Per-Game Personal Best Score Split & Timestamp History Log Modal",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1553",
+    "published_at": "2026-11-25T16:27:53.672Z"
+  },
+  {
+    "number": 1554,
+    "title": "[Enhancement/Audio]: Web Audio Fade-In & Fade-Out Smooth Ramp Controller on Game Modal Open and Close",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1554",
+    "published_at": "2026-11-25T16:27:59.264Z"
+  },
+  {
+    "number": 1555,
+    "title": "[Enhancement/UI]: Catalog Header Live Game Count & Category Breakdown Progress Bar",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1555",
+    "published_at": "2026-11-25T16:28:04.990Z"
+  },
+  {
+    "number": 1556,
+    "title": "[Enhancement/UX]: Catalog Filter Preset Saver with Custom Bookmarkable Slot Pills",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1556",
+    "published_at": "2026-11-25T16:28:10.560Z"
+  },
+  {
+    "number": 1557,
+    "title": "[Enhancement/UI]: Interactive Game Card Pin-to-Top Sticky Showcase Section",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1557",
+    "published_at": "2026-11-25T16:28:16.679Z"
   }
 ]
