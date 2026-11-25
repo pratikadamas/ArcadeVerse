@@ -1,0 +1,98 @@
+/* ArcadeVerse - Fullscreen Toggle Button & Animated Expand-Compress Icon (#1505) */
+
+body.modal-fullscreen-active {
+  overflow: hidden !important;
+}
+
+.game-modal.fullscreen-mode .modal-window,
+.modal-window.fullscreen,
+.modal-window.is-css-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  z-index: 10080 !important;
+}
+
+.game-modal.fullscreen-mode .game-modal-body,
+.modal-window.fullscreen .game-modal-body,
+.modal-window.is-css-fullscreen .game-modal-body {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  background: #020617 !important;
+}
+
+.game-modal.fullscreen-mode #game-iframe,
+.modal-window.fullscreen #game-iframe,
+.modal-window.is-css-fullscreen #game-iframe {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain;
+}
+
+/* Interactive Animated Expand <-> Compress SVG Icon */
+#fullscreen-btn .fs-anim-icon {
+  display: block;
+  overflow: visible;
+  transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+#fullscreen-btn .fs-expand-paths,
+#fullscreen-btn .fs-compress-paths {
+  transform-origin: center;
+  transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease;
+}
+
+/* Default (Windowed): Expand arrows visible */
+#fullscreen-btn .fs-expand-paths {
+  opacity: 1;
+  transform: scale(1);
+}
+
+#fullscreen-btn .fs-compress-paths {
+  opacity: 0;
+  transform: scale(0.65);
+}
+
+#fullscreen-btn:hover .fs-expand-paths {
+  transform: scale(1.1);
+}
+
+/* Fullscreen Active: Compress arrows visible */
+#fullscreen-btn.is-fullscreen .fs-expand-paths,
+#fullscreen-btn[aria-pressed="true"] .fs-expand-paths {
+  opacity: 0;
+  transform: scale(1.3);
+}
+
+#fullscreen-btn.is-fullscreen .fs-compress-paths,
+#fullscreen-btn[aria-pressed="true"] .fs-compress-paths {
+  opacity: 1;
+  transform: scale(1);
+}
+
+#fullscreen-btn.is-fullscreen:hover .fs-compress-paths,
+#fullscreen-btn[aria-pressed="true"]:hover .fs-compress-paths {
+  transform: scale(0.9);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #fullscreen-btn .fs-anim-icon,
+  #fullscreen-btn .fs-expand-paths,
+  #fullscreen-btn .fs-compress-paths {
+    transition: none !important;
+  }
+}
