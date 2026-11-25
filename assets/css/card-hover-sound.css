@@ -1,0 +1,52 @@
+/* ArcadeVerse - Game Card Hover Sound Feedback (#1508) */
+
+.card-hover-sfx-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(15, 23, 42, 0.72);
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: border-color 0.18s ease, color 0.18s ease, background 0.18s ease, transform 0.15s ease;
+}
+
+.card-hover-sfx-toggle:hover {
+  border-color: #22d3ee;
+  color: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.card-hover-sfx-toggle.is-enabled {
+  border-color: rgba(34, 211, 238, 0.48);
+  color: #67e8f9;
+  background: rgba(8, 145, 178, 0.16);
+}
+
+.card-hover-sfx-toggle.is-master-muted {
+  opacity: 0.52;
+}
+
+.card-hover-sfx-toggle svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.card-hover-sfx-toggle:focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+  .card-hover-sfx-label {
+    display: none;
+  }
+}
+
