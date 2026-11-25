@@ -844,5 +844,65 @@
     "title": "[Theme/UI]: 1989 Sega Genesis 16-Bit High-Contrast Metallic Chrome Arcade Theme Studio",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1518",
     "published_at": "2026-11-24T16:27:34.806Z"
+  },
+  {
+    "number": 1538,
+    "title": "[Enhancement/UI]: Interactive Catalog Card Density Switcher for Cozy, Standard and Compact Grids",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1538",
+    "published_at": "2026-11-25T16:24:42.284Z"
+  },
+  {
+    "number": 1539,
+    "title": "[Enhancement/UX]: Catalog Sort Direction Inverter & Multi-Field Sort Selector",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1539",
+    "published_at": "2026-11-25T16:24:48.105Z"
+  },
+  {
+    "number": 1540,
+    "title": "[Enhancement/Catalog]: New Releases & Recently Updated Spotlight Ribbon on Game Cards",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1540",
+    "published_at": "2026-11-25T16:24:53.677Z"
+  },
+  {
+    "number": 1541,
+    "title": "[Enhancement/A11y]: Keyboard-Focused Card Action Prompt Bar for Instant Play & Favorite",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1541",
+    "published_at": "2026-11-25T16:24:59.276Z"
+  },
+  {
+    "number": 1542,
+    "title": "[Enhancement/UX]: LocalStorage Usage Inspector & Per-Game Cache Cleaner Drawer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1542",
+    "published_at": "2026-11-25T16:25:05.071Z"
+  },
+  {
+    "number": 1543,
+    "title": "[Enhancement/UI]: Interactive Catalog Card Thumbnail Lazy-Load Fade-In & Error Placeholder",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1543",
+    "published_at": "2026-11-25T16:25:10.888Z"
+  },
+  {
+    "number": 1544,
+    "title": "[Enhancement/UI]: Game Card Genre Accent Border Stripes & Category Corner Tag Indicator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1544",
+    "published_at": "2026-11-25T16:25:16.600Z"
+  },
+  {
+    "number": 1545,
+    "title": "[Enhancement/Catalog]: Game Tag Cloud Discovery Drawer with Frequency Sizing",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1545",
+    "published_at": "2026-11-25T16:25:22.097Z"
+  },
+  {
+    "number": 1546,
+    "title": "[Enhancement/UX]: Game Modal Quick-Restart & Instant Reset Confirmation Shortcut",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1546",
+    "published_at": "2026-11-25T16:25:27.838Z"
+  },
+  {
+    "number": 1547,
+    "title": "[Enhancement/UI]: Catalog Empty Filter Reset Banner with Applied Filter Summary Chips",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1547",
+    "published_at": "2026-11-25T16:25:33.542Z"
   }
 ]
