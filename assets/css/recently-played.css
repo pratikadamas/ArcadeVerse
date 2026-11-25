@@ -1,34 +1,34 @@
 /**
- * ArcadeVerse — Recently Played & Quick Resume Drawer
- * Provides persistent session history and 1-click game resume
+ * ArcadeVerse - Recently Played Games Quick Bar in Catalog Header (#1504)
+ * Horizontal pill strip displaying last 5 launched games with one-click play and clear option.
  */
 
 .recently-played-section {
   max-width: 1240px;
-  margin: 0 auto 2.5rem auto;
+  margin: 0 auto 1.25rem auto;
   padding: 0 1.5rem;
 }
 
 .recently-played-container {
-  background: var(--bg-card);
+  background: var(--bg-card, rgba(15, 23, 42, 0.78));
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--border-medium);
-  border-radius: var(--radius-lg);
-  padding: 1.25rem 1.5rem;
-  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.12));
+  border-radius: var(--radius-lg, 14px);
+  padding: 0.75rem 1.15rem;
+  box-shadow: var(--shadow-card, 0 8px 24px rgba(0, 0, 0, 0.35));
   transition: border-color 0.25s ease;
 }
 
 .recently-played-container:hover {
-  border-color: rgba(59, 130, 246, 0.35);
+  border-color: rgba(34, 211, 238, 0.35);
 }
 
 .recently-played-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  margin-bottom: 0.65rem;
   flex-wrap: wrap;
   gap: 0.75rem;
 }
@@ -36,42 +36,42 @@
 .recent-header-left {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.55rem;
 }
 
 .recent-header-left .recent-pulse-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: rgba(59, 130, 246, 0.15);
-  color: var(--accent-primary);
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: rgba(34, 211, 238, 0.15);
+  color: #22d3ee;
 }
 
 .recently-played-title {
-  font-family: var(--font-heading);
-  font-size: 1.15rem;
+  font-family: var(--font-heading, inherit);
+  font-size: 0.92rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-primary, #f8fafc);
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
 }
 
 .recent-badge-count {
-  font-family: var(--font-code);
-  font-size: 0.75rem;
-  padding: 0.15rem 0.5rem;
-  border-radius: 12px;
-  background: rgba(59, 130, 246, 0.18);
-  color: #60a5fa;
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  font-size: 0.72rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(34, 211, 238, 0.16);
+  color: #67e8f9;
+  border: 1px solid rgba(34, 211, 238, 0.3);
 }
 
 .recent-header-actions {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -79,122 +79,105 @@
 
 .btn-clear-recent {
   background: transparent;
-  border: 1px solid var(--border-subtle);
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  padding: 0.35rem 0.75rem;
-  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.65rem;
+  border-radius: 8px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
   transition: all 0.2s ease;
 }
 
-.btn-clear-recent:hover {
-  background: rgba(244, 63, 94, 0.12);
-  color: #fb7185;
-  border-color: rgba(244, 63, 94, 0.3);
+.btn-clear-recent:hover,
+.btn-clear-recent.is-confirming {
+  background: rgba(244, 63, 94, 0.15);
+  color: #fda4af;
+  border-color: rgba(244, 63, 94, 0.45);
 }
 
-.recently-played-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 0.85rem;
-}
-
-.recent-game-card {
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 0.85rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 0.6rem;
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.recent-game-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(99, 102, 241, 0.45);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
-}
-
-.recent-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.4rem;
-}
-
-.recent-game-tag {
-  font-size: 0.68rem;
+.recent-clear-tooltip {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #0f172a;
+  border: 1px solid rgba(244, 63, 94, 0.45);
+  color: #fecdd3;
+  font-size: 0.72rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 0.15rem 0.45rem;
-  border-radius: 4px;
-  background: rgba(99, 102, 241, 0.14);
-  color: #818cf8;
-}
-
-.recent-game-time {
-  font-family: var(--font-code);
-  font-size: 0.7rem;
-  color: var(--text-muted);
-}
-
-.recent-game-title {
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
   white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+}
+
+/* Horizontal Pill Bar */
+.recently-played-pill-bar {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.65rem;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.recent-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.42rem 0.85rem 0.42rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(30, 41, 59, 0.78);
+  color: var(--text-primary, #f8fafc);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.recent-pill-btn:hover {
+  transform: translateY(-1px);
+  border-color: #22d3ee;
+  background: rgba(8, 145, 178, 0.22);
+  box-shadow: 0 4px 14px rgba(34, 211, 238, 0.22);
+}
+
+.recent-pill-btn:focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 2px;
+}
+
+.recent-pill-thumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(34, 211, 238, 0.18);
+  color: #67e8f9;
+  font-size: 0.7rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.recent-pill-title {
+  max-width: 170px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.btn-recent-play {
-  width: 100%;
-  background: var(--accent-primary);
-  color: #ffffff;
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: 0.4rem 0.65rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
+.recent-pill-play-icon {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  transition: background 0.15s ease;
-}
-
-.btn-recent-play:hover {
-  background: var(--accent-primary-hover);
-}
-
-.recently-played-empty {
-  text-align: center;
-  padding: 1.5rem 1rem;
-  color: var(--text-secondary);
-}
-
-.recently-played-empty p {
-  font-size: 0.88rem;
-  margin: 0;
-}
-
-@media (max-width: 768px) {
-  .recently-played-grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 0.65rem;
-  }
-  .recent-game-title {
-    font-size: 0.85rem;
-  }
+  color: #22d3ee;
+  flex-shrink: 0;
 }
