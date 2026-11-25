@@ -1024,5 +1024,65 @@
     "title": "[Feature/Graphics]: Procedural Mandelbrot & Julia Set Fractal Explorer with Smooth Palette Cycling",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1567",
     "published_at": "2026-11-25T16:36:48.513Z"
+  },
+  {
+    "number": 1568,
+    "title": "[Theme/UI]: 1983 MSX2 & PC-9801 Japanese Dithered 16-Color Cyber Aesthetic Theme Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1568",
+    "published_at": "2026-11-25T16:41:46.058Z"
+  },
+  {
+    "number": 1569,
+    "title": "[Theme/UI]: 1998 Translucent Bondi Blue Aqua Gloss & Pinstripe Retro Theme Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1569",
+    "published_at": "2026-11-25T16:41:51.929Z"
+  },
+  {
+    "number": 1570,
+    "title": "[Feature/VFX]: Interactive 2D Lissajous Curve & Harmonograph Phase-Shift Oscillograph Canvas",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1570",
+    "published_at": "2026-11-25T16:41:57.508Z"
+  },
+  {
+    "number": 1571,
+    "title": "[Feature/Physics]: Interactive 2D N-Body Orbital Gravity & Planetary Slingshot Mechanics Sandbox",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1571",
+    "published_at": "2026-11-25T16:42:03.274Z"
+  },
+  {
+    "number": 1572,
+    "title": "[Feature/Graphics]: Procedural 2D L-System Fractal Botanical & Recursive Growth Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1572",
+    "published_at": "2026-11-25T16:42:08.899Z"
+  },
+  {
+    "number": 1573,
+    "title": "[Feature/Audio]: Interactive Web Audio Euclidean Rhythm Sequencer & Circular Beat Visualizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1573",
+    "published_at": "2026-11-25T16:42:14.484Z"
+  },
+  {
+    "number": 1574,
+    "title": "[Feature/VFX]: Interactive 2D Navier-Stokes Incompressible Smoke & Dye Fluid Simulation Canvas",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1574",
+    "published_at": "2026-11-25T16:42:19.993Z"
+  },
+  {
+    "number": 1575,
+    "title": "[Feature/Tools]: Interactive Pixel-Art Sprite Editor & CSS Box-Shadow Exporter",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1575",
+    "published_at": "2026-11-25T16:42:25.760Z"
+  },
+  {
+    "number": 1576,
+    "title": "[Feature/Audio]: Procedural Web Audio Additive Harmonic Organ & Drawbar Synthesizer Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1576",
+    "published_at": "2026-11-25T16:42:31.403Z"
+  },
+  {
+    "number": 1577,
+    "title": "[Feature/Graphics]: Procedural 2D Wave Function Collapse Constraint Tilemap Generator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1577",
+    "published_at": "2026-11-25T16:42:36.919Z"
   }
 ]
