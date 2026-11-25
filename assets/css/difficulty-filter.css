@@ -1,0 +1,123 @@
+/* ArcadeVerse - Game Difficulty Rating Filter with Active Tag Pills & Counts (#1506) */
+
+.difficulty-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0 4px;
+  width: 100%;
+}
+
+.difficulty-filter-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #94a3b8);
+  margin-right: 4px;
+}
+
+.difficulty-pills-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.difficulty-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(15, 23, 42, 0.72);
+  color: var(--text-secondary, #cbd5e1);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.18s ease, background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.difficulty-pill:hover {
+  transform: translateY(-1px);
+  color: #f8fafc;
+}
+
+.difficulty-pill:focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 2px;
+}
+
+.difficulty-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* All Tier */
+.difficulty-pill[data-difficulty="all"].active {
+  border-color: #22d3ee;
+  background: rgba(34, 211, 238, 0.18);
+  color: #67e8f9;
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.25);
+}
+
+/* Casual: Emerald Green */
+.difficulty-pill[data-difficulty="casual"] {
+  border-color: rgba(16, 185, 129, 0.32);
+}
+.difficulty-pill[data-difficulty="casual"]:hover,
+.difficulty-pill[data-difficulty="casual"].active {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.3);
+}
+
+/* Normal: Cyber Blue */
+.difficulty-pill[data-difficulty="normal"] {
+  border-color: rgba(56, 189, 248, 0.32);
+}
+.difficulty-pill[data-difficulty="normal"]:hover,
+.difficulty-pill[data-difficulty="normal"].active {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.2);
+  color: #bae6fd;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
+}
+
+/* Hard: Amber Orange */
+.difficulty-pill[data-difficulty="hard"] {
+  border-color: rgba(245, 158, 11, 0.35);
+}
+.difficulty-pill[data-difficulty="hard"]:hover,
+.difficulty-pill[data-difficulty="hard"].active {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.2);
+  color: #fde68a;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.3);
+}
+
+/* Insane: Crimson Red */
+.difficulty-pill[data-difficulty="insane"] {
+  border-color: rgba(244, 63, 94, 0.35);
+}
+.difficulty-pill[data-difficulty="insane"]:hover,
+.difficulty-pill[data-difficulty="insane"].active {
+  border-color: #f43f5e;
+  background: rgba(244, 63, 94, 0.22);
+  color: #fecdd3;
+  box-shadow: 0 0 14px rgba(244, 63, 94, 0.35);
+}

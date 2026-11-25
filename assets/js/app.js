@@ -1764,7 +1764,9 @@ document.addEventListener("DOMContentLoaded", () => {
         matchesCuratedMix = currentMixFilter.includes(item.id);
       }
 
-      return matchesCategory && matchesTag && matchesDuration && matchesControls && matchesLetter && matchesCuratedMix;
+      const matchesDifficulty = !window.ArcadeDifficultyFilter || window.ArcadeDifficultyFilter.matchesGame(item);
+
+      return matchesCategory && matchesTag && matchesDuration && matchesControls && matchesLetter && matchesCuratedMix && matchesDifficulty;
     });
 
     const cleanSearch = searchQuery.replace(/^by\s+@?/, "").replace(/^@/, "").trim();
@@ -4760,11 +4762,18 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   const btnResetFacets = document.getElementById("btn-reset-facets");
+  window.addEventListener("arcadeverse:difficulty-filter-changed", () => {
+    renderGames();
+  });
+
   if (btnResetFacets) {
     btnResetFacets.addEventListener("click", () => {
       currentDurationFacet = "all";
       currentControlsFacet = "all";
       currentLetterFilter = "all";
+      if (window.ArcadeDifficultyFilter && typeof window.ArcadeDifficultyFilter.setActiveDifficulty === "function") {
+        window.ArcadeDifficultyFilter.setActiveDifficulty("all", true);
+      }
       resetLetterFilterUI();
       durationFacetChips.forEach((c) => {
         if (c.getAttribute("data-duration") === "all") c.classList.add("active");
