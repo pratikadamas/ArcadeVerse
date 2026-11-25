@@ -406,6 +406,9 @@
             <button type="button" class="btn btn-secondary btn-xs btn-export-pl">
               <i data-lucide="copy"></i> Export Code
             </button>
+            <button type="button" class="btn btn-secondary btn-xs btn-share-qr-pl">
+              <i data-lucide="qr-code"></i> Share / QR
+            </button>
             <button type="button" class="btn btn-icon btn-xs btn-delete-pl" title="Delete Playlist" aria-label="Delete Playlist">
               <i data-lucide="trash-2"></i>
             </button>
@@ -418,6 +421,14 @@
         description.textContent = pl.description || '';
         description.hidden = !pl.description;
         item.querySelector('.btn-export-pl').addEventListener('click', () => this.copyPlaylistCode(pl.id));
+        const shareQrBtn = item.querySelector('.btn-share-qr-pl');
+        if (shareQrBtn) {
+          shareQrBtn.addEventListener('click', () => {
+            if (window.ArcadePlaylistShare && typeof window.ArcadePlaylistShare.openShareModal === 'function') {
+              window.ArcadePlaylistShare.openShareModal(pl);
+            }
+          });
+        }
 
         const viewBtn = item.querySelector('.btn-filter-pl');
         if (viewBtn) {
