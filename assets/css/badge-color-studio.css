@@ -1,0 +1,153 @@
+/* ArcadeVerse - Customizable Game Category Badge Color Accent Studio (#1503) */
+
+:root {
+  --category-action: #f43f5e;
+  --category-puzzle: #a855f7;
+  --category-arcade: #22d3ee;
+  --category-strategy: #f59e0b;
+  --category-retro: #10b981;
+  --category-rhythm: #ec4899;
+}
+
+/* Dynamic CSS Variable Mappings for Game Card Category Badges */
+.game-category-tag[data-category-key="action"],
+.category-pills .pill[data-category="Action"] {
+  border-color: var(--category-action) !important;
+  color: var(--category-action) !important;
+  background: color-mix(in srgb, var(--category-action) 14%, rgba(15, 23, 42, 0.85)) !important;
+}
+
+.game-category-tag[data-category-key="puzzle"],
+.category-pills .pill[data-category="Puzzle"] {
+  border-color: var(--category-puzzle) !important;
+  color: var(--category-puzzle) !important;
+  background: color-mix(in srgb, var(--category-puzzle) 14%, rgba(15, 23, 42, 0.85)) !important;
+}
+
+.game-category-tag[data-category-key="arcade"],
+.category-pills .pill[data-category="Arcade"] {
+  border-color: var(--category-arcade) !important;
+  color: var(--category-arcade) !important;
+  background: color-mix(in srgb, var(--category-arcade) 14%, rgba(15, 23, 42, 0.85)) !important;
+}
+
+.game-category-tag[data-category-key="strategy"],
+.category-pills .pill[data-category="Strategy"] {
+  border-color: var(--category-strategy) !important;
+  color: var(--category-strategy) !important;
+  background: color-mix(in srgb, var(--category-strategy) 14%, rgba(15, 23, 42, 0.85)) !important;
+}
+
+.game-category-tag[data-category-key="retro"],
+.category-pills .pill[data-category="Retro"] {
+  border-color: var(--category-retro) !important;
+  color: var(--category-retro) !important;
+  background: color-mix(in srgb, var(--category-retro) 14%, rgba(15, 23, 42, 0.85)) !important;
+}
+
+.game-category-tag[data-category-key="rhythm"],
+.category-pills .pill[data-category="Rhythm"] {
+  border-color: var(--category-rhythm) !important;
+  color: var(--category-rhythm) !important;
+  background: color-mix(in srgb, var(--category-rhythm) 14%, rgba(15, 23, 42, 0.85)) !important;
+}
+
+/* Badge Color Studio Settings Panel */
+.badge-studio-panel {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.badge-studio-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.badge-studio-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary, #f8fafc);
+}
+
+.badge-studio-reset-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(30, 41, 59, 0.8);
+  color: #cbd5e1;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.badge-studio-reset-btn:hover {
+  border-color: #f43f5e;
+  color: #fda4af;
+}
+
+.badge-studio-presets {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.badge-preset-btn {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(15, 23, 42, 0.75);
+  color: #e2e8f0;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.badge-preset-btn:hover,
+.badge-preset-btn.is-active {
+  border-color: #22d3ee;
+  background: rgba(34, 211, 238, 0.16);
+  color: #67e8f9;
+}
+
+.badge-studio-pickers {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.badge-picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(2, 6, 23, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.badge-picker-label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  text-transform: capitalize;
+}
+
+.badge-picker-input {
+  width: 28px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
