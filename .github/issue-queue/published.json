@@ -1144,5 +1144,65 @@
     "title": "[Enhancement/Audio]: Web Audio Suspended State Auto-Resume Banner Prompt",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1643",
     "published_at": "2026-11-26T18:38:02.123Z"
+  },
+  {
+    "number": 1646,
+    "title": "[Enhancement/UX]: Game Modal Neighbor Game Switcher Arrows",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1646",
+    "published_at": "2026-11-26T18:45:23.133Z"
+  },
+  {
+    "number": 1647,
+    "title": "[Enhancement/UI]: Responsive Sticky Filter Bar Auto-Collapse on Mobile Scroll",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1647",
+    "published_at": "2026-11-26T18:45:28.666Z"
+  },
+  {
+    "number": 1648,
+    "title": "[Enhancement/A11y]: Visual Tab-Order Sequence Overlay Helper for Focus Audits",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1648",
+    "published_at": "2026-11-26T18:45:34.138Z"
+  },
+  {
+    "number": 1649,
+    "title": "[Enhancement/Catalog]: Alphabetical Range Chips (A-F, G-M, N-S, T-Z) Filter Bar",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1649",
+    "published_at": "2026-11-26T18:45:39.846Z"
+  },
+  {
+    "number": 1650,
+    "title": "[Enhancement/UX]: Active Theme CSS Variables Snippet Copy Tool in Settings",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1650",
+    "published_at": "2026-11-26T18:45:45.274Z"
+  },
+  {
+    "number": 1651,
+    "title": "[Enhancement/UI]: Game Card Thumbnail Hover Zoom Micro-Transition with Reduced-Motion Guard",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1651",
+    "published_at": "2026-11-26T18:45:50.990Z"
+  },
+  {
+    "number": 1652,
+    "title": "[Enhancement/Leaderboard]: Leaderboard Jump-to-Me Quick Lookup & Handle Highlight Pin",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1652",
+    "published_at": "2026-11-26T18:45:57.152Z"
+  },
+  {
+    "number": 1653,
+    "title": "[Enhancement/UX]: Starter Recommendations Card Grid for Empty Favorites Filter State",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1653",
+    "published_at": "2026-11-26T18:46:02.741Z"
+  },
+  {
+    "number": 1654,
+    "title": "[Enhancement/UI]: Game Modal Safe Viewport Margins & Tablet Landscape Padding Polish",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1654",
+    "published_at": "2026-11-26T18:46:08.325Z"
+  },
+  {
+    "number": 1655,
+    "title": "[Enhancement/Audio]: Subtle Synthesized UI Toggle Tick Feedback Option in Preferences",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1655",
+    "published_at": "2026-11-26T18:46:14.104Z"
   }
 ]
