@@ -1,0 +1,126 @@
+/* ArcadeVerse - Mini Game Preview Popover on Card Hover and Long-Press (#1498) */
+
+.card-preview-popover {
+  position: fixed;
+  z-index: 10055;
+  width: 286px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(34, 211, 238, 0.45);
+  background: var(--bg-card, rgba(15, 23, 42, 0.96));
+  color: var(--text-primary, #f8fafc);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.68), 0 0 22px rgba(34, 211, 238, 0.18);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(6px) scale(0.97);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  display: none;
+}
+
+.card-preview-popover.is-visible {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.cpp-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cpp-thumb {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.3), rgba(99, 102, 241, 0.3));
+  border: 1px solid rgba(34, 211, 238, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #67e8f9;
+  flex-shrink: 0;
+}
+
+.cpp-title-block {
+  min-width: 0;
+  flex: 1;
+}
+
+.cpp-title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #f8fafc;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cpp-author {
+  margin: 2px 0 0;
+  font-size: 0.74rem;
+  color: #94a3b8;
+}
+
+.cpp-meta-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cpp-pill {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(30, 41, 59, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+}
+
+.cpp-pill-accent {
+  border-color: rgba(34, 211, 238, 0.38);
+  color: #67e8f9;
+}
+
+.cpp-synopsis {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #cbd5e1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cpp-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.cpp-control-icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #67e8f9;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-preview-popover {
+    transition: none !important;
+  }
+}
