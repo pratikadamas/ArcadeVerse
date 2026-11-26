@@ -1,0 +1,132 @@
+/* ArcadeVerse - Multi-Tag Filtering System with AND-OR Logic Toggle (#1495) */
+
+.multi-tag-filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 1240px;
+  margin: 0 auto 14px auto;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.65);
+}
+
+.mtf-header-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mtf-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mtf-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+}
+
+.mtf-result-badge {
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(34, 211, 238, 0.16);
+  color: #67e8f9;
+  border: 1px solid rgba(34, 211, 238, 0.35);
+}
+
+.mtf-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mtf-logic-toggle {
+  display: inline-flex;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(2, 6, 23, 0.65);
+  overflow: hidden;
+}
+
+.mtf-logic-btn {
+  padding: 4px 10px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.mtf-logic-btn.is-active {
+  background: rgba(34, 211, 238, 0.22);
+  color: #67e8f9;
+}
+
+.mtf-clear-btn {
+  padding: 4px 10px;
+  border-radius: 7px;
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  background: rgba(244, 63, 94, 0.12);
+  color: #fda4af;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mtf-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.mtf-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(30, 41, 59, 0.72);
+  color: #cbd5e1;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+}
+
+.mtf-tag-chip:hover {
+  transform: translateY(-1px);
+  border-color: #22d3ee;
+  color: #f8fafc;
+}
+
+.mtf-tag-chip.is-active {
+  border-color: #22d3ee;
+  background: rgba(34, 211, 238, 0.2);
+  color: #67e8f9;
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.24);
+}
+
+.mtf-chip-remove {
+  display: none;
+  font-size: 0.85rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.mtf-tag-chip.is-active .mtf-chip-remove {
+  display: inline;
+}

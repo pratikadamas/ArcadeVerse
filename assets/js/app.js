@@ -1764,7 +1764,9 @@ document.addEventListener("DOMContentLoaded", () => {
         matchesCuratedMix = currentMixFilter.includes(item.id);
       }
 
-      return matchesCategory && matchesTag && matchesDuration && matchesControls && matchesLetter && matchesCuratedMix;
+      const matchesMultiTag = !window.ArcadeMultiTagFilter || window.ArcadeMultiTagFilter.matchesGame(item);
+
+      return matchesCategory && matchesTag && matchesDuration && matchesControls && matchesLetter && matchesCuratedMix && matchesMultiTag;
     });
 
     const cleanSearch = searchQuery.replace(/^by\s+@?/, "").replace(/^@/, "").trim();
@@ -4757,6 +4759,10 @@ document.addEventListener("DOMContentLoaded", () => {
       currentControlsFacet = chip.getAttribute("data-controls") || "all";
       renderGames();
     });
+  });
+
+  window.addEventListener("arcadeverse:multi-tag-changed", () => {
+    renderGames();
   });
 
   const btnResetFacets = document.getElementById("btn-reset-facets");
