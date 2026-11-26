@@ -1,0 +1,91 @@
+/* ArcadeVerse - Game Search Autocomplete Suggestion Dropdown (#1500) */
+
+#search-box-wrapper {
+  position: relative;
+}
+
+.search-ac-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 10040;
+  display: none;
+  flex-direction: column;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(34, 211, 238, 0.42);
+  background: var(--bg-card, rgba(15, 23, 42, 0.96));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 18px rgba(34, 211, 238, 0.16);
+}
+
+.search-ac-dropdown.is-open {
+  display: flex;
+}
+
+.search-ac-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  border-left: 3px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-primary, #f8fafc);
+  text-align: left;
+  font-size: 0.86rem;
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease;
+}
+
+.search-ac-item:hover,
+.search-ac-item.is-selected {
+  background: rgba(34, 211, 238, 0.14);
+  border-left-color: #22d3ee;
+}
+
+.search-ac-title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-ac-match {
+  color: #22d3ee;
+  font-weight: 800;
+}
+
+.search-ac-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.search-ac-category {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+}
+
+.search-ac-hint {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #67e8f9;
+  opacity: 0;
+  transition: opacity 0.14s ease;
+}
+
+.search-ac-item.is-selected .search-ac-hint,
+.search-ac-item:hover .search-ac-hint {
+  opacity: 1;
+}
