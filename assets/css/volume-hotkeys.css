@@ -1,0 +1,102 @@
+/* ArcadeVerse - Master Volume Keyboard Hotkeys HUD Overlay (#1496) */
+
+.volume-hud-overlay {
+  position: fixed;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  z-index: 10090;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 270px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(34, 211, 238, 0.45);
+  background: rgba(15, 23, 42, 0.94);
+  color: #f8fafc;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.65), 0 0 22px rgba(34, 211, 238, 0.22);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.volume-hud-overlay.is-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.volume-hud-overlay.is-muted {
+  border-color: rgba(244, 63, 94, 0.52);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.65), 0 0 20px rgba(244, 63, 94, 0.2);
+}
+
+.volume-hud-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #22d3ee;
+  flex-shrink: 0;
+}
+
+.volume-hud-overlay.is-muted .volume-hud-icon {
+  color: #f43f5e;
+}
+
+.volume-hud-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.volume-hud-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.volume-hud-percent {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: #67e8f9;
+}
+
+.volume-hud-overlay.is-muted .volume-hud-percent {
+  color: #fda4af;
+}
+
+.volume-hud-segments {
+  display: grid;
+  grid-template-columns: repeat(20, 1fr);
+  gap: 3px;
+  height: 10px;
+}
+
+.volume-hud-segment {
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  transition: background 0.1s ease;
+}
+
+.volume-hud-segment.is-filled {
+  background: #22d3ee;
+  box-shadow: 0 0 6px rgba(34, 211, 238, 0.45);
+}
+
+.volume-hud-overlay.is-muted .volume-hud-segment.is-filled {
+  background: #f43f5e;
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .volume-hud-overlay,
+  .volume-hud-segment {
+    transition: none !important;
+  }
+}
