@@ -1,0 +1,92 @@
+/* ArcadeVerse - Compact Table List View Mode Toggle (#1501) */
+
+.catalog-view-switcher .view-toggle-btn.active {
+  border-color: #22d3ee;
+  background: rgba(34, 211, 238, 0.16);
+  color: #67e8f9;
+  box-shadow: 0 0 12px rgba(34, 211, 238, 0.25);
+}
+
+/* High-Density Compact Table List View */
+#games-grid.catalog-list-mode {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+
+#games-grid.catalog-list-mode .game-card {
+  display: grid !important;
+  grid-template-columns: 48px minmax(180px, 2fr) 120px 100px auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px !important;
+  min-height: 60px !important;
+  border-radius: 10px !important;
+  transform: none !important;
+}
+
+#games-grid.catalog-list-mode .game-card-preview {
+  width: 48px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  border-radius: 8px !important;
+  margin: 0 !important;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#games-grid.catalog-list-mode .card-micro-preview-canvas,
+#games-grid.catalog-list-mode .game-card-desc,
+#games-grid.catalog-list-mode .game-card-tags,
+#games-grid.catalog-list-mode .btn-card-manual-flip {
+  display: none !important;
+}
+
+#games-grid.catalog-list-mode .game-card-content,
+#games-grid.catalog-list-mode .game-card-body {
+  display: contents !important;
+}
+
+#games-grid.catalog-list-mode .game-card-title {
+  margin: 0 !important;
+  font-size: 0.94rem !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#games-grid.catalog-list-mode .game-category-tag {
+  position: static !important;
+  justify-self: start;
+  font-size: 0.72rem !important;
+  padding: 3px 9px !important;
+}
+
+#games-grid.catalog-list-mode .game-card-footer {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  justify-self: end;
+}
+
+#games-grid.catalog-list-mode .btn-play-trigger {
+  padding: 6px 14px !important;
+  font-size: 0.8rem !important;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  #games-grid.catalog-list-mode .game-card {
+    grid-template-columns: 40px 1fr auto;
+    gap: 10px;
+    padding: 10px 12px !important;
+  }
+  #games-grid.catalog-list-mode .game-category-tag {
+    display: none !important;
+  }
+}
