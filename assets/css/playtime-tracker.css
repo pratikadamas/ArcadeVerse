@@ -1,0 +1,147 @@
+/* ArcadeVerse - Session Playtime Stopwatch & Rest Reminder Toast (#1497) */
+
+.playtime-stopwatch-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(34, 211, 238, 0.28);
+  background: rgba(15, 23, 42, 0.72);
+  color: #e2e8f0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: default;
+  transition: border-color 0.2s ease, opacity 0.2s ease;
+}
+
+.playtime-stopwatch-pill svg {
+  width: 14px;
+  height: 14px;
+  color: #22d3ee;
+  flex-shrink: 0;
+}
+
+.playtime-stopwatch-pill.is-paused {
+  opacity: 0.6;
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+/* Gentle Rest Reminder Toast */
+.playtime-rest-toast {
+  position: fixed;
+  right: 20px;
+  bottom: 24px;
+  z-index: 10075;
+  width: min(370px, calc(100vw - 32px));
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(16, 185, 129, 0.48);
+  background: var(--bg-card, rgba(15, 23, 42, 0.96));
+  color: var(--text-primary, #f8fafc);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 20px 46px rgba(0, 0, 0, 0.6), 0 0 20px rgba(16, 185, 129, 0.18);
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.playtime-rest-toast.is-visible {
+  display: flex;
+}
+
+.playtime-toast-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.playtime-toast-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  flex-shrink: 0;
+}
+
+.playtime-toast-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #6ee7b7;
+}
+
+.playtime-toast-msg {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: #cbd5e1;
+}
+
+.playtime-toast-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.playtime-toast-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(30, 41, 59, 0.85);
+  color: #f8fafc;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.playtime-toast-btn:hover {
+  border-color: #22d3ee;
+}
+
+.playtime-toast-btn-snooze {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.5);
+  color: #6ee7b7;
+}
+
+/* Settings Drawer Interval Control */
+.playtime-settings-panel {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.playtime-settings-label {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-primary, #f8fafc);
+}
+
+.playtime-settings-select {
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(2, 6, 23, 0.75);
+  color: #f8fafc;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 768px) {
+  .playtime-stopwatch-pill {
+    display: none;
+  }
+}
