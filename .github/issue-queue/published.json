@@ -1084,5 +1084,65 @@
     "title": "[Feature/Graphics]: Procedural 2D Wave Function Collapse Constraint Tilemap Generator",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1577",
     "published_at": "2026-11-25T16:42:36.919Z"
+  },
+  {
+    "number": 1626,
+    "title": "[Enhancement/UI]: Game Modal Elapsed Session Timer Pill in Toolbar Header",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1626",
+    "published_at": "2026-11-26T18:37:10.828Z"
+  },
+  {
+    "number": 1627,
+    "title": "[Enhancement/Catalog]: Multi-Column Sticky Catalog Sub-Header with Live Filter Match Counter",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1627",
+    "published_at": "2026-11-26T18:37:16.520Z"
+  },
+  {
+    "number": 1629,
+    "title": "[Enhancement/UX]: Catalog Search Query Clear Button with Escape Key Reset Shortcut",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1629",
+    "published_at": "2026-11-26T18:37:22.281Z"
+  },
+  {
+    "number": 1631,
+    "title": "[Enhancement/A11y]: High-Contrast Card Border & Flat Shadow Override Toggle",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1631",
+    "published_at": "2026-11-26T18:37:28.126Z"
+  },
+  {
+    "number": 1633,
+    "title": "[Enhancement/UI]: Interactive Footer Retro Arcade Trivia Ticker Rotator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1633",
+    "published_at": "2026-11-26T18:37:33.834Z"
+  },
+  {
+    "number": 1635,
+    "title": "[Enhancement/Catalog]: Unplayed Games Filter Toggle for Catalog Discovery",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1635",
+    "published_at": "2026-11-26T18:37:39.531Z"
+  },
+  {
+    "number": 1637,
+    "title": "[Enhancement/UX]: Undo Toast Guard for Destructive Favorites and History Clears",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1637",
+    "published_at": "2026-11-26T18:37:45.109Z"
+  },
+  {
+    "number": 1639,
+    "title": "[Enhancement/Leaderboard]: Top-N Rank Tier Filter Pills on Leaderboard Standings",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1639",
+    "published_at": "2026-11-26T18:37:50.700Z"
+  },
+  {
+    "number": 1641,
+    "title": "[Enhancement/UI]: Catalog Featured Game Hero Spotlight Carousel Banner",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1641",
+    "published_at": "2026-11-26T18:37:56.375Z"
+  },
+  {
+    "number": 1643,
+    "title": "[Enhancement/Audio]: Web Audio Suspended State Auto-Resume Banner Prompt",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1643",
+    "published_at": "2026-11-26T18:38:02.123Z"
   }
 ]
