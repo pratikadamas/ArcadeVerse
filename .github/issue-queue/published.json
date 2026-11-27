@@ -1204,5 +1204,65 @@
     "title": "[Enhancement/Audio]: Subtle Synthesized UI Toggle Tick Feedback Option in Preferences",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1655",
     "published_at": "2026-11-26T18:46:14.104Z"
+  },
+  {
+    "number": 1686,
+    "title": "[Theme/UI]: Authentic 1981 IBM PC CGA 4-Color Cyan-Magenta Palette Theme Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1686",
+    "published_at": "2026-11-27T16:00:06.838Z"
+  },
+  {
+    "number": 1687,
+    "title": "[Theme/UI]: 1984 ZX Spectrum Color-Clash Attribute Grid & Cassette Border Theme Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1687",
+    "published_at": "2026-11-27T16:00:12.697Z"
+  },
+  {
+    "number": 1688,
+    "title": "[Theme/UI]: 1991 Super Nintendo Lavender-Violet Concave Shell Aesthetic Theme Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1688",
+    "published_at": "2026-11-27T16:00:18.345Z"
+  },
+  {
+    "number": 1689,
+    "title": "[Theme/UI]: 1986 EGA 16-Color DOS Text Mode & CP437 Box-Drawing Border Theme Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1689",
+    "published_at": "2026-11-27T16:00:24.065Z"
+  },
+  {
+    "number": 1690,
+    "title": "[Feature/VFX]: Interactive 2D Double-Slit Wave Interference & Diffraction Canvas Simulator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1690",
+    "published_at": "2026-11-27T16:00:29.750Z"
+  },
+  {
+    "number": 1691,
+    "title": "[Feature/VFX]: Procedural 2D Lorenz, Clifford and De Jong Strange Attractor Chaos Visualizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1691",
+    "published_at": "2026-11-27T16:00:35.473Z"
+  },
+  {
+    "number": 1692,
+    "title": "[Feature/Graphics]: Procedural 2D Marching Squares Topographic Contour & Elevation Field Visualizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1692",
+    "published_at": "2026-11-27T16:00:41.430Z"
+  },
+  {
+    "number": 1693,
+    "title": "[Feature/Graphics]: Procedural 2D Spirograph Epitrochoid & Hypotrochoid Gear Geometry Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1693",
+    "published_at": "2026-11-27T16:00:47.607Z"
+  },
+  {
+    "number": 1694,
+    "title": "[Feature/Physics]: Interactive 2D Electric Field Lines & Lorentz Charged Particle Sandbox",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1694",
+    "published_at": "2026-11-27T16:00:53.314Z"
+  },
+  {
+    "number": 1695,
+    "title": "[Feature/Physics]: Interactive 2D Coupled Oscillator & Standing Wave Harmonics Resonance Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1695",
+    "published_at": "2026-11-27T16:00:59.003Z"
   }
 ]
