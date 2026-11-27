@@ -1744,5 +1744,65 @@
     "title": "[Feature/Audio]: Coupled Multi-Pendulum Zone-Trigger Ambient Harmonic Chime Generator",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1805",
     "published_at": "2026-11-27T17:11:43.830Z"
+  },
+  {
+    "number": 1806,
+    "title": "[Feature/Graphics]: Bowyer-Watson Delaunay Triangulation and Circumcircle Step-by-Step Debugger",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1806",
+    "published_at": "2026-11-27T17:13:23.446Z"
+  },
+  {
+    "number": 1807,
+    "title": "[Feature/Graphics]: Content-Aware Seam Carving Image Resizer Using Dynamic Programming Energy Maps",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1807",
+    "published_at": "2026-11-27T17:13:29.337Z"
+  },
+  {
+    "number": 1808,
+    "title": "[Feature/Algorithms]: Interactive Sweep-Line Bentley-Ottmann Segment Intersection Debugger",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1808",
+    "published_at": "2026-11-27T17:13:34.848Z"
+  },
+  {
+    "number": 1809,
+    "title": "[Feature/Graphics]: Interactive 2D Signed Distance Field Raymarching Sphere-Trace Stepper and CSG Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1809",
+    "published_at": "2026-11-27T17:13:40.418Z"
+  },
+  {
+    "number": 1810,
+    "title": "[Feature/Physics]: Ideal-Gas Pressure-Filled Verlet Soft-Body Balloon and Tire Physics Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1810",
+    "published_at": "2026-11-27T17:13:45.914Z"
+  },
+  {
+    "number": 1811,
+    "title": "[Feature/Graphics]: Bridson Poisson-Disc Blue-Noise Sampling and Weighted Stipple Art Generator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1811",
+    "published_at": "2026-11-27T17:13:51.415Z"
+  },
+  {
+    "number": 1812,
+    "title": "[Feature/Algorithms]: Interactive 2D K-D Tree Spatial Partitioning and K-Nearest-Neighbor Pruning Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1812",
+    "published_at": "2026-11-27T17:13:57.194Z"
+  },
+  {
+    "number": 1813,
+    "title": "[Feature/Physics]: Meshing Spur Gear-Train Angular Velocity and Jam-Lock Kinematics Sandbox",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1813",
+    "published_at": "2026-11-27T17:14:02.805Z"
+  },
+  {
+    "number": 1814,
+    "title": "[Feature/Graphics]: Descartes Circle Theorem Apollonian Fractal Gasket Complex Solver Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1814",
+    "published_at": "2026-11-27T17:14:08.489Z"
+  },
+  {
+    "number": 1815,
+    "title": "[Feature/Tools]: Recursive-Descent JSON Structural Diff Tree and Query Path Evaluator Workbench",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1815",
+    "published_at": "2026-11-27T17:14:14.297Z"
   }
 ]
