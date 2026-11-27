@@ -1564,5 +1564,65 @@
     "title": "[Feature/Core]: Fixed-Point Q16.16 Arithmetic Math Engine and Cross-Browser Lockstep Checksum Verifier",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1769",
     "published_at": "2026-11-27T16:39:27.997Z"
+  },
+  {
+    "number": 1776,
+    "title": "[Feature/Emulator]: Full 6502 Microprocessor Emulator with Assembler, Flags and Pixel Bus",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1776",
+    "published_at": "2026-11-27T17:03:44.658Z"
+  },
+  {
+    "number": 1777,
+    "title": "[Feature/Compiler]: Recursive-Descent Matrix and Math Expression AST Compiler with Visual Evaluator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1777",
+    "published_at": "2026-11-27T17:03:50.270Z"
+  },
+  {
+    "number": 1778,
+    "title": "[Feature/Systems]: Interactive Preemptive OS Process Scheduler with Multilevel Queue and Gantt Chart",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1778",
+    "published_at": "2026-11-27T17:03:55.884Z"
+  },
+  {
+    "number": 1779,
+    "title": "[Feature/Systems]: Virtual Memory TLB and Page Replacement Simulator for LRU, FIFO and Clock",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1779",
+    "published_at": "2026-11-27T17:04:01.486Z"
+  },
+  {
+    "number": 1780,
+    "title": "[Feature/Crypto]: Interactive AES-128 Block Cipher SubBytes, ShiftRows and MixColumns Round Debugger",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1780",
+    "published_at": "2026-11-27T17:04:07.093Z"
+  },
+  {
+    "number": 1781,
+    "title": "[Feature/Compression]: Huffman Prefix-Tree Builder, Bitstream Encoder and Shannon Entropy Analyzer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1781",
+    "published_at": "2026-11-27T17:04:12.690Z"
+  },
+  {
+    "number": 1782,
+    "title": "[Feature/Logic]: Interactive Sequential Digital Circuit Lab with Flip-Flops and 7-Segment Display",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1782",
+    "published_at": "2026-11-27T17:04:18.199Z"
+  },
+  {
+    "number": 1783,
+    "title": "[Feature/Networking]: Interactive TCP Sliding Window, AIMD Congestion Sawtooth and Packet Loss Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1783",
+    "published_at": "2026-11-27T17:04:23.808Z"
+  },
+  {
+    "number": 1784,
+    "title": "[Feature/Systems]: Tri-Color Mark-and-Sweep Garbage Collector Heap Graph and Compaction Visualizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1784",
+    "published_at": "2026-11-27T17:04:29.331Z"
+  },
+  {
+    "number": 1785,
+    "title": "[Feature/Data]: Interactive Order-M B+ Tree Index Insertion, Node Splitting and Range Scan Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1785",
+    "published_at": "2026-11-27T17:04:35.150Z"
   }
 ]
