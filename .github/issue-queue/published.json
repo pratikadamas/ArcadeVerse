@@ -1504,5 +1504,65 @@
     "title": "[Feature/Audio]: Microtonal 19-TET and Just Intonation Scale Matrix Audio Sequencer",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1735",
     "published_at": "2026-11-27T16:38:03.232Z"
+  },
+  {
+    "number": 1736,
+    "title": "[Feature/Graphics]: Software 2D BSP Tree Doom-Style Sector Portal Renderer with Textured Floors",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1736",
+    "published_at": "2026-11-27T16:38:38.329Z"
+  },
+  {
+    "number": 1738,
+    "title": "[Feature/Physics]: 2D Smoothed Particle Hydrodynamics Liquid Fluid and Dam-Break Solver",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1738",
+    "published_at": "2026-11-27T16:38:43.936Z"
+  },
+  {
+    "number": 1741,
+    "title": "[Feature/Physics]: 2D Bridge Truss Tension Stress Heatmap and Vehicle Load Physics Simulator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1741",
+    "published_at": "2026-11-27T16:38:49.380Z"
+  },
+  {
+    "number": 1745,
+    "title": "[Feature/Graphics]: Software 3D Textured Scanline Triangle Rasterizer with Perspective Texture Mapping",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1745",
+    "published_at": "2026-11-27T16:38:54.835Z"
+  },
+  {
+    "number": 1749,
+    "title": "[Feature/Algorithms]: Exact Cover Dancing Links DLX Toroidal Matrix Solver Visualizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1749",
+    "published_at": "2026-11-27T16:39:00.321Z"
+  },
+  {
+    "number": 1753,
+    "title": "[Feature/Graphics]: Procedural 2D Differential Line Growth and Organic Coral Folding Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1753",
+    "published_at": "2026-11-27T16:39:05.828Z"
+  },
+  {
+    "number": 1757,
+    "title": "[Feature/Physics]: Interactive 2D Lattice-Boltzmann D2Q9 Wind Tunnel Airfoil Vorticity Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1757",
+    "published_at": "2026-11-27T16:39:11.429Z"
+  },
+  {
+    "number": 1761,
+    "title": "[Feature/Algorithms]: Interactive Force-Directed Graph Layout with Kruskal MST and Max-Flow Stepper",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1761",
+    "published_at": "2026-11-27T16:39:16.874Z"
+  },
+  {
+    "number": 1765,
+    "title": "[Feature/Graphics]: Software 2D Raytraced Reflective Mirror and Snells Law Prism Dispersion Sandbox",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1765",
+    "published_at": "2026-11-27T16:39:22.422Z"
+  },
+  {
+    "number": 1769,
+    "title": "[Feature/Core]: Fixed-Point Q16.16 Arithmetic Math Engine and Cross-Browser Lockstep Checksum Verifier",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1769",
+    "published_at": "2026-11-27T16:39:27.997Z"
   }
 ]
