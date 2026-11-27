@@ -1264,5 +1264,65 @@
     "title": "[Feature/Physics]: Interactive 2D Coupled Oscillator & Standing Wave Harmonics Resonance Lab",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1695",
     "published_at": "2026-11-27T16:00:59.003Z"
+  },
+  {
+    "number": 1696,
+    "title": "[Feature/Audio]: Wavetable Morphing Waterfall Spectrum Instrument with LFO Frame Sweeper",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1696",
+    "published_at": "2026-11-27T16:08:47.696Z"
+  },
+  {
+    "number": 1697,
+    "title": "[Feature/Audio]: Procedural Web Audio Markov Chain Melody Composer with Transition Matrix",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1697",
+    "published_at": "2026-11-27T16:08:53.224Z"
+  },
+  {
+    "number": 1698,
+    "title": "[Feature/VFX]: Interactive 2D Physarum Slime Mold Chemotaxis Transport Network Canvas",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1698",
+    "published_at": "2026-11-27T16:08:58.835Z"
+  },
+  {
+    "number": 1699,
+    "title": "[Feature/VFX]: Procedural 2D Animated Truchet Arcs & Geometric Weaving Pattern Canvas",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1699",
+    "published_at": "2026-11-27T16:09:04.392Z"
+  },
+  {
+    "number": 1700,
+    "title": "[Feature/Tools]: Interactive SVG Bezier Path & Snap-Grid Vector Icon Workbench",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1700",
+    "published_at": "2026-11-27T16:09:10.158Z"
+  },
+  {
+    "number": 1701,
+    "title": "[Feature/Tools]: Interactive CSS Cubic-Bezier Easing Curve & Keyframe Animation Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1701",
+    "published_at": "2026-11-27T16:09:15.663Z"
+  },
+  {
+    "number": 1702,
+    "title": "[Feature/Tools]: In-Browser Retro Hardware Palette Quantizer & WCAG Contrast Matrix Tool",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1702",
+    "published_at": "2026-11-27T16:09:21.164Z"
+  },
+  {
+    "number": 1703,
+    "title": "[Feature/Physics]: Interactive 2D Newtons Cradle & Elastic Collision Momentum Transfer Physics Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1703",
+    "published_at": "2026-11-27T16:09:26.753Z"
+  },
+  {
+    "number": 1704,
+    "title": "[Feature/Graphics]: Procedural Hilbert, Peano and Gosper Space-Filling Curve Animator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1704",
+    "published_at": "2026-11-27T16:09:32.185Z"
+  },
+  {
+    "number": 1705,
+    "title": "[Feature/Audio]: Interactive Web Audio Shepard Tone & Perpetual Pitch Illusion Synthesizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1705",
+    "published_at": "2026-11-27T16:09:37.803Z"
   }
 ]
