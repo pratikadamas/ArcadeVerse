@@ -1324,5 +1324,65 @@
     "title": "[Feature/Audio]: Interactive Web Audio Shepard Tone & Perpetual Pitch Illusion Synthesizer",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1705",
     "published_at": "2026-11-27T16:09:37.803Z"
+  },
+  {
+    "number": 1706,
+    "title": "[Feature/Emulator]: Full 1977 CHIP-8 Virtual Machine Interpreter with 64x32 Display and Disassembler",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1706",
+    "published_at": "2026-11-27T16:28:45.461Z"
+  },
+  {
+    "number": 1707,
+    "title": "[Feature/Compiler]: Regex-to-NFA and DFA Thompson Construction Compiler with State Graph Stepper",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1707",
+    "published_at": "2026-11-27T16:28:51.016Z"
+  },
+  {
+    "number": 1708,
+    "title": "[Feature/VM]: Interactive Little Man Computer Assembly IDE, Two-Pass Assembler and Step Debugger",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1708",
+    "published_at": "2026-11-27T16:28:56.587Z"
+  },
+  {
+    "number": 1709,
+    "title": "[Feature/Interpreter]: Brainfuck Tape Virtual Machine with Jump-Table Compiler and Memory Heatmap",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1709",
+    "published_at": "2026-11-27T16:29:02.184Z"
+  },
+  {
+    "number": 1710,
+    "title": "[Feature/Algorithms]: Interactive Multi-Algorithm Pathfinding Race Arena for A-Star, Dijkstra and JPS",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1710",
+    "published_at": "2026-11-27T16:29:07.795Z"
+  },
+  {
+    "number": 1711,
+    "title": "[Feature/AI]: Interactive Multi-Layer Perceptron Neural Network Backpropagation and Boundary Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1711",
+    "published_at": "2026-11-27T16:29:13.480Z"
+  },
+  {
+    "number": 1712,
+    "title": "[Feature/AI]: Interactive Monte Carlo Tree Search (MCTS) UCB1 Playout Simulator for Hex & Connect-4",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1712",
+    "published_at": "2026-11-27T16:29:19.085Z"
+  },
+  {
+    "number": 1713,
+    "title": "[Feature/Algorithms]: Procedural BSP Dungeon and Cave Hybrid Generator with Shadowcasting Visibility",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1713",
+    "published_at": "2026-11-27T16:29:24.841Z"
+  },
+  {
+    "number": 1714,
+    "title": "[Feature/Tools]: Client-Side Binary Hex-Dump and Endianness Struct Byte-Stream Inspector",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1714",
+    "published_at": "2026-11-27T16:29:30.665Z"
+  },
+  {
+    "number": 1715,
+    "title": "[Feature/Algorithms]: Genetic Algorithm Rocket Fleet Evolver with Obstacle Course and Fitness Graph",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1715",
+    "published_at": "2026-11-27T16:29:36.261Z"
   }
 ]
