@@ -1444,5 +1444,65 @@
     "title": "[New Game]: 'Echo Chamber' — Pitch-Black Maze Navigator Guided Strictly by Raycasted Sonar Pulses",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1725",
     "published_at": "2026-11-27T16:33:03.121Z"
+  },
+  {
+    "number": 1726,
+    "title": "[Feature/Audio]: Multi-Track Piano Roll MIDI Sequencer with Velocity Lanes and Quantize Grid",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1726",
+    "published_at": "2026-11-27T16:37:11.837Z"
+  },
+  {
+    "number": 1727,
+    "title": "[Feature/Audio]: Procedural Schroeder Algorithmic Reverb, Early Reflections and Stereo Chorus Rack",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1727",
+    "published_at": "2026-11-27T16:37:17.594Z"
+  },
+  {
+    "number": 1728,
+    "title": "[Feature/Audio]: Real-Time Autocorrelation Pitch Chromatic Tuner and Harmonic Overtone Scope",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1728",
+    "published_at": "2026-11-27T16:37:23.260Z"
+  },
+  {
+    "number": 1729,
+    "title": "[Feature/Audio]: Algorithmic Breakbeat Buffer Slicer and Poly-Meter Pattern Remixer Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1729",
+    "published_at": "2026-11-27T16:37:29.523Z"
+  },
+  {
+    "number": 1730,
+    "title": "[Feature/Audio]: Multi-Band 3-Way Crossover Compressor, Limiter and Analog Soft-Clipper Mastering Rack",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1730",
+    "published_at": "2026-11-27T16:37:35.227Z"
+  },
+  {
+    "number": 1731,
+    "title": "[Feature/Audio]: 2D Waveguide Drumhead Membrane PDE Percussion Physical Modeling Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1731",
+    "published_at": "2026-11-27T16:37:40.772Z"
+  },
+  {
+    "number": 1732,
+    "title": "[Feature/Audio]: Algorithmic Four-Voice Counterpoint and SATB Chord Progression Harmonizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1732",
+    "published_at": "2026-11-27T16:37:46.337Z"
+  },
+  {
+    "number": 1733,
+    "title": "[Feature/Audio]: Multi-Tap Ping-Pong Stereo Delay Matrix and Tape Wow-Flutter Modulation Workbench",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1733",
+    "published_at": "2026-11-27T16:37:52.023Z"
+  },
+  {
+    "number": 1734,
+    "title": "[Feature/Audio]: Casio CZ-Style Phase-Distortion and Ring-Modulator Retro Synth Workstation",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1734",
+    "published_at": "2026-11-27T16:37:57.649Z"
+  },
+  {
+    "number": 1735,
+    "title": "[Feature/Audio]: Microtonal 19-TET and Just Intonation Scale Matrix Audio Sequencer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1735",
+    "published_at": "2026-11-27T16:38:03.232Z"
   }
 ]
