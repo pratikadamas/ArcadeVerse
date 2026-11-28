@@ -1,0 +1,73 @@
+/* ==========================================================================
+   1989 SEGA GENESIS 16-BIT HIGH-CONTRAST METALLIC CHROME THEME (#1518)
+   16-bit 512-color RGB styling, Sonic Blue, brushed metallic chrome gradients,
+   golden ring amber, and toggleable Blast Processing speed glow.
+   ========================================================================== */
+
+:root[data-theme="genesis-16bit"],
+body.theme-genesis-16bit {
+  /* 16-Bit Arcade & Genesis Color Palette */
+  --genesis-sonic-blue: #0038ce;
+  --genesis-dark-blue: #001f7a;
+  --genesis-chrome-light: #ffffff;
+  --genesis-chrome-mid: #a8a8a8;
+  --genesis-chrome-dark: #484848;
+  --genesis-gold-ring: #f8b800;
+  --genesis-carbon: #121216;
+  --genesis-grid-line: rgba(0, 56, 206, 0.25);
+
+  --bg-primary: #121216;
+  --bg-secondary: #001f7a;
+  --bg-card: #181920;
+  --text-primary: #ffffff;
+  --text-secondary: #f8b800;
+  --accent-color: #0038ce;
+  --border-color: #484848;
+}
+
+body.theme-genesis-16bit {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  background-image:
+    linear-gradient(180deg, rgba(0, 31, 122, 0.4) 0%, rgba(18, 18, 22, 0.95) 70%),
+    repeating-linear-gradient(0deg, transparent, transparent 39px, var(--genesis-grid-line) 40px),
+    repeating-linear-gradient(90deg, transparent, transparent 39px, var(--genesis-grid-line) 40px) !important;
+}
+
+body.theme-genesis-16bit .game-card {
+  background: var(--bg-card) !important;
+  border: 2px solid #a8a8a8 !important;
+  border-top-color: #ffffff !important;
+  border-left-color: #ffffff !important;
+  border-bottom-color: #484848 !important;
+  border-right-color: #484848 !important;
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.8) !important;
+  border-radius: 4px !important;
+}
+
+body.theme-genesis-16bit .game-card:hover {
+  border-color: #f8b800 !important;
+  box-shadow: 0 0 16px rgba(248, 184, 0, 0.5) !important;
+}
+
+/* Blast Processing Speed Glow */
+body.theme-genesis-16bit.blast-processing-active .game-card {
+  animation: blastProcessingGlow 2s infinite alternate ease-in-out;
+}
+
+@keyframes blastProcessingGlow {
+  0% {
+    box-shadow: 0 0 8px rgba(0, 56, 206, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(0, 56, 206, 0.8), 0 0 8px rgba(248, 184, 0, 0.6);
+  }
+}
+
+.genesis-chrome-badge {
+  background: linear-gradient(180deg, #ffffff 0%, #a8a8a8 50%, #484848 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 900;
+  letter-spacing: 1px;
+}

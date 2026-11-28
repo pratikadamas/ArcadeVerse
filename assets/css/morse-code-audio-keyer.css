@@ -1,0 +1,13 @@
+* { box-sizing: border-box; }
+body { margin: 0; background: #101922; color: #e9e6dc; font: 17px/1.55 system-ui, sans-serif; }
+main { max-width: 860px; margin: auto; padding: 30px 20px; }
+a { color: #79e7df; } h1 { font: 700 clamp(32px, 6vw, 56px)/1.1 Georgia, serif; }
+section { margin: 24px 0; padding: 22px; border: 1px solid #627580; border-radius: 12px; background: #192630; }
+label { display: block; margin: 12px 0; } textarea { display: block; width: 100%; min-height: 90px; resize: vertical; background: #0e161d; color: #eef5f5; border: 1px solid #72878d; padding: 12px; font: 17px/1.5 monospace; }
+button { min-height: 46px; padding: 10px 18px; margin: 5px 5px 5px 0; border: 1px solid #aebaa9; border-radius: 6px; background: #223d44; color: #fff; font: inherit; cursor: pointer; }
+button:focus-visible, textarea:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid #ffd674; outline-offset: 3px; }
+input { min-height: 44px; width: min(100%, 360px); vertical-align: middle; } output { overflow-wrap: anywhere; }
+#key { width: 100%; min-height: 92px; border: 4px ridge #c3a15b; background: #413421; touch-action: none; user-select: none; }
+#key[aria-pressed="true"] { background: #795816; border-style: inset; }
+canvas { width: 100%; height: 140px; background: #0b151d; border: 1px solid #627580; margin-top: 18px; }
+@media (max-width: 500px) { section { padding: 14px; } main { padding: 20px 12px; } button { width: 100%; } }

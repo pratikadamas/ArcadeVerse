@@ -195,12 +195,14 @@ test('Ensures zero Unicode emojis in theme studio script and stylesheet', () => 
   const cssPath = require.resolve('../assets/css/theme-studio.css');
   const customizerJsPath = require.resolve('../assets/js/theme-customizer.js');
   const solarizedCssPath = require.resolve('../assets/css/theme-solarized-cyber.css');
+  const vectorGreenCssPath = require.resolve('../assets/css/theme-vector-green.css');
   const synthwaveCssPath = require.resolve('../assets/css/theme-synthwave-outrun.css');
 
   const jsContent = fs.readFileSync(jsPath, 'utf8');
   const cssContent = fs.readFileSync(cssPath, 'utf8');
   const customizerJsContent = fs.readFileSync(customizerJsPath, 'utf8');
   const solarizedCssContent = fs.readFileSync(solarizedCssPath, 'utf8');
+  const vectorGreenCssContent = fs.readFileSync(vectorGreenCssPath, 'utf8');
   const synthwaveCssContent = fs.readFileSync(synthwaveCssPath, 'utf8');
 
   const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u;
@@ -209,6 +211,7 @@ test('Ensures zero Unicode emojis in theme studio script and stylesheet', () => 
   assert.equal(emojiRegex.test(cssContent), false, 'Found emoji in theme-studio.css');
   assert.equal(emojiRegex.test(customizerJsContent), false, 'Found emoji in theme-customizer.js');
   assert.equal(emojiRegex.test(solarizedCssContent), false, 'Found emoji in theme-solarized-cyber.css');
+  assert.equal(emojiRegex.test(vectorGreenCssContent), false, 'Found emoji in theme-vector-green.css');
   assert.equal(emojiRegex.test(synthwaveCssContent), false, 'Found emoji in theme-synthwave-outrun.css');
 });
 
@@ -263,6 +266,44 @@ test('Solarized Cyber Dark and Light palettes guarantee strict WCAG 2.1 AAA cont
   assert.equal(typeof customizer.applySolarizedMode, 'function');
   assert.equal(typeof customizer.toggleSolarizedMode, 'function');
   assert.equal(typeof customizer.createSubToggleDOM, 'function');
+});
+
+test('Authentic 1982 Vector Green palette (#1362) complies with WCAG AA/AAA standards and exposes controller APIs', () => {
+  const customizer = require('../assets/js/theme-customizer.js');
+  assert.ok(customizer.VECTOR_GREEN_PALETTE, 'VECTOR_GREEN_PALETTE must exist');
+
+  const vector = customizer.VECTOR_GREEN_PALETTE;
+  assert.equal(vector.id, 'vector_green');
+  assert.equal(vector.themeName, 'vector-green');
+  assert.equal(vector.bgMain, '#020d05');
+  assert.equal(vector.bgCard, 'rgba(0, 255, 102, 0.03)');
+  assert.equal(vector.accentPrimary, '#00ff66');
+  assert.equal(vector.accentSecondary, '#55ff99');
+  assert.equal(vector.textPrimary, '#55ff99');
+  assert.equal(vector.textSecondary, '#00ff66');
+
+  // Verify WCAG contrast ratios (> 4.5:1 required by acceptance criteria)
+  const primaryCR = studio.getContrastRatio(vector.textPrimary, vector.bgMain);
+  const secondaryCR = studio.getContrastRatio(vector.textSecondary, vector.bgMain);
+  const mutedCR = studio.getContrastRatio(vector.textMuted, vector.bgMain);
+
+  assert.ok(primaryCR >= 4.5, `primaryCR must be >= 4.5: got ${primaryCR}`);
+  assert.ok(primaryCR >= 7.0, `primaryCR must exceed 7.0 (AAA): got ${primaryCR}`);
+  assert.ok(secondaryCR >= 4.5, `secondaryCR must be >= 4.5: got ${secondaryCR}`);
+  assert.ok(secondaryCR >= 7.0, `secondaryCR must exceed 7.0 (AAA): got ${secondaryCR}`);
+  assert.ok(mutedCR >= 4.5, `mutedCR must be >= 4.5: got ${mutedCR}`);
+
+  // Controller API verification
+  assert.equal(typeof customizer.applyVectorGreenTheme, 'function');
+  assert.equal(typeof customizer.removeVectorGreenTheme, 'function');
+  assert.equal(typeof customizer.toggleVectorGreenTheme, 'function');
+
+  // PRESET_PALETTES integration verification
+  const presetVector = studio.PRESET_PALETTES.find(p => p.id === 'vector_green');
+  assert.ok(presetVector, 'vector_green must be registered in studio PRESET_PALETTES');
+  assert.equal(presetVector.bgMain, '#020d05');
+  assert.equal(presetVector.accentPrimary, '#00ff66');
+  assert.equal(presetVector.textPrimary, '#55ff99');
 });
 
 test('Synthwave Outrun palette satisfies full matrix requirements and WCAG AAA contrast compliance', () => {

@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="assets/css/style.css">
   <link rel="stylesheet" href="assets/css/theme-studio.css">
   <link rel="stylesheet" href="assets/css/theme-solarized-cyber.css">
+  <link rel="stylesheet" href="assets/css/theme-vector-green.css">
   <link rel="stylesheet" href="assets/css/theme-synthwave-outrun.css">
   <link rel="stylesheet" href="assets/css/pages.css">
   <link rel="stylesheet" href="assets/css/a11y-engine.css">
@@ -1247,7 +1248,23 @@ if (ArcadeVerse.a11y.isAudioBeaconEnabled()) {
           </ul>
         </section>
 
-        <!-- 15c-4. Cyberpunk Neon Sunset Synthwave Outrun Theme Studio (#1365) -->
+        <!-- 15c-4. Authentic 1982 Vector Graphics Monochromatic Green Wireframe Theme (#1362) -->
+        <section class="docs-section" id="vector-green-theme">
+          <span class="docs-section-tag">04 / Platform Subsystems</span>
+          <h2 class="docs-section-title">Authentic 1982 Vector Graphics Monochromatic Green Wireframe Theme & Glow Matrix</h2>
+          <p class="docs-paragraph">
+            Implemented in <code>assets/css/theme-vector-green.css</code> and integrated via <code>assets/js/theme-customizer.js</code> and <code>assets/js/theme-studio.js</code>, this theme accurately reproduces the golden age of arcade vector beam monitors (Battlezone, Asteroids, Tempest, Star Wars).
+          </p>
+          <ul>
+            <li><strong>Dedicated Vector Palette:</strong> Phosphor Green <code>#00ff66</code>, High-Beam Line <code>#55ff99</code>, and Deep Electron Black <code>#020d05</code>.</li>
+            <li><strong>Crisp 1px Neon Wireframe Rendering:</strong> Replaces solid cards, navigation bars, and modals with high-contrast 1px neon wireframe borders and translucent interior alpha fills (<code>rgba(0, 255, 102, 0.03)</code>).</li>
+            <li><strong>Phosphor Persistence Beam Glow:</strong> Multi-layered CSS text and box glows (<code>drop-shadow(0 0 6px #00ff66)</code>) simulating vector beam bloom and slow phosphor cathode decay.</li>
+            <li><strong>WCAG AA/AAA Contrast Compliance:</strong> High-Beam Line on Deep Electron Black achieves a contrast ratio of > 15:1, easily exceeding WCAG Level AA and AAA standards.</li>
+            <li><strong>Zero Layout Shifts:</strong> Instant theme activation with zero performance degradation or geometric shift.</li>
+          </ul>
+        </section>
+
+        <!-- 15c-5. Cyberpunk Neon Sunset Synthwave Outrun Theme Studio (#1365) -->
         <section class="docs-section" id="synthwave-outrun-theme">
           <span class="docs-section-tag">04 / Platform Subsystems</span>
           <h2 class="docs-section-title">Cyberpunk Neon Sunset Synthwave Outrun Theme Studio</h2>
@@ -1260,6 +1277,8 @@ if (ArcadeVerse.a11y.isAudioBeaconEnabled()) {
             <li><strong>Retro Duotone Card Glows:</strong> Community game cards feature dynamic cyan-to-magenta duotone border glows and retro angled italic typography accents.</li>
             <li><strong>Instant Switching & Persistence:</strong> Seamlessly integrated into <code>ThemeCustomizer</code> and <code>ThemeStudio</code> with instant switching and localStorage persistence.</li>
             <li><strong>WCAG 2.1 AA/AAA Compliance:</strong> High contrast text rendering (&gt;14:1 contrast ratio) ensuring full accessibility across all buttons, badges, tables, and dialogs.</li>
+          </ul>
+        </section>
           </ul>
         </section>
 
@@ -1686,6 +1705,7 @@ const joints = chain.getPoints(); // independent snapshot for your renderer</cod
   <script src="assets/js/arcade-wallpaper-generator.js"></script>
   <script src="assets/js/a11y-audio-beacon.js"></script>
   <script src="assets/js/a11y-engine.js"></script>
+  <script src="assets/js/cursor-trails.js"></script>
   <script src="assets/js/sound-engine.js"></script>
   <script src="assets/js/keyboard-shortcuts.js"></script>
   <script src="assets/js/network-detector.js"></script>
