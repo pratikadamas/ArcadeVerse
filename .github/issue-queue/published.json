@@ -1984,5 +1984,65 @@
     "title": "[Feature/Physics]: Cloth & Tearable Mesh PBD (Position Based Dynamics) Wind-Tunnel Sandbox",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1851",
     "published_at": "2026-11-28T13:04:38.045Z"
+  },
+  {
+    "number": 1862,
+    "title": "[Feature/Algorithms]: Interactive Red-Black Self-Balancing Binary Search Tree Rotator Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1862",
+    "published_at": "2026-11-28T13:14:21.065Z"
+  },
+  {
+    "number": 1863,
+    "title": "[Feature/Algorithms]: Interactive Suffix Automaton & Aho-Corasick Multi-Pattern Matcher Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1863",
+    "published_at": "2026-11-28T13:14:26.720Z"
+  },
+  {
+    "number": 1864,
+    "title": "[Feature/Algorithms]: Minimax Alpha-Beta Pruning & Zobrist Transposition Table Tree Inspector",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1864",
+    "published_at": "2026-11-28T13:14:32.358Z"
+  },
+  {
+    "number": 1865,
+    "title": "[Feature/Algorithms]: Lock-Free Ring Buffer & Raft Consensus State-Machine Cluster Simulator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1865",
+    "published_at": "2026-11-28T13:14:37.930Z"
+  },
+  {
+    "number": 1866,
+    "title": "[Feature/Algorithms]: Voronoi Lloyd Relaxation & Centroidal Stipple Territory Generator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1866",
+    "published_at": "2026-11-28T13:14:43.550Z"
+  },
+  {
+    "number": 1867,
+    "title": "[Feature/Emulator]: 6502 Assembly Mini-Computer, Live Zero-Page Memory & 32x32 Pixel Bus",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1867",
+    "published_at": "2026-11-28T13:14:49.161Z"
+  },
+  {
+    "number": 1868,
+    "title": "[Feature/Emulator]: Deterministic Brainfuck & Tape-Machine Optimizing JIT Step Debugger",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1868",
+    "published_at": "2026-11-28T13:14:54.668Z"
+  },
+  {
+    "number": 1869,
+    "title": "[Feature/Tools]: Deterministic L-System Lindenmayer Fractal & Turtle Graphics Grammar Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1869",
+    "published_at": "2026-11-28T13:15:00.278Z"
+  },
+  {
+    "number": 1870,
+    "title": "[Feature/Tools]: Client-Side IEEE-754 Float32/Float64 Bit-Layout & Rounding Error Explorer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1870",
+    "published_at": "2026-11-28T13:15:05.787Z"
+  },
+  {
+    "number": 1871,
+    "title": "[Feature/Tools]: Regex NFA/DFA Thompson Construction & State-Transition Graph Visualizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1871",
+    "published_at": "2026-11-28T13:15:11.418Z"
   }
 ]
