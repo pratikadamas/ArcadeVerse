@@ -1,1 +1,322 @@
-[]
+[
+  {
+    "title": "[New Game]: 'Signal Forge' — Logic Gate Circuit Routing & Timing Diagram Puzzle",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse has no digital-logic circuit puzzle where players wire AND, OR, XOR, NOT, and D-Flip-Flop gates under propagation-delay constraints to match target output waveforms.\n\n## Architectural Scope & Requirements\n1. Create a standalone game strictly inside `games/signal-forge_your-name/` containing **exclusively 4 files**: `index.html`, `style.css`, `game.js`, and `game.json` (no `README.md`, no extra assets, no subfolders).\n2. **Gameplay & Mechanics (`game.js`):**\n   - Interactive breadboard grid with draggable/rotatable logic gates (`AND`, `OR`, `NAND`, `XOR`, `NOT`, `D-FF`), clock-pulse generator, and live animated signal-trace wires.\n   - 12+ progressive levels verified against a real truth-table & multi-cycle waveform comparator.\n   - Include a built-in **How to Play / Controls & Rules** modal.\n3. Use SVG/Lucide icons only (**zero emojis**). Do NOT edit `assets/js/games-registry.js` or root HTML files.\n\n## Acceptance Criteria\n- [ ] Strictly 4 files inside `games/signal-forge_your-name/` (`index.html`, `style.css`, `game.js`, `game.json`).\n- [ ] Logic simulation accurately evaluates combinational and clocked sequential circuits across 12+ levels.\n- [ ] Built-in How to Play modal and SVG-only UI with zero emojis.\n- [ ] Runs cleanly inside the ArcadeVerse iframe sandbox without `window.top` or `window.parent` navigation."
+  },
+  {
+    "title": "[New Game]: 'Tide Sculptor' — Coastal Wave-Breaker & Erosion Defense Sandbox",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse lacks a fluid-wave coastal engineering puzzle where players place angled seawalls, tetrapods, and sand-replenishment groynes to protect harbor structures from storm-surge wave reflections.\n\n## Architectural Scope & Requirements\n1. Create a standalone game strictly inside `games/tide-sculptor_your-name/` containing **exclusively 4 files**: `index.html`, `style.css`, `game.js`, and `game.json`.\n2. **Gameplay & Mechanics (`game.js`):**\n   - 2D shallow-water heightfield wave solver supporting wave refraction, reflection off angled barriers, and shore-tile erosion hp.\n   - Budgeted placement tools (Concrete Seawall, Energy-Dissipating Reef, Tidal Gate) across 10 storm scenarios.\n   - Built-in **How to Play / Controls & Rules** modal.\n3. Use SVG/Lucide icons only (**zero emojis**). Do NOT edit `assets/js/games-registry.js` or root files.\n\n## Acceptance Criteria\n- [ ] Strictly 4 files inside `games/tide-sculptor_your-name/`.\n- [ ] Wave reflection and energy dissipation visibly respond to barrier angles and materials.\n- [ ] Built-in How to Play modal and SVG-only UI with zero emojis."
+  },
+  {
+    "title": "[New Game]: 'Magnetic Drift' — Polarity-Switching Orbital Slingshot Racer",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse has no top-down racing game built around switching ship magnetic polarity (`North`/`South`) to attract or repel off charged track pylons for high-speed cornering.\n\n## Architectural Scope & Requirements\n1. Create a standalone game strictly inside `games/magnetic-drift_your-name/` containing **exclusively 4 files**: `index.html`, `style.css`, `game.js`, and `game.json`.\n2. **Gameplay & Mechanics (`game.js`):**\n   - Continuous inverse-square magnetic force physics with visual field-line arcs, drift trail particles, and checkpoint lap timing.\n   - 6+ multi-lap circuits with ghost-best-lap replay and keyboard + touch controls.\n   - Built-in **How to Play / Controls & Rules** modal.\n3. Use SVG/Lucide icons only (**zero emojis**). Do NOT edit `assets/js/games-registry.js` or root files.\n\n## Acceptance Criteria\n- [ ] Strictly 4 files inside `games/magnetic-drift_your-name/`.\n- [ ] Polarity toggle smoothly switches between attraction and repulsion around charged pylons.\n- [ ] Built-in How to Play modal and SVG-only UI with zero emojis."
+  },
+  {
+    "title": "[New Game]: 'Glyph Weaver' — Turn-Based Runic Spell-Grid & Combo Chain Tactics",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse needs a tactical grid puzzle where players rotate and connect directional rune tiles to trigger multi-step elemental chain reactions before enemy constructs reach the sanctum.\n\n## Architectural Scope & Requirements\n1. Create a standalone game strictly inside `games/glyph-weaver_your-name/` containing **exclusively 4 files**: `index.html`, `style.css`, `game.js`, and `game.json`.\n2. **Gameplay & Mechanics (`game.js`):**\n   - 7x7 tactical board with directional conduit runes, amplifier nodes, and enemy wave AI.\n   - Deterministic turn resolution with chain-multiplier scoring and undo-last-move support.\n   - Built-in **How to Play / Controls & Rules** modal.\n3. Use SVG/Lucide icons only (**zero emojis**). Do NOT edit `assets/js/games-registry.js` or root files.\n\n## Acceptance Criteria\n- [ ] Strictly 4 files inside `games/glyph-weaver_your-name/`.\n- [ ] Conduit chaining and enemy wave progression work deterministically.\n- [ ] Built-in How to Play modal and SVG-only UI with zero emojis."
+  },
+  {
+    "title": "[New Game]: 'Thermal Updraft' — Glider Soaring & Ridge-Lift Endurance Simulator",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse lacks an atmospheric flight-physics game where players pilot an unpowered sailplane across mountain ridges, hunting rising thermal columns and avoiding sink zones to reach distant waypoints.\n\n## Architectural Scope & Requirements\n1. Create a standalone game strictly inside `games/thermal-updraft_your-name/` containing **exclusively 4 files**: `index.html`, `style.css`, `game.js`, and `game.json`.\n2. **Gameplay & Mechanics (`game.js`):**\n   - Aerodynamic lift/drag/stall physics with variometer audio-tone pitch feedback (Web Audio API) and dynamic wind-shear layers.\n   - Procedural ridge terrain with thermal particle columns and distance/altitude HUD.\n   - Built-in **How to Play / Controls & Rules** modal.\n3. Use SVG/Lucide icons only (**zero emojis**). Do NOT edit `assets/js/games-registry.js` or root files.\n\n## Acceptance Criteria\n- [ ] Strictly 4 files inside `games/thermal-updraft_your-name/`.\n- [ ] Realistic glide ratio, stall recovery, and thermal lift mechanics.\n- [ ] Built-in How to Play modal and SVG-only UI with zero emojis."
+  },
+  {
+    "title": "[New Game]: 'Vault Cracker' — Acoustic Pin-Tumbler & Stethoscope Lockpicking Challenge",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse has no precision timing & audio-cue puzzle centered around tension-wrench torque control and spring-pin binding detection.\n\n## Architectural Scope & Requirements\n1. Create a standalone game strictly inside `games/vault-cracker_your-name/` containing **exclusively 4 files**: `index.html`, `style.css`, `game.js`, and `game.json`.\n2. **Gameplay & Mechanics (`game.js`):**\n   - Multi-pin cylinder simulation with binding-order physics, pick-stress meter, and Web Audio click/scrape cues.\n   - 10+ progressive lock tiers (standard, spool, serrated pins) plus timed heist mode.\n   - Built-in **How to Play / Controls & Rules** modal.\n3. Use SVG/Lucide icons only (**zero emojis**). Do NOT edit `assets/js/games-registry.js` or root files.\n\n## Acceptance Criteria\n- [ ] Strictly 4 files inside `games/vault-cracker_your-name/`.\n- [ ] Pin binding order and tension feedback feel responsive with both visual and Web Audio cues.\n- [ ] Built-in How to Play modal and SVG-only UI with zero emojis."
+  },
+  {
+    "title": "[New Game]: 'Borehole Miner' — Subterranean Drill Rig, Heat-Sink & Ore Vein Strategy",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse needs a resource-management digging arcade game where players steer a thermal drill rig through stratified rock layers, balancing drill-bit temperature, hull pressure, and cargo weight.\n\n## Architectural Scope & Requirements\n1. Create a standalone game strictly inside `games/borehole-miner_your-name/` containing **exclusively 4 files**: `index.html`, `style.css`, `game.js`, and `game.json`.\n2. **Gameplay & Mechanics (`game.js`):**\n   - Procedural stratified tilemap with granite, magma pockets, coolant aquifers, and rare mineral veins.\n   - Surface upgrade shop (coolant tank, diamond bit, cargo bay) and fuel-return loop.\n   - Built-in **How to Play / Controls & Rules** modal.\n3. Use SVG/Lucide icons only (**zero emojis**). Do NOT edit `assets/js/games-registry.js` or root files.\n\n## Acceptance Criteria\n- [ ] Strictly 4 files inside `games/borehole-miner_your-name/`.\n- [ ] Smooth digging physics, heat management, and upgrade progression.\n- [ ] Built-in How to Play modal and SVG-only UI with zero emojis."
+  },
+  {
+    "title": "[New Game]: 'Relay Rush' — High-Speed Laser-Link Satellite Constellation Networker",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse has no orbital-mechanics puzzle where players launch and phase-align relay satellites into Keplerian orbits to maintain continuous line-of-sight data links around a rotating planet.\n\n## Architectural Scope & Requirements\n1. Create a standalone game strictly inside `games/relay-rush_your-name/` containing **exclusively 4 files**: `index.html`, `style.css`, `game.js`, and `game.json`.\n2. **Gameplay & Mechanics (`game.js`):**\n   - Two-body orbital propagator with elliptical transfer burns, planetary occlusion raycasts, and packet-throughput scoring.\n   - 8+ mission levels with ground-station targets and solar-storm deadzones.\n   - Built-in **How to Play / Controls & Rules** modal.\n3. Use SVG/Lucide icons only (**zero emojis**). Do NOT edit `assets/js/games-registry.js` or root files.\n\n## Acceptance Criteria\n- [ ] Strictly 4 files inside `games/relay-rush_your-name/`.\n- [ ] Orbital paths and planetary occlusion line-of-sight checks are accurate.\n- [ ] Built-in How to Play modal and SVG-only UI with zero emojis."
+  },
+  {
+    "title": "[New Game]: 'Timber Truss' — Load-Bearing Bridge Stress & Buckling Physics Builder",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse lacks a structural-truss engineering game where players design pin-jointed bridges and test them under moving axle loads with live tension/compression color heatmaps.\n\n## Architectural Scope & Requirements\n1. Create a standalone game strictly inside `games/timber-truss_your-name/` containing **exclusively 4 files**: `index.html`, `style.css`, `game.js`, and `game.json`.\n2. **Gameplay & Mechanics (`game.js`):**\n   - Verlet/impulse truss solver computing per-beam axial stress, snapping beams when yield limits are exceeded.\n   - Multiple materials (Road Deck, Timber Strut, Steel Cable) and 10+ canyon crossing levels.\n   - Built-in **How to Play / Controls & Rules** modal.\n3. Use SVG/Lucide icons only (**zero emojis**). Do NOT edit `assets/js/games-registry.js` or root files.\n\n## Acceptance Criteria\n- [ ] Strictly 4 files inside `games/timber-truss_your-name/`.\n- [ ] Live tension/compression stress visualization and realistic beam-failure physics.\n- [ ] Built-in How to Play modal and SVG-only UI with zero emojis."
+  },
+  {
+    "title": "[New Game]: 'Echo Cavern' — Blind Echolocation Stealth & Acoustic Pulse Navigator",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse has no stealth-exploration game where the entire maze is pitch-black and only becomes visible briefly via expanding sonar wavefronts that also alert nearby patrols.\n\n## Architectural Scope & Requirements\n1. Create a standalone game strictly inside `games/echo-cavern_your-name/` containing **exclusively 4 files**: `index.html`, `style.css`, `game.js`, and `game.json`.\n2. **Gameplay & Mechanics (`game.js`):**\n   - 2D raycasted/grid-propagated soundwave rings that bounce off walls and fade over distance.\n   - Soft-step vs loud-ping trade-off against sound-sensitive cavern stalkers across 10+ handcrafted/seeded chambers.\n   - Built-in **How to Play / Controls & Rules** modal.\n3. Use SVG/Lucide icons only (**zero emojis**). Do NOT edit `assets/js/games-registry.js` or root files.\n\n## Acceptance Criteria\n- [ ] Strictly 4 files inside `games/echo-cavern_your-name/`.\n- [ ] Acoustic pulse rendering, wall reflections, and enemy hearing AI work smoothly.\n- [ ] Built-in How to Play modal and SVG-only UI with zero emojis."
+  },
+  {
+    "title": "[New Game]: 'Clockwork Escapement' — Gear Ratio & Mainspring Pendulum Timing Puzzle",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse has no mechanical horology puzzle where players mesh gears of different tooth counts to drive multiple clock hands at exact target angular ratios.\n\n## Architectural Scope & Requirements\n1. Create a standalone game strictly inside `games/clockwork-escapement_your-name/` containing **exclusively 4 files**: `index.html`, `style.css`, `game.js`, and `game.json`.\n2. **Gameplay & Mechanics (`game.js`):**\n   - Procedural involute-style gear rendering with accurate `ratio = -N1 / N2` angular velocity coupling and jam-detection.\n   - 12+ horology levels requiring exact RPM and direction targets on output dials.\n   - Built-in **How to Play / Controls & Rules** modal.\n3. Use SVG/Lucide icons only (**zero emojis**). Do NOT edit `assets/js/games-registry.js` or root files.\n\n## Acceptance Criteria\n- [ ] Strictly 4 files inside `games/clockwork-escapement_your-name/`.\n- [ ] Meshed gears rotate at exact tooth-count ratios and detect mechanical jams.\n- [ ] Built-in How to Play modal and SVG-only UI with zero emojis."
+  },
+  {
+    "title": "[New Game]: 'Vector Interceptor' — Ballistic Lead-Prediction & Radar Turret Defense",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse needs a minimalist vector-CRT missile defense game where players manually dial azimuth, elevation, and fuse-timer altitude to intercept incoming ballistic arcs.\n\n## Architectural Scope & Requirements\n1. Create a standalone game strictly inside `games/vector-interceptor_your-name/` containing **exclusively 4 files**: `index.html`, `style.css`, `game.js`, and `game.json`.\n2. **Gameplay & Mechanics (`game.js`):**\n   - True projectile gravity kinematics, optional predictive lead-reticle assist, flak blast-radius shockwaves, and multi-wave escalation.\n   - Crisp vector-phosphor Canvas rendering with Web Audio radar pings.\n   - Built-in **How to Play / Controls & Rules** modal.\n3. Use SVG/Lucide icons only (**zero emojis**). Do NOT edit `assets/js/games-registry.js` or root files.\n\n## Acceptance Criteria\n- [ ] Strictly 4 files inside `games/vector-interceptor_your-name/`.\n- [ ] Ballistic trajectories, fuse-detonation timing, and blast interception work accurately.\n- [ ] Built-in How to Play modal and SVG-only UI with zero emojis."
+  },
+  {
+    "title": "[New Game]: 'Mycelium Web' — Nutrient-Network Bio-Expansion & Territory Strategy",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse lacks an organic network-growth strategy game where players extend branching fungal hyphae across a forest-floor graph to capture moisture nodes before rival spores.\n\n## Architectural Scope & Requirements\n1. Create a standalone game strictly inside `games/mycelium-web_your-name/` containing **exclusively 4 files**: `index.html`, `style.css`, `game.js`, and `game.json`.\n2. **Gameplay & Mechanics (`game.js`):**\n   - Real-time graph-flow nutrient transport, branch pruning/reinforcement, and competing AI spore colony.\n   - 8+ soil maps with toxic barriers and rich humus clusters.\n   - Built-in **How to Play / Controls & Rules** modal.\n3. Use SVG/Lucide icons only (**zero emojis**). Do NOT edit `assets/js/games-registry.js` or root files.\n\n## Acceptance Criteria\n- [ ] Strictly 4 files inside `games/mycelium-web_your-name/`.\n- [ ] Nutrient flow, branch growth, and AI territory competition run smoothly at 60fps.\n- [ ] Built-in How to Play modal and SVG-only UI with zero emojis."
+  },
+  {
+    "title": "[New Game]: 'Gyro Courier' — Two-Wheeled Self-Balancing Cargo Delivery Platformer",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse has no PID-assisted unicycle/segway courier platformer where players lean to accelerate while keeping stacked fragile parcels balanced over ramps and seesaws.\n\n## Architectural Scope & Requirements\n1. Create a standalone game strictly inside `games/gyro-courier_your-name/` containing **exclusively 4 files**: `index.html`, `style.css`, `game.js`, and `game.json`.\n2. **Gameplay & Mechanics (`game.js`):**\n   - Inverted-pendulum angular physics with cargo-stack inertia, terrain slope normal alignment, and delivery-zone scoring.\n   - 8+ side-scrolling obstacle courses with keyboard and touch tilt controls.\n   - Built-in **How to Play / Controls & Rules** modal.\n3. Use SVG/Lucide icons only (**zero emojis**). Do NOT edit `assets/js/games-registry.js` or root files.\n\n## Acceptance Criteria\n- [ ] Strictly 4 files inside `games/gyro-courier_your-name/`.\n- [ ] Inverted-pendulum balance and stacked cargo physics feel responsive and fair.\n- [ ] Built-in How to Play modal and SVG-only UI with zero emojis."
+  },
+  {
+    "title": "[New Game]: 'Prism Foundry' — Dichroic Beam Splitting & Additive Color Mixing Lab Game",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse has no optical-physics puzzle focused on RGB additive beam mixing, dichroic mirrors, and wavelength-selective filters to energize multi-color receivers simultaneously.\n\n## Architectural Scope & Requirements\n1. Create a standalone game strictly inside `games/prism-foundry_your-name/` containing **exclusively 4 files**: `index.html`, `style.css`, `game.js`, and `game.json`.\n2. **Gameplay & Mechanics (`game.js`):**\n   - Exact 2D ray-segment intersection solver with RGB channel bitmasks, 45/90-degree mirrors, beam splitters, and color-pass filters.\n   - 14+ puzzle stages with cycle/infinite-loop guard and step undo.\n   - Built-in **How to Play / Controls & Rules** modal.\n3. Use SVG/Lucide icons only (**zero emojis**). Do NOT edit `assets/js/games-registry.js` or root files.\n\n## Acceptance Criteria\n- [ ] Strictly 4 files inside `games/prism-foundry_your-name/`.\n- [ ] Ray tracing handles splitters, filters, and additive RGB combinations accurately.\n- [ ] Built-in How to Play modal and SVG-only UI with zero emojis."
+  },
+  {
+    "title": "[Feature/Audio]: Karplus-Strong Plucked String Physical Modeling Synthesizer Studio",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse's audio labs cover FM/subtractive synthesis, but lack a physical-modeling Karplus-Strong delay-line string synthesizer for acoustic guitar, harp, and bowed-string timbres.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/karplus-strong-synth.js` and `assets/css/karplus-strong-synth.css` (260+ LOC):\n   - Implement a pure JS **Karplus-Strong** ring-buffer delay line with fractional-delay linear/allpass tuning, damping low-pass filter, pick-position comb excitation, and decay-stretch parameter.\n   - Interactive multi-string fretboard/harp Canvas UI with live oscillating string-displacement waveform and spectroscope.\n2. Pure Vanilla JS + Web Audio API, zero external libraries, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-karplus-strong-synth.js` (`node:test`) verifying ring-buffer pitch period accuracy, energy decay monotonicity, and damping filter stability.\n\n## Acceptance Criteria\n- [ ] Karplus-Strong delay-line synthesis produces accurate pitched plucks across 3+ octaves.\n- [ ] Pick position, damping, and brightness controls audibly and visually alter harmonic decay.\n- [ ] Unit test `scripts/test-karplus-strong-synth.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Audio]: Biquad Parametric EQ & Pole-Zero Z-Plane Filter Topology Visualizer",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nDevelopers building Web Audio effects need an interactive Z-plane pole-zero filter explorer that links complex-plane pole/zero placement directly to real-time Biquad frequency and phase response.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/zplane-biquad-lab.js` and `assets/css/zplane-biquad-lab.css` (260+ LOC):\n   - Compute exact second-order IIR coefficients (`b0, b1, b2, a1, a2`) from draggable conjugate pole/zero pairs on the unit circle, enforcing stability (`|pole| < 1`).\n   - Render coupled Z-plane unit circle + magnitude/phase Bode plots + live Web Audio `IIRFilterNode` auditioning.\n2. Pure Vanilla JS/Canvas/CSS3, zero external DSP libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-zplane-biquad-lab.js` verifying conjugate-pair polynomial expansion, unit-circle stability clamping, and DC/Nyquist gain evaluation.\n\n## Acceptance Criteria\n- [ ] Dragging poles and zeros updates IIR coefficients and Bode magnitude/phase curves in real time.\n- [ ] Stability guard prevents poles from crossing outside the unit circle.\n- [ ] Unit test `scripts/test-zplane-biquad-lab.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Audio]: Real-Time LPC Formant Vocal Tract & Vowel Formant Synthesizer",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse has no speech-tract formant synthesizer letting retro game creators synthesize robotic/choral vowel formants (`F1, F2, F3`) via parallel bandpass resonators.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/formant-vocal-synth.js` and `assets/css/formant-vocal-synth.css` (250+ LOC):\n   - Implement glottal-pulse oscillator + 3 parallel formant bandpass filters (`F1/F2/F3` frequency & bandwidth) with an interactive **2D F1-vs-F2 Vowel Trapezoid Pad** (`/i/, /e/, /a/, /o/, /u/`).\n   - Include vibrato LFO, breathiness noise mix, and live spectral envelope overlay.\n2. Pure Vanilla JS + Web Audio API, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-formant-vocal-synth.js` verifying vowel preset formant tables, bilinear interpolation across the vowel pad, and filter Q-factor bounds.\n\n## Acceptance Criteria\n- [ ] Dragging across the F1/F2 vowel pad smoothly morphs synthesized vowel formants.\n- [ ] Live spectral envelope clearly shows the three resonant formant peaks.\n- [ ] Unit test `scripts/test-formant-vocal-synth.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Audio]: Euclidean Polyrhythm Matrix & Bjorklund Rhythm Generator Sequencer",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse's rhythm tools lack a **Bjorklund Euclidean rhythm** sequencer that distributes `k` pulses as evenly as possible across `n` steps on concentric circular rings.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/euclidean-rhythm-lab.js` and `assets/css/euclidean-rhythm-lab.css` (250+ LOC):\n   - Implement exact Bjorklund/Bresenham Euclidean pulse distribution `E(k, n)` with per-ring phase rotation offset, swing, and Web Audio synthesized percussion voices.\n   - Render interactive concentric polygon rings on 2D Canvas with playhead sweep.\n2. Pure Vanilla JS/Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-euclidean-rhythm-lab.js` verifying classic rhythms (`E(3,8)` Tresillo, `E(5,8)` Cinquillo, `E(5,16)` Bossa-Nova) and rotation invariance.\n\n## Acceptance Criteria\n- [ ] Bjorklund algorithm generates exact Euclidean step patterns and polygon geometry.\n- [ ] Multi-ring polyrhythm playback stays sample-accurate via Web Audio lookahead scheduling.\n- [ ] Unit test `scripts/test-euclidean-rhythm-lab.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Graphics]: Marching Squares Isoline Contour & Procedural Metaballs Renderer",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse has no **Marching Squares** scalar-field contouring studio demonstrating lookup-table edge interpolation, saddle-point disambiguation, and smooth metaball rendering.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/marching-squares-lab.js` and `assets/css/marching-squares-lab.css` (260+ LOC):\n   - Implement full 16-case Marching Squares with linear edge interpolation, asymptotic decider for saddle cases (`5` and `10`), and interactive animated metaballs + Perlin/value-noise terrain elevation mode.\n   - Toggleable grid cells, corner scalar signs, and multi-level topographic contour bands.\n2. Pure Vanilla JS/2D Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-marching-squares-lab.js` testing all 16 bitmask cases, linear edge interpolation exactness, and closed-loop contour continuity.\n\n## Acceptance Criteria\n- [ ] All 16 Marching Squares cases render watertight, linearly interpolated isolines.\n- [ ] Interactive metaballs and topographic noise fields update smoothly at 60fps.\n- [ ] Unit test `scripts/test-marching-squares-lab.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Graphics]: Floyd-Steinberg & Bayer Ordered-Dithering Retro Palette Quantizer",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nRetro pixel-art and Game Boy/CGA/EGA creators need an interactive dithering lab comparing Floyd-Steinberg error diffusion, Atkinson dithering, and Bayer `2x2`/`4x4`/`8x8` ordered threshold matrices.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/dither-palette-studio.js` and `assets/css/dither-palette-studio.css` (260+ LOC):\n   - Implement perceptual CIE76/Euclidean RGB palette quantization with **Floyd-Steinberg**, **Atkinson**, **Jarvis-Judice-Ninke**, and **Bayer Ordered Dithering** (`2x2`, `4x4`, `8x8`).\n   - Include built-in procedural test scenes + local image upload (`FileReader`, downscaled safely) and custom palette presets (DMG-01, CGA, Pico-8, 1-bit).\n2. Pure Vanilla JS/`ImageData`/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-dither-palette-studio.js` verifying Bayer matrix recursive generation, error-diffusion kernel weight sums, and output palette membership.\n\n## Acceptance Criteria\n- [ ] All 4 dithering algorithms produce crisp, palette-exact retro outputs.\n- [ ] Side-by-side split-slider comparison works smoothly on procedural and uploaded images.\n- [ ] Unit test `scripts/test-dither-palette-studio.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Graphics]: Reaction-Diffusion Gray-Scott Morphogenesis Pattern Simulator",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse has no **Gray-Scott Reaction-Diffusion** PDE simulator for generating organic coral, fingerprint, mitosis, and Turing-spot procedural textures on HTML5 Canvas.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/gray-scott-rd.js` and `assets/css/gray-scott-rd.css` (250+ LOC):\n   - Implement 2D 9-point Laplacian finite-difference Gray-Scott solver (`dU/dt`, `dV/dt`) with interactive brush seeding, feed/kill `(f, k)` parameter map, and multi-stop color-ramp LUTs.\n   - Include curated presets (Mitosis, Coral, Spirals, Solitons) and PNG texture export.\n2. Pure Vanilla JS/2D Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-gray-scott-rd.js` verifying 9-point Laplacian zero-sum weights on uniform fields, concentration clamping `[0, 1]`, and steady-state preservation.\n\n## Acceptance Criteria\n- [ ] Gray-Scott simulation runs smoothly with interactive brush seeding and `(f, k)` presets.\n- [ ] Clicking the `(f, k)` phase diagram switches morphogenesis regimes live.\n- [ ] Unit test `scripts/test-gray-scott-rd.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Graphics]: 2D Visibility Polygon & Dynamic Hard/Soft Shadow Raycaster Studio",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nTop-down stealth and roguelike game authors need an exact **angular-sweep 2D visibility polygon** engine rather than naive fixed-step raymarching that misses sharp wall corners.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/visibility-polygon-2d.js` and `assets/css/visibility-polygon-2d.css` (260+ LOC):\n   - Implement exact endpoint-angle sweep raycasting (`angle - eps, angle, angle + eps`) against arbitrary polygon walls, producing a sorted triangle-fan visibility mesh.\n   - Interactive light-source dragging, drawable obstacle polygons, and optional penumbra soft-shadow blur.\n2. Pure Vanilla JS/2D Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-visibility-polygon-2d.js` verifying ray-segment intersection math, corner-grazing visibility, and radial ordering of output vertices.\n\n## Acceptance Criteria\n- [ ] Visibility polygon snaps cleanly to every obstacle vertex with zero corner flicker.\n- [ ] Users can drag lights and draw custom wall segments in real time.\n- [ ] Unit test `scripts/test-visibility-polygon-2d.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Graphics]: Wave Function Collapse (WFC) Adjacency Tilemap & Backtracking Generator",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nProcedural dungeon and city-tile games benefit from **Wave Function Collapse (WFC)** constraint propagation, yet ArcadeVerse has no interactive WFC solver with step-by-step entropy visualization.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/wfc-tile-solver.js` and `assets/css/wfc-tile-solver.css` (280+ LOC):\n   - Implement Shannon-entropy cell selection, AC-3/queue-based socket-adjacency constraint propagation, and contradiction backtracking.\n   - Render a live grid showing remaining superposition mini-tiles per cell, Step / Auto-Solve / Seed controls, and 2+ tilesets (Circuit Traces, Coastline Roads).\n2. Pure Vanilla JS/2D Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-wfc-tile-solver.js` verifying zero adjacency-socket violations on completed boards and deterministic seeded generation.\n\n## Acceptance Criteria\n- [ ] WFC collapses arbitrary grids with zero socket mismatches and clean contradiction recovery.\n- [ ] Step mode visualizes entropy reduction and constraint propagation waves.\n- [ ] Unit test `scripts/test-wfc-tile-solver.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Graphics]: Catmull-Rom & Cubic Bezier Arc-Length Parameterized Spline Camera Editor",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nGame cutscenes and racing tracks need **arc-length parameterized** splines so objects move at constant speed rather than bunching up near closely-spaced control points.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/spline-arclength-lab.js` and `assets/css/spline-arclength-lab.css` (250+ LOC):\n   - Implement Centripetal Catmull-Rom and Cubic Bezier evaluators plus cumulative Gauss-Legendre / LUT arc-length re-parameterization (`s -> u`).\n   - Side-by-side comparison of naive `t`-parameterized vs constant-speed `s`-parameterized tracers, curvature comb plot, and draggable control points.\n2. Pure Vanilla JS/2D Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-spline-arclength-lab.js` verifying endpoint interpolation, uniform arc-length sample spacing tolerance, and closed-loop C1 continuity.\n\n## Acceptance Criteria\n- [ ] Arc-length tracer maintains constant tangential speed across uneven control-point spacing.\n- [ ] Curvature comb and tangent/normal Frenet vectors render accurately.\n- [ ] Unit test `scripts/test-spline-arclength-lab.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Physics]: 2D Rigid-Body Separating Axis Theorem (SAT) & Impulse Manifold Sandbox",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nWhile ArcadeVerse has broadphase collision tools, it lacks a full **convex-polygon SAT narrowphase + sequential impulse solver** with friction, restitution, and angular torque.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/sat-rigidbody-2d.js` and `assets/css/sat-rigidbody-2d.css` (290+ LOC):\n   - Implement Separating Axis Theorem (`SAT`) minimum translation vector (`MTV`), Sutherland-Hodgman contact-point clipping, and sequential-impulse solver with rotational inertia.\n   - Interactive sandbox to spawn/drag boxes, triangles, and hexagons with live contact-normal & penetration-depth debug vectors.\n2. Pure Vanilla JS/2D Canvas/CSS3, zero external physics engines, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-sat-rigidbody-2d.js` verifying SAT separation/overlap detection on rotated convex polygons, MTV direction, and momentum/restitution impulse sign.\n\n## Acceptance Criteria\n- [ ] Convex polygons stack, bounce, and rotate realistically under gravity and friction.\n- [ ] Debug overlay visualizes contact points, normals, and MTVs.\n- [ ] Unit test `scripts/test-sat-rigidbody-2d.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Physics]: FABRIK Inverse Kinematics (IK) Multi-Jointed Tentacle & Limb Solver",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nProcedural boss tentacles and articulated character limbs require **FABRIK (Forward And Backward Reaching Inverse Kinematics)** with angular joint-cone constraints.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/fabrik-ik-solver.js` and `assets/css/fabrik-ik-solver.css` (250+ LOC):\n   - Implement iterative FABRIK solver supporting arbitrary bone lengths, root pinning, pole targets, and per-joint angular limits.\n   - Interactive Canvas where users drag targets, toggle joint-angle constraints, and inspect forward/backward iteration convergence.\n2. Pure Vanilla JS/2D Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-fabrik-ik-solver.js` verifying exact bone-length preservation after solving, target reachability convergence, and out-of-reach collinear extension.\n\n## Acceptance Criteria\n- [ ] FABRIK preserves exact segment lengths across all iterations and constraints.\n- [ ] Multi-limb and tentacle presets follow cursor targets smoothly at 60fps.\n- [ ] Unit test `scripts/test-fabrik-ik-solver.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Physics]: Eulerian Grid Smoke & Ink Advection Fluid Solver (Jos Stam Stable Fluids)",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse lacks a real-time **Stable Fluids** Eulerian velocity-grid solver (semi-Lagrangian advection, Gauss-Seidel Jacobi pressure projection, vorticity confinement) for smoke and ink effects.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/stable-fluids-2d.js` and `assets/css/stable-fluids-2d.css` (280+ LOC):\n   - Implement Jos Stam's incompressible Navier-Stokes grid solver (`diffuse`, `advect`, `project` divergence-free pass, `curl` vorticity confinement) using `Float32Array` buffers.\n   - Interactive Canvas dye-injection brush, velocity-arrow debug overlay, viscosity & vorticity sliders.\n2. Pure Vanilla JS/2D Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-stable-fluids-2d.js` verifying post-projection velocity divergence approaches zero and dye mass conservation under pure advection.\n\n## Acceptance Criteria\n- [ ] Incompressible fluid swirls smoothly without numerical blow-up under rapid mouse drags.\n- [ ] Velocity vector field and divergence telemetry render cleanly.\n- [ ] Unit test `scripts/test-stable-fluids-2d.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Physics]: Barnes-Hut Quadtree N-Body Gravitational Galaxy & Tidal Merger Simulator",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nDirect `O(N^2)` N-body gravity stalls past a few hundred stars; ArcadeVerse needs an `O(N log N)` **Barnes-Hut Quadtree** monopole approximation solver with Leapfrog symplectic integration.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/barnes-hut-nbody.js` and `assets/css/barnes-hut-nbody.css` (270+ LOC):\n   - Implement adaptive Barnes-Hut quadtree construction, center-of-mass aggregation, `s / d < theta` opening-angle approximation, and Velocity-Verlet/Leapfrog integrator.\n   - Presets for Spiral Galaxy Collision, Plummer Sphere, and Binary Star Rings with live quadtree cell overlay and `theta` accuracy slider.\n2. Pure Vanilla JS/2D Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-barnes-hut-nbody.js` comparing Barnes-Hut (`theta = 0`) exactness against direct `O(N^2)` force and total-mass conservation.\n\n## Acceptance Criteria\n- [ ] Simulates 1,500+ gravitating particles smoothly with toggleable quadtree cell visualization.\n- [ ] `theta = 0` matches direct `O(N^2)` gravitational acceleration within floating-point tolerance.\n- [ ] Unit test `scripts/test-barnes-hut-nbody.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Physics]: Cloth & Tearable Mesh PBD (Position Based Dynamics) Wind-Tunnel Sandbox",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse has no **Position Based Dynamics (PBD)** cloth simulator supporting structural/shear/bending distance constraints, aerodynamic wind drag, and stress-based fabric tearing.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/pbd-cloth-mesh.js` and `assets/css/pbd-cloth-mesh.css` (260+ LOC):\n   - Implement PBD particle solver with Gauss-Seidel distance-constraint relaxation, pin-node anchors, mouse-slice tearing, and directional wind gusts.\n   - Visual stress-coloring on cloth links and interactive pin/cut/drag toolbars.\n2. Pure Vanilla JS/2D Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-pbd-cloth-mesh.js` verifying rest-length constraint convergence, pinned-vertex immobility, and tear-threshold link removal.\n\n## Acceptance Criteria\n- [ ] Cloth drapes, billows in wind, and tears cleanly along stressed or sliced links.\n- [ ] Pinned vertices remain fixed while solver iterations keep stretch minimal.\n- [ ] Unit test `scripts/test-pbd-cloth-mesh.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Algorithms]: Interactive Red-Black Self-Balancing Binary Search Tree Rotator Lab",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nStudents and game-engine devs often struggle with **Red-Black Tree** recoloring and left/right rotation invariants during insertion and deletion.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/red-black-tree-lab.js` and `assets/css/red-black-tree-lab.css` (260+ LOC):\n   - Implement full Red-Black Tree (`insert`, `delete`, `leftRotate`, `rightRotate`, `fixInsert`, `fixDelete`) with animated step-by-step transition logs explaining each case (`Uncle Red`, `Triangle Left-Right`, `Line Rotation`).\n   - Live black-height indicator and invariant validator badge.\n2. Pure Vanilla JS/SVG or Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-red-black-tree-lab.js` asserting all 5 Red-Black invariants (root black, no red-red parent-child, uniform black-height on all root-to-NIL paths) across random insert/delete sequences.\n\n## Acceptance Criteria\n- [ ] Every insertion and deletion preserves all 5 Red-Black invariants.\n- [ ] Step-by-step mode highlights rotations and recoloring decisions clearly.\n- [ ] Unit test `scripts/test-red-black-tree-lab.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Algorithms]: Interactive Suffix Automaton & Aho-Corasick Multi-Pattern Matcher Lab",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse has no string-algorithm visualizer for **Aho-Corasick** multi-pattern trie failure-link construction and linear-time stream scanning.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/aho-corasick-lab.js` and `assets/css/aho-corasick-lab.css` (250+ LOC):\n   - Implement Aho-Corasick trie builder, BFS failure-link & dictionary-suffix-link computation, and step-by-step character stream matcher.\n   - Interactive Canvas state-graph showing solid goto edges, dashed blue failure links, and highlighted match emissions.\n2. Pure Vanilla JS/2D Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-aho-corasick-lab.js` verifying exact multi-pattern match positions (including overlapping patterns) against naive substring search.\n\n## Acceptance Criteria\n- [ ] Failure links and output-link chains match exact Aho-Corasick linear-time behavior.\n- [ ] Stepping through input text animates state transitions and failure-link fallbacks.\n- [ ] Unit test `scripts/test-aho-corasick-lab.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Algorithms]: Minimax Alpha-Beta Pruning & Zobrist Transposition Table Tree Inspector",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nBoard-game AI authors need a visual **Minimax + Alpha-Beta Pruning + Zobrist Hashing** explorer showing how move ordering dramatically increases branch cutoffs.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/alphabeta-tree-lab.js` and `assets/css/alphabeta-tree-lab.css` (260+ LOC):\n   - Implement interactive Connect-4 / Tic-Tac-Toe 4x4 search tree with Minimax vs Alpha-Beta vs Zobrist Transposition Table toggle.\n   - Render expandable search-tree nodes displaying `[alpha, beta]` windows, pruned subtrees (crossed/dimmed), and node-evaluation count comparison.\n2. Pure Vanilla JS/Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-alphabeta-tree-lab.js` verifying Alpha-Beta returns identical root best-move scores as unpruned Minimax while evaluating strictly fewer or equal nodes.\n\n## Acceptance Criteria\n- [ ] Alpha-Beta produces 100% score parity with Minimax while visibly pruning branches.\n- [ ] Node inspector displays `[alpha, beta]` bounds and Zobrist transposition cache hits.\n- [ ] Unit test `scripts/test-alphabeta-tree-lab.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Algorithms]: Lock-Free Ring Buffer & Raft Consensus State-Machine Cluster Simulator",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nDistributed-systems learners lack an interactive **Raft Consensus** simulator in ArcadeVerse demonstrating leader election, randomized election timeouts, split-vote recovery, and log replication.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/raft-consensus-lab.js` and `assets/css/raft-consensus-lab.css` (280+ LOC):\n   - Implement deterministic/steppable Raft node state machine (`Follower`, `Candidate`, `Leader`), `RequestVote` & `AppendEntries` RPC packets in flight, network partition toggles, and node crash/restart.\n   - Visual cluster ring with animated RPC envelopes and per-node replicated log indices.\n2. Pure Vanilla JS/Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-raft-consensus-lab.js` verifying single-leader-per-term invariant, majority quorum election, and log-index commitment after partition heal.\n\n## Acceptance Criteria\n- [ ] At most one leader is elected per term, even under simulated network partitions.\n- [ ] Replicated logs converge across recovered nodes once majority quorum is restored.\n- [ ] Unit test `scripts/test-raft-consensus-lab.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Algorithms]: Voronoi Lloyd Relaxation & Centroidal Stipple Territory Generator",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nProcedural map generators use **Lloyd's Relaxation** on Voronoi diagrams to turn clumped random seeds into evenly spaced organic regions, a technique not yet showcased in ArcadeVerse.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/voronoi-lloyd-lab.js` and `assets/css/voronoi-lloyd-lab.css` (260+ LOC):\n   - Implement clipped half-plane / Fortune-or-Delaunay-dual Voronoi cell polygon builder + polygon centroid calculation + iterative **Lloyd Relaxation** stepper.\n   - Interactive seed placement, relaxation iteration counter, and island-biome elevation coloring mode.\n2. Pure Vanilla JS/2D Canvas/CSS3, zero external geometry libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-voronoi-lloyd-lab.js` verifying Voronoi nearest-site property on cell centroids and variance reduction in cell areas after Lloyd iterations.\n\n## Acceptance Criteria\n- [ ] Each Lloyd step moves seeds toward their Voronoi cell centroids, reducing area variance.\n- [ ] Users can add/drag sites and switch between wireframe cells and biome map view.\n- [ ] Unit test `scripts/test-voronoi-lloyd-lab.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Emulator]: 6502 Assembly Mini-Computer, Live Zero-Page Memory & 32x32 Pixel Bus",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse's emulator tools lack a classic **MOS 6502** subset CPU & two-pass assembler with a memory-mapped 32x32 color display (`$0200-$05FF`) like classic retro consoles.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/mos6502-sandbox.js` and `assets/css/mos6502-sandbox.css` (320+ LOC):\n   - Implement core 6502 opcodes (`LDA, LDX, LDY, STA, STX, ADC, SBC, INC, DEC, INX, DEX, CMP, BEQ, BNE, BCC, BCS, JMP, JSR, RTS, BRK`) with addressing modes (`Immediate, ZeroPage, Absolute, Indexed`).\n   - Built-in two-pass assembler, `A/X/Y/SP/PC/NV-BDIZC` register inspector, hex memory viewer, and 32x32 RGB pixel screen mapped to `$0200-$05FF`.\n2. Pure Vanilla JS/Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-mos6502-sandbox.js` testing arithmetic carry/zero/negative flags, subroutine `JSR/RTS` stack round-trips, and assembler branch-offset encoding.\n\n## Acceptance Criteria\n- [ ] Assembles and executes sample 6502 programs (gradient fill, bouncing sprite) on the 32x32 display.\n- [ ] Step, Run, Reset, and register/stack inspection work accurately.\n- [ ] Unit test `scripts/test-mos6502-sandbox.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Emulator]: Deterministic Brainfuck & Tape-Machine Optimizing JIT Step Debugger",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse has no visual **Turing-tape / Brainfuck** optimizing interpreter showing bracket-jump pairing, run-length instruction folding (`++++` -> `ADD 4`), and live tape-head memory.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/tape-vm-debugger.js` and `assets/css/tape-vm-debugger.css` (250+ LOC):\n   - Implement parser/validator (balanced `[`/`]`), IR optimizer (folding repeated `+/-/</>`, clear-loop `[-]` -> `ZERO`), and step/breakpoint execution with cycle cap.\n   - Visual tape strip with active pointer highlight, ASCII/Hex output console, and curated sample programs (Fibonacci, Mandelbrot mini).\n2. Pure Vanilla JS/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-tape-vm-debugger.js` verifying IR optimization parity vs unoptimized execution, unmatched-bracket error reporting, and cycle-limit infinite-loop protection.\n\n## Acceptance Criteria\n- [ ] Optimized IR execution matches unoptimized output 100% with fewer execution steps.\n- [ ] Unbalanced brackets and infinite-loop step caps fail safely without freezing the UI.\n- [ ] Unit test `scripts/test-tape-vm-debugger.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Tools]: Deterministic L-System Lindenmayer Fractal & Turtle Graphics Grammar Studio",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nProcedural flora and fractal builders need an interactive **L-System** grammar studio with stack branching (`[`/`]`), stochastic rules, and live Canvas turtle rendering.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/lsystem-turtle-studio.js` and `assets/css/lsystem-turtle-studio.css` (250+ LOC):\n   - Implement deterministic & stochastic L-System string rewriter with expansion-length safety cap, plus 2D Turtle Graphics interpreter (`F, +, -, [, ]`) with tapered branch thickness and leaf coloring.\n   - Include presets (Koch Snowflake, Dragon Curve, Sierpinski, Fractal Fern, Algorithmic Tree) and SVG export.\n2. Pure Vanilla JS/Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-lsystem-turtle-studio.js` verifying exact rewrite string expansion, turtle stack push/pop state restoration, and max-char safety clamping.\n\n## Acceptance Criteria\n- [ ] Custom axiom/rules/angle/iterations render crisp fractals and branching plants.\n- [ ] Expansion safety cap prevents browser OOM on high iteration counts.\n- [ ] Unit test `scripts/test-lsystem-turtle-studio.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Tools]: Client-Side IEEE-754 Float32/Float64 Bit-Layout & Rounding Error Explorer",
+    "labels": [
+      "nsoc26",
+      "level2"
+    ],
+    "body": "## Problem\nPhysics and shader developers frequently run into `0.1 + 0.2 !== 0.3`, `NaN`, subnormals, and precision loss, yet ArcadeVerse has no interactive **IEEE-754** bit-level inspector.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/ieee754-bit-explorer.js` and `assets/css/ieee754-bit-explorer.css` (220+ LOC):\n   - Use `DataView` (`Float32Array`/`Float64Array`/`BigUint64Array`) to decode and interactively toggle individual **Sign**, **Exponent**, and **Mantissa** bits in real time.\n   - Display exact decimal value, hex representation, ULP (Unit in Last Place) spacing, and special-value presets (`-0`, `+Inf`, `NaN`, `Denormal Min`).\n2. Pure Vanilla JS/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-ieee754-bit-explorer.js` verifying exact Sign/Exponent/Mantissa bit extraction for `0.1`, `-0`, `Infinity`, `NaN`, and subnormal floats.\n\n## Acceptance Criteria\n- [ ] Clicking any of the 32 or 64 bits toggles the value and updates decimal/hex/ULP live.\n- [ ] Correctly classifies Normal, Subnormal, Zero, Infinity, and NaN.\n- [ ] Unit test `scripts/test-ieee754-bit-explorer.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Tools]: Regex NFA/DFA Thompson Construction & State-Transition Graph Visualizer",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse has no **Thompson's Construction + Subset Construction** regular-expression engine visualizing how a regex compiles into an epsilon-NFA and minimized DFA.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/regex-nfa-dfa-lab.js` and `assets/css/regex-nfa-dfa-lab.css` (270+ LOC):\n   - Implement regex parser (concatenation, alternation `|`, Kleene star `*`, plus `+`, optional `?`, grouping `()`), Thompson epsilon-NFA builder, and Subset Construction DFA converter.\n   - Render interactive state-machine graph and step-by-step test-string matcher highlighting active states.\n2. Pure Vanilla JS/Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-regex-nfa-dfa-lab.js` verifying NFA and DFA acceptance parity against native `RegExp` on 20+ patterns.\n\n## Acceptance Criteria\n- [ ] Compiles valid regexes into both epsilon-NFA and deterministic DFA state graphs.\n- [ ] NFA and DFA match results agree 100% across positive and negative test strings.\n- [ ] Unit test `scripts/test-regex-nfa-dfa-lab.js` passes cleanly under `node`."
+  }
+]
