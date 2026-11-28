@@ -1864,5 +1864,65 @@
     "title": "[New Game]: 'Echo Cavern' — Blind Echolocation Stealth & Acoustic Pulse Navigator",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1831",
     "published_at": "2026-11-28T11:39:49.303Z"
+  },
+  {
+    "number": 1832,
+    "title": "[New Game]: 'Clockwork Escapement' — Gear Ratio & Mainspring Pendulum Timing Puzzle",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1832",
+    "published_at": "2026-11-28T12:58:30.694Z"
+  },
+  {
+    "number": 1833,
+    "title": "[New Game]: 'Vector Interceptor' — Ballistic Lead-Prediction & Radar Turret Defense",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1833",
+    "published_at": "2026-11-28T12:58:36.445Z"
+  },
+  {
+    "number": 1834,
+    "title": "[New Game]: 'Mycelium Web' — Nutrient-Network Bio-Expansion & Territory Strategy",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1834",
+    "published_at": "2026-11-28T12:58:42.122Z"
+  },
+  {
+    "number": 1835,
+    "title": "[New Game]: 'Gyro Courier' — Two-Wheeled Self-Balancing Cargo Delivery Platformer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1835",
+    "published_at": "2026-11-28T12:58:47.781Z"
+  },
+  {
+    "number": 1836,
+    "title": "[New Game]: 'Prism Foundry' — Dichroic Beam Splitting & Additive Color Mixing Lab Game",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1836",
+    "published_at": "2026-11-28T12:58:53.457Z"
+  },
+  {
+    "number": 1837,
+    "title": "[Feature/Audio]: Karplus-Strong Plucked String Physical Modeling Synthesizer Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1837",
+    "published_at": "2026-11-28T12:58:59.080Z"
+  },
+  {
+    "number": 1838,
+    "title": "[Feature/Audio]: Biquad Parametric EQ & Pole-Zero Z-Plane Filter Topology Visualizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1838",
+    "published_at": "2026-11-28T12:59:04.664Z"
+  },
+  {
+    "number": 1839,
+    "title": "[Feature/Audio]: Real-Time LPC Formant Vocal Tract & Vowel Formant Synthesizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1839",
+    "published_at": "2026-11-28T12:59:10.322Z"
+  },
+  {
+    "number": 1840,
+    "title": "[Feature/Audio]: Euclidean Polyrhythm Matrix & Bjorklund Rhythm Generator Sequencer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1840",
+    "published_at": "2026-11-28T12:59:15.939Z"
+  },
+  {
+    "number": 1841,
+    "title": "[Feature/Graphics]: Marching Squares Isoline Contour & Procedural Metaballs Renderer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1841",
+    "published_at": "2026-11-28T12:59:21.474Z"
   }
 ]
