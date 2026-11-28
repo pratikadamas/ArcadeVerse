@@ -1924,5 +1924,65 @@
     "title": "[Feature/Graphics]: Marching Squares Isoline Contour & Procedural Metaballs Renderer",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1841",
     "published_at": "2026-11-28T12:59:21.474Z"
+  },
+  {
+    "number": 1842,
+    "title": "[Feature/Graphics]: Floyd-Steinberg & Bayer Ordered-Dithering Retro Palette Quantizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1842",
+    "published_at": "2026-11-28T13:03:47.886Z"
+  },
+  {
+    "number": 1843,
+    "title": "[Feature/Graphics]: Reaction-Diffusion Gray-Scott Morphogenesis Pattern Simulator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1843",
+    "published_at": "2026-11-28T13:03:53.404Z"
+  },
+  {
+    "number": 1844,
+    "title": "[Feature/Graphics]: 2D Visibility Polygon & Dynamic Hard/Soft Shadow Raycaster Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1844",
+    "published_at": "2026-11-28T13:03:59.010Z"
+  },
+  {
+    "number": 1845,
+    "title": "[Feature/Graphics]: Wave Function Collapse (WFC) Adjacency Tilemap & Backtracking Generator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1845",
+    "published_at": "2026-11-28T13:04:04.633Z"
+  },
+  {
+    "number": 1846,
+    "title": "[Feature/Graphics]: Catmull-Rom & Cubic Bezier Arc-Length Parameterized Spline Camera Editor",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1846",
+    "published_at": "2026-11-28T13:04:10.260Z"
+  },
+  {
+    "number": 1847,
+    "title": "[Feature/Physics]: 2D Rigid-Body Separating Axis Theorem (SAT) & Impulse Manifold Sandbox",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1847",
+    "published_at": "2026-11-28T13:04:15.890Z"
+  },
+  {
+    "number": 1848,
+    "title": "[Feature/Physics]: FABRIK Inverse Kinematics (IK) Multi-Jointed Tentacle & Limb Solver",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1848",
+    "published_at": "2026-11-28T13:04:21.369Z"
+  },
+  {
+    "number": 1849,
+    "title": "[Feature/Physics]: Eulerian Grid Smoke & Ink Advection Fluid Solver (Jos Stam Stable Fluids)",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1849",
+    "published_at": "2026-11-28T13:04:26.873Z"
+  },
+  {
+    "number": 1850,
+    "title": "[Feature/Physics]: Barnes-Hut Quadtree N-Body Gravitational Galaxy & Tidal Merger Simulator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1850",
+    "published_at": "2026-11-28T13:04:32.456Z"
+  },
+  {
+    "number": 1851,
+    "title": "[Feature/Physics]: Cloth & Tearable Mesh PBD (Position Based Dynamics) Wind-Tunnel Sandbox",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1851",
+    "published_at": "2026-11-28T13:04:38.045Z"
   }
 ]
