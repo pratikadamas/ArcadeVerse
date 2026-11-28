@@ -1,0 +1,85 @@
+/* ==========================================================================
+   1995 SONY PLAYSTATION CLASSIC GREY THEME STUDIO (#1560)
+   Matte grey plastic surfaces, dual-bevel 3D borders,
+   geometric PS button motifs (Triangle, Circle, Cross, Square),
+   and memory card slot badge styling.
+   ========================================================================== */
+
+:root[data-theme="ps1-classic-grey"],
+body.theme-ps1-classic-grey {
+  --ps1-surface-grey: #a8abb0;
+  --ps1-surface-light: #c8cbd0;
+  --ps1-surface-shadow: #707378;
+  --ps1-ink-dark: #2a2d34;
+  --ps1-recessed: #181a1f;
+
+  /* 4 Iconic Geometric Button Accent Colors */
+  --ps-green-triangle: #00d26a;
+  --ps-red-circle: #ff4d4d;
+  --ps-blue-cross: #3d8bff;
+  --ps-pink-square: #ff70ba;
+
+  --bg-primary: #a8abb0;
+  --bg-secondary: #c8cbd0;
+  --bg-card: #a8abb0;
+  --text-primary: #2a2d34;
+  --text-secondary: #181a1f;
+  --border-color: #707378;
+  --accent-color: #3d8bff;
+}
+
+body.theme-ps1-classic-grey {
+  background-color: var(--ps1-surface-grey) !important;
+  color: var(--ps1-ink-dark) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+body.theme-ps1-classic-grey .game-card {
+  background: var(--ps1-surface-grey) !important;
+  border-top: 3px solid var(--ps1-surface-light) !important;
+  border-left: 3px solid var(--ps1-surface-light) !important;
+  border-right: 3px solid var(--ps1-surface-shadow) !important;
+  border-bottom: 3px solid var(--ps1-surface-shadow) !important;
+  border-radius: 4px !important;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3) !important;
+  color: var(--ps1-ink-dark) !important;
+}
+
+body.theme-ps1-classic-grey .game-card:hover {
+  border-top-color: #ffffff !important;
+  border-left-color: #ffffff !important;
+  box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* PS1 Geometric Motifs */
+.ps-motif {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 0.75rem;
+  font-weight: 900;
+  border-radius: 50%;
+  background: var(--ps1-recessed);
+}
+
+.ps-triangle { color: var(--ps-green-triangle); }
+.ps-circle { color: var(--ps-red-circle); }
+.ps-cross { color: var(--ps-blue-cross); }
+.ps-square { color: var(--ps-pink-square); }
+
+/* Memory Card Slot Badge */
+.ps-memory-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--ps1-recessed);
+  color: var(--ps-green-triangle);
+  border: 2px inset var(--ps1-surface-shadow);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-family: monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+}

@@ -1,0 +1,96 @@
+/* ==========================================================================
+   GAME CARD FAVORITE COLLECTIONS FOLDER SYSTEM (#1490)
+   Folder chips, folder manager drawer, and folder badge tags on game cards.
+   ========================================================================== */
+
+.favorite-folders-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 0;
+  margin-bottom: 16px;
+  scrollbar-width: thin;
+}
+
+.folder-chip {
+  background: #161b22;
+  border: 1px solid #30363d;
+  color: #c9d1d9;
+  border-radius: 16px;
+  padding: 5px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.folder-chip:hover {
+  border-color: #00f0ff;
+  color: #00f0ff;
+}
+
+.folder-chip.active {
+  background: #00f0ff;
+  color: #000000;
+  border-color: #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}
+
+.folder-count-badge {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+}
+
+.folder-chip.active .folder-count-badge {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* Card folder tags */
+.card-folder-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.card-folder-tag {
+  background: #21262d;
+  color: #58a6ff;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  font-weight: 500;
+}
+
+/* Management Modal/Drawer */
+.favorite-folders-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.folders-modal-content {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 480px;
+  width: 90%;
+  color: #e6edf3;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}

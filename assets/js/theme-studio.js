@@ -49,6 +49,14 @@
       textPrimary: '#f8fafc'
     },
     {
+      id: 'vector_green',
+      name: '1982 Vector Green',
+      bgMain: '#020d05',
+      bgCard: '#021408',
+      accentPrimary: '#00ff66',
+      textPrimary: '#55ff99'
+    },
+    {
       id: 'synthwave_outrun',
       name: 'Synthwave Outrun',
       bgMain: '#0d001a',
@@ -665,6 +673,20 @@
               </div>
             </div>
 
+            <!-- 1982 Vector Green Theme Quick Selector (#1362) -->
+            <div class="vector-subtoggle-group" id="studio-vector-subtoggle">
+              <div class="solarized-subtoggle-header">
+                <span class="solarized-subtoggle-title" style="color: #00ff66;">1982 VECTOR GREEN WIREFRAME</span>
+                <span class="solarized-subtoggle-badge" style="color: #00ff66; border-color: rgba(0,255,102,0.35); background: rgba(0,255,102,0.15);">WCAG AAA</span>
+              </div>
+              <div class="vector-subtoggle-actions" style="margin-top: 6px;">
+                <button type="button" class="preset-pill-btn" id="studio-activate-vector-green" style="width: 100%; justify-content: center; border-color: #00ff66; color: #55ff99; background: rgba(0,255,102,0.05); text-shadow: 0 0 4px #00ff66;" aria-label="Activate 1982 Monochromatic Vector Green Wireframe Theme">
+                  <span class="preset-swatch" style="background:#020d05; border-color:#00ff66"></span>
+                  <span>Activate 1982 Vector Green Theme</span>
+                </button>
+              </div>
+            </div>
+
             <!-- Solarized Cyber Dual Mode Sub-Toggle (#1374) -->
             <div class="solarized-subtoggle-group" id="studio-solarized-subtoggle">
               <div class="solarized-subtoggle-header">
@@ -860,6 +882,25 @@
         }
       });
     });
+
+    // 1982 Vector Green Theme Quick Selector (#1362)
+    const activateVectorBtn = document.getElementById('studio-activate-vector-green');
+    if (activateVectorBtn) {
+      activateVectorBtn.addEventListener('click', () => {
+        const found = PRESET_PALETTES.find(p => p.id === 'vector_green');
+        if (found) {
+          syncPaletteToControls(found);
+          updateStudioAudit();
+          if (window.ThemeCustomizer && typeof window.ThemeCustomizer.applyVectorGreenTheme === 'function') {
+            window.ThemeCustomizer.applyVectorGreenTheme(true);
+          } else {
+            applyThemeToDocument(found);
+            saveThemeToStorage(found);
+          }
+          showStudioToast('Loaded & Activated 1982 Vector Green Theme!');
+        }
+      });
+    }
 
     // Solarized Dual Mode Sub-Toggle Buttons (#1374)
     const subtoggleDark = document.getElementById('studio-subtoggle-dark');

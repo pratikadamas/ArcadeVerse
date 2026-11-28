@@ -1,0 +1,52 @@
+/* ==========================================================================
+   NEW RELEASES & SPOTLIGHT RIBBON ON GAME CARDS (#1540)
+   Diagonal and corner ribbons highlighting newly added arcade titles
+   ========================================================================== */
+
+.game-card-ribbon-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.game-spotlight-ribbon {
+  position: absolute;
+  top: 12px;
+  right: -32px;
+  transform: rotate(45deg);
+  background: linear-gradient(135deg, #ff0055, #ff5500);
+  color: #ffffff;
+  padding: 4px 34px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  z-index: 10;
+  pointer-events: none;
+  user-select: none;
+}
+
+.game-spotlight-ribbon.ribbon-new {
+  background: linear-gradient(135deg, #00f0ff, #0077ff);
+  color: #000000;
+}
+
+.game-spotlight-ribbon.ribbon-featured {
+  background: linear-gradient(135deg, #ffd700, #ff8800);
+  color: #000000;
+}
+
+.game-spotlight-ribbon.ribbon-hot {
+  background: linear-gradient(135deg, #ff0055, #ff5500);
+  color: #ffffff;
+}
+
+@keyframes ribbonGlowPulse {
+  0% { filter: drop-shadow(0 0 2px rgba(0, 240, 255, 0.4)); }
+  50% { filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.8)); }
+  100% { filter: drop-shadow(0 0 2px rgba(0, 240, 255, 0.4)); }
+}
+
+.game-spotlight-ribbon.ribbon-animated {
+  animation: ribbonGlowPulse 2.5s infinite ease-in-out;
+}

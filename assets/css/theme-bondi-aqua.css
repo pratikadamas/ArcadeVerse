@@ -1,0 +1,74 @@
+/* ==========================================================================
+   1998 TRANSLUCENT BONDI BLUE AQUA GLOSS & PINSTRIPE THEME (#1569)
+   Frosted Bondi Blue (#0095b6) glassmorphic panels, pinstripe window titlebars,
+   gel-pill buttons with top highlights, and high-contrast typography.
+   ========================================================================== */
+
+:root[data-theme="bondi-blue-aqua"],
+body.theme-bondi-blue-aqua {
+  --bondi-blue: #0095b6;
+  --bondi-frosted: rgba(0, 149, 182, 0.75);
+  --bondi-card-surface: rgba(235, 245, 250, 0.92);
+  --bondi-ink-dark: #12222a;
+  --bondi-pinstripe: rgba(0, 149, 182, 0.12);
+  --bondi-gel-highlight: rgba(255, 255, 255, 0.65);
+
+  --bg-primary: #d4e8ee;
+  --bg-secondary: #0095b6;
+  --bg-card: rgba(240, 248, 252, 0.95);
+  --text-primary: #12222a;
+  --text-secondary: #006880;
+  --border-color: #0095b6;
+  --accent-color: #0095b6;
+}
+
+body.theme-bondi-blue-aqua {
+  background-color: var(--bg-primary) !important;
+  color: var(--bondi-ink-dark) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Lucida Grande", sans-serif;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 3px,
+    var(--bondi-pinstripe) 3px,
+    var(--bondi-pinstripe) 4px
+  ) !important;
+}
+
+body.theme-bondi-blue-aqua .game-card {
+  background: var(--bg-card) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 2px solid rgba(0, 149, 182, 0.5) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(0, 149, 182, 0.25) !important;
+  color: var(--bondi-ink-dark) !important;
+}
+
+/* Glossy Gel Pill Button */
+.aqua-gel-btn {
+  background: linear-gradient(180deg, var(--bondi-gel-highlight) 0%, rgba(255, 255, 255, 0) 50%), var(--bondi-blue);
+  color: #ffffff;
+  border: 1px solid rgba(0, 90, 110, 0.8);
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2), inset 0 1px 1px #ffffff;
+  transition: all 0.2s ease;
+}
+
+.aqua-gel-btn:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 12px rgba(0, 149, 182, 0.5), inset 0 1px 1px #ffffff;
+}
+
+/* Gloss Pulse on CTA buttons */
+body.theme-bondi-blue-aqua.gloss-pulse-active .aqua-gel-btn {
+  animation: aquaGlossPulse 2.5s infinite ease-in-out;
+}
+
+@keyframes aquaGlossPulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.2) drop-shadow(0 0 8px #0095b6); }
+}
