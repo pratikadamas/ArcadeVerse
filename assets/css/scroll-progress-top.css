@@ -1,0 +1,88 @@
+/* ==========================================================================
+   INTERACTIVE FLOATING BACK-TO-TOP BUTTON WITH PROGRESS RING (#1492)
+   Floating action button with circular SVG stroke progress indicator and neon glow.
+   ========================================================================== */
+
+.scroll-progress-top-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  color: #00f0ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(16px) scale(0.9);
+  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  padding: 0;
+}
+
+.scroll-progress-top-btn.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.scroll-progress-top-btn:hover {
+  border-color: #00f0ff;
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.6);
+  transform: translateY(-2px) scale(1.05);
+}
+
+.scroll-progress-top-btn:focus-visible {
+  outline: 2px solid #00f0ff;
+  outline-offset: 3px;
+}
+
+/* SVG Progress Ring */
+.progress-ring-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 48px;
+  height: 48px;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+
+.progress-ring-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 3;
+}
+
+.progress-ring-fill {
+  fill: none;
+  stroke: #00f0ff;
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.1s linear;
+}
+
+/* Up Arrow Icon */
+.scroll-top-arrow {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  position: relative;
+  z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-progress-top-btn {
+    transition: none !important;
+  }
+  .progress-ring-fill {
+    transition: none !important;
+  }
+}
