@@ -2945,11 +2945,11 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "sumittiwari",
-    "github": "sumittiwari",
-    "avatarInitial": "S",
+    "name": "trunalpatil",
+    "github": "trunalpatil",
+    "avatarInitial": "T",
     "role": "Contributor (NSOC '26)",
-    "commits": 7,
+    "commits": 8,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,
@@ -2960,9 +2960,9 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "trunalpatil",
-    "github": "trunalpatil",
-    "avatarInitial": "T",
+    "name": "sumittiwari",
+    "github": "sumittiwari",
+    "avatarInitial": "S",
     "role": "Contributor (NSOC '26)",
     "commits": 7,
     "gamesCount": 0,
