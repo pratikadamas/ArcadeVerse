@@ -2889,7 +2889,7 @@ const CONTRIBUTORS_REGISTRY = [
     "github": "divyanshagarwal123",
     "avatarInitial": "D",
     "role": "Contributor (NSOC '26)",
-    "commits": 24,
+    "commits": 25,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,
