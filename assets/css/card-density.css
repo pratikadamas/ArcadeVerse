@@ -1,0 +1,86 @@
+/* ==========================================================================
+   CATALOG CARD DENSITY SWITCHER (#1538)
+   Cozy, Standard, and Compact view modes for the games catalog grid
+   ========================================================================== */
+
+.density-control-bar {
+  display: inline-flex;
+  align-items: center;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.density-btn {
+  background: transparent;
+  border: none;
+  color: #8b949e;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.density-btn:hover {
+  color: #c9d1d9;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.density-btn.active {
+  background: #21262d;
+  color: #58a6ff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Cozy Density Mode --- */
+#games-grid.density-cozy {
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+  gap: 28px !important;
+}
+
+#games-grid.density-cozy .game-card {
+  padding: 20px;
+}
+
+#games-grid.density-cozy .game-card img,
+#games-grid.density-cozy .game-card .game-thumbnail {
+  height: 220px;
+}
+
+/* --- Standard Density Mode --- */
+#games-grid.density-standard {
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+/* --- Compact Density Mode --- */
+#games-grid.density-compact {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
+  gap: 12px !important;
+}
+
+#games-grid.density-compact .game-card {
+  padding: 10px;
+}
+
+#games-grid.density-compact .game-card img,
+#games-grid.density-compact .game-card .game-thumbnail {
+  height: 120px;
+}
+
+#games-grid.density-compact .game-card-title {
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+#games-grid.density-compact .game-card-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.75rem;
+}

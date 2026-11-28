@@ -1,0 +1,100 @@
+/* ==========================================================================
+   CATALOG EMPTY FILTER RESET BANNER & SUMMARY CHIPS (#1547)
+   Removable active filter summary chips and 0-results reset banner
+   ========================================================================== */
+
+.active-filters-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 0;
+  margin-bottom: 16px;
+}
+
+.active-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  color: #58a6ff;
+  border-radius: 16px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.filter-chip-remove {
+  background: transparent;
+  border: none;
+  color: #8b949e;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.filter-chip-remove:hover {
+  color: #ff7b72;
+}
+
+.clear-all-filters-btn {
+  background: transparent;
+  border: 1px dashed #30363d;
+  color: #8b949e;
+  border-radius: 16px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-all-filters-btn:hover {
+  border-color: #ff7b72;
+  color: #ff7b72;
+}
+
+/* Empty Results Banner */
+.empty-results-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  background: #161b22;
+  border: 1px dashed #30363d;
+  border-radius: 8px;
+  margin: 32px 0;
+}
+
+.empty-results-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #f0f6fc;
+  margin-bottom: 8px;
+}
+
+.empty-results-desc {
+  font-size: 0.88rem;
+  color: #8b949e;
+  margin-bottom: 20px;
+  max-width: 400px;
+}
+
+.empty-results-reset-btn {
+  background: #238636;
+  border: 1px solid rgba(240, 246, 252, 0.1);
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.empty-results-reset-btn:hover {
+  background: #2ea043;
+}

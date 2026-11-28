@@ -1,0 +1,87 @@
+/* ==========================================================================
+   INTERACTIVE 2D N-BODY ORBITAL GRAVITY & SLINGSHOT SANDBOX (#1571)
+   Deep space canvas, HUD parameters (G constant, time scale, trail length),
+   and preset orbital systems (Binary Star, Solar Mini, Figure-8).
+   ========================================================================== */
+
+.nbody-gravity-container {
+  position: relative;
+  width: 100%;
+  height: 480px;
+  background: #020206;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+  user-select: none;
+}
+
+.nbody-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: crosshair;
+}
+
+.nbody-hud {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: rgba(13, 17, 23, 0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(88, 166, 255, 0.3);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 10;
+  max-width: 260px;
+}
+
+.nbody-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #58a6ff;
+  letter-spacing: 0.5px;
+}
+
+.nbody-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.72rem;
+  color: #8b949e;
+}
+
+.nbody-select {
+  background: #161b22;
+  border: 1px solid #30363d;
+  color: #c9d1d9;
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.nbody-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 85px;
+  height: 4px;
+  background: #21262d;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.nbody-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #58a6ff;
+  border-radius: 50%;
+  cursor: pointer;
+}

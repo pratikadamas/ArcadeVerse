@@ -1,0 +1,82 @@
+/* ==========================================================================
+   INTERACTIVE 2D CANVAS CELLULAR AUTOMATA SIMULATION STUDIO (#1517)
+   Retro high-contrast grid container, toolbar controls (Step, Play, Clear, Speed),
+   and preset selector (Glider Gun, Pulsar, Spaceship).
+   ========================================================================== */
+
+.cellular-automata-container {
+  position: relative;
+  width: 100%;
+  height: 500px;
+  background: #090c10;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+  user-select: none;
+}
+
+.cellular-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: crosshair;
+}
+
+.cellular-toolbar {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: rgba(13, 17, 23, 0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(46, 160, 67, 0.4);
+  border-radius: 6px;
+  padding: 10px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  z-index: 10;
+  max-width: 480px;
+}
+
+.cellular-btn {
+  background: #161b22;
+  border: 1px solid #30363d;
+  color: #c9d1d9;
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cellular-btn:hover {
+  background: #21262d;
+  color: #3fb950;
+  border-color: #3fb950;
+}
+
+.cellular-btn.primary {
+  background: #238636;
+  border-color: rgba(240, 246, 252, 0.1);
+  color: #ffffff;
+}
+
+.cellular-select {
+  background: #161b22;
+  border: 1px solid #30363d;
+  color: #c9d1d9;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.cellular-stats {
+  font-family: monospace;
+  font-size: 0.72rem;
+  color: #8b949e;
+  margin-left: auto;
+}

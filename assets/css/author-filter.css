@@ -1,0 +1,49 @@
+/* ==========================================================================
+   GAME AUTHOR FILTER DROPDOWN & CREATOR ATTRIBUTION (#1551)
+   Filter dropdown listing game authors and contributors with portfolio counts
+   ========================================================================== */
+
+.author-filter-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
+.author-filter-select {
+  background: #0d1117;
+  color: #c9d1d9;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  outline: none;
+  max-width: 200px;
+}
+
+.author-filter-select:focus {
+  border-color: #58a6ff;
+}
+
+.author-attribution-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: #8b949e;
+  margin-top: 4px;
+}
+
+.author-attribution-link {
+  color: #58a6ff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.author-attribution-link:hover {
+  text-decoration: underline;
+}
