@@ -1,0 +1,81 @@
+/* ==========================================================================
+   1993 GAME BOY COLOR ATOMIC PURPLE TRANSLUCENT SHELL THEME (#1514)
+   Translucent violet/purple glassmorphism, reflective LCD green palettes,
+   procedural copper PCB circuit trace backgrounds, and tactile d-pad elements.
+   ========================================================================== */
+
+:root[data-theme="atomic-purple"],
+body.theme-atomic-purple {
+  /* Translucent Violet & Reflective LCD Tokens */
+  --gbc-shell-purple: rgba(82, 38, 122, 0.88);
+  --gbc-shell-deep: #28123e;
+  --gbc-lcd-emerald: #9bbc0f;
+  --gbc-lcd-olive: #8bac0f;
+  --gbc-lcd-sage: #306230;
+  --gbc-lcd-charcoal: #0f380f;
+  --gbc-copper-trace: rgba(220, 140, 60, 0.28);
+  --gbc-led-red: #ff3b30;
+
+  --bg-primary: #1f0d32;
+  --bg-secondary: rgba(82, 38, 122, 0.75);
+  --bg-card: rgba(40, 18, 62, 0.85);
+  --text-primary: #9bbc0f;
+  --text-secondary: #c4d79b;
+  --border-color: rgba(162, 88, 240, 0.4);
+  --accent-color: #9bbc0f;
+}
+
+body.theme-atomic-purple {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(120, 50, 180, 0.2) 0%, transparent 80%),
+    repeating-linear-gradient(45deg, transparent, transparent 18px, var(--gbc-copper-trace) 19px, transparent 20px),
+    repeating-linear-gradient(-45deg, transparent, transparent 28px, var(--gbc-copper-trace) 29px, transparent 30px) !important;
+}
+
+body.theme-atomic-purple .game-card {
+  background: var(--bg-card) !important;
+  backdrop-filter: blur(10px) !important;
+  border: 2px solid rgba(162, 88, 240, 0.5) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), inset 0 0 14px rgba(162, 88, 240, 0.25) !important;
+  color: var(--text-primary) !important;
+}
+
+body.theme-atomic-purple .game-card:hover {
+  border-color: #9bbc0f !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.8), 0 0 16px rgba(155, 188, 15, 0.4) !important;
+}
+
+/* Simulated Internal PCB LED Glow */
+body.theme-atomic-purple.internal-glow-active::after {
+  content: '';
+  position: fixed;
+  top: 18px;
+  right: 24px;
+  width: 10px;
+  height: 10px;
+  background-color: #ff3b30;
+  border-radius: 50%;
+  box-shadow: 0 0 12px 4px #ff3b30;
+  z-index: 99999;
+  pointer-events: none;
+  animation: ledPulse 2s infinite ease-in-out;
+}
+
+@keyframes ledPulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+.atomic-purple-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(40, 18, 62, 0.9);
+  border: 1px solid rgba(162, 88, 240, 0.5);
+  border-radius: 8px;
+  padding: 8px 16px;
+  margin: 12px 0;
+}
