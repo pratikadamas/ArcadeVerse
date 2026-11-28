@@ -1,0 +1,72 @@
+/* ==========================================================================
+   GAME CARD GENRE ACCENT BORDER STRIPES (#1544)
+   Color-coded top border stripes and genre tags keyed to game category
+   ========================================================================== */
+
+.game-card[data-genre] {
+  position: relative;
+  overflow: hidden;
+  border-top-width: 4px !important;
+  border-top-style: solid !important;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* Genre Accent Palettes */
+.game-card[data-genre="action"] {
+  border-top-color: #ff0055 !important;
+}
+.game-card[data-genre="action"]:hover {
+  box-shadow: 0 4px 20px rgba(255, 0, 85, 0.25);
+}
+
+.game-card[data-genre="arcade"] {
+  border-top-color: #00f0ff !important;
+}
+.game-card[data-genre="arcade"]:hover {
+  box-shadow: 0 4px 20px rgba(0, 240, 255, 0.25);
+}
+
+.game-card[data-genre="puzzle"] {
+  border-top-color: #a371f7 !important;
+}
+.game-card[data-genre="puzzle"]:hover {
+  box-shadow: 0 4px 20px rgba(163, 113, 247, 0.25);
+}
+
+.game-card[data-genre="racing"] {
+  border-top-color: #ff9900 !important;
+}
+.game-card[data-genre="racing"]:hover {
+  box-shadow: 0 4px 20px rgba(255, 153, 0, 0.25);
+}
+
+.game-card[data-genre="retro"] {
+  border-top-color: #2ea043 !important;
+}
+.game-card[data-genre="retro"]:hover {
+  box-shadow: 0 4px 20px rgba(46, 160, 67, 0.25);
+}
+
+.game-card[data-genre="strategy"] {
+  border-top-color: #e3b341 !important;
+}
+.game-card[data-genre="strategy"]:hover {
+  box-shadow: 0 4px 20px rgba(227, 179, 65, 0.25);
+}
+
+/* Fallback default stripe */
+.game-card[data-genre="other"],
+.game-card:not([data-genre]) {
+  border-top-color: #58a6ff;
+}
+
+.genre-accent-tag {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-top: 6px;
+  background: rgba(255, 255, 255, 0.08);
+}

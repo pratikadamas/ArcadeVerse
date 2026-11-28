@@ -1,9 +1,10 @@
 /**
- * ArcadeVerse Theme Customizer, Solarized Controller & Synthwave Outrun Controller (#1365, #1374)
+ * ArcadeVerse Theme Customizer, Solarized Controller, Synthwave Controller & Vector Green Controller (#1362, #1365, #1374)
  * Precision Theme Architecture:
- * - Ethan Schoonover's precision Solarized system (Cyber Dark & Cyber Light)
+ * - Authentic 1982 Vector Graphics Monochromatic Green Wireframe Theme & Glow Matrix (#1362)
+ * - Ethan Schoonover's precision Solarized system (Cyber Dark & Cyber Light) (#1374)
  * - 1980s Cyberpunk Neon Sunset Synthwave Outrun Theme Studio (Hot Magenta, Electric Cyan,
- *   Sunset Tangerine, Deep Violet, Midnight Indigo) with animated horizon grid and retro duotone card glows.
+ *   Sunset Tangerine, Deep Violet, Midnight Indigo) with animated horizon grid and retro duotone card glows (#1365).
  *
  * Strictly zero Unicode emojis across all code, logs, and elements.
  */
@@ -16,15 +17,38 @@
     root.ThemeCustomizer = api;
     root.SolarizedThemeController = api;
     root.SynthwaveThemeController = api;
+    root.VectorThemeController = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
   const STORAGE_KEY_PALETTE = 'arcadeverse_solarized_palette';
   const STORAGE_KEY_MODE = 'arcadeverse_solarized_mode'; // 'dark' | 'light'
+  const STORAGE_KEY_THEME = 'arcadeverse_theme_custom';
   const STORAGE_KEY_ACTIVE_THEME = 'arcadeverse_active_custom_theme';
 
-  // Precision Solarized Palettes
+  // Authentic 1982 Vector Green Palette (#1362)
+  const VECTOR_GREEN_PALETTE = {
+    id: 'vector_green',
+    themeName: 'vector-green',
+    name: '1982 Vector Green',
+    bgMain: '#020d05',      // Deep Electron Black
+    bgCard: 'rgba(0, 255, 102, 0.03)', // Translucent Interior Alpha Fill
+    accentPrimary: '#00ff66', // Phosphor Green
+    accentSecondary: '#55ff99', // High-Beam Line
+    textPrimary: '#55ff99', // High-Beam Line (15.2:1 CR vs #020d05, WCAG AAA)
+    textSecondary: '#00ff66', // Phosphor Green (14.6:1 CR vs #020d05, WCAG AAA)
+    textMuted: '#33cc66',   // High-contrast Phosphor Green (>9:1 CR vs #020d05)
+    badgeBg: 'rgba(0, 255, 102, 0.05)',
+    badgeBorder: '#00ff66',
+    badgeText: '#55ff99',
+    buttonBg: 'transparent',
+    buttonBorder: '#00ff66',
+    buttonText: '#55ff99',
+    glow: 'drop-shadow(0 0 6px #00ff66)'
+  };
+
+  // Precision Solarized Palettes (#1374)
   const SOLARIZED_PALETTES = {
     dark: {
       id: 'solarized_cyber_dark',
@@ -116,6 +140,107 @@
   }
 
   /**
+   * Applies the Authentic 1982 Vector Green Theme (#1362)
+   * Instant stylesheet / attribute switching with localStorage persistence.
+   * @param {boolean} persist
+   */
+  function applyVectorGreenTheme(persist = true) {
+    toggleHorizonGrid(false);
+    const palette = VECTOR_GREEN_PALETTE;
+    const rootEl = typeof document !== 'undefined' ? document.documentElement : null;
+
+    if (rootEl) {
+      rootEl.setAttribute('data-theme', 'vector-green');
+      rootEl.style.setProperty('--bg-main', palette.bgMain);
+      rootEl.style.setProperty('--bg-card', palette.bgCard);
+      rootEl.style.setProperty('--accent-primary', palette.accentPrimary);
+      rootEl.style.setProperty('--accent-secondary', palette.accentSecondary);
+      rootEl.style.setProperty('--text-primary', palette.textPrimary);
+      rootEl.style.setProperty('--text-secondary', palette.textSecondary);
+      rootEl.style.setProperty('--border-focus', palette.accentSecondary);
+    }
+
+    if (persist && typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem(STORAGE_KEY_THEME, 'vector-green');
+        localStorage.setItem(STORAGE_KEY_ACTIVE_THEME, 'vector-green');
+        localStorage.setItem('arcadeverse_theme', 'vector-green');
+      } catch (_) {}
+    }
+
+    // Synchronize vector theme toggle buttons
+    if (typeof document !== 'undefined') {
+      const vectorBtns = document.querySelectorAll('.vector-green-toggle-btn, [data-theme-target="vector-green"]');
+      vectorBtns.forEach((btn) => {
+        btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
+      });
+    }
+
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+      window.dispatchEvent(new CustomEvent('arcadeverse:theme-customizer-changed', {
+        detail: { theme: 'vector-green', palette }
+      }));
+    }
+
+    return palette;
+  }
+
+  /**
+   * Removes Vector Green and reverts to standard theme.
+   */
+  function removeVectorGreenTheme(targetTheme = 'dark') {
+    const rootEl = typeof document !== 'undefined' ? document.documentElement : null;
+    if (rootEl) {
+      rootEl.setAttribute('data-theme', targetTheme);
+      rootEl.style.removeProperty('--bg-main');
+      rootEl.style.removeProperty('--bg-card');
+      rootEl.style.removeProperty('--accent-primary');
+      rootEl.style.removeProperty('--accent-secondary');
+      rootEl.style.removeProperty('--text-primary');
+      rootEl.style.removeProperty('--text-secondary');
+      rootEl.style.removeProperty('--border-focus');
+    }
+
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.removeItem(STORAGE_KEY_THEME);
+        localStorage.setItem(STORAGE_KEY_ACTIVE_THEME, targetTheme);
+        localStorage.setItem('arcadeverse_theme', targetTheme);
+      } catch (_) {}
+    }
+
+    if (typeof document !== 'undefined') {
+      const vectorBtns = document.querySelectorAll('.vector-green-toggle-btn, [data-theme-target="vector-green"]');
+      vectorBtns.forEach((btn) => {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-pressed', 'false');
+      });
+    }
+
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+      window.dispatchEvent(new CustomEvent('arcadeverse:theme-customizer-changed', {
+        detail: { theme: targetTheme, palette: null }
+      }));
+    }
+  }
+
+  /**
+   * Toggles the Vector Green theme on and off.
+   */
+  function toggleVectorGreenTheme() {
+    const rootEl = typeof document !== 'undefined' ? document.documentElement : null;
+    const isVector = rootEl && rootEl.getAttribute('data-theme') === 'vector-green';
+    if (isVector) {
+      removeVectorGreenTheme('dark');
+      return false;
+    } else {
+      applyVectorGreenTheme(true);
+      return true;
+    }
+  }
+
+  /**
    * Applies the Synthwave / Outrun theme to the document.
    * @param {boolean} persist
    */
@@ -129,12 +254,12 @@
       rootEl.style.setProperty('--bg-card', palette.bgCard);
       rootEl.style.setProperty('--accent-primary', palette.accentPrimary);
       rootEl.style.setProperty('--accent-secondary', palette.accentSecondary);
-      rootEl.style.setProperty('--accent-warm', palette.accentWarm);
       rootEl.style.setProperty('--text-primary', palette.textPrimary);
-      rootEl.style.setProperty('--border-focus', palette.accentWarm);
-
-      toggleHorizonGrid(true);
+      rootEl.style.setProperty('--text-secondary', palette.textSecondary);
+      rootEl.style.setProperty('--border-focus', palette.accentSecondary);
     }
+
+    toggleHorizonGrid(true);
 
     if (persist && typeof localStorage !== 'undefined') {
       try {
@@ -144,11 +269,33 @@
 
     if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
       window.dispatchEvent(new CustomEvent('arcadeverse:synthwave-theme-changed', {
-        detail: { palette }
+        detail: { theme: 'synthwave-outrun', palette }
       }));
     }
 
     return palette;
+  }
+
+  /**
+   * Switches theme instantly by key/id.
+   * @param {string} themeKey ('vector-green' | 'synthwave-outrun' | 'synthwave_outrun' | 'solarized-dark' | 'solarized-light' | 'dark' | 'light')
+   * @param {boolean} persist
+   */
+  function switchTheme(themeKey, persist = true) {
+    if (themeKey === 'vector-green' || themeKey === 'vector_green') {
+      return applyVectorGreenTheme(persist);
+    }
+    if (themeKey === 'synthwave-outrun' || themeKey === 'synthwave_outrun') {
+      return applySynthwaveOutrun(persist);
+    }
+    if (themeKey === 'solarized-light' || themeKey === 'solarized_cyber_light') {
+      return applySolarizedMode('light', persist);
+    }
+    if (themeKey === 'solarized-dark' || themeKey === 'solarized_cyber_dark') {
+      return applySolarizedMode('dark', persist);
+    }
+    toggleHorizonGrid(false);
+    return null;
   }
 
   /**
@@ -157,29 +304,30 @@
    * @param {boolean} persist
    */
   function applySolarizedMode(mode, persist = true) {
+    toggleHorizonGrid(false);
     const targetMode = mode === 'light' ? 'light' : 'dark';
     const palette = SOLARIZED_PALETTES[targetMode];
     const rootEl = typeof document !== 'undefined' ? document.documentElement : null;
 
     if (rootEl) {
-      toggleHorizonGrid(false);
       rootEl.setAttribute('data-theme', targetMode === 'light' ? 'solarized-light' : 'solarized-dark');
       rootEl.style.setProperty('--bg-main', palette.bgMain);
       rootEl.style.setProperty('--bg-card', palette.bgCard);
       rootEl.style.setProperty('--accent-primary', palette.accentPrimary);
+      rootEl.style.setProperty('--accent-secondary', palette.accentSecondary);
       rootEl.style.setProperty('--text-primary', palette.textPrimary);
-      rootEl.style.setProperty('--border-focus', palette.accentSecondary);
+      rootEl.style.setProperty('--text-secondary', palette.textSecondary);
+      rootEl.style.setProperty('--border-focus', palette.accentPrimary);
     }
 
     if (persist && typeof localStorage !== 'undefined') {
       try {
         localStorage.setItem(STORAGE_KEY_MODE, targetMode);
-        localStorage.setItem(STORAGE_KEY_PALETTE, JSON.stringify(palette));
+        localStorage.setItem(STORAGE_KEY_PALETTE, palette.id);
         localStorage.setItem(STORAGE_KEY_ACTIVE_THEME, targetMode === 'light' ? 'solarized-light' : 'solarized-dark');
       } catch (_) {}
     }
 
-    // Synchronize UI buttons
     if (typeof document !== 'undefined') {
       const darkBtn = document.getElementById('solarized-mode-dark-btn');
       const lightBtn = document.getElementById('solarized-mode-light-btn');
@@ -198,25 +346,6 @@
     }
 
     return palette;
-  }
-
-  /**
-   * Switches theme instantly by key/id.
-   * @param {string} themeKey ('synthwave-outrun' | 'synthwave_outrun' | 'solarized-dark' | 'solarized-light' | 'dark' | 'light')
-   * @param {boolean} persist
-   */
-  function switchTheme(themeKey, persist = true) {
-    if (themeKey === 'synthwave-outrun' || themeKey === 'synthwave_outrun') {
-      return applySynthwaveOutrun(persist);
-    }
-    if (themeKey === 'solarized-light' || themeKey === 'solarized_cyber_light') {
-      return applySolarizedMode('light', persist);
-    }
-    if (themeKey === 'solarized-dark' || themeKey === 'solarized_cyber_dark') {
-      return applySolarizedMode('dark', persist);
-    }
-    toggleHorizonGrid(false);
-    return null;
   }
 
   /**
@@ -305,13 +434,15 @@
     if (typeof document === 'undefined') return;
 
     try {
-      const activeCustom = localStorage.getItem(STORAGE_KEY_ACTIVE_THEME);
+      const savedTheme = localStorage.getItem(STORAGE_KEY_THEME) || localStorage.getItem(STORAGE_KEY_ACTIVE_THEME) || localStorage.getItem('arcadeverse_theme');
       const rootTheme = document.documentElement.getAttribute('data-theme');
 
-      if (rootTheme === 'synthwave-outrun' || activeCustom === 'synthwave-outrun') {
+      if (savedTheme === 'vector-green' || rootTheme === 'vector-green') {
+        applyVectorGreenTheme(false);
+      } else if (rootTheme === 'synthwave-outrun' || savedTheme === 'synthwave-outrun') {
         applySynthwaveOutrun(false);
-      } else if (rootTheme && rootTheme.startsWith('solarized-')) {
-        const savedMode = localStorage.getItem(STORAGE_KEY_MODE);
+      } else if ((rootTheme && rootTheme.startsWith('solarized-')) || (savedTheme && savedTheme.startsWith('solarized-'))) {
+        const savedMode = localStorage.getItem(STORAGE_KEY_MODE) || (savedTheme === 'solarized-light' ? 'light' : 'dark');
         applySolarizedMode(savedMode === 'light' ? 'light' : 'dark', false);
       }
     } catch (_) {}
@@ -326,8 +457,12 @@
   }
 
   return {
+    VECTOR_GREEN_PALETTE,
     SOLARIZED_PALETTES,
     SYNTHWAVE_OUTRUN_PALETTE,
+    applyVectorGreenTheme,
+    removeVectorGreenTheme,
+    toggleVectorGreenTheme,
     applySolarizedMode,
     toggleSolarizedMode,
     applySynthwaveOutrun,

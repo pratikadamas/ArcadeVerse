@@ -1,0 +1,154 @@
+/* Navier-Stokes Incompressible Smoke & Dye Fluid Simulation Styles */
+:root {
+  --fluid-bg: #030712;
+  --fluid-panel-bg: rgba(15, 23, 42, 0.95);
+  --fluid-border: #1e293b;
+  --fluid-cyan: #06b6d4;
+  --fluid-violet: #8b5cf6;
+  --fluid-pink: #ec4899;
+  --fluid-text: #f8fafc;
+  --fluid-muted: #94a3b8;
+}
+
+.fluid-sim-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  background: var(--fluid-bg);
+  color: var(--fluid-text);
+  border-radius: 12px;
+  border: 1px solid var(--fluid-border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  max-width: 1200px;
+  margin: 1.5rem auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.fluid-sim-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--fluid-border);
+  padding-bottom: 0.75rem;
+}
+
+.fluid-sim-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--fluid-cyan), var(--fluid-pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.fluid-sim-workspace {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.fluid-sim-canvas-wrap {
+  position: relative;
+  background: #000000;
+  border: 1px solid var(--fluid-border);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 480px;
+  cursor: crosshair;
+}
+
+.fluid-sim-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: auto;
+}
+
+.fluid-sim-controls {
+  background: var(--fluid-panel-bg);
+  border: 1px solid var(--fluid-border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fluid-sim-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.fluid-sim-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--fluid-muted);
+  display: flex;
+  justify-content: space-between;
+}
+
+.fluid-sim-range {
+  width: 100%;
+  accent-color: var(--fluid-cyan);
+}
+
+.fluid-sim-select {
+  background: #0b1329;
+  border: 1px solid var(--fluid-border);
+  color: var(--fluid-text);
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.fluid-sim-btn-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.fluid-sim-btn {
+  flex: 1;
+  padding: 0.65rem 1rem;
+  background: linear-gradient(135deg, var(--fluid-cyan), var(--fluid-violet));
+  color: #030712;
+  font-weight: 700;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.fluid-sim-btn:hover {
+  opacity: 0.9;
+}
+
+.fluid-sim-btn:active {
+  transform: scale(0.98);
+}
+
+.fluid-sim-btn-secondary {
+  background: #1e293b;
+  color: var(--fluid-text);
+  border: 1px solid var(--fluid-border);
+}
+
+.fluid-sim-hint {
+  font-size: 0.78rem;
+  color: var(--fluid-muted);
+  line-height: 1.4;
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 860px) {
+  .fluid-sim-workspace {
+    grid-template-columns: 1fr;
+  }
+}

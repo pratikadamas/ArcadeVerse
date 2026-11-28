@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Morse Telegraph · ArcadeVerse</title><link rel="stylesheet" href="../css/morse-code-audio-keyer.css"></head>
+<body><main><a href="../../index.html">Back to ArcadeVerse</a><h1>Morse Telegraph</h1>
+<p>Translate a message or hold the key to send dots and dashes. One dot lasts 1.2 ÷ WPM seconds.</p>
+<section aria-label="Message translator"><label for="text">Message (A–Z, 0–9 and common punctuation)</label>
+<textarea id="text" maxlength="300">SOS</textarea><label for="code">International Morse (separate words with /)</label>
+<textarea id="code" maxlength="1800">... --- ...</textarea><button id="encode">Text to Morse</button><button id="decode">Morse to text</button>
+<button id="play">Play message</button><button id="stop">Stop</button></section>
+<section aria-label="Sound settings"><label>Speed <input id="speed" type="range" min="5" max="35" value="15"> <output id="speed-value">15 WPM</output></label>
+<label>Tone <input id="tone" type="range" min="400" max="1000" value="650"> <output id="tone-value">650 Hz</output></label>
+<label>Volume <input id="volume" type="range" min="0" max="0.5" step="0.01" value="0.15"> <output id="volume-value">30%</output></label></section>
+<section aria-label="Telegraph key"><button id="key" aria-pressed="false">Hold to transmit · Space</button>
+<p>Focus the key to use Space. A press shorter than two dots is a dot. Pause for three dots to finish a letter, seven for a word.</p>
+<p>Received Morse <output id="received-code"></output></p><p>Decoded <output id="received-text"></output></p><button id="clear">Clear received</button>
+<canvas id="wave" width="720" height="140" role="img" aria-label="Live audio waveform"></canvas></section>
+<p id="status" role="status">Ready. Sound starts after you press a control.</p></main>
+<script src="../js/morse-code-audio-keyer.js"></script></body></html>
