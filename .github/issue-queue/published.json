@@ -1084,5 +1084,905 @@
     "title": "[Feature/Graphics]: Procedural 2D Wave Function Collapse Constraint Tilemap Generator",
     "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1577",
     "published_at": "2026-11-25T16:42:36.919Z"
+  },
+  {
+    "number": 1626,
+    "title": "[Enhancement/UI]: Game Modal Elapsed Session Timer Pill in Toolbar Header",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1626",
+    "published_at": "2026-11-26T18:37:10.828Z"
+  },
+  {
+    "number": 1627,
+    "title": "[Enhancement/Catalog]: Multi-Column Sticky Catalog Sub-Header with Live Filter Match Counter",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1627",
+    "published_at": "2026-11-26T18:37:16.520Z"
+  },
+  {
+    "number": 1629,
+    "title": "[Enhancement/UX]: Catalog Search Query Clear Button with Escape Key Reset Shortcut",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1629",
+    "published_at": "2026-11-26T18:37:22.281Z"
+  },
+  {
+    "number": 1631,
+    "title": "[Enhancement/A11y]: High-Contrast Card Border & Flat Shadow Override Toggle",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1631",
+    "published_at": "2026-11-26T18:37:28.126Z"
+  },
+  {
+    "number": 1633,
+    "title": "[Enhancement/UI]: Interactive Footer Retro Arcade Trivia Ticker Rotator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1633",
+    "published_at": "2026-11-26T18:37:33.834Z"
+  },
+  {
+    "number": 1635,
+    "title": "[Enhancement/Catalog]: Unplayed Games Filter Toggle for Catalog Discovery",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1635",
+    "published_at": "2026-11-26T18:37:39.531Z"
+  },
+  {
+    "number": 1637,
+    "title": "[Enhancement/UX]: Undo Toast Guard for Destructive Favorites and History Clears",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1637",
+    "published_at": "2026-11-26T18:37:45.109Z"
+  },
+  {
+    "number": 1639,
+    "title": "[Enhancement/Leaderboard]: Top-N Rank Tier Filter Pills on Leaderboard Standings",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1639",
+    "published_at": "2026-11-26T18:37:50.700Z"
+  },
+  {
+    "number": 1641,
+    "title": "[Enhancement/UI]: Catalog Featured Game Hero Spotlight Carousel Banner",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1641",
+    "published_at": "2026-11-26T18:37:56.375Z"
+  },
+  {
+    "number": 1643,
+    "title": "[Enhancement/Audio]: Web Audio Suspended State Auto-Resume Banner Prompt",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1643",
+    "published_at": "2026-11-26T18:38:02.123Z"
+  },
+  {
+    "number": 1646,
+    "title": "[Enhancement/UX]: Game Modal Neighbor Game Switcher Arrows",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1646",
+    "published_at": "2026-11-26T18:45:23.133Z"
+  },
+  {
+    "number": 1647,
+    "title": "[Enhancement/UI]: Responsive Sticky Filter Bar Auto-Collapse on Mobile Scroll",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1647",
+    "published_at": "2026-11-26T18:45:28.666Z"
+  },
+  {
+    "number": 1648,
+    "title": "[Enhancement/A11y]: Visual Tab-Order Sequence Overlay Helper for Focus Audits",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1648",
+    "published_at": "2026-11-26T18:45:34.138Z"
+  },
+  {
+    "number": 1649,
+    "title": "[Enhancement/Catalog]: Alphabetical Range Chips (A-F, G-M, N-S, T-Z) Filter Bar",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1649",
+    "published_at": "2026-11-26T18:45:39.846Z"
+  },
+  {
+    "number": 1650,
+    "title": "[Enhancement/UX]: Active Theme CSS Variables Snippet Copy Tool in Settings",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1650",
+    "published_at": "2026-11-26T18:45:45.274Z"
+  },
+  {
+    "number": 1651,
+    "title": "[Enhancement/UI]: Game Card Thumbnail Hover Zoom Micro-Transition with Reduced-Motion Guard",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1651",
+    "published_at": "2026-11-26T18:45:50.990Z"
+  },
+  {
+    "number": 1652,
+    "title": "[Enhancement/Leaderboard]: Leaderboard Jump-to-Me Quick Lookup & Handle Highlight Pin",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1652",
+    "published_at": "2026-11-26T18:45:57.152Z"
+  },
+  {
+    "number": 1653,
+    "title": "[Enhancement/UX]: Starter Recommendations Card Grid for Empty Favorites Filter State",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1653",
+    "published_at": "2026-11-26T18:46:02.741Z"
+  },
+  {
+    "number": 1654,
+    "title": "[Enhancement/UI]: Game Modal Safe Viewport Margins & Tablet Landscape Padding Polish",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1654",
+    "published_at": "2026-11-26T18:46:08.325Z"
+  },
+  {
+    "number": 1655,
+    "title": "[Enhancement/Audio]: Subtle Synthesized UI Toggle Tick Feedback Option in Preferences",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1655",
+    "published_at": "2026-11-26T18:46:14.104Z"
+  },
+  {
+    "number": 1686,
+    "title": "[Theme/UI]: Authentic 1981 IBM PC CGA 4-Color Cyan-Magenta Palette Theme Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1686",
+    "published_at": "2026-11-27T16:00:06.838Z"
+  },
+  {
+    "number": 1687,
+    "title": "[Theme/UI]: 1984 ZX Spectrum Color-Clash Attribute Grid & Cassette Border Theme Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1687",
+    "published_at": "2026-11-27T16:00:12.697Z"
+  },
+  {
+    "number": 1688,
+    "title": "[Theme/UI]: 1991 Super Nintendo Lavender-Violet Concave Shell Aesthetic Theme Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1688",
+    "published_at": "2026-11-27T16:00:18.345Z"
+  },
+  {
+    "number": 1689,
+    "title": "[Theme/UI]: 1986 EGA 16-Color DOS Text Mode & CP437 Box-Drawing Border Theme Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1689",
+    "published_at": "2026-11-27T16:00:24.065Z"
+  },
+  {
+    "number": 1690,
+    "title": "[Feature/VFX]: Interactive 2D Double-Slit Wave Interference & Diffraction Canvas Simulator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1690",
+    "published_at": "2026-11-27T16:00:29.750Z"
+  },
+  {
+    "number": 1691,
+    "title": "[Feature/VFX]: Procedural 2D Lorenz, Clifford and De Jong Strange Attractor Chaos Visualizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1691",
+    "published_at": "2026-11-27T16:00:35.473Z"
+  },
+  {
+    "number": 1692,
+    "title": "[Feature/Graphics]: Procedural 2D Marching Squares Topographic Contour & Elevation Field Visualizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1692",
+    "published_at": "2026-11-27T16:00:41.430Z"
+  },
+  {
+    "number": 1693,
+    "title": "[Feature/Graphics]: Procedural 2D Spirograph Epitrochoid & Hypotrochoid Gear Geometry Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1693",
+    "published_at": "2026-11-27T16:00:47.607Z"
+  },
+  {
+    "number": 1694,
+    "title": "[Feature/Physics]: Interactive 2D Electric Field Lines & Lorentz Charged Particle Sandbox",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1694",
+    "published_at": "2026-11-27T16:00:53.314Z"
+  },
+  {
+    "number": 1695,
+    "title": "[Feature/Physics]: Interactive 2D Coupled Oscillator & Standing Wave Harmonics Resonance Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1695",
+    "published_at": "2026-11-27T16:00:59.003Z"
+  },
+  {
+    "number": 1696,
+    "title": "[Feature/Audio]: Wavetable Morphing Waterfall Spectrum Instrument with LFO Frame Sweeper",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1696",
+    "published_at": "2026-11-27T16:08:47.696Z"
+  },
+  {
+    "number": 1697,
+    "title": "[Feature/Audio]: Procedural Web Audio Markov Chain Melody Composer with Transition Matrix",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1697",
+    "published_at": "2026-11-27T16:08:53.224Z"
+  },
+  {
+    "number": 1698,
+    "title": "[Feature/VFX]: Interactive 2D Physarum Slime Mold Chemotaxis Transport Network Canvas",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1698",
+    "published_at": "2026-11-27T16:08:58.835Z"
+  },
+  {
+    "number": 1699,
+    "title": "[Feature/VFX]: Procedural 2D Animated Truchet Arcs & Geometric Weaving Pattern Canvas",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1699",
+    "published_at": "2026-11-27T16:09:04.392Z"
+  },
+  {
+    "number": 1700,
+    "title": "[Feature/Tools]: Interactive SVG Bezier Path & Snap-Grid Vector Icon Workbench",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1700",
+    "published_at": "2026-11-27T16:09:10.158Z"
+  },
+  {
+    "number": 1701,
+    "title": "[Feature/Tools]: Interactive CSS Cubic-Bezier Easing Curve & Keyframe Animation Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1701",
+    "published_at": "2026-11-27T16:09:15.663Z"
+  },
+  {
+    "number": 1702,
+    "title": "[Feature/Tools]: In-Browser Retro Hardware Palette Quantizer & WCAG Contrast Matrix Tool",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1702",
+    "published_at": "2026-11-27T16:09:21.164Z"
+  },
+  {
+    "number": 1703,
+    "title": "[Feature/Physics]: Interactive 2D Newtons Cradle & Elastic Collision Momentum Transfer Physics Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1703",
+    "published_at": "2026-11-27T16:09:26.753Z"
+  },
+  {
+    "number": 1704,
+    "title": "[Feature/Graphics]: Procedural Hilbert, Peano and Gosper Space-Filling Curve Animator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1704",
+    "published_at": "2026-11-27T16:09:32.185Z"
+  },
+  {
+    "number": 1705,
+    "title": "[Feature/Audio]: Interactive Web Audio Shepard Tone & Perpetual Pitch Illusion Synthesizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1705",
+    "published_at": "2026-11-27T16:09:37.803Z"
+  },
+  {
+    "number": 1706,
+    "title": "[Feature/Emulator]: Full 1977 CHIP-8 Virtual Machine Interpreter with 64x32 Display and Disassembler",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1706",
+    "published_at": "2026-11-27T16:28:45.461Z"
+  },
+  {
+    "number": 1707,
+    "title": "[Feature/Compiler]: Regex-to-NFA and DFA Thompson Construction Compiler with State Graph Stepper",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1707",
+    "published_at": "2026-11-27T16:28:51.016Z"
+  },
+  {
+    "number": 1708,
+    "title": "[Feature/VM]: Interactive Little Man Computer Assembly IDE, Two-Pass Assembler and Step Debugger",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1708",
+    "published_at": "2026-11-27T16:28:56.587Z"
+  },
+  {
+    "number": 1709,
+    "title": "[Feature/Interpreter]: Brainfuck Tape Virtual Machine with Jump-Table Compiler and Memory Heatmap",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1709",
+    "published_at": "2026-11-27T16:29:02.184Z"
+  },
+  {
+    "number": 1710,
+    "title": "[Feature/Algorithms]: Interactive Multi-Algorithm Pathfinding Race Arena for A-Star, Dijkstra and JPS",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1710",
+    "published_at": "2026-11-27T16:29:07.795Z"
+  },
+  {
+    "number": 1711,
+    "title": "[Feature/AI]: Interactive Multi-Layer Perceptron Neural Network Backpropagation and Boundary Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1711",
+    "published_at": "2026-11-27T16:29:13.480Z"
+  },
+  {
+    "number": 1712,
+    "title": "[Feature/AI]: Interactive Monte Carlo Tree Search (MCTS) UCB1 Playout Simulator for Hex & Connect-4",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1712",
+    "published_at": "2026-11-27T16:29:19.085Z"
+  },
+  {
+    "number": 1713,
+    "title": "[Feature/Algorithms]: Procedural BSP Dungeon and Cave Hybrid Generator with Shadowcasting Visibility",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1713",
+    "published_at": "2026-11-27T16:29:24.841Z"
+  },
+  {
+    "number": 1714,
+    "title": "[Feature/Tools]: Client-Side Binary Hex-Dump and Endianness Struct Byte-Stream Inspector",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1714",
+    "published_at": "2026-11-27T16:29:30.665Z"
+  },
+  {
+    "number": 1715,
+    "title": "[Feature/Algorithms]: Genetic Algorithm Rocket Fleet Evolver with Obstacle Course and Fitness Graph",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1715",
+    "published_at": "2026-11-27T16:29:36.261Z"
+  },
+  {
+    "number": 1716,
+    "title": "[New Game]: 'Signal Relay' — Optical Fiber Wavelength Splitter and Prism Routing Puzzle",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1716",
+    "published_at": "2026-11-27T16:32:12.262Z"
+  },
+  {
+    "number": 1717,
+    "title": "[New Game]: 'Magma Forge' — Turn-Based Conveyor and Thermodynamic Ore Smelting Puzzle",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1717",
+    "published_at": "2026-11-27T16:32:18.092Z"
+  },
+  {
+    "number": 1718,
+    "title": "[New Game]: 'Phantom Ricochet' — Top-Down Stealth Mirror-Bounce Sniper and Sonar Arena",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1718",
+    "published_at": "2026-11-27T16:32:23.673Z"
+  },
+  {
+    "number": 1719,
+    "title": "[New Game]: 'Tectonic Shift' — Hex-Grid Plate Subduction and Landmass Stability Strategy",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1719",
+    "published_at": "2026-11-27T16:32:29.138Z"
+  },
+  {
+    "number": 1720,
+    "title": "[New Game]: 'Chrono Heist' — Multi-Timeline Self-Coop Platformer with Ghost Clone Recording",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1720",
+    "published_at": "2026-11-27T16:32:34.840Z"
+  },
+  {
+    "number": 1721,
+    "title": "[New Game]: 'Deep Bore' — Procedural Destructible Voxel Drill and Oxygen Management Roguelite",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1721",
+    "published_at": "2026-11-27T16:32:40.406Z"
+  },
+  {
+    "number": 1722,
+    "title": "[New Game]: 'Volt Vector' — Dual-Polarity Magnetic Rail-Grinding Arcade Speedrunner",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1722",
+    "published_at": "2026-11-27T16:32:46.243Z"
+  },
+  {
+    "number": 1723,
+    "title": "[New Game]: 'Circuit Hashi' — Procedural Island-Bridge Graph Connectivity Logic Puzzle",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1723",
+    "published_at": "2026-11-27T16:32:52.053Z"
+  },
+  {
+    "number": 1724,
+    "title": "[New Game]: 'Bastion Siege' — Physics Trebuchet Trajectory and Structural Block Demolition",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1724",
+    "published_at": "2026-11-27T16:32:57.538Z"
+  },
+  {
+    "number": 1725,
+    "title": "[New Game]: 'Echo Chamber' — Pitch-Black Maze Navigator Guided Strictly by Raycasted Sonar Pulses",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1725",
+    "published_at": "2026-11-27T16:33:03.121Z"
+  },
+  {
+    "number": 1726,
+    "title": "[Feature/Audio]: Multi-Track Piano Roll MIDI Sequencer with Velocity Lanes and Quantize Grid",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1726",
+    "published_at": "2026-11-27T16:37:11.837Z"
+  },
+  {
+    "number": 1727,
+    "title": "[Feature/Audio]: Procedural Schroeder Algorithmic Reverb, Early Reflections and Stereo Chorus Rack",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1727",
+    "published_at": "2026-11-27T16:37:17.594Z"
+  },
+  {
+    "number": 1728,
+    "title": "[Feature/Audio]: Real-Time Autocorrelation Pitch Chromatic Tuner and Harmonic Overtone Scope",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1728",
+    "published_at": "2026-11-27T16:37:23.260Z"
+  },
+  {
+    "number": 1729,
+    "title": "[Feature/Audio]: Algorithmic Breakbeat Buffer Slicer and Poly-Meter Pattern Remixer Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1729",
+    "published_at": "2026-11-27T16:37:29.523Z"
+  },
+  {
+    "number": 1730,
+    "title": "[Feature/Audio]: Multi-Band 3-Way Crossover Compressor, Limiter and Analog Soft-Clipper Mastering Rack",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1730",
+    "published_at": "2026-11-27T16:37:35.227Z"
+  },
+  {
+    "number": 1731,
+    "title": "[Feature/Audio]: 2D Waveguide Drumhead Membrane PDE Percussion Physical Modeling Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1731",
+    "published_at": "2026-11-27T16:37:40.772Z"
+  },
+  {
+    "number": 1732,
+    "title": "[Feature/Audio]: Algorithmic Four-Voice Counterpoint and SATB Chord Progression Harmonizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1732",
+    "published_at": "2026-11-27T16:37:46.337Z"
+  },
+  {
+    "number": 1733,
+    "title": "[Feature/Audio]: Multi-Tap Ping-Pong Stereo Delay Matrix and Tape Wow-Flutter Modulation Workbench",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1733",
+    "published_at": "2026-11-27T16:37:52.023Z"
+  },
+  {
+    "number": 1734,
+    "title": "[Feature/Audio]: Casio CZ-Style Phase-Distortion and Ring-Modulator Retro Synth Workstation",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1734",
+    "published_at": "2026-11-27T16:37:57.649Z"
+  },
+  {
+    "number": 1735,
+    "title": "[Feature/Audio]: Microtonal 19-TET and Just Intonation Scale Matrix Audio Sequencer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1735",
+    "published_at": "2026-11-27T16:38:03.232Z"
+  },
+  {
+    "number": 1736,
+    "title": "[Feature/Graphics]: Software 2D BSP Tree Doom-Style Sector Portal Renderer with Textured Floors",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1736",
+    "published_at": "2026-11-27T16:38:38.329Z"
+  },
+  {
+    "number": 1738,
+    "title": "[Feature/Physics]: 2D Smoothed Particle Hydrodynamics Liquid Fluid and Dam-Break Solver",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1738",
+    "published_at": "2026-11-27T16:38:43.936Z"
+  },
+  {
+    "number": 1741,
+    "title": "[Feature/Physics]: 2D Bridge Truss Tension Stress Heatmap and Vehicle Load Physics Simulator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1741",
+    "published_at": "2026-11-27T16:38:49.380Z"
+  },
+  {
+    "number": 1745,
+    "title": "[Feature/Graphics]: Software 3D Textured Scanline Triangle Rasterizer with Perspective Texture Mapping",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1745",
+    "published_at": "2026-11-27T16:38:54.835Z"
+  },
+  {
+    "number": 1749,
+    "title": "[Feature/Algorithms]: Exact Cover Dancing Links DLX Toroidal Matrix Solver Visualizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1749",
+    "published_at": "2026-11-27T16:39:00.321Z"
+  },
+  {
+    "number": 1753,
+    "title": "[Feature/Graphics]: Procedural 2D Differential Line Growth and Organic Coral Folding Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1753",
+    "published_at": "2026-11-27T16:39:05.828Z"
+  },
+  {
+    "number": 1757,
+    "title": "[Feature/Physics]: Interactive 2D Lattice-Boltzmann D2Q9 Wind Tunnel Airfoil Vorticity Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1757",
+    "published_at": "2026-11-27T16:39:11.429Z"
+  },
+  {
+    "number": 1761,
+    "title": "[Feature/Algorithms]: Interactive Force-Directed Graph Layout with Kruskal MST and Max-Flow Stepper",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1761",
+    "published_at": "2026-11-27T16:39:16.874Z"
+  },
+  {
+    "number": 1765,
+    "title": "[Feature/Graphics]: Software 2D Raytraced Reflective Mirror and Snells Law Prism Dispersion Sandbox",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1765",
+    "published_at": "2026-11-27T16:39:22.422Z"
+  },
+  {
+    "number": 1769,
+    "title": "[Feature/Core]: Fixed-Point Q16.16 Arithmetic Math Engine and Cross-Browser Lockstep Checksum Verifier",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1769",
+    "published_at": "2026-11-27T16:39:27.997Z"
+  },
+  {
+    "number": 1776,
+    "title": "[Feature/Emulator]: Full 6502 Microprocessor Emulator with Assembler, Flags and Pixel Bus",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1776",
+    "published_at": "2026-11-27T17:03:44.658Z"
+  },
+  {
+    "number": 1777,
+    "title": "[Feature/Compiler]: Recursive-Descent Matrix and Math Expression AST Compiler with Visual Evaluator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1777",
+    "published_at": "2026-11-27T17:03:50.270Z"
+  },
+  {
+    "number": 1778,
+    "title": "[Feature/Systems]: Interactive Preemptive OS Process Scheduler with Multilevel Queue and Gantt Chart",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1778",
+    "published_at": "2026-11-27T17:03:55.884Z"
+  },
+  {
+    "number": 1779,
+    "title": "[Feature/Systems]: Virtual Memory TLB and Page Replacement Simulator for LRU, FIFO and Clock",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1779",
+    "published_at": "2026-11-27T17:04:01.486Z"
+  },
+  {
+    "number": 1780,
+    "title": "[Feature/Crypto]: Interactive AES-128 Block Cipher SubBytes, ShiftRows and MixColumns Round Debugger",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1780",
+    "published_at": "2026-11-27T17:04:07.093Z"
+  },
+  {
+    "number": 1781,
+    "title": "[Feature/Compression]: Huffman Prefix-Tree Builder, Bitstream Encoder and Shannon Entropy Analyzer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1781",
+    "published_at": "2026-11-27T17:04:12.690Z"
+  },
+  {
+    "number": 1782,
+    "title": "[Feature/Logic]: Interactive Sequential Digital Circuit Lab with Flip-Flops and 7-Segment Display",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1782",
+    "published_at": "2026-11-27T17:04:18.199Z"
+  },
+  {
+    "number": 1783,
+    "title": "[Feature/Networking]: Interactive TCP Sliding Window, AIMD Congestion Sawtooth and Packet Loss Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1783",
+    "published_at": "2026-11-27T17:04:23.808Z"
+  },
+  {
+    "number": 1784,
+    "title": "[Feature/Systems]: Tri-Color Mark-and-Sweep Garbage Collector Heap Graph and Compaction Visualizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1784",
+    "published_at": "2026-11-27T17:04:29.331Z"
+  },
+  {
+    "number": 1785,
+    "title": "[Feature/Data]: Interactive Order-M B+ Tree Index Insertion, Node Splitting and Range Scan Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1785",
+    "published_at": "2026-11-27T17:04:35.150Z"
+  },
+  {
+    "number": 1786,
+    "title": "[New Game]: 'Orbital Tug' — Dual-Thruster Zero-G Salvage and Elastic Cable Towing Physics",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1786",
+    "published_at": "2026-11-27T17:08:29.500Z"
+  },
+  {
+    "number": 1787,
+    "title": "[New Game]: 'Packet Storm' — Real-Time Firewall Node Routing and Bandwidth Defense Strategy",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1787",
+    "published_at": "2026-11-27T17:08:35.072Z"
+  },
+  {
+    "number": 1788,
+    "title": "[New Game]: 'Pendulum Swing' — Momentum Grapple-Hook Cavern Vaulting and Precision Landing",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1788",
+    "published_at": "2026-11-27T17:08:40.607Z"
+  },
+  {
+    "number": 1789,
+    "title": "[New Game]: 'Mirror Sanctum' — Turn-Based Dual-Guardian Symmetrical Grid Movement Puzzle",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1789",
+    "published_at": "2026-11-27T17:08:46.401Z"
+  },
+  {
+    "number": 1790,
+    "title": "[New Game]: 'Subspace Sonar' — Submarine Thermocline Stealth and Wire-Guided Torpedo Hunter",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1790",
+    "published_at": "2026-11-27T17:08:52.050Z"
+  },
+  {
+    "number": 1791,
+    "title": "[New Game]: 'Hexa Alchemist' — Turn-Based Directional Elemental Transmutation Hex Strategy",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1791",
+    "published_at": "2026-11-27T17:08:57.755Z"
+  },
+  {
+    "number": 1792,
+    "title": "[New Game]: 'Laser Loom' — Beat-Quantized Rotating Prism Deflector Rhythm Survival Arena",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1792",
+    "published_at": "2026-11-27T17:09:03.321Z"
+  },
+  {
+    "number": 1793,
+    "title": "[New Game]: 'Cargo Crane' — Gantry Counterweight Stacking and Wave-Sway Balance Simulator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1793",
+    "published_at": "2026-11-27T17:09:08.835Z"
+  },
+  {
+    "number": 1794,
+    "title": "[New Game]: 'Sluice Lock' — Multi-Reservoir Canal Gate Balancing and Hydraulic Routing Puzzle",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1794",
+    "published_at": "2026-11-27T17:09:14.401Z"
+  },
+  {
+    "number": 1795,
+    "title": "[New Game]: 'Bio Hazard' — Real-Time Macrophage Patrol and Antibody Immune Defense Strategy",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1795",
+    "published_at": "2026-11-27T17:09:20.064Z"
+  },
+  {
+    "number": 1796,
+    "title": "[Feature/Audio]: 10-Band Graphic Equalizer with Complex Magnitude and Phase Bode Plot Analyzer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1796",
+    "published_at": "2026-11-27T17:10:53.405Z"
+  },
+  {
+    "number": 1797,
+    "title": "[Feature/Audio]: Bouncing-Particle Cellular Sequencer Grid (Otomata-Style Melodic Synth Matrix)",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1797",
+    "published_at": "2026-11-27T17:10:58.965Z"
+  },
+  {
+    "number": 1798,
+    "title": "[Feature/Audio]: Mid-Side Stereo Width Processor with Vectorscope Goniometer and Phase Meter",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1798",
+    "published_at": "2026-11-27T17:11:04.535Z"
+  },
+  {
+    "number": 1799,
+    "title": "[Feature/Audio]: Sidechain Ducking Compressor with Envelope Follower and Gain Reduction History",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1799",
+    "published_at": "2026-11-27T17:11:10.171Z"
+  },
+  {
+    "number": 1800,
+    "title": "[Feature/Audio]: Polyphonic Web Audio Phase Vocoder Time-Stretcher and Granular Pitch-Shifter Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1800",
+    "published_at": "2026-11-27T17:11:15.659Z"
+  },
+  {
+    "number": 1801,
+    "title": "[Feature/Audio]: Broadcast K-Weighted LUFS Loudness Meter and True-Peak Headroom Analyzer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1801",
+    "published_at": "2026-11-27T17:11:21.439Z"
+  },
+  {
+    "number": 1802,
+    "title": "[Feature/Audio]: Interactive Chord Inversion, Drop-2 Jazz Voicing and Rhodes Electric Piano Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1802",
+    "published_at": "2026-11-27T17:11:27.023Z"
+  },
+  {
+    "number": 1803,
+    "title": "[Feature/Audio]: Dual-Tone DTMF Telephony Keypad Synthesizer and Goertzel Frequency Decoder",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1803",
+    "published_at": "2026-11-27T17:11:32.704Z"
+  },
+  {
+    "number": 1804,
+    "title": "[Feature/Audio]: Nonlinear Vacuum-Tube Amp Waveshaper, Passive Tone Stack and Cabinet Simulator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1804",
+    "published_at": "2026-11-27T17:11:38.247Z"
+  },
+  {
+    "number": 1805,
+    "title": "[Feature/Audio]: Coupled Multi-Pendulum Zone-Trigger Ambient Harmonic Chime Generator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1805",
+    "published_at": "2026-11-27T17:11:43.830Z"
+  },
+  {
+    "number": 1806,
+    "title": "[Feature/Graphics]: Bowyer-Watson Delaunay Triangulation and Circumcircle Step-by-Step Debugger",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1806",
+    "published_at": "2026-11-27T17:13:23.446Z"
+  },
+  {
+    "number": 1807,
+    "title": "[Feature/Graphics]: Content-Aware Seam Carving Image Resizer Using Dynamic Programming Energy Maps",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1807",
+    "published_at": "2026-11-27T17:13:29.337Z"
+  },
+  {
+    "number": 1808,
+    "title": "[Feature/Algorithms]: Interactive Sweep-Line Bentley-Ottmann Segment Intersection Debugger",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1808",
+    "published_at": "2026-11-27T17:13:34.848Z"
+  },
+  {
+    "number": 1809,
+    "title": "[Feature/Graphics]: Interactive 2D Signed Distance Field Raymarching Sphere-Trace Stepper and CSG Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1809",
+    "published_at": "2026-11-27T17:13:40.418Z"
+  },
+  {
+    "number": 1810,
+    "title": "[Feature/Physics]: Ideal-Gas Pressure-Filled Verlet Soft-Body Balloon and Tire Physics Engine",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1810",
+    "published_at": "2026-11-27T17:13:45.914Z"
+  },
+  {
+    "number": 1811,
+    "title": "[Feature/Graphics]: Bridson Poisson-Disc Blue-Noise Sampling and Weighted Stipple Art Generator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1811",
+    "published_at": "2026-11-27T17:13:51.415Z"
+  },
+  {
+    "number": 1812,
+    "title": "[Feature/Algorithms]: Interactive 2D K-D Tree Spatial Partitioning and K-Nearest-Neighbor Pruning Lab",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1812",
+    "published_at": "2026-11-27T17:13:57.194Z"
+  },
+  {
+    "number": 1813,
+    "title": "[Feature/Physics]: Meshing Spur Gear-Train Angular Velocity and Jam-Lock Kinematics Sandbox",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1813",
+    "published_at": "2026-11-27T17:14:02.805Z"
+  },
+  {
+    "number": 1814,
+    "title": "[Feature/Graphics]: Descartes Circle Theorem Apollonian Fractal Gasket Complex Solver Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1814",
+    "published_at": "2026-11-27T17:14:08.489Z"
+  },
+  {
+    "number": 1815,
+    "title": "[Feature/Tools]: Recursive-Descent JSON Structural Diff Tree and Query Path Evaluator Workbench",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1815",
+    "published_at": "2026-11-27T17:14:14.297Z"
+  },
+  {
+    "number": 1822,
+    "title": "[New Game]: 'Signal Forge' — Logic Gate Circuit Routing & Timing Diagram Puzzle",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1822",
+    "published_at": "2026-11-28T11:38:58.559Z"
+  },
+  {
+    "number": 1823,
+    "title": "[New Game]: 'Tide Sculptor' — Coastal Wave-Breaker & Erosion Defense Sandbox",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1823",
+    "published_at": "2026-11-28T11:39:04.342Z"
+  },
+  {
+    "number": 1824,
+    "title": "[New Game]: 'Magnetic Drift' — Polarity-Switching Orbital Slingshot Racer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1824",
+    "published_at": "2026-11-28T11:39:09.829Z"
+  },
+  {
+    "number": 1825,
+    "title": "[New Game]: 'Glyph Weaver' — Turn-Based Runic Spell-Grid & Combo Chain Tactics",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1825",
+    "published_at": "2026-11-28T11:39:15.317Z"
+  },
+  {
+    "number": 1826,
+    "title": "[New Game]: 'Thermal Updraft' — Glider Soaring & Ridge-Lift Endurance Simulator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1826",
+    "published_at": "2026-11-28T11:39:20.914Z"
+  },
+  {
+    "number": 1827,
+    "title": "[New Game]: 'Vault Cracker' — Acoustic Pin-Tumbler & Stethoscope Lockpicking Challenge",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1827",
+    "published_at": "2026-11-28T11:39:26.587Z"
+  },
+  {
+    "number": 1828,
+    "title": "[New Game]: 'Borehole Miner' — Subterranean Drill Rig, Heat-Sink & Ore Vein Strategy",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1828",
+    "published_at": "2026-11-28T11:39:32.484Z"
+  },
+  {
+    "number": 1829,
+    "title": "[New Game]: 'Relay Rush' — High-Speed Laser-Link Satellite Constellation Networker",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1829",
+    "published_at": "2026-11-28T11:39:37.959Z"
+  },
+  {
+    "number": 1830,
+    "title": "[New Game]: 'Timber Truss' — Load-Bearing Bridge Stress & Buckling Physics Builder",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1830",
+    "published_at": "2026-11-28T11:39:43.671Z"
+  },
+  {
+    "number": 1831,
+    "title": "[New Game]: 'Echo Cavern' — Blind Echolocation Stealth & Acoustic Pulse Navigator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1831",
+    "published_at": "2026-11-28T11:39:49.303Z"
+  },
+  {
+    "number": 1832,
+    "title": "[New Game]: 'Clockwork Escapement' — Gear Ratio & Mainspring Pendulum Timing Puzzle",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1832",
+    "published_at": "2026-11-28T12:58:30.694Z"
+  },
+  {
+    "number": 1833,
+    "title": "[New Game]: 'Vector Interceptor' — Ballistic Lead-Prediction & Radar Turret Defense",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1833",
+    "published_at": "2026-11-28T12:58:36.445Z"
+  },
+  {
+    "number": 1834,
+    "title": "[New Game]: 'Mycelium Web' — Nutrient-Network Bio-Expansion & Territory Strategy",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1834",
+    "published_at": "2026-11-28T12:58:42.122Z"
+  },
+  {
+    "number": 1835,
+    "title": "[New Game]: 'Gyro Courier' — Two-Wheeled Self-Balancing Cargo Delivery Platformer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1835",
+    "published_at": "2026-11-28T12:58:47.781Z"
+  },
+  {
+    "number": 1836,
+    "title": "[New Game]: 'Prism Foundry' — Dichroic Beam Splitting & Additive Color Mixing Lab Game",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1836",
+    "published_at": "2026-11-28T12:58:53.457Z"
+  },
+  {
+    "number": 1837,
+    "title": "[Feature/Audio]: Karplus-Strong Plucked String Physical Modeling Synthesizer Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1837",
+    "published_at": "2026-11-28T12:58:59.080Z"
+  },
+  {
+    "number": 1838,
+    "title": "[Feature/Audio]: Biquad Parametric EQ & Pole-Zero Z-Plane Filter Topology Visualizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1838",
+    "published_at": "2026-11-28T12:59:04.664Z"
+  },
+  {
+    "number": 1839,
+    "title": "[Feature/Audio]: Real-Time LPC Formant Vocal Tract & Vowel Formant Synthesizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1839",
+    "published_at": "2026-11-28T12:59:10.322Z"
+  },
+  {
+    "number": 1840,
+    "title": "[Feature/Audio]: Euclidean Polyrhythm Matrix & Bjorklund Rhythm Generator Sequencer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1840",
+    "published_at": "2026-11-28T12:59:15.939Z"
+  },
+  {
+    "number": 1841,
+    "title": "[Feature/Graphics]: Marching Squares Isoline Contour & Procedural Metaballs Renderer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1841",
+    "published_at": "2026-11-28T12:59:21.474Z"
+  },
+  {
+    "number": 1842,
+    "title": "[Feature/Graphics]: Floyd-Steinberg & Bayer Ordered-Dithering Retro Palette Quantizer",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1842",
+    "published_at": "2026-11-28T13:03:47.886Z"
+  },
+  {
+    "number": 1843,
+    "title": "[Feature/Graphics]: Reaction-Diffusion Gray-Scott Morphogenesis Pattern Simulator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1843",
+    "published_at": "2026-11-28T13:03:53.404Z"
+  },
+  {
+    "number": 1844,
+    "title": "[Feature/Graphics]: 2D Visibility Polygon & Dynamic Hard/Soft Shadow Raycaster Studio",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1844",
+    "published_at": "2026-11-28T13:03:59.010Z"
+  },
+  {
+    "number": 1845,
+    "title": "[Feature/Graphics]: Wave Function Collapse (WFC) Adjacency Tilemap & Backtracking Generator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1845",
+    "published_at": "2026-11-28T13:04:04.633Z"
+  },
+  {
+    "number": 1846,
+    "title": "[Feature/Graphics]: Catmull-Rom & Cubic Bezier Arc-Length Parameterized Spline Camera Editor",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1846",
+    "published_at": "2026-11-28T13:04:10.260Z"
+  },
+  {
+    "number": 1847,
+    "title": "[Feature/Physics]: 2D Rigid-Body Separating Axis Theorem (SAT) & Impulse Manifold Sandbox",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1847",
+    "published_at": "2026-11-28T13:04:15.890Z"
+  },
+  {
+    "number": 1848,
+    "title": "[Feature/Physics]: FABRIK Inverse Kinematics (IK) Multi-Jointed Tentacle & Limb Solver",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1848",
+    "published_at": "2026-11-28T13:04:21.369Z"
+  },
+  {
+    "number": 1849,
+    "title": "[Feature/Physics]: Eulerian Grid Smoke & Ink Advection Fluid Solver (Jos Stam Stable Fluids)",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1849",
+    "published_at": "2026-11-28T13:04:26.873Z"
+  },
+  {
+    "number": 1850,
+    "title": "[Feature/Physics]: Barnes-Hut Quadtree N-Body Gravitational Galaxy & Tidal Merger Simulator",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1850",
+    "published_at": "2026-11-28T13:04:32.456Z"
+  },
+  {
+    "number": 1851,
+    "title": "[Feature/Physics]: Cloth & Tearable Mesh PBD (Position Based Dynamics) Wind-Tunnel Sandbox",
+    "url": "https://github.com/DebasmitaBose0/ArcadeVerse/issues/1851",
+    "published_at": "2026-11-28T13:04:38.045Z"
   }
 ]

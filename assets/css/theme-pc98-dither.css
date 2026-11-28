@@ -1,0 +1,83 @@
+/* ==========================================================================
+   1983 MSX2 & PC-9801 DITHERED 16-COLOR CYBER THEME STUDIO (#1568)
+   Ordered Bayer 4x4 checkerboard dithering patterns, double-line borders,
+   phosphor cyan, warm amber, and 400-line CRT interlace scanlines.
+   ========================================================================== */
+
+:root[data-theme="pc98-msx2-dither"],
+body.theme-pc98-msx2-dither {
+  --pc98-navy: #080828;
+  --pc98-cyan: #44ffee;
+  --pc98-amber: #ffaa22;
+  --pc98-ivory: #f4f4ee;
+  --pc98-magenta: #ee4499;
+  --pc98-green: #22dd55;
+  --pc98-black: #000000;
+
+  --bg-primary: #080828;
+  --bg-secondary: #101038;
+  --bg-card: #080828;
+  --text-primary: #f4f4ee;
+  --text-secondary: #44ffee;
+  --border-color: #44ffee;
+  --accent-color: #ffaa22;
+}
+
+body.theme-pc98-msx2-dither {
+  background-color: var(--pc98-navy) !important;
+  color: var(--pc98-ivory) !important;
+  font-family: "MS Gothic", monospace;
+  background-image: 
+    repeating-linear-gradient(
+      0deg,
+      rgba(68, 255, 238, 0.05) 0px,
+      rgba(68, 255, 238, 0.05) 1px,
+      transparent 1px,
+      transparent 2px
+    ),
+    radial-gradient(circle at 50% 50%, rgba(8, 8, 40, 0.6) 0%, #000010 100%) !important;
+}
+
+/* Sharp double-pixel PC-98 window borders */
+body.theme-pc98-msx2-dither .game-card {
+  background: var(--pc98-navy) !important;
+  border: 4px double var(--pc98-cyan) !important;
+  border-radius: 0 !important;
+  box-shadow: 4px 4px 0 #000000 !important;
+  color: var(--pc98-ivory) !important;
+}
+
+body.theme-pc98-msx2-dither .game-card:hover {
+  border-color: var(--pc98-amber) !important;
+  box-shadow: 4px 4px 0 var(--pc98-amber) !important;
+}
+
+/* 400-Line CRT Interlace Scanline Filter */
+.pc98-crt-interlace {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 999998;
+  background: linear-gradient(
+    rgba(8, 8, 40, 0) 50%,
+    rgba(0, 0, 0, 0.35) 50%
+  );
+  background-size: 100% 2px;
+}
+
+/* Status counter in Japanese PC-98 style */
+.pc98-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #000018;
+  border: 2px solid var(--pc98-cyan);
+  padding: 4px 10px;
+  font-family: monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--pc98-cyan);
+}
