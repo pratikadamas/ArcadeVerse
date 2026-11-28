@@ -1,0 +1,74 @@
+/* ==========================================================================
+   PER-GAME PERSONAL BEST SCORE SPLIT HISTORY LOG (#1553)
+   Milestone timeline, score delta chips, and timestamped personal best logs
+   ========================================================================== */
+
+.score-history-modal-card {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 16px;
+  max-width: 420px;
+}
+
+.score-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #30363d;
+}
+
+.score-history-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f0f6fc;
+}
+
+.score-history-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.score-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #161b22;
+  border: 1px solid rgba(48, 54, 61, 0.7);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+.score-history-val {
+  font-family: monospace;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #ffd700;
+}
+
+.score-history-delta {
+  font-family: monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #3fb950;
+  background: rgba(46, 160, 67, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.score-history-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.score-history-date {
+  font-size: 0.72rem;
+  color: #8b949e;
+}

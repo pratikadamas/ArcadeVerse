@@ -1,0 +1,62 @@
+/* ==========================================================================
+   CATALOG SORT DIRECTION INVERTER & MULTI-FIELD SORTER (#1539)
+   Toolbar controls, sort field select, and ASC/DESC invert button
+   ========================================================================== */
+
+.catalog-sort-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
+.catalog-sort-select {
+  background: #0d1117;
+  color: #c9d1d9;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.catalog-sort-select:focus {
+  border-color: #58a6ff;
+}
+
+.catalog-sort-invert-btn {
+  background: #21262d;
+  border: 1px solid #30363d;
+  color: #c9d1d9;
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.catalog-sort-invert-btn:hover {
+  background: #30363d;
+  color: #58a6ff;
+}
+
+.catalog-sort-invert-btn[data-direction="desc"] .sort-arrow {
+  display: inline-block;
+  transform: rotate(180deg);
+  transition: transform 0.2s ease;
+}
+
+.catalog-sort-invert-btn[data-direction="asc"] .sort-arrow {
+  display: inline-block;
+  transform: rotate(0deg);
+  transition: transform 0.2s ease;
+}

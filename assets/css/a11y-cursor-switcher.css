@@ -1,0 +1,48 @@
+/* ==========================================================================
+   CUSTOM ACCESSIBILITY OVERSIZED CURSOR SWITCHER (#1552)
+   High-visibility oversized cursor options: Default, Large Neon Cyan, Large Amber
+   ========================================================================== */
+
+/* Neon Cyan Oversized Cursor */
+body.cursor-large-cyan,
+body.cursor-large-cyan * {
+  cursor: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cpath d='M4,4 L16,32 L20,20 L32,16 Z' fill='%2300f0ff' stroke='%23000000' stroke-width='2.5' stroke-linejoin='round'/%3E%3C/svg%3E"), auto !important;
+}
+
+body.cursor-large-cyan a,
+body.cursor-large-cyan button,
+body.cursor-large-cyan [role="button"] {
+  cursor: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cpath d='M10,2 L14,14 L26,14 L16,22 L20,34 L10,26 L0,34 L4,22 L-6,14 L6,14 Z' transform='translate(8, 0)' fill='%2300f0ff' stroke='%23000000' stroke-width='2'/%3E%3C/svg%3E"), pointer !important;
+}
+
+/* High-Vis Amber Oversized Cursor */
+body.cursor-large-amber,
+body.cursor-large-amber * {
+  cursor: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cpath d='M4,4 L16,32 L20,20 L32,16 Z' fill='%23ffd700' stroke='%23000000' stroke-width='2.5' stroke-linejoin='round'/%3E%3C/svg%3E"), auto !important;
+}
+
+.cursor-switcher-group {
+  display: inline-flex;
+  gap: 4px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.cursor-select-btn {
+  background: transparent;
+  border: none;
+  color: #8b949e;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cursor-select-btn.active {
+  background: #21262d;
+  color: #58a6ff;
+}

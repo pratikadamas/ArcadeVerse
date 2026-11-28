@@ -1,0 +1,67 @@
+/* ==========================================================================
+   KEYBOARD-FOCUSED CARD ACTION PROMPT BAR (#1541)
+   Floating shortcut guidance bar that displays keyboard commands
+   when a player focuses an individual game card
+   ========================================================================== */
+
+.focus-action-prompt-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: rgba(13, 17, 23, 0.95);
+  border: 1px solid #58a6ff;
+  border-radius: 30px;
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(88, 166, 255, 0.3);
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+}
+
+.focus-action-prompt-bar.visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.prompt-game-title {
+  color: #f0f6fc;
+  font-weight: 700;
+  font-size: 0.88rem;
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.prompt-shortcuts-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.prompt-shortcut-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #8b949e;
+}
+
+.prompt-key-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  color: #58a6ff;
+  font-family: monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}

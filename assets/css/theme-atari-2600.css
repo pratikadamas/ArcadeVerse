@@ -1,0 +1,108 @@
+/* ==========================================================================
+   1979 ATARI 2600 WOODGRAIN CONSOLE & TIA RAINBOW STRIPE THEME (#1559)
+   Walnut woodgrain bezels, brushed chrome rocker switch accents,
+   6-band TIA rainbow stripe dividers, and optional RF static effect.
+   ========================================================================== */
+
+:root[data-theme="atari-2600-woodgrain"],
+body.theme-atari-2600-woodgrain {
+  --atari-wood-dark: #2a1810;
+  --atari-wood-mid: #4a2d1b;
+  --atari-wood-light: #6a4028;
+  --atari-chrome: #c0c0c0;
+  --atari-black: #0c0c0e;
+  --atari-orange: #ff5500;
+
+  /* 6-Band TIA Rainbow Accent Palette */
+  --tia-red: #e02020;
+  --tia-orange: #f07010;
+  --tia-yellow: #f0d010;
+  --tia-green: #30b030;
+  --tia-cyan: #2090d0;
+  --tia-purple: #8020a0;
+
+  --bg-primary: #12100d;
+  --bg-secondary: #2a1810;
+  --bg-card: #1f140f;
+  --text-primary: #f8e8d0;
+  --text-secondary: #f0d010;
+  --accent-color: #ff5500;
+  --border-color: #6a4028;
+}
+
+body.theme-atari-2600-woodgrain {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  background-image: 
+    repeating-linear-gradient(
+      90deg,
+      #24140c 0px,
+      #321d12 4px,
+      #2a1810 8px,
+      #3e2417 14px,
+      #24140c 20px
+    ) !important;
+}
+
+body.theme-atari-2600-woodgrain .game-card {
+  background: var(--bg-card) !important;
+  border: 4px solid var(--atari-wood-light) !important;
+  border-top-color: #8c5636 !important;
+  border-left-color: #8c5636 !important;
+  border-bottom-color: #1a0e09 !important;
+  border-right-color: #1a0e09 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8) !important;
+  border-radius: 4px !important;
+}
+
+/* 6-band Atari TIA Rainbow Stripe Divider */
+.atari-tia-rainbow-stripe {
+  height: 6px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--tia-red) 0%,
+    var(--tia-orange) 16.6%,
+    var(--tia-yellow) 33.3%,
+    var(--tia-green) 50%,
+    var(--tia-cyan) 66.6%,
+    var(--tia-purple) 83.3%,
+    var(--tia-red) 100%
+  );
+  margin: 12px 0;
+  box-shadow: 0 0 10px rgba(240, 112, 16, 0.4);
+}
+
+/* Brushed Aluminum Rocker Switch Styling */
+.atari-rocker-switch {
+  display: inline-flex;
+  align-items: center;
+  background: #333338;
+  border: 2px solid #55555e;
+  border-radius: 4px;
+  padding: 4px 10px;
+  color: #ffffff;
+  font-family: monospace;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.2), 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.atari-rocker-switch.active {
+  background: #ff5500;
+  border-color: #ff8833;
+}
+
+/* CRT RF Channel 3 Static Noise Simulation */
+.atari-rf-static {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 999998;
+  opacity: 0.04;
+  background-image: radial-gradient(#ffffff 1px, transparent 0);
+  background-size: 4px 4px;
+}
