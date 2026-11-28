@@ -2278,6 +2278,446 @@
     },
 
     /**
+     * Standardized Hierarchical A* & Jump Point Search (JPS) 2D Grid Pathfinding Engine with Vector Smoothing
+     * @param {Object} options - { width, height, grid, diagonal, heuristic }
+     * @returns {Object} Pathfinder instance
+     */
+    createPathfinder: function (options) {
+      var opts = options || {};
+      var width = (typeof opts.width === "number" && opts.width > 0) ? Math.floor(opts.width) : 10;
+      var height = (typeof opts.height === "number" && opts.height > 0) ? Math.floor(opts.height) : 10;
+      var defaultDiagonal = opts.diagonal || "noObstacles"; // "never", "always", "noObstacles", "oneObstacle"
+      var defaultHeuristic = opts.heuristic || "manhattan"; // "manhattan", "euclidean", "chebyshev", "octile"
+
+      // Internal grid data: 2D array [y][x] containing weight (1+ = walkable, 0 = blocked)
+      var grid = [];
+      for (var y = 0; y < height; y++) {
+        var row = [];
+        for (var x = 0; x < width; x++) {
+          row.push(1);
+        }
+        grid.push(row);
+      }
+
+      if (Array.isArray(opts.grid)) {
+        for (var gy = 0; gy < Math.min(height, opts.grid.length); gy++) {
+          if (Array.isArray(opts.grid[gy])) {
+            for (var gx = 0; gx < Math.min(width, opts.grid[gy].length); gx++) {
+              var val = opts.grid[gy][gx];
+              if (val === false || val === 0) {
+                grid[gy][gx] = 0;
+              } else if (typeof val === "number" && val > 0) {
+                grid[gy][gx] = val;
+              } else {
+                grid[gy][gx] = 1;
+              }
+            }
+          }
+        }
+      }
+
+      function isWalkable(x, y) {
+        if (x < 0 || x >= width || y < 0 || y >= height) return false;
+        return grid[y][x] > 0;
+      }
+
+      function getWeight(x, y) {
+        if (x < 0 || x >= width || y < 0 || y >= height) return 0;
+        return grid[y][x];
+      }
+
+      function setWalkable(x, y, walkable) {
+        if (x >= 0 && x < width && y >= 0 && y < height) {
+          grid[y][x] = walkable ? 1 : 0;
+        }
+      }
+
+      function setWeight(x, y, weight) {
+        if (x >= 0 && x < width && y >= 0 && y < height) {
+          grid[y][x] = (typeof weight === "number" && weight >= 0) ? weight : 0;
+        }
+      }
+
+      function computeHeuristic(type, x1, y1, x2, y2) {
+        var dx = Math.abs(x1 - x2);
+        var dy = Math.abs(y1 - y2);
+        switch (type) {
+          case "euclidean":
+            return Math.sqrt(dx * dx + dy * dy);
+          case "chebyshev":
+            return Math.max(dx, dy);
+          case "octile":
+            var F = Math.SQRT2 - 1;
+            return (dx < dy) ? F * dx + dy : F * dy + dx;
+          case "manhattan":
+          default:
+            return dx + dy;
+        }
+      }
+
+      // Min-Heap Priority Queue for A*
+      function PriorityQueue() {
+        this.nodes = [];
+      }
+      PriorityQueue.prototype.push = function (node) {
+        this.nodes.push(node);
+        this._up(this.nodes.length - 1);
+      };
+      PriorityQueue.prototype.pop = function () {
+        if (this.nodes.length === 0) return null;
+        var top = this.nodes[0];
+        var bottom = this.nodes.pop();
+        if (this.nodes.length > 0) {
+          this.nodes[0] = bottom;
+          this._down(0);
+        }
+        return top;
+      };
+      PriorityQueue.prototype.size = function () {
+        return this.nodes.length;
+      };
+      PriorityQueue.prototype._up = function (i) {
+        var node = this.nodes[i];
+        while (i > 0) {
+          var p = (i - 1) >> 1;
+          var parent = this.nodes[p];
+          if (node.f >= parent.f) break;
+          this.nodes[i] = parent;
+          i = p;
+        }
+        this.nodes[i] = node;
+      };
+      PriorityQueue.prototype._down = function (i) {
+        var len = this.nodes.length;
+        var node = this.nodes[i];
+        while ((i << 1) + 1 < len) {
+          var left = (i << 1) + 1;
+          var right = left + 1;
+          var best = left;
+          if (right < len && this.nodes[right].f < this.nodes[left].f) {
+            best = right;
+          }
+          if (this.nodes[best].f >= node.f) break;
+          this.nodes[i] = this.nodes[best];
+          i = best;
+        }
+        this.nodes[i] = node;
+      };
+
+      // Raycast line of sight check (Bresenham) for vector smoothing
+      function lineOfSight(x0, y0, x1, y1) {
+        var dx = Math.abs(x1 - x0);
+        var dy = Math.abs(y1 - y0);
+        var sx = (x0 < x1) ? 1 : -1;
+        var sy = (y0 < y1) ? 1 : -1;
+        var err = dx - dy;
+
+        var cx = x0;
+        var cy = y0;
+
+        while (true) {
+          if (!isWalkable(cx, cy)) return false;
+          if (cx === x1 && cy === y1) break;
+          var e2 = 2 * err;
+          if (e2 > -dy) {
+            err -= dy;
+            cx += sx;
+          }
+          if (e2 < dx) {
+            err += dx;
+            cy += sy;
+          }
+        }
+        return true;
+      }
+
+      // String-pulling vector path smoothing
+      function smoothPath(rawPath) {
+        if (!Array.isArray(rawPath) || rawPath.length <= 2) return rawPath;
+        var smoothed = [rawPath[0]];
+        var current = 0;
+
+        while (current < rawPath.length - 1) {
+          var furthest = current + 1;
+          for (var check = rawPath.length - 1; check > current + 1; check--) {
+            if (lineOfSight(rawPath[current].x, rawPath[current].y, rawPath[check].x, rawPath[check].y)) {
+              furthest = check;
+              break;
+            }
+          }
+          smoothed.push(rawPath[furthest]);
+          current = furthest;
+        }
+        return smoothed;
+      }
+
+      function getNeighbors(node, diagonalMode) {
+        var x = node.x;
+        var y = node.y;
+        var result = [];
+
+        var north = isWalkable(x, y - 1);
+        var south = isWalkable(x, y + 1);
+        var east = isWalkable(x + 1, y);
+        var west = isWalkable(x - 1, y);
+
+        if (north) result.push({ x: x, y: y - 1, cost: getWeight(x, y - 1) });
+        if (south) result.push({ x: x, y: y + 1, cost: getWeight(x, y + 1) });
+        if (east) result.push({ x: x + 1, y: y, cost: getWeight(x + 1, y) });
+        if (west) result.push({ x: x - 1, y: y, cost: getWeight(x - 1, y) });
+
+        if (diagonalMode === "never") return result;
+
+        var diagCost = Math.SQRT2;
+
+        // North-East
+        if (isWalkable(x + 1, y - 1)) {
+          if (diagonalMode === "always" ||
+              (diagonalMode === "noObstacles" && north && east) ||
+              (diagonalMode === "oneObstacle" && (north || east))) {
+            result.push({ x: x + 1, y: y - 1, cost: getWeight(x + 1, y - 1) * diagCost });
+          }
+        }
+        // South-East
+        if (isWalkable(x + 1, y + 1)) {
+          if (diagonalMode === "always" ||
+              (diagonalMode === "noObstacles" && south && east) ||
+              (diagonalMode === "oneObstacle" && (south || east))) {
+            result.push({ x: x + 1, y: y + 1, cost: getWeight(x + 1, y + 1) * diagCost });
+          }
+        }
+        // South-West
+        if (isWalkable(x - 1, y + 1)) {
+          if (diagonalMode === "always" ||
+              (diagonalMode === "noObstacles" && south && west) ||
+              (diagonalMode === "oneObstacle" && (south || west))) {
+            result.push({ x: x - 1, y: y + 1, cost: getWeight(x - 1, y + 1) * diagCost });
+          }
+        }
+        // North-West
+        if (isWalkable(x - 1, y - 1)) {
+          if (diagonalMode === "always" ||
+              (diagonalMode === "noObstacles" && north && west) ||
+              (diagonalMode === "oneObstacle" && (north || west))) {
+            result.push({ x: x - 1, y: y - 1, cost: getWeight(x - 1, y - 1) * diagCost });
+          }
+        }
+
+        return result;
+      }
+
+      // Jump Point Search jump helper
+      function jump(x, y, px, py, endX, endY) {
+        if (!isWalkable(x, y)) return null;
+        if (x === endX && y === endY) return { x: x, y: y };
+
+        var dx = x - px;
+        var dy = y - py;
+
+        // Diagonal search
+        if (dx !== 0 && dy !== 0) {
+          if ((isWalkable(x - dx, y + dy) && !isWalkable(x - dx, y)) ||
+              (isWalkable(x + dx, y - dy) && !isWalkable(x, y - dy))) {
+            return { x: x, y: y };
+          }
+          if (jump(x + dx, y, x, y, endX, endY) || jump(x, y + dy, x, y, endX, endY)) {
+            return { x: x, y: y };
+          }
+        } else if (dx !== 0) {
+          // Horizontal search
+          if ((isWalkable(x + dx, y + 1) && !isWalkable(x, y + 1)) ||
+              (isWalkable(x + dx, y - 1) && !isWalkable(x, y - 1))) {
+            return { x: x, y: y };
+          }
+        } else if (dy !== 0) {
+          // Vertical search
+          if ((isWalkable(x + 1, y + dy) && !isWalkable(x + 1, y)) ||
+              (isWalkable(x - 1, y + dy) && !isWalkable(x - 1, y))) {
+            return { x: x, y: y };
+          }
+        }
+
+        if (isWalkable(x + dx, y) || isWalkable(x, y + dy)) {
+          return jump(x + dx, y + dy, x, y, endX, endY);
+        }
+        return null;
+      }
+
+      function reconstructPath(node) {
+        var path = [];
+        var curr = node;
+        while (curr) {
+          path.push({ x: curr.x, y: curr.y });
+          curr = curr.parent;
+        }
+        path.reverse();
+        return path;
+      }
+
+      function findPath(startX, startY, endX, endY, findOpts) {
+        var search = createSearch(startX, startY, endX, endY, findOpts);
+        while (!search.isDone()) {
+          search.step();
+        }
+        return search.getPath();
+      }
+
+      function createSearch(startX, startY, endX, endY, searchOpts) {
+        var sOpts = searchOpts || {};
+        var diagonalMode = sOpts.diagonal || defaultDiagonal;
+        var heuristicType = sOpts.heuristic || defaultHeuristic;
+        var smooth = sOpts.smooth !== false;
+        var useJPS = Boolean(sOpts.allowJPS);
+        var maxIterations = (typeof sOpts.maxIterationsPerStep === "number" && sOpts.maxIterationsPerStep > 0)
+          ? sOpts.maxIterationsPerStep : 500;
+
+        var openSet = new PriorityQueue();
+        var gScore = {};
+        var closedSet = {};
+        var done = false;
+        var finalPath = [];
+        var totalIterations = 0;
+
+        var startValid = isWalkable(startX, startY);
+        var endValid = isWalkable(endX, endY);
+
+        if (!startValid || !endValid) {
+          done = true;
+        } else if (startX === endX && startY === endY) {
+          finalPath = [{ x: startX, y: startY }];
+          done = true;
+        } else {
+          var startNode = {
+            x: startX,
+            y: startY,
+            g: 0,
+            f: computeHeuristic(heuristicType, startX, startY, endX, endY),
+            parent: null,
+          };
+          gScore[startX + "," + startY] = 0;
+          openSet.push(startNode);
+        }
+
+        return {
+          step: function () {
+            if (done) return { done: true, path: finalPath, iterations: totalIterations };
+            var iters = 0;
+
+            while (openSet.size() > 0 && iters < maxIterations) {
+              iters++;
+              totalIterations++;
+              var current = openSet.pop();
+              var key = current.x + "," + current.y;
+
+              if (current.x === endX && current.y === endY) {
+                var rawPath = reconstructPath(current);
+                finalPath = smooth ? smoothPath(rawPath) : rawPath;
+                done = true;
+                return { done: true, path: finalPath, iterations: totalIterations };
+              }
+
+              closedSet[key] = true;
+
+              if (useJPS && diagonalMode !== "never") {
+                // JPS expansion
+                var neighbors = getNeighbors(current, diagonalMode);
+                for (var i = 0; i < neighbors.length; i++) {
+                  var jp = jump(neighbors[i].x, neighbors[i].y, current.x, current.y, endX, endY);
+                  if (jp) {
+                    var jpKey = jp.x + "," + jp.y;
+                    if (closedSet[jpKey]) continue;
+                    var jumpDist = computeHeuristic("octile", current.x, current.y, jp.x, jp.y);
+                    var tentativeG = current.g + jumpDist;
+                    if (gScore[jpKey] === undefined || tentativeG < gScore[jpKey]) {
+                      gScore[jpKey] = tentativeG;
+                      var h = computeHeuristic(heuristicType, jp.x, jp.y, endX, endY);
+                      openSet.push({ x: jp.x, y: jp.y, g: tentativeG, f: tentativeG + h, parent: current });
+                    }
+                  }
+                }
+              } else {
+                // Standard A* expansion
+                var neighbors = getNeighbors(current, diagonalMode);
+                for (var i = 0; i < neighbors.length; i++) {
+                  var neighbor = neighbors[i];
+                  var nKey = neighbor.x + "," + neighbor.y;
+                  if (closedSet[nKey]) continue;
+
+                  var tentativeG = current.g + neighbor.cost;
+                  if (gScore[nKey] === undefined || tentativeG < gScore[nKey]) {
+                    gScore[nKey] = tentativeG;
+                    var h = computeHeuristic(heuristicType, neighbor.x, neighbor.y, endX, endY);
+                    openSet.push({
+                      x: neighbor.x,
+                      y: neighbor.y,
+                      g: tentativeG,
+                      f: tentativeG + h,
+                      parent: current,
+                    });
+                  }
+                }
+              }
+            }
+
+            if (openSet.size() === 0) {
+              done = true;
+            }
+
+            return { done: done, path: finalPath, iterations: totalIterations };
+          },
+          isDone: function () {
+            return done;
+          },
+          getPath: function () {
+            return finalPath;
+          },
+        };
+      }
+
+      function clone() {
+        var clonedGrid = [];
+        for (var y = 0; y < height; y++) {
+          clonedGrid.push(grid[y].slice());
+        }
+        return sdkInstance.createPathfinder({
+          width: width,
+          height: height,
+          grid: clonedGrid,
+          diagonal: defaultDiagonal,
+          heuristic: defaultHeuristic,
+        });
+      }
+
+      function reset(newGrid) {
+        for (var y = 0; y < height; y++) {
+          for (var x = 0; x < width; x++) {
+            if (Array.isArray(newGrid) && Array.isArray(newGrid[y]) && newGrid[y][x] !== undefined) {
+              grid[y][x] = newGrid[y][x] ? 1 : 0;
+            } else {
+              grid[y][x] = 1;
+            }
+          }
+        }
+      }
+
+      return {
+        width: width,
+        height: height,
+        isWalkable: isWalkable,
+        setWalkable: setWalkable,
+        getWeight: getWeight,
+        setWeight: setWeight,
+        findPath: findPath,
+        createSearch: createSearch,
+        lineOfSight: lineOfSight,
+        smoothPath: smoothPath,
+        clone: clone,
+        reset: reset,
+      };
+    },
+
+
+    /**
      * Safe timer helper that automatically clears on game exit
      * @param {Function} fn
      * @param {number} delay
