@@ -1,0 +1,173 @@
+/* Procedural 2D Wave Function Collapse Constraint Tilemap Generator Styles */
+:root {
+  --wfc-bg: #090d16;
+  --wfc-panel-bg: rgba(16, 24, 40, 0.95);
+  --wfc-border: #1f3050;
+  --wfc-primary: #00f2fe;
+  --wfc-accent: #4facfe;
+  --wfc-text: #e2e8f0;
+  --wfc-muted: #8092af;
+}
+
+.wfc-studio-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  background: var(--wfc-bg);
+  color: var(--wfc-text);
+  border-radius: 12px;
+  border: 1px solid var(--wfc-border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  max-width: 1100px;
+  margin: 1.5rem auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.wfc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--wfc-border);
+  padding-bottom: 0.75rem;
+}
+
+.wfc-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--wfc-primary), var(--wfc-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.wfc-workspace {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.wfc-canvas-panel {
+  background: #05080f;
+  border: 1px solid var(--wfc-border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 480px;
+}
+
+.wfc-canvas-wrapper {
+  position: relative;
+  border: 2px solid var(--wfc-border);
+  border-radius: 6px;
+  background: #000000;
+  overflow: hidden;
+}
+
+.wfc-canvas {
+  display: block;
+}
+
+.wfc-controls-panel {
+  background: var(--wfc-panel-bg);
+  border: 1px solid var(--wfc-border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.wfc-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.wfc-control-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--wfc-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  justify-content: space-between;
+}
+
+.wfc-select,
+.wfc-input {
+  background: #08101d;
+  border: 1px solid var(--wfc-border);
+  color: var(--wfc-text);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.wfc-select:focus,
+.wfc-input:focus {
+  border-color: var(--wfc-primary);
+}
+
+.wfc-stats-card {
+  background: #08101e;
+  border: 1px solid var(--wfc-border);
+  border-radius: 6px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.wfc-stat-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.wfc-stat-row strong {
+  color: var(--wfc-primary);
+}
+
+.wfc-btn-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.wfc-btn {
+  flex: 1;
+  padding: 0.65rem 1rem;
+  background: linear-gradient(135deg, var(--wfc-accent), var(--wfc-primary));
+  color: #05080f;
+  font-weight: 700;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.wfc-btn:hover {
+  opacity: 0.9;
+}
+
+.wfc-btn:active {
+  transform: scale(0.98);
+}
+
+.wfc-btn-secondary {
+  background: #16243d;
+  color: var(--wfc-text);
+  border: 1px solid var(--wfc-border);
+}
+
+@media (max-width: 860px) {
+  .wfc-workspace {
+    grid-template-columns: 1fr;
+  }
+}
