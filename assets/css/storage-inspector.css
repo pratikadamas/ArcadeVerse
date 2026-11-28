@@ -1,0 +1,123 @@
+/* ==========================================================================
+   LOCALSTORAGE USAGE INSPECTOR & CACHE CLEANER DRAWER (#1542)
+   Slide-out diagnostic drawer displaying per-key storage byte footprints,
+   metered storage quota progress bar, and targeted cache clear controls.
+   ========================================================================== */
+
+.storage-inspector-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 380px;
+  max-width: 90vw;
+  height: 100vh;
+  background: #0d1117;
+  border-left: 1px solid #30363d;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.8);
+  z-index: 100000;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.storage-inspector-drawer.open {
+  transform: translateX(0);
+}
+
+.storage-inspector-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid #30363d;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.storage-inspector-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #f0f6fc;
+}
+
+.storage-close-btn {
+  background: transparent;
+  border: none;
+  color: #8b949e;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.storage-close-btn:hover {
+  color: #f0f6fc;
+  background: #21262d;
+}
+
+.storage-overview-card {
+  padding: 16px 20px;
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+}
+
+.storage-meter-track {
+  width: 100%;
+  height: 8px;
+  background: #21262d;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 10px 0 6px 0;
+}
+
+.storage-meter-fill {
+  height: 100%;
+  background: #58a6ff;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.storage-items-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 20px;
+}
+
+.storage-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+}
+
+.storage-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.storage-item-key {
+  font-family: monospace;
+  font-size: 0.82rem;
+  color: #58a6ff;
+}
+
+.storage-item-size {
+  font-size: 0.75rem;
+  color: #8b949e;
+}
+
+.storage-delete-key-btn {
+  background: transparent;
+  border: 1px solid #f85149;
+  color: #f85149;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.storage-delete-key-btn:hover {
+  background: #f85149;
+  color: #ffffff;
+}
