@@ -4287,7 +4287,545 @@
           notify();
         }
       };
-    })()
+    })(),
+
+    /**
+     * Dynamic Loose Quadtree & Spatial Hash Grid Broadphase Collision Detection Engine (#1621)
+     */
+    createQuadtree: function (boundsInput, options) {
+      options = options || {};
+      var beta = typeof options.beta === "number" ? options.beta : (typeof options.looseFactor === "number" ? options.looseFactor : 1.5);
+      var maxEntitiesPerNode = options.maxEntitiesPerNode || 8;
+      var maxDepth = options.maxDepth || 6;
+      var currentQueryId = 1;
+
+      var rootBounds = { minX: 0, minY: 0, maxX: 1000, maxY: 1000 };
+      if (boundsInput) {
+        if (typeof boundsInput.minX === "number") {
+          rootBounds.minX = boundsInput.minX;
+          rootBounds.minY = boundsInput.minY;
+          rootBounds.maxX = boundsInput.maxX;
+          rootBounds.maxY = boundsInput.maxY;
+        } else if (typeof boundsInput.x === "number") {
+          rootBounds.minX = boundsInput.x;
+          rootBounds.minY = boundsInput.y;
+          rootBounds.maxX = boundsInput.x + (boundsInput.width || 0);
+          rootBounds.maxY = boundsInput.y + (boundsInput.height || 0);
+        }
+      }
+
+      function extractBounds(item) {
+        if (!item) return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+        var b = item.bounds || item;
+        if (typeof b.minX === "number") {
+          return { minX: b.minX, minY: b.minY, maxX: b.maxX, maxY: b.maxY };
+        }
+        if (typeof b.radius === "number" && typeof b.x === "number" && typeof b.y === "number") {
+          return { minX: b.x - b.radius, minY: b.y - b.radius, maxX: b.x + b.radius, maxY: b.y + b.radius };
+        }
+        if (typeof b.x === "number") {
+          var w = b.width !== undefined ? b.width : 0;
+          var h = b.height !== undefined ? b.height : 0;
+          return { minX: b.x, minY: b.y, maxX: b.x + w, maxY: b.y + h };
+        }
+        return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+      }
+
+      function aabbIntersects(a, b) {
+        return !(a.maxX < b.minX || a.minX > b.maxX || a.maxY < b.minY || a.minY > b.maxY);
+      }
+
+      function aabbContains(outer, inner) {
+        return inner.minX >= outer.minX && inner.maxX <= outer.maxX && inner.minY >= outer.minY && inner.maxY <= outer.maxY;
+      }
+
+      function circleIntersectsAABB(cx, cy, r, box) {
+        var closestX = Math.max(box.minX, Math.min(cx, box.maxX));
+        var closestY = Math.max(box.minY, Math.min(cy, box.maxY));
+        var dx = cx - closestX;
+        var dy = cy - closestY;
+        return (dx * dx + dy * dy) <= (r * r);
+      }
+
+      function rayIntersectsAABB(ox, oy, dx, dy, maxDist, box) {
+        var tmin = 0;
+        var tmax = maxDist;
+        if (Math.abs(dx) < 1e-9) {
+          if (ox < box.minX || ox > box.maxX) return false;
+        } else {
+          var invD = 1.0 / dx;
+          var t1 = (box.minX - ox) * invD;
+          var t2 = (box.maxX - ox) * invD;
+          tmin = Math.max(tmin, Math.min(t1, t2));
+          tmax = Math.min(tmax, Math.max(t1, t2));
+          if (tmin > tmax) return false;
+        }
+        if (Math.abs(dy) < 1e-9) {
+          if (oy < box.minY || oy > box.maxY) return false;
+        } else {
+          var invD2 = 1.0 / dy;
+          var t12 = (box.minY - oy) * invD2;
+          var t22 = (box.maxY - oy) * invD2;
+          tmin = Math.max(tmin, Math.min(t12, t22));
+          tmax = Math.min(tmax, Math.max(t12, t22));
+          if (tmin > tmax) return false;
+        }
+        return tmax >= 0 && tmin <= maxDist;
+      }
+
+      function QuadNode(minX, minY, maxX, maxY, depth) {
+        this.minX = minX;
+        this.minY = minY;
+        this.maxX = maxX;
+        this.maxY = maxY;
+        this.depth = depth;
+        var w = maxX - minX;
+        var h = maxY - minY;
+        var cx = minX + w * 0.5;
+        var cy = minY + h * 0.5;
+        var hw = (w * 0.5) * beta;
+        var hh = (h * 0.5) * beta;
+        this.loose = {
+          minX: cx - hw,
+          minY: cy - hh,
+          maxX: cx + hw,
+          maxY: cy + hh
+        };
+        this.entities = [];
+        this.children = null;
+      }
+
+      QuadNode.prototype.subdivide = function () {
+        var midX = this.minX + (this.maxX - this.minX) * 0.5;
+        var midY = this.minY + (this.maxY - this.minY) * 0.5;
+        var nextDepth = this.depth + 1;
+        this.children = [
+          new QuadNode(this.minX, this.minY, midX, midY, nextDepth),
+          new QuadNode(midX, this.minY, this.maxX, midY, nextDepth),
+          new QuadNode(this.minX, midY, midX, this.maxY, nextDepth),
+          new QuadNode(midX, midY, this.maxX, this.maxY, nextDepth)
+        ];
+      };
+
+      QuadNode.prototype.insert = function (entity, entityBounds, entityNodeMap) {
+        if (this.children) {
+          for (var i = 0; i < 4; i++) {
+            if (aabbContains(this.children[i].loose, entityBounds)) {
+              return this.children[i].insert(entity, entityBounds, entityNodeMap);
+            }
+          }
+        }
+        if (!this.children && this.entities.length >= maxEntitiesPerNode && this.depth < maxDepth) {
+          this.subdivide();
+          var remaining = [];
+          for (var j = 0; j < this.entities.length; j++) {
+            var ent = this.entities[j];
+            var eb = extractBounds(ent);
+            var pushed = false;
+            for (var k = 0; k < 4; k++) {
+              if (aabbContains(this.children[k].loose, eb)) {
+                this.children[k].insert(ent, eb, entityNodeMap);
+                pushed = true;
+                break;
+              }
+            }
+            if (!pushed) remaining.push(ent);
+          }
+          this.entities = remaining;
+          for (var m = 0; m < 4; m++) {
+            if (aabbContains(this.children[m].loose, entityBounds)) {
+              return this.children[m].insert(entity, entityBounds, entityNodeMap);
+            }
+          }
+        }
+        this.entities.push(entity);
+        if (entityNodeMap) entityNodeMap.set(entity, this);
+        return true;
+      };
+
+      QuadNode.prototype.queryAABB = function (box, qId, out) {
+        if (!aabbIntersects(this.loose, box)) return;
+        for (var i = 0; i < this.entities.length; i++) {
+          var ent = this.entities[i];
+          if (ent.__avQueryId !== qId) {
+            var eb = extractBounds(ent);
+            if (aabbIntersects(eb, box)) {
+              ent.__avQueryId = qId;
+              out.push(ent);
+            }
+          }
+        }
+        if (this.children) {
+          for (var j = 0; j < 4; j++) {
+            this.children[j].queryAABB(box, qId, out);
+          }
+        }
+      };
+
+      QuadNode.prototype.queryCircle = function (cx, cy, radius, qId, out) {
+        if (!circleIntersectsAABB(cx, cy, radius, this.loose)) return;
+        for (var i = 0; i < this.entities.length; i++) {
+          var ent = this.entities[i];
+          if (ent.__avQueryId !== qId) {
+            var eb = extractBounds(ent);
+            if (circleIntersectsAABB(cx, cy, radius, eb)) {
+              ent.__avQueryId = qId;
+              out.push(ent);
+            }
+          }
+        }
+        if (this.children) {
+          for (var j = 0; j < 4; j++) {
+            this.children[j].queryCircle(cx, cy, radius, qId, out);
+          }
+        }
+      };
+
+      QuadNode.prototype.queryRay = function (ox, oy, dx, dy, maxDist, qId, out) {
+        if (!rayIntersectsAABB(ox, oy, dx, dy, maxDist, this.loose)) return;
+        for (var i = 0; i < this.entities.length; i++) {
+          var ent = this.entities[i];
+          if (ent.__avQueryId !== qId) {
+            var eb = extractBounds(ent);
+            if (rayIntersectsAABB(ox, oy, dx, dy, maxDist, eb)) {
+              ent.__avQueryId = qId;
+              out.push(ent);
+            }
+          }
+        }
+        if (this.children) {
+          for (var j = 0; j < 4; j++) {
+            this.children[j].queryRay(ox, oy, dx, dy, maxDist, qId, out);
+          }
+        }
+      };
+
+      var entityNodeMap = new Map();
+      var rootNode = new QuadNode(rootBounds.minX, rootBounds.minY, rootBounds.maxX, rootBounds.maxY, 0);
+      var totalEntities = 0;
+
+      return {
+        _root: rootNode,
+        get count() { return totalEntities; },
+        size: function () { return totalEntities; },
+
+        insert: function (entity) {
+          if (!entity) return false;
+          if (entityNodeMap.has(entity)) {
+            this.remove(entity);
+          }
+          var eb = extractBounds(entity);
+          rootNode.insert(entity, eb, entityNodeMap);
+          totalEntities++;
+          return true;
+        },
+
+        update: function (entity) {
+          if (!entity) return false;
+          var node = entityNodeMap.get(entity);
+          if (!node) return this.insert(entity);
+          var eb = extractBounds(entity);
+          if (aabbContains(node.loose, eb)) {
+            return true;
+          }
+          this.remove(entity);
+          return this.insert(entity);
+        },
+
+        remove: function (entity) {
+          if (!entity) return false;
+          var node = entityNodeMap.get(entity);
+          if (!node) return false;
+          var idx = node.entities.indexOf(entity);
+          if (idx !== -1) {
+            node.entities.splice(idx, 1);
+          }
+          entityNodeMap.delete(entity);
+          totalEntities = Math.max(0, totalEntities - 1);
+          return true;
+        },
+
+        clear: function () {
+          rootNode = new QuadNode(rootBounds.minX, rootBounds.minY, rootBounds.maxX, rootBounds.maxY, 0);
+          this._root = rootNode;
+          entityNodeMap.clear();
+          totalEntities = 0;
+        },
+
+        queryAABB: function (minX, minY, maxX, maxY, outArray) {
+          var out = outArray || [];
+          if (outArray) out.length = 0;
+          var qId = ++currentQueryId;
+          var box = { minX: minX, minY: minY, maxX: maxX, maxY: maxY };
+          rootNode.queryAABB(box, qId, out);
+          return out;
+        },
+
+        queryCircle: function (centerX, centerY, radius, outArray) {
+          var out = outArray || [];
+          if (outArray) out.length = 0;
+          var qId = ++currentQueryId;
+          rootNode.queryCircle(centerX, centerY, radius, qId, out);
+          return out;
+        },
+
+        queryRay: function (originX, originY, dirX, dirY, maxDistance, outArray) {
+          var out = outArray || [];
+          if (outArray) out.length = 0;
+          var qId = ++currentQueryId;
+          var len = Math.hypot(dirX, dirY);
+          var dx = len > 1e-9 ? dirX / len : 0;
+          var dy = len > 1e-9 ? dirY / len : 0;
+          rootNode.queryRay(originX, originY, dx, dy, maxDistance || 1000, qId, out);
+          return out;
+        }
+      };
+    },
+
+    createSpatialHashGrid: function (cellSize, options) {
+      options = options || {};
+      cellSize = cellSize || 64;
+      var mask = typeof options.mask === "number" ? options.mask : 0x7fffffff;
+      var buckets = new Map();
+      var entityBuckets = new Map();
+      var currentQueryId = 1;
+      var totalEntities = 0;
+
+      function hash(cx, cy) {
+        return (((cx * 73856093) ^ (cy * 19349663)) & mask) >>> 0;
+      }
+
+      function extractBounds(item) {
+        if (!item) return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+        var b = item.bounds || item;
+        if (typeof b.minX === "number") {
+          return { minX: b.minX, minY: b.minY, maxX: b.maxX, maxY: b.maxY };
+        }
+        if (typeof b.radius === "number" && typeof b.x === "number" && typeof b.y === "number") {
+          return { minX: b.x - b.radius, minY: b.y - b.radius, maxX: b.x + b.radius, maxY: b.y + b.radius };
+        }
+        if (typeof b.x === "number") {
+          var w = b.width !== undefined ? b.width : 0;
+          var h = b.height !== undefined ? b.height : 0;
+          return { minX: b.x, minY: b.y, maxX: b.x + w, maxY: b.y + h };
+        }
+        return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+      }
+
+      function aabbIntersects(a, b) {
+        return !(a.maxX < b.minX || a.minX > b.maxX || a.maxY < b.minY || a.minY > b.maxY);
+      }
+
+      function circleIntersectsAABB(cx, cy, r, box) {
+        var closestX = Math.max(box.minX, Math.min(cx, box.maxX));
+        var closestY = Math.max(box.minY, Math.min(cy, box.maxY));
+        var dx = cx - closestX;
+        var dy = cy - closestY;
+        return (dx * dx + dy * dy) <= (r * r);
+      }
+
+      function rayIntersectsAABB(ox, oy, dx, dy, maxDist, box) {
+        var tmin = 0;
+        var tmax = maxDist;
+        if (Math.abs(dx) < 1e-9) {
+          if (ox < box.minX || ox > box.maxX) return false;
+        } else {
+          var invD = 1.0 / dx;
+          var t1 = (box.minX - ox) * invD;
+          var t2 = (box.maxX - ox) * invD;
+          tmin = Math.max(tmin, Math.min(t1, t2));
+          tmax = Math.min(tmax, Math.max(t1, t2));
+          if (tmin > tmax) return false;
+        }
+        if (Math.abs(dy) < 1e-9) {
+          if (oy < box.minY || oy > box.maxY) return false;
+        } else {
+          var invD2 = 1.0 / dy;
+          var t12 = (box.minY - oy) * invD2;
+          var t22 = (box.maxY - oy) * invD2;
+          tmin = Math.max(tmin, Math.min(t12, t22));
+          tmax = Math.min(tmax, Math.max(t12, t22));
+          if (tmin > tmax) return false;
+        }
+        return tmax >= 0 && tmin <= maxDist;
+      }
+
+      function getCellKeysForBounds(eb) {
+        var minCX = Math.floor(eb.minX / cellSize);
+        var maxCX = Math.floor(eb.maxX / cellSize);
+        var minCY = Math.floor(eb.minY / cellSize);
+        var maxCY = Math.floor(eb.maxY / cellSize);
+        var keys = [];
+        for (var cy = minCY; cy <= maxCY; cy++) {
+          for (var cx = minCX; cx <= maxCX; cx++) {
+            keys.push(hash(cx, cy));
+          }
+        }
+        return keys;
+      }
+
+      return {
+        cellSize: cellSize,
+        get count() { return totalEntities; },
+        size: function () { return totalEntities; },
+
+        insert: function (entity) {
+          if (!entity) return false;
+          if (entityBuckets.has(entity)) {
+            this.remove(entity);
+          }
+          var eb = extractBounds(entity);
+          var keys = getCellKeysForBounds(eb);
+          for (var i = 0; i < keys.length; i++) {
+            var k = keys[i];
+            var bucket = buckets.get(k);
+            if (!bucket) {
+              bucket = [];
+              buckets.set(k, bucket);
+            }
+            bucket.push(entity);
+          }
+          entityBuckets.set(entity, keys);
+          totalEntities++;
+          return true;
+        },
+
+        update: function (entity) {
+          if (!entity) return false;
+          var oldKeys = entityBuckets.get(entity);
+          if (!oldKeys) return this.insert(entity);
+          var eb = extractBounds(entity);
+          var newKeys = getCellKeysForBounds(eb);
+          if (oldKeys.length === newKeys.length) {
+            var same = true;
+            for (var i = 0; i < newKeys.length; i++) {
+              if (oldKeys[i] !== newKeys[i]) {
+                same = false;
+                break;
+              }
+            }
+            if (same) return true;
+          }
+          this.remove(entity);
+          return this.insert(entity);
+        },
+
+        remove: function (entity) {
+          if (!entity) return false;
+          var keys = entityBuckets.get(entity);
+          if (!keys) return false;
+          for (var i = 0; i < keys.length; i++) {
+            var k = keys[i];
+            var bucket = buckets.get(k);
+            if (bucket) {
+              var idx = bucket.indexOf(entity);
+              if (idx !== -1) {
+                bucket.splice(idx, 1);
+              }
+              if (bucket.length === 0) {
+                buckets.delete(k);
+              }
+            }
+          }
+          entityBuckets.delete(entity);
+          totalEntities = Math.max(0, totalEntities - 1);
+          return true;
+        },
+
+        clear: function () {
+          buckets.clear();
+          entityBuckets.clear();
+          totalEntities = 0;
+        },
+
+        queryAABB: function (minX, minY, maxX, maxY, outArray) {
+          var out = outArray || [];
+          if (outArray) out.length = 0;
+          var qId = ++currentQueryId;
+          var box = { minX: minX, minY: minY, maxX: maxX, maxY: maxY };
+          var keys = getCellKeysForBounds(box);
+          for (var k = 0; k < keys.length; k++) {
+            var bucket = buckets.get(keys[k]);
+            if (bucket) {
+              for (var i = 0; i < bucket.length; i++) {
+                var ent = bucket[i];
+                if (ent.__avQueryId !== qId) {
+                  ent.__avQueryId = qId;
+                  var eb = extractBounds(ent);
+                  if (aabbIntersects(eb, box)) {
+                    out.push(ent);
+                  }
+                }
+              }
+            }
+          }
+          return out;
+        },
+
+        queryCircle: function (centerX, centerY, radius, outArray) {
+          var out = outArray || [];
+          if (outArray) out.length = 0;
+          var qId = ++currentQueryId;
+          var box = {
+            minX: centerX - radius,
+            minY: centerY - radius,
+            maxX: centerX + radius,
+            maxY: centerY + radius
+          };
+          var keys = getCellKeysForBounds(box);
+          for (var k = 0; k < keys.length; k++) {
+            var bucket = buckets.get(keys[k]);
+            if (bucket) {
+              for (var i = 0; i < bucket.length; i++) {
+                var ent = bucket[i];
+                if (ent.__avQueryId !== qId) {
+                  ent.__avQueryId = qId;
+                  var eb = extractBounds(ent);
+                  if (circleIntersectsAABB(centerX, centerY, radius, eb)) {
+                    out.push(ent);
+                  }
+                }
+              }
+            }
+          }
+          return out;
+        },
+
+        queryRay: function (originX, originY, dirX, dirY, maxDistance, outArray) {
+          var out = outArray || [];
+          if (outArray) out.length = 0;
+          var qId = ++currentQueryId;
+          var len = Math.hypot(dirX, dirY);
+          var dx = len > 1e-9 ? dirX / len : 0;
+          var dy = len > 1e-9 ? dirY / len : 0;
+          var endX = originX + dx * maxDistance;
+          var endY = originY + dy * maxDistance;
+          var box = {
+            minX: Math.min(originX, endX),
+            minY: Math.min(originY, endY),
+            maxX: Math.max(originX, endX),
+            maxY: Math.max(originY, endY)
+          };
+          var keys = getCellKeysForBounds(box);
+          for (var k = 0; k < keys.length; k++) {
+            var bucket = buckets.get(keys[k]);
+            if (bucket) {
+              for (var i = 0; i < bucket.length; i++) {
+                var ent = bucket[i];
+                if (ent.__avQueryId !== qId) {
+                  ent.__avQueryId = qId;
+                  var eb = extractBounds(ent);
+                  if (rayIntersectsAABB(originX, originY, dx, dy, maxDistance, eb)) {
+                    out.push(ent);
+                  }
+                }
+              }
+            }
+          }
+          return out;
+        }
+      };
+    }
   };
 
   // Wire message handler for ARCADEVERSE_SET_VOLUME (#735) and ARCADEVERSE_DDA_CONFIG (#1112)
