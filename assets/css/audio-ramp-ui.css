@@ -1,0 +1,46 @@
+/* ==========================================================================
+   WEB AUDIO FADE-IN/OUT SMOOTH RAMP CONTROLLER (#1554)
+   Audio volume ramp controls, exponential gain transitions, and mute fade
+   ========================================================================== */
+
+.audio-ramp-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 4px 10px;
+}
+
+.audio-ramp-btn {
+  background: transparent;
+  border: none;
+  color: #8b949e;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.audio-ramp-btn:hover {
+  background: #21262d;
+  color: #58a6ff;
+}
+
+.audio-ramp-meter {
+  width: 48px;
+  height: 6px;
+  background: #21262d;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.audio-ramp-level {
+  height: 100%;
+  background: #2ea043;
+  width: 80%;
+  transition: width 0.1s linear;
+}
