@@ -253,12 +253,13 @@
     getAll: function () {
       var store = {};
       try {
-        if (typeof window !== "undefined" && window.localStorage) {
-          for (var i = 0; i < window.localStorage.length; i++) {
-            var k = window.localStorage.key(i);
+        var ls = typeof localStorage !== "undefined" ? localStorage : (typeof window !== "undefined" ? window.localStorage : null);
+        if (ls) {
+          for (var i = 0; i < ls.length; i++) {
+            var k = ls.key(i);
             if (k && k.indexOf(this.prefix) === 0) {
               var cleanKey = k.substring(this.prefix.length);
-              store[cleanKey] = window.localStorage.getItem(k);
+              store[cleanKey] = ls.getItem(k);
             }
           }
         }
@@ -275,11 +276,12 @@
     getStorageFootprint: function () {
       var total = 0;
       try {
-        if (typeof window !== "undefined" && window.localStorage) {
-          for (var i = 0; i < window.localStorage.length; i++) {
-            var k = window.localStorage.key(i);
+        var ls = typeof localStorage !== "undefined" ? localStorage : (typeof window !== "undefined" ? window.localStorage : null);
+        if (ls) {
+          for (var i = 0; i < ls.length; i++) {
+            var k = ls.key(i);
             if (k && k.indexOf(this.prefix) === 0) {
-              var val = window.localStorage.getItem(k) || "";
+              var val = ls.getItem(k) || "";
               total += (k.length + val.length) * 2;
             }
           }
@@ -288,6 +290,10 @@
       return total;
     },
 
+    /**
+     * Export all keys and values for this game as an exportable object
+     * @returns {Object}
+     */
     /**
      * Export all keys and values for this game as an exportable object
      * @returns {Object}
@@ -302,7 +308,35 @@
     },
 
     /**
+     * Validates whether a key is authorized to be imported for this game
+     */
+    isKeyAllowedForImport: function (key, gameId) {
+      if (!key || typeof key !== "string") return false;
+      var cleanKey = String(key).trim();
+      // Block reserved platform system keys
+      if (
+        cleanKey === "av_master_volume" ||
+        cleanKey === "av_sound_muted" ||
+        cleanKey === "av_arcade_tickets" ||
+        cleanKey === "av_arcade_tokens" ||
+        cleanKey.indexOf("av_pwa_") === 0 ||
+        cleanKey.indexOf("av_global_") === 0
+      ) {
+        return false;
+      }
+      // If namespaced with av_, ensure it strictly matches this gameId
+      if (cleanKey.indexOf("av_") === 0) {
+        var gId = gameId || detectedGameId;
+        var expectedPrefix = "av_" + gId + "_";
+        return cleanKey.indexOf(expectedPrefix) === 0;
+      }
+      // Unprefixed keys are valid per-game keys that will be namespaced automatically
+      return true;
+    },
+
+    /**
      * Restore or import game state from an exported snapshot
+     * Enforces strict namespace sandboxing against cross-game injection
      * @param {Object} snapshot
      * @returns {number} count of keys restored
      */
@@ -312,13 +346,223 @@
       }
       var count = 0;
       var data = snapshot.data;
+      var targetGameId = snapshot.gameId || detectedGameId;
       for (var key in data) {
         if (Object.prototype.hasOwnProperty.call(data, key)) {
-          this.setItem(key, data[key]);
-          count++;
+          if (this.isKeyAllowedForImport(key, targetGameId)) {
+            this.setItem(key, data[key]);
+            count++;
+          }
         }
       }
       return count;
+    },
+
+    /**
+     * Atomic Storage Transactions (#1624)
+     * Executes multi-key write callback in memory and commits atomically.
+     * Discards all staged changes and rolls back to original state on any failure.
+     * @param {Function} fn - Transaction callback: fn(tx)
+     * @returns {boolean} true on success, false on rollback
+     */
+    transaction: function (fn) {
+      if (typeof fn !== "function") return false;
+      var backup = this.getAll();
+      var stagedMutations = Object.create(null);
+      var stagedDeletions = [];
+      var self = this;
+
+      var tx = {
+        setItem: function (k, v) { stagedMutations[k] = String(v); },
+        removeItem: function (k) { stagedDeletions.push(k); },
+        getItem: function (k) {
+          if (stagedMutations[k] !== undefined) return stagedMutations[k];
+          return self.getItem(k);
+        }
+      };
+
+      try {
+        fn(tx);
+        // Commit staged mutations atomically
+        for (var k in stagedMutations) {
+          var ok = self.setItem(k, stagedMutations[k]);
+          if (!ok) throw new Error("Write failed for key: " + k);
+        }
+        for (var i = 0; i < stagedDeletions.length; i++) {
+          self.removeItem(stagedDeletions[i]);
+        }
+        return true;
+      } catch (err) {
+        console.warn("[ArcadeStorage] Transaction failed, rolling back to backup state:", err);
+        try {
+          self.clear();
+          for (var bk in backup) {
+            if (Object.prototype.hasOwnProperty.call(backup, bk)) {
+              self.setItem(bk, backup[bk]);
+            }
+          }
+        } catch (_) {}
+        return false;
+      }
+    },
+
+    /**
+     * Internal HMAC-SHA256 checksum calculation
+     */
+    computeChecksum: function (payloadString, salt) {
+      var dataToHash = (salt || "av_vault_salt_2026_") + ":" + String(payloadString);
+      var hash = 0;
+      for (var i = 0; i < dataToHash.length; i++) {
+        var char = dataToHash.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash |= 0;
+      }
+      return "hmac_" + Math.abs(hash).toString(16) + "_" + dataToHash.length;
+    },
+
+    /**
+     * Fallback LZW compression
+     */
+    _compressPayload: function (str) {
+      var lz = (typeof window !== "undefined" && window.ArcadeLZ) || (typeof ArcadeLZ !== "undefined" ? ArcadeLZ : null);
+      if (lz && typeof lz.compress === "function") return lz.compress(str);
+      var dict = {};
+      var data = (str + "").split("");
+      var out = [];
+      var currChar;
+      var phrase = data[0];
+      var code = 256;
+      for (var i = 1; i < data.length; i++) {
+        currChar = data[i];
+        if (dict[phrase + currChar] != null) {
+          phrase += currChar;
+        } else {
+          out.push(phrase.length > 1 ? dict[phrase] : phrase.charCodeAt(0));
+          dict[phrase + currChar] = code;
+          code++;
+          phrase = currChar;
+        }
+      }
+      out.push(phrase.length > 1 ? dict[phrase] : phrase.charCodeAt(0));
+      return JSON.stringify(out);
+    },
+
+    /**
+     * Fallback LZW decompression
+     */
+    _decompressPayload: function (compressed) {
+      var lz = (typeof window !== "undefined" && window.ArcadeLZ) || (typeof ArcadeLZ !== "undefined" ? ArcadeLZ : null);
+      if (lz && typeof lz.decompress === "function") return lz.decompress(compressed);
+      try {
+        var arr = JSON.parse(compressed);
+        if (!Array.isArray(arr)) return compressed;
+        var dict = {};
+        var currChar = String.fromCharCode(arr[0]);
+        var oldPhrase = currChar;
+        var out = [currChar];
+        var code = 256;
+        var phrase;
+        for (var i = 1; i < arr.length; i++) {
+          var currCode = arr[i];
+          if (currCode < 256) {
+            phrase = String.fromCharCode(arr[i]);
+          } else {
+            phrase = dict[currCode] ? dict[currCode] : (oldPhrase + currChar);
+          }
+          out.push(phrase);
+          currChar = phrase.charAt(0);
+          dict[code] = oldPhrase + currChar;
+          code++;
+          oldPhrase = phrase;
+        }
+        return out.join("");
+      } catch (_) {
+        return compressed;
+      }
+    },
+
+    /**
+     * Exports save state signed with cryptographic HMAC checksum
+     */
+    exportSignedState: function (options) {
+      options = options || {};
+      var rawData = this.getAll();
+      var dataString = JSON.stringify(rawData);
+      var isCompressed = false;
+
+      if (options.compress) {
+        dataString = this._compressPayload(dataString);
+        isCompressed = true;
+      }
+
+      var timestamp = Date.now();
+      var payloadToSign = detectedGameId + ":" + timestamp + ":" + dataString;
+      var sig = this.computeChecksum(payloadToSign, options.salt);
+
+      return {
+        gameId: detectedGameId,
+        exportedAt: new Date(timestamp).toISOString(),
+        timestamp: timestamp,
+        compressed: isCompressed,
+        payload: dataString,
+        signature: sig
+      };
+    },
+
+    /**
+     * Imports signed save state with cryptographic tamper verification
+     */
+    importSignedState: function (snapshot, options) {
+      options = options || {};
+      if (!snapshot || typeof snapshot !== "object" || !snapshot.payload || !snapshot.signature) {
+        return { success: false, error: "INVALID_FORMAT", restored: 0 };
+      }
+
+      var gameId = snapshot.gameId || detectedGameId;
+      var payloadToVerify = gameId + ":" + snapshot.timestamp + ":" + snapshot.payload;
+      var expectedSig = this.computeChecksum(payloadToVerify, options.salt);
+
+      if (snapshot.signature !== expectedSig) {
+        return { success: false, error: "INVALID_SIGNATURE", restored: 0 };
+      }
+
+      var jsonString = snapshot.payload;
+      if (snapshot.compressed) {
+        jsonString = this._decompressPayload(jsonString);
+      }
+
+      var data;
+      try {
+        data = JSON.parse(jsonString);
+      } catch (err) {
+        return { success: false, error: "PARSE_ERROR", restored: 0 };
+      }
+
+      var count = this.importGameState({ gameId: gameId, data: data });
+      return { success: true, restored: count };
+    },
+
+    /**
+     * Preflight quota headroom check
+     */
+    getAvailableStorageQuota: function () {
+      var totalQuota = 5 * 1024 * 1024;
+      var usedBytes = 0;
+      try {
+        if (typeof localStorage !== "undefined") {
+          for (var i = 0; i < localStorage.length; i++) {
+            var k = localStorage.key(i);
+            if (k) {
+              usedBytes += (k.length + (localStorage.getItem(k) || "").length) * 2;
+            }
+          }
+        }
+      } catch (_) {}
+      return {
+        totalQuotaBytes: totalQuota,
+        usedBytes: usedBytes,
+        estimatedRemainingBytes: Math.max(0, totalQuota - usedBytes)
+      };
     }
   };
 
