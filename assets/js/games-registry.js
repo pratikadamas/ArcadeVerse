@@ -2945,9 +2945,9 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "trunalpatil",
-    "github": "trunalpatil",
-    "avatarInitial": "T",
+    "name": "sumittiwari",
+    "github": "sumittiwari",
+    "avatarInitial": "S",
     "role": "Contributor (NSOC '26)",
     "commits": 6,
     "gamesCount": 0,
@@ -2960,11 +2960,11 @@ const CONTRIBUTORS_REGISTRY = [
     ]
   },
   {
-    "name": "sumittiwari",
-    "github": "sumittiwari",
-    "avatarInitial": "S",
+    "name": "trunalpatil",
+    "github": "trunalpatil",
+    "avatarInitial": "T",
     "role": "Contributor (NSOC '26)",
-    "commits": 5,
+    "commits": 6,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,
@@ -2995,6 +2995,21 @@ const CONTRIBUTORS_REGISTRY = [
     "avatarInitial": "N",
     "role": "Contributor (NSOC '26)",
     "commits": 4,
+    "gamesCount": 0,
+    "mechanicsBonus": 0,
+    "platformPRs": 0,
+    "qualityPRs": 0,
+    "bonusPts": 0,
+    "contributions": [
+      "Quality & Platform Contribution"
+    ]
+  },
+  {
+    "name": "khushishah",
+    "github": "khushishah",
+    "avatarInitial": "K",
+    "role": "Contributor (NSOC '26)",
+    "commits": 2,
     "gamesCount": 0,
     "mechanicsBonus": 0,
     "platformPRs": 0,
