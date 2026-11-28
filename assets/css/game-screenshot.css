@@ -1,0 +1,96 @@
+/* ==========================================================================
+   IN-BROWSER SCREENSHOT CAPTURE TOOL FOR GAME MODALS (#1493)
+   Camera shutter toolbar button, flash overlay, and preview toast
+   ========================================================================== */
+
+.screenshot-btn {
+  background: transparent;
+  border: 1px solid #30363d;
+  color: #00f0ff;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.screenshot-btn:hover {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: #00f0ff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}
+
+.screenshot-flash-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 100000;
+  transition: opacity 0.1s ease-out;
+}
+
+.screenshot-flash-overlay.flashing {
+  opacity: 0.85;
+}
+
+/* Toast preview dialog */
+.screenshot-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #0d1117;
+  border: 1px solid #00f0ff;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 16px rgba(0, 240, 255, 0.3);
+  z-index: 100001;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 320px;
+  animation: screenshotSlideIn 0.3s ease-out;
+}
+
+@keyframes screenshotSlideIn {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.screenshot-preview-img {
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+  border: 1px solid #30363d;
+}
+
+.screenshot-toast-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.screenshot-action-btn {
+  flex: 1;
+  background: #161b22;
+  border: 1px solid #30363d;
+  color: #c9d1d9;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+}
+
+.screenshot-action-btn:hover {
+  background: #00f0ff;
+  color: #000000;
+}

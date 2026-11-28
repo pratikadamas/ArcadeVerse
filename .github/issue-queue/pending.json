@@ -1,1 +1,82 @@
-[]
+[
+  {
+    "title": "[Feature/Algorithms]: Interactive Red-Black Self-Balancing Binary Search Tree Rotator Lab",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nStudents and game-engine devs often struggle with **Red-Black Tree** recoloring and left/right rotation invariants during insertion and deletion.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/red-black-tree-lab.js` and `assets/css/red-black-tree-lab.css` (260+ LOC):\n   - Implement full Red-Black Tree (`insert`, `delete`, `leftRotate`, `rightRotate`, `fixInsert`, `fixDelete`) with animated step-by-step transition logs explaining each case (`Uncle Red`, `Triangle Left-Right`, `Line Rotation`).\n   - Live black-height indicator and invariant validator badge.\n2. Pure Vanilla JS/SVG or Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-red-black-tree-lab.js` asserting all 5 Red-Black invariants (root black, no red-red parent-child, uniform black-height on all root-to-NIL paths) across random insert/delete sequences.\n\n## Acceptance Criteria\n- [ ] Every insertion and deletion preserves all 5 Red-Black invariants.\n- [ ] Step-by-step mode highlights rotations and recoloring decisions clearly.\n- [ ] Unit test `scripts/test-red-black-tree-lab.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Algorithms]: Interactive Suffix Automaton & Aho-Corasick Multi-Pattern Matcher Lab",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse has no string-algorithm visualizer for **Aho-Corasick** multi-pattern trie failure-link construction and linear-time stream scanning.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/aho-corasick-lab.js` and `assets/css/aho-corasick-lab.css` (250+ LOC):\n   - Implement Aho-Corasick trie builder, BFS failure-link & dictionary-suffix-link computation, and step-by-step character stream matcher.\n   - Interactive Canvas state-graph showing solid goto edges, dashed blue failure links, and highlighted match emissions.\n2. Pure Vanilla JS/2D Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-aho-corasick-lab.js` verifying exact multi-pattern match positions (including overlapping patterns) against naive substring search.\n\n## Acceptance Criteria\n- [ ] Failure links and output-link chains match exact Aho-Corasick linear-time behavior.\n- [ ] Stepping through input text animates state transitions and failure-link fallbacks.\n- [ ] Unit test `scripts/test-aho-corasick-lab.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Algorithms]: Minimax Alpha-Beta Pruning & Zobrist Transposition Table Tree Inspector",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nBoard-game AI authors need a visual **Minimax + Alpha-Beta Pruning + Zobrist Hashing** explorer showing how move ordering dramatically increases branch cutoffs.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/alphabeta-tree-lab.js` and `assets/css/alphabeta-tree-lab.css` (260+ LOC):\n   - Implement interactive Connect-4 / Tic-Tac-Toe 4x4 search tree with Minimax vs Alpha-Beta vs Zobrist Transposition Table toggle.\n   - Render expandable search-tree nodes displaying `[alpha, beta]` windows, pruned subtrees (crossed/dimmed), and node-evaluation count comparison.\n2. Pure Vanilla JS/Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-alphabeta-tree-lab.js` verifying Alpha-Beta returns identical root best-move scores as unpruned Minimax while evaluating strictly fewer or equal nodes.\n\n## Acceptance Criteria\n- [ ] Alpha-Beta produces 100% score parity with Minimax while visibly pruning branches.\n- [ ] Node inspector displays `[alpha, beta]` bounds and Zobrist transposition cache hits.\n- [ ] Unit test `scripts/test-alphabeta-tree-lab.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Algorithms]: Lock-Free Ring Buffer & Raft Consensus State-Machine Cluster Simulator",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nDistributed-systems learners lack an interactive **Raft Consensus** simulator in ArcadeVerse demonstrating leader election, randomized election timeouts, split-vote recovery, and log replication.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/raft-consensus-lab.js` and `assets/css/raft-consensus-lab.css` (280+ LOC):\n   - Implement deterministic/steppable Raft node state machine (`Follower`, `Candidate`, `Leader`), `RequestVote` & `AppendEntries` RPC packets in flight, network partition toggles, and node crash/restart.\n   - Visual cluster ring with animated RPC envelopes and per-node replicated log indices.\n2. Pure Vanilla JS/Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-raft-consensus-lab.js` verifying single-leader-per-term invariant, majority quorum election, and log-index commitment after partition heal.\n\n## Acceptance Criteria\n- [ ] At most one leader is elected per term, even under simulated network partitions.\n- [ ] Replicated logs converge across recovered nodes once majority quorum is restored.\n- [ ] Unit test `scripts/test-raft-consensus-lab.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Algorithms]: Voronoi Lloyd Relaxation & Centroidal Stipple Territory Generator",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nProcedural map generators use **Lloyd's Relaxation** on Voronoi diagrams to turn clumped random seeds into evenly spaced organic regions, a technique not yet showcased in ArcadeVerse.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/voronoi-lloyd-lab.js` and `assets/css/voronoi-lloyd-lab.css` (260+ LOC):\n   - Implement clipped half-plane / Fortune-or-Delaunay-dual Voronoi cell polygon builder + polygon centroid calculation + iterative **Lloyd Relaxation** stepper.\n   - Interactive seed placement, relaxation iteration counter, and island-biome elevation coloring mode.\n2. Pure Vanilla JS/2D Canvas/CSS3, zero external geometry libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-voronoi-lloyd-lab.js` verifying Voronoi nearest-site property on cell centroids and variance reduction in cell areas after Lloyd iterations.\n\n## Acceptance Criteria\n- [ ] Each Lloyd step moves seeds toward their Voronoi cell centroids, reducing area variance.\n- [ ] Users can add/drag sites and switch between wireframe cells and biome map view.\n- [ ] Unit test `scripts/test-voronoi-lloyd-lab.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Emulator]: 6502 Assembly Mini-Computer, Live Zero-Page Memory & 32x32 Pixel Bus",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse's emulator tools lack a classic **MOS 6502** subset CPU & two-pass assembler with a memory-mapped 32x32 color display (`$0200-$05FF`) like classic retro consoles.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/mos6502-sandbox.js` and `assets/css/mos6502-sandbox.css` (320+ LOC):\n   - Implement core 6502 opcodes (`LDA, LDX, LDY, STA, STX, ADC, SBC, INC, DEC, INX, DEX, CMP, BEQ, BNE, BCC, BCS, JMP, JSR, RTS, BRK`) with addressing modes (`Immediate, ZeroPage, Absolute, Indexed`).\n   - Built-in two-pass assembler, `A/X/Y/SP/PC/NV-BDIZC` register inspector, hex memory viewer, and 32x32 RGB pixel screen mapped to `$0200-$05FF`.\n2. Pure Vanilla JS/Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-mos6502-sandbox.js` testing arithmetic carry/zero/negative flags, subroutine `JSR/RTS` stack round-trips, and assembler branch-offset encoding.\n\n## Acceptance Criteria\n- [ ] Assembles and executes sample 6502 programs (gradient fill, bouncing sprite) on the 32x32 display.\n- [ ] Step, Run, Reset, and register/stack inspection work accurately.\n- [ ] Unit test `scripts/test-mos6502-sandbox.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Emulator]: Deterministic Brainfuck & Tape-Machine Optimizing JIT Step Debugger",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse has no visual **Turing-tape / Brainfuck** optimizing interpreter showing bracket-jump pairing, run-length instruction folding (`++++` -> `ADD 4`), and live tape-head memory.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/tape-vm-debugger.js` and `assets/css/tape-vm-debugger.css` (250+ LOC):\n   - Implement parser/validator (balanced `[`/`]`), IR optimizer (folding repeated `+/-/</>`, clear-loop `[-]` -> `ZERO`), and step/breakpoint execution with cycle cap.\n   - Visual tape strip with active pointer highlight, ASCII/Hex output console, and curated sample programs (Fibonacci, Mandelbrot mini).\n2. Pure Vanilla JS/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-tape-vm-debugger.js` verifying IR optimization parity vs unoptimized execution, unmatched-bracket error reporting, and cycle-limit infinite-loop protection.\n\n## Acceptance Criteria\n- [ ] Optimized IR execution matches unoptimized output 100% with fewer execution steps.\n- [ ] Unbalanced brackets and infinite-loop step caps fail safely without freezing the UI.\n- [ ] Unit test `scripts/test-tape-vm-debugger.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Tools]: Deterministic L-System Lindenmayer Fractal & Turtle Graphics Grammar Studio",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nProcedural flora and fractal builders need an interactive **L-System** grammar studio with stack branching (`[`/`]`), stochastic rules, and live Canvas turtle rendering.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/lsystem-turtle-studio.js` and `assets/css/lsystem-turtle-studio.css` (250+ LOC):\n   - Implement deterministic & stochastic L-System string rewriter with expansion-length safety cap, plus 2D Turtle Graphics interpreter (`F, +, -, [, ]`) with tapered branch thickness and leaf coloring.\n   - Include presets (Koch Snowflake, Dragon Curve, Sierpinski, Fractal Fern, Algorithmic Tree) and SVG export.\n2. Pure Vanilla JS/Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-lsystem-turtle-studio.js` verifying exact rewrite string expansion, turtle stack push/pop state restoration, and max-char safety clamping.\n\n## Acceptance Criteria\n- [ ] Custom axiom/rules/angle/iterations render crisp fractals and branching plants.\n- [ ] Expansion safety cap prevents browser OOM on high iteration counts.\n- [ ] Unit test `scripts/test-lsystem-turtle-studio.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Tools]: Client-Side IEEE-754 Float32/Float64 Bit-Layout & Rounding Error Explorer",
+    "labels": [
+      "nsoc26",
+      "level2"
+    ],
+    "body": "## Problem\nPhysics and shader developers frequently run into `0.1 + 0.2 !== 0.3`, `NaN`, subnormals, and precision loss, yet ArcadeVerse has no interactive **IEEE-754** bit-level inspector.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/ieee754-bit-explorer.js` and `assets/css/ieee754-bit-explorer.css` (220+ LOC):\n   - Use `DataView` (`Float32Array`/`Float64Array`/`BigUint64Array`) to decode and interactively toggle individual **Sign**, **Exponent**, and **Mantissa** bits in real time.\n   - Display exact decimal value, hex representation, ULP (Unit in Last Place) spacing, and special-value presets (`-0`, `+Inf`, `NaN`, `Denormal Min`).\n2. Pure Vanilla JS/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-ieee754-bit-explorer.js` verifying exact Sign/Exponent/Mantissa bit extraction for `0.1`, `-0`, `Infinity`, `NaN`, and subnormal floats.\n\n## Acceptance Criteria\n- [ ] Clicking any of the 32 or 64 bits toggles the value and updates decimal/hex/ULP live.\n- [ ] Correctly classifies Normal, Subnormal, Zero, Infinity, and NaN.\n- [ ] Unit test `scripts/test-ieee754-bit-explorer.js` passes cleanly under `node`."
+  },
+  {
+    "title": "[Feature/Tools]: Regex NFA/DFA Thompson Construction & State-Transition Graph Visualizer",
+    "labels": [
+      "nsoc26",
+      "level3"
+    ],
+    "body": "## Problem\nArcadeVerse has no **Thompson's Construction + Subset Construction** regular-expression engine visualizing how a regex compiles into an epsilon-NFA and minimized DFA.\n\n## Architectural Scope & Requirements\n1. Create `assets/js/regex-nfa-dfa-lab.js` and `assets/css/regex-nfa-dfa-lab.css` (270+ LOC):\n   - Implement regex parser (concatenation, alternation `|`, Kleene star `*`, plus `+`, optional `?`, grouping `()`), Thompson epsilon-NFA builder, and Subset Construction DFA converter.\n   - Render interactive state-machine graph and step-by-step test-string matcher highlighting active states.\n2. Pure Vanilla JS/Canvas/CSS3, zero external libs, zero emojis. Do NOT edit `assets/js/games-registry.js`.\n3. Add unit test `scripts/test-regex-nfa-dfa-lab.js` verifying NFA and DFA acceptance parity against native `RegExp` on 20+ patterns.\n\n## Acceptance Criteria\n- [ ] Compiles valid regexes into both epsilon-NFA and deterministic DFA state graphs.\n- [ ] NFA and DFA match results agree 100% across positive and negative test strings.\n- [ ] Unit test `scripts/test-regex-nfa-dfa-lab.js` passes cleanly under `node`."
+  }
+]

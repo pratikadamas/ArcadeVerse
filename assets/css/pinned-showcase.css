@@ -1,0 +1,75 @@
+/* ==========================================================================
+   INTERACTIVE GAME CARD PIN-TO-TOP STICKY SHOWCASE (#1557)
+   Pinned showcase tray, pin toggle buttons, and showcase card styling
+   ========================================================================== */
+
+.pinned-showcase-tray {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.pinned-showcase-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.pinned-showcase-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffd700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pinned-showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.pinned-card-item {
+  background: #0d1117;
+  border: 1px solid #ffd700;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.15);
+}
+
+.pinned-card-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #f0f6fc;
+}
+
+.pin-toggle-btn {
+  background: transparent;
+  border: 1px solid #30363d;
+  color: #8b949e;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pin-toggle-btn:hover {
+  border-color: #ffd700;
+  color: #ffd700;
+}
+
+.pin-toggle-btn.pinned {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: #ffd700;
+  color: #ffd700;
+}
