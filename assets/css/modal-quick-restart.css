@@ -1,0 +1,56 @@
+/* ==========================================================================
+   GAME MODAL QUICK-RESTART & RESET SHORTCUT (#1546)
+   Toolbar restart button, keyboard shortcut toast notification,
+   and frame reload indicator animation
+   ========================================================================== */
+
+.modal-quick-restart-btn {
+  background: transparent;
+  border: 1px solid #30363d;
+  color: #ff7b72;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.modal-quick-restart-btn:hover {
+  background: rgba(255, 123, 114, 0.15);
+  border-color: #ff7b72;
+  box-shadow: 0 0 8px rgba(255, 123, 114, 0.4);
+}
+
+.restart-toast-notification {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-30px);
+  background: #161b22;
+  border: 1px solid #ff7b72;
+  border-radius: 20px;
+  padding: 8px 18px;
+  color: #f0f6fc;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8), 0 0 12px rgba(255, 123, 114, 0.3);
+  z-index: 100005;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+}
+
+.restart-toast-notification.active {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.game-iframe-reloading {
+  opacity: 0.4;
+  filter: blur(2px);
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}

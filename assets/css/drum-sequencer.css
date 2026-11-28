@@ -1,0 +1,107 @@
+/* ==========================================================================
+   PROCEDURAL 16-STEP WEB AUDIO DRUM MACHINE & POLYRHYTHMIC SEQUENCER (#1564)
+   Interactive 4x16 step-pad matrix, active playhead column highlight,
+   BPM dial (60-180), swing slider, and pattern preset triggers.
+   ========================================================================== */
+
+.drum-sequencer-container {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 680px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  user-select: none;
+}
+
+.drum-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.drum-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ff5500;
+  font-family: monospace;
+}
+
+.drum-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.drum-btn {
+  background: #161b22;
+  border: 1px solid #30363d;
+  color: #c9d1d9;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.drum-btn.primary {
+  background: #238636;
+  border-color: rgba(240, 246, 252, 0.1);
+  color: #ffffff;
+}
+
+.drum-btn.primary.playing {
+  background: #da3633;
+}
+
+.drum-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.drum-track-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.drum-track-label {
+  width: 50px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #8b949e;
+  font-family: monospace;
+}
+
+.drum-step-pad {
+  width: 32px;
+  height: 32px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.drum-step-pad:nth-child(4n + 2) {
+  border-left-color: #58a6ff;
+}
+
+.drum-step-pad.active {
+  background: #ff5500;
+  border-color: #ff8833;
+  box-shadow: 0 0 6px rgba(255, 85, 0, 0.6);
+}
+
+.drum-step-pad.playhead {
+  border-color: #ffffff !important;
+  box-shadow: 0 0 8px #ffffff !important;
+}

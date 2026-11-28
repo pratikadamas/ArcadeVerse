@@ -1,0 +1,68 @@
+/* ==========================================================================
+   HIGH-CONTRAST FOCUS RING CUSTOMIZER WITH PULSE ANIMATION (#1489)
+   Dual-color concentric outlines (outer neon glow + inner crisp white contrast line)
+   Customizable width, presets, and gentle pulse for keyboard navigation.
+   ========================================================================== */
+
+:root {
+  --a11y-focus-width: 3px;
+  --a11y-focus-outer-color: #00f0ff;
+  --a11y-focus-inner-color: #ffffff;
+  --a11y-focus-glow: 0 0 10px var(--a11y-focus-outer-color);
+}
+
+/* Preset mappings */
+[data-focus-preset="neon-gold"] {
+  --a11y-focus-outer-color: #ffd700;
+  --a11y-focus-inner-color: #ffffff;
+}
+
+[data-focus-preset="cyber-cyan"] {
+  --a11y-focus-outer-color: #00f0ff;
+  --a11y-focus-inner-color: #ffffff;
+}
+
+[data-focus-preset="high-vis-white"] {
+  --a11y-focus-outer-color: #ffffff;
+  --a11y-focus-inner-color: #000000;
+}
+
+/* Width overrides */
+[data-focus-width="2px"] { --a11y-focus-width: 2px; }
+[data-focus-width="3px"] { --a11y-focus-width: 3px; }
+[data-focus-width="4px"] { --a11y-focus-width: 4px; }
+
+/* Keyboard-only focus visible styling */
+:focus-visible {
+  outline: var(--a11y-focus-width) solid var(--a11y-focus-outer-color) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 calc(var(--a11y-focus-width) - 1px) var(--a11y-focus-inner-color),
+              var(--a11y-focus-glow) !important;
+  transition: outline-offset 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Gentle pulse animation for focused elements when enabled */
+.a11y-focus-pulse:focus-visible {
+  animation: a11yFocusPulse 1.8s infinite ease-in-out;
+}
+
+@keyframes a11yFocusPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 calc(var(--a11y-focus-width) - 1px) var(--a11y-focus-inner-color),
+                0 0 6px var(--a11y-focus-outer-color);
+  }
+  50% {
+    box-shadow: 0 0 0 calc(var(--a11y-focus-width) - 1px) var(--a11y-focus-inner-color),
+                0 0 16px var(--a11y-focus-outer-color),
+                0 0 24px var(--a11y-focus-outer-color);
+  }
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  :focus-visible,
+  .a11y-focus-pulse:focus-visible {
+    animation: none !important;
+    transition: none !important;
+  }
+}

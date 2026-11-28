@@ -1,0 +1,84 @@
+/* ==========================================================================
+   PROCEDURAL MANDELBROT & JULIA SET FRACTAL EXPLORER (#1567)
+   Canvas frame, mode toggles (Mandelbrot vs Julia), palette cycle controls,
+   and smooth zoom / pan coordinate displays.
+   ========================================================================== */
+
+.fractal-explorer-container {
+  position: relative;
+  width: 100%;
+  height: 480px;
+  background: #000000;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+  user-select: none;
+}
+
+.fractal-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: zoom-in;
+}
+
+.fractal-hud {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: rgba(13, 17, 23, 0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 0, 128, 0.4);
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 10;
+  max-width: 260px;
+}
+
+.fractal-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ff0080;
+  letter-spacing: 0.5px;
+}
+
+.fractal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.72rem;
+  color: #8b949e;
+}
+
+.fractal-select {
+  background: #161b22;
+  border: 1px solid #30363d;
+  color: #c9d1d9;
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.fractal-btn {
+  background: #161b22;
+  border: 1px solid #30363d;
+  color: #c9d1d9;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fractal-btn:hover {
+  background: #21262d;
+  color: #ff0080;
+  border-color: #ff0080;
+}

@@ -1,0 +1,59 @@
+/* ==========================================================================
+   CATALOG HEADER GAME COUNT & CATEGORY BREAKDOWN BAR (#1555)
+   Segmented proportional bar visualization and category breakdown legend
+   ========================================================================== */
+
+.category-breakdown-card {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+}
+
+.breakdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.breakdown-total-count {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f0f6fc;
+}
+
+.breakdown-segmented-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #21262d;
+  margin-bottom: 12px;
+}
+
+.breakdown-segment {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.breakdown-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.breakdown-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: #8b949e;
+}
+
+.breakdown-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}

@@ -1,0 +1,110 @@
+/* ==========================================================================
+   1987 COMMODORE AMIGA WORKBENCH 1.3 THEME STUDIO (#1558)
+   Authentic royal blue, crisp white, pitch black, and copper orange palette,
+   pixel-beveled window borders, checkered titlebars, and Guru Meditation banner.
+   ========================================================================== */
+
+:root[data-theme="amiga-workbench-13"],
+body.theme-amiga-workbench-13 {
+  /* Strict 4-Color Workbench 1.3 Palette */
+  --wb-blue: #0055aa;
+  --wb-white: #ffffff;
+  --wb-black: #000020;
+  --wb-orange: #ff8800;
+
+  --bg-primary: #0055aa;
+  --bg-secondary: #0055aa;
+  --bg-card: #0055aa;
+  --text-primary: #ffffff;
+  --text-secondary: #ff8800;
+  --border-color: #ffffff;
+  --accent-color: #ff8800;
+
+  --font-family-wb: "Topaz", "Courier New", Courier, monospace;
+}
+
+body.theme-amiga-workbench-13 {
+  background-color: var(--wb-blue) !important;
+  color: var(--wb-white) !important;
+  font-family: var(--font-family-wb) !important;
+  image-rendering: pixelated;
+}
+
+/* Sharp zero-radius cards with 2px beveled borders */
+body.theme-amiga-workbench-13 .game-card {
+  background: var(--wb-blue) !important;
+  border-radius: 0 !important;
+  border-top: 2px solid var(--wb-white) !important;
+  border-left: 2px solid var(--wb-white) !important;
+  border-right: 2px solid var(--wb-black) !important;
+  border-bottom: 2px solid var(--wb-black) !important;
+  box-shadow: 2px 2px 0 var(--wb-black) !important;
+  color: var(--wb-white) !important;
+}
+
+body.theme-amiga-workbench-13 .game-card:hover {
+  border-top-color: var(--wb-orange) !important;
+  border-left-color: var(--wb-orange) !important;
+}
+
+/* Checkered titlebar simulation */
+.amiga-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--wb-white);
+  color: var(--wb-blue);
+  padding: 4px 8px;
+  font-weight: 700;
+  border-bottom: 2px solid var(--wb-black);
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--wb-white) 0px,
+    var(--wb-white) 2px,
+    var(--wb-blue) 2px,
+    var(--wb-blue) 4px
+  );
+}
+
+.amiga-gadget-box {
+  width: 14px;
+  height: 14px;
+  background: var(--wb-blue);
+  border: 1px solid var(--wb-white);
+  cursor: pointer;
+}
+
+/* Guru Meditation error banner */
+.guru-meditation-banner {
+  border: 4px solid #ff0000;
+  background-color: #000000;
+  color: #ff0000;
+  padding: 12px;
+  text-align: center;
+  font-family: monospace;
+  font-weight: 700;
+  letter-spacing: 1px;
+  animation: guruBlink 1.4s infinite ease-in-out;
+  margin: 16px 0;
+}
+
+@keyframes guruBlink {
+  0%, 100% { border-color: #ff0000; }
+  50% { border-color: #000000; }
+}
+
+/* Optional Topaz Pixel Scanlines */
+.amiga-scanlines {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 999999;
+  background: linear-gradient(
+    rgba(0, 0, 0, 0) 50%,
+    rgba(0, 0, 32, 0.25) 50%
+  );
+  background-size: 100% 4px;
+}
